@@ -52,7 +52,7 @@ namespace WWSearchDataGrid.Modern.SampleApp.ViewModels
         /// Count of items in the collection
         /// </summary>
         [ObservableProperty]
-        private int _itemsToGenerate;
+        private int _itemsToGenerate = 500;
 
         #endregion
 

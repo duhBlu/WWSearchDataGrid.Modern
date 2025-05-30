@@ -609,7 +609,12 @@
                                         <CheckBox Style="{StaticResource FilterValueCheckBoxStyle}"
                                                   IsChecked="{Binding IsSelected, Mode=TwoWay}"
                                                   Margin="20,2,2,2">
-                                            <TextBlock Text="{Binding DisplayValue}" />
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="{Binding DisplayValue}" />
+                                                <TextBlock Foreground="#999"
+                                                           Text="{Binding ItemCount, StringFormat=' ({0})'}"
+                                                           Margin="4,0,0,0" />
+                                            </StackPanel>
                                         </CheckBox>
                                     </DataTemplate>
                                 </HierarchicalDataTemplate.ItemTemplate>
