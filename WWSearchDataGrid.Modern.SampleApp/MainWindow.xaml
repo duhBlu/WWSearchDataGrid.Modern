@@ -1,0 +1,160 @@
+﻿<Window x:Class="WWSearchDataGrid.Modern.SampleApp.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:WWSearchDataGrid.Modern.SampleApp"
+        xmlns:vm="clr-namespace:WWSearchDataGrid.Modern.SampleApp.ViewModels"
+        xmlns:sdg="clr-namespace:WWSearchDataGrid.Modern.WPF;assembly=WWSearchDataGrid.Modern.WPF"
+        xmlns:sdgCore="clr-namespace:WWSearchDataGrid.Modern.Core;assembly=WWSearchDataGrid.Modern.Core"
+        Title="SearchDataGrid Demo"
+        Width="1280"
+        Height="800"
+        WindowStartupLocation="CenterOwner"
+        mc:Ignorable="d">
+    <Window.DataContext>
+        <vm:vmMain />
+    </Window.DataContext>
+
+    <Window.Resources>
+        <CollectionViewSource x:Key="ComboBoxItemsSource" Source="{Binding ComboBoxItems}" />
+        <CollectionViewSource x:Key="ComboBoxStringSource" Source="{Binding ComboBoxStringValues}" />
+    </Window.Resources>
+
+    <DockPanel>
+        <!--  Header with app title  -->
+        <Border DockPanel.Dock="Top"
+                Background="#007ACC"
+                Padding="10">
+            <TextBlock Foreground="White"
+                       Text="SearchDataGrid Demo Application"
+                       FontSize="18"
+                       FontWeight="Bold" />
+        </Border>
+
+        <!--  Control Panel  -->
+        <Grid DockPanel.Dock="Bottom" Background="#F0F0F0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <!--  Item Counter  -->
+            <StackPanel Grid.Column="0"
+                        Orientation="Horizontal"
+                        Margin="15,0,0,0"
+                        VerticalAlignment="Center">
+                <TextBlock Text="Items: "
+                           VerticalAlignment="Center"
+                           FontWeight="Bold" />
+                <TextBlock Text="{Binding ItemCount}" VerticalAlignment="Center" />
+            </StackPanel>
+
+            <!--  Buttons  -->
+            <StackPanel Grid.Column="1"
+                        Orientation="Horizontal"
+                        HorizontalAlignment="Right">
+                <sdg:NumericUpDown Value="{Binding ItemsToGenerate, Mode=TwoWay}" />
+                <Button Background="#007ACC"
+                        Foreground="White"
+                        Command="{Binding PopulateDataCommand}"
+                        Margin="5"
+                        Padding="10,5"
+                        Content="Generate Data" />
+
+                <Button Command="{Binding AddItemCommand}"
+                        Margin="5"
+                        Padding="10,5"
+                        Content="Add Item" />
+
+                <Button Command="{Binding RemoveItemCommand}"
+                        Margin="5"
+                        Padding="10,5"
+                        Content="Remove Item" />
+
+                <Button Command="{Binding ClearDataCommand}"
+                        Margin="5"
+                        Padding="10,5"
+                        Content="Clear Data" />
+            </StackPanel>
+        </Grid>
+
+        <!--  SearchDataGrid  -->
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+                <sdg:SearchDataGrid x:Name="DataGrid"
+                                    IsReadOnly="False"
+                                    Grid.Row="0"
+                                    Margin="10"
+                                    ItemsSource="{Binding Items}"
+                                    CanUserAddRows="True">
+
+                    <sdg:SearchDataGrid.Columns>
+                        <!--  Boolean Values  -->
+                        <DataGridCheckBoxColumn Width="80"
+                                                sdg:SearchControl.ShowInAdvancedFilter="False"
+                                                Header="Boolean"
+                                                Binding="{Binding BoolValue}" />
+
+                        <DataGridCheckBoxColumn Width="100"
+                                                Header="Nullable Bool"
+                                                Binding="{Binding NullableBoolValue}" />
+
+                        <!--  Numeric Values  -->
+                        <DataGridTextColumn Width="80"
+                                            Header="Integer"
+                                            Binding="{Binding IntValue}" />
+
+                        <DataGridTextColumn Width="90"
+                                            Header="Nullable Int"
+                                            Binding="{Binding NullableIntValue}" />
+
+                        <DataGridTextColumn Width="80"
+                                            Header="Long"
+                                            Binding="{Binding LongValue}" />
+
+                        <DataGridTextColumn Width="100"
+                                            Header="Decimal"
+                                            Binding="{Binding DecimalValue, StringFormat=N2}" />
+
+                        <DataGridTextColumn Width="100"
+                                            Header="Double"
+                                            Binding="{Binding DoubleValue, StringFormat=N2}" />
+
+                        <DataGridTextColumn Width="80"
+                                            Header="Float"
+                                            Binding="{Binding FloatValue, StringFormat=N2}" />
+
+                        <!--  DateTime Values  -->
+                        <DataGridTextColumn Width="150"
+                                            Header="DateTime"
+                                            Binding="{Binding DateTimeValue, StringFormat=g}" />
+
+                        <DataGridTextColumn Width="150"
+                                            Header="Nullable DateTime"
+                                            Binding="{Binding NullableDateTimeValue, StringFormat=g}" />
+
+                        <!--  String Value  -->
+                        <DataGridTextColumn Width="120"
+                                            Header="String"
+                                            Binding="{Binding StringValue}" />
+
+                        <!--  ComboBox Values  -->
+                        <DataGridComboBoxColumn Width="120"
+                                                Header="ComboBox ID"
+                                                ItemsSource="{Binding Source={StaticResource ComboBoxItemsSource}}"
+                                                DisplayMemberPath="Name"
+                                                SelectedValuePath="Id"
+                                                SelectedValueBinding="{Binding ComboBoxValueId}" />
+
+                        <DataGridComboBoxColumn Width="140"
+                                                Header="ComboBox String"
+                                                ItemsSource="{Binding Source={StaticResource ComboBoxStringSource}}"
+                                                SelectedItemBinding="{Binding SelectedComboBoxStringValue}" />
+                    </sdg:SearchDataGrid.Columns>
+                </sdg:SearchDataGrid>
+        </Grid>
+    </DockPanel>
+</Window>

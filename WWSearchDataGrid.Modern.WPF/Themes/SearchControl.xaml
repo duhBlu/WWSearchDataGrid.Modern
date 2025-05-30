@@ -1,0 +1,180 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sdg="clr-namespace:WWSearchDataGrid.Modern.WPF"
+                    xmlns:converters="clr-namespace:WWSearchDataGrid.Modern.WPF.Converters">
+
+    <converters:IntToVisibilityConverter x:Key="IntToVisibilityConverter" />
+    <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+    
+    <!--  SearchControl Style  -->
+    <Style x:Key="DefaultSearchControlStyle" TargetType="{x:Type sdg:SearchControl}">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type sdg:SearchControl}">
+                    <Border Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="6"
+                            SnapsToDevicePixels="True">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <Grid Grid.Column="0">
+                                <TextBox x:Name="PART_SearchTextBox"
+                                         Background="Transparent"
+                                         BorderThickness="0"
+                                         Text="{Binding SearchText, RelativeSource={RelativeSource TemplatedParent}, UpdateSourceTrigger=PropertyChanged}"
+                                         IsReadOnly="{Binding HasAdvancedFilter, RelativeSource={RelativeSource AncestorType={x:Type sdg:SearchControl}}}"
+                                         Padding="6,2"
+                                         VerticalAlignment="Center"
+                                         VerticalContentAlignment="Center"
+                                         Height="28"
+                                         FontSize="12"
+                                         FontFamily="Segoe UI" />
+
+                                <TextBlock Foreground="DarkSlateGray"
+                                           Text="Advanced Filter"
+                                           Visibility="{Binding HasAdvancedFilter, RelativeSource={RelativeSource AncestorType={x:Type sdg:SearchControl}}, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                           IsHitTestVisible="False"
+                                           Margin="6,2"
+                                           VerticalAlignment="Center"
+                                           FontSize="12"
+                                           FontFamily="Segoe UI"
+                                           FontWeight="SemiBold" />
+                            </Grid>
+
+                            <Button Grid.Column="1"
+                                    Visibility="{Binding SearchText.Length, RelativeSource={RelativeSource AncestorType={x:Type sdg:SearchControl}}, Converter={StaticResource IntToVisibilityConverter}}"
+                                    Cursor="Hand"
+                                    Command="{Binding ClearSearchTextCommand, RelativeSource={RelativeSource AncestorType=sdg:SearchControl}}"
+                                    Margin="2,1,5,1"
+                                    Padding="4"
+                                    VerticalAlignment="Center"
+                                    ToolTip="Clear filter"
+                                    FontFamily="Segoe MDL2 Assets"
+                                    FontSize="10"
+                                    Content="&#xE8BB;">
+                                <Button.Style>
+                                    <Style TargetType="{x:Type Button}">
+                                        <Setter Property="Foreground" Value="Gray" />
+                                        <Setter Property="Background" Value="Transparent" />
+                                        <Setter Property="BorderBrush" Value="Transparent" />
+                                        <Setter Property="BorderThickness" Value="0" />
+                                        <Setter Property="Cursor" Value="Hand" />
+                                        <Setter Property="Template">
+                                            <Setter.Value>
+                                                <ControlTemplate TargetType="{x:Type Button}">
+                                                    <Border x:Name="border"
+                                                            Background="{TemplateBinding Background}"
+                                                            BorderBrush="{TemplateBinding BorderBrush}"
+                                                            BorderThickness="{TemplateBinding BorderThickness}"
+                                                            CornerRadius="3">
+                                                        <ContentPresenter x:Name="contentPresenter"
+                                                                          Focusable="False"
+                                                                          Margin="{TemplateBinding Padding}"
+                                                                          HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                                                          VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                                                          RecognizesAccessKey="True"
+                                                                          TextElement.Foreground="{TemplateBinding Foreground}"
+                                                                          SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" />
+                                                    </Border>
+                                                </ControlTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                        <Style.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter Property="Background" Value="#FFF0F0F0" />
+                                                <Setter Property="Foreground" Value="#CC0000" />
+                                            </Trigger>
+                                            <Trigger Property="IsPressed" Value="True">
+                                                <Setter Property="Background" Value="#FFE0E0E0" />
+                                                <Setter Property="Foreground" Value="#990000" />
+                                            </Trigger>
+                                            <Trigger Property="IsEnabled" Value="False">
+                                                <Setter Property="Opacity" Value="0.5" />
+                                                <Setter Property="Cursor" Value="Arrow" />
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+
+                            <Button x:Name="PART_AdvancedFilterButton"
+                                    Grid.Column="2"
+                                    Cursor="Hand"
+                                    Margin="2,1,5,1"
+                                    Padding="4"
+                                    VerticalAlignment="Center"
+                                    ToolTip="Advanced Filter"
+                                    FontFamily="Segoe MDL2 Assets"
+                                    FontSize="12"
+                                    Content="&#xE71C;">
+                                <Button.Style>
+                                    <Style TargetType="Button">
+                                        <Setter Property="Foreground" Value="Gray" />
+                                        <Setter Property="Background" Value="Transparent" />
+                                        <Setter Property="BorderBrush" Value="Transparent" />
+                                        <Setter Property="BorderThickness" Value="0" />
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                        <Setter Property="Cursor" Value="Hand" />
+                                        <Setter Property="Template">
+                                            <Setter.Value>
+                                                <ControlTemplate TargetType="{x:Type Button}">
+                                                    <Border x:Name="border"
+                                                            Background="{TemplateBinding Background}"
+                                                            BorderBrush="{TemplateBinding BorderBrush}"
+                                                            BorderThickness="{TemplateBinding BorderThickness}"
+                                                            CornerRadius="3">
+                                                        <ContentPresenter x:Name="contentPresenter"
+                                                                          Focusable="False"
+                                                                          Margin="{TemplateBinding Padding}"
+                                                                          HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                                                          VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                                                          RecognizesAccessKey="True"
+                                                                          TextElement.Foreground="{TemplateBinding Foreground}"
+                                                                          SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" />
+                                                    </Border>
+                                                </ControlTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                        <Style.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter Property="Background" Value="#FFE6EFFF" />
+                                                <Setter Property="Foreground" Value="#0078D4" />
+                                            </Trigger>
+                                            <Trigger Property="IsPressed" Value="True">
+                                                <Setter Property="Background" Value="#FFD0E7FF" />
+                                                <Setter Property="Foreground" Value="#005A9E" />
+                                            </Trigger>
+                                            <MultiDataTrigger>
+                                                <MultiDataTrigger.Conditions>
+                                                    <Condition Binding="{Binding ShowInAdvancedFilter, RelativeSource={RelativeSource TemplatedParent}}" Value="True" />
+                                                    <Condition Binding="{Binding SearchText, RelativeSource={RelativeSource AncestorType={x:Type sdg:SearchControl}}}" Value="" />
+                                                </MultiDataTrigger.Conditions>
+                                                <Setter Property="Visibility" Value="Visible" />
+                                            </MultiDataTrigger>
+                                            <DataTrigger Binding="{Binding HasAdvancedFilter, RelativeSource={RelativeSource AncestorType={x:Type sdg:SearchControl}}}" Value="True">
+                                                <Setter Property="Background" Value="#0078D4" />
+                                                <Setter Property="BorderBrush" Value="#0078D4" />
+                                                <Setter Property="Foreground" Value="White" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+                        </Grid>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="Background" Value="White" />
+        <Setter Property="BorderBrush" Value="#FFC8C8C8" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="SnapsToDevicePixels" Value="True" />
+        <Setter Property="UseLayoutRounding" Value="True" />
+    </Style>
+</ResourceDictionary>
