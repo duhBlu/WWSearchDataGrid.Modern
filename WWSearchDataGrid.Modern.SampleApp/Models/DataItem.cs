@@ -12,175 +12,64 @@ namespace WWSearchDataGrid.Modern.SampleApp.Models
     /// </summary>
     public class DataItem : ObservableObject
     {
-        private bool _boolValue;
-        private bool? _nullableBoolValue;
-        private DateTime _dateTimeValue;
-        private DateTime? _nullableDateTimeValue;
-        private decimal _decimalValue;
-        private decimal? _nullableDecimalValue;
-        private double _doubleValue;
-        private double? _nullableDoubleValue;
-        private float _floatValue;
-        private float? _nullableFloatValue;
-        private int _intValue;
-        private int? _nullableIntValue;
-        private long _longValue;
-        private string _stringValue;
-        private int _comboBoxValueId;
-        private string _selectedComboBoxStringValue;
+        public bool BoolValue { get; set; }
+        public bool? NullableBoolValue { get; set; }
+        public int IntValue { get; set; }
+        public int? NullableIntValue { get; set; }
+        public long LongValue { get; set; }
+        public float FloatValue { get; set; }
+        public float? NullableFloatValue { get; set; }
+        public double DoubleValue { get; set; }
+        public double? NullableDoubleValue { get; set; }
+        public decimal DecimalValue { get; set; }
+        public decimal? NullableDecimalValue { get; set; }
+        public string StringValue { get; set; }
+        public DateTime DateTimeValue { get; set; }
+        public DateTime? NullableDateTimeValue { get; set; }
+        public int ComboBoxValueId { get; set; }
+        public string SelectedComboBoxStringValue { get; set; }
+        public List<Tuple<string, string>> PropertyValues { get; set; }
+        public Dictionary<string, object> PropertyDictionary { get; set; }
+
+        // --- new "realistic" fields ---
+        /// <summary>
+        /// A product or item name (e.g. "Laptop", "Headphones", etc.)
+        /// </summary>
+        public string ProductName { get; set; }
 
         /// <summary>
-        /// Gets or sets the boolean value
+        /// A broad category (so rows naturally duplicate every few items)
         /// </summary>
-        public bool BoolValue
-        {
-            get => _boolValue;
-            set => SetProperty(ref _boolValue, value);
-        }
+        public string Category { get; set; }
 
         /// <summary>
-        /// Gets or sets the nullable boolean value
+        /// Unit price in some currency
         /// </summary>
-        public bool? NullableBoolValue
-        {
-            get => _nullableBoolValue;
-            set => SetProperty(ref _nullableBoolValue, value);
-        }
+        public decimal Price { get; set; }
 
         /// <summary>
-        /// Gets or sets the DateTime value
+        /// ISO currency code (USD, EUR, GBP, etc.)
         /// </summary>
-        public DateTime DateTimeValue
-        {
-            get => _dateTimeValue;
-            set => SetProperty(ref _dateTimeValue, value);
-        }
+        public string CurrencyCode { get; set; }
 
         /// <summary>
-        /// Gets or sets the nullable DateTime value
+        /// Geographic region (duplicates every few rows)
         /// </summary>
-        public DateTime? NullableDateTimeValue
-        {
-            get => _nullableDateTimeValue;
-            set => SetProperty(ref _nullableDateTimeValue, value);
-        }
+        public string Region { get; set; }
 
         /// <summary>
-        /// Gets or sets the decimal value
+        /// Quantity ordered (1–100)
         /// </summary>
-        public decimal DecimalValue
-        {
-            get => _decimalValue;
-            set => SetProperty(ref _decimalValue, value);
-        }
+        public int Quantity { get; set; }
 
         /// <summary>
-        /// Gets or sets the nullable decimal value
+        /// Order date somewhere in the last 12 months
         /// </summary>
-        public decimal? NullableDecimalValue
-        {
-            get => _nullableDecimalValue;
-            set => SetProperty(ref _nullableDecimalValue, value);
-        }
+        public DateTime OrderDate { get; set; }
 
         /// <summary>
-        /// Gets or sets the double value
+        /// Order status (Pending, Shipped, Delivered, Cancelled)
         /// </summary>
-        public double DoubleValue
-        {
-            get => _doubleValue;
-            set => SetProperty(ref _doubleValue, value);
-        }
-
-        /// <summary>
-        /// Gets or sets the nullable double value
-        /// </summary>
-        public double? NullableDoubleValue
-        {
-            get => _nullableDoubleValue;
-            set => SetProperty(ref _nullableDoubleValue, value);
-        }
-
-        /// <summary>
-        /// Gets or sets the float value
-        /// </summary>
-        public float FloatValue
-        {
-            get => _floatValue;
-            set => SetProperty(ref _floatValue, value);
-        }
-
-        /// <summary>
-        /// Gets or sets the nullable float value
-        /// </summary>
-        public float? NullableFloatValue
-        {
-            get => _nullableFloatValue;
-            set => SetProperty(ref _nullableFloatValue, value);
-        }
-
-        /// <summary>
-        /// Gets or sets the integer value
-        /// </summary>
-        public int IntValue
-        {
-            get => _intValue;
-            set => SetProperty(ref _intValue, value);
-        }
-
-        /// <summary>
-        /// Gets or sets the nullable integer value
-        /// </summary>
-        public int? NullableIntValue
-        {
-            get => _nullableIntValue;
-            set => SetProperty(ref _nullableIntValue, value);
-        }
-
-        /// <summary>
-        /// Gets or sets the long value
-        /// </summary>
-        public long LongValue
-        {
-            get => _longValue;
-            set => SetProperty(ref _longValue, value);
-        }
-
-        /// <summary>
-        /// Gets or sets the string value
-        /// </summary>
-        public string StringValue
-        {
-            get => _stringValue;
-            set => SetProperty(ref _stringValue, value);
-        }
-
-        /// <summary>
-        /// Gets or sets the ComboBox value ID
-        /// </summary>
-        public int ComboBoxValueId
-        {
-            get => _comboBoxValueId;
-            set => SetProperty(ref _comboBoxValueId, value);
-        }
-
-        /// <summary>
-        /// Gets or sets the selected ComboBox string value
-        /// </summary>
-        public string SelectedComboBoxStringValue
-        {
-            get => _selectedComboBoxStringValue;
-            set => SetProperty(ref _selectedComboBoxStringValue, value);
-        }
-
-        /// <summary>
-        /// Gets or sets the collection of property tuples for complex filtering
-        /// </summary>
-        public List<Tuple<string, string>> PropertyValues { get; set; } = new();
-
-        /// <summary>
-        /// Gets or sets the dictionary of property values for dictionary-based filtering
-        /// </summary>
-        public Dictionary<string, object> PropertyDictionary { get; set; } = new();
+        public string Status { get; set; }
     }
 }

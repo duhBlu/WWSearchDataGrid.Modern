@@ -52,7 +52,7 @@ namespace WWSearchDataGrid.Modern.SampleApp.ViewModels
         /// Count of items in the collection
         /// </summary>
         [ObservableProperty]
-        private int _itemsToGenerate = 500;
+        private int _itemsToGenerate = 5000;
 
         #endregion
 
@@ -138,27 +138,56 @@ namespace WWSearchDataGrid.Modern.SampleApp.ViewModels
         /// <returns>A new data item</returns>
         private DataItem CreateDataItem(int index)
         {
-            var random = new Random(index); // deterministic per row
-            var baseIndex = index % 50; // introduces duplicates across every 50 rows
+            // Reuse the same pattern so that “random” is deterministic per index:
+            var random = new Random(index);
+            var baseIndex = index % 50; // forces a repeat every 50 rows
 
+            // --- existing pools ---
             var stringPool = new[] { "Apple", "Banana", "Cherry", "Date", "Elderberry", null, "", "apple", "banana" };
             var floatSet = new[] { 100f, 200f, 300f, 400f, 500f, 600f, 700f };
             var doubleSet = new[] { 1.01, 1.02, 2.05, 2.06, 3.00 };
             var decimalSet = new[] { 107.005m, 108.005m, 109.005m, 107.005m }; // duplicates
             var comboOptions = ComboBoxItems.Select(c => c.Id).ToList();
             var stringComboOptions = ComboBoxStringValues.ToList();
-
             var today = DateTime.Today;
 
+            // 1) Product names (so every row gets a recognizable product)
+            var productNames = new[]
+            {
+                "Laptop", "Smartphone", "Tablet", "Headphones", "Monitor",
+                "Keyboard", "Mouse", "Printer", "Webcam", "External HDD"
+            };
+
+            // 2) Categories (will repeat every few rows => grouping)
+            var categories = new[]
+            {
+                "Electronics", "Accessories", "Office Supplies",
+                "Gaming", "Home Appliances"
+            };
+
+            // 3) Currency codes (small set => duplicates)
+            var currencyCodes = new[] { "USD", "EUR", "GBP", "JPY", "CAD" };
+
+            // 4) Regions (duplicates periodically)
+            var regions = new[]
+            {
+                "North America", "Europe", "Asia", "South America", "Australia"
+            };
+
+            // 5) Order statuses (duplicates frequently)
+            var statuses = new[] { "Pending", "Shipped", "Delivered", "Cancelled" };
+
+            // Now assemble the DataItem:
             return new DataItem
             {
+                // --- existing fields ---
                 BoolValue = index % 3 == 0,
                 NullableBoolValue = index % 7 == 0 ? null : (bool?)(index % 2 == 0),
 
                 IntValue = index,
-                NullableIntValue = index % 13 == 0 ? null : (int?)(baseIndex), // repeated every 50 rows
+                NullableIntValue = index % 13 == 0 ? null : (int?)(baseIndex),
 
-                LongValue = index * 100000L,
+                LongValue = index * 100_000L,
 
                 FloatValue = floatSet[index % floatSet.Length],
                 NullableFloatValue = index % 11 == 0 ? null : (float?)(floatSet[baseIndex % floatSet.Length]),
@@ -169,10 +198,10 @@ namespace WWSearchDataGrid.Modern.SampleApp.ViewModels
                 DecimalValue = decimalSet[index % decimalSet.Length],
                 NullableDecimalValue = index % 6 == 0 ? null : (decimal?)(decimalSet[baseIndex % decimalSet.Length]),
 
-                StringValue = stringPool[index % stringPool.Length], // mixed casing + null/empty
+                StringValue = stringPool[index % stringPool.Length],
 
-                DateTimeValue = today.AddDays(-index % 365), // spans across year
-                NullableDateTimeValue = index % 10 == 0 ? null : (DateTime?)(today.AddDays(-baseIndex % 30)),
+                DateTimeValue = today.AddDays(-(index % 365)),
+                NullableDateTimeValue = index % 10 == 0 ? null : (DateTime?)(today.AddDays(-(baseIndex % 30))),
 
                 ComboBoxValueId = comboOptions[index % comboOptions.Count],
                 SelectedComboBoxStringValue = stringComboOptions[index % stringComboOptions.Count],
@@ -183,14 +212,29 @@ namespace WWSearchDataGrid.Modern.SampleApp.ViewModels
                     Tuple.Create("KeyB", $"Val{(index + 1) % 5}"),
                     Tuple.Create("KeyC", $"Val{(index + 2) % 4}")
                 },
-
                         PropertyDictionary = new Dictionary<string, object>
                 {
                     { "DictKeyA", baseIndex },
-                    { "DictKeyB", today.AddDays(-index % 90) },
+                    { "DictKeyB", today.AddDays(- (index % 90)) },
                     { "DictKeyC", stringPool[(index + 3) % stringPool.Length] },
                     { "DictKeyD", index % 2 == 0 ? (object)"SetA" : "SetB" }
-                }
+                },
+
+                // --- NEW realistic/groupable fields ---
+                ProductName = productNames[index % productNames.Length],
+                Category = categories[baseIndex % categories.Length],
+                CurrencyCode = currencyCodes[baseIndex % currencyCodes.Length],
+
+                // Price: anywhere from $5.00 to $999.99, deterministic via Random(index)
+                Price = (decimal)(random.Next(500, 100_000)) / 100m,
+
+                Quantity = random.Next(1, 101),                        // 1–100
+
+                // OrderDate: pick any day in the past 365 days
+                OrderDate = today.AddDays(-random.Next(0, 365)),
+
+                Region = regions[index % regions.Length],
+                Status = statuses[index % statuses.Length]
             };
         }
 

@@ -84,77 +84,119 @@
             <Grid.RowDefinitions>
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
-                <sdg:SearchDataGrid x:Name="DataGrid"
-                                    IsReadOnly="False"
-                                    Grid.Row="0"
-                                    Margin="10"
-                                    ItemsSource="{Binding Items}"
-                                    CanUserAddRows="True">
+            <sdg:SearchDataGrid x:Name="DataGrid"
+                                Grid.Row="0"
+                                IsReadOnly="False"
+                                Margin="10"
+                                ItemsSource="{Binding Items}"
+                                CanUserAddRows="True">
 
-                    <sdg:SearchDataGrid.Columns>
-                        <!--  Boolean Values  -->
-                        <DataGridCheckBoxColumn Width="80"
-                                                sdg:SearchControl.ShowInAdvancedFilter="False"
-                                                Header="Boolean"
-                                                Binding="{Binding BoolValue}" />
+                <sdg:SearchDataGrid.Columns>
+                    <!--  Boolean Values  -->
+                    <DataGridCheckBoxColumn Width="80"
+                                            sdg:SearchControl.ShowInAdvancedFilter="False"
+                                            Header="Boolean"
+                                            Binding="{Binding BoolValue}" />
 
-                        <DataGridCheckBoxColumn Width="100"
-                                                Header="Nullable Bool"
-                                                Binding="{Binding NullableBoolValue}" />
+                    <DataGridCheckBoxColumn Width="100"
+                                            Header="Nullable Bool"
+                                            Binding="{Binding NullableBoolValue}" />
 
-                        <!--  Numeric Values  -->
-                        <DataGridTextColumn Width="80"
-                                            Header="Integer"
-                                            Binding="{Binding IntValue}" />
+                    <!--  Numeric Values  -->
+                    <DataGridTextColumn Width="80"
+                                        Header="Integer"
+                                        Binding="{Binding IntValue}" />
 
-                        <DataGridTextColumn Width="90"
-                                            Header="Nullable Int"
-                                            Binding="{Binding NullableIntValue}" />
+                    <DataGridTextColumn Width="90"
+                                        Header="Nullable Int"
+                                        Binding="{Binding NullableIntValue}" />
 
-                        <DataGridTextColumn Width="80"
-                                            Header="Long"
-                                            Binding="{Binding LongValue}" />
+                    <DataGridTextColumn Width="80"
+                                        Header="Long"
+                                        Binding="{Binding LongValue}" />
 
-                        <DataGridTextColumn Width="100"
-                                            Header="Decimal"
-                                            Binding="{Binding DecimalValue, StringFormat=N2}" />
+                    <DataGridTextColumn Width="100"
+                                        Header="Decimal"
+                                        Binding="{Binding DecimalValue, StringFormat=N2}" />
 
-                        <DataGridTextColumn Width="100"
-                                            Header="Double"
-                                            Binding="{Binding DoubleValue, StringFormat=N2}" />
+                    <DataGridTextColumn Width="100"
+                                        Header="Double"
+                                        Binding="{Binding DoubleValue, StringFormat=N2}" />
 
-                        <DataGridTextColumn Width="80"
-                                            Header="Float"
-                                            Binding="{Binding FloatValue, StringFormat=N2}" />
+                    <DataGridTextColumn Width="80"
+                                        Header="Float"
+                                        Binding="{Binding FloatValue, StringFormat=N2}" />
 
-                        <!--  DateTime Values  -->
-                        <DataGridTextColumn Width="150"
-                                            Header="DateTime"
-                                            Binding="{Binding DateTimeValue, StringFormat=g}" />
+                    <!--  DateTime Values  -->
+                    <DataGridTextColumn Width="150"
+                                        Header="DateTime"
+                                        Binding="{Binding DateTimeValue, StringFormat=g}" />
 
-                        <DataGridTextColumn Width="150"
-                                            Header="Nullable DateTime"
-                                            Binding="{Binding NullableDateTimeValue, StringFormat=g}" />
+                    <DataGridTextColumn Width="150"
+                                        Header="Nullable DateTime"
+                                        Binding="{Binding NullableDateTimeValue, StringFormat=g}" />
 
-                        <!--  String Value  -->
-                        <DataGridTextColumn Width="120"
-                                            Header="String"
-                                            Binding="{Binding StringValue}" />
+                    <!--  String Value  -->
+                    <DataGridTextColumn Width="120"
+                                        Header="String"
+                                        Binding="{Binding StringValue}" />
 
-                        <!--  ComboBox Values  -->
-                        <DataGridComboBoxColumn Width="120"
-                                                Header="ComboBox ID"
-                                                ItemsSource="{Binding Source={StaticResource ComboBoxItemsSource}}"
-                                                DisplayMemberPath="Name"
-                                                SelectedValuePath="Id"
-                                                SelectedValueBinding="{Binding ComboBoxValueId}" />
+                    <!--  ComboBox Values  -->
+                    <DataGridComboBoxColumn Width="120"
+                                            Header="ComboBox ID"
+                                            ItemsSource="{Binding Source={StaticResource ComboBoxItemsSource}}"
+                                            DisplayMemberPath="Name"
+                                            SelectedValuePath="Id"
+                                            SelectedValueBinding="{Binding ComboBoxValueId}" />
 
-                        <DataGridComboBoxColumn Width="140"
-                                                Header="ComboBox String"
-                                                ItemsSource="{Binding Source={StaticResource ComboBoxStringSource}}"
-                                                SelectedItemBinding="{Binding SelectedComboBoxStringValue}" />
-                    </sdg:SearchDataGrid.Columns>
-                </sdg:SearchDataGrid>
+                    <DataGridComboBoxColumn Width="140"
+                                            Header="ComboBox String"
+                                            ItemsSource="{Binding Source={StaticResource ComboBoxStringSource}}"
+                                            SelectedItemBinding="{Binding SelectedComboBoxStringValue}" />
+
+                    <!--  1) Product Name (string)  -->
+                    <DataGridTextColumn Width="150"
+                                        Header="Product Name"
+                                        Binding="{Binding ProductName}" />
+
+                    <!--  2) Category (string; good for grouping/duplicates)  -->
+                    <DataGridTextColumn Width="120"
+                                        Header="Category"
+                                        Binding="{Binding Category}" />
+
+                    <!--  3) Price (decimal)  -->
+                    <!--  Using StringFormat='C2' will show currency symbol (depending on your culture)  -->
+                    <DataGridTextColumn Width="100"
+                                        Header="Price"
+                                        Binding="{Binding Price, StringFormat=C2}" />
+
+                    <!--  4) Currency Code (e.g. USD, EUR)  -->
+                    <DataGridTextColumn Width="80"
+                                        Header="Currency"
+                                        Binding="{Binding CurrencyCode}" />
+
+                    <!--  5) Quantity (int)  -->
+                    <DataGridTextColumn Width="80"
+                                        Header="Quantity"
+                                        Binding="{Binding Quantity}" />
+
+                    <!--  6) Order Date  -->
+                    <DataGridTextColumn Width="140"
+                                        Header="Order Date"
+                                        Binding="{Binding OrderDate, StringFormat=d}" />
+
+                    <!--  7) Region (string)  -->
+                    <DataGridTextColumn Width="140"
+                                        Header="Region"
+                                        Binding="{Binding Region}" />
+
+                    <!--  8) Status (string)  -->
+                    <DataGridTextColumn Width="120"
+                                        Header="Status"
+                                        sdg:AdvancedFilterControl.GroupByColumn="Region"
+                                        Binding="{Binding Status}" />
+                </sdg:SearchDataGrid.Columns>
+            </sdg:SearchDataGrid>
         </Grid>
     </DockPanel>
 </Window>

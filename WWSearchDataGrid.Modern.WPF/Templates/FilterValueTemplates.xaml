@@ -26,6 +26,101 @@
         <Setter Property="VerticalScrollBarVisibility" Value="Auto" />
     </Style>
 
+    <!--  Search TextBox Style  -->
+    <Style x:Key="SearchTextBoxStyle" TargetType="TextBox">
+        <Setter Property="Padding" Value="8,6" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="TextBox">
+                    <Border Background="White"
+                            BorderBrush="{StaticResource BorderBrush}"
+                            BorderThickness="1"
+                            CornerRadius="4">
+                        <Grid>
+                            <!--  Search Icon  -->
+                            <TextBlock x:Name="SearchIcon"
+                                       Text="&#xE721;"
+                                       FontFamily="Segoe MDL2 Assets"
+                                       FontSize="12"
+                                       Foreground="{StaticResource GrayTextBrush}"
+                                       HorizontalAlignment="Left"
+                                       VerticalAlignment="Center"
+                                       Margin="8,0,0,0"
+                                       IsHitTestVisible="False" />
+
+                            <!--  Placeholder text  -->
+                            <TextBlock x:Name="PlaceholderText"
+                                       Foreground="{StaticResource GrayTextBrush}"
+                                       Text="{TemplateBinding Tag}"
+                                       Visibility="Collapsed"
+                                       Margin="30,0,30,0"
+                                       VerticalAlignment="Center"
+                                       IsHitTestVisible="False" />
+
+                            <ScrollViewer x:Name="PART_ContentHost"
+                                          Margin="26,0,26,0"
+                                          VerticalAlignment="Center" />
+
+                            <!--  Clear Button  -->
+                            <Button x:Name="ClearButton"
+                                    HorizontalAlignment="Right"
+                                    VerticalAlignment="Center"
+                                    Margin="0,0,6,0"
+                                    Width="16"
+                                    Height="16"
+                                    Visibility="Collapsed"
+                                    Cursor="Hand"
+                                    Background="Transparent"
+                                    BorderThickness="0"
+                                    ToolTip="Clear search">
+                                <Button.Template>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border Background="{TemplateBinding Background}"
+                                                CornerRadius="8">
+                                            <TextBlock Text="&#xE711;"
+                                                       FontFamily="Segoe MDL2 Assets"
+                                                       FontSize="10"
+                                                       Foreground="{StaticResource GrayTextBrush}"
+                                                       HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center" />
+                                        </Border>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter Property="Background" Value="#FFF0F0F0" />
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </Button.Template>
+                            </Button>
+                        </Grid>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="Text" Value="" />
+                                <Condition Property="IsFocused" Value="False" />
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="PlaceholderText" Property="Visibility" Value="Visible" />
+                        </MultiTrigger>
+                        <Trigger Property="Text" Value="">
+                            <Setter TargetName="ClearButton" Property="Visibility" Value="Collapsed" />
+                        </Trigger>
+                        <Trigger Property="Text" Value="{x:Null}">
+                            <Setter TargetName="ClearButton" Property="Visibility" Value="Collapsed" />
+                        </Trigger>
+                        <DataTrigger Binding="{Binding Text.Length, RelativeSource={RelativeSource Self}}" Value="0">
+                            <Setter TargetName="ClearButton" Property="Visibility" Value="Collapsed" />
+                        </DataTrigger>
+                        <Trigger Property="Text" Value="">
+                            <Setter TargetName="ClearButton" Property="Visibility" Value="Collapsed" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    
     <!--  CheckBox Style for Filter Values  -->
     <Style x:Key="FilterValueCheckBoxStyle" TargetType="CheckBox">
         <Setter Property="FontSize" Value="13" />
@@ -37,29 +132,64 @@
                         <BulletDecorator.Bullet>
                             <Border x:Name="Border"
                                     Background="White"
-                                    BorderBrush="#999"
+                                    BorderBrush="#999999"
                                     BorderThickness="1"
                                     Width="16"
                                     Height="16"
                                     CornerRadius="3">
-                                <Path x:Name="CheckMark"
-                                      Stroke="Transparent"
-                                      Data="M 0 4 L 3 7 L 8 1"
-                                      StrokeThickness="2"
-                                      Stretch="Uniform" />
+                                <TextBlock x:Name="Icon"
+                                           Foreground="Transparent"
+                                           Text="&#xE73E;"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"
+                                           FontFamily="Segoe MDL2 Assets"
+                                           FontSize="12" />
                             </Border>
                         </BulletDecorator.Bullet>
-                        <ContentPresenter Margin="6,0,0,0" VerticalAlignment="Center" />
+                        <ContentPresenter Margin="6,0,0,0"
+                                          VerticalAlignment="Center"
+                                          RecognizesAccessKey="True" />
                     </BulletDecorator>
+
                     <ControlTemplate.Triggers>
+                        <!--  1) Checked = True  -->
                         <Trigger Property="IsChecked" Value="True">
                             <Setter TargetName="Border" Property="Background" Value="{StaticResource SelectionBrush}" />
                             <Setter TargetName="Border" Property="BorderBrush" Value="{StaticResource SelectionBrush}" />
-                            <Setter TargetName="CheckMark" Property="Stroke" Value="White" />
+                            <Setter TargetName="Icon" Property="Foreground" Value="White" />
                         </Trigger>
-                        <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Border" Property="Background" Value="#E5F3FF" />
-                        </Trigger>
+
+                        <!--  2) Hover when Checked  -->
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="IsMouseOver" Value="True" />
+                                <Condition Property="IsChecked" Value="True" />
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="Border" Property="Background" Value="#005A9E" />
+                            <Setter TargetName="Border" Property="BorderBrush" Value="#005A9E" />
+                        </MultiTrigger>
+
+                        <!--  3) Hover when NOT Checked  -->
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="IsMouseOver" Value="True" />
+                                <Condition Property="IsChecked" Value="False" />
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="Border" Property="Background" Value="#EEEEEE" />
+                            <Setter TargetName="Border" Property="BorderBrush" Value="#CCCCCC" />
+                        </MultiTrigger>
+
+                        <!--  4) Pressed when NOT Checked  -->
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="IsPressed" Value="True" />
+                                <Condition Property="IsChecked" Value="False" />
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="Border" Property="Background" Value="#CDE6FF" />
+                            <Setter TargetName="Border" Property="BorderBrush" Value="#005A9E" />
+                        </MultiTrigger>
+
+                        <!--  5) Disabled State  -->
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Opacity" Value="0.5" />
                         </Trigger>
@@ -69,164 +199,9 @@
         </Setter>
     </Style>
 
-    <DataTemplate x:Key="FlatListFilterValuesTemplate">
-        <Grid>
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="*" />
-            </Grid.RowDefinitions>
-
-            <!--  Search Box  -->
-            <Grid Margin="0,0,0,8">
-
-                <TextBox Grid.Row="0"
-                         Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
-                         Tag="Search values...">
-                    <TextBox.Style>
-                        <Style TargetType="TextBox">
-                            <Setter Property="Template">
-                                <Setter.Value>
-                                    <ControlTemplate TargetType="TextBox">
-                                        <Border Background="White"
-                                                BorderBrush="#CCC"
-                                                BorderThickness="1"
-                                                CornerRadius="4">
-                                            <Grid>
-                                                <TextBlock Foreground="#999"
-                                                           Text="{TemplateBinding Tag}"
-                                                           Visibility="{Binding Text, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource NullToVisibilityConverter}}"
-                                                           Margin="8,6"
-                                                           VerticalAlignment="Center" />
-                                                <ScrollViewer x:Name="PART_ContentHost"
-                                                              Margin="6,4"
-                                                              VerticalAlignment="Center" />
-                                            </Grid>
-                                        </Border>
-                                    </ControlTemplate>
-                                </Setter.Value>
-                            </Setter>
-                        </Style>
-                    </TextBox.Style>
-                </TextBox>
-                <Button Visibility="{Binding SearchText.Length, RelativeSource={RelativeSource AncestorType={x:Type sdgCore:FlatListFilterValueViewModel}}, Converter={StaticResource IntToVisibilityConverter}}"
-                        Cursor="Hand"
-                        Command="{Binding ClearSearchTextCommand}"
-                        Margin="0,0,5,0"
-                        Padding="4"
-                        HorizontalAlignment="Right"
-                        VerticalAlignment="Center"
-                        ToolTip="Clear filter"
-                        FontFamily="Segoe MDL2 Assets"
-                        FontSize="10"
-                        Content="&#xE8BB;">
-                    <Button.Style>
-                        <Style TargetType="{x:Type Button}">
-                            <Setter Property="Foreground" Value="Gray" />
-                            <Setter Property="Background" Value="Transparent" />
-                            <Setter Property="BorderBrush" Value="Transparent" />
-                            <Setter Property="BorderThickness" Value="0" />
-                            <Setter Property="Cursor" Value="Hand" />
-                            <Setter Property="Template">
-                                <Setter.Value>
-                                    <ControlTemplate TargetType="{x:Type Button}">
-                                        <Border x:Name="border"
-                                                Background="{TemplateBinding Background}"
-                                                BorderBrush="{TemplateBinding BorderBrush}"
-                                                BorderThickness="{TemplateBinding BorderThickness}"
-                                                CornerRadius="3">
-                                            <ContentPresenter x:Name="contentPresenter"
-                                                              Focusable="False"
-                                                              Margin="{TemplateBinding Padding}"
-                                                              HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                                              VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
-                                                              RecognizesAccessKey="True"
-                                                              TextElement.Foreground="{TemplateBinding Foreground}"
-                                                              SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" />
-                                        </Border>
-                                    </ControlTemplate>
-                                </Setter.Value>
-                            </Setter>
-                            <Style.Triggers>
-                                <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter Property="Background" Value="#FFF0F0F0" />
-                                    <Setter Property="Foreground" Value="#CC0000" />
-                                </Trigger>
-                                <Trigger Property="IsPressed" Value="True">
-                                    <Setter Property="Background" Value="#FFE0E0E0" />
-                                    <Setter Property="Foreground" Value="#990000" />
-                                </Trigger>
-                                <Trigger Property="IsEnabled" Value="False">
-                                    <Setter Property="Opacity" Value="0.5" />
-                                    <Setter Property="Cursor" Value="Arrow" />
-                                </Trigger>
-                            </Style.Triggers>
-                        </Style>
-                    </Button.Style>
-                </Button>
-            </Grid>
-            <!--  Select All with Count  -->
-            <StackPanel Grid.Row="1"
-                        Orientation="Horizontal"
-                        Margin="0,0,0,4">
-                <CheckBox Style="{StaticResource FilterValueCheckBoxStyle}"
-                          IsChecked="{Binding SelectAllState}"
-                          Content="(Select All)"
-                          IsThreeState="True" />
-                <TextBlock Foreground="#666"
-                           Text="{Binding SelectedItemsCount}"
-                           Margin="20,0,0,0"
-                           VerticalAlignment="Center" />
-            </StackPanel>
-
-            <!--  Virtualized ListBox instead of ItemsControl  -->
-            <ListBox Grid.Row="2"
-                     Background="Transparent"
-                     BorderThickness="0"
-                     ItemsSource="{Binding FilteredValues}"
-                     ScrollViewer.CanContentScroll="True"
-                     VirtualizingPanel.IsVirtualizing="True"
-                     VirtualizingPanel.VirtualizationMode="Recycling"
-                     VirtualizingPanel.ScrollUnit="Pixel">
-                <ListBox.ItemsPanel>
-                    <ItemsPanelTemplate>
-                        <VirtualizingStackPanel />
-                    </ItemsPanelTemplate>
-                </ListBox.ItemsPanel>
-                <ListBox.ItemContainerStyle>
-                    <Style TargetType="ListBoxItem">
-                        <Setter Property="Template">
-                            <Setter.Value>
-                                <ControlTemplate TargetType="ListBoxItem">
-                                    <ContentPresenter />
-                                </ControlTemplate>
-                            </Setter.Value>
-                        </Setter>
-                    </Style>
-                </ListBox.ItemContainerStyle>
-                <ListBox.ItemTemplate>
-                    <DataTemplate>
-                        <CheckBox Style="{StaticResource FilterValueCheckBoxStyle}"
-                                  IsChecked="{Binding IsSelected, Mode=TwoWay}"
-                                  Margin="0,2">
-                            <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="{Binding DisplayValue}" />
-                                <TextBlock Foreground="#999"
-                                           Text="{Binding ItemCount, StringFormat=' ({0})'}"
-                                           Visibility="{Binding ShowItemCount, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                           Margin="4,0,0,0" />
-                            </StackPanel>
-                        </CheckBox>
-                    </DataTemplate>
-                </ListBox.ItemTemplate>
-            </ListBox>
-        </Grid>
-    </DataTemplate>
-
     <!--  TreeView Item Style  -->
     <Style x:Key="TreeViewItemStyle" TargetType="TreeViewItem">
         <Setter Property="IsExpanded" Value="False" />
-        <!--  Start collapsed for performance  -->
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="TreeViewItem">
@@ -295,10 +270,86 @@
         </Setter>
     </Style>
 
-    <!--  Optimized Grouped TreeView Template with Virtualization  -->
+    <!--  Flat List Filter Values Template with Integrated Search  -->
+    <DataTemplate x:Key="FlatListFilterValuesTemplate">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <!--  Search Box  -->
+            <TextBox Grid.Row="0"
+                     x:Name="PART_FlatSearchBox"
+                     Style="{StaticResource SearchTextBoxStyle}"
+                     Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                     Tag="Search values..."
+                     Margin="0,0,0,8" />
+
+            <!--  Select All / Clear All Buttons  -->
+            <StackPanel Grid.Row="1"
+                        Orientation="Horizontal"
+                        Margin="0,0,0,8">
+                <Button Command="{Binding DataContext.SelectAllValuesCommand, RelativeSource={RelativeSource AncestorType={x:Type sdg:AdvancedFilterControl}}}"
+                        Padding="6,2"
+                        Content="Select All" />
+
+                <Button Command="{Binding DataContext.ClearAllValuesCommand, RelativeSource={RelativeSource AncestorType={x:Type sdg:AdvancedFilterControl}}}"
+                        Margin="8,0,0,0"
+                        Padding="6,2"
+                        Content="Clear All" />
+            </StackPanel>
+
+            <!--  Virtualized ListBox of CheckBoxes  -->
+            <ListBox Grid.Row="2"
+                     Background="Transparent"
+                     BorderThickness="0"
+                     ItemsSource="{Binding FilteredValues}"
+                     ScrollViewer.CanContentScroll="True"
+                     VirtualizingPanel.IsVirtualizing="True"
+                     VirtualizingPanel.VirtualizationMode="Recycling"
+                     VirtualizingPanel.ScrollUnit="Pixel">
+                <ListBox.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <VirtualizingStackPanel />
+                    </ItemsPanelTemplate>
+                </ListBox.ItemsPanel>
+                <ListBox.ItemContainerStyle>
+                    <Style TargetType="ListBoxItem">
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="ListBoxItem">
+                                    <ContentPresenter />
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                </ListBox.ItemContainerStyle>
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <CheckBox Style="{StaticResource FilterValueCheckBoxStyle}"
+                                  IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                                  Margin="0,2">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{Binding DisplayValue}" />
+                                <TextBlock Foreground="#999"
+                                           Text="{Binding ItemCount, StringFormat=' ({0})'}"
+                                           Visibility="{Binding ShowItemCount, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                           Margin="4,0,0,0" />
+                            </StackPanel>
+                        </CheckBox>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </Grid>
+    </DataTemplate>
+
+    <!--  Grouped TreeView Template with Integrated Search  -->
     <DataTemplate x:Key="GroupedTreeViewFilterValuesTemplate">
         <Grid>
             <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
@@ -311,14 +362,17 @@
                     Background="#F5F5F5"
                     BorderBrush="#DDDDDD"
                     BorderThickness="0,0,0,1"
-                    Padding="8,4">
+                    Padding="8,4"
+                    Margin="0,0,0,8">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
 
-                    <TextBlock Grid.Column="0" VerticalAlignment="Center">
+                    <TextBlock Grid.Column="0" 
+                               VerticalAlignment="Center"
+                               FontWeight="SemiBold">
                         <TextBlock.Text>
                             <MultiBinding StringFormat="Grouped by: {0}">
                                 <Binding Path="GroupByColumn" />
@@ -342,91 +396,69 @@
             </Border>
 
             <!--  Search Box  -->
-            <Grid Grid.Row="1" Margin="0,8,0,4">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
+            <TextBox Grid.Row="1"
+                     x:Name="PART_GroupSearchBox"
+                     Style="{StaticResource SearchTextBoxStyle}"
+                     Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                     Tag="Search groups and values..."
+                     Margin="0,0,0,8" />
 
-                <TextBox x:Name="PART_GroupSearchBox"
-                         Grid.Column="0"
-                         Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
-                         Tag="Search groups and values...">
-                    <TextBox.Style>
-                        <Style TargetType="TextBox">
-                            <Setter Property="Template">
-                                <Setter.Value>
-                                    <ControlTemplate TargetType="TextBox">
-                                        <Border Background="White"
-                                                BorderBrush="#CCCCCC"
-                                                BorderThickness="1"
-                                                CornerRadius="2">
-                                            <Grid>
-                                                <TextBlock Foreground="Gray"
-                                                           Text="{TemplateBinding Tag}"
-                                                           Visibility="{Binding Text, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource NullToVisibilityConverter}}"
-                                                           Margin="8,6"
-                                                           VerticalAlignment="Center" />
-                                                <ScrollViewer x:Name="PART_ContentHost"
-                                                              Margin="6,4"
-                                                              VerticalAlignment="Center" />
-                                            </Grid>
-                                        </Border>
-                                    </ControlTemplate>
-                                </Setter.Value>
-                            </Setter>
-                        </Style>
-                    </TextBox.Style>
-                </TextBox>
-
-                <Button Grid.Column="1"
-                        Command="{Binding SelectAllCommand}"
-                        Margin="5,0,0,0"
-                        Padding="8,4"
-                        Content="Select All" />
-
-                <Button Grid.Column="2"
-                        Command="{Binding ClearAllCommand}"
-                        Margin="5,0,0,0"
-                        Padding="8,4"
-                        Content="Clear All" />
-            </Grid>
-
-            <!--  Expand/Collapse All Bar  -->
+            <!--  Select All / Clear All Buttons  -->
             <StackPanel Grid.Row="2"
                         Orientation="Horizontal"
-                        Margin="0,0,0,4">
+                        Margin="0,0,0,8">
+                <Button Command="{Binding DataContext.SelectAllValuesCommand, RelativeSource={RelativeSource AncestorType={x:Type sdg:AdvancedFilterControl}}}"
+                        Padding="6,2"
+                        Content="Select All" />
+
+                <Button Command="{Binding DataContext.ClearAllValuesCommand, RelativeSource={RelativeSource AncestorType={x:Type sdg:AdvancedFilterControl}}}"
+                        Margin="8,0,0,0"
+                        Padding="6,2"
+                        Content="Clear All" />
+            </StackPanel>
+
+            <!--  Expand/Collapse All Bar  -->
+            <StackPanel Grid.Row="3"
+                        Orientation="Horizontal"
+                        Margin="0,0,0,8">
                 <Button x:Name="ExpandAllButton"
                         Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
                         Margin="0,0,8,0"
+                        Padding="4,2"
                         ToolTip="Expand All Groups">
                     <StackPanel Orientation="Horizontal">
                         <Path Fill="#666"
                               Data="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z"
                               Margin="0,0,4,0"
-                              Width="12"
-                              Height="12" />
-                        <TextBlock Foreground="#666" Text="Expand All" />
+                              Width="10"
+                              Height="10"
+                              Stretch="Uniform" />
+                        <TextBlock Foreground="#666" 
+                                   Text="Expand All" 
+                                   FontSize="11" />
                     </StackPanel>
                 </Button>
 
                 <Button x:Name="CollapseAllButton"
                         Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
+                        Padding="4,2"
                         ToolTip="Collapse All Groups">
                     <StackPanel Orientation="Horizontal">
                         <Path Fill="#666"
                               Data="M19,13H5V11H19V13Z"
                               Margin="0,0,4,0"
-                              Width="12"
-                              Height="12" />
-                        <TextBlock Foreground="#666" Text="Collapse All" />
+                              Width="10"
+                              Height="10"
+                              Stretch="Uniform" />
+                        <TextBlock Foreground="#666" 
+                                   Text="Collapse All" 
+                                   FontSize="11" />
                     </StackPanel>
                 </Button>
             </StackPanel>
 
             <!--  Virtualized TreeView  -->
-            <TreeView Grid.Row="3"
+            <TreeView Grid.Row="4"
                       BorderThickness="0"
                       ItemsSource="{Binding GroupedValues}"
                       VirtualizingPanel.IsVirtualizing="True"
@@ -529,14 +561,13 @@
 
                 <TreeView.ItemContainerStyle>
                     <Style BasedOn="{StaticResource TreeViewItemStyle}" TargetType="TreeViewItem">
-                        <Setter Property="IsExpanded" Value="True" />
-                        <!--  Start expanded for better UX  -->
+                        <Setter Property="IsExpanded" Value="False" />
                     </Style>
                 </TreeView.ItemContainerStyle>
             </TreeView>
 
             <!--  Selection Summary  -->
-            <Border Grid.Row="4"
+            <Border Grid.Row="5"
                     Background="#F5F5F5"
                     BorderBrush="#DDDDDD"
                     BorderThickness="0,1,0,0"
@@ -550,25 +581,53 @@
     </DataTemplate>
 
     <!--  Date TreeView Template (Year/Month/Day hierarchy)  -->
+    <!--  Date TreeView Template with Integrated Search  -->
     <DataTemplate x:Key="DateTreeViewFilterValuesTemplate">
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
+            <!--  Header  -->
             <Border Grid.Row="0"
                     Background="#F5F5F5"
                     BorderBrush="#DDD"
                     BorderThickness="0,0,0,1"
                     Margin="0,0,0,8"
                     Padding="8,4">
-                <TextBlock FontStyle="Italic"
+                <TextBlock FontWeight="SemiBold"
                            Foreground="#666"
                            Text="Select date ranges" />
             </Border>
 
-            <TreeView Grid.Row="1"
+            <!--  Search Box  -->
+            <TextBox Grid.Row="1"
+                     x:Name="PART_DateSearchBox"
+                     Style="{StaticResource SearchTextBoxStyle}"
+                     Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                     Tag="Search dates (e.g., 2023, January, 15)..."
+                     Margin="0,0,0,8" />
+
+            <!--  Select All / Clear All Buttons  -->
+            <StackPanel Grid.Row="2"
+                        Orientation="Horizontal"
+                        Margin="0,0,0,8">
+                <Button Command="{Binding DataContext.SelectAllValuesCommand, RelativeSource={RelativeSource AncestorType={x:Type sdg:AdvancedFilterControl}}}"
+                        Padding="6,2"
+                        Content="Select All" />
+
+                <Button Command="{Binding DataContext.ClearAllValuesCommand, RelativeSource={RelativeSource AncestorType={x:Type sdg:AdvancedFilterControl}}}"
+                        Margin="8,0,0,0"
+                        Padding="6,2"
+                        Content="Clear All" />
+            </StackPanel>
+
+            <!--  Date TreeView  -->
+            <TreeView Grid.Row="3"
                       BorderThickness="0"
                       ItemsSource="{Binding GroupedValues}"
                       VirtualizingPanel.IsVirtualizing="True"
@@ -582,7 +641,9 @@
                 <TreeView.Resources>
                     <!--  Year Level  -->
                     <HierarchicalDataTemplate DataType="{x:Type sdgCore:FilterValueGroup}" ItemsSource="{Binding Children}">
-                        <CheckBox Style="{StaticResource FilterValueCheckBoxStyle}" IsChecked="{Binding IsSelected, Mode=TwoWay}">
+                        <CheckBox Style="{StaticResource FilterValueCheckBoxStyle}" 
+                                  IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                                  IsThreeState="True">
                             <StackPanel Orientation="Horizontal">
                                 <TextBlock Text="{Binding DisplayValue}" FontWeight="Bold" />
                                 <TextBlock Foreground="#666"
@@ -594,7 +655,9 @@
                         <!--  Month Level nested template  -->
                         <HierarchicalDataTemplate.ItemTemplate>
                             <HierarchicalDataTemplate DataType="{x:Type sdgCore:FilterValueGroup}" ItemsSource="{Binding Children}">
-                                <CheckBox Style="{StaticResource FilterValueCheckBoxStyle}" IsChecked="{Binding IsSelected, Mode=TwoWay}">
+                                <CheckBox Style="{StaticResource FilterValueCheckBoxStyle}" 
+                                          IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                                          IsThreeState="True">
                                     <StackPanel Orientation="Horizontal">
                                         <TextBlock Text="{Binding DisplayValue}" />
                                         <TextBlock Foreground="#999"
@@ -627,16 +690,25 @@
                     <Style BasedOn="{StaticResource TreeViewItemStyle}" TargetType="TreeViewItem" />
                 </TreeView.ItemContainerStyle>
             </TreeView>
+
+            <!--  Selection Summary  -->
+            <Border Grid.Row="4"
+                    Background="#F5F5F5"
+                    BorderBrush="#DDDDDD"
+                    BorderThickness="0,1,0,0"
+                    Margin="0,8,0,0"
+                    Padding="8,4">
+                <TextBlock FontStyle="Italic"
+                           Foreground="#666"
+                           Text="{Binding GetSelectionSummary}" />
+            </Border>
         </Grid>
     </DataTemplate>
-
-
 
     <!--  Template Selector  -->
     <sdg:FilterValueTemplateSelector x:Key="FilterValueTemplateSelector"
                                      FlatListTemplate="{StaticResource FlatListFilterValuesTemplate}"
                                      GroupedTreeViewTemplate="{StaticResource GroupedTreeViewFilterValuesTemplate}"
                                      DateTreeViewTemplate="{StaticResource DateTreeViewFilterValuesTemplate}" />
-
 
 </ResourceDictionary>

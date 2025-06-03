@@ -15,7 +15,6 @@ namespace WWSearchDataGrid.Modern.Core
     public class FlatListFilterValueViewModel : FilterValueViewModel
     {
         private bool? selectAllState = true;
-        private string searchText = string.Empty;
         private readonly ObservableCollection<FilterValueItem> _allItems;
         private readonly ObservableCollection<FilterValueItem> _filteredItems;
         private readonly object _updateLock = new object();
@@ -43,18 +42,6 @@ namespace WWSearchDataGrid.Modern.Core
             }
         }
 
-        public string SearchText
-        {
-            get => searchText;
-            set
-            {
-                if (SetProperty(value, ref searchText))
-                {
-                    ApplyFilter();
-                }
-            }
-        }
-
         public string SelectedItemsCount
         {
             get
@@ -67,7 +54,6 @@ namespace WWSearchDataGrid.Modern.Core
 
         public ICommand ClearSearchTextCommand => new RelayCommand(_ => ClearFilter());
 
-
         public FlatListFilterValueViewModel()
         {
             _allItems = new ObservableCollection<FilterValueItem>();
@@ -78,7 +64,7 @@ namespace WWSearchDataGrid.Modern.Core
         {
             try
             {
-                // Clear the search text
+                // Clear the search text (this will trigger ApplyFilter via the base class)
                 SearchText = string.Empty;
             }
             catch (Exception ex)
@@ -87,14 +73,16 @@ namespace WWSearchDataGrid.Modern.Core
             }
         }
 
-        private void ApplyFilter()
+        /// <summary>
+        /// Override the base class filter method for flat list specific filtering
+        /// </summary>
+        protected override void ApplyFilter()
         {
             _filteredItems.Clear();
 
-            var filtered = string.IsNullOrWhiteSpace(searchText)
+            var filtered = string.IsNullOrWhiteSpace(SearchText)
                 ? _allItems
-                : _allItems.Where(item =>
-                    item.DisplayValue?.IndexOf(searchText, StringComparison.OrdinalIgnoreCase) >= 0);
+                : _allItems.Where(item => MatchesSearchText(item.DisplayValue, SearchText));
 
             foreach (var item in filtered)
             {
@@ -197,9 +185,8 @@ namespace WWSearchDataGrid.Modern.Core
                         var index = FindInsertIndex(_allItems, newItem);
                         _allItems.Insert(index, newItem);
 
-                        // Also add to filtered if it matches
-                        if (string.IsNullOrWhiteSpace(searchText) ||
-                            newItem.DisplayValue.IndexOf(searchText, StringComparison.OrdinalIgnoreCase) >= 0)
+                        // Also add to filtered if it matches search criteria
+                        if (MatchesSearchText(newItem.DisplayValue, SearchText))
                         {
                             var filteredIndex = FindInsertIndex(_filteredItems, newItem);
                             _filteredItems.Insert(filteredIndex, newItem);

@@ -10,26 +10,120 @@ using WWSearchDataGrid.Modern.Core.Performance;
 namespace WWSearchDataGrid.Modern.Core
 {
     /// <summary>
-    /// Enhanced date tree view filter value view model with proper hierarchy
+    /// Enhanced date tree view filter value view model with proper hierarchy and search
     /// </summary>
     public class DateTreeViewFilterValueViewModel : FilterValueViewModel
     {
-        private readonly ObservableCollection<FilterValueGroup> _yearGroups;
+        private readonly ObservableCollection<FilterValueGroup> _allYearGroups;
+        private readonly ObservableCollection<FilterValueGroup> _filteredYearGroups;
         private readonly Dictionary<int, FilterValueGroup> _yearIndex;
         private readonly Dictionary<string, FilterValueGroup> _monthIndex;
 
-        public ObservableCollection<FilterValueGroup> GroupedValues => _yearGroups;
+        public ObservableCollection<FilterValueGroup> GroupedValues => _filteredYearGroups;
+        public ObservableCollection<FilterValueGroup> AllGroups => _allYearGroups;
 
         public DateTreeViewFilterValueViewModel()
         {
-            _yearGroups = new ObservableCollection<FilterValueGroup>();
+            _allYearGroups = new ObservableCollection<FilterValueGroup>();
+            _filteredYearGroups = new ObservableCollection<FilterValueGroup>();
             _yearIndex = new Dictionary<int, FilterValueGroup>();
             _monthIndex = new Dictionary<string, FilterValueGroup>();
         }
 
+        /// <summary>
+        /// Override the base class filter method for date-specific filtering
+        /// </summary>
+        protected override void ApplyFilter()
+        {
+            _filteredYearGroups.Clear();
+
+            if (string.IsNullOrWhiteSpace(SearchText))
+            {
+                // No filter - show all years
+                foreach (var year in _allYearGroups)
+                {
+                    _filteredYearGroups.Add(year);
+                }
+            }
+            else
+            {
+                foreach (var year in _allYearGroups)
+                {
+                    // Check if year matches
+                    var yearMatches = MatchesSearchText(year.DisplayValue, SearchText);
+
+                    // Check if any months match
+                    var matchingMonths = new List<FilterValueGroup>();
+                    foreach (var month in year.Children.OfType<FilterValueGroup>())
+                    {
+                        var monthMatches = MatchesSearchText(month.DisplayValue, SearchText);
+
+                        // Check if any days match (including formatted date strings)
+                        var matchingDays = month.Children.Where(day =>
+                            MatchesSearchText(day.DisplayValue, SearchText) ||
+                            (day.Value is DateTime dt && (
+                                MatchesSearchText(dt.ToString("MMM dd, yyyy"), SearchText) ||
+                                MatchesSearchText(dt.ToString("MM/dd/yyyy"), SearchText) ||
+                                MatchesSearchText(dt.ToString("yyyy-MM-dd"), SearchText)
+                            ))
+                        ).ToList();
+
+                        if (yearMatches || monthMatches || matchingDays.Any())
+                        {
+                            // Create filtered month with matching days
+                            var filteredMonth = new FilterValueGroup
+                            {
+                                DisplayValue = month.DisplayValue,
+                                GroupKey = month.GroupKey,
+                                IsSelected = month.IsSelected,
+                                ItemCount = 0
+                            };
+
+                            // Add days (all if year/month matches, otherwise only matching days)
+                            var daysToAdd = (yearMatches || monthMatches) ? month.Children : new ObservableCollection<FilterValueItem>(matchingDays);
+                            foreach (var day in daysToAdd)
+                            {
+                                filteredMonth.Children.Add(day);
+                                filteredMonth.ItemCount += day.ItemCount;
+                            }
+
+                            if (filteredMonth.Children.Any())
+                            {
+                                matchingMonths.Add(filteredMonth);
+                            }
+                        }
+                    }
+
+                    if (matchingMonths.Any())
+                    {
+                        // Create filtered year
+                        var filteredYear = new FilterValueGroup
+                        {
+                            DisplayValue = year.DisplayValue,
+                            GroupKey = year.GroupKey,
+                            IsSelected = year.IsSelected,
+                            ItemCount = 0
+                        };
+
+                        foreach (var month in matchingMonths)
+                        {
+                            filteredYear.Children.Add(month);
+                            filteredYear.ItemCount += month.ItemCount;
+                        }
+
+                        _filteredYearGroups.Add(filteredYear);
+                    }
+                }
+            }
+
+            OnPropertyChanged(nameof(GroupedValues));
+        }
+
         protected override void LoadValuesInternal(IEnumerable<object> values, Dictionary<object, int> valueCounts)
         {
-            GroupedValues.Clear();
+            _allYearGroups.Clear();
+            _yearIndex.Clear();
+            _monthIndex.Clear();
 
             // Filter to only DateTime values first, avoiding null issues
             var dateValues = values
@@ -49,21 +143,28 @@ namespace WWSearchDataGrid.Modern.Core
                 var yearItem = new FilterValueGroup
                 {
                     DisplayValue = yearGroup.Key.ToString(),
+                    GroupKey = yearGroup.Key,
                     IsSelected = true,
                     ItemCount = 0 // Will calculate from children
                 };
+
+                _yearIndex[yearGroup.Key] = yearItem;
 
                 // Group by month within year
                 var monthGroups = yearGroup.GroupBy(d => d.Month);
 
                 foreach (var monthGroup in monthGroups)
                 {
+                    var monthKey = $"{yearGroup.Key}_{monthGroup.Key}";
                     var monthItem = new FilterValueGroup
                     {
                         DisplayValue = System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(monthGroup.Key),
+                        GroupKey = monthGroup.Key,
                         IsSelected = true,
                         ItemCount = 0 // Will calculate from children
                     };
+
+                    _monthIndex[monthKey] = monthItem;
 
                     // Add individual days
                     var dayGroups = monthGroup.GroupBy(d => d.Date);
@@ -73,22 +174,58 @@ namespace WWSearchDataGrid.Modern.Core
                         var date = dayGroup.Key;
                         var count = GetSafeValueCount(date, valueCounts);
 
-                        monthItem.Children.Add(new FilterValueItem
+                        var dayItem = new FilterValueItem
                         {
                             Value = date,
                             DisplayValue = date.ToString("dd"),
                             ItemCount = count,
-                            IsSelected = true
-                        });
+                            IsSelected = true,
+                            ParentGroup = monthItem
+                        };
 
+                        dayItem.PropertyChanged += OnChildPropertyChanged;
+                        monthItem.Children.Add(dayItem);
                         monthItem.ItemCount += count;
                     }
 
+                    monthItem.PropertyChanged += OnGroupPropertyChanged;
                     yearItem.Children.Add(monthItem);
                     yearItem.ItemCount += monthItem.ItemCount;
                 }
 
-                GroupedValues.Add(yearItem);
+                yearItem.PropertyChanged += OnGroupPropertyChanged;
+                _allYearGroups.Add(yearItem);
+            }
+
+            ApplyFilter();
+        }
+
+        private void OnGroupPropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == nameof(FilterValueItem.IsSelected))
+            {
+                var group = sender as FilterValueGroup;
+                if (group != null && group.IsSelected.HasValue)
+                {
+                    // Update all children when group selection changes
+                    foreach (var child in group.Children)
+                    {
+                        child.SetIsSelectedSilent(group.IsSelected.Value);
+                    }
+                }
+            }
+        }
+
+        private void OnChildPropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == nameof(FilterValueItem.IsSelected))
+            {
+                var item = sender as FilterValueItem;
+                if (item?.ParentGroup != null)
+                {
+                    // Update parent group state
+                    item.ParentGroup.UpdateGroupSelectionState();
+                }
             }
         }
 
@@ -137,6 +274,7 @@ namespace WWSearchDataGrid.Modern.Core
                         dayItem.ItemCount += isAdd ? 1 : -1;
                         if (dayItem.ItemCount <= 0)
                         {
+                            dayItem.PropertyChanged -= OnChildPropertyChanged;
                             monthGroup.Children.Remove(dayItem);
                         }
                     }
@@ -146,10 +284,13 @@ namespace WWSearchDataGrid.Modern.Core
                         var newDay = new FilterValueItem
                         {
                             Value = dateValue.Date,
-                            DisplayValue = dateValue.ToString("MMM dd, yyyy"),
+                            DisplayValue = dateValue.ToString("dd"),
                             ItemCount = 1,
-                            IsSelected = monthGroup.IsSelected ?? false
+                            IsSelected = monthGroup.IsSelected ?? false,
+                            ParentGroup = monthGroup
                         };
+
+                        newDay.PropertyChanged += OnChildPropertyChanged;
 
                         var index = 0;
                         foreach (var child in monthGroup.Children.OfType<FilterValueItem>())
@@ -168,6 +309,7 @@ namespace WWSearchDataGrid.Modern.Core
                 var newYear = new FilterValueGroup
                 {
                     DisplayValue = year.ToString(),
+                    GroupKey = year,
                     IsSelected = true,
                     ItemCount = 1
                 };
@@ -178,30 +320,43 @@ namespace WWSearchDataGrid.Modern.Core
                 var monthGroup = new FilterValueGroup
                 {
                     DisplayValue = System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(month),
+                    GroupKey = month,
                     IsSelected = true,
                     ItemCount = 1
                 };
 
-                monthGroup.Children.Add(new FilterValueItem
+                var dayItem = new FilterValueItem
                 {
                     Value = dateValue.Date,
-                    DisplayValue = dateValue.ToString("MMM dd, yyyy"),
+                    DisplayValue = dateValue.ToString("dd"),
                     ItemCount = 1,
-                    IsSelected = true
-                });
+                    IsSelected = true,
+                    ParentGroup = monthGroup
+                };
 
+                dayItem.PropertyChanged += OnChildPropertyChanged;
+                monthGroup.Children.Add(dayItem);
+                monthGroup.PropertyChanged += OnGroupPropertyChanged;
                 newYear.Children.Add(monthGroup);
+                newYear.PropertyChanged += OnGroupPropertyChanged;
+
                 _monthIndex[monthKey] = monthGroup;
 
                 // Insert in sorted order
                 var yearIndex = 0;
-                foreach (var yg in _yearGroups)
+                foreach (var yg in _allYearGroups)
                 {
                     if (int.Parse(yg.DisplayValue) > year)
                         break;
                     yearIndex++;
                 }
-                _yearGroups.Insert(yearIndex, newYear);
+                _allYearGroups.Insert(yearIndex, newYear);
+            }
+
+            // Reapply filter if there's search text
+            if (!string.IsNullOrWhiteSpace(SearchText))
+            {
+                ApplyFilter();
             }
         }
 
@@ -209,7 +364,7 @@ namespace WWSearchDataGrid.Modern.Core
         {
             var selectedDates = new List<DateTime>();
 
-            foreach (var year in _yearGroups)
+            foreach (var year in _allYearGroups)
             {
                 if (year.IsSelected == true)
                 {
@@ -257,7 +412,7 @@ namespace WWSearchDataGrid.Modern.Core
 
         public override void SelectAll()
         {
-            foreach (var year in _yearGroups)
+            foreach (var year in _allYearGroups)
             {
                 year.IsSelected = true;
             }
@@ -265,7 +420,7 @@ namespace WWSearchDataGrid.Modern.Core
 
         public override void ClearAll()
         {
-            foreach (var year in _yearGroups)
+            foreach (var year in _allYearGroups)
             {
                 year.IsSelected = false;
             }
@@ -276,7 +431,7 @@ namespace WWSearchDataGrid.Modern.Core
             var selectedCount = 0;
             var totalCount = 0;
 
-            foreach (var year in _yearGroups)
+            foreach (var year in _allYearGroups)
             {
                 selectedCount += year.GetSelectedChildCount();
                 totalCount += year.GetTotalChildCount();

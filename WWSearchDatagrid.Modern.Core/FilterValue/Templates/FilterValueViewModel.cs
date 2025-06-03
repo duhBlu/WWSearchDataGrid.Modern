@@ -7,15 +7,31 @@ using WWSearchDataGrid.Modern.Core.Performance;
 namespace WWSearchDataGrid.Modern.Core
 {
     /// <summary>
-    /// Enhanced base class for filter value view models - handles both Dictionary types
+    /// Enhanced base class for filter value view models - handles both Dictionary types and search functionality
     /// </summary>
     public abstract class FilterValueViewModel : ObservableObject
     {
         protected bool isLoaded = false;
         protected IEnumerable<object> cachedValues;
         protected Dictionary<object, int> cachedValueCounts;
+        private string _searchText = string.Empty;
 
         public bool IsLoaded => isLoaded;
+
+        /// <summary>
+        /// Gets or sets the search text for filtering values
+        /// </summary>
+        public string SearchText
+        {
+            get => _searchText;
+            set
+            {
+                if (SetProperty(value, ref _searchText))
+                {
+                    ApplyFilter();
+                }
+            }
+        }
 
         public void EnsureLoaded(IEnumerable<object> values)
         {
@@ -36,6 +52,29 @@ namespace WWSearchDataGrid.Modern.Core
         }
 
         protected abstract void LoadValuesInternal(IEnumerable<object> values, Dictionary<object, int> valueCounts);
+
+        /// <summary>
+        /// Virtual method to apply search filter - can be overridden by derived classes
+        /// </summary>
+        protected virtual void ApplyFilter()
+        {
+            // Default implementation - derived classes should override this
+            // to provide their specific filtering logic
+        }
+
+        /// <summary>
+        /// Helper method for simple string matching - can be used by derived classes
+        /// </summary>
+        protected virtual bool MatchesSearchText(string displayValue, string searchText)
+        {
+            if (string.IsNullOrWhiteSpace(searchText))
+                return true;
+
+            if (string.IsNullOrEmpty(displayValue))
+                return false;
+
+            return displayValue.IndexOf(searchText, StringComparison.OrdinalIgnoreCase) >= 0;
+        }
 
         public abstract void LoadValues(IEnumerable<object> values);
         public abstract IEnumerable<object> GetSelectedValues();

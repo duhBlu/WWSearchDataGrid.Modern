@@ -14,7 +14,6 @@ namespace WWSearchDataGrid.Modern.Core
     public class GroupedTreeViewFilterValueViewModel : FilterValueViewModel
     {
         private string _groupByColumn;
-        private string _searchText = string.Empty;
         private readonly ObservableCollection<FilterValueGroup> _allGroups;
         private readonly ObservableCollection<FilterValueGroup> _filteredGroups;
         private readonly Dictionary<string, Dictionary<object, List<object>>> _groupedData;
@@ -32,18 +31,6 @@ namespace WWSearchDataGrid.Modern.Core
                 if (SetProperty(value, ref _groupByColumn))
                 {
                     ReloadGroups();
-                }
-            }
-        }
-
-        public string SearchText
-        {
-            get => _searchText;
-            set
-            {
-                if (SetProperty(value, ref _searchText))
-                {
-                    ApplyFilter();
                 }
             }
         }
@@ -69,8 +56,12 @@ namespace WWSearchDataGrid.Modern.Core
                 _groupedData[columnPath] = groupData;
 
                 // Store display name mappings if provided
-                if (displayNames != null && _groupDisplayNames.ContainsKey(columnPath))
+                if (displayNames != null)
                 {
+                    if (!_groupDisplayNames.ContainsKey(columnPath))
+                    {
+                        _groupDisplayNames[columnPath] = new Dictionary<string, string>();
+                    }
                     _groupDisplayNames[columnPath] = displayNames;
                 }
             }
@@ -78,6 +69,63 @@ namespace WWSearchDataGrid.Modern.Core
 
         private readonly Dictionary<string, Dictionary<string, string>> _groupDisplayNames =
             new Dictionary<string, Dictionary<string, string>>();
+
+        /// <summary>
+        /// Override the base class filter method for hierarchical filtering
+        /// </summary>
+        protected override void ApplyFilter()
+        {
+            _filteredGroups.Clear();
+
+            if (string.IsNullOrWhiteSpace(SearchText))
+            {
+                foreach (var group in _allGroups)
+                {
+                    _filteredGroups.Add(group);
+                }
+            }
+            else
+            {
+                foreach (var group in _allGroups)
+                {
+                    // Check if group name matches
+                    var groupMatches = MatchesSearchText(group.DisplayValue, SearchText);
+
+                    // Check if any children match
+                    var hasMatchingChildren = group.Children.Any(child =>
+                        MatchesSearchText(child.DisplayValue, SearchText));
+
+                    if (groupMatches || hasMatchingChildren)
+                    {
+                        // Create filtered group
+                        var filteredGroup = new FilterValueGroup
+                        {
+                            DisplayValue = group.DisplayValue,
+                            GroupKey = group.GroupKey,
+                            IsSelected = group.IsSelected,
+                            ItemCount = 0
+                        };
+
+                        // Add matching children
+                        foreach (var child in group.Children)
+                        {
+                            if (groupMatches || MatchesSearchText(child.DisplayValue, SearchText))
+                            {
+                                filteredGroup.Children.Add(child);
+                                filteredGroup.ItemCount += child.ItemCount;
+                            }
+                        }
+
+                        if (filteredGroup.Children.Any())
+                        {
+                            _filteredGroups.Add(filteredGroup);
+                        }
+                    }
+                }
+            }
+
+            OnPropertyChanged(nameof(SelectionSummary));
+        }
 
         protected override void LoadValuesInternal(IEnumerable<object> values, Dictionary<object, int> valueCounts)
         {
@@ -340,62 +388,6 @@ namespace WWSearchDataGrid.Modern.Core
             return value;
         }
 
-        private void ApplyFilter()
-        {
-            _filteredGroups.Clear();
-
-            if (string.IsNullOrWhiteSpace(_searchText))
-            {
-                foreach (var group in _allGroups)
-                {
-                    _filteredGroups.Add(group);
-                }
-            }
-            else
-            {
-                var searchLower = _searchText.ToLower();
-
-                foreach (var group in _allGroups)
-                {
-                    // Check if group name matches
-                    var groupMatches = group.DisplayValue?.ToLower().Contains(searchLower) ?? false;
-
-                    // Check if any children match
-                    var hasMatchingChildren = group.Children.Any(child =>
-                        child.DisplayValue?.ToLower().Contains(searchLower) ?? false);
-
-                    if (groupMatches || hasMatchingChildren)
-                    {
-                        // Create filtered group
-                        var filteredGroup = new FilterValueGroup
-                        {
-                            DisplayValue = group.DisplayValue,
-                            GroupKey = group.GroupKey,
-                            IsSelected = group.IsSelected,
-                            ItemCount = 0
-                        };
-
-                        // Add matching children
-                        foreach (var child in group.Children)
-                        {
-                            if (groupMatches || (child.DisplayValue?.ToLower().Contains(searchLower) ?? false))
-                            {
-                                filteredGroup.Children.Add(child);
-                                filteredGroup.ItemCount += child.ItemCount;
-                            }
-                        }
-
-                        if (filteredGroup.Children.Any())
-                        {
-                            _filteredGroups.Add(filteredGroup);
-                        }
-                    }
-                }
-            }
-
-            OnPropertyChanged(nameof(SelectionSummary));
-        }
-
         private void OnGroupPropertyChanged(object sender, PropertyChangedEventArgs e)
         {
             if (e.PropertyName == nameof(FilterValueItem.IsSelected))
@@ -526,7 +518,7 @@ namespace WWSearchDataGrid.Modern.Core
             }
 
             // Reapply filter if needed
-            if (!string.IsNullOrWhiteSpace(_searchText))
+            if (!string.IsNullOrWhiteSpace(SearchText))
             {
                 ApplyFilter();
             }

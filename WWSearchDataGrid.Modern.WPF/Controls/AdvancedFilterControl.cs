@@ -26,11 +26,9 @@ namespace WWSearchDataGrid.Modern.WPF
         private Button clearButton;
         private Button closeButton;
         private TabControl tabControl;
-        private ContentControl filterValuesContent;
         private TextBox valueSearchBox;
         private TextBlock valuesSummary;
         private ColumnDataType columnDataType;
-        private FilterValueViewModel filterValueViewModel;
 
         private readonly ColumnValueCache _cache = ColumnValueCache.Instance;
         private DispatcherTimer _tabSwitchTimer;
@@ -43,10 +41,17 @@ namespace WWSearchDataGrid.Modern.WPF
         #region Dependency Properties
 
         public static readonly DependencyProperty FilterValueViewModelProperty =
-            DependencyProperty.Register(nameof(FilterValueViewModel), 
-                typeof(FilterValueViewModel), 
-                typeof(AdvancedFilterControl), 
+            DependencyProperty.Register(nameof(FilterValueViewModel),
+                typeof(FilterValueViewModel),
+                typeof(AdvancedFilterControl),
                 new PropertyMetadata(null));
+
+        /// <summary>
+        /// Attached property for specifying the GroupBy column for filter values
+        /// </summary>
+        public static readonly DependencyProperty GroupByColumnProperty =
+            DependencyProperty.RegisterAttached("GroupByColumn", typeof(string), typeof(AdvancedFilterControl),
+                new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.Inherits));
 
         #endregion Dependency Properties
 
@@ -66,7 +71,7 @@ namespace WWSearchDataGrid.Modern.WPF
             set
             {
                 columnDataType = value;
-                UpdateFilterValueViewModelFromCache();
+                // Don't call UpdateFilterValueViewModelFromCache here as it's handled in LoadColumnValuesAsync
             }
         }
 
@@ -107,6 +112,22 @@ namespace WWSearchDataGrid.Modern.WPF
                 return Enumerable.Empty<SearchControl>();
             }
         }
+
+        #endregion
+
+        #region Attached Property Methods
+
+        /// <summary>
+        /// Gets the GroupBy column for an element
+        /// </summary>
+        public static string GetGroupByColumn(DependencyObject element) =>
+            (string)element.GetValue(GroupByColumnProperty);
+
+        /// <summary>
+        /// Sets the GroupBy column for an element
+        /// </summary>
+        public static void SetGroupByColumn(DependencyObject element, string value) =>
+            element.SetValue(GroupByColumnProperty, value);
 
         #endregion
 
@@ -236,9 +257,6 @@ namespace WWSearchDataGrid.Modern.WPF
             // Find tab control
             tabControl = GetTemplateChild("PART_TabControl") as TabControl;
 
-            // Find filter values content
-            filterValuesContent = GetTemplateChild("PART_FilterValuesContent") as ContentControl;
-
             // Find value search box
             valueSearchBox = GetTemplateChild("PART_ValueSearchBox") as TextBox;
             if (valueSearchBox != null)
@@ -293,11 +311,11 @@ namespace WWSearchDataGrid.Modern.WPF
             // Generate unique column key for caching
             _columnKey = GenerateColumnKey();
 
-            // Load column values asynchronously
+            // Load column values and set up FilterValueViewModel
             await LoadColumnValuesAsync();
 
-            // Update filter value view model using cache
-            UpdateFilterValueViewModelFromCache();
+            // Update the summary after everything is loaded
+            UpdateValueSelectionSummary();
 
             // Bind to UI
             if (groupsListBox != null && SearchTemplateController != null)
@@ -350,6 +368,9 @@ namespace WWSearchDataGrid.Modern.WPF
                     var metadata = _cache.GetOrCreateMetadata(_columnKey, bindingPath);
                     SearchTemplateController.ColumnValues = new HashSet<object>(metadata.Values);
                     SearchTemplateController.ColumnDataType = metadata.DataType;
+
+                    // Create and set up the FilterValueViewModel first
+                    await SetupFilterValueViewModel(searchControl, items, metadata);
                 }
             }
             else if (DataContext is SearchDataGrid dataGrid)
@@ -371,6 +392,97 @@ namespace WWSearchDataGrid.Modern.WPF
 
                 await Task.WhenAll(tasks);
             }
+        }
+
+        /// <summary>
+        /// Sets up the FilterValueViewModel with proper data
+        /// </summary>
+        private async Task SetupFilterValueViewModel(SearchControl searchControl, List<object> items, dynamic metadata)
+        {
+            // Check if GroupBy column is specified
+            var groupByColumn = GetGroupByColumn(searchControl.CurrentColumn);
+
+            if (!string.IsNullOrEmpty(groupByColumn))
+            {
+                // Create grouped tree view model
+                var groupedViewModel = new GroupedTreeViewFilterValueViewModel();
+                groupedViewModel.GroupByColumn = groupByColumn;
+
+                // Load grouped data
+                await LoadGroupedDataForViewModel(groupedViewModel, searchControl, items, groupByColumn);
+
+                FilterValueViewModel = groupedViewModel;
+
+                // Load the data with counts
+                if (metadata.Values != null && metadata.Values.Count > 0)
+                {
+                    FilterValueViewModel.LoadValuesWithCounts(metadata.Values, metadata.ValueCounts);
+                }
+            }
+            else
+            {
+                // Use regular filter value view model from cache
+                FilterValueViewModel = _cache.GetOrCreateFilterViewModel(
+                    _columnKey,
+                    ColumnDataType,
+                    FilterValueConfiguration);
+
+                // Load the data with counts
+                if (metadata.Values != null && metadata.Values.Count > 0)
+                {
+                    FilterValueViewModel.LoadValuesWithCounts(metadata.Values, metadata.ValueCounts);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Loads grouped data for the filter values view model
+        /// </summary>
+        private async Task LoadGroupedDataForViewModel(GroupedTreeViewFilterValueViewModel groupedViewModel,
+            SearchControl searchControl, List<object> items, string groupByColumn)
+        {
+            // Create grouped data based on the GroupBy column
+            var groupedData = new Dictionary<object, List<object>>();
+            var displayNames = new Dictionary<string, string>();
+
+            foreach (var item in items)
+            {
+                try
+                {
+                    // Get the group key from the GroupBy column
+                    var groupKey = ReflectionHelper.GetPropValue(item, groupByColumn);
+
+                    // Get the actual value from the current column (the column being filtered)
+                    var value = ReflectionHelper.GetPropValue(item, searchControl.BindingPath);
+
+                    // Group the current column's values by the GroupBy column's values
+                    if (!groupedData.ContainsKey(groupKey))
+                    {
+                        groupedData[groupKey] = new List<object>();
+                    }
+
+                    // Only add unique values to each group
+                    if (!groupedData[groupKey].Contains(value))
+                    {
+                        groupedData[groupKey].Add(value);
+                    }
+
+                    // Store display name for the group key
+                    var displayName = groupKey?.ToString() ?? "(No Value)";
+                    var keyStr = groupKey?.ToString() ?? "null";
+                    if (!displayNames.ContainsKey(keyStr))
+                    {
+                        displayNames[keyStr] = displayName;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Error processing grouped data: {ex.Message}");
+                }
+            }
+
+            // Set the grouped data in the view model
+            groupedViewModel.SetGroupedData(groupByColumn, groupedData, displayNames);
         }
 
         /// <summary>
@@ -448,30 +560,6 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
-        /// Updates the filter value view model using cached data
-        /// </summary>
-        private void UpdateFilterValueViewModelFromCache()
-        {
-            if (string.IsNullOrEmpty(_columnKey))
-                return;
-
-            // Get or create cached view model
-            FilterValueViewModel = _cache.GetOrCreateFilterViewModel(
-                _columnKey,
-                ColumnDataType,
-                FilterValueConfiguration);
-
-            // Ensure data is loaded
-            var metadata = _cache.GetOrCreateMetadata(_columnKey, string.Empty);
-            if (metadata.Values.Any())
-            {
-                FilterValueViewModel.LoadValuesWithCounts(metadata.Values, metadata.ValueCounts);
-            }
-
-            UpdateValueSelectionSummary();
-        }
-
-        /// <summary>
         /// Updates the value selection summary
         /// </summary>
         private void UpdateValueSelectionSummary()
@@ -514,6 +602,10 @@ namespace WWSearchDataGrid.Modern.WPF
             if (FilterValueViewModel is FlatListFilterValueViewModel flatList)
             {
                 flatList.SearchText = searchText;
+            }
+            else if (FilterValueViewModel is GroupedTreeViewFilterValueViewModel groupedList)
+            {
+                groupedList.SearchText = searchText;
             }
             // Add search support for other view model types as needed
         }

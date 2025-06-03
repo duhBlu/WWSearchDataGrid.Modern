@@ -25,7 +25,9 @@
                   VerticalContentAlignment="Center"
                   MinWidth="150"
                   IsEditable="True"
-                  ItemsSource="{Binding AvailableValues}" />
+                  ItemsSource="{Binding AvailableValues}" >
+            
+        </ComboBox>
     </DataTemplate>
 
     <!--  Dual ComboBox Template  -->
@@ -128,8 +130,8 @@
                                         Command="{Binding DataContext.RemoveValueCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                         CommandParameter="{Binding}"
                                         Margin="3,0,0,0"
-                                        Width="20"
-                                        Content="X" />
+                                        FontFamily="Segoe MDL2 Assets"
+                                        Content="&#xE10A;" />
                             </Grid>
                         </Border>
                     </DataTemplate>
@@ -405,51 +407,10 @@
 
                                 <!--  Filter Values Tab  -->
                                 <TabItem x:Name="PART_FilterValuesTab" Header="Filter Values">
-                                    <Grid Margin="5">
-                                        <Grid.RowDefinitions>
-                                            <RowDefinition Height="Auto" />
-                                            <RowDefinition Height="*" />
-                                            <RowDefinition Height="Auto" />
-                                        </Grid.RowDefinitions>
-
-                                        <!--  Search Box  -->
-                                        <Grid Grid.Row="0" Margin="0,0,0,5">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*" />
-                                                <ColumnDefinition Width="Auto" />
-                                                <ColumnDefinition Width="Auto" />
-                                            </Grid.ColumnDefinitions>
-
-                                            <TextBox x:Name="PART_ValueSearchBox"
-                                                     Grid.Column="0"
-                                                     Margin="0,0,5,0"
-                                                     Tag="Search values..." />
-
-                                            <Button Grid.Column="1"
-                                                    Command="{Binding SelectAllValuesCommand, RelativeSource={RelativeSource TemplatedParent}}"
-                                                    Margin="0,0,5,0"
-                                                    Padding="5,2"
-                                                    Content="Select All" />
-
-                                            <Button Grid.Column="2"
-                                                    Command="{Binding ClearAllValuesCommand, RelativeSource={RelativeSource TemplatedParent}}"
-                                                    Padding="5,2"
-                                                    Content="Clear All" />
-                                        </Grid>
-
                                         <!--  Values Content  -->
                                         <ContentControl x:Name="PART_FilterValuesContent"
-                                                        Grid.Row="1"
                                                         Content="{Binding FilterValueViewModel, RelativeSource={RelativeSource TemplatedParent}}"
                                                         ContentTemplateSelector="{StaticResource FilterValueTemplateSelector}" />
-
-                                        <!--  Summary  -->
-                                        <TextBlock x:Name="PART_ValuesSummary"
-                                                   FontStyle="Italic"
-                                                   Grid.Row="2"
-                                                   Text="{Binding ValueSelectionSummary, RelativeSource={RelativeSource TemplatedParent}}"
-                                                   Margin="0,5,0,0" />
-                                    </Grid>
                                 </TabItem>
                             </TabControl>
 
