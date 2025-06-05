@@ -5,9 +5,9 @@ using System.Text;
 
 namespace WWSearchDataGrid.Modern.Core
 {
-    public static class CollectionExtensions
+    internal static class CollectionExtensions
     {
-        public static void ForEach<T>(this IEnumerable<T> enumerable, Action<T> action)
+        internal static void ForEach<T>(this IEnumerable<T> enumerable, Action<T> action)
         {
             foreach (var item in enumerable.ToList())
             {
@@ -16,5 +16,4 @@ namespace WWSearchDataGrid.Modern.Core
             }
         }
     }
-
 }

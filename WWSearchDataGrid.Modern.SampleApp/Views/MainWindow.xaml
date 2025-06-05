@@ -4,7 +4,6 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:WWSearchDataGrid.Modern.SampleApp"
-        xmlns:vm="clr-namespace:WWSearchDataGrid.Modern.SampleApp.ViewModels"
         xmlns:sdg="clr-namespace:WWSearchDataGrid.Modern.WPF;assembly=WWSearchDataGrid.Modern.WPF"
         xmlns:sdgCore="clr-namespace:WWSearchDataGrid.Modern.Core;assembly=WWSearchDataGrid.Modern.Core"
         Title="SearchDataGrid Demo"
@@ -13,7 +12,7 @@
         WindowStartupLocation="CenterOwner"
         mc:Ignorable="d">
     <Window.DataContext>
-        <vm:vmMain />
+        <local:MainViewModel />
     </Window.DataContext>
 
     <Window.Resources>

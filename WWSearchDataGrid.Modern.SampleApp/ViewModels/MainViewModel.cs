@@ -6,15 +6,14 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using WWSearchDataGrid.Modern.SampleApp.Models;
 using WWSearchDataGrid.Modern.WPF;
 
-namespace WWSearchDataGrid.Modern.SampleApp.ViewModels
+namespace WWSearchDataGrid.Modern.SampleApp
 {
     /// <summary>
     /// Main ViewModel for the application
     /// </summary>
-    public partial class vmMain : ObservableObject
+    public partial class MainViewModel : ObservableObject
     {
         #region Observable Properties
 
@@ -59,9 +58,9 @@ namespace WWSearchDataGrid.Modern.SampleApp.ViewModels
         #region Constructor
 
         /// <summary>
-        /// Initializes a new instance of the vmMain class
+        /// Initializes a new instance of the MainViewModel class
         /// </summary>
-        public vmMain()
+        public MainViewModel()
         {
             InitializeComboBoxItems();
             InitializeComboBoxStringValues();
@@ -281,21 +280,5 @@ namespace WWSearchDataGrid.Modern.SampleApp.ViewModels
         }
 
         #endregion
-    }
-
-    /// <summary>
-    /// Model representing combo box item with ID and name
-    /// </summary>
-    public class ComboBoxItem
-    {
-        /// <summary>
-        /// Gets or sets the item ID
-        /// </summary>
-        public int Id { get; set; }
-
-        /// <summary>
-        /// Gets or sets the item name
-        /// </summary>
-        public string Name { get; set; }
     }
 }

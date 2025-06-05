@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace WWSearchDataGrid.Modern.SampleApp.Models
+namespace WWSearchDataGrid.Modern.SampleApp
 {
     /// <summary>
     /// Model representing various data types for testing DataGrid filtering
