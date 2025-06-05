@@ -56,6 +56,5 @@ namespace WWSearchDataGrid.Modern.Core
         /// </summary>
         /// <param name="columnValues">Set of available values</param>
         void LoadAvailableValues(HashSet<object> columnValues);
-
     }
 }
