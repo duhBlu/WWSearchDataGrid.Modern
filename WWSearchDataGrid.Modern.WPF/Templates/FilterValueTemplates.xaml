@@ -137,13 +137,22 @@
                                     Width="16"
                                     Height="16"
                                     CornerRadius="3">
-                                <TextBlock x:Name="Icon"
-                                           Foreground="Transparent"
-                                           Text="&#xE73E;"
-                                           HorizontalAlignment="Center"
-                                           VerticalAlignment="Center"
-                                           FontFamily="Segoe MDL2 Assets"
-                                           FontSize="12" />
+                                <Grid>
+                                    <TextBlock x:Name="CheckIcon"
+                                               Foreground="Transparent"
+                                               Text="&#xE73E;"
+                                               HorizontalAlignment="Center"
+                                               VerticalAlignment="Center"
+                                               FontFamily="Segoe MDL2 Assets"
+                                               FontSize="12" />
+                                    <Rectangle x:Name="IndeterminateIcon"
+                                               Fill="Transparent"
+                                               Width="8"
+                                               Height="2"
+                                               HorizontalAlignment="Center"
+                                               VerticalAlignment="Center"
+                                               Visibility="Collapsed" />
+                                </Grid>
                             </Border>
                         </BulletDecorator.Bullet>
                         <ContentPresenter Margin="6,0,0,0"
@@ -156,7 +165,17 @@
                         <Trigger Property="IsChecked" Value="True">
                             <Setter TargetName="Border" Property="Background" Value="{StaticResource SelectionBrush}" />
                             <Setter TargetName="Border" Property="BorderBrush" Value="{StaticResource SelectionBrush}" />
-                            <Setter TargetName="Icon" Property="Foreground" Value="White" />
+                            <Setter TargetName="CheckIcon" Property="Foreground" Value="White" />
+                            <Setter TargetName="IndeterminateIcon" Property="Visibility" Value="Collapsed" />
+                        </Trigger>
+
+                        <!--  1a) Indeterminate State  -->
+                        <Trigger Property="IsChecked" Value="{x:Null}">
+                            <Setter TargetName="Border" Property="Background" Value="{StaticResource SelectionBrush}" />
+                            <Setter TargetName="Border" Property="BorderBrush" Value="{StaticResource SelectionBrush}" />
+                            <Setter TargetName="CheckIcon" Property="Visibility" Value="Collapsed" />
+                            <Setter TargetName="IndeterminateIcon" Property="Fill" Value="White" />
+                            <Setter TargetName="IndeterminateIcon" Property="Visibility" Value="Visible" />
                         </Trigger>
 
                         <!--  2) Hover when Checked  -->
@@ -164,6 +183,16 @@
                             <MultiTrigger.Conditions>
                                 <Condition Property="IsMouseOver" Value="True" />
                                 <Condition Property="IsChecked" Value="True" />
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="Border" Property="Background" Value="#005A9E" />
+                            <Setter TargetName="Border" Property="BorderBrush" Value="#005A9E" />
+                        </MultiTrigger>
+
+                        <!--  2a) Hover when Indeterminate  -->
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="IsMouseOver" Value="True" />
+                                <Condition Property="IsChecked" Value="{x:Null}" />
                             </MultiTrigger.Conditions>
                             <Setter TargetName="Border" Property="Background" Value="#005A9E" />
                             <Setter TargetName="Border" Property="BorderBrush" Value="#005A9E" />
@@ -187,6 +216,16 @@
                             </MultiTrigger.Conditions>
                             <Setter TargetName="Border" Property="Background" Value="#CDE6FF" />
                             <Setter TargetName="Border" Property="BorderBrush" Value="#005A9E" />
+                        </MultiTrigger>
+
+                        <!--  4a) Pressed when Indeterminate  -->
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="IsPressed" Value="True" />
+                                <Condition Property="IsChecked" Value="{x:Null}" />
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="Border" Property="Background" Value="#005A9E" />
+                            <Setter TargetName="Border" Property="BorderBrush" Value="#003D7A" />
                         </MultiTrigger>
 
                         <!--  5) Disabled State  -->
@@ -287,19 +326,13 @@
                      Tag="Search values..."
                      Margin="0,0,0,8" />
 
-            <!--  Select All / Clear All Buttons  -->
-            <StackPanel Grid.Row="1"
-                        Orientation="Horizontal"
-                        Margin="0,0,0,8">
-                <Button Command="{Binding DataContext.SelectAllValuesCommand, RelativeSource={RelativeSource AncestorType={x:Type sdg:AdvancedFilterControl}}}"
-                        Padding="6,2"
-                        Content="Select All" />
-
-                <Button Command="{Binding DataContext.ClearAllValuesCommand, RelativeSource={RelativeSource AncestorType={x:Type sdg:AdvancedFilterControl}}}"
-                        Margin="8,0,0,0"
-                        Padding="6,2"
-                        Content="Clear All" />
-            </StackPanel>
+            <!--  Select All Checkbox  -->
+            <CheckBox Grid.Row="1"
+                      Style="{StaticResource FilterValueCheckBoxStyle}"
+                      IsChecked="{Binding SelectAllState, Mode=TwoWay}"
+                      IsThreeState="True"
+                      Content="Select All"
+                      Margin="0,0,0,8" />
 
             <!--  Virtualized ListBox of CheckBoxes  -->
             <ListBox Grid.Row="2"
@@ -403,19 +436,13 @@
                      Tag="Search groups and values..."
                      Margin="0,0,0,8" />
 
-            <!--  Select All / Clear All Buttons  -->
-            <StackPanel Grid.Row="2"
-                        Orientation="Horizontal"
-                        Margin="0,0,0,8">
-                <Button Command="{Binding DataContext.SelectAllValuesCommand, RelativeSource={RelativeSource AncestorType={x:Type sdg:AdvancedFilterControl}}}"
-                        Padding="6,2"
-                        Content="Select All" />
-
-                <Button Command="{Binding DataContext.ClearAllValuesCommand, RelativeSource={RelativeSource AncestorType={x:Type sdg:AdvancedFilterControl}}}"
-                        Margin="8,0,0,0"
-                        Padding="6,2"
-                        Content="Clear All" />
-            </StackPanel>
+            <!--  Select All Checkbox  -->
+            <CheckBox Grid.Row="2"
+                      Style="{StaticResource FilterValueCheckBoxStyle}"
+                      IsChecked="{Binding SelectAllState, Mode=TwoWay}"
+                      IsThreeState="True"
+                      Content="Select All"
+                      Margin="0,0,0,8" />
 
             <!--  Expand/Collapse All Bar  -->
             <StackPanel Grid.Row="3"
@@ -496,7 +523,7 @@
 
                                         <TextBlock Grid.Column="1"
                                                    Foreground="#0078D4"
-                                                   Text="{Binding GetSelectedChildCount, StringFormat='({0} selected)'}"
+                                                   Text="{Binding SelectedChildCount, StringFormat='({0} selected)'}"
                                                    Visibility="{Binding IsSelected, Converter={StaticResource NullToVisibilityConverter}}"
                                                    Margin="8,0,0,0"
                                                    VerticalAlignment="Center"
@@ -612,19 +639,13 @@
                      Tag="Search dates (e.g., 2023, January, 15)..."
                      Margin="0,0,0,8" />
 
-            <!--  Select All / Clear All Buttons  -->
-            <StackPanel Grid.Row="2"
-                        Orientation="Horizontal"
-                        Margin="0,0,0,8">
-                <Button Command="{Binding DataContext.SelectAllValuesCommand, RelativeSource={RelativeSource AncestorType={x:Type sdg:AdvancedFilterControl}}}"
-                        Padding="6,2"
-                        Content="Select All" />
-
-                <Button Command="{Binding DataContext.ClearAllValuesCommand, RelativeSource={RelativeSource AncestorType={x:Type sdg:AdvancedFilterControl}}}"
-                        Margin="8,0,0,0"
-                        Padding="6,2"
-                        Content="Clear All" />
-            </StackPanel>
+            <!--  Select All Checkbox  -->
+            <CheckBox Grid.Row="2"
+                      Style="{StaticResource FilterValueCheckBoxStyle}"
+                      IsChecked="{Binding SelectAllState, Mode=TwoWay}"
+                      IsThreeState="True"
+                      Content="Select All"
+                      Margin="0,0,0,8" />
 
             <!--  Date TreeView  -->
             <TreeView Grid.Row="3"
@@ -700,7 +721,7 @@
                     Padding="8,4">
                 <TextBlock FontStyle="Italic"
                            Foreground="#666"
-                           Text="{Binding GetSelectionSummary}" />
+                           Text="{Binding SelectionSummary}" />
             </Border>
         </Grid>
     </DataTemplate>

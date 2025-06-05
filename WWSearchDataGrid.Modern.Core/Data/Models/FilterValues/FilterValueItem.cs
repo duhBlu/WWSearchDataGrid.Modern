@@ -40,8 +40,11 @@ namespace WWSearchDataGrid.Modern.Core
             {
                 if (SetProperty(value, ref _isSelected))
                 {
-                    // Notify parent of selection change
-                    parent?.OnChildSelectionChanged();
+                    // Only notify parent if parent is not in the middle of a bulk update
+                    if (parent != null && !parent.isUpdating)
+                    {
+                        parent.OnChildSelectionChanged();
+                    }
                 }
             }
         }

@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Windows.Input;
 using WWSearchDataGrid.Modern.Core.Performance;
 
@@ -15,6 +16,7 @@ namespace WWSearchDataGrid.Modern.Core
     public class FlatListFilterValueViewModel : FilterValueViewModel
     {
         private bool? selectAllState = true;
+        private bool _isBulkUpdating = false;
         private readonly ObservableCollection<FilterValueItem> _allItems;
         private readonly ObservableCollection<FilterValueItem> _filteredItems;
         private readonly object _updateLock = new object();
@@ -27,18 +29,49 @@ namespace WWSearchDataGrid.Modern.Core
             get => selectAllState;
             set
             {
-                if (SetProperty(value, ref selectAllState) && value.HasValue)
+                // Handle the different states properly
+                bool targetState;
+                
+                if (value == true)
                 {
-                    // Batch update all items
+                    // User wants to select all
+                    targetState = true;
+                }
+                else if (value == false)
+                {
+                    // User wants to unselect all
+                    targetState = false;
+                }
+                else
+                {
+                    // Null/indeterminate - determine intent based on current state
+                    // If currently true (all selected), user wants to unselect
+                    // If currently false (none selected), user wants to select
+                    // If currently null (some selected), user wants to select all
+                    targetState = selectAllState != true;
+                }
+
+                // Batch update all items
+                _isBulkUpdating = true;
+                try
+                {
                     lock (_updateLock)
                     {
                         foreach (var item in _allItems)
                         {
-                            item.SetIsSelected(value.Value);
+                            item.SetIsSelected(targetState);
                         }
                     }
-                    OnPropertyChanged(nameof(SelectedItemsCount));
                 }
+                finally
+                {
+                    _isBulkUpdating = false;
+                }
+                
+                // Always update the state and notify (don't rely on SetProperty)
+                selectAllState = targetState;
+                OnPropertyChanged(nameof(SelectAllState));
+                OnPropertyChanged(nameof(SelectedItemsCount));
             }
         }
 
@@ -134,7 +167,11 @@ namespace WWSearchDataGrid.Modern.Core
         {
             if (e.PropertyName == nameof(FilterValueItem.IsSelected))
             {
-                UpdateSelectAllState();
+                // Don't update during bulk operations
+                if (!_isBulkUpdating)
+                {
+                    UpdateSelectAllState();
+                }
                 OnPropertyChanged(nameof(SelectedItemsCount));
             }
         }

@@ -14,6 +14,8 @@ namespace WWSearchDataGrid.Modern.Core
     /// </summary>
     public class DateTreeViewFilterValueViewModel : FilterValueViewModel
     {
+        private bool? _selectAllState = true;
+        private bool _isBulkUpdating = false;
         private readonly ObservableCollection<FilterValueGroup> _allYearGroups;
         private readonly ObservableCollection<FilterValueGroup> _filteredYearGroups;
         private readonly Dictionary<int, FilterValueGroup> _yearIndex;
@@ -21,6 +23,53 @@ namespace WWSearchDataGrid.Modern.Core
 
         public ObservableCollection<FilterValueGroup> GroupedValues => _filteredYearGroups;
         public ObservableCollection<FilterValueGroup> AllGroups => _allYearGroups;
+
+        public bool? SelectAllState
+        {
+            get => _selectAllState;
+            set
+            {
+                // Handle the different states properly
+                bool targetState;
+                
+                if (value == true)
+                {
+                    // User wants to select all
+                    targetState = true;
+                }
+                else if (value == false)
+                {
+                    // User wants to unselect all
+                    targetState = false;
+                }
+                else
+                {
+                    // Null/indeterminate - determine intent based on current state
+                    // If currently true (all selected), user wants to unselect
+                    // If currently false (none selected), user wants to select
+                    // If currently null (some selected), user wants to select all
+                    targetState = _selectAllState != true;
+                }
+
+                _isBulkUpdating = true;
+                try
+                {
+                    foreach (var year in _allYearGroups)
+                    {
+                        year.IsSelected = targetState;
+                    }
+                }
+                finally
+                {
+                    _isBulkUpdating = false;
+                }
+                
+                // Always update the state and notify (don't rely on SetProperty)
+                _selectAllState = targetState;
+                OnPropertyChanged(nameof(SelectAllState));
+                OnPropertyChanged(nameof(SelectionSummary));
+            }
+        }
 
         public DateTreeViewFilterValueViewModel()
         {
@@ -180,7 +229,7 @@ namespace WWSearchDataGrid.Modern.Core
                             DisplayValue = date.ToString("dd"),
                             ItemCount = count,
                             IsSelected = true,
-                            ParentGroup = monthItem
+                            Parent = monthItem
                         };
 
                         dayItem.PropertyChanged += OnChildPropertyChanged;
@@ -198,6 +247,7 @@ namespace WWSearchDataGrid.Modern.Core
             }
 
             ApplyFilter();
+            UpdateSelectAllState();
         }
 
         private void OnGroupPropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -213,6 +263,12 @@ namespace WWSearchDataGrid.Modern.Core
                         child.SetIsSelectedSilent(group.IsSelected.Value);
                     }
                 }
+                
+                // Don't update during bulk operations
+                if (!_isBulkUpdating)
+                {
+                    UpdateSelectAllState();
+                }
             }
         }
 
@@ -221,10 +277,16 @@ namespace WWSearchDataGrid.Modern.Core
             if (e.PropertyName == nameof(FilterValueItem.IsSelected))
             {
                 var item = sender as FilterValueItem;
-                if (item?.ParentGroup != null)
+                if (item?.Parent != null)
                 {
                     // Update parent group state
-                    item.ParentGroup.UpdateGroupSelectionState();
+                    item.Parent.UpdateGroupSelectionState();
+                }
+                
+                // Don't update during bulk operations
+                if (!_isBulkUpdating)
+                {
+                    UpdateSelectAllState();
                 }
             }
         }
@@ -287,7 +349,7 @@ namespace WWSearchDataGrid.Modern.Core
                             DisplayValue = dateValue.ToString("dd"),
                             ItemCount = 1,
                             IsSelected = monthGroup.IsSelected ?? false,
-                            ParentGroup = monthGroup
+                            Parent = monthGroup
                         };
 
                         newDay.PropertyChanged += OnChildPropertyChanged;
@@ -331,7 +393,7 @@ namespace WWSearchDataGrid.Modern.Core
                     DisplayValue = dateValue.ToString("dd"),
                     ItemCount = 1,
                     IsSelected = true,
-                    ParentGroup = monthGroup
+                    Parent = monthGroup
                 };
 
                 dayItem.PropertyChanged += OnChildPropertyChanged;
@@ -426,6 +488,8 @@ namespace WWSearchDataGrid.Modern.Core
             }
         }
 
+        public string SelectionSummary => GetSelectionSummary();
+
         public override string GetSelectionSummary()
         {
             var selectedCount = 0;
@@ -443,6 +507,33 @@ namespace WWSearchDataGrid.Modern.Core
                 return "No dates selected";
             else
                 return $"{selectedCount} of {totalCount} dates selected";
+        }
+
+        private void UpdateSelectAllState()
+        {
+            if (_allYearGroups.Count == 0)
+            {
+                _selectAllState = false;
+            }
+            else
+            {
+                var selectedCount = 0;
+                var totalCount = 0;
+
+                foreach (var year in _allYearGroups)
+                {
+                    selectedCount += year.GetSelectedChildCount();
+                    totalCount += year.GetTotalChildCount();
+                }
+
+                if (selectedCount == 0)
+                    _selectAllState = false;
+                else if (selectedCount == totalCount)
+                    _selectAllState = true;
+                else
+                    _selectAllState = null;
+            }
+            OnPropertyChanged(nameof(SelectAllState));
         }
     }
 }

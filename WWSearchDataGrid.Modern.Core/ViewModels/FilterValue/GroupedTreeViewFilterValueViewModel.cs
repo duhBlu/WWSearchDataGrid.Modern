@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace WWSearchDataGrid.Modern.Core
@@ -14,6 +15,8 @@ namespace WWSearchDataGrid.Modern.Core
     public class GroupedTreeViewFilterValueViewModel : FilterValueViewModel
     {
         private string _groupByColumn;
+        private bool? _selectAllState = true;
+        private bool _isBulkUpdating = false;
         private readonly ObservableCollection<FilterValueGroup> _allGroups;
         private readonly ObservableCollection<FilterValueGroup> _filteredGroups;
         private readonly Dictionary<string, Dictionary<object, List<object>>> _groupedData;
@@ -36,6 +39,56 @@ namespace WWSearchDataGrid.Modern.Core
         }
 
         public string SelectionSummary => GetSelectionSummary();
+
+        public bool? SelectAllState
+        {
+            get => _selectAllState;
+            set
+            {
+                // Handle the different states properly
+                bool targetState;
+                
+                if (value == true)
+                {
+                    // User wants to select all
+                    targetState = true;
+                }
+                else if (value == false)
+                {
+                    // User wants to unselect all
+                    targetState = false;
+                }
+                else
+                {
+                    // Null/indeterminate - determine intent based on current state
+                    // If currently true (all selected), user wants to unselect
+                    // If currently false (none selected), user wants to select
+                    // If currently null (some selected), user wants to select all
+                    targetState = _selectAllState != true;
+                }
+
+                _isBulkUpdating = true;
+                try
+                {
+                    lock (_updateLock)
+                    {
+                        foreach (var group in _allGroups)
+                        {
+                            group.IsSelected = targetState;
+                        }
+                    }
+                }
+                finally
+                {
+                    _isBulkUpdating = false;
+                }
+                
+                // Always update the state and notify (don't rely on SetProperty)
+                _selectAllState = targetState;
+                OnPropertyChanged(nameof(SelectAllState));
+                OnPropertyChanged(nameof(SelectionSummary));
+            }
+        }
 
         public GroupedTreeViewFilterValueViewModel()
         {
@@ -147,6 +200,7 @@ namespace WWSearchDataGrid.Modern.Core
             }
 
             ApplyFilter();
+            UpdateSelectAllState();
         }
 
         private void LoadGroupedValuesOptimized(IEnumerable<object> values, Dictionary<object, int> valueCounts)
@@ -204,7 +258,7 @@ namespace WWSearchDataGrid.Modern.Core
                         DisplayValue = item.Display,
                         ItemCount = item.Count,
                         IsSelected = true,
-                        ParentGroup = groupItem
+                        Parent = groupItem
                     };
 
                     childItem.PropertyChanged += OnChildPropertyChanged;
@@ -253,7 +307,7 @@ namespace WWSearchDataGrid.Modern.Core
                         DisplayValue = value?.ToString() ?? "(blank)",
                         ItemCount = count,
                         IsSelected = true,
-                        ParentGroup = groupItem
+                        Parent = groupItem
                     };
 
                     childItem.PropertyChanged += OnChildPropertyChanged;
@@ -401,6 +455,12 @@ namespace WWSearchDataGrid.Modern.Core
                         child.SetIsSelectedSilent(group.IsSelected.Value);
                     }
                 }
+                
+                // Don't update during bulk operations
+                if (!_isBulkUpdating)
+                {
+                    UpdateSelectAllState();
+                }
                 OnPropertyChanged(nameof(SelectionSummary));
             }
         }
@@ -410,10 +470,16 @@ namespace WWSearchDataGrid.Modern.Core
             if (e.PropertyName == nameof(FilterValueItem.IsSelected))
             {
                 var item = sender as FilterValueItem;
-                if (item?.ParentGroup != null)
+                if (item?.Parent != null)
                 {
                     // Update parent group state
-                    item.ParentGroup.UpdateGroupSelectionState();
+                    item.Parent.UpdateGroupSelectionState();
+                }
+                
+                // Don't update during bulk operations
+                if (!_isBulkUpdating)
+                {
+                    UpdateSelectAllState();
                 }
                 OnPropertyChanged(nameof(SelectionSummary));
             }
@@ -455,7 +521,7 @@ namespace WWSearchDataGrid.Modern.Core
                                 DisplayValue = value?.ToString() ?? "(blank)",
                                 ItemCount = 1,
                                 IsSelected = group.IsSelected ?? false,
-                                ParentGroup = group
+                                Parent = group
                             };
 
                             newItem.PropertyChanged += OnChildPropertyChanged;
@@ -503,7 +569,7 @@ namespace WWSearchDataGrid.Modern.Core
                         DisplayValue = value?.ToString() ?? "(blank)",
                         ItemCount = 1,
                         IsSelected = true,
-                        ParentGroup = newGroup
+                        Parent = newGroup
                     };
 
                     newItem.PropertyChanged += OnChildPropertyChanged;
@@ -612,6 +678,33 @@ namespace WWSearchDataGrid.Modern.Core
             }
         }
 
+        private void UpdateSelectAllState()
+        {
+            if (_allGroups.Count == 0)
+            {
+                _selectAllState = false;
+            }
+            else
+            {
+                var selectedCount = 0;
+                var totalCount = 0;
+
+                foreach (var group in _allGroups)
+                {
+                    selectedCount += group.GetSelectedChildCount();
+                    totalCount += group.GetTotalChildCount();
+                }
+
+                if (selectedCount == 0)
+                    _selectAllState = false;
+                else if (selectedCount == totalCount)
+                    _selectAllState = true;
+                else
+                    _selectAllState = null;
+            }
+            OnPropertyChanged(nameof(SelectAllState));
+        }
+
         public override string GetSelectionSummary()
         {
             var selectedCount = 0;
@@ -640,33 +733,5 @@ namespace WWSearchDataGrid.Modern.Core
                    type == typeof(float) || type == typeof(double) ||
                    type == typeof(decimal);
         }
-    }
-
-    /// <summary>
-    /// Extended FilterValueGroup with parent tracking
-    /// </summary>
-    public partial class FilterValueGroup : FilterValueItem
-    {
-        public object GroupKey { get; set; }
-
-        public void UpdateSelectionState()
-        {
-            var selectedCount = Children.Count(c => c.IsSelected);
-
-            if (selectedCount == 0)
-                IsSelected = false;
-            else if (selectedCount == Children.Count)
-                IsSelected = true;
-            else
-                IsSelected = null; // Indeterminate
-        }
-    }
-
-    /// <summary>
-    /// Extended FilterValueItem with parent tracking
-    /// </summary>
-    public partial class FilterValueItem
-    {
-        internal FilterValueGroup ParentGroup { get; set; }
     }
 }

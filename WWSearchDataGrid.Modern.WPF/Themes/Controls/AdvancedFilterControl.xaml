@@ -255,7 +255,7 @@
                                                                               Margin="0,0,8,0"
                                                                               Width="80"
                                                                               ItemsSource="{Binding SearchTemplateController.LogicalOperators, RelativeSource={RelativeSource AncestorType=sdg:AdvancedFilterControl}}"
-                                                                              SelectedItem="{Binding OperatorName}" />
+                                                                              SelectedItem="{Binding DataContext.OperatorName, RelativeSource={RelativeSource AncestorType=GroupBox}}" />
 
                                                                     <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
                                                                         <Button Command="{Binding RemoveSearchGroupCommand, RelativeSource={RelativeSource AncestorType=sdg:AdvancedFilterControl}}"
