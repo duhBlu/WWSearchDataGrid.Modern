@@ -40,23 +40,23 @@
                         <Grid>
                             <!--  Search Icon  -->
                             <TextBlock x:Name="SearchIcon"
-                                       Text="&#xE721;"
-                                       FontFamily="Segoe MDL2 Assets"
-                                       FontSize="12"
                                        Foreground="{StaticResource GrayTextBrush}"
+                                       Text="&#xE721;"
+                                       IsHitTestVisible="False"
+                                       Margin="8,0,0,0"
                                        HorizontalAlignment="Left"
                                        VerticalAlignment="Center"
-                                       Margin="8,0,0,0"
-                                       IsHitTestVisible="False" />
+                                       FontFamily="Segoe MDL2 Assets"
+                                       FontSize="12" />
 
                             <!--  Placeholder text  -->
                             <TextBlock x:Name="PlaceholderText"
                                        Foreground="{StaticResource GrayTextBrush}"
                                        Text="{TemplateBinding Tag}"
                                        Visibility="Collapsed"
+                                       IsHitTestVisible="False"
                                        Margin="30,0,30,0"
-                                       VerticalAlignment="Center"
-                                       IsHitTestVisible="False" />
+                                       VerticalAlignment="Center" />
 
                             <ScrollViewer x:Name="PART_ContentHost"
                                           Margin="26,0,26,0"
@@ -64,26 +64,25 @@
 
                             <!--  Clear Button  -->
                             <Button x:Name="ClearButton"
-                                    HorizontalAlignment="Right"
-                                    VerticalAlignment="Center"
-                                    Margin="0,0,6,0"
-                                    Width="16"
-                                    Height="16"
-                                    Visibility="Collapsed"
-                                    Cursor="Hand"
                                     Background="Transparent"
                                     BorderThickness="0"
+                                    Visibility="Collapsed"
+                                    Cursor="Hand"
+                                    Margin="0,0,6,0"
+                                    HorizontalAlignment="Right"
+                                    VerticalAlignment="Center"
+                                    Width="16"
+                                    Height="16"
                                     ToolTip="Clear search">
                                 <Button.Template>
                                     <ControlTemplate TargetType="Button">
-                                        <Border Background="{TemplateBinding Background}"
-                                                CornerRadius="8">
-                                            <TextBlock Text="&#xE711;"
-                                                       FontFamily="Segoe MDL2 Assets"
-                                                       FontSize="10"
-                                                       Foreground="{StaticResource GrayTextBrush}"
+                                        <Border Background="{TemplateBinding Background}" CornerRadius="8">
+                                            <TextBlock Foreground="{StaticResource GrayTextBrush}"
+                                                       Text="&#xE711;"
                                                        HorizontalAlignment="Center"
-                                                       VerticalAlignment="Center" />
+                                                       VerticalAlignment="Center"
+                                                       FontFamily="Segoe MDL2 Assets"
+                                                       FontSize="10" />
                                         </Border>
                                         <ControlTemplate.Triggers>
                                             <Trigger Property="IsMouseOver" Value="True">
@@ -120,7 +119,7 @@
             </Setter.Value>
         </Setter>
     </Style>
-    
+
     <!--  CheckBox Style for Filter Values  -->
     <Style x:Key="FilterValueCheckBoxStyle" TargetType="CheckBox">
         <Setter Property="FontSize" Value="13" />
@@ -134,8 +133,8 @@
                                     Background="White"
                                     BorderBrush="#999999"
                                     BorderThickness="1"
-                                    Width="16"
-                                    Height="16"
+                                    Width="18"
+                                    Height="18"
                                     CornerRadius="3">
                                 <Grid>
                                     <TextBlock x:Name="CheckIcon"
@@ -147,11 +146,11 @@
                                                FontSize="12" />
                                     <Rectangle x:Name="IndeterminateIcon"
                                                Fill="Transparent"
-                                               Width="8"
-                                               Height="2"
+                                               Visibility="Collapsed"
                                                HorizontalAlignment="Center"
                                                VerticalAlignment="Center"
-                                               Visibility="Collapsed" />
+                                               Width="10"
+                                               Height="1" />
                                 </Grid>
                             </Border>
                         </BulletDecorator.Bullet>
@@ -249,7 +248,6 @@
                             <RowDefinition Height="Auto" />
                             <RowDefinition />
                         </Grid.RowDefinitions>
-
                         <Border Name="Bd"
                                 Grid.Row="0"
                                 Background="{TemplateBinding Background}"
@@ -261,27 +259,55 @@
                                     <ColumnDefinition Width="19" />
                                     <ColumnDefinition Width="*" />
                                 </Grid.ColumnDefinitions>
-
                                 <ToggleButton x:Name="Expander"
                                               Grid.Column="0"
+                                              BorderThickness="0"
                                               IsChecked="{Binding Path=IsExpanded, RelativeSource={RelativeSource TemplatedParent}}"
+                                              Cursor="Hand"
                                               Width="16"
                                               Height="16"
-                                              ClickMode="Press">
-                                    <ToggleButton.Template>
-                                        <ControlTemplate TargetType="ToggleButton">
-                                            <Path x:Name="ExpandPath"
-                                                  Fill="#666"
-                                                  Data="M 0 0 L 4 4 L 0 8 Z"
-                                                  HorizontalAlignment="Center"
-                                                  VerticalAlignment="Center" />
-                                            <ControlTemplate.Triggers>
+                                              FontFamily="Segoe MDL2 Assets"
+                                              FontSize="12">
+                                    <ToggleButton.Style>
+                                        <Style TargetType="ToggleButton">
+                                            <!--  Default appearance  -->
+                                            <Setter Property="Foreground" Value="Gray" />
+                                            <Setter Property="Background" Value="Transparent" />
+                                            <Setter Property="BorderBrush" Value="Transparent" />
+                                            <Setter Property="BorderThickness" Value="0" />
+                                            <Setter Property="Cursor" Value="Hand" />
+                                            <Setter Property="FontFamily" Value="Segoe MDL2 Assets" />
+                                            <Setter Property="FontSize" Value="12" />
+                                            <Setter Property="Content" Value="&#xE76C;" />
+                                            <!--  ChevronRight  -->
+
+                                            <!--  Custom template: no chrome, just a border + ContentPresenter  -->
+                                            <Setter Property="Template">
+                                                <Setter.Value>
+                                                    <ControlTemplate TargetType="ToggleButton">
+                                                        <Border x:Name="border"
+                                                                Background="{TemplateBinding Background}"
+                                                                BorderBrush="{TemplateBinding BorderBrush}"
+                                                                BorderThickness="{TemplateBinding BorderThickness}"
+                                                                CornerRadius="2">
+                                                            <ContentPresenter HorizontalAlignment="Center"
+                                                                              VerticalAlignment="Center"
+                                                                              RecognizesAccessKey="True"
+                                                                              TextElement.Foreground="{TemplateBinding Foreground}" />
+                                                        </Border>
+                                                    </ControlTemplate>
+                                                </Setter.Value>
+                                            </Setter>
+
+                                            <Style.Triggers>
+                                                <!--  Checked state: swap to "ChevronDown" glyph, keep colors unchanged  -->
                                                 <Trigger Property="IsChecked" Value="True">
-                                                    <Setter TargetName="ExpandPath" Property="Data" Value="M 0 0 L 8 0 L 4 4 Z" />
+                                                    <Setter Property="Content" Value="&#xE70D;" />
+                                                    <!--  ChevronDown  -->
                                                 </Trigger>
-                                            </ControlTemplate.Triggers>
-                                        </ControlTemplate>
-                                    </ToggleButton.Template>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </ToggleButton.Style>
                                 </ToggleButton>
 
                                 <ContentPresenter x:Name="PART_Header"
@@ -290,18 +316,24 @@
                                                   ContentSource="Header" />
                             </Grid>
                         </Border>
-
-                        <ItemsPresenter x:Name="ItemsHost"
-                                        Grid.Row="1"
-                                        Visibility="Collapsed" />
+                        <!--  Add proper indentation for child items  -->
+                        <Border x:Name="ItemsHost"
+                                Grid.Row="1"
+                                Visibility="Collapsed"
+                                Margin="19,2,2,2">
+                            <ItemsPresenter />
+                        </Border>
                     </Grid>
-
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsExpanded" Value="true">
                             <Setter TargetName="ItemsHost" Property="Visibility" Value="Visible" />
                         </Trigger>
                         <Trigger Property="HasItems" Value="false">
-                            <Setter TargetName="Expander" Property="Visibility" Value="Hidden" />
+                            <Setter TargetName="Expander" Property="Visibility" Value="Collapsed" />
+                            <Setter TargetName="ItemsHost" Property="Margin" Value="2" />
+                        </Trigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter Property="Background" Value="#f0f0f0" />
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -319,20 +351,20 @@
             </Grid.RowDefinitions>
 
             <!--  Search Box  -->
-            <TextBox Grid.Row="0"
-                     x:Name="PART_FlatSearchBox"
+            <TextBox x:Name="PART_FlatSearchBox"
                      Style="{StaticResource SearchTextBoxStyle}"
+                     Grid.Row="0"
                      Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
-                     Tag="Search values..."
-                     Margin="0,0,0,8" />
+                     Margin="0,0,0,8"
+                     Tag="Search values..." />
 
             <!--  Select All Checkbox  -->
-            <CheckBox Grid.Row="1"
-                      Style="{StaticResource FilterValueCheckBoxStyle}"
+            <CheckBox Style="{StaticResource FilterValueCheckBoxStyle}"
+                      Grid.Row="1"
                       IsChecked="{Binding SelectAllState, Mode=TwoWay}"
+                      Margin="0,0,0,8"
                       IsThreeState="True"
-                      Content="Select All"
-                      Margin="0,0,0,8" />
+                      Content="Select All" />
 
             <!--  Virtualized ListBox of CheckBoxes  -->
             <ListBox Grid.Row="2"
@@ -350,10 +382,22 @@
                 </ListBox.ItemsPanel>
                 <ListBox.ItemContainerStyle>
                     <Style TargetType="ListBoxItem">
+                        <Setter Property="Background" Value="Transparent" />
+                        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                        <Setter Property="Padding" Value="2,0" />
                         <Setter Property="Template">
                             <Setter.Value>
                                 <ControlTemplate TargetType="ListBoxItem">
-                                    <ContentPresenter />
+                                    <Border x:Name="Bd"
+                                            Background="{TemplateBinding Background}"
+                                            SnapsToDevicePixels="True">
+                                        <ContentPresenter />
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="Bd" Property="Background" Value="#FFF0F0F0" />
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
                                 </ControlTemplate>
                             </Setter.Value>
                         </Setter>
@@ -395,15 +439,15 @@
                     Background="#F5F5F5"
                     BorderBrush="#DDDDDD"
                     BorderThickness="0,0,0,1"
-                    Padding="8,4"
-                    Margin="0,0,0,8">
+                    Margin="0,0,0,8"
+                    Padding="8,4">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
 
-                    <TextBlock Grid.Column="0" 
+                    <TextBlock Grid.Column="0"
                                VerticalAlignment="Center"
                                FontWeight="SemiBold">
                         <TextBlock.Text>
@@ -412,37 +456,24 @@
                             </MultiBinding>
                         </TextBlock.Text>
                     </TextBlock>
-
-                    <!--  Group Options Button  -->
-                    <Button Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
-                            Grid.Column="1"
-                            Width="20"
-                            Height="20"
-                            ToolTip="Group Options">
-                        <Path Fill="#666"
-                              Data="M12,16A2,2 0 0,1 14,18A2,2 0 0,1 12,20A2,2 0 0,1 10,18A2,2 0 0,1 12,16M12,10A2,2 0 0,1 14,12A2,2 0 0,1 12,14A2,2 0 0,1 10,12A2,2 0 0,1 12,10M12,4A2,2 0 0,1 14,6A2,2 0 0,1 12,8A2,2 0 0,1 10,6A2,2 0 0,1 12,4Z"
-                              Width="12"
-                              Height="12"
-                              Stretch="Uniform" />
-                    </Button>
                 </Grid>
             </Border>
 
             <!--  Search Box  -->
-            <TextBox Grid.Row="1"
-                     x:Name="PART_GroupSearchBox"
+            <TextBox x:Name="PART_GroupSearchBox"
                      Style="{StaticResource SearchTextBoxStyle}"
+                     Grid.Row="1"
                      Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
-                     Tag="Search groups and values..."
-                     Margin="0,0,0,8" />
+                     Margin="0,0,0,8"
+                     Tag="Search groups and values..." />
 
             <!--  Select All Checkbox  -->
-            <CheckBox Grid.Row="2"
-                      Style="{StaticResource FilterValueCheckBoxStyle}"
+            <CheckBox Style="{StaticResource FilterValueCheckBoxStyle}"
+                      Grid.Row="2"
                       IsChecked="{Binding SelectAllState, Mode=TwoWay}"
+                      Margin="0,0,0,8"
                       IsThreeState="True"
-                      Content="Select All"
-                      Margin="0,0,0,8" />
+                      Content="Select All" />
 
             <!--  Expand/Collapse All Bar  -->
             <StackPanel Grid.Row="3"
@@ -460,8 +491,8 @@
                               Width="10"
                               Height="10"
                               Stretch="Uniform" />
-                        <TextBlock Foreground="#666" 
-                                   Text="Expand All" 
+                        <TextBlock Foreground="#666"
+                                   Text="Expand All"
                                    FontSize="11" />
                     </StackPanel>
                 </Button>
@@ -477,8 +508,8 @@
                               Width="10"
                               Height="10"
                               Stretch="Uniform" />
-                        <TextBlock Foreground="#666" 
-                                   Text="Collapse All" 
+                        <TextBlock Foreground="#666"
+                                   Text="Collapse All"
                                    FontSize="11" />
                     </StackPanel>
                 </Button>
@@ -578,11 +609,6 @@
                                 </CheckBox.Content>
                             </CheckBox>
                         </Border>
-                        <DataTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="ItemBorder" Property="Background" Value="#FAFAFA" />
-                            </Trigger>
-                        </DataTemplate.Triggers>
                     </DataTemplate>
                 </TreeView.Resources>
 
@@ -608,7 +634,6 @@
     </DataTemplate>
 
     <!--  Date TreeView Template (Year/Month/Day hierarchy)  -->
-    <!--  Date TreeView Template with Integrated Search  -->
     <DataTemplate x:Key="DateTreeViewFilterValuesTemplate">
         <Grid>
             <Grid.RowDefinitions>
@@ -626,26 +651,26 @@
                     BorderThickness="0,0,0,1"
                     Margin="0,0,0,8"
                     Padding="8,4">
-                <TextBlock FontWeight="SemiBold"
-                           Foreground="#666"
-                           Text="Select date ranges" />
+                <TextBlock Foreground="#666"
+                           Text="Select date ranges"
+                           FontWeight="SemiBold" />
             </Border>
 
             <!--  Search Box  -->
-            <TextBox Grid.Row="1"
-                     x:Name="PART_DateSearchBox"
+            <TextBox x:Name="PART_DateSearchBox"
                      Style="{StaticResource SearchTextBoxStyle}"
+                     Grid.Row="1"
                      Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
-                     Tag="Search dates (e.g., 2023, January, 15)..."
-                     Margin="0,0,0,8" />
+                     Margin="0,0,0,8"
+                     Tag="Search dates (e.g., 2023, January, 15)..." />
 
             <!--  Select All Checkbox  -->
-            <CheckBox Grid.Row="2"
-                      Style="{StaticResource FilterValueCheckBoxStyle}"
+            <CheckBox Style="{StaticResource FilterValueCheckBoxStyle}"
+                      Grid.Row="2"
                       IsChecked="{Binding SelectAllState, Mode=TwoWay}"
+                      Margin="0,0,0,8"
                       IsThreeState="True"
-                      Content="Select All"
-                      Margin="0,0,0,8" />
+                      Content="Select All" />
 
             <!--  Date TreeView  -->
             <TreeView Grid.Row="3"
@@ -662,8 +687,9 @@
                 <TreeView.Resources>
                     <!--  Year Level  -->
                     <HierarchicalDataTemplate DataType="{x:Type sdgCore:FilterValueGroup}" ItemsSource="{Binding Children}">
-                        <CheckBox Style="{StaticResource FilterValueCheckBoxStyle}" 
+                        <CheckBox Style="{StaticResource FilterValueCheckBoxStyle}"
                                   IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                                  Margin="2"
                                   IsThreeState="True">
                             <StackPanel Orientation="Horizontal">
                                 <TextBlock Text="{Binding DisplayValue}" FontWeight="Bold" />
@@ -676,8 +702,9 @@
                         <!--  Month Level nested template  -->
                         <HierarchicalDataTemplate.ItemTemplate>
                             <HierarchicalDataTemplate DataType="{x:Type sdgCore:FilterValueGroup}" ItemsSource="{Binding Children}">
-                                <CheckBox Style="{StaticResource FilterValueCheckBoxStyle}" 
+                                <CheckBox Style="{StaticResource FilterValueCheckBoxStyle}"
                                           IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                                          Margin="2"
                                           IsThreeState="True">
                                     <StackPanel Orientation="Horizontal">
                                         <TextBlock Text="{Binding DisplayValue}" />
@@ -692,7 +719,7 @@
                                     <DataTemplate DataType="{x:Type sdgCore:FilterValueItem}">
                                         <CheckBox Style="{StaticResource FilterValueCheckBoxStyle}"
                                                   IsChecked="{Binding IsSelected, Mode=TwoWay}"
-                                                  Margin="20,2,2,2">
+                                                  Margin="2">
                                             <StackPanel Orientation="Horizontal">
                                                 <TextBlock Text="{Binding DisplayValue}" />
                                                 <TextBlock Foreground="#999"
