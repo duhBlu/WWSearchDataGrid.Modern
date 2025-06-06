@@ -446,16 +446,6 @@ namespace WWSearchDataGrid.Modern.Core
         {
             if (e.PropertyName == nameof(FilterValueItem.IsSelected))
             {
-                var group = sender as FilterValueGroup;
-                if (group != null && group.IsSelected.HasValue)
-                {
-                    // Update all children when group selection changes
-                    foreach (var child in group.Children)
-                    {
-                        child.SetIsSelectedSilent(group.IsSelected.Value);
-                    }
-                }
-                
                 // Don't update during bulk operations
                 if (!_isBulkUpdating)
                 {

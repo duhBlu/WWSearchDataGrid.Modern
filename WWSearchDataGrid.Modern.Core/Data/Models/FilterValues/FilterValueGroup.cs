@@ -59,9 +59,13 @@ namespace WWSearchDataGrid.Modern.Core
                     }
                     else
                     {
-                        // Indeterminate state clicked - select all children
-                        UpdateChildrenSelection(true);
-                        isChecked = true;
+                        // Null/indeterminate - determine intent based on current state
+                        // If previously true (all selected), user wants to unselect
+                        // If previously false (none selected), user wants to select
+                        // If previously null (some selected), user wants to select all
+                        bool targetState = previousValue != true;
+                        UpdateChildrenSelection(targetState);
+                        isChecked = targetState;
                     }
                 }
 
@@ -187,11 +191,8 @@ namespace WWSearchDataGrid.Modern.Core
                 else
                     isChecked = null; // Indeterminate state
 
-                if (previousState != isChecked)
-                {
-                    OnPropertyChanged(nameof(IsSelected));
-                    OnPropertyChanged(nameof(SelectedChildCount));
-                }
+                OnPropertyChanged(nameof(IsSelected));
+                OnPropertyChanged(nameof(SelectedChildCount));
             }
             finally
             {
