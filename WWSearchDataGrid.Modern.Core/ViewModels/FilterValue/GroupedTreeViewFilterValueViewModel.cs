@@ -184,18 +184,40 @@ namespace WWSearchDataGrid.Modern.Core
         {
             lock (_updateLock)
             {
+                // Preserve existing groups and their selection states
+                var existingGroups = _allGroups.ToDictionary(g => g.GroupKey?.ToString() ?? "null", g => g);
+                var existingGroupIndex = new Dictionary<string, FilterValueGroup>(_groupIndex);
+                
                 _allGroups.Clear();
                 _groupIndex.Clear();
 
                 // If we have grouped data for the GroupByColumn, use it
                 if (!string.IsNullOrEmpty(GroupByColumn) && _groupedData.ContainsKey(GroupByColumn))
                 {
-                    LoadGroupedValuesOptimized(values, valueCounts);
+                    LoadGroupedValuesOptimized(values, valueCounts, existingGroups);
                 }
                 else
                 {
                     // Fallback to smart grouping
-                    LoadSmartGroupedValues(values, valueCounts);
+                    LoadSmartGroupedValues(values, valueCounts, existingGroups);
+                }
+                
+                // Add any existing groups that weren't in the new data (preserve unselected filtered groups)
+                foreach (var existingGroup in existingGroups.Values)
+                {
+                    var groupKeyStr = existingGroup.GroupKey?.ToString() ?? "null";
+                    if (!_groupIndex.ContainsKey(groupKeyStr))
+                    {
+                        // Reset item counts for children not in current data
+                        foreach (var child in existingGroup.Children.OfType<FilterValueItem>())
+                        {
+                            child.ItemCount = 0;
+                        }
+                        existingGroup.ItemCount = 0;
+                        
+                        _allGroups.Add(existingGroup);
+                        _groupIndex[groupKeyStr] = existingGroup;
+                    }
                 }
             }
 
@@ -203,7 +225,7 @@ namespace WWSearchDataGrid.Modern.Core
             UpdateSelectAllState();
         }
 
-        private void LoadGroupedValuesOptimized(IEnumerable<object> values, Dictionary<object, int> valueCounts)
+        private void LoadGroupedValuesOptimized(IEnumerable<object> values, Dictionary<object, int> valueCounts, Dictionary<string, FilterValueGroup> existingGroups = null)
         {
             var valueSet = new HashSet<object>(values);
             var groupData = _groupedData[GroupByColumn];
@@ -226,52 +248,143 @@ namespace WWSearchDataGrid.Modern.Core
 
             foreach (var group in groups)
             {
-                var groupItem = new FilterValueGroup
+                var groupKeyStr = group.GroupKey?.ToString() ?? "null";
+                FilterValueGroup groupItem;
+                
+                // Check if we have an existing group to preserve its selection state
+                if (existingGroups != null && existingGroups.TryGetValue(groupKeyStr, out var existingGroup))
                 {
-                    DisplayValue = group.GroupDisplay,
-                    GroupKey = group.GroupKey,
-                    IsSelected = true,
-                    ItemCount = 0 // Will be calculated from children
-                };
-
-                // Register in index for fast lookup
-                _groupIndex[group.GroupKey?.ToString() ?? "null"] = groupItem;
-
-                // Add children with counts
-                var itemGroups = group.Items
-                    .GroupBy(v => v)
-                    .Select(g => new
+                    groupItem = existingGroup;
+                    groupItem.DisplayValue = group.GroupDisplay;
+                    groupItem.ItemCount = 0; // Will be recalculated
+                    
+                    // Create a lookup of existing children to preserve their selection states
+                    var existingChildren = new Dictionary<string, FilterValueItem>();
+                    foreach (var child in groupItem.Children.OfType<FilterValueItem>())
                     {
-                        Value = g.Key,
-                        Count = valueCounts?.ContainsKey(g.Key) == true ? valueCounts[g.Key] : g.Count(),
-                        Display = g.Key?.ToString() ?? "(blank)",
-                        SortKey = GetItemSortKey(g.Key)
-                    })
-                    .OrderBy(i => i.SortKey)
-                    .ThenBy(i => i.Display);
+                        var key = child.Value?.ToString() ?? "__NULL__";
+                        existingChildren[key] = child;
+                    }
+                    
+                    groupItem.Children.Clear();
+                    
+                    // Add children with preserved selection states
+                    var itemGroups = group.Items
+                        .GroupBy(v => v)
+                        .Select(g => new
+                        {
+                            Value = g.Key,
+                            Count = valueCounts?.ContainsKey(g.Key) == true ? valueCounts[g.Key] : g.Count(),
+                            Display = g.Key?.ToString() ?? "(blank)",
+                            SortKey = GetItemSortKey(g.Key)
+                        })
+                        .OrderBy(i => i.SortKey)
+                        .ThenBy(i => i.Display);
 
-                foreach (var item in itemGroups)
+                    var seenChildKeys = new HashSet<string>();
+                    
+                    foreach (var item in itemGroups)
+                    {
+                        FilterValueItem childItem;
+                        
+                        var childKey = item.Value?.ToString() ?? "__NULL__";
+                        seenChildKeys.Add(childKey);
+                        
+                        if (existingChildren.TryGetValue(childKey, out var existingChild))
+                        {
+                            // Preserve existing child's selection state but update count
+                            childItem = existingChild;
+                            childItem.ItemCount = item.Count;
+                            childItem.Parent = groupItem; // Ensure parent is set correctly
+                        }
+                        else
+                        {
+                            // Create new child with default selection (true for new items)
+                            childItem = new FilterValueItem
+                            {
+                                Value = item.Value,
+                                DisplayValue = item.Display,
+                                ItemCount = item.Count,
+                                IsSelected = true, // New items default to selected
+                                Parent = groupItem
+                            };
+                            childItem.PropertyChanged += OnChildPropertyChanged;
+                        }
+
+                        groupItem.Children.Add(childItem);
+                        groupItem.ItemCount += item.Count;
+                    }
+                    
+                    // Add any existing children that weren't in the new data (preserve unselected filtered values)
+                    foreach (var existingChildKvp in existingChildren)
+                    {
+                        if (!seenChildKeys.Contains(existingChildKvp.Key))
+                        {
+                            // Keep the child but set count to 0 to indicate it's not in current data
+                            var filteredChild = existingChildKvp.Value;
+                            filteredChild.ItemCount = 0;
+                            filteredChild.Parent = groupItem;
+                            groupItem.Children.Add(filteredChild);
+                        }
+                    }
+                }
+                else
                 {
-                    var childItem = new FilterValueItem
+                    // Create new group
+                    groupItem = new FilterValueGroup
                     {
-                        Value = item.Value,
-                        DisplayValue = item.Display,
-                        ItemCount = item.Count,
+                        DisplayValue = group.GroupDisplay,
+                        GroupKey = group.GroupKey,
                         IsSelected = true,
-                        Parent = groupItem
+                        ItemCount = 0 // Will be calculated from children
                     };
 
-                    childItem.PropertyChanged += OnChildPropertyChanged;
-                    groupItem.Children.Add(childItem);
-                    groupItem.ItemCount += item.Count;
+                    // Add children with counts
+                    var itemGroups = group.Items
+                        .GroupBy(v => v)
+                        .Select(g => new
+                        {
+                            Value = g.Key,
+                            Count = valueCounts?.ContainsKey(g.Key) == true ? valueCounts[g.Key] : g.Count(),
+                            Display = g.Key?.ToString() ?? "(blank)",
+                            SortKey = GetItemSortKey(g.Key)
+                        })
+                        .OrderBy(i => i.SortKey)
+                        .ThenBy(i => i.Display);
+
+                    foreach (var item in itemGroups)
+                    {
+                        var childItem = new FilterValueItem
+                        {
+                            Value = item.Value,
+                            DisplayValue = item.Display,
+                            ItemCount = item.Count,
+                            IsSelected = true,
+                            Parent = groupItem
+                        };
+
+                        childItem.PropertyChanged += OnChildPropertyChanged;
+                        groupItem.Children.Add(childItem);
+                        groupItem.ItemCount += item.Count;
+                    }
+
+                    groupItem.PropertyChanged += OnGroupPropertyChanged;
                 }
 
-                groupItem.PropertyChanged += OnGroupPropertyChanged;
+                // Update group selection state based on children
+                if (existingGroups != null && existingGroups.ContainsKey(groupKeyStr))
+                {
+                    // For existing groups, update the group's selection state based on its children
+                    groupItem.UpdateGroupSelectionState();
+                }
+                
+                // Register in index for fast lookup
+                _groupIndex[groupKeyStr] = groupItem;
                 _allGroups.Add(groupItem);
             }
         }
 
-        private void LoadSmartGroupedValues(IEnumerable<object> values, Dictionary<object, int> valueCounts)
+        private void LoadSmartGroupedValues(IEnumerable<object> values, Dictionary<object, int> valueCounts, Dictionary<string, FilterValueGroup> existingGroups = null)
         {
             // Smart grouping based on data type and patterns
             var groupingStrategy = DetermineGroupingStrategy(values);
@@ -288,34 +401,106 @@ namespace WWSearchDataGrid.Modern.Core
 
             foreach (var group in groups)
             {
-                var groupItem = new FilterValueGroup
+                var groupKeyStr = group.GroupKey?.ToString() ?? "null";
+                FilterValueGroup groupItem;
+                
+                // Check if we have an existing group to preserve its selection state
+                if (existingGroups != null && existingGroups.TryGetValue(groupKeyStr, out var existingGroup))
                 {
-                    DisplayValue = group.GroupKey?.ToString() ?? "(No Group)",
-                    GroupKey = group.GroupKey,
-                    IsSelected = true,
-                    ItemCount = 0
-                };
-
-                _groupIndex[group.GroupKey?.ToString() ?? "null"] = groupItem;
-
-                foreach (var value in group.Items.OrderBy(v => v?.ToString()))
-                {
-                    var count = valueCounts?.ContainsKey(value) == true ? valueCounts[value] : 1;
-                    var childItem = new FilterValueItem
+                    groupItem = existingGroup;
+                    groupItem.DisplayValue = group.GroupKey?.ToString() ?? "(No Group)";
+                    groupItem.ItemCount = 0; // Will be recalculated
+                    
+                    // Create a lookup of existing children to preserve their selection states
+                    var existingChildren = new Dictionary<string, FilterValueItem>();
+                    foreach (var child in groupItem.Children.OfType<FilterValueItem>())
                     {
-                        Value = value,
-                        DisplayValue = value?.ToString() ?? "(blank)",
-                        ItemCount = count,
+                        var key = child.Value?.ToString() ?? "__NULL__";
+                        existingChildren[key] = child;
+                    }
+                    
+                    groupItem.Children.Clear();
+                    
+                    var seenChildKeys = new HashSet<string>();
+                    
+                    foreach (var value in group.Items.OrderBy(v => v?.ToString()))
+                    {
+                        var count = valueCounts?.ContainsKey(value) == true ? valueCounts[value] : 1;
+                        FilterValueItem childItem;
+                        
+                        var childKey = value?.ToString() ?? "__NULL__";
+                        seenChildKeys.Add(childKey);
+                        
+                        if (existingChildren.TryGetValue(childKey, out var existingChild))
+                        {
+                            // Preserve existing child's selection state but update count
+                            childItem = existingChild;
+                            childItem.ItemCount = count;
+                            childItem.Parent = groupItem; // Ensure parent is set correctly
+                        }
+                        else
+                        {
+                            // Create new child with default selection (true for new items)
+                            childItem = new FilterValueItem
+                            {
+                                Value = value,
+                                DisplayValue = value?.ToString() ?? "(blank)",
+                                ItemCount = count,
+                                IsSelected = true, // New items default to selected
+                                Parent = groupItem
+                            };
+                            childItem.PropertyChanged += OnChildPropertyChanged;
+                        }
+
+                        groupItem.Children.Add(childItem);
+                        groupItem.ItemCount += count;
+                    }
+                    
+                    // Add any existing children that weren't in the new data (preserve unselected filtered values)
+                    foreach (var existingChildKvp in existingChildren)
+                    {
+                        if (!seenChildKeys.Contains(existingChildKvp.Key))
+                        {
+                            // Keep the child but set count to 0 to indicate it's not in current data
+                            var filteredChild = existingChildKvp.Value;
+                            filteredChild.ItemCount = 0;
+                            filteredChild.Parent = groupItem;
+                            groupItem.Children.Add(filteredChild);
+                        }
+                    }
+                }
+                else
+                {
+                    // Create new group
+                    groupItem = new FilterValueGroup
+                    {
+                        DisplayValue = group.GroupKey?.ToString() ?? "(No Group)",
+                        GroupKey = group.GroupKey,
                         IsSelected = true,
-                        Parent = groupItem
+                        ItemCount = 0
                     };
 
-                    childItem.PropertyChanged += OnChildPropertyChanged;
-                    groupItem.Children.Add(childItem);
-                    groupItem.ItemCount += count;
+                    foreach (var value in group.Items.OrderBy(v => v?.ToString()))
+                    {
+                        var count = valueCounts?.ContainsKey(value) == true ? valueCounts[value] : 1;
+                        var childItem = new FilterValueItem
+                        {
+                            Value = value,
+                            DisplayValue = value?.ToString() ?? "(blank)",
+                            ItemCount = count,
+                            IsSelected = true,
+                            Parent = groupItem
+                        };
+
+                        childItem.PropertyChanged += OnChildPropertyChanged;
+                        groupItem.Children.Add(childItem);
+                        groupItem.ItemCount += count;
+                    }
+
+                    groupItem.PropertyChanged += OnGroupPropertyChanged;
                 }
 
-                groupItem.PropertyChanged += OnGroupPropertyChanged;
+                _groupIndex[groupKeyStr] = groupItem;
                 _allGroups.Add(groupItem);
             }
         }
@@ -651,6 +836,30 @@ namespace WWSearchDataGrid.Modern.Core
 
             return selectedValues.Distinct();
         }
+        
+        /// <summary>
+        /// Gets the selected group-child combinations for proper grouped filtering
+        /// </summary>
+        /// <returns>List of tuples containing (GroupKey, ChildValue) pairs</returns>
+        public IEnumerable<(object GroupKey, object ChildValue)> GetSelectedGroupChildCombinations()
+        {
+            var combinations = new List<(object, object)>();
+
+            foreach (var group in _allGroups)
+            {
+                foreach (var child in group.Children.Where(c => c.IsSelected))
+                {
+                    combinations.Add((group.GroupKey, child.Value));
+                }
+            }
+
+            return combinations;
+        }
+        
+        /// <summary>
+        /// Gets whether this is using grouped filtering (has a GroupByColumn set)
+        /// </summary>
+        public bool IsGroupedFiltering => !string.IsNullOrEmpty(GroupByColumn);
 
         public override void SelectAll()
         {

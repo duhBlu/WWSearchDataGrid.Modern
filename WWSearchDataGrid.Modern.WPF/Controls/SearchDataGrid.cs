@@ -97,6 +97,11 @@ namespace WWSearchDataGrid.Modern.WPF
         /// Gets the dictionary of column property info
         /// </summary>
         internal Dictionary<string, System.Reflection.PropertyInfo> ColumnPropertyInfo { get; } = new Dictionary<string, System.Reflection.PropertyInfo>();
+        
+        /// <summary>
+        /// Gets the original unfiltered items source
+        /// </summary>
+        public System.Collections.IEnumerable OriginalItemsSource => originalItemsSource;
 
         #endregion
 
@@ -426,11 +431,23 @@ namespace WWSearchDataGrid.Modern.WPF
         {
             try
             {
-                // Get the property value
-                object propertyValue = ReflectionHelper.GetPropValue(item, filter.BindingPath);
-
-                // Evaluate using the search controller
-                return filter.SearchTemplateController.FilterExpression(propertyValue);
+                // Check if this is grouped filtering
+                if (filter.GroupedFilterCombinations != null && !string.IsNullOrEmpty(filter.GroupByColumnPath))
+                {
+                    // Grouped filtering: check both the group column and the current column
+                    var groupValue = ReflectionHelper.GetPropValue(item, filter.GroupByColumnPath);
+                    var currentValue = ReflectionHelper.GetPropValue(item, filter.BindingPath);
+                    
+                    // Check if this item matches any of the selected group-child combinations
+                    return filter.GroupedFilterCombinations.Any(c => 
+                        Equals(c.GroupKey, groupValue) && Equals(c.ChildValue, currentValue));
+                }
+                else
+                {
+                    // Standard filtering: get the property value and evaluate
+                    object propertyValue = ReflectionHelper.GetPropValue(item, filter.BindingPath);
+                    return filter.SearchTemplateController.FilterExpression(propertyValue);
+                }
             }
             catch
             {

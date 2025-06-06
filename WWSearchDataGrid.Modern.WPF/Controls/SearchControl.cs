@@ -53,6 +53,20 @@ namespace WWSearchDataGrid.Modern.WPF
                 new FrameworkPropertyMetadata(true, FrameworkPropertyMetadataOptions.Inherits));
 
         #endregion
+        
+        #region Grouped Filtering Properties
+        
+        /// <summary>
+        /// Stores grouped filter combinations for custom filtering
+        /// </summary>
+        public List<(object GroupKey, object ChildValue)> GroupedFilterCombinations { get; set; }
+        
+        /// <summary>
+        /// Gets or sets the GroupBy column path for grouped filtering
+        /// </summary>
+        public string GroupByColumnPath { get; set; }
+        
+        #endregion
 
         #region Properties
 

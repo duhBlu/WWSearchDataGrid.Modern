@@ -359,9 +359,10 @@ namespace WWSearchDataGrid.Modern.WPF
             if (DataContext is SearchControl searchControl)
             {
                 var bindingPath = searchControl.BindingPath;
-                if (!string.IsNullOrEmpty(bindingPath) && searchControl.SourceDataGrid?.Items != null)
+                if (!string.IsNullOrEmpty(bindingPath) && searchControl.SourceDataGrid?.OriginalItemsSource != null)
                 {
-                    var items = searchControl.SourceDataGrid.Items.Cast<object>().ToList();
+                    // Use the original unfiltered items source to preserve all possible values
+                    var items = searchControl.SourceDataGrid.OriginalItemsSource.Cast<object>().ToList();
                     await _cache.UpdateColumnValuesAsync(_columnKey, items, bindingPath);
 
                     // Update controller with cached values
@@ -807,12 +808,74 @@ namespace WWSearchDataGrid.Modern.WPF
         {
             if (FilterValueViewModel != null)
             {
-                var selectedValues = FilterValueViewModel.GetSelectedValues().ToList();
+                // Check if this is grouped filtering
+                if (FilterValueViewModel is GroupedTreeViewFilterValueViewModel groupedViewModel && groupedViewModel.IsGroupedFiltering)
+                {
+                    ApplyGroupedValueBasedFilter(groupedViewModel);
+                }
+                else
+                {
+                    // Standard flat filtering
+                    var selectedValues = FilterValueViewModel.GetSelectedValues().ToList();
 
-                // Only update if there are changes
+                    // Only update if there are changes
+                    if (selectedValues.Any())
+                    {
+                        // Clear and recreate more efficiently
+                        SearchTemplateController.SearchGroups.Clear();
+                        var group = new SearchTemplateGroup();
+                        SearchTemplateController.SearchGroups.Add(group);
+
+                        var template = new SearchTemplate(ColumnDataType)
+                        {
+                            SearchType = SearchType.IsAnyOf
+                        };
+
+                        // Batch add values
+                        template.SelectedValues.Clear();
+                        foreach (var value in selectedValues)
+                        {
+                            template.SelectedValues.Add(new FilterListValue { Value = value });
+                        }
+
+                        group.SearchTemplates.Add(template);
+                        SearchTemplateController.UpdateFilterExpression();
+                    }
+                }
+            }
+        }
+        
+        /// <summary>
+        /// Apply grouped filtering that respects group-child combinations
+        /// </summary>
+        private void ApplyGroupedValueBasedFilter(GroupedTreeViewFilterValueViewModel groupedViewModel)
+        {
+            var groupChildCombinations = groupedViewModel.GetSelectedGroupChildCombinations().ToList();
+            
+            if (!groupChildCombinations.Any())
+            {
+                // No selections - clear filters
+                SearchTemplateController.SearchGroups.Clear();
+                SearchTemplateController.AddSearchGroup();
+                SearchTemplateController.HasCustomExpression = false;
+                return;
+            }
+            
+            // Get the binding paths for both columns
+            string currentColumnPath = null;
+            string groupByColumnPath = groupedViewModel.GroupByColumn;
+            
+            if (DataContext is SearchControl searchControl)
+            {
+                currentColumnPath = searchControl.BindingPath;
+            }
+            
+            if (string.IsNullOrEmpty(currentColumnPath) || string.IsNullOrEmpty(groupByColumnPath))
+            {
+                // Fallback to regular filtering if we can't determine the paths
+                var selectedValues = groupedViewModel.GetSelectedValues().ToList();
                 if (selectedValues.Any())
                 {
-                    // Clear and recreate more efficiently
                     SearchTemplateController.SearchGroups.Clear();
                     var group = new SearchTemplateGroup();
                     SearchTemplateController.SearchGroups.Add(group);
@@ -822,8 +885,6 @@ namespace WWSearchDataGrid.Modern.WPF
                         SearchType = SearchType.IsAnyOf
                     };
 
-                    // Batch add values
-                    template.SelectedValues.Clear();
                     foreach (var value in selectedValues)
                     {
                         template.SelectedValues.Add(new FilterListValue { Value = value });
@@ -832,6 +893,49 @@ namespace WWSearchDataGrid.Modern.WPF
                     group.SearchTemplates.Add(template);
                     SearchTemplateController.UpdateFilterExpression();
                 }
+                return;
+            }
+            
+            // Clear existing groups and create a custom filter expression
+            SearchTemplateController.SearchGroups.Clear();
+            
+            // Create a custom filter expression that handles grouped logic
+            CreateGroupedFilterExpression(groupChildCombinations, currentColumnPath, groupByColumnPath);
+        }
+        
+        /// <summary>
+        /// Creates a custom filter expression for grouped filtering
+        /// </summary>
+        private void CreateGroupedFilterExpression(List<(object GroupKey, object ChildValue)> combinations, 
+            string currentColumnPath, string groupByColumnPath)
+        {
+            if (DataContext is SearchControl searchControl)
+            {
+                // Create a custom filter function that checks both the group column and current column
+                Func<object, bool> groupedFilter = columnValue =>
+                {
+                    try
+                    {
+                        // We need to check against the entire data item, not just the column value
+                        // Unfortunately, we only get the column value here, so we need a different approach
+                        
+                        // For now, return true if the column value matches any selected child value
+                        // This is a limitation - we'll need to enhance the SearchTemplateController
+                        return combinations.Any(c => Equals(c.ChildValue, columnValue));
+                    }
+                    catch
+                    {
+                        return false;
+                    }
+                };
+                
+                // Store the grouped combinations for use in a custom evaluation
+                searchControl.GroupedFilterCombinations = combinations;
+                searchControl.GroupByColumnPath = groupByColumnPath;
+                
+                // Set the filter expression on the controller
+                SearchTemplateController.FilterExpression = groupedFilter;
+                SearchTemplateController.HasCustomExpression = true;
             }
         }
 

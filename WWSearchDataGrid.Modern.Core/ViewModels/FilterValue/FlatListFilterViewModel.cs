@@ -127,21 +127,63 @@ namespace WWSearchDataGrid.Modern.Core
         {
             lock (_updateLock)
             {
-                _allItems.Clear();
-
-                var items = values
-                    .Select(v => new FilterValueItem
-                    {
-                        Value = v,
-                        DisplayValue = v?.ToString() ?? "(blank)",
-                        ItemCount = GetSafeValueCount(v, valueCounts),
-                        IsSelected = true
-                    })
-                    .OrderBy(i => i.DisplayValue);
-
-                foreach (var item in items)
+                // Create a lookup of existing items to preserve their selection state
+                // Use a more robust approach to handle null values
+                var existingItems = new Dictionary<string, FilterValueItem>();
+                foreach (var item in _allItems)
                 {
-                    item.PropertyChanged += OnItemPropertyChanged;
+                    var key = item.Value?.ToString() ?? "__NULL__";
+                    existingItems[key] = item;
+                }
+                
+                // Track which existing items we've seen in the new data
+                var seenKeys = new HashSet<string>();
+                
+                // Update existing items and add new ones
+                var newItems = values
+                    .Select(v => 
+                    {
+                        var key = v?.ToString() ?? "__NULL__";
+                        seenKeys.Add(key);
+                        
+                        if (existingItems.TryGetValue(key, out var existingItem))
+                        {
+                            // Update existing item's count but preserve selection state
+                            existingItem.ItemCount = GetSafeValueCount(v, valueCounts);
+                            return existingItem;
+                        }
+                        else
+                        {
+                            // Create new item with default selected state
+                            var newItem = new FilterValueItem
+                            {
+                                Value = v,
+                                DisplayValue = v?.ToString() ?? "(blank)",
+                                ItemCount = GetSafeValueCount(v, valueCounts),
+                                IsSelected = true
+                            };
+                            newItem.PropertyChanged += OnItemPropertyChanged;
+                            return newItem;
+                        }
+                    })
+                    .ToList();
+                
+                // Add any existing items that weren't in the new data (preserve unselected filtered values)
+                foreach (var kvp in existingItems)
+                {
+                    if (!seenKeys.Contains(kvp.Key))
+                    {
+                        // Keep the item but set count to 0 to indicate it's not in current data
+                        kvp.Value.ItemCount = 0;
+                        newItems.Add(kvp.Value);
+                    }
+                }
+                
+                // Clear and rebuild the collection
+                _allItems.Clear();
+                
+                foreach (var item in newItems.OrderBy(i => i.DisplayValue))
+                {
                     _allItems.Add(item);
                 }
             }
