@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace WWSearchDataGrid.Modern
+namespace WWSearchDataGrid.Modern.Core
 {
     /// <summary>
     /// Defines the available search operation types

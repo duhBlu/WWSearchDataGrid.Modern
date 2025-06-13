@@ -271,8 +271,7 @@
                             
                             <!-- FilterPanel -->
                             <sdg:FilterPanel x:Name="PART_FilterPanel"
-                                                Grid.Row="1"
-                                                FilterPanelViewModel="{Binding FilterPanelViewModel, RelativeSource={RelativeSource TemplatedParent}}" />
+                                                Grid.Row="1" />
                         </Grid>
                     </Border>
                 </ControlTemplate>

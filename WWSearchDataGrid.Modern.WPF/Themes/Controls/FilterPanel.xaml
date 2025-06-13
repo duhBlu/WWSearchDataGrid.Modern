@@ -190,7 +190,7 @@
                     <Border Background="#F8F9FA"
                             BorderBrush="#E1E5E9"
                             BorderThickness="0,1,0,0"
-                            Visibility="{Binding HasActiveFilters, Converter={StaticResource BooleanToVisibilityConverter}}"
+                            Visibility="{Binding HasActiveFilters, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource BooleanToVisibilityConverter}}"
                             Padding="12,8">
 
                         <Grid>
@@ -207,7 +207,7 @@
                             <CheckBox x:Name="PART_FiltersEnabledCheckBox"
                                       Style="{StaticResource FilterPanelEnableFilterCheckboxStyle}"
                                       Grid.Column="0"
-                                      IsChecked="{Binding FiltersEnabled}"
+                                      IsChecked="{Binding FiltersEnabled, RelativeSource={RelativeSource TemplatedParent}}"
                                       Margin="0,0,8,0"
                                       VerticalAlignment="Center"
                                       Content="Filters Active"
@@ -219,7 +219,7 @@
                                           HorizontalScrollBarVisibility="Auto"
                                           VerticalScrollBarVisibility="Disabled">
                                 <WrapPanel Orientation="Horizontal" ItemHeight="32">
-                                    <ItemsControl ItemsSource="{Binding ActiveFilters}">
+                                    <ItemsControl ItemsSource="{Binding ActiveFilters, RelativeSource={RelativeSource TemplatedParent}}">
                                         <ItemsControl.ItemsPanel>
                                             <ItemsPanelTemplate>
                                                 <WrapPanel Orientation="Horizontal" />
@@ -250,7 +250,7 @@
                                                     <!--  Close Button  -->
                                                     <Button Cursor="Hand"
                                                             Grid.Column="1"
-                                                            Command="{Binding DataContext.RemoveFilterCommand, RelativeSource={RelativeSource AncestorType=sdg:FilterPanel}}"
+                                                            Command="{Binding RemoveFilterCommand, RelativeSource={RelativeSource AncestorType=sdg:FilterPanel}}"
                                                             CommandParameter="{Binding}"
                                                             Margin="2"
                                                             HorizontalAlignment="Right"
@@ -323,13 +323,13 @@
 
                                 <Button x:Name="PART_EditButton"
                                         Style="{StaticResource FilterPanelActionButtonStyle}"
-                                        Command="{Binding EditFiltersCommand}"
+                                        Command="{Binding EditFiltersCommand, RelativeSource={RelativeSource TemplatedParent}}"
                                         Content="Edit"
                                         ToolTip="Open advanced filter editor" />
 
                                 <Button x:Name="PART_ClearAllButton"
                                         Style="{StaticResource FilterPanelActionButtonStyle}"
-                                        Command="{Binding ClearAllFiltersCommand}"
+                                        Command="{Binding ClearAllFiltersCommand, RelativeSource={RelativeSource TemplatedParent}}"
                                         Content="Clear All"
                                         ToolTip="Clear all filters" />
 

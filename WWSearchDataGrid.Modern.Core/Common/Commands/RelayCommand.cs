@@ -34,6 +34,11 @@ namespace WWSearchDataGrid.Modern.Core
         {
             execute(parameter);
         }
+
+        public void RaiseCanExecuteChanged()
+        {
+            CommandManager.InvalidateRequerySuggested();
+        }
     }
 
     public class RelayCommand<T> : ICommand
@@ -65,6 +70,11 @@ namespace WWSearchDataGrid.Modern.Core
         {
             if (parameter is T t)
                 execute(t);
+        }
+
+        public void RaiseCanExecuteChanged()
+        {
+            CommandManager.InvalidateRequerySuggested();
         }
     }
 

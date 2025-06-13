@@ -104,9 +104,9 @@ namespace WWSearchDataGrid.Modern.WPF
         public System.Collections.IEnumerable OriginalItemsSource => originalItemsSource;
 
         /// <summary>
-        /// Gets the filter panel view model
+        /// Gets the filter panel control
         /// </summary>
-        public FilterPanelViewModel FilterPanelViewModel { get; private set; }
+        public FilterPanel FilterPanel { get; private set; }
 
         #endregion
 
@@ -144,14 +144,43 @@ namespace WWSearchDataGrid.Modern.WPF
                 .FromProperty(ItemsControl.ItemsSourceProperty, typeof(SearchDataGrid))
                 .AddValueChanged(this, (s, e) => UpdateHasItemsProperty());
 
-            // Initialize FilterPanelViewModel
-            FilterPanelViewModel = new FilterPanelViewModel();
+            // Initialize FilterPanel
+            FilterPanel = new FilterPanel();
             
-            // Subscribe to FilterPanelViewModel events
-            FilterPanelViewModel.FiltersEnabledChanged += OnFiltersEnabledChanged;
-            FilterPanelViewModel.RemoveFilterRequested += OnRemoveFilterRequested;
-            FilterPanelViewModel.EditFiltersRequested += OnEditFiltersRequested;
-            FilterPanelViewModel.ClearAllFiltersRequested += OnClearAllFiltersRequested;
+            // Subscribe to FilterPanel events
+            FilterPanel.FiltersEnabledChanged += OnFiltersEnabledChanged;
+            FilterPanel.FilterRemoved += OnFilterRemoved;
+            FilterPanel.EditFiltersRequested += OnEditFiltersRequested;
+            FilterPanel.ClearAllFiltersRequested += OnClearAllFiltersRequested;
+        }
+
+        #endregion
+
+        #region Overrides
+
+        /// <summary>
+        /// When applying the template
+        /// </summary>
+        public override void OnApplyTemplate()
+        {
+            base.OnApplyTemplate();
+            
+            // Get the FilterPanel template part and connect it to our FilterPanel instance
+            if (GetTemplateChild("PART_FilterPanel") is FilterPanel templateFilterPanel && FilterPanel != null)
+            {
+                // Copy the current state from our FilterPanel to the template FilterPanel
+                templateFilterPanel.FiltersEnabled = FilterPanel.FiltersEnabled;
+                templateFilterPanel.UpdateActiveFilters(FilterPanel.ActiveFilters);
+                
+                // Wire up events from template FilterPanel to our FilterPanel events
+                templateFilterPanel.FiltersEnabledChanged += (s, e) => OnFiltersEnabledChanged(s, e);
+                templateFilterPanel.FilterRemoved += (s, e) => OnFilterRemoved(s, e);
+                templateFilterPanel.EditFiltersRequested += (s, e) => OnEditFiltersRequested(s, e);
+                templateFilterPanel.ClearAllFiltersRequested += (s, e) => OnClearAllFiltersRequested(s, e);
+                
+                // Replace our FilterPanel property with the template instance so updates go to the right place
+                FilterPanel = templateFilterPanel;
+            }
         }
 
         #endregion
@@ -640,10 +669,10 @@ namespace WWSearchDataGrid.Modern.WPF
         /// </summary>
         public void UpdateFilterPanel()
         {
-            if (FilterPanelViewModel != null)
+            if (FilterPanel != null)
             {
                 var activeFilters = GetActiveColumnFilters();
-                FilterPanelViewModel.UpdateActiveFilters(activeFilters);
+                FilterPanel.UpdateActiveFilters(activeFilters);
             }
         }
 
@@ -677,7 +706,7 @@ namespace WWSearchDataGrid.Modern.WPF
         /// <summary>
         /// Handles requests to remove a specific filter
         /// </summary>
-        private void OnRemoveFilterRequested(object sender, RemoveFilterEventArgs e)
+        private void OnFilterRemoved(object sender, RemoveFilterEventArgs e)
         {
             try
             {
@@ -690,7 +719,7 @@ namespace WWSearchDataGrid.Modern.WPF
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error in OnRemoveFilterRequested: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"Error in OnFilterRemoved: {ex.Message}");
             }
         }
 
