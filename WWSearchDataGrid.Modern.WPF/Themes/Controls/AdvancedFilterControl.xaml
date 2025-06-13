@@ -25,9 +25,7 @@
                   VerticalContentAlignment="Center"
                   MinWidth="150"
                   IsEditable="True"
-                  ItemsSource="{Binding AvailableValues}" >
-            
-        </ComboBox>
+                  ItemsSource="{Binding AvailableValues}" />
     </DataTemplate>
 
     <!--  Dual ComboBox Template  -->
@@ -36,7 +34,7 @@
             <TextBlock Text="From:"
                        Margin="0,0,5,0"
                        VerticalAlignment="Center" />
-            <ComboBox Text="{Binding SelectedValue}"
+            <ComboBox Text="{Binding SelectedValue, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
                       VerticalContentAlignment="Center"
                       MinWidth="120"
                       IsEditable="True"
@@ -44,7 +42,7 @@
             <TextBlock Text="To:"
                        Margin="10,0,5,0"
                        VerticalAlignment="Center" />
-            <ComboBox Text="{Binding SelectedSecondaryValue}"
+            <ComboBox Text="{Binding SelectedSecondaryValue, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
                       VerticalContentAlignment="Center"
                       MinWidth="120"
                       IsEditable="True"
@@ -189,10 +187,9 @@
             <ItemsControl ItemsSource="{Binding DateIntervals}">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                        <CheckBox IsChecked="{Binding IsSelected}"
-                              Margin="0,2">
+                        <CheckBox IsChecked="{Binding IsSelected}" Margin="0,2">
                             <CheckBox.Content>
-                                    <TextBlock Text="{Binding DisplayName}" />
+                                <TextBlock Text="{Binding DisplayName}" />
                             </CheckBox.Content>
                         </CheckBox>
                     </DataTemplate>
@@ -201,6 +198,125 @@
         </ScrollViewer>
     </DataTemplate>
 
+    <DataTemplate x:Key="SearchGroupContentTemplate" DataType="{x:Type sdgCore:SearchTemplateGroup}">
+        <ItemsControl ItemsSource="{Binding SearchTemplates}">
+            <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                    <StackPanel Orientation="Vertical"
+                                Margin="0,4"
+                                HorizontalAlignment="Stretch">
+                        <Border Background="#FAFAFA"
+                                BorderBrush="#DDD"
+                                BorderThickness="1"
+                                Padding="6"
+                                CornerRadius="8">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+
+                                <!--  Filter Type Row  -->
+                                <Grid Grid.Row="0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <TextBlock x:Name="DragHandle"
+                                               Grid.Column="0"
+                                               Text="&#xEDD6;"
+                                               Margin="0,0,8,0"
+                                               VerticalAlignment="Center"
+                                               FontFamily="Segoe MDL2 Assets"
+                                               ToolTip="Grip Handle" />
+
+                                    <ComboBox Grid.Column="1"
+                                              Visibility="{Binding IsOperatorVisible, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                              Margin="0,0,8,0"
+                                              VerticalContentAlignment="Center"
+                                              Width="80"
+                                              ItemsSource="{Binding SearchTemplateController.LogicalOperators, RelativeSource={RelativeSource AncestorType=sdg:AdvancedFilterControl}}"
+                                              SelectedItem="{Binding OperatorName}" />
+
+                                    <ComboBox x:Name="PART_SearchTypeCombo"
+                                              Grid.Column="2"
+                                              Margin="0,0,8,0"
+                                              VerticalContentAlignment="Center"
+                                              Width="180"
+                                              ItemsSource="{Binding ValidSearchTypes}"
+                                              SelectedItem="{Binding SearchType}">
+                                        <ComboBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding Converter={StaticResource EnumToStringConverter}}" />
+                                            </DataTemplate>
+                                        </ComboBox.ItemTemplate>
+                                    </ComboBox>
+
+                                    <!--  Buttons  -->
+                                    <StackPanel Grid.Column="4" Orientation="Horizontal">
+                                        <Button Command="{Binding RemoveSearchTemplateCommand, RelativeSource={RelativeSource AncestorType=sdg:AdvancedFilterControl}}"
+                                                CommandParameter="{Binding}"
+                                                Margin="0,0,4,0"
+                                                Height="{Binding ActualWidth, RelativeSource={RelativeSource Self}}"
+                                                ToolTip="Remove"
+                                                FontFamily="Segoe MDL2 Assets"
+                                                Content="&#xE10A;" />
+                                        <Button Command="{Binding AddSearchTemplateCommand, RelativeSource={RelativeSource AncestorType=sdg:AdvancedFilterControl}}"
+                                                CommandParameter="{Binding}"
+                                                Height="{Binding ActualWidth, RelativeSource={RelativeSource Self}}"
+                                                ToolTip="Add"
+                                                FontFamily="Segoe MDL2 Assets"
+                                                Content="&#xE109;" />
+                                    </StackPanel>
+                                </Grid>
+
+                                <!--  Value Input Row  -->
+                                <ContentControl x:Name="PART_ValueInput"
+                                                Grid.Row="1"
+                                                Margin="0,8,0,0"
+                                                Content="{Binding}">
+                                    <ContentControl.Style>
+                                        <Style TargetType="ContentControl">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding InputTemplate}" Value="SingleComboBox">
+                                                    <Setter Property="ContentTemplate" Value="{StaticResource SingleComboBoxTemplate}" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding InputTemplate}" Value="DualComboBox">
+                                                    <Setter Property="ContentTemplate" Value="{StaticResource DualComboBoxTemplate}" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding InputTemplate}" Value="DualDateTimePicker">
+                                                    <Setter Property="ContentTemplate" Value="{StaticResource DualDateTimePickerTemplate}" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding InputTemplate}" Value="NumericUpDown">
+                                                    <Setter Property="ContentTemplate" Value="{StaticResource NumericUpDownTemplate}" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding InputTemplate}" Value="NoInput">
+                                                    <Setter Property="ContentTemplate" Value="{StaticResource NoInputTemplate}" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding InputTemplate}" Value="ComboBoxList">
+                                                    <Setter Property="ContentTemplate" Value="{StaticResource ComboBoxListTemplate}" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding InputTemplate}" Value="DateTimePickerList">
+                                                    <Setter Property="ContentTemplate" Value="{StaticResource DateTimePickerListTemplate}" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding InputTemplate}" Value="DateIntervalCheckList">
+                                                    <Setter Property="ContentTemplate" Value="{StaticResource DateIntervalCheckListTemplate}" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </ContentControl.Style>
+                                </ContentControl>
+                            </Grid>
+                        </Border>
+                    </StackPanel>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+    </DataTemplate>
 
     <!--  AdvancedFilterControl Style  -->
     <Style TargetType="{x:Type sdg:AdvancedFilterControl}">
@@ -240,177 +356,71 @@
                                             <ListBox.ItemContainerStyle>
                                                 <Style TargetType="{x:Type ListBoxItem}">
                                                     <Setter Property="HorizontalAlignment" Value="Stretch" />
+                                                    <Setter Property="HorizontalContentAlignment" Value="Center" />
+                                                    <Setter Property="Background" Value="Transparent" />
+                                                    <Setter Property="BorderBrush" Value="Transparent" />
                                                 </Style>
                                             </ListBox.ItemContainerStyle>
                                             <ListBox.ItemTemplate>
                                                 <DataTemplate DataType="{x:Type sdgCore:SearchTemplateGroup}">
-                                                    <GroupBox Margin="0,0,0,10"
-                                                              Padding="8">
-                                                        <GroupBox.Style>
-                                                            <Style TargetType="GroupBox">
-                                                                <Setter Property="Header" Value="{Binding GroupNumber, StringFormat='Group {0}'}" />
+                                                    <ContentControl Content="{Binding}">
+                                                        <ContentControl.Style>
+                                                            <Style TargetType="ContentControl">
+                                                                <Setter Property="ContentTemplate">
+                                                                    <Setter.Value>
+                                                                        <DataTemplate>
+                                                                            <GroupBox Margin="0,0,0,10"
+                                                                                      Padding="8"
+                                                                                      Header="{Binding GroupNumber, StringFormat='Group {0}'}">
+                                                                                <GroupBox.HeaderTemplate>
+                                                                                    <DataTemplate>
+                                                                                        <DockPanel Margin="0,0,0,5" LastChildFill="True">
+                                                                                            <ComboBox DockPanel.Dock="Left"
+                                                                                                      Visibility="{Binding DataContext.IsOperatorVisible, RelativeSource={RelativeSource AncestorType=GroupBox}, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                                                                                      Margin="0,0,8,0"
+                                                                                                      Width="80"
+                                                                                                      ItemsSource="{Binding SearchTemplateController.LogicalOperators, RelativeSource={RelativeSource AncestorType=sdg:AdvancedFilterControl}}"
+                                                                                                      SelectedItem="{Binding DataContext.OperatorName, RelativeSource={RelativeSource AncestorType=GroupBox}}" />
+                                                                                            <StackPanel DockPanel.Dock="Right"
+                                                                                                        Orientation="Horizontal"
+                                                                                                        Visibility="{Binding SearchTemplateController.AllowMultipleGroups, RelativeSource={RelativeSource AncestorType=sdg:AdvancedFilterControl}, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                                                                                <Button Command="{Binding RemoveSearchGroupCommand, RelativeSource={RelativeSource AncestorType=sdg:AdvancedFilterControl}}"
+                                                                                                        CommandParameter="{Binding}"
+                                                                                                        Margin="0,0,5,0"
+                                                                                                        Height="{Binding ActualWidth, RelativeSource={RelativeSource Self}}"
+                                                                                                        ToolTip="Remove Group"
+                                                                                                        FontFamily="Segoe MDL2 Assets"
+                                                                                                        Content="&#xE10A;" />
+                                                                                                <Button Command="{Binding AddSearchGroupCommand, RelativeSource={RelativeSource AncestorType=sdg:AdvancedFilterControl}}"
+                                                                                                        CommandParameter="{Binding}"
+                                                                                                        Height="{Binding ActualWidth, RelativeSource={RelativeSource Self}}"
+                                                                                                        ToolTip="Add Group"
+                                                                                                        FontFamily="Segoe MDL2 Assets"
+                                                                                                        Content="&#xE109;" />
+                                                                                            </StackPanel>
+                                                                                        </DockPanel>
+                                                                                    </DataTemplate>
+                                                                                </GroupBox.HeaderTemplate>
+                                                                                <ContentPresenter Content="{Binding}" ContentTemplate="{StaticResource SearchGroupContentTemplate}" />
+                                                                            </GroupBox>
+                                                                        </DataTemplate>
+                                                                    </Setter.Value>
+                                                                </Setter>
+                                                                <!--  Flat template if AllowMultipleGroups is false  -->
                                                                 <Style.Triggers>
-                                                                    <!-- Hide group numbering when AllowMultipleGroups is false -->
                                                                     <DataTrigger Binding="{Binding SearchTemplateController.AllowMultipleGroups, RelativeSource={RelativeSource AncestorType=sdg:AdvancedFilterControl}}" Value="False">
-                                                                        <Setter Property="Header" Value="Filter Rules" />
+                                                                        <Setter Property="ContentTemplate">
+                                                                            <Setter.Value>
+                                                                                <DataTemplate>
+                                                                                    <ContentPresenter Content="{Binding}" ContentTemplate="{StaticResource SearchGroupContentTemplate}" />
+                                                                                </DataTemplate>
+                                                                            </Setter.Value>
+                                                                        </Setter>
                                                                     </DataTrigger>
                                                                 </Style.Triggers>
                                                             </Style>
-                                                        </GroupBox.Style>
-                                                        <GroupBox.HeaderTemplate>
-                                                            <DataTemplate>
-                                                                <DockPanel Margin="0,0,0,5" LastChildFill="True">
-                                                                    <ComboBox DockPanel.Dock="Left"
-                                                                              Visibility="{Binding DataContext.IsOperatorVisible, RelativeSource={RelativeSource AncestorType=GroupBox}, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                                                              Margin="0,0,8,0"
-                                                                              Width="80"
-                                                                              ItemsSource="{Binding SearchTemplateController.LogicalOperators, RelativeSource={RelativeSource AncestorType=sdg:AdvancedFilterControl}}"
-                                                                              SelectedItem="{Binding DataContext.OperatorName, RelativeSource={RelativeSource AncestorType=GroupBox}}" />
-
-                                                                    <StackPanel DockPanel.Dock="Right" 
-                                                                                Orientation="Horizontal"
-                                                                                Visibility="{Binding SearchTemplateController.AllowMultipleGroups, RelativeSource={RelativeSource AncestorType=sdg:AdvancedFilterControl}, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                                                        <Button Command="{Binding RemoveSearchGroupCommand, RelativeSource={RelativeSource AncestorType=sdg:AdvancedFilterControl}}"
-                                                                                CommandParameter="{Binding}"
-                                                                                Margin="0,0,5,0"
-                                                                                Height="{Binding ActualWidth, RelativeSource={RelativeSource Self}}"
-                                                                                ToolTip="Remove Group"
-                                                                                FontFamily="Segoe MDL2 Assets"
-                                                                                Content="&#xE10A;" />
-
-                                                                        <Button Command="{Binding AddSearchGroupCommand, RelativeSource={RelativeSource AncestorType=sdg:AdvancedFilterControl}}"
-                                                                                CommandParameter="{Binding}"
-                                                                                Height="{Binding ActualWidth, RelativeSource={RelativeSource Self}}"
-                                                                                ToolTip="Add Group"
-                                                                                FontFamily="Segoe MDL2 Assets"
-                                                                                Content="&#xE109;" />
-                                                                    </StackPanel>
-                                                                </DockPanel>
-                                                            </DataTemplate>
-                                                        </GroupBox.HeaderTemplate>
-
-                                                        <!--  Templates in Group  -->
-                                                        <ItemsControl ItemsSource="{Binding SearchTemplates}">
-                                                            <ItemsControl.ItemTemplate>
-                                                                <DataTemplate>
-                                                                    <StackPanel Orientation="Vertical"
-                                                                                Margin="0,4"
-                                                                                HorizontalAlignment="Stretch">
-                                                                        <Border Background="#FAFAFA"
-                                                                                BorderBrush="#DDD"
-                                                                                BorderThickness="1"
-                                                                                Padding="6">
-                                                                            <Grid>
-                                                                                <Grid.RowDefinitions>
-                                                                                    <RowDefinition Height="Auto" />
-                                                                                    <RowDefinition Height="Auto" />
-                                                                                </Grid.RowDefinitions>
-
-                                                                                <!--  Filter Type Row  -->
-                                                                                <Grid Grid.Row="0">
-                                                                                    <Grid.ColumnDefinitions>
-                                                                                        <ColumnDefinition Width="Auto" />
-                                                                                        <ColumnDefinition Width="Auto" />
-                                                                                        <ColumnDefinition Width="Auto" />
-                                                                                        <ColumnDefinition Width="*" />
-                                                                                        <ColumnDefinition Width="Auto" />
-                                                                                    </Grid.ColumnDefinitions>
-
-                                                                                    <!--  Drag Handle  -->
-                                                                                    <TextBlock x:Name="DragHandle"
-                                                                                               Grid.Column="0"
-                                                                                               Text="&#xEDD6;"
-                                                                                               Margin="0,0,8,0"
-                                                                                               VerticalAlignment="Center"
-                                                                                               FontFamily="Segoe MDL2 Assets"
-                                                                                               ToolTip="Grip Handle" />
-
-                                                                                    <!--  Operator  -->
-                                                                                    <ComboBox Grid.Column="1"
-                                                                                              Visibility="{Binding IsOperatorVisible, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                                                                              Margin="0,0,8,0"
-                                                                                              VerticalContentAlignment="Center"
-                                                                                              Width="80"
-                                                                                              ItemsSource="{Binding SearchTemplateController.LogicalOperators, RelativeSource={RelativeSource AncestorType=sdg:AdvancedFilterControl}}"
-                                                                                              SelectedItem="{Binding OperatorName}" />
-
-                                                                                    <!--  Search Type  -->
-                                                                                    <ComboBox x:Name="PART_SearchTypeCombo"
-                                                                                              Grid.Column="2"
-                                                                                              Margin="0,0,8,0"
-                                                                                              VerticalContentAlignment="Center"
-                                                                                              Width="180"
-                                                                                              ItemsSource="{Binding ValidSearchTypes}"
-                                                                                              SelectedItem="{Binding SearchType}">
-                                                                                        <ComboBox.ItemTemplate>
-                                                                                            <DataTemplate>
-                                                                                                    <TextBlock Text="{Binding Converter={StaticResource EnumToStringConverter}}" />
-                                                                                            </DataTemplate>
-                                                                                        </ComboBox.ItemTemplate>
-                                                                                    </ComboBox>
-
-                                                                                    <!--  Buttons  -->
-                                                                                    <StackPanel Grid.Column="4" Orientation="Horizontal">
-                                                                                        <Button Command="{Binding RemoveSearchTemplateCommand, RelativeSource={RelativeSource AncestorType=sdg:AdvancedFilterControl}}"
-                                                                                                CommandParameter="{Binding}"
-                                                                                                Margin="0,0,4,0"
-                                                                                                Height="{Binding ActualWidth, RelativeSource={RelativeSource Self}}"
-                                                                                                ToolTip="Remove"
-                                                                                                FontFamily="Segoe MDL2 Assets"
-                                                                                                Content="&#xE10A;" />
-
-                                                                                        <Button Command="{Binding AddSearchTemplateCommand, RelativeSource={RelativeSource AncestorType=sdg:AdvancedFilterControl}}"
-                                                                                                CommandParameter="{Binding}"
-                                                                                                Height="{Binding ActualWidth, RelativeSource={RelativeSource Self}}"
-                                                                                                ToolTip="Add"
-                                                                                                FontFamily="Segoe MDL2 Assets"
-                                                                                                Content="&#xE109;" />
-                                                                                    </StackPanel>
-                                                                                </Grid>
-
-                                                                                <!--  Value Input Row  -->
-                                                                                <ContentControl x:Name="PART_ValueInput"
-                                                                                                Grid.Row="1"
-                                                                                                Margin="0,8,0,0"
-                                                                                                Content="{Binding}">
-                                                                                    <ContentControl.Style>
-                                                                                        <Style TargetType="ContentControl">
-                                                                                            <Style.Triggers>
-                                                                                                <DataTrigger Binding="{Binding InputTemplate}" Value="SingleComboBox">
-                                                                                                    <Setter Property="ContentTemplate" Value="{StaticResource SingleComboBoxTemplate}" />
-                                                                                                </DataTrigger>
-                                                                                                <DataTrigger Binding="{Binding InputTemplate}" Value="DualComboBox">
-                                                                                                    <Setter Property="ContentTemplate" Value="{StaticResource DualComboBoxTemplate}" />
-                                                                                                </DataTrigger>
-                                                                                                <DataTrigger Binding="{Binding InputTemplate}" Value="DualDateTimePicker">
-                                                                                                    <Setter Property="ContentTemplate" Value="{StaticResource DualDateTimePickerTemplate}" />
-                                                                                                </DataTrigger>
-                                                                                                <DataTrigger Binding="{Binding InputTemplate}" Value="NumericUpDown">
-                                                                                                    <Setter Property="ContentTemplate" Value="{StaticResource NumericUpDownTemplate}" />
-                                                                                                </DataTrigger>
-                                                                                                <DataTrigger Binding="{Binding InputTemplate}" Value="NoInput">
-                                                                                                    <Setter Property="ContentTemplate" Value="{StaticResource NoInputTemplate}" />
-                                                                                                </DataTrigger>
-                                                                                                <DataTrigger Binding="{Binding InputTemplate}" Value="ComboBoxList">
-                                                                                                    <Setter Property="ContentTemplate" Value="{StaticResource ComboBoxListTemplate}" />
-                                                                                                </DataTrigger>
-                                                                                                <DataTrigger Binding="{Binding InputTemplate}" Value="DateTimePickerList">
-                                                                                                    <Setter Property="ContentTemplate" Value="{StaticResource DateTimePickerListTemplate}" />
-                                                                                                </DataTrigger>
-                                                                                                <DataTrigger Binding="{Binding InputTemplate}" Value="DateIntervalCheckList">
-                                                                                                    <Setter Property="ContentTemplate" Value="{StaticResource DateIntervalCheckListTemplate}" />
-                                                                                                </DataTrigger>
-                                                                                            </Style.Triggers>
-                                                                                        </Style>
-                                                                                    </ContentControl.Style>
-                                                                                </ContentControl>
-                                                                            </Grid>
-                                                                        </Border>
-                                                                    </StackPanel>
-                                                                </DataTemplate>
-                                                            </ItemsControl.ItemTemplate>
-                                                        </ItemsControl>
-                                                    </GroupBox>
+                                                        </ContentControl.Style>
+                                                    </ContentControl>
                                                 </DataTemplate>
                                             </ListBox.ItemTemplate>
                                         </ListBox>
@@ -418,11 +428,11 @@
                                 </TabItem>
 
                                 <!--  Filter Values Tab  -->
-                                <TabItem x:Name="PART_FilterValuesTab" Header="Filter Values">
-                                        <!--  Values Content  -->
-                                        <ContentControl x:Name="PART_FilterValuesContent"
-                                                        Content="{Binding FilterValueViewModel, RelativeSource={RelativeSource TemplatedParent}}"
-                                                        ContentTemplateSelector="{StaticResource FilterValueTemplateSelector}" />
+                                <TabItem x:Name="PART_FilterValuesTab" Header="Filter Values" IsSelected="True">
+                                    <!--  Values Content  -->
+                                    <ContentControl x:Name="PART_FilterValuesContent"
+                                                    Content="{Binding FilterValueViewModel, RelativeSource={RelativeSource TemplatedParent}}"
+                                                    ContentTemplateSelector="{StaticResource FilterValueTemplateSelector}" />
                                 </TabItem>
                             </TabControl>
 

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -93,6 +94,69 @@ namespace WWSearchDataGrid.Modern.Core.Performance
                 // Invalidate related view models
                 InvalidateFilterViewModels(columnKey);
             });
+        }
+
+        /// <summary>
+        /// Updates the cache incrementally when items are added or removed
+        /// </summary>
+        public async Task UpdateColumnValuesIncrementalAsync(string columnKey, NotifyCollectionChangedEventArgs e, string bindingPath)
+        {
+            var metadata = GetOrCreateMetadata(columnKey, bindingPath);
+
+            await Task.Run(() =>
+            {
+                lock (metadata.SyncRoot)
+                {
+                    switch (e.Action)
+                    {
+                        case NotifyCollectionChangedAction.Add:
+                            if (e.NewItems != null)
+                            {
+                                foreach (var item in e.NewItems)
+                                {
+                                    var value = ReflectionHelper.GetPropValue(item, bindingPath);
+                                    metadata.Values.Add(value);
+
+                                    if (metadata.ValueCounts.ContainsKey(value))
+                                        metadata.ValueCounts[value]++;
+                                    else
+                                        metadata.ValueCounts[value] = 1;
+                                }
+                                UpdateSortedValues(metadata);
+                            }
+                            break;
+
+                        case NotifyCollectionChangedAction.Remove:
+                            if (e.OldItems != null)
+                            {
+                                foreach (var item in e.OldItems)
+                                {
+                                    var value = ReflectionHelper.GetPropValue(item, bindingPath);
+                                    if (metadata.ValueCounts.ContainsKey(value))
+                                    {
+                                        metadata.ValueCounts[value]--;
+                                        if (metadata.ValueCounts[value] <= 0)
+                                        {
+                                            metadata.Values.Remove(value);
+                                            metadata.ValueCounts.Remove(value);
+                                        }
+                                    }
+                                }
+                                UpdateSortedValues(metadata);
+                            }
+                            break;
+
+                        default:
+                            // For other actions, do a full reload
+                            return;
+                    }
+
+                    metadata.LastUpdated = DateTime.Now;
+                }
+            });
+
+            // Notify any listening filter view models
+            InvalidateFilterViewModels(columnKey);
         }
 
         /// <summary>

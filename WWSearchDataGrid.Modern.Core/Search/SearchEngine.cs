@@ -22,37 +22,70 @@ namespace WWSearchDataGrid.Modern.Core
         {
             try
             {
+                // Handle null cases first
+                if (columnValue == null && comparisonValue == null)
+                    return 0;
                 if (columnValue == null)
-                {
-                    return comparisonValue == null ? 0 : -1;
-                }
-
+                    return -1;
                 if (comparisonValue == null)
-                {
                     return 1;
-                }
 
+                // Convert both values to the same type for comparison
                 if (searchCondition.IsDateTime)
                 {
-                    return ((IComparable)columnValue).CompareTo(comparisonValue);
-                }
+                    var columnDate = ConvertToDateTime(columnValue);
+                    var comparisonDate = ConvertToDateTime(comparisonValue);
 
-                if (searchCondition.IsNumeric)
+                    if (columnDate.HasValue && comparisonDate.HasValue)
+                        return columnDate.Value.CompareTo(comparisonDate.Value);
+                }
+                else if (searchCondition.IsNumeric)
                 {
-                    return ((IComparable)columnValue).CompareTo(comparisonValue);
-                }
+                    var columnDecimal = ConvertToDecimal(columnValue);
+                    var comparisonDecimal = ConvertToDecimal(comparisonValue);
 
-                if (searchCondition.IsString)
+                    if (columnDecimal.HasValue && comparisonDecimal.HasValue)
+                        return columnDecimal.Value.CompareTo(comparisonDecimal.Value);
+                }
+                else if (searchCondition.IsString)
                 {
-                    return columnValue.ToStringEmptyIfNull().ToLower().CompareTo(comparisonValue);
+                    var columnString = columnValue.ToString().ToLower();
+                    var comparisonString = comparisonValue.ToString().ToLower();
+                    return string.Compare(columnString, comparisonString, StringComparison.OrdinalIgnoreCase);
                 }
 
-                return columnValue.ToStringEmptyIfNull().CompareTo(searchCondition.StringValue);
+                // Fallback to string comparison
+                return string.Compare(columnValue.ToString(), comparisonValue.ToString(), StringComparison.OrdinalIgnoreCase);
             }
-            catch (ArgumentException ex)
+            catch (Exception ex)
             {
-                throw new InvalidSearchException("The search criteria does not match the corresponding column type.", ex);
+                System.Diagnostics.Debug.WriteLine($"Error in CompareValues: {ex.Message}");
+                throw new InvalidSearchException($"Unable to compare values: {ex.Message}", ex);
             }
+        }
+
+        private static DateTime? ConvertToDateTime(object value)
+        {
+            if (value is DateTime dt)
+                return dt;
+            if (DateTime.TryParse(value.ToString(), out DateTime parsed))
+                return parsed;
+            return null;
+        }
+
+        private static decimal? ConvertToDecimal(object value)
+        {
+            if (value is decimal dec)
+                return dec;
+            if (value is int i)
+                return (decimal)i;
+            if (value is double d)
+                return (decimal)d;
+            if (value is float f)
+                return (decimal)f;
+            if (decimal.TryParse(value.ToString(), out decimal parsed))
+                return parsed;
+            return null;
         }
 
         /// <summary>

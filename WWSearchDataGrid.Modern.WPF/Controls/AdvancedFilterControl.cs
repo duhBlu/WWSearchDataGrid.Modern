@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
@@ -328,6 +329,13 @@ namespace WWSearchDataGrid.Modern.WPF
             {
                 tabControl.SelectionChanged += OnTabControlSelectionChanged;
             }
+
+            if (DataContext is SearchControl searchControl && searchControl.SourceDataGrid != null)
+            {
+                searchControl.SourceDataGrid.CollectionChanged += OnSourceDataGridCollectionChanged;
+                searchControl.SourceDataGrid.ItemsSourceChanged += OnItemsSourceChanged;
+            }
+
         }
 
         /// <summary>
@@ -648,6 +656,57 @@ namespace WWSearchDataGrid.Modern.WPF
             }
 
             _pendingTab = null;
+        }
+
+        private async void OnSourceDataGridCollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
+        {
+            if (string.IsNullOrEmpty(_columnKey) || DataContext is not SearchControl searchControl)
+                return;
+
+            try
+            {
+                // Try incremental update first
+                if (e.Action == NotifyCollectionChangedAction.Add || e.Action == NotifyCollectionChangedAction.Remove)
+                {
+                    await _cache.UpdateColumnValuesIncrementalAsync(_columnKey, e, searchControl.BindingPath);
+                }
+                else
+                {
+                    // Fall back to full reload for complex changes
+                    var items = searchControl.SourceDataGrid.OriginalItemsSource?.Cast<object>().ToList();
+                    if (items?.Any() == true)
+                    {
+                        await _cache.UpdateColumnValuesAsync(_columnKey, items, searchControl.BindingPath);
+                    }
+                }
+
+                await RefreshFilterValueViewModel();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error updating filter values: {ex.Message}");
+            }
+        }
+
+        private async void OnItemsSourceChanged(object sender, EventArgs e)
+        {
+            // Reload all column values when the entire ItemsSource changes
+            await LoadColumnValuesAsync();
+            await RefreshFilterValueViewModel();
+        }
+
+        private async Task RefreshFilterValueViewModel()
+        {
+            if (FilterValueViewModel != null && DataContext is SearchControl searchControl)
+            {
+                var metadata = _cache.GetOrCreateMetadata(_columnKey, searchControl.BindingPath);
+
+                // Reload the view model with updated values
+                FilterValueViewModel.LoadValuesWithCounts(metadata.Values, metadata.ValueCounts);
+
+                // Update UI
+                UpdateValueSelectionSummary();
+            }
         }
 
         /// <summary>
@@ -990,6 +1049,12 @@ namespace WWSearchDataGrid.Modern.WPF
                 tabControl.SelectionChanged -= OnTabControlSelectionChanged;
             }
 
+            if (DataContext is SearchControl searchControl && searchControl.SourceDataGrid != null)
+            {
+                searchControl.SourceDataGrid.CollectionChanged -= OnSourceDataGridCollectionChanged;
+                searchControl.SourceDataGrid.ItemsSourceChanged -= OnItemsSourceChanged;
+            }
+
             _isInitialized = false;
         }
 
@@ -1010,26 +1075,5 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         #endregion
-    }
-
-    /// <summary>
-    /// Extension methods for performance
-    /// </summary>
-    public static class PerformanceExtensions
-    {
-        /// <summary>
-        /// Executes an action after a delay, cancelling any previous pending execution
-        /// </summary>
-        public static void Debounce(this DispatcherTimer timer, TimeSpan delay, Action action)
-        {
-            timer.Stop();
-            timer.Interval = delay;
-            timer.Tick += (s, e) =>
-            {
-                timer.Stop();
-                action();
-            };
-            timer.Start();
-        }
     }
 }

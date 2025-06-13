@@ -75,6 +75,5 @@ namespace WWSearchDataGrid.Modern.Core
                 OnPropertyChanged(nameof(IsSelected));
             }
         }
-
     }
 }

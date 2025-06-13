@@ -140,7 +140,7 @@ namespace WWSearchDataGrid.Modern.Core
         /// </summary>
         /// <param name="value">Value to convert</param>
         /// <returns>Converted value</returns>
-        private object ConvertValue(object value)
+        private object ConvertValueInternal(object value)
         {
             if (value == null || string.IsNullOrWhiteSpace(value.ToString()) || value.ToString() == "custom filter")
             {
@@ -151,32 +151,30 @@ namespace WWSearchDataGrid.Modern.Core
 
             if (TargetType != null)
             {
-                underlyingType = Nullable.GetUnderlyingType(TargetType) ?? TargetType;
-                ResetTypeFlags();
+                var underlyingType = Nullable.GetUnderlyingType(TargetType) ?? TargetType;
 
                 if (underlyingType == typeof(DateTime))
                 {
-                    IsDateTime = DateTime.TryParse(stringValue, out DateTime dateTimeValue);
-                    return IsDateTime ? Convert.ChangeType(value, underlyingType) : value;
+                    if (DateTime.TryParse(stringValue, out DateTime dateTimeValue))
+                        return Convert.ChangeType(value, underlyingType);
                 }
-                if (decimal.TryParse(stringValue, out decimal decimalValue))
+                else if (IsNumericType(underlyingType))
                 {
-                    IsNumeric = true;
-                    return Convert.ChangeType(value, underlyingType);
+                    if (decimal.TryParse(stringValue, out decimal decimalValue))
+                        return Convert.ChangeType(value, underlyingType);
                 }
-                if (value is bool)
+                else if (underlyingType == typeof(bool))
                 {
-                    IsBoolean = true;
-                    return Convert.ChangeType(value, underlyingType);
+                    if (value is bool)
+                        return Convert.ChangeType(value, underlyingType);
                 }
-                if (value is string)
+                else if (underlyingType == typeof(string))
                 {
-                    IsString = true;
                     return stringValue.ToLower();
                 }
             }
 
-            return null;
+            return value; // Return original value if no conversion needed
         }
 
         /// <summary>
@@ -184,44 +182,61 @@ namespace WWSearchDataGrid.Modern.Core
         /// </summary>
         private void OrderRangeValues()
         {
-            if (IsNumeric && SecondaryValue != null)
+            if (PrimaryValue != null && SecondaryValue != null)
             {
-                decimal primaryDecimal = Convert.ToDecimal(PrimaryValue);
-                decimal secondaryDecimal = Convert.ToDecimal(SecondaryValue);
-
-                if (primaryDecimal > secondaryDecimal)
+                if (IsNumeric)
                 {
-                    var temp = PrimaryValue;
-                    PrimaryValue = Convert.ChangeType(secondaryDecimal, underlyingType);
-                    SecondaryValue = Convert.ChangeType(primaryDecimal, underlyingType);
+                    var primaryDecimal = ConvertToDecimal(PrimaryValue);
+                    var secondaryDecimal = ConvertToDecimal(SecondaryValue);
+
+                    if (primaryDecimal.HasValue && secondaryDecimal.HasValue && primaryDecimal > secondaryDecimal)
+                    {
+                        var temp = PrimaryValue;
+                        PrimaryValue = SecondaryValue;
+                        SecondaryValue = temp;
+                    }
+                }
+                else if (IsDateTime)
+                {
+                    var primaryDate = ConvertToDateTime(PrimaryValue);
+                    var secondaryDate = ConvertToDateTime(SecondaryValue);
+
+                    if (primaryDate.HasValue && secondaryDate.HasValue && primaryDate > secondaryDate)
+                    {
+                        var temp = PrimaryValue;
+                        PrimaryValue = SecondaryValue;
+                        SecondaryValue = temp;
+                    }
+                }
+                else if (IsString)
+                {
+                    var primaryString = PrimaryValue?.ToString() ?? "";
+                    var secondaryString = SecondaryValue?.ToString() ?? "";
+
+                    if (string.Compare(primaryString, secondaryString, StringComparison.OrdinalIgnoreCase) > 0)
+                    {
+                        var temp = PrimaryValue;
+                        PrimaryValue = SecondaryValue;
+                        SecondaryValue = temp;
+                    }
                 }
             }
+        }
 
-            if (IsDateTime && SecondaryValue != null)
-            {
-                DateTime primaryDateTime = (DateTime)PrimaryValue;
-                DateTime secondaryDateTime = (DateTime)SecondaryValue;
+        private decimal? ConvertToDecimal(object value)
+        {
+            if (value == null) return null;
+            if (value is decimal d) return d;
+            if (decimal.TryParse(value.ToString(), out decimal result)) return result;
+            return null;
+        }
 
-                if (primaryDateTime > secondaryDateTime)
-                {
-                    var temp = PrimaryValue;
-                    PrimaryValue = secondaryDateTime;
-                    SecondaryValue = primaryDateTime;
-                }
-            }
-
-            if (IsString && SecondaryValue != null)
-            {
-                string primaryString = PrimaryValue.ToString();
-                string secondaryString = SecondaryValue.ToString();
-
-                if (string.Compare(primaryString, secondaryString) > 0)
-                {
-                    var temp = PrimaryValue;
-                    PrimaryValue = SecondaryValue;
-                    SecondaryValue = temp;
-                }
-            }
+        private DateTime? ConvertToDateTime(object value)
+        {
+            if (value == null) return null;
+            if (value is DateTime dt) return dt;
+            if (DateTime.TryParse(value.ToString(), out DateTime result)) return result;
+            return null;
         }
 
         /// <summary>
@@ -240,10 +255,93 @@ namespace WWSearchDataGrid.Modern.Core
         public void ConvertValues()
         {
             ClearConvertedValues();
-            PrimaryValue = ConvertValue(RawPrimaryValue);
-            SecondaryValue = ConvertValue(RawSecondaryValue);
+            PrimaryValue = ConvertValueInternal(RawPrimaryValue);
+            SecondaryValue = ConvertValueInternal(RawSecondaryValue);
             StringValue = RawPrimaryValue.ToStringEmptyIfNull().ToLower();
+
+            DetermineTypeFlags();
+
             OrderRangeValues();
+        }
+
+        private void DetermineTypeFlags()
+        {
+            ResetTypeFlags();
+
+            if (TargetType != null)
+            {
+                var underlyingType = Nullable.GetUnderlyingType(TargetType) ?? TargetType;
+
+                if (underlyingType == typeof(DateTime))
+                {
+                    IsDateTime = true;
+                }
+                else if (IsNumericType(underlyingType))
+                {
+                    IsNumeric = true;
+                }
+                else if (underlyingType == typeof(bool))
+                {
+                    IsBoolean = true;
+                }
+                else
+                {
+                    IsString = true;
+                }
+            }
+            else
+            {
+                // Fallback: try to determine type from actual values
+                DetermineTypeFlagsFromValues();
+            }
+        }
+
+        private void DetermineTypeFlagsFromValues()
+        {
+            // Try to determine type from the actual values
+            var valueToCheck = RawPrimaryValue ?? RawSecondaryValue;
+
+            if (valueToCheck != null)
+            {
+                if (valueToCheck is DateTime || DateTime.TryParse(valueToCheck.ToString(), out _))
+                {
+                    IsDateTime = true;
+                }
+                else if (IsNumericValue(valueToCheck) || decimal.TryParse(valueToCheck.ToString(), out _))
+                {
+                    IsNumeric = true;
+                }
+                else if (valueToCheck is bool || bool.TryParse(valueToCheck.ToString(), out _))
+                {
+                    IsBoolean = true;
+                }
+                else
+                {
+                    IsString = true;
+                }
+            }
+            else
+            {
+                // Ultimate fallback
+                IsString = true;
+            }
+        }
+
+        private bool IsNumericValue(object value)
+        {
+            return value is byte || value is sbyte || value is short || value is ushort ||
+                   value is int || value is uint || value is long || value is ulong ||
+                   value is float || value is double || value is decimal;
+        }
+
+        private bool IsNumericType(Type type)
+        {
+            return type == typeof(byte) || type == typeof(sbyte) ||
+                   type == typeof(short) || type == typeof(ushort) ||
+                   type == typeof(int) || type == typeof(uint) ||
+                   type == typeof(long) || type == typeof(ulong) ||
+                   type == typeof(float) || type == typeof(double) ||
+                   type == typeof(decimal);
         }
 
         #endregion

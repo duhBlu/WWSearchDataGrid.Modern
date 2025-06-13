@@ -384,6 +384,11 @@ namespace WWSearchDataGrid.Modern.Core
                 {
                     targetColumnType = typeof(string);
                 }
+                else
+                {
+                    // Determine column type from available values or metadata
+                    targetColumnType = DetermineTargetColumnType();
+                }
 
                 // Track if we have collection-context filters that need special handling
                 bool hasCollectionContextFilters = false;
@@ -586,12 +591,12 @@ namespace WWSearchDataGrid.Modern.Core
                 if (!HasCustomExpression || SearchGroups.Count == 0)
                     return "No filter";
 
-                var parts = new System.Collections.Generic.List<string>();
+                var groupTexts = new List<(string text, SearchTemplateGroup group)>();
 
                 foreach (var group in SearchGroups)
                 {
-                    var groupParts = new System.Collections.Generic.List<string>();
-                    
+                    var templateTexts = new List<(string text, SearchTemplate template)>();
+
                     foreach (var template in group.SearchTemplates)
                     {
                         if (template.HasCustomFilter)
@@ -599,31 +604,56 @@ namespace WWSearchDataGrid.Modern.Core
                             var templateText = GetTemplateDisplayText(template);
                             if (!string.IsNullOrWhiteSpace(templateText))
                             {
-                                groupParts.Add(templateText);
+                                templateTexts.Add((templateText, template));
                             }
                         }
                     }
 
-                    if (groupParts.Count > 0)
+                    if (templateTexts.Count > 0)
                     {
-                        if (groupParts.Count == 1)
+                        string groupText;
+                        if (templateTexts.Count == 1)
                         {
-                            parts.Add(groupParts[0]);
+                            groupText = templateTexts[0].text;
                         }
                         else
                         {
-                            parts.Add($"({string.Join(" AND ", groupParts)})");
+                            // Combine templates within the group using their operators
+                            var combinedText = new System.Text.StringBuilder();
+                            combinedText.Append(templateTexts[0].text);
+
+                            for (int i = 1; i < templateTexts.Count; i++)
+                            {
+                                var operatorName = templateTexts[i].template.OperatorName?.ToUpper() ?? "AND";
+                                combinedText.Append($" {operatorName} ");
+                                combinedText.Append(templateTexts[i].text);
+                            }
+
+                            groupText = $"({combinedText})";
                         }
+
+                        groupTexts.Add((groupText, group));
                     }
                 }
 
-                if (parts.Count == 0)
+                if (groupTexts.Count == 0)
                     return "No filter";
 
-                if (parts.Count == 1)
-                    return parts[0];
+                if (groupTexts.Count == 1)
+                    return groupTexts[0].text;
 
-                return string.Join(" OR ", parts);
+                // Combine groups using their operators
+                var result = new System.Text.StringBuilder();
+                result.Append(groupTexts[0].text);
+
+                for (int i = 1; i < groupTexts.Count; i++)
+                {
+                    var operatorName = groupTexts[i].group.OperatorName?.ToUpper() ?? "OR";
+                    result.Append($" {operatorName} ");
+                    result.Append(groupTexts[i].text);
+                }
+
+                return result.ToString();
             }
             catch (Exception ex)
             {
@@ -631,6 +661,9 @@ namespace WWSearchDataGrid.Modern.Core
                 return "Advanced filter";
             }
         }
+        #endregion
+
+        #region Private Methods
 
         /// <summary>
         /// Gets display text for a single search template
@@ -639,7 +672,6 @@ namespace WWSearchDataGrid.Modern.Core
         {
             try
             {
-                var searchType = template.SearchType.ToString();
                 var value = template.SelectedValue?.ToString();
                 var secondaryValue = template.SelectedSecondaryValue?.ToString();
 
@@ -663,6 +695,10 @@ namespace WWSearchDataGrid.Modern.Core
                         return "Is not empty";
                     case SearchType.Between:
                         return $"Between '{value}' and '{secondaryValue}'";
+                    case SearchType.NotBetween:
+                        return $"Not between '{value}' and '{secondaryValue}'";
+                    case SearchType.BetweenDates:
+                        return $"Between dates '{FormatDateValue(value)}' and '{FormatDateValue(secondaryValue)}'";
                     case SearchType.GreaterThan:
                         return $"> '{value}'";
                     case SearchType.GreaterThanOrEqualTo:
@@ -671,6 +707,14 @@ namespace WWSearchDataGrid.Modern.Core
                         return $"< '{value}'";
                     case SearchType.LessThanOrEqualTo:
                         return $"<= '{value}'";
+                    case SearchType.IsLike:
+                        return $"Is like '{value}'";
+                    case SearchType.IsNotLike:
+                        return $"Is not like '{value}'";
+                    case SearchType.IsNull:
+                        return "Is null";
+                    case SearchType.IsNotNull:
+                        return "Is not null";
                     case SearchType.TopN:
                         return $"Top {value}";
                     case SearchType.BottomN:
@@ -683,19 +727,125 @@ namespace WWSearchDataGrid.Modern.Core
                         return "Unique values";
                     case SearchType.Duplicate:
                         return "Duplicate values";
+                    case SearchType.Yesterday:
+                        return "Is yesterday";
+                    case SearchType.Today:
+                        return "Is today";
+
+                    // Multi-value filters
+                    case SearchType.IsAnyOf:
+                        return FormatMultiValueFilter("Is any of", template.SelectedValues);
+                    case SearchType.IsNoneOf:
+                        return FormatMultiValueFilter("Is none of", template.SelectedValues);
+                    case SearchType.IsOnAnyOfDates:
+                        return FormatDateListFilter("Is on any of", template.SelectedDates);
+                    case SearchType.DateInterval:
+                        return FormatDateIntervalFilter(template.DateIntervals);
+
                     default:
-                        return searchType;
+                        return template.SearchType.ToString();
                 }
             }
-            catch
+            catch (Exception ex)
             {
+                System.Diagnostics.Debug.WriteLine($"Error in GetTemplateDisplayText: {ex.Message}");
                 return "Filter";
             }
         }
 
-        #endregion
+        private string FormatDateValue(string value)
+        {
+            if (DateTime.TryParse(value, out DateTime date))
+            {
+                return date.ToString("yyyy-MM-dd");
+            }
+            return value;
+        }
 
-        #region Private Methods
+        private string FormatMultiValueFilter(string prefix, System.Collections.IEnumerable selectedValues)
+        {
+            if (selectedValues == null)
+                return prefix + " (no values)";
+
+            var values = new List<string>();
+            foreach (var item in selectedValues)
+            {
+                if (item is FilterListValue filterValue)
+                {
+                    values.Add(filterValue.Value?.ToString() ?? "(null)");
+                }
+                else
+                {
+                    values.Add(item?.ToString() ?? "(null)");
+                }
+            }
+
+            if (values.Count == 0)
+                return prefix + " (no values)";
+
+            if (values.Count <= 3)
+            {
+                return $"{prefix} [{string.Join(", ", values.Select(v => $"'{v}'"))}]";
+            }
+            else
+            {
+                return $"{prefix} [{string.Join(", ", values.Take(2).Select(v => $"'{v}'"))} and {values.Count - 2} more]";
+            }
+        }
+
+        private string FormatDateListFilter(string prefix, System.Collections.IEnumerable selectedDates)
+        {
+            if (selectedDates == null)
+                return prefix + " (no dates)";
+
+            var dates = new List<string>();
+            foreach (var date in selectedDates)
+            {
+                if (date is DateTime dt)
+                {
+                    dates.Add(dt.ToString("yyyy-MM-dd"));
+                }
+            }
+
+            if (dates.Count == 0)
+                return prefix + " (no dates)";
+
+            if (dates.Count <= 3)
+            {
+                return $"{prefix} [{string.Join(", ", dates)}]";
+            }
+            else
+            {
+                return $"{prefix} [{string.Join(", ", dates.Take(2))} and {dates.Count - 2} more]";
+            }
+        }
+
+        private string FormatDateIntervalFilter(System.Collections.IEnumerable dateIntervals)
+        {
+            if (dateIntervals == null)
+                return "Date intervals (none)";
+
+            var selectedIntervals = new List<string>();
+            foreach (var item in dateIntervals)
+            {
+                if (item is DateIntervalItem intervalItem && intervalItem.IsSelected)
+                {
+                    selectedIntervals.Add(intervalItem.DisplayName);
+                }
+            }
+
+            if (selectedIntervals.Count == 0)
+                return "Date intervals (none selected)";
+
+            if (selectedIntervals.Count <= 2)
+            {
+                return $"Date intervals [{string.Join(", ", selectedIntervals)}]";
+            }
+            else
+            {
+                return $"Date intervals [{string.Join(", ", selectedIntervals.Take(2))} and {selectedIntervals.Count - 2} more]";
+            }
+        }
 
         /// <summary>
         /// Updates the visibility of logical operators
@@ -718,6 +868,59 @@ namespace WWSearchDataGrid.Modern.Core
             {
                 SearchGroups[i].GroupNumber = i + 1;
             }
+        }
+
+        private Type DetermineTargetColumnType()
+        {
+            // First, try to use the explicitly set ColumnDataType
+            switch (ColumnDataType)
+            {
+                case ColumnDataType.DateTime:
+                    return typeof(DateTime);
+                case ColumnDataType.Number:
+                    // Try to determine the specific numeric type from values
+                    return DetermineNumericType();
+                case ColumnDataType.Boolean:
+                    return typeof(bool);
+                case ColumnDataType.Enum:
+                    // Try to determine the enum type from values
+                    return DetermineEnumType();
+                default:
+                    return typeof(string);
+            }
+        }
+
+        private Type DetermineNumericType()
+        {
+            if (ColumnValues?.Any() == true)
+            {
+                var firstNumericValue = ColumnValues.FirstOrDefault(v => v != null && IsNumericValue(v));
+                if (firstNumericValue != null)
+                {
+                    return firstNumericValue.GetType();
+                }
+            }
+            return typeof(decimal); // Default to decimal for numeric operations
+        }
+
+        private Type DetermineEnumType()
+        {
+            if (ColumnValues?.Any() == true)
+            {
+                var firstEnumValue = ColumnValues.FirstOrDefault(v => v != null && v.GetType().IsEnum);
+                if (firstEnumValue != null)
+                {
+                    return firstEnumValue.GetType();
+                }
+            }
+            return typeof(string); // Fallback to string
+        }
+
+        private bool IsNumericValue(object value)
+        {
+            return value is byte || value is sbyte || value is short || value is ushort ||
+                   value is int || value is uint || value is long || value is ulong ||
+                   value is float || value is double || value is decimal;
         }
 
         #endregion
