@@ -166,7 +166,7 @@ namespace WWSearchDataGrid.Modern.WPF
         /// </summary>
         public ICommand AddSearchTemplateCommand => new RelayCommand(p =>
         {
-            ISearchTemplate template = p as ISearchTemplate;
+            SearchTemplate template = p as SearchTemplate;
 
             // When adding new template, ensure it's the smart type
             var newTemplate = new SearchTemplate(ColumnDataType);
@@ -184,7 +184,7 @@ namespace WWSearchDataGrid.Modern.WPF
         /// </summary>
         public ICommand RemoveSearchTemplateCommand => new RelayCommand(p =>
         {
-            ISearchTemplate template = p as ISearchTemplate;
+            SearchTemplate template = p as SearchTemplate;
             SearchTemplateController?.RemoveSearchTemplate(template);
         });
 
@@ -701,9 +701,9 @@ namespace WWSearchDataGrid.Modern.WPF
         /// </summary>
         private void OnListBoxDrop(object sender, DragEventArgs e)
         {
-            if (e.Data.GetDataPresent(typeof(ISearchTemplate)))
+            if (e.Data.GetDataPresent(typeof(SearchTemplate)))
             {
-                var template = e.Data.GetData(typeof(ISearchTemplate)) as ISearchTemplate;
+                var template = e.Data.GetData(typeof(SearchTemplate)) as SearchTemplate;
                 var targetElement = e.OriginalSource as FrameworkElement;
 
                 if (template != null && targetElement != null)
@@ -719,7 +719,7 @@ namespace WWSearchDataGrid.Modern.WPF
                         var targetItem = FindVisualParent<ListBoxItem>(targetElement);
                         if (targetItem != null)
                         {
-                            var targetTemplate = targetItem.DataContext as ISearchTemplate;
+                            var targetTemplate = targetItem.DataContext as SearchTemplate;
                             if (targetTemplate != null)
                             {
                                 targetIndex = targetGroup.SearchTemplates.IndexOf(targetTemplate);
@@ -736,7 +736,7 @@ namespace WWSearchDataGrid.Modern.WPF
         /// <summary>
         /// Find the parent group for a template
         /// </summary>
-        private SearchTemplateGroup FindParentGroup(ISearchTemplate template)
+        private SearchTemplateGroup FindParentGroup(SearchTemplate template)
         {
             foreach (var group in SearchTemplateController.SearchGroups)
             {

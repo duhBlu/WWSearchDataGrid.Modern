@@ -130,6 +130,25 @@ namespace WWSearchDataGrid.Modern.WPF
         /// </summary>
         public string BindingPath { get; private set; }
 
+        /// <summary>
+        /// Gets whether this control has an active filter
+        /// </summary>
+        public bool HasActiveFilter
+        {
+            get
+            {
+                if (SearchTemplateController == null)
+                    return false;
+
+                // Check if we have a simple text filter
+                if (!string.IsNullOrWhiteSpace(SearchText))
+                    return true;
+
+                // Check if we have an advanced filter
+                return SearchTemplateController.HasCustomExpression;
+            }
+        }
+
         #endregion
 
         #region Constructors
@@ -671,6 +690,36 @@ namespace WWSearchDataGrid.Modern.WPF
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Error in ClearFilter: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Gets a display text for the current filter state
+        /// </summary>
+        /// <returns>Human-readable description of the current filter</returns>
+        public string GetFilterDisplayText()
+        {
+            try
+            {
+                // Check if we have a simple text filter
+                if (!string.IsNullOrWhiteSpace(SearchText))
+                {
+                    return $"Contains '{SearchText}'";
+                }
+
+                // Check if we have an advanced filter
+                if (SearchTemplateController?.HasCustomExpression == true)
+                {
+                    // Get summary from SearchTemplateController
+                    return SearchTemplateController.GetFilterDisplayText();
+                }
+
+                return "No filter";
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error in GetFilterDisplayText: {ex.Message}");
+                return "Filter error";
             }
         }
 

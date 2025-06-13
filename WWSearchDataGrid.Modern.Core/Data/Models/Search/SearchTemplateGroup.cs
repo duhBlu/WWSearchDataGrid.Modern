@@ -69,7 +69,7 @@ namespace WWSearchDataGrid.Modern.Core
         /// <summary>
         /// Gets the collection of search templates in this group
         /// </summary>
-        public ObservableCollection<ISearchTemplate> SearchTemplates { get; } = new ObservableCollection<ISearchTemplate>();
+        public ObservableCollection<SearchTemplate> SearchTemplates { get; } = new ObservableCollection<SearchTemplate>();
 
         #endregion
     }

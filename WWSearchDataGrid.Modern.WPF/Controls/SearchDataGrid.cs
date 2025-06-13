@@ -103,6 +103,11 @@ namespace WWSearchDataGrid.Modern.WPF
         /// </summary>
         public System.Collections.IEnumerable OriginalItemsSource => originalItemsSource;
 
+        /// <summary>
+        /// Gets the filter panel view model
+        /// </summary>
+        public FilterPanelViewModel FilterPanelViewModel { get; private set; }
+
         #endregion
 
         #region Commands
@@ -138,6 +143,15 @@ namespace WWSearchDataGrid.Modern.WPF
             DependencyPropertyDescriptor
                 .FromProperty(ItemsControl.ItemsSourceProperty, typeof(SearchDataGrid))
                 .AddValueChanged(this, (s, e) => UpdateHasItemsProperty());
+
+            // Initialize FilterPanelViewModel
+            FilterPanelViewModel = new FilterPanelViewModel();
+            
+            // Subscribe to FilterPanelViewModel events
+            FilterPanelViewModel.FiltersEnabledChanged += OnFiltersEnabledChanged;
+            FilterPanelViewModel.RemoveFilterRequested += OnRemoveFilterRequested;
+            FilterPanelViewModel.EditFiltersRequested += OnEditFiltersRequested;
+            FilterPanelViewModel.ClearAllFiltersRequested += OnClearAllFiltersRequested;
         }
 
         #endregion
@@ -379,6 +393,9 @@ namespace WWSearchDataGrid.Modern.WPF
                 // Notify that items have been filtered
                 ItemsSourceFiltered?.Invoke(this, EventArgs.Empty);
 
+                // Update filter panel
+                UpdateFilterPanel();
+
                 // Remove token source
                 tokenSource.RemoveCancellationTokenSource(cts);
             }
@@ -581,6 +598,163 @@ namespace WWSearchDataGrid.Modern.WPF
                 }
             }
         }
+
+        /// <summary>
+        /// Gets the active column filters for the filter panel
+        /// </summary>
+        /// <returns>Collection of active filter information</returns>
+        public System.Collections.Generic.IEnumerable<ColumnFilterInfo> GetActiveColumnFilters()
+        {
+            var activeFilters = new System.Collections.Generic.List<ColumnFilterInfo>();
+
+            foreach (var column in DataColumns.Where(c => c.HasActiveFilter))
+            {
+                var filterInfo = new ColumnFilterInfo
+                {
+                    ColumnName = column.CurrentColumn?.Header?.ToString() ?? "Unknown",
+                    BindingPath = column.BindingPath,
+                    IsActive = true,
+                    FilterData = column
+                };
+
+                // Determine filter type and display text
+                if (!string.IsNullOrWhiteSpace(column.SearchText))
+                {
+                    filterInfo.FilterType = FilterType.Simple;
+                    filterInfo.DisplayText = $"Contains '{column.SearchText}'";
+                }
+                else if (column.SearchTemplateController?.HasCustomExpression == true)
+                {
+                    filterInfo.FilterType = FilterType.Advanced;
+                    filterInfo.DisplayText = column.SearchTemplateController.GetFilterDisplayText();
+                }
+
+                activeFilters.Add(filterInfo);
+            }
+
+            return activeFilters;
+        }
+
+        /// <summary>
+        /// Updates the filter panel with current filter state
+        /// </summary>
+        public void UpdateFilterPanel()
+        {
+            if (FilterPanelViewModel != null)
+            {
+                var activeFilters = GetActiveColumnFilters();
+                FilterPanelViewModel.UpdateActiveFilters(activeFilters);
+            }
+        }
+
+        #region FilterPanel Event Handlers
+
+        /// <summary>
+        /// Handles changes to the filters enabled state
+        /// </summary>
+        private void OnFiltersEnabledChanged(object sender, FilterEnabledChangedEventArgs e)
+        {
+            try
+            {
+                if (e.Enabled)
+                {
+                    // Re-apply existing filters
+                    FilterItemsSource();
+                }
+                else
+                {
+                    // Disable filtering without clearing filter definitions
+                    Items.Filter = null;
+                    SearchFilter = null;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error in OnFiltersEnabledChanged: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Handles requests to remove a specific filter
+        /// </summary>
+        private void OnRemoveFilterRequested(object sender, RemoveFilterEventArgs e)
+        {
+            try
+            {
+                if (e.FilterInfo?.FilterData is SearchControl searchControl)
+                {
+                    searchControl.ClearFilter();
+                    FilterItemsSource();
+                    UpdateFilterPanel();
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error in OnRemoveFilterRequested: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Handles requests to open the edit filters dialog
+        /// </summary>
+        private void OnEditFiltersRequested(object sender, EventArgs e)
+        {
+            try
+            {
+                // Create the FilterEditDialog custom control
+                var filterEditDialog = new FilterEditDialog
+                {
+                    SourceDataGrid = this
+                };
+
+                // Create a window to host the custom control
+                var window = new Window
+                {
+                    Title = "Edit Filters",
+                    Height = 600,
+                    Width = 900,
+                    MinHeight = 500,
+                    MinWidth = 700,
+                    WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                    Owner = Window.GetWindow(this),
+                    Content = filterEditDialog,
+                    Background = System.Windows.Media.Brushes.White
+                };
+
+                // Handle dialog closing
+                filterEditDialog.DialogClosing += (s, args) =>
+                {
+                    window.DialogResult = args.Accepted;
+                    window.Close();
+                };
+
+                // Show the dialog
+                window.ShowDialog();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error in OnEditFiltersRequested: {ex.Message}");
+                MessageBox.Show("Error opening filter editor.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        /// <summary>
+        /// Handles requests to clear all filters
+        /// </summary>
+        private void OnClearAllFiltersRequested(object sender, EventArgs e)
+        {
+            try
+            {
+                ClearAllFilters();
+                UpdateFilterPanel();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error in OnClearAllFiltersRequested: {ex.Message}");
+            }
+        }
+
+        #endregion
 
         #endregion
     }

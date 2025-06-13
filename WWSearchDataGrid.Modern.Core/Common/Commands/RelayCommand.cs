@@ -35,4 +35,37 @@ namespace WWSearchDataGrid.Modern.Core
             execute(parameter);
         }
     }
+
+    public class RelayCommand<T> : ICommand
+    {
+        private readonly Action<T> execute;
+        private readonly Predicate<T> canExecute;
+
+        public RelayCommand(Action<T> execute, Predicate<T> canExecute = null)
+        {
+            this.execute = execute ?? throw new ArgumentNullException(nameof(execute));
+            this.canExecute = canExecute;
+        }
+
+        public event EventHandler CanExecuteChanged
+        {
+            add => CommandManager.RequerySuggested += value;
+            remove => CommandManager.RequerySuggested -= value;
+        }
+
+        public bool CanExecute(object parameter)
+        {
+            if (parameter == null && default(T) == null)
+                return canExecute?.Invoke(default) ?? true;
+
+            return parameter is T t && (canExecute?.Invoke(t) ?? true);
+        }
+
+        public void Execute(object parameter)
+        {
+            if (parameter is T t)
+                execute(t);
+        }
+    }
+
 }

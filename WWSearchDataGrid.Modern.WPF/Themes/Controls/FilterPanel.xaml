@@ -1,0 +1,193 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:converters="clr-namespace:WWSearchDataGrid.Modern.WPF.Converters"
+                    xmlns:sdg="clr-namespace:WWSearchDataGrid.Modern.WPF">
+
+    <ResourceDictionary.MergedDictionaries>
+        <!-- Include any required converters -->
+    </ResourceDictionary.MergedDictionaries>
+
+    <!-- Converters -->
+    <converters:BooleanToVisibilityCollapsedConverter x:Key="BooleanToVisibilityConverter"/>
+
+    <!-- Filter Chip Style -->
+    <Style x:Key="FilterChipStyle" TargetType="Border">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderBrush" Value="#FF0F0F0F"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="12"/>
+        <Setter Property="Padding" Value="8,4"/>
+        <Setter Property="Margin" Value="0,0,4,4"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Background" Value="#BBDEFB"/>
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+    
+    <!-- Remove Button Style -->
+    <Style x:Key="FilterChipRemoveButtonStyle" TargetType="Button">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Foreground" Value="#666"/>
+        <Setter Property="FontWeight" Value="Bold"/>
+        <Setter Property="Padding" Value="2"/>
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="Margin" Value="4,0,0,0"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border Background="{TemplateBinding Background}" 
+                            CornerRadius="8"
+                            Padding="{TemplateBinding Padding}">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter Property="Background" Value="#FFCDD2"/>
+                            <Setter Property="Foreground" Value="#D32F2F"/>
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter Property="Background" Value="#FFCDD2"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    
+    <!-- Action Button Style -->
+    <Style x:Key="FilterPanelActionButtonStyle" TargetType="Button">
+        <Setter Property="Background" Value="#F5F5F5"/>
+        <Setter Property="BorderBrush" Value="#CCC"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Padding" Value="12,6"/>
+        <Setter Property="Margin" Value="4,0"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border Background="{TemplateBinding Background}" 
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="4"
+                            Padding="{TemplateBinding Padding}">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter Property="Background" Value="#E0E0E0"/>
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter Property="Background" Value="#D0D0D0"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Background" Value="#F9F9F9"/>
+                            <Setter Property="Foreground" Value="#999"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Default FilterPanel Style -->
+    <Style x:Key="DefaultFilterPanelStyle" TargetType="{x:Type sdg:FilterPanel}">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type sdg:FilterPanel}">
+                    <Border Background="#F8F9FA" 
+                            BorderBrush="#E1E5E9" 
+                            BorderThickness="0,1,0,0" 
+                            Padding="12,8"
+                            Visibility="{Binding HasActiveFilters, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/> <!-- Filters enabled checkbox -->
+                                <ColumnDefinition Width="*"/>    <!-- Filter chips -->
+                                <ColumnDefinition Width="Auto"/> <!-- Action buttons -->
+                            </Grid.ColumnDefinitions>
+                            
+                            <!-- Filters Enabled Checkbox -->
+                            <CheckBox x:Name="PART_FiltersEnabledCheckBox"
+                                      Grid.Column="0" 
+                                      IsChecked="{Binding FiltersEnabled}"
+                                      VerticalAlignment="Center"
+                                      Margin="0,0,8,0"
+                                      Content="Filters Active"
+                                      ToolTip="Enable or disable all filters without clearing filter definitions"/>
+                            
+                            <!-- Filter Chips Area -->
+                            <ScrollViewer Grid.Column="1" 
+                                          HorizontalScrollBarVisibility="Auto" 
+                                          VerticalScrollBarVisibility="Disabled"
+                                          VerticalAlignment="Center">
+                                <WrapPanel Orientation="Horizontal" 
+                                           ItemHeight="32">
+                                    <ItemsControl ItemsSource="{Binding ActiveFilters}">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <WrapPanel Orientation="Horizontal"/>
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border Style="{StaticResource FilterChipStyle}">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <TextBlock Text="{Binding ColumnName}" 
+                                                                   FontWeight="Medium"
+                                                                   VerticalAlignment="Center"/>
+                                                        <TextBlock Text=": " 
+                                                                   VerticalAlignment="Center"/>
+                                                        <TextBlock Text="{Binding DisplayText}" 
+                                                                   VerticalAlignment="Center"/>
+                                                        <Button Style="{StaticResource FilterChipRemoveButtonStyle}"
+                                                                Height="16"
+                                                                Width="16"
+                                                                VerticalAlignment="Center"
+                                                                VerticalContentAlignment="Center"
+                                                                Command="{Binding DataContext.RemoveFilterCommand, RelativeSource={RelativeSource AncestorType=sdg:FilterPanel}}"
+                                                                CommandParameter="{Binding}"
+                                                                Content="✕"
+                                                                ToolTip="Remove this filter"/>
+                                                    </StackPanel>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </WrapPanel>
+                            </ScrollViewer>
+                            
+                            <!-- Action Buttons -->
+                            <StackPanel Grid.Column="2" 
+                                        Orientation="Horizontal" 
+                                        VerticalAlignment="Center"
+                                        Margin="8,0,0,0">
+                                
+                                <Button x:Name="PART_EditButton"
+                                        Style="{StaticResource FilterPanelActionButtonStyle}"
+                                        Command="{Binding EditFiltersCommand}"
+                                        Content="Edit"
+                                        ToolTip="Open advanced filter editor"/>
+                                
+                                <Button x:Name="PART_ClearAllButton"
+                                        Style="{StaticResource FilterPanelActionButtonStyle}"
+                                        Command="{Binding ClearAllFiltersCommand}"
+                                        Content="Clear All"
+                                        ToolTip="Clear all filters"/>
+                                
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Apply default style -->
+    <Style BasedOn="{StaticResource DefaultFilterPanelStyle}" TargetType="{x:Type sdg:FilterPanel}" />
+
+</ResourceDictionary>

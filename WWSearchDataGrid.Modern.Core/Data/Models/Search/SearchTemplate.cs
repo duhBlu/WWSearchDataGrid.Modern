@@ -7,7 +7,7 @@ using System.Windows.Input;
 
 namespace WWSearchDataGrid.Modern.Core
 {
-    public class SearchTemplate : ObservableObject, ISearchTemplate
+    public class SearchTemplate : ObservableObject, ILogicalOperatorProvider
     {
         #region Fields
 

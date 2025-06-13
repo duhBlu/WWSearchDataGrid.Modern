@@ -102,6 +102,11 @@ namespace WWSearchDataGrid.Modern.Core
         /// </summary>
         public Dictionary<string, HashSet<object>> ColumnValuesByPath { get; set; } = new Dictionary<string, HashSet<object>>();
 
+        /// <summary>
+        /// Gets whether group management UI should be visible (false for single group per column)
+        /// </summary>
+        public bool AllowMultipleGroups => false; // Enforce single group per column
+
         #endregion
 
         #region Constructors
@@ -134,7 +139,7 @@ namespace WWSearchDataGrid.Modern.Core
         /// <param name="bindingPath">The property path to evaluate</param>
         /// <param name="template">The search template with the filter criteria</param>
         /// <returns>A filtered collection of items</returns>
-        public IEnumerable<object> EvaluateCollectionContextFilters(IEnumerable<object> items, string bindingPath, ISearchTemplate template)
+        public IEnumerable<object> EvaluateCollectionContextFilters(IEnumerable<object> items, string bindingPath, SearchTemplate template)
         {
             if (items == null || string.IsNullOrEmpty(bindingPath))
                 return items;
@@ -274,26 +279,18 @@ namespace WWSearchDataGrid.Modern.Core
         }
 
         /// <summary>
-        /// Adds a new search group
+        /// Adds a new search group (limited to one group per column)
         /// </summary>
         /// <param name="canAddGroup">Whether a group can be added</param>
         /// <param name="markAsChanged">Whether to mark the group as changed</param>
-        /// <param name="referenceGroup">Reference group for positioning</param>
+        /// <param name="referenceGroup">Reference group for positioning (ignored in single group mode)</param>
         public void AddSearchGroup(bool canAddGroup = true, bool markAsChanged = true, SearchTemplateGroup referenceGroup = null)
         {
-            if (canAddGroup)
+            if (canAddGroup && SearchGroups.Count == 0)
             {
+                // Only allow one group per column
                 var newGroup = new SearchTemplateGroup();
-
-                if (referenceGroup == null)
-                {
-                    SearchGroups.Add(newGroup);
-                }
-                else
-                {
-                    SearchGroups.Insert(SearchGroups.IndexOf(referenceGroup) + 1, newGroup);
-                }
-
+                SearchGroups.Add(newGroup);
                 AddSearchTemplate(true, markAsChanged, null, newGroup);
             }
 
@@ -311,7 +308,7 @@ namespace WWSearchDataGrid.Modern.Core
         /// <param name="markAsChanged">Whether to mark the template as changed</param>
         /// <param name="referenceTemplate">Reference template for positioning</param>
         /// <param name="group">Group to add the template to</param>
-        public void AddSearchTemplate(bool canAddTemplate = true, bool markAsChanged = true, ISearchTemplate referenceTemplate = null, SearchTemplateGroup group = null)
+        public void AddSearchTemplate(bool canAddTemplate = true, bool markAsChanged = true, SearchTemplate referenceTemplate = null, SearchTemplateGroup group = null)
         {
             if (canAddTemplate)
             {
@@ -487,7 +484,7 @@ namespace WWSearchDataGrid.Modern.Core
         public void MoveSearchTemplate(
             SearchTemplateGroup sourceGroup,
             SearchTemplateGroup targetGroup,
-            ISearchTemplate template,
+            SearchTemplate template,
             int targetIndex)
         {
             isTemplateItemMoving = true;
@@ -520,16 +517,29 @@ namespace WWSearchDataGrid.Modern.Core
         }
 
         /// <summary>
-        /// Removes a search group
+        /// Removes a search group (prevented in single group mode)
         /// </summary>
         /// <param name="group">Group to remove</param>
         public void RemoveSearchGroup(SearchTemplateGroup group)
         {
-            group.SearchTemplates.Clear();
-            SearchGroups.Remove(group);
-            UpdateFilterExpression();
-            AddSearchGroup(SearchGroups.Count == 0);
-            UpdateGroupNumbers();
+            // In single group mode, don't allow removing the only group
+            // Instead, clear its templates and reset it
+            if (SearchGroups.Count == 1 && SearchGroups.Contains(group))
+            {
+                group.SearchTemplates.Clear();
+                AddSearchTemplate(true, false, null, group);
+                UpdateFilterExpression();
+            }
+            else if (SearchGroups.Count > 1)
+            {
+                // Legacy support for multiple groups (though we enforce single group)
+                group.SearchTemplates.Clear();
+                SearchGroups.Remove(group);
+                UpdateFilterExpression();
+                AddSearchGroup(SearchGroups.Count == 0);
+                UpdateGroupNumbers();
+            }
+            
             OnPropertyChanged(nameof(SearchGroups));
         }
 
@@ -537,7 +547,7 @@ namespace WWSearchDataGrid.Modern.Core
         /// Removes a search template
         /// </summary>
         /// <param name="template">Template to remove</param>
-        public void RemoveSearchTemplate(ISearchTemplate template)
+        public void RemoveSearchTemplate(SearchTemplate template)
         {
             var group = SearchGroups.First(g => g.SearchTemplates.Contains(template));
 
@@ -563,6 +573,124 @@ namespace WWSearchDataGrid.Modern.Core
                 return values;
 
             return new HashSet<object>();
+        }
+
+        /// <summary>
+        /// Gets a human-readable display text for the current filter state
+        /// </summary>
+        /// <returns>Description of the active filters</returns>
+        public string GetFilterDisplayText()
+        {
+            try
+            {
+                if (!HasCustomExpression || SearchGroups.Count == 0)
+                    return "No filter";
+
+                var parts = new System.Collections.Generic.List<string>();
+
+                foreach (var group in SearchGroups)
+                {
+                    var groupParts = new System.Collections.Generic.List<string>();
+                    
+                    foreach (var template in group.SearchTemplates)
+                    {
+                        if (template.HasCustomFilter)
+                        {
+                            var templateText = GetTemplateDisplayText(template);
+                            if (!string.IsNullOrWhiteSpace(templateText))
+                            {
+                                groupParts.Add(templateText);
+                            }
+                        }
+                    }
+
+                    if (groupParts.Count > 0)
+                    {
+                        if (groupParts.Count == 1)
+                        {
+                            parts.Add(groupParts[0]);
+                        }
+                        else
+                        {
+                            parts.Add($"({string.Join(" AND ", groupParts)})");
+                        }
+                    }
+                }
+
+                if (parts.Count == 0)
+                    return "No filter";
+
+                if (parts.Count == 1)
+                    return parts[0];
+
+                return string.Join(" OR ", parts);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error in GetFilterDisplayText: {ex.Message}");
+                return "Advanced filter";
+            }
+        }
+
+        /// <summary>
+        /// Gets display text for a single search template
+        /// </summary>
+        private string GetTemplateDisplayText(SearchTemplate template)
+        {
+            try
+            {
+                var searchType = template.SearchType.ToString();
+                var value = template.SelectedValue?.ToString();
+                var secondaryValue = template.SelectedSecondaryValue?.ToString();
+
+                switch (template.SearchType)
+                {
+                    case SearchType.Contains:
+                        return $"Contains '{value}'";
+                    case SearchType.DoesNotContain:
+                        return $"Does not contain '{value}'";
+                    case SearchType.Equals:
+                        return $"= '{value}'";
+                    case SearchType.NotEquals:
+                        return $"≠ '{value}'";
+                    case SearchType.StartsWith:
+                        return $"Starts with '{value}'";
+                    case SearchType.EndsWith:
+                        return $"Ends with '{value}'";
+                    case SearchType.IsEmpty:
+                        return "Is empty";
+                    case SearchType.IsNotEmpty:
+                        return "Is not empty";
+                    case SearchType.Between:
+                        return $"Between '{value}' and '{secondaryValue}'";
+                    case SearchType.GreaterThan:
+                        return $"> '{value}'";
+                    case SearchType.GreaterThanOrEqualTo:
+                        return $">= '{value}'";
+                    case SearchType.LessThan:
+                        return $"< '{value}'";
+                    case SearchType.LessThanOrEqualTo:
+                        return $"<= '{value}'";
+                    case SearchType.TopN:
+                        return $"Top {value}";
+                    case SearchType.BottomN:
+                        return $"Bottom {value}";
+                    case SearchType.AboveAverage:
+                        return "Above average";
+                    case SearchType.BelowAverage:
+                        return "Below average";
+                    case SearchType.Unique:
+                        return "Unique values";
+                    case SearchType.Duplicate:
+                        return "Duplicate values";
+                    default:
+                        return searchType;
+                }
+            }
+            catch
+            {
+                return "Filter";
+            }
         }
 
         #endregion
