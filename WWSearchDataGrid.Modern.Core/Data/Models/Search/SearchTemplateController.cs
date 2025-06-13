@@ -102,10 +102,16 @@ namespace WWSearchDataGrid.Modern.Core
         /// </summary>
         public Dictionary<string, HashSet<object>> ColumnValuesByPath { get; set; } = new Dictionary<string, HashSet<object>>();
 
+        private bool allowMultipleGroups = false;
+
         /// <summary>
-        /// Gets whether group management UI should be visible (false for single group per column)
+        /// Gets or sets whether multiple groups are allowed (defaults to false for backward compatibility)
         /// </summary>
-        public bool AllowMultipleGroups => false; // Enforce single group per column
+        public bool AllowMultipleGroups 
+        { 
+            get => allowMultipleGroups; 
+            set => SetProperty(value, ref allowMultipleGroups); 
+        }
 
         #endregion
 
@@ -279,19 +285,32 @@ namespace WWSearchDataGrid.Modern.Core
         }
 
         /// <summary>
-        /// Adds a new search group (limited to one group per column)
+        /// Adds a new search group
         /// </summary>
         /// <param name="canAddGroup">Whether a group can be added</param>
         /// <param name="markAsChanged">Whether to mark the group as changed</param>
-        /// <param name="referenceGroup">Reference group for positioning (ignored in single group mode)</param>
+        /// <param name="referenceGroup">Reference group for positioning</param>
         public void AddSearchGroup(bool canAddGroup = true, bool markAsChanged = true, SearchTemplateGroup referenceGroup = null)
         {
-            if (canAddGroup && SearchGroups.Count == 0)
+            if (canAddGroup)
             {
-                // Only allow one group per column
-                var newGroup = new SearchTemplateGroup();
-                SearchGroups.Add(newGroup);
-                AddSearchTemplate(true, markAsChanged, null, newGroup);
+                // Check if we can add a group (first group always allowed, additional groups only if AllowMultipleGroups is true)
+                if (SearchGroups.Count == 0 || AllowMultipleGroups)
+                {
+                    var newGroup = new SearchTemplateGroup();
+                    
+                    if (referenceGroup != null && SearchGroups.Contains(referenceGroup))
+                    {
+                        int insertIndex = SearchGroups.IndexOf(referenceGroup) + 1;
+                        SearchGroups.Insert(insertIndex, newGroup);
+                    }
+                    else
+                    {
+                        SearchGroups.Add(newGroup);
+                    }
+                    
+                    AddSearchTemplate(true, markAsChanged, null, newGroup);
+                }
             }
 
             if (SearchGroups.Count > 0)
@@ -522,27 +541,40 @@ namespace WWSearchDataGrid.Modern.Core
         }
 
         /// <summary>
-        /// Removes a search group (prevented in single group mode)
+        /// Removes a search group
         /// </summary>
         /// <param name="group">Group to remove</param>
         public void RemoveSearchGroup(SearchTemplateGroup group)
         {
-            // In single group mode, don't allow removing the only group
-            // Instead, clear its templates and reset it
-            if (SearchGroups.Count == 1 && SearchGroups.Contains(group))
+            if (SearchGroups.Contains(group))
             {
-                group.SearchTemplates.Clear();
-                AddSearchTemplate(true, false, null, group);
-                UpdateFilterExpression();
-            }
-            else if (SearchGroups.Count > 1)
-            {
-                // Legacy support for multiple groups (though we enforce single group)
-                group.SearchTemplates.Clear();
-                SearchGroups.Remove(group);
-                UpdateFilterExpression();
-                AddSearchGroup(SearchGroups.Count == 0);
-                UpdateGroupNumbers();
+                // If multiple groups are allowed, or this isn't the last group, remove it normally
+                if (AllowMultipleGroups && SearchGroups.Count > 1)
+                {
+                    group.SearchTemplates.Clear();
+                    SearchGroups.Remove(group);
+                    UpdateFilterExpression();
+                    UpdateGroupNumbers();
+                }
+                else if (SearchGroups.Count == 1)
+                {
+                    // For the last remaining group, clear and reset instead of removing
+                    group.SearchTemplates.Clear();
+                    AddSearchTemplate(true, false, null, group);
+                    UpdateFilterExpression();
+                }
+                else
+                {
+                    // Multiple groups exist but AllowMultipleGroups is false - shouldn't happen normally
+                    group.SearchTemplates.Clear();
+                    SearchGroups.Remove(group);
+                    UpdateFilterExpression();
+                    if (SearchGroups.Count == 0)
+                    {
+                        AddSearchGroup(true, false);
+                    }
+                    UpdateGroupNumbers();
+                }
             }
             
             OnPropertyChanged(nameof(SearchGroups));

@@ -280,7 +280,7 @@
         <Setter Property="Background" Value="White" />
         <Setter Property="RowHeaderStyle" Value="{StaticResource DefaultSearchDataGridRowHeaderStyle}" />
         <Setter Property="ColumnHeaderStyle" Value="{StaticResource DefaultSearchDataGridColumnHeaderStyle}" />
-        <Setter Property="RowHeaderWidth" Value="50" />
+        <Setter Property="RowHeaderWidth" Value="24" />
         <Setter Property="BorderBrush" Value="#FFDDDDDD" />
         <Setter Property="RowBackground" Value="White" />
         <Setter Property="AlternatingRowBackground" Value="#FFF9F9F9" />
