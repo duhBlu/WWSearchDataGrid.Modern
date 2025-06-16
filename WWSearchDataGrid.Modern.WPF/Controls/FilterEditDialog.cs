@@ -246,7 +246,7 @@ namespace WWSearchDataGrid.Modern.WPF
                         {
                             SearchTemplateGroup = group,
                             ColumnInfo = columnInfo,
-                            DisplayName = $"Advanced Filter: {columnInfo.ColumnName}"
+                            DisplayName = columnInfo.ColumnName
                         };
 
                         AllFilterGroups.Add(filterGroupInfo);

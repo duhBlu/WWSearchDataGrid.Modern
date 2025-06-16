@@ -2,6 +2,7 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:sdg="clr-namespace:WWSearchDataGrid.Modern.WPF"
                     xmlns:sdgCore="clr-namespace:WWSearchDataGrid.Modern.Core;assembly=WWSearchDataGrid.Modern.Core"
+                    xmlns:sys="clr-namespace:System;assembly=mscorlib"
                     xmlns:converters="clr-namespace:WWSearchDataGrid.Modern.WPF.Converters">
     
     <ResourceDictionary.MergedDictionaries>
@@ -11,6 +12,137 @@
     <!-- Converters -->
     <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
     <converters:EnumToStringConverter x:Key="EnumToStringConverter" />
+
+    <DataTemplate x:Key="FilterEditSearchGroupContentTemplate" DataType="{x:Type sdgCore:SearchTemplateGroup}">
+        <ItemsControl ItemsSource="{Binding SearchTemplates}"
+                  VirtualizingPanel.IsVirtualizing="True"
+                  VirtualizingPanel.VirtualizationMode="Recycling"
+                  ScrollViewer.CanContentScroll="True">
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <VirtualizingStackPanel Orientation="Vertical" />
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                    <StackPanel Orientation="Vertical"
+                            Margin="0,4"
+                            HorizontalAlignment="Stretch">
+                        <Border Background="#FAFAFA"
+                            BorderBrush="#DDD"
+                            BorderThickness="1"
+                            Padding="6"
+                            CornerRadius="8">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+
+                                <!-- Filter Type Row -->
+                                <Grid Grid.Row="0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <TextBlock x:Name="DragHandle"
+                                           Grid.Column="0"
+                                           Text="&#xEDD6;"
+                                           Margin="0,0,8,0"
+                                           VerticalAlignment="Center"
+                                           FontFamily="Segoe MDL2 Assets"
+                                           ToolTip="Grip Handle" />
+
+                                    <ComboBox Grid.Column="1"
+                                          Visibility="{Binding IsOperatorVisible, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                          Margin="0,0,8,0"
+                                          VerticalContentAlignment="Center"
+                                          Width="80"
+                                          SelectedItem="{Binding OperatorName}">
+                                        <sys:String>And</sys:String>
+                                        <sys:String>Or</sys:String>
+                                    </ComboBox>
+
+                                    <ComboBox x:Name="PART_SearchTypeCombo"
+                                          Grid.Column="2"
+                                          Margin="0,0,8,0"
+                                          VerticalContentAlignment="Center"
+                                          Width="180"
+                                          ItemsSource="{Binding ValidSearchTypes}"
+                                          SelectedItem="{Binding SearchType}">
+                                        <ComboBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding Converter={StaticResource EnumToStringConverter}}" />
+                                            </DataTemplate>
+                                        </ComboBox.ItemTemplate>
+                                    </ComboBox>
+
+                                    <!-- FilterEditDialog specific buttons -->
+                                    <StackPanel Grid.Column="4" Orientation="Horizontal">
+                                        <Button Command="{Binding DataContext.RemoveSearchTemplateCommand, RelativeSource={RelativeSource AncestorType=sdg:FilterEditDialog}}"
+                                                CommandParameter="{Binding}"
+                                                Margin="0,0,4,0"
+                                                Height="{Binding ActualWidth, RelativeSource={RelativeSource Self}}"
+                                                ToolTip="Remove"
+                                                FontFamily="Segoe MDL2 Assets"
+                                                Content="&#xE10A;" />
+                                        <Button Command="{Binding DataContext.AddSearchTemplateCommand, RelativeSource={RelativeSource AncestorType=sdg:FilterEditDialog}}"
+                                                CommandParameter="{Binding}"
+                                                Height="{Binding ActualWidth, RelativeSource={RelativeSource Self}}"
+                                                ToolTip="Add"
+                                                FontFamily="Segoe MDL2 Assets"
+                                                Content="&#xE109;" />
+                                    </StackPanel>
+                                </Grid>
+
+                                <!-- Value Input Row -->
+                                <ContentControl x:Name="PART_ValueInput"
+                                            Grid.Row="1"
+                                            Margin="0,8,0,0"
+                                            Content="{Binding}">
+                                    <ContentControl.Style>
+                                        <Style TargetType="ContentControl">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding InputTemplate}" Value="SingleComboBox">
+                                                    <Setter Property="ContentTemplate" Value="{StaticResource SingleComboBoxTemplate}" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding InputTemplate}" Value="DualComboBox">
+                                                    <Setter Property="ContentTemplate" Value="{StaticResource DualComboBoxTemplate}" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding InputTemplate}" Value="DualDateTimePicker">
+                                                    <Setter Property="ContentTemplate" Value="{StaticResource DualDateTimePickerTemplate}" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding InputTemplate}" Value="NumericUpDown">
+                                                    <Setter Property="ContentTemplate" Value="{StaticResource NumericUpDownTemplate}" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding InputTemplate}" Value="NoInput">
+                                                    <Setter Property="ContentTemplate" Value="{StaticResource NoInputTemplate}" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding InputTemplate}" Value="ComboBoxList">
+                                                    <Setter Property="ContentTemplate" Value="{StaticResource ComboBoxListTemplate}" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding InputTemplate}" Value="DateTimePickerList">
+                                                    <Setter Property="ContentTemplate" Value="{StaticResource DateTimePickerListTemplate}" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding InputTemplate}" Value="DateIntervalCheckList">
+                                                    <Setter Property="ContentTemplate" Value="{StaticResource DateIntervalCheckListTemplate}" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </ContentControl.Style>
+                                </ContentControl>
+                            </Grid>
+                        </Border>
+                    </StackPanel>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+    </DataTemplate>
+
 
     <!-- Default FilterEditDialog Style -->
     <Style x:Key="DefaultFilterEditDialogStyle" TargetType="{x:Type sdg:FilterEditDialog}">
@@ -89,50 +221,48 @@
                                 </ListBox.ItemContainerStyle>
                                 <ListBox.ItemTemplate>
                                     <DataTemplate>
-                                        <GroupBox Padding="12"
-                                                  Header="{Binding DisplayName}">
-                                            <GroupBox.HeaderTemplate>
-                                                <DataTemplate>
-                                                    <DockPanel Margin="0,0,0,8" LastChildFill="True">
-                                                        <ComboBox DockPanel.Dock="Left"
-                                                                  Visibility="{Binding SearchTemplateGroup.IsOperatorVisible, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                                                  Margin="0,0,8,0"
-                                                                  Width="80"
-                                                                  SelectedItem="{Binding SearchTemplateGroup.OperatorName}">
-                                                            <ComboBoxItem>And</ComboBoxItem>
-                                                            <ComboBoxItem>Or</ComboBoxItem>
-                                                        </ComboBox>
-                                                        
-                                                        <TextBlock DockPanel.Dock="Left"
-                                                                   Text="{Binding}"
-                                                                   FontWeight="Bold"
-                                                                   FontSize="14"
-                                                                   VerticalAlignment="Center" />
-                                                        
-                                                        <StackPanel DockPanel.Dock="Right"
-                                                                    Orientation="Horizontal"
-                                                                    Visibility="{Binding ColumnInfo.WorkingController.AllowMultipleGroups, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                                            <Button Command="{Binding DataContext.RemoveSearchGroupCommand, RelativeSource={RelativeSource AncestorType=sdg:FilterEditDialog}}"
-                                                                    CommandParameter="{Binding SearchTemplateGroup}"
-                                                                    Margin="0,0,5,0"
-                                                                    Height="{Binding ActualWidth, RelativeSource={RelativeSource Self}}"
-                                                                    ToolTip="Remove Group"
-                                                                    FontFamily="Segoe MDL2 Assets"
-                                                                    Content="&#xE10A;" />
-                                                            <Button Command="{Binding DataContext.AddSearchGroupCommand, RelativeSource={RelativeSource AncestorType=sdg:FilterEditDialog}}"
-                                                                    CommandParameter="{Binding SearchTemplateGroup}"
-                                                                    Height="{Binding ActualWidth, RelativeSource={RelativeSource Self}}"
-                                                                    ToolTip="Add Group"
-                                                                    FontFamily="Segoe MDL2 Assets"
-                                                                    Content="&#xE109;" />
-                                                        </StackPanel>
-                                                    </DockPanel>
-                                                </DataTemplate>
-                                            </GroupBox.HeaderTemplate>
+                                        <GroupBox Padding="12">
+                                            <GroupBox.Header>
+                                                <DockPanel Margin="0,0,0,8" LastChildFill="True">
+                                                    <ComboBox DockPanel.Dock="Left"
+                                                              Visibility="{Binding SearchTemplateGroup.IsOperatorVisible, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                                              Margin="0,0,8,0"
+                                                              Width="80"
+                                                              VerticalContentAlignment="Center"
+                                                              SelectedItem="{Binding SearchTemplateGroup.OperatorName}">
+                                                        <sys:String>And</sys:String>
+                                                        <sys:String>Or</sys:String>
+                                                    </ComboBox>
+                                                    
+                                                    <TextBlock DockPanel.Dock="Left"
+                                                               Text="{Binding DisplayName}"
+                                                               FontWeight="Bold"
+                                                               FontSize="14"
+                                                               VerticalAlignment="Center" />
+                                                    
+                                                    <StackPanel DockPanel.Dock="Right"
+                                                                Orientation="Horizontal"
+                                                                Visibility="{Binding ColumnInfo.WorkingController.AllowMultipleGroups, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                                        <Button Command="{Binding DataContext.RemoveSearchGroupCommand, RelativeSource={RelativeSource AncestorType=sdg:FilterEditDialog}}"
+                                                                CommandParameter="{Binding SearchTemplateGroup}"
+                                                                Margin="0,0,5,0"
+                                                                Height="{Binding ActualWidth, RelativeSource={RelativeSource Self}}"
+                                                                ToolTip="Remove Group"
+                                                                FontFamily="Segoe MDL2 Assets"
+                                                                Content="&#xE10A;" />
+                                                        <Button Command="{Binding DataContext.AddSearchGroupCommand, RelativeSource={RelativeSource AncestorType=sdg:FilterEditDialog}}"
+                                                                CommandParameter="{Binding SearchTemplateGroup}"
+                                                                Height="{Binding ActualWidth, RelativeSource={RelativeSource Self}}"
+                                                                ToolTip="Add Group"
+                                                                FontFamily="Segoe MDL2 Assets"
+                                                                Content="&#xE109;" />
+                                                    </StackPanel>
+                                                </DockPanel>
+                                            </GroupBox.Header>
                                             
                                             <!-- Use the shared template for the group content -->
                                             <ContentPresenter Content="{Binding SearchTemplateGroup}" 
-                                                              ContentTemplate="{StaticResource SearchGroupContentTemplate}" />
+                                                              ContentTemplate="{StaticResource FilterEditSearchGroupContentTemplate}" />
                                         </GroupBox>
                                     </DataTemplate>
                                 </ListBox.ItemTemplate>

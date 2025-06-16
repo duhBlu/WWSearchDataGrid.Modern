@@ -17,7 +17,6 @@ namespace WWSearchDataGrid.Modern.Core
         /// <typeparam name="T">Type of the parameter</typeparam>
         /// <param name="first">First expression</param>
         /// <param name="second">Second expression</param>
-        /// <param name="combiner">Function to combine the expressions</param>
         /// <returns>Combined expression</returns>
         /// <summary>
         /// Composes two expressions with a given operator

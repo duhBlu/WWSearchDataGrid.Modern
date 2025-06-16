@@ -219,15 +219,27 @@
                                           HorizontalScrollBarVisibility="Auto"
                                           VerticalScrollBarVisibility="Disabled">
                                 <WrapPanel Orientation="Horizontal" ItemHeight="32">
-                                    <ItemsControl ItemsSource="{Binding ActiveFilters, RelativeSource={RelativeSource TemplatedParent}}">
+                                    <ItemsControl x:Name="PART_FiltersItemsControl" ItemsSource="{Binding ActiveFilters, RelativeSource={RelativeSource TemplatedParent}}">
                                         <ItemsControl.ItemsPanel>
                                             <ItemsPanelTemplate>
-                                                <WrapPanel Orientation="Horizontal" />
+                                                <StackPanel Orientation="Horizontal" />
                                             </ItemsPanelTemplate>
                                         </ItemsControl.ItemsPanel>
                                         <ItemsControl.ItemTemplate>
                                             <DataTemplate>
-                                                <Grid Background="Transparent" Margin="0,0,4,4">
+                                                <StackPanel Orientation="Horizontal" Margin="0,0,8,0">
+                                                    <!-- Conjunction text (AND) - shown before all items except the first -->
+                                                    <TextBlock x:Name="ConjunctionText"
+                                                               Text="{Binding Conjunction}"
+                                                               VerticalAlignment="Center"
+                                                               FontWeight="Bold"
+                                                               FontSize="12"
+                                                               Foreground="DarkBlue"
+                                                               Margin="0,0,8,0"
+                                                               Visibility="Visible" />
+                                                    
+                                                    <!-- Filter chip -->
+                                                    <Grid Background="Transparent">
                                                     <Grid.ColumnDefinitions>
                                                         <ColumnDefinition Width="Auto" />
                                                         <ColumnDefinition Width="Auto" />
@@ -308,6 +320,8 @@
                                                         </Button.Style>
                                                     </Button>
                                                 </Grid>
+                                                </StackPanel>
+                                                
                                             </DataTemplate>
                                         </ItemsControl.ItemTemplate>
                                     </ItemsControl>

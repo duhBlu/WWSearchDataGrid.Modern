@@ -331,19 +331,62 @@ namespace WWSearchDataGrid.Modern.Core
         {
             if (canAddTemplate)
             {
-                var targetGroup = group ?? SearchGroups.First(g => g.SearchTemplates.Contains(referenceTemplate));
+                SearchTemplateGroup targetGroup;
+
+                // Handle null parameters with proper fallback logic
+                if (group != null)
+                {
+                    // Use the explicitly provided group
+                    targetGroup = group;
+                }
+                else if (referenceTemplate != null)
+                {
+                    // Find the group containing the reference template
+                    targetGroup = SearchGroups.FirstOrDefault(g => g.SearchTemplates.Contains(referenceTemplate));
+                    if (targetGroup == null)
+                    {
+                        // Fallback: if reference template not found, use the first group or create one
+                        targetGroup = SearchGroups.FirstOrDefault() ?? new SearchTemplateGroup();
+                        if (!SearchGroups.Contains(targetGroup))
+                        {
+                            SearchGroups.Add(targetGroup);
+                        }
+                    }
+                }
+                else
+                {
+                    // Both group and referenceTemplate are null - use first available group or create one
+                    targetGroup = SearchGroups.FirstOrDefault();
+                    if (targetGroup == null)
+                    {
+                        targetGroup = new SearchTemplateGroup();
+                        SearchGroups.Add(targetGroup);
+                    }
+                }
 
                 // Create new SearchTemplate with column data type
                 var newTemplate = new SearchTemplate(ColumnValues, ColumnDataType);
                 newTemplate.HasChanges = markAsChanged;
 
+                // Add the template at the appropriate position
                 if (referenceTemplate == null)
                 {
+                    // No reference template - add to the end
                     targetGroup.SearchTemplates.Add(newTemplate);
                 }
                 else
                 {
-                    targetGroup.SearchTemplates.Insert(targetGroup.SearchTemplates.IndexOf(referenceTemplate) + 1, newTemplate);
+                    // Insert after the reference template if it exists in the target group
+                    int referenceIndex = targetGroup.SearchTemplates.IndexOf(referenceTemplate);
+                    if (referenceIndex >= 0)
+                    {
+                        targetGroup.SearchTemplates.Insert(referenceIndex + 1, newTemplate);
+                    }
+                    else
+                    {
+                        // Reference template not in target group - add to the end
+                        targetGroup.SearchTemplates.Add(newTemplate);
+                    }
                 }
             }
 
@@ -555,6 +598,12 @@ namespace WWSearchDataGrid.Modern.Core
                     SearchGroups.Remove(group);
                     UpdateFilterExpression();
                     UpdateGroupNumbers();
+                    
+                    // Update operator visibility on the first remaining group
+                    if (SearchGroups.Count > 0)
+                    {
+                        UpdateOperatorVisibility(SearchGroups[0]);
+                    }
                 }
                 else if (SearchGroups.Count == 1)
                 {
@@ -572,6 +621,11 @@ namespace WWSearchDataGrid.Modern.Core
                     if (SearchGroups.Count == 0)
                     {
                         AddSearchGroup(true, false);
+                    }
+                    else
+                    {
+                        // Update operator visibility on the first remaining group
+                        UpdateOperatorVisibility(SearchGroups[0]);
                     }
                     UpdateGroupNumbers();
                 }
@@ -680,7 +734,7 @@ namespace WWSearchDataGrid.Modern.Core
 
                 for (int i = 1; i < groupTexts.Count; i++)
                 {
-                    var operatorName = groupTexts[i].group.OperatorName?.ToUpper() ?? "OR";
+                    var operatorName = groupTexts[i].group.OperatorName?.ToUpper() ?? "AND";
                     result.Append($" {operatorName} ");
                     result.Append(groupTexts[i].text);
                 }
@@ -693,6 +747,7 @@ namespace WWSearchDataGrid.Modern.Core
                 return "Advanced filter";
             }
         }
+
         #endregion
 
         #region Private Methods

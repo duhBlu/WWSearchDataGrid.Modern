@@ -246,14 +246,9 @@ namespace WWSearchDataGrid.Modern.WPF
         {
             base.OnApplyTemplate();
 
-            // Find and hook up the ListBox
-            groupsListBox = GetTemplateChild("PART_GroupsListBox") as ListBox;
-            if (groupsListBox != null)
-            {
-                groupsListBox.AllowDrop = true;
-                groupsListBox.PreviewMouseLeftButtonDown += OnListBoxPreviewMouseLeftButtonDown;
-                groupsListBox.Drop += OnListBoxDrop;
-            }
+            // The ListBox is now conditionally created based on AllowMultipleGroups
+            // We'll set it up when needed in SetupListBoxReference method
+            SetupListBoxReference();
 
             // Find tab control
             tabControl = GetTemplateChild("PART_TabControl") as TabControl;
@@ -318,11 +313,8 @@ namespace WWSearchDataGrid.Modern.WPF
             // Update the summary after everything is loaded
             UpdateValueSelectionSummary();
 
-            // Bind to UI
-            if (groupsListBox != null && SearchTemplateController != null)
-            {
-                groupsListBox.ItemsSource = SearchTemplateController.SearchGroups;
-            }
+            // Setup ListBox reference and bindings if needed
+            SetupListBoxReference();
 
             // Hook up tab control selection changed for lazy loading
             if (tabControl != null)
@@ -336,6 +328,86 @@ namespace WWSearchDataGrid.Modern.WPF
                 searchControl.SourceDataGrid.ItemsSourceChanged += OnItemsSourceChanged;
             }
 
+            // Hook up AllowMultipleGroups property change notification
+            if (SearchTemplateController != null)
+            {
+                SearchTemplateController.PropertyChanged += OnSearchTemplateControllerPropertyChanged;
+            }
+        }
+
+        /// <summary>
+        /// Handles property changes on SearchTemplateController to respond to AllowMultipleGroups changes
+        /// </summary>
+        private void OnSearchTemplateControllerPropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == nameof(SearchTemplateController.AllowMultipleGroups))
+            {
+                // Re-setup ListBox reference when AllowMultipleGroups changes
+                SetupListBoxReference();
+            }
+        }
+
+        /// <summary>
+        /// Sets up the ListBox reference dynamically based on AllowMultipleGroups
+        /// </summary>
+        private void SetupListBoxReference()
+        {
+            // Clean up existing ListBox event handlers
+            if (groupsListBox != null)
+            {
+                groupsListBox.AllowDrop = false;
+                groupsListBox.PreviewMouseLeftButtonDown -= OnListBoxPreviewMouseLeftButtonDown;
+                groupsListBox.Drop -= OnListBoxDrop;
+                groupsListBox = null;
+            }
+
+            // Only try to find and setup ListBox if AllowMultipleGroups is true
+            if (SearchTemplateController?.AllowMultipleGroups == true)
+            {
+                // The ListBox is created dynamically in the DataTemplate, so we need to wait for it
+                Dispatcher.BeginInvoke(new Action(() =>
+                {
+                    groupsListBox = FindNameInVisualTree("PART_GroupsListBox") as ListBox;
+                    if (groupsListBox != null)
+                    {
+                        groupsListBox.AllowDrop = true;
+                        groupsListBox.PreviewMouseLeftButtonDown += OnListBoxPreviewMouseLeftButtonDown;
+                        groupsListBox.Drop += OnListBoxDrop;
+                    }
+                }), System.Windows.Threading.DispatcherPriority.Loaded);
+            }
+        }
+
+        /// <summary>
+        /// Finds a named element in the visual tree (including DataTemplates)
+        /// </summary>
+        private DependencyObject FindNameInVisualTree(string name)
+        {
+            return FindChildByName(this, name);
+        }
+
+        /// <summary>
+        /// Recursively searches for a child element by name in the visual tree
+        /// </summary>
+        private DependencyObject FindChildByName(DependencyObject parent, string name)
+        {
+            if (parent == null) return null;
+
+            // Check if this element has the target name
+            if (parent is FrameworkElement fe && fe.Name == name)
+                return parent;
+
+            // Search through all children
+            int childCount = VisualTreeHelper.GetChildrenCount(parent);
+            for (int i = 0; i < childCount; i++)
+            {
+                var child = VisualTreeHelper.GetChild(parent, i);
+                var result = FindChildByName(child, name);
+                if (result != null)
+                    return result;
+            }
+
+            return null;
         }
 
         /// <summary>
@@ -1053,6 +1125,21 @@ namespace WWSearchDataGrid.Modern.WPF
             {
                 searchControl.SourceDataGrid.CollectionChanged -= OnSourceDataGridCollectionChanged;
                 searchControl.SourceDataGrid.ItemsSourceChanged -= OnItemsSourceChanged;
+            }
+
+            // Unhook SearchTemplateController property changes
+            if (SearchTemplateController != null)
+            {
+                SearchTemplateController.PropertyChanged -= OnSearchTemplateControllerPropertyChanged;
+            }
+
+            // Clean up ListBox event handlers
+            if (groupsListBox != null)
+            {
+                groupsListBox.AllowDrop = false;
+                groupsListBox.PreviewMouseLeftButtonDown -= OnListBoxPreviewMouseLeftButtonDown;
+                groupsListBox.Drop -= OnListBoxDrop;
+                groupsListBox = null;
             }
 
             _isInitialized = false;

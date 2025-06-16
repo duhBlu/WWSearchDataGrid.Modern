@@ -15,6 +15,7 @@ namespace WWSearchDataGrid.Modern.Core
         private string displayText;
         private bool isActive;
         private object filterData;
+        private string conjunction;
 
         /// <summary>
         /// Gets or sets the display name of the column
@@ -68,6 +69,15 @@ namespace WWSearchDataGrid.Modern.Core
         {
             get => filterData;
             set => SetProperty(value, ref filterData);
+        }
+
+        /// <summary>
+        /// Gets or sets the conjunction to be displayed before this filter (e.g., "AND", "OR")
+        /// </summary>
+        public string Conjunction
+        {
+            get => conjunction;
+            set => SetProperty(value, ref conjunction);
         }
     }
 }

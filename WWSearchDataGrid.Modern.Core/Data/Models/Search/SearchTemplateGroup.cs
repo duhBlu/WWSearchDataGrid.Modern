@@ -13,7 +13,7 @@ namespace WWSearchDataGrid.Modern.Core
     {
         #region Fields
 
-        private string operatorName = "Or";
+        private string operatorName = "And";
         private int groupNumber;
         private bool isOperatorVisible = true;
 
@@ -24,7 +24,7 @@ namespace WWSearchDataGrid.Modern.Core
         /// <summary>
         /// Gets or sets the logical operator function
         /// </summary>
-        public Func<Expression, Expression, Expression> OperatorFunction { get; set; } = Expression.Or;
+        public Func<Expression, Expression, Expression> OperatorFunction { get; set; } = Expression.And;
 
         /// <summary>
         /// Gets or sets the logical operator name

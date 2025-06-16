@@ -635,15 +635,33 @@ namespace WWSearchDataGrid.Modern.WPF
         public System.Collections.Generic.IEnumerable<ColumnFilterInfo> GetActiveColumnFilters()
         {
             var activeFilters = new System.Collections.Generic.List<ColumnFilterInfo>();
+            bool isFirstFilter = true;
 
             foreach (var column in DataColumns.Where(c => c.HasActiveFilter))
             {
+                // Extract the actual conjunction from the SearchTemplateController
+                string conjunction = string.Empty;
+                if (!isFirstFilter)
+                {
+                    // Use the first SearchTemplateGroup's OperatorName as the conjunction for this column
+                    if (column.SearchTemplateController?.SearchGroups?.Count > 0)
+                    {
+                        conjunction = column.SearchTemplateController.SearchGroups[0].OperatorName?.ToUpper() ?? "AND";
+                    }
+                    else
+                    {
+                        // Default to "AND" if no groups exist
+                        conjunction = "AND";
+                    }
+                }
+
                 var filterInfo = new ColumnFilterInfo
                 {
                     ColumnName = column.CurrentColumn?.Header?.ToString() ?? "Unknown",
                     BindingPath = column.BindingPath,
                     IsActive = true,
-                    FilterData = column
+                    FilterData = column,
+                    Conjunction = conjunction
                 };
 
                 // Determine filter type and display text
@@ -659,6 +677,7 @@ namespace WWSearchDataGrid.Modern.WPF
                 }
 
                 activeFilters.Add(filterInfo);
+                isFirstFilter = false;
             }
 
             return activeFilters;
@@ -753,8 +772,13 @@ namespace WWSearchDataGrid.Modern.WPF
                 // Handle dialog closing
                 filterEditDialog.DialogClosing += (s, args) =>
                 {
-                    window.DialogResult = args.Accepted;
                     window.Close();
+                    
+                    // Update filter panel if changes were accepted
+                    if (args.Accepted)
+                    {
+                        UpdateFilterPanel();
+                    }
                 };
 
                 // Show the dialog
