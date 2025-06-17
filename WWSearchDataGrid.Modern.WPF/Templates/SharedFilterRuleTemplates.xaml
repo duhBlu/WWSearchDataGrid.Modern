@@ -6,55 +6,66 @@
                     xmlns:converters="clr-namespace:WWSearchDataGrid.Modern.WPF.Converters">
 
     <ResourceDictionary.MergedDictionaries>
-        <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF;component/Templates/FilterValueTemplates.xaml" />
+        <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF;component/Themes/Common/CommonStyles.xaml" />
     </ResourceDictionary.MergedDictionaries>
 
-    <!-- Converters -->
+    <!--  Converters  -->
     <converters:SearchTypeToBetweenVisibilityConverter x:Key="BetweenValueVisibilityConverter" />
     <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
     <converters:FilterInputTemplateToVisibilityConverter x:Key="FilterInputTemplateToVisibilityConverter" />
     <converters:EnumToStringConverter x:Key="EnumToStringConverter" />
 
-    <!-- Data Templates for different input types -->
+    <!--  Data Templates for different input types  -->
 
-    <!-- Single ComboBox Template -->
+    <Style x:Key="VirtualizedEditable_Combobox_Style"
+           BasedOn="{StaticResource Editable_ComboBox_Style}"
+           TargetType="{x:Type ComboBox}">
+        <Setter Property="ItemsPanel">
+            <Setter.Value>
+                <ItemsPanelTemplate>
+                    <VirtualizingStackPanel VirtualizingPanel.IsVirtualizing="True"
+                                            VirtualizingPanel.VirtualizationMode="Recycling"
+                                            VirtualizingPanel.ScrollUnit="Item" />
+                </ItemsPanelTemplate>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="MinWidth" Value="150" />
+        <Setter Property="VirtualizingPanel.IsVirtualizing" Value="True" />
+        <Setter Property="VirtualizingPanel.VirtualizationMode" Value="Recycling" />
+        <Setter Property="ScrollViewer.IsDeferredScrollingEnabled" Value="True" />
+    </Style>
+
+    <!--  Single ComboBox Template  -->
     <DataTemplate x:Key="SingleComboBoxTemplate">
-        <ComboBox Text="{Binding SelectedValue}"
-                  VerticalContentAlignment="Center"
-                  MinWidth="150"
-                  IsEditable="True"
-                  ItemsSource="{Binding AvailableValues}"
-                  VirtualizingPanel.IsVirtualizing="True"
-                  VirtualizingPanel.VirtualizationMode="Recycling" />
+        <ComboBox Style="{StaticResource VirtualizedEditable_Combobox_Style}"
+                  Text="{Binding SelectedValue}"
+                  Tag="Type or select..."
+                  ItemsSource="{Binding AvailableValues}" />
     </DataTemplate>
 
-    <!-- Dual ComboBox Template -->
+    <!--  Dual ComboBox Template  -->
     <DataTemplate x:Key="DualComboBoxTemplate">
         <StackPanel Orientation="Horizontal">
             <TextBlock Text="From:"
                        Margin="0,0,5,0"
                        VerticalAlignment="Center" />
-            <ComboBox Text="{Binding SelectedValue, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
-                      VerticalContentAlignment="Center"
+            <ComboBox Style="{StaticResource VirtualizedEditable_Combobox_Style}"
+                      Text="{Binding SelectedValue, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
                       MinWidth="120"
-                      IsEditable="True"
-                      ItemsSource="{Binding AvailableValues}"
-                      VirtualizingPanel.IsVirtualizing="True"
-                      VirtualizingPanel.VirtualizationMode="Recycling" />
+                      Tag="Type or select..."
+                      ItemsSource="{Binding AvailableValues}" />
             <TextBlock Text="To:"
                        Margin="10,0,5,0"
                        VerticalAlignment="Center" />
-            <ComboBox Text="{Binding SelectedSecondaryValue, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
-                      VerticalContentAlignment="Center"
+            <ComboBox Style="{StaticResource VirtualizedEditable_Combobox_Style}"
+                      Text="{Binding SelectedSecondaryValue, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
                       MinWidth="120"
-                      IsEditable="True"
-                      ItemsSource="{Binding AvailableValues}"
-                      VirtualizingPanel.IsVirtualizing="True"
-                      VirtualizingPanel.VirtualizationMode="Recycling" />
+                      Tag="Type or select..."
+                      ItemsSource="{Binding AvailableValues}" />
         </StackPanel>
     </DataTemplate>
 
-    <!-- Dual DateTime Picker Template -->
+    <!--  Dual DateTime Picker Template  -->
     <DataTemplate x:Key="DualDateTimePickerTemplate">
         <StackPanel Orientation="Horizontal">
             <TextBlock Text="From:"
@@ -72,14 +83,15 @@
         </StackPanel>
     </DataTemplate>
 
-    <!-- Numeric UpDown Template -->
+    <!--  Numeric UpDown Template  -->
     <DataTemplate x:Key="NumericUpDownTemplate">
         <StackPanel Orientation="Horizontal">
             <sdg:NumericUpDown Width="80"
                                Minimum="1"
                                Maximum="1000"
                                Value="{Binding SelectedValue}" />
-            <ComboBox Margin="5,0,0,0"
+            <ComboBox Style="{StaticResource Default_ComboBox_Style}"
+                      Margin="5,0,0,0"
                       Width="80"
                       SelectedIndex="0">
                 <ComboBoxItem>Items</ComboBoxItem>
@@ -88,7 +100,7 @@
         </StackPanel>
     </DataTemplate>
 
-    <!-- No Input Template -->
+    <!--  No Input Template  -->
     <DataTemplate x:Key="NoInputTemplate">
         <TextBlock FontStyle="Italic"
                    Foreground="Gray"
@@ -96,7 +108,7 @@
                    VerticalAlignment="Center" />
     </DataTemplate>
 
-    <!-- ComboBox List Template -->
+    <!--  ComboBox List Template  -->
     <DataTemplate x:Key="ComboBoxListTemplate">
         <Grid>
             <Grid.RowDefinitions>
@@ -104,20 +116,21 @@
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
-            <Button Grid.Row="0"
+            <Button Style="{StaticResource Default_Button_Style}"
+                    Grid.Row="0"
                     Command="{Binding AddValueCommand}"
                     Margin="0,0,0,5"
                     HorizontalAlignment="Left"
                     Content="Add Value" />
 
             <ListBox Grid.Row="1"
+                     Background="Transparent"
+                     BorderThickness="0"
                      MaxHeight="150"
                      ItemsSource="{Binding SelectedValues}"
                      ScrollViewer.CanContentScroll="True"
                      VirtualizingPanel.IsVirtualizing="True"
-                     VirtualizingPanel.VirtualizationMode="Recycling"
-                     Background="Transparent"
-                     BorderThickness="0">
+                     VirtualizingPanel.VirtualizationMode="Recycling">
                 <ListBox.ItemsPanel>
                     <ItemsPanelTemplate>
                         <VirtualizingStackPanel Orientation="Vertical" />
@@ -129,6 +142,14 @@
                         <Setter Property="Background" Value="Transparent" />
                         <Setter Property="BorderThickness" Value="0" />
                         <Setter Property="Padding" Value="0" />
+                        <Style.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="Transparent" />
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter Property="Background" Value="Transparent" />
+                            </Trigger>
+                        </Style.Triggers>
                     </Style>
                 </ListBox.ItemContainerStyle>
                 <ListBox.ItemTemplate>
@@ -142,17 +163,16 @@
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
-                                <ComboBox Grid.Column="0"
+                                <ComboBox Style="{StaticResource VirtualizedEditable_Combobox_Style}"
+                                          Grid.Column="0"
+                                          Tag="Type or select..."
                                           Text="{Binding Value}"
-                                          IsEditable="True"
-                                          ItemsSource="{Binding DataContext.AvailableValues, RelativeSource={RelativeSource AncestorType=ListBox}}"
-                                          VirtualizingPanel.IsVirtualizing="True"
-                                          VirtualizingPanel.VirtualizationMode="Recycling" />
-                                <Button Grid.Column="1"
+                                          ItemsSource="{Binding DataContext.AvailableValues, RelativeSource={RelativeSource AncestorType=ListBox}}" />
+                                <Button Style="{StaticResource TransparentFontIcon_Button_Style}"
+                                        Grid.Column="1"
                                         Command="{Binding DataContext.RemoveValueCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"
                                         CommandParameter="{Binding}"
                                         Margin="3,0,0,0"
-                                        FontFamily="Segoe MDL2 Assets"
                                         Content="&#xE10A;" />
                             </Grid>
                         </Border>
@@ -162,7 +182,7 @@
         </Grid>
     </DataTemplate>
 
-    <!-- DateTime Picker List Template -->
+    <!--  DateTime Picker List Template  -->
     <DataTemplate x:Key="DateTimePickerListTemplate">
         <Grid>
             <Grid.RowDefinitions>
@@ -170,20 +190,21 @@
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
-            <Button Grid.Row="0"
+            <Button Style="{StaticResource Default_Button_Style}"
+                    Grid.Row="0"
                     Command="{Binding AddDateCommand}"
                     Margin="0,0,0,5"
                     HorizontalAlignment="Left"
                     Content="Add Date" />
 
             <ListBox Grid.Row="1"
+                     Background="Transparent"
+                     BorderThickness="0"
                      MaxHeight="150"
                      ItemsSource="{Binding SelectedDates}"
                      ScrollViewer.CanContentScroll="True"
                      VirtualizingPanel.IsVirtualizing="True"
-                     VirtualizingPanel.VirtualizationMode="Recycling"
-                     Background="Transparent"
-                     BorderThickness="0">
+                     VirtualizingPanel.VirtualizationMode="Recycling">
                 <ListBox.ItemsPanel>
                     <ItemsPanelTemplate>
                         <VirtualizingStackPanel Orientation="Vertical" />
@@ -209,7 +230,8 @@
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
                                 <DatePicker Grid.Column="0" SelectedDate="{Binding DateValue}" />
-                                <Button Grid.Column="1"
+                                <Button Style="{StaticResource TransparentFontIcon_Button_Style}"
+                                        Grid.Column="1"
                                         Command="{Binding DataContext.RemoveDateCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"
                                         CommandParameter="{Binding}"
                                         Margin="3,0,0,0"
@@ -223,7 +245,7 @@
         </Grid>
     </DataTemplate>
 
-    <!-- Date Interval CheckList Template -->
+    <!--  Date Interval CheckList Template  -->
     <DataTemplate x:Key="DateIntervalCheckListTemplate">
         <ScrollViewer MaxHeight="200">
             <ItemsControl ItemsSource="{Binding DateIntervals}">
@@ -239,5 +261,5 @@
             </ItemsControl>
         </ScrollViewer>
     </DataTemplate>
-    
+
 </ResourceDictionary>

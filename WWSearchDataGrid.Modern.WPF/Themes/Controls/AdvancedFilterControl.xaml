@@ -6,6 +6,7 @@
                     xmlns:converters="clr-namespace:WWSearchDataGrid.Modern.WPF.Converters">
 
     <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF;component/Themes/Common/CommonStyles.xaml" />
         <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF;component/Templates/FilterValueTemplates.xaml" />
         <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF;component/Templates/SharedFilterRuleTemplates.xaml" />
         <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF;component/Themes/Controls/NumericUpDown.xaml" />
@@ -18,7 +19,123 @@
     <converters:FilterInputTemplateToVisibilityConverter x:Key="FilterInputTemplateToVisibilityConverter" />
     <converters:EnumToStringConverter x:Key="EnumToStringConverter" />
 
-    <!-- AdvancedFilterControl-specific Search Group Content Template -->
+    <!--  Hardcoded TabItem Pivot Style  -->
+    <Style x:Key="Default_TabItemPivot_Style" TargetType="{x:Type TabItem}">
+        <Setter Property="OverridesDefaultStyle" Value="True" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Padding" Value="10,0" />
+        <Setter Property="Height" Value="48" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <Setter Property="VerticalContentAlignment" Value="Stretch" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type TabItem}">
+                    <Border x:Name="Border"
+                            Background="{TemplateBinding Background}"
+                            Padding="{TemplateBinding Padding}"
+                            SnapsToDevicePixels="True">
+                        <Grid>
+                            <ContentPresenter x:Name="ContentPresenter"
+                                              Focusable="False"
+                                              HorizontalAlignment="Stretch"
+                                              VerticalAlignment="Center"
+                                              TextElement.Foreground="#666"
+                                              TextElement.FontSize="14"
+                                              TextElement.FontFamily="Segoe UI"
+                                              TextElement.FontWeight="Normal"
+                                              RecognizesAccessKey="True"
+                                              ContentSource="Header"
+                                              SnapsToDevicePixels="True" />
+                            <Rectangle x:Name="SelectedPipe"
+                                       Fill="#0067C0"
+                                       Margin="0,0,0,2"
+                                       HorizontalAlignment="Stretch"
+                                       VerticalAlignment="Bottom"
+                                       Height="2"
+                                       RadiusX="1"
+                                       RadiusY="1" />
+                        </Grid>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="IsSelected" Value="False" />
+                                <Condition SourceName="Border" Property="IsMouseOver" Value="False" />
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="SelectedPipe" Property="Visibility" Value="Collapsed" />
+                        </MultiTrigger>
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="IsSelected" Value="True" />
+                                <Condition SourceName="Border" Property="IsMouseOver" Value="False" />
+                            </MultiTrigger.Conditions>
+                            <Setter Property="Panel.ZIndex" Value="1" />
+                            <Setter TargetName="ContentPresenter" Property="TextElement.Foreground" Value="#000" />
+                        </MultiTrigger>
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="IsSelected" Value="False" />
+                                <Condition SourceName="Border" Property="IsMouseOver" Value="True" />
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="ContentPresenter" Property="TextElement.Foreground" Value="#333" />
+                            <Setter TargetName="SelectedPipe" Property="Visibility" Value="Collapsed" />
+                        </MultiTrigger>
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="IsSelected" Value="True" />
+                                <Condition SourceName="Border" Property="IsMouseOver" Value="True" />
+                            </MultiTrigger.Conditions>
+                            <Setter Property="Panel.ZIndex" Value="1" />
+                            <Setter TargetName="ContentPresenter" Property="TextElement.Foreground" Value="#000" />
+                        </MultiTrigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="ContentPresenter" Property="TextElement.Foreground" Value="#999" />
+                            <Setter TargetName="SelectedPipe" Property="Visibility" Value="Collapsed" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!--  Basic TabControl Pivot Style with no external dependencies  -->
+    <Style x:Key="Default_TabControlPivot_Style" TargetType="{x:Type TabControl}">
+        <Setter Property="OverridesDefaultStyle" Value="True" />
+        <Setter Property="Background" Value="White" />
+        <Setter Property="FontFamily" Value="Segoe UI" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="ItemContainerStyle" Value="{StaticResource Default_TabItemPivot_Style}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type TabControl}">
+                    <Grid Background="{TemplateBinding Background}" KeyboardNavigation.TabNavigation="Local">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+                        <TabPanel x:Name="HeaderPanel"
+                                  Grid.Row="0"
+                                  HorizontalAlignment="Center"
+                                  Background="Transparent"
+                                  Margin="4,0,4,5"
+                                  IsItemsHost="True" />
+                        <Border x:Name="ContentPanel"
+                                Grid.Row="1"
+                                Background="White"
+                                BorderBrush="#CCC"
+                                BorderThickness="1,1,1,1">
+                            <ContentPresenter x:Name="PART_SelectedContentHost"
+                                              Margin="8"
+                                              VerticalAlignment="Stretch"
+                                              ContentSource="SelectedContent" />
+                        </Border>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!--  AdvancedFilterControl-specific Search Group Content Template  -->
     <DataTemplate x:Key="AdvancedFilterSearchGroupContentTemplate" DataType="{x:Type sdgCore:SearchTemplateGroup}">
         <ItemsControl ItemsSource="{Binding SearchTemplates}"
                       VirtualizingPanel.IsVirtualizing="True"
@@ -45,7 +162,7 @@
                                     <RowDefinition Height="Auto" />
                                 </Grid.RowDefinitions>
 
-                                <!-- Filter Type Row -->
+                                <!--  Filter Type Row  -->
                                 <Grid Grid.Row="0">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="Auto" />
@@ -63,7 +180,8 @@
                                                FontFamily="Segoe MDL2 Assets"
                                                ToolTip="Grip Handle" />
 
-                                    <ComboBox Grid.Column="1"
+                                    <ComboBox Style="{StaticResource Default_ComboBox_Style}"
+                                              Grid.Column="1"
                                               Visibility="{Binding IsOperatorVisible, Converter={StaticResource BooleanToVisibilityConverter}}"
                                               Margin="0,0,8,0"
                                               VerticalContentAlignment="Center"
@@ -74,6 +192,7 @@
                                     </ComboBox>
 
                                     <ComboBox x:Name="PART_SearchTypeCombo"
+                                              Style="{StaticResource Default_ComboBox_Style}"
                                               Grid.Column="2"
                                               Margin="0,0,8,0"
                                               VerticalContentAlignment="Center"
@@ -87,17 +206,21 @@
                                         </ComboBox.ItemTemplate>
                                     </ComboBox>
 
-                                    <!-- AdvancedFilterControl specific buttons -->
+                                    <!--  AdvancedFilterControl specific buttons  -->
                                     <StackPanel Grid.Column="4" Orientation="Horizontal">
-                                        <Button Command="{Binding RemoveSearchTemplateCommand, RelativeSource={RelativeSource AncestorType=sdg:AdvancedFilterControl}}"
+                                        <Button Style="{StaticResource TransparentFontIcon_Button_Style}"
+                                                Command="{Binding RemoveSearchTemplateCommand, RelativeSource={RelativeSource AncestorType=sdg:AdvancedFilterControl}}"
                                                 CommandParameter="{Binding}"
                                                 Margin="0,0,4,0"
+                                                Padding="4"
                                                 Height="{Binding ActualWidth, RelativeSource={RelativeSource Self}}"
                                                 ToolTip="Remove"
                                                 FontFamily="Segoe MDL2 Assets"
                                                 Content="&#xE10A;" />
-                                        <Button Command="{Binding AddSearchTemplateCommand, RelativeSource={RelativeSource AncestorType=sdg:AdvancedFilterControl}}"
+                                        <Button Style="{StaticResource TransparentFontIcon_Button_Style}"
+                                                Command="{Binding AddSearchTemplateCommand, RelativeSource={RelativeSource AncestorType=sdg:AdvancedFilterControl}}"
                                                 CommandParameter="{Binding}"
+                                                Padding="4"
                                                 Height="{Binding ActualWidth, RelativeSource={RelativeSource Self}}"
                                                 ToolTip="Add"
                                                 FontFamily="Segoe MDL2 Assets"
@@ -105,7 +228,7 @@
                                     </StackPanel>
                                 </Grid>
 
-                                <!-- Value Input Row -->
+                                <!--  Value Input Row  -->
                                 <ContentControl x:Name="PART_ValueInput"
                                                 Grid.Row="1"
                                                 Margin="0,8,0,0"
@@ -150,7 +273,7 @@
     </DataTemplate>
 
     <!--  AdvancedFilterControl Style  -->
-    <Style TargetType="{x:Type sdg:AdvancedFilterControl}">
+    <Style x:Key="Default_AdvancedFilterControl_Style" TargetType="{x:Type sdg:AdvancedFilterControl}">
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type sdg:AdvancedFilterControl}">
@@ -176,19 +299,20 @@
                             </DockPanel>
 
                             <!--  Tab Control  -->
-                            <TabControl x:Name="PART_TabControl" Grid.Row="1">
+                            <TabControl x:Name="PART_TabControl"
+                                        Style="{StaticResource Default_TabControlPivot_Style}"
+                                        Grid.Row="1">
                                 <!--  Filter Rules Tab  -->
                                 <TabItem Header="Filter Rules">
                                     <ScrollViewer VerticalScrollBarVisibility="Auto">
                                         <ContentControl Content="{Binding SearchTemplateController, RelativeSource={RelativeSource TemplatedParent}}">
                                             <ContentControl.Style>
                                                 <Style TargetType="ContentControl">
-                                                    <!-- Default template for single group mode - direct display -->
+                                                    <!--  Default template for single group mode - direct display  -->
                                                     <Setter Property="ContentTemplate">
                                                         <Setter.Value>
                                                             <DataTemplate>
-                                                                <ItemsControl ItemsSource="{Binding SearchGroups}" 
-                                                                              VirtualizingPanel.IsVirtualizing="False">
+                                                                <ItemsControl ItemsSource="{Binding SearchGroups}" VirtualizingPanel.IsVirtualizing="False">
                                                                     <ItemsControl.ItemsPanel>
                                                                         <ItemsPanelTemplate>
                                                                             <StackPanel Orientation="Vertical" />
@@ -210,7 +334,9 @@
                                 </TabItem>
 
                                 <!--  Filter Values Tab  -->
-                                <TabItem x:Name="PART_FilterValuesTab" Header="Filter Values" IsSelected="True">
+                                <TabItem x:Name="PART_FilterValuesTab"
+                                         Header="Filter Values"
+                                         IsSelected="True">
                                     <!--  Values Content  -->
                                     <ContentControl x:Name="PART_FilterValuesContent"
                                                     Content="{Binding FilterValueViewModel, RelativeSource={RelativeSource TemplatedParent}}"
@@ -224,6 +350,7 @@
                                         Margin="0,12,0,0"
                                         HorizontalAlignment="Right">
                                 <Button x:Name="PART_ApplyButton"
+                                        Style="{StaticResource Default_Button_Style}"
                                         Command="{Binding ApplyFilterCommand, RelativeSource={RelativeSource TemplatedParent}}"
                                         Margin="4,0"
                                         Width="100"
@@ -231,6 +358,7 @@
                                         Content="Apply" />
 
                                 <Button x:Name="PART_ClearButton"
+                                        Style="{StaticResource Default_Button_Style}"
                                         Command="{Binding ClearFilterCommand, RelativeSource={RelativeSource TemplatedParent}}"
                                         Margin="4,0"
                                         Width="100"
@@ -238,6 +366,7 @@
                                         Content="Clear" />
 
                                 <Button x:Name="PART_CloseButton"
+                                        Style="{StaticResource Default_Button_Style}"
                                         Command="{Binding CloseWindowCommand, RelativeSource={RelativeSource TemplatedParent}}"
                                         Margin="4,0"
                                         Width="100"
@@ -254,5 +383,7 @@
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="SnapsToDevicePixels" Value="True" />
     </Style>
+
+    <Style BasedOn="{StaticResource Default_AdvancedFilterControl_Style}" TargetType="{x:Type sdg:AdvancedFilterControl}" />
 
 </ResourceDictionary>

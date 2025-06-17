@@ -4,6 +4,10 @@
                     xmlns:sdg="clr-namespace:WWSearchDataGrid.Modern.WPF"
                     xmlns:converters="clr-namespace:WWSearchDataGrid.Modern.WPF.Converters">
 
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF;component/Themes/Common/CommonStyles.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+
     <!--  Converters  -->
     <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
     <converters:NullToVisibilityConverter x:Key="NullToVisibilityConverter" />
@@ -16,15 +20,6 @@
     <SolidColorBrush x:Key="HoverBrush" Color="#F3F3F3" />
     <SolidColorBrush x:Key="BorderBrush" Color="#DDDDDD" />
     <SolidColorBrush x:Key="GrayTextBrush" Color="#666" />
-
-    <Style x:Key="VirtualizedScrollViewerStyle" TargetType="ScrollViewer">
-        <Setter Property="CanContentScroll" Value="True" />
-        <Setter Property="VirtualizingPanel.IsVirtualizing" Value="True" />
-        <Setter Property="VirtualizingPanel.VirtualizationMode" Value="Recycling" />
-        <Setter Property="VirtualizingPanel.ScrollUnit" Value="Pixel" />
-        <Setter Property="HorizontalScrollBarVisibility" Value="Disabled" />
-        <Setter Property="VerticalScrollBarVisibility" Value="Auto" />
-    </Style>
 
     <!--  Search TextBox Style  -->
     <Style x:Key="SearchTextBoxStyle" TargetType="TextBox">
@@ -113,123 +108,6 @@
                         </DataTrigger>
                         <Trigger Property="Text" Value="">
                             <Setter TargetName="ClearButton" Property="Visibility" Value="Collapsed" />
-                        </Trigger>
-                    </ControlTemplate.Triggers>
-                </ControlTemplate>
-            </Setter.Value>
-        </Setter>
-    </Style>
-
-    <!--  CheckBox Style for Filter Values  -->
-    <Style x:Key="FilterValueCheckBoxStyle" TargetType="CheckBox">
-        <Setter Property="FontSize" Value="13" />
-        <Setter Property="Foreground" Value="Black" />
-        <Setter Property="Template">
-            <Setter.Value>
-                <ControlTemplate TargetType="CheckBox">
-                    <BulletDecorator>
-                        <BulletDecorator.Bullet>
-                            <Border x:Name="Border"
-                                    Background="White"
-                                    BorderBrush="#999999"
-                                    BorderThickness="1"
-                                    Width="18"
-                                    Height="18"
-                                    CornerRadius="3">
-                                <Grid>
-                                    <TextBlock x:Name="CheckIcon"
-                                               Foreground="Transparent"
-                                               Text="&#xE73E;"
-                                               HorizontalAlignment="Center"
-                                               VerticalAlignment="Center"
-                                               FontFamily="Segoe MDL2 Assets"
-                                               FontSize="12" />
-                                    <Rectangle x:Name="IndeterminateIcon"
-                                               Fill="Transparent"
-                                               Visibility="Collapsed"
-                                               HorizontalAlignment="Center"
-                                               VerticalAlignment="Center"
-                                               Width="10"
-                                               Height="1" />
-                                </Grid>
-                            </Border>
-                        </BulletDecorator.Bullet>
-                        <ContentPresenter Margin="6,0,0,0"
-                                          VerticalAlignment="Center"
-                                          RecognizesAccessKey="True" />
-                    </BulletDecorator>
-
-                    <ControlTemplate.Triggers>
-                        <!--  1) Checked = True  -->
-                        <Trigger Property="IsChecked" Value="True">
-                            <Setter TargetName="Border" Property="Background" Value="{StaticResource SelectionBrush}" />
-                            <Setter TargetName="Border" Property="BorderBrush" Value="{StaticResource SelectionBrush}" />
-                            <Setter TargetName="CheckIcon" Property="Foreground" Value="White" />
-                            <Setter TargetName="IndeterminateIcon" Property="Visibility" Value="Collapsed" />
-                        </Trigger>
-
-                        <!--  1a) Indeterminate State  -->
-                        <Trigger Property="IsChecked" Value="{x:Null}">
-                            <Setter TargetName="Border" Property="Background" Value="{StaticResource SelectionBrush}" />
-                            <Setter TargetName="Border" Property="BorderBrush" Value="{StaticResource SelectionBrush}" />
-                            <Setter TargetName="CheckIcon" Property="Visibility" Value="Collapsed" />
-                            <Setter TargetName="IndeterminateIcon" Property="Fill" Value="White" />
-                            <Setter TargetName="IndeterminateIcon" Property="Visibility" Value="Visible" />
-                        </Trigger>
-
-                        <!--  2) Hover when Checked  -->
-                        <MultiTrigger>
-                            <MultiTrigger.Conditions>
-                                <Condition Property="IsMouseOver" Value="True" />
-                                <Condition Property="IsChecked" Value="True" />
-                            </MultiTrigger.Conditions>
-                            <Setter TargetName="Border" Property="Background" Value="#005A9E" />
-                            <Setter TargetName="Border" Property="BorderBrush" Value="#005A9E" />
-                        </MultiTrigger>
-
-                        <!--  2a) Hover when Indeterminate  -->
-                        <MultiTrigger>
-                            <MultiTrigger.Conditions>
-                                <Condition Property="IsMouseOver" Value="True" />
-                                <Condition Property="IsChecked" Value="{x:Null}" />
-                            </MultiTrigger.Conditions>
-                            <Setter TargetName="Border" Property="Background" Value="#005A9E" />
-                            <Setter TargetName="Border" Property="BorderBrush" Value="#005A9E" />
-                        </MultiTrigger>
-
-                        <!--  3) Hover when NOT Checked  -->
-                        <MultiTrigger>
-                            <MultiTrigger.Conditions>
-                                <Condition Property="IsMouseOver" Value="True" />
-                                <Condition Property="IsChecked" Value="False" />
-                            </MultiTrigger.Conditions>
-                            <Setter TargetName="Border" Property="Background" Value="#EEEEEE" />
-                            <Setter TargetName="Border" Property="BorderBrush" Value="#CCCCCC" />
-                        </MultiTrigger>
-
-                        <!--  4) Pressed when NOT Checked  -->
-                        <MultiTrigger>
-                            <MultiTrigger.Conditions>
-                                <Condition Property="IsPressed" Value="True" />
-                                <Condition Property="IsChecked" Value="False" />
-                            </MultiTrigger.Conditions>
-                            <Setter TargetName="Border" Property="Background" Value="#CDE6FF" />
-                            <Setter TargetName="Border" Property="BorderBrush" Value="#005A9E" />
-                        </MultiTrigger>
-
-                        <!--  4a) Pressed when Indeterminate  -->
-                        <MultiTrigger>
-                            <MultiTrigger.Conditions>
-                                <Condition Property="IsPressed" Value="True" />
-                                <Condition Property="IsChecked" Value="{x:Null}" />
-                            </MultiTrigger.Conditions>
-                            <Setter TargetName="Border" Property="Background" Value="#005A9E" />
-                            <Setter TargetName="Border" Property="BorderBrush" Value="#003D7A" />
-                        </MultiTrigger>
-
-                        <!--  5) Disabled State  -->
-                        <Trigger Property="IsEnabled" Value="False">
-                            <Setter Property="Opacity" Value="0.5" />
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -359,7 +237,7 @@
                      Tag="Search values..." />
 
             <!--  Select All Checkbox  -->
-            <CheckBox Style="{StaticResource FilterValueCheckBoxStyle}"
+            <CheckBox Style="{StaticResource Default_CheckBox_Style}"
                       Grid.Row="1"
                       IsChecked="{Binding SelectAllState, Mode=TwoWay}"
                       Margin="0,0,0,8"
@@ -405,7 +283,7 @@
                 </ListBox.ItemContainerStyle>
                 <ListBox.ItemTemplate>
                     <DataTemplate>
-                        <CheckBox Style="{StaticResource FilterValueCheckBoxStyle}"
+                        <CheckBox Style="{StaticResource Default_CheckBox_Style}"
                                   IsChecked="{Binding IsSelected, Mode=TwoWay}"
                                   Margin="0,2">
                             <StackPanel Orientation="Horizontal">
@@ -468,7 +346,7 @@
                      Tag="Search groups and values..." />
 
             <!--  Select All Checkbox  -->
-            <CheckBox Style="{StaticResource FilterValueCheckBoxStyle}"
+            <CheckBox Style="{StaticResource Default_CheckBox_Style}"
                       Grid.Row="2"
                       IsChecked="{Binding SelectAllState, Mode=TwoWay}"
                       Margin="0,0,0,8"
@@ -536,7 +414,7 @@
                         <Border x:Name="GroupBorder"
                                 Background="Transparent"
                                 Padding="2">
-                            <CheckBox Style="{StaticResource FilterValueCheckBoxStyle}"
+                            <CheckBox Style="{StaticResource Default_CheckBox_Style}"
                                       IsChecked="{Binding IsSelected, Mode=TwoWay}"
                                       IsThreeState="True">
                                 <CheckBox.Content>
@@ -581,7 +459,7 @@
                         <Border x:Name="ItemBorder"
                                 Background="Transparent"
                                 Padding="2">
-                            <CheckBox Style="{StaticResource FilterValueCheckBoxStyle}"
+                            <CheckBox Style="{StaticResource Default_CheckBox_Style}"
                                       IsChecked="{Binding IsSelected, Mode=TwoWay}"
                                       Margin="20,1,1,1">
                                 <CheckBox.Content>
@@ -665,7 +543,7 @@
                      Tag="Search dates (e.g., 2023, January, 15)..." />
 
             <!--  Select All Checkbox  -->
-            <CheckBox Style="{StaticResource FilterValueCheckBoxStyle}"
+            <CheckBox Style="{StaticResource Default_CheckBox_Style}"
                       Grid.Row="2"
                       IsChecked="{Binding SelectAllState, Mode=TwoWay}"
                       Margin="0,0,0,8"
@@ -687,7 +565,7 @@
                 <TreeView.Resources>
                     <!--  Year Level  -->
                     <HierarchicalDataTemplate DataType="{x:Type sdgCore:FilterValueGroup}" ItemsSource="{Binding Children}">
-                        <CheckBox Style="{StaticResource FilterValueCheckBoxStyle}"
+                        <CheckBox Style="{StaticResource Default_CheckBox_Style}"
                                   IsChecked="{Binding IsSelected, Mode=TwoWay}"
                                   Margin="2"
                                   IsThreeState="True">
@@ -702,7 +580,7 @@
                         <!--  Month Level nested template  -->
                         <HierarchicalDataTemplate.ItemTemplate>
                             <HierarchicalDataTemplate DataType="{x:Type sdgCore:FilterValueGroup}" ItemsSource="{Binding Children}">
-                                <CheckBox Style="{StaticResource FilterValueCheckBoxStyle}"
+                                <CheckBox Style="{StaticResource Default_CheckBox_Style}"
                                           IsChecked="{Binding IsSelected, Mode=TwoWay}"
                                           Margin="2"
                                           IsThreeState="True">
@@ -717,7 +595,7 @@
                                 <!--  Day Level  -->
                                 <HierarchicalDataTemplate.ItemTemplate>
                                     <DataTemplate DataType="{x:Type sdgCore:FilterValueItem}">
-                                        <CheckBox Style="{StaticResource FilterValueCheckBoxStyle}"
+                                        <CheckBox Style="{StaticResource Default_CheckBox_Style}"
                                                   IsChecked="{Binding IsSelected, Mode=TwoWay}"
                                                   Margin="2">
                                             <StackPanel Orientation="Horizontal">

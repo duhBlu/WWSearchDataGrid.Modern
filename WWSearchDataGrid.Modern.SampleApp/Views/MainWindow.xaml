@@ -61,6 +61,7 @@
     <DockPanel>
         <!--  Header with app title  -->
         <Border DockPanel.Dock="Top"
+                Background="DodgerBlue"
                 Padding="10">
             <TextBlock Foreground="White"
                        Text="SearchDataGrid Demo Application"

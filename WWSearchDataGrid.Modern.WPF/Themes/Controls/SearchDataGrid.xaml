@@ -4,6 +4,7 @@
                     xmlns:converters="clr-namespace:WWSearchDataGrid.Modern.WPF.Converters">
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF;component/Themes/Controls/SearchControl.xaml" />
+        <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF;component/Themes/Controls/FilterPanel.xaml" />
     </ResourceDictionary.MergedDictionaries>
 
     <Style x:Key="DefaultSelectAllButtonStyle" TargetType="{x:Type Button}">
@@ -204,11 +205,13 @@
                             SnapsToDevicePixels="True">
                         <Grid>
                             <Grid.RowDefinitions>
-                                <RowDefinition Height="*" />      <!-- DataGrid -->
-                                <RowDefinition Height="Auto" />   <!-- FilterPanel -->
+                                <RowDefinition Height="*" />      
+                                <!--  DataGrid  -->
+                                <RowDefinition Height="Auto" />   
+                                <!--  FilterPanel  -->
                             </Grid.RowDefinitions>
-                            
-                            <!-- Main DataGrid -->
+
+                            <!--  Main DataGrid  -->
                             <ScrollViewer x:Name="DG_ScrollViewer"
                                           Grid.Row="0"
                                           Focusable="false"
@@ -268,10 +271,9 @@
                                 </ScrollViewer.Template>
                                 <ItemsPresenter SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" />
                             </ScrollViewer>
-                            
-                            <!-- FilterPanel -->
-                            <sdg:FilterPanel x:Name="PART_FilterPanel" Style="{StaticResource DefaultFilterPanelStyle}"
-                                                Grid.Row="1" />
+
+                            <!--  FilterPanel  -->
+                            <sdg:FilterPanel x:Name="PART_FilterPanel" Grid.Row="1" />
                         </Grid>
                     </Border>
                 </ControlTemplate>

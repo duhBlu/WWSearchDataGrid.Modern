@@ -226,7 +226,7 @@ namespace WWSearchDataGrid.Modern.Core
                         var dayItem = new FilterValueItem
                         {
                             Value = date,
-                            DisplayValue = date.ToString("dd"),
+                            DisplayValue = date.ToString("d MMM yyyy"),
                             ItemCount = count,
                             IsSelected = true,
                             Parent = monthItem
@@ -336,7 +336,7 @@ namespace WWSearchDataGrid.Modern.Core
                         var newDay = new FilterValueItem
                         {
                             Value = dateValue.Date,
-                            DisplayValue = dateValue.ToString("dd"),
+                            DisplayValue = dateValue.ToString("d MMM yyyy"),
                             ItemCount = 1,
                             IsSelected = monthGroup.IsSelected ?? false,
                             Parent = monthGroup
@@ -380,7 +380,7 @@ namespace WWSearchDataGrid.Modern.Core
                 var dayItem = new FilterValueItem
                 {
                     Value = dateValue.Date,
-                    DisplayValue = dateValue.ToString("dd"),
+                    DisplayValue = dateValue.ToString("d MMM yyyy"),
                     ItemCount = 1,
                     IsSelected = true,
                     Parent = monthGroup
