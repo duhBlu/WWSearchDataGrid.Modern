@@ -31,6 +31,7 @@ namespace WWSearchDataGrid.Modern.WPF
         private SearchTemplateController globalFilterController;
         private Dictionary<string, IEnumerable<object>> _columnTransformationResults = new Dictionary<string, IEnumerable<object>>();
         private bool _isApplyingTransformation = false;
+        private bool _isEditingTransformedData = false;
 
         #endregion
 
@@ -204,6 +205,11 @@ namespace WWSearchDataGrid.Modern.WPF
         {
             base.OnApplyTemplate();
             
+            // Wire up editing events to handle transformed data editing
+            this.BeginningEdit += OnBeginningEdit;
+            this.RowEditEnding += OnRowEditEnding;
+            this.CellEditEnding += OnCellEditEnding;
+            
             // Get the FilterPanel template part and connect it to our FilterPanel instance
             if (GetTemplateChild("PART_FilterPanel") is FilterPanel templateFilterPanel && FilterPanel != null)
             {
@@ -219,6 +225,65 @@ namespace WWSearchDataGrid.Modern.WPF
                 
                 // Replace our FilterPanel property with the template instance so updates go to the right place
                 FilterPanel = templateFilterPanel;
+            }
+        }
+
+        #endregion
+
+        #region Editing Event Handlers
+
+        /// <summary>
+        /// Handles the beginning of edit operations to track if we're editing transformed data
+        /// </summary>
+        private void OnBeginningEdit(object sender, DataGridBeginningEditEventArgs e)
+        {
+            try
+            {
+                _isEditingTransformedData = HasActiveTransformations();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error in OnBeginningEdit: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Handles row edit ending to sync changes back to original data if needed
+        /// </summary>
+        private void OnRowEditEnding(object sender, DataGridRowEditEndingEventArgs e)
+        {
+            try
+            {
+                if (_isEditingTransformedData && e.EditAction == DataGridEditAction.Commit)
+                {
+                    // The change will be automatically reflected in the original data
+                    // since both collections contain references to the same objects
+                    // No additional synchronization needed for reference types
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error in OnRowEditEnding: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Handles cell edit ending to sync changes back to original data if needed
+        /// </summary>
+        private void OnCellEditEnding(object sender, DataGridCellEditEndingEventArgs e)
+        {
+            try
+            {
+                if (_isEditingTransformedData && e.EditAction == DataGridEditAction.Commit)
+                {
+                    // For reference types, changes are automatically synchronized
+                    // For value types or complex scenarios, additional synchronization might be needed
+                    // This can be extended based on specific data model requirements
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error in OnCellEditEnding: {ex.Message}");
             }
         }
 
@@ -1080,7 +1145,18 @@ namespace WWSearchDataGrid.Modern.WPF
                     }
                 }
 
-                transformedItemsSource = finalResult;
+                // Convert to editable collection to support DataGrid editing
+                if (finalResult is System.Collections.IList editableResult)
+                {
+                    transformedItemsSource = editableResult;
+                }
+                else
+                {
+                    // Convert LINQ results to ObservableCollection for editing support
+                    var resultList = finalResult.ToList();
+                    var observableResult = new ObservableCollection<object>(resultList);
+                    transformedItemsSource = observableResult;
+                }
 
                 // Update the ItemsSource to use transformed data
                 var currentFilter = Items.Filter;
