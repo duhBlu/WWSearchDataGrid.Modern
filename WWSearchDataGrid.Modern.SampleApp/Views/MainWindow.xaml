@@ -18,12 +18,49 @@
     <Window.Resources>
         <CollectionViewSource x:Key="ComboBoxItemsSource" Source="{Binding ComboBoxItems}" />
         <CollectionViewSource x:Key="ComboBoxStringSource" Source="{Binding ComboBoxStringValues}" />
+
+
+        <Style x:Key="DefaultButtonStyle" TargetType="Button">
+            <Setter Property="Padding" Value="10,5" />
+            <Setter Property="Background" Value="#F0F0F0" />
+            <Setter Property="BorderBrush" Value="#CCCCCC" />
+            <Setter Property="Foreground" Value="#333333" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="1"
+                                CornerRadius="3">
+                            <ContentPresenter Margin="{TemplateBinding Padding}"
+                                              HorizontalAlignment="Center"
+                                              VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#E0E0E0" />
+                                <Setter Property="BorderBrush" Value="#AAAAAA" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Background" Value="#D0D0D0" />
+                                <Setter Property="BorderBrush" Value="#999999" />
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.6" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
     </Window.Resources>
 
     <DockPanel>
         <!--  Header with app title  -->
         <Border DockPanel.Dock="Top"
-                Background="#007ACC"
                 Padding="10">
             <TextBlock Foreground="White"
                        Text="SearchDataGrid Demo Application"
@@ -56,22 +93,26 @@
                 <sdg:NumericUpDown Value="{Binding ItemsToGenerate, Mode=TwoWay}" />
                 <Button Background="#007ACC"
                         Foreground="White"
+                        Style="{StaticResource DefaultButtonStyle}"
                         Command="{Binding PopulateDataCommand}"
                         Margin="5"
                         Padding="10,5"
                         Content="Generate Data" />
 
                 <Button Command="{Binding AddItemCommand}"
+                        Style="{StaticResource DefaultButtonStyle}"
                         Margin="5"
                         Padding="10,5"
                         Content="Add Item" />
 
                 <Button Command="{Binding RemoveItemCommand}"
+                        Style="{StaticResource DefaultButtonStyle}"
                         Margin="5"
                         Padding="10,5"
                         Content="Remove Item" />
 
                 <Button Command="{Binding ClearDataCommand}"
+                        Style="{StaticResource DefaultButtonStyle}"
                         Margin="5"
                         Padding="10,5"
                         Content="Clear Data" />
@@ -191,8 +232,8 @@
 
                     <!--  8) Status (string)  -->
                     <DataGridTextColumn Width="120"
-                                        Header="Status"
                                         sdg:AdvancedFilterControl.GroupByColumn="Region"
+                                        Header="Status"
                                         Binding="{Binding Status}" />
                 </sdg:SearchDataGrid.Columns>
             </sdg:SearchDataGrid>

@@ -4,130 +4,13 @@
                     xmlns:sdg="clr-namespace:WWSearchDataGrid.Modern.WPF">
 
     <ResourceDictionary.MergedDictionaries>
-        <!--  Include any required converters  -->
     </ResourceDictionary.MergedDictionaries>
-
+    
     <!--  Converters  -->
     <converters:BooleanToVisibilityCollapsedConverter x:Key="BooleanToVisibilityConverter" />
 
     <Color x:Key="PrimaryColor">#0078D4</Color>
     <SolidColorBrush x:Key="SelectionBrush" Color="{StaticResource PrimaryColor}" />
-
-    <Style x:Key="FilterPanelEnableFilterCheckboxStyle" TargetType="CheckBox">
-        <Setter Property="FontSize" Value="13" />
-        <Setter Property="Foreground" Value="Black" />
-        <Setter Property="Template">
-            <Setter.Value>
-                <ControlTemplate TargetType="CheckBox">
-                    <BulletDecorator>
-                        <BulletDecorator.Bullet>
-                            <Border x:Name="Border"
-                                    Background="White"
-                                    BorderBrush="#999999"
-                                    BorderThickness="1"
-                                    Width="18"
-                                    Height="18"
-                                    CornerRadius="3">
-                                <Grid>
-                                    <TextBlock x:Name="CheckIcon"
-                                               Foreground="Transparent"
-                                               Text="&#xE73E;"
-                                               HorizontalAlignment="Center"
-                                               VerticalAlignment="Center"
-                                               FontFamily="Segoe MDL2 Assets"
-                                               FontSize="12" />
-                                    <Rectangle x:Name="IndeterminateIcon"
-                                               Fill="Transparent"
-                                               Visibility="Collapsed"
-                                               HorizontalAlignment="Center"
-                                               VerticalAlignment="Center"
-                                               Width="10"
-                                               Height="1" />
-                                </Grid>
-                            </Border>
-                        </BulletDecorator.Bullet>
-                        <ContentPresenter Margin="6,0,0,0"
-                                          VerticalAlignment="Center"
-                                          RecognizesAccessKey="True" />
-                    </BulletDecorator>
-
-                    <ControlTemplate.Triggers>
-                        <!--  1) Checked = True  -->
-                        <Trigger Property="IsChecked" Value="True">
-                            <Setter TargetName="Border" Property="Background" Value="{StaticResource SelectionBrush}" />
-                            <Setter TargetName="Border" Property="BorderBrush" Value="{StaticResource SelectionBrush}" />
-                            <Setter TargetName="CheckIcon" Property="Foreground" Value="White" />
-                            <Setter TargetName="IndeterminateIcon" Property="Visibility" Value="Collapsed" />
-                        </Trigger>
-
-                        <!--  1a) Indeterminate State  -->
-                        <Trigger Property="IsChecked" Value="{x:Null}">
-                            <Setter TargetName="Border" Property="Background" Value="{StaticResource SelectionBrush}" />
-                            <Setter TargetName="Border" Property="BorderBrush" Value="{StaticResource SelectionBrush}" />
-                            <Setter TargetName="CheckIcon" Property="Visibility" Value="Collapsed" />
-                            <Setter TargetName="IndeterminateIcon" Property="Fill" Value="White" />
-                            <Setter TargetName="IndeterminateIcon" Property="Visibility" Value="Visible" />
-                        </Trigger>
-
-                        <!--  2) Hover when Checked  -->
-                        <MultiTrigger>
-                            <MultiTrigger.Conditions>
-                                <Condition Property="IsMouseOver" Value="True" />
-                                <Condition Property="IsChecked" Value="True" />
-                            </MultiTrigger.Conditions>
-                            <Setter TargetName="Border" Property="Background" Value="#005A9E" />
-                            <Setter TargetName="Border" Property="BorderBrush" Value="#005A9E" />
-                        </MultiTrigger>
-
-                        <!--  2a) Hover when Indeterminate  -->
-                        <MultiTrigger>
-                            <MultiTrigger.Conditions>
-                                <Condition Property="IsMouseOver" Value="True" />
-                                <Condition Property="IsChecked" Value="{x:Null}" />
-                            </MultiTrigger.Conditions>
-                            <Setter TargetName="Border" Property="Background" Value="#005A9E" />
-                            <Setter TargetName="Border" Property="BorderBrush" Value="#005A9E" />
-                        </MultiTrigger>
-
-                        <!--  3) Hover when NOT Checked  -->
-                        <MultiTrigger>
-                            <MultiTrigger.Conditions>
-                                <Condition Property="IsMouseOver" Value="True" />
-                                <Condition Property="IsChecked" Value="False" />
-                            </MultiTrigger.Conditions>
-                            <Setter TargetName="Border" Property="Background" Value="#EEEEEE" />
-                            <Setter TargetName="Border" Property="BorderBrush" Value="#CCCCCC" />
-                        </MultiTrigger>
-
-                        <!--  4) Pressed when NOT Checked  -->
-                        <MultiTrigger>
-                            <MultiTrigger.Conditions>
-                                <Condition Property="IsPressed" Value="True" />
-                                <Condition Property="IsChecked" Value="False" />
-                            </MultiTrigger.Conditions>
-                            <Setter TargetName="Border" Property="Background" Value="#CDE6FF" />
-                            <Setter TargetName="Border" Property="BorderBrush" Value="#005A9E" />
-                        </MultiTrigger>
-
-                        <!--  4a) Pressed when Indeterminate  -->
-                        <MultiTrigger>
-                            <MultiTrigger.Conditions>
-                                <Condition Property="IsPressed" Value="True" />
-                                <Condition Property="IsChecked" Value="{x:Null}" />
-                            </MultiTrigger.Conditions>
-                            <Setter TargetName="Border" Property="Background" Value="#005A9E" />
-                            <Setter TargetName="Border" Property="BorderBrush" Value="#003D7A" />
-                        </MultiTrigger>
-
-                        <!--  5) Disabled State  -->
-                        <Trigger Property="IsEnabled" Value="False">
-                            <Setter Property="Opacity" Value="0.5" />
-                        </Trigger>
-                    </ControlTemplate.Triggers>
-                </ControlTemplate>
-            </Setter.Value>
-        </Setter>
-    </Style>
 
     <!--  Filter Chip Style  -->
     <Style x:Key="FilterChipStyle" TargetType="Border">
@@ -205,7 +88,7 @@
 
                             <!--  Filters Enabled Checkbox  -->
                             <CheckBox x:Name="PART_FiltersEnabledCheckBox"
-                                      Style="{StaticResource FilterPanelEnableFilterCheckboxStyle}"
+                                      Style="{StaticResource Default_CheckBox_Style}"
                                       Grid.Column="0"
                                       IsChecked="{Binding FiltersEnabled, RelativeSource={RelativeSource TemplatedParent}}"
                                       Margin="0,0,8,0"
@@ -237,30 +120,30 @@
                                                                Foreground="DarkBlue"
                                                                Margin="0,0,8,0"
                                                                Visibility="Visible" />
-                                                    
+
                                                     <!-- Filter chip -->
                                                     <Grid Background="Transparent">
-                                                    <Grid.ColumnDefinitions>
-                                                        <ColumnDefinition Width="Auto" />
-                                                        <ColumnDefinition Width="Auto" />
-                                                    </Grid.ColumnDefinitions>
-                                                    <Border Background="Transparent"
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="Auto" />
+                                                            <ColumnDefinition Width="Auto" />
+                                                        </Grid.ColumnDefinitions>
+                                                        <Border Background="Transparent"
                                                             BorderBrush="DimGray"
                                                             BorderThickness="1"
                                                             Grid.Column="0"
                                                             Padding="8,4"
                                                             CornerRadius="3">
-                                                        <StackPanel Orientation="Horizontal">
-                                                            <TextBlock Text="{Binding ColumnName}"
+                                                            <StackPanel Orientation="Horizontal">
+                                                                <TextBlock Text="{Binding ColumnName}"
                                                                        VerticalAlignment="Center"
                                                                        FontWeight="Medium" />
-                                                            <TextBlock Text=": " VerticalAlignment="Center" />
-                                                            <TextBlock Text="{Binding DisplayText}" VerticalAlignment="Center" />
-                                                        </StackPanel>
-                                                    </Border>
+                                                                <TextBlock Text=": " VerticalAlignment="Center" />
+                                                                <TextBlock Text="{Binding DisplayText}" VerticalAlignment="Center" />
+                                                            </StackPanel>
+                                                        </Border>
 
-                                                    <!--  Close Button  -->
-                                                    <Button Cursor="Hand"
+                                                        <!--  Close Button  -->
+                                                        <Button Cursor="Hand"
                                                             Grid.Column="1"
                                                             Command="{Binding RemoveFilterCommand, RelativeSource={RelativeSource AncestorType=sdg:FilterPanel}}"
                                                             CommandParameter="{Binding}"
@@ -273,55 +156,55 @@
                                                             FontSize="10"
                                                             Content="&#xE8BB;"
                                                             ToolTip="Remove this filter">
-                                                        <Button.Style>
-                                                            <Style TargetType="Button">
-                                                                <Setter Property="Visibility" Value="Collapsed" />
-                                                                <Setter Property="Foreground" Value="Gray" />
-                                                                <Setter Property="Background" Value="Transparent" />
-                                                                <Setter Property="BorderBrush" Value="Transparent" />
-                                                                <Setter Property="BorderThickness" Value="0" />
-                                                                <Setter Property="Cursor" Value="Hand" />
-                                                                <Setter Property="Template">
-                                                                    <Setter.Value>
-                                                                        <ControlTemplate TargetType="{x:Type Button}">
-                                                                            <Border Background="{TemplateBinding Background}"
+                                                            <Button.Style>
+                                                                <Style TargetType="Button">
+                                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                                    <Setter Property="Foreground" Value="Gray" />
+                                                                    <Setter Property="Background" Value="Transparent" />
+                                                                    <Setter Property="BorderBrush" Value="Transparent" />
+                                                                    <Setter Property="BorderThickness" Value="0" />
+                                                                    <Setter Property="Cursor" Value="Hand" />
+                                                                    <Setter Property="Template">
+                                                                        <Setter.Value>
+                                                                            <ControlTemplate TargetType="{x:Type Button}">
+                                                                                <Border Background="{TemplateBinding Background}"
                                                                                     BorderBrush="{TemplateBinding BorderBrush}"
                                                                                     BorderThickness="{TemplateBinding BorderThickness}"
                                                                                     CornerRadius="3">
-                                                                                <ContentPresenter Margin="{TemplateBinding Padding}"
+                                                                                    <ContentPresenter Margin="{TemplateBinding Padding}"
                                                                                                   HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
                                                                                                   VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
                                                                                                   RecognizesAccessKey="True"
                                                                                                   TextElement.Foreground="{TemplateBinding Foreground}" />
-                                                                            </Border>
-                                                                        </ControlTemplate>
-                                                                    </Setter.Value>
-                                                                </Setter>
-                                                                <Style.Triggers>
-                                                                    <Trigger Property="IsMouseOver" Value="True">
-                                                                        <Setter Property="Background" Value="#FFF0F0F0" />
-                                                                        <Setter Property="Foreground" Value="#CC0000" />
-                                                                    </Trigger>
-                                                                    <Trigger Property="IsPressed" Value="True">
-                                                                        <Setter Property="Background" Value="#FFE0E0E0" />
-                                                                        <Setter Property="Foreground" Value="#990000" />
-                                                                    </Trigger>
-                                                                    <Trigger Property="IsEnabled" Value="False">
-                                                                        <Setter Property="Opacity" Value="0.5" />
-                                                                        <Setter Property="Cursor" Value="Arrow" />
-                                                                    </Trigger>
+                                                                                </Border>
+                                                                            </ControlTemplate>
+                                                                        </Setter.Value>
+                                                                    </Setter>
+                                                                    <Style.Triggers>
+                                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                                            <Setter Property="Background" Value="#FFF0F0F0" />
+                                                                            <Setter Property="Foreground" Value="#CC0000" />
+                                                                        </Trigger>
+                                                                        <Trigger Property="IsPressed" Value="True">
+                                                                            <Setter Property="Background" Value="#FFE0E0E0" />
+                                                                            <Setter Property="Foreground" Value="#990000" />
+                                                                        </Trigger>
+                                                                        <Trigger Property="IsEnabled" Value="False">
+                                                                            <Setter Property="Opacity" Value="0.5" />
+                                                                            <Setter Property="Cursor" Value="Arrow" />
+                                                                        </Trigger>
 
-                                                                    <!--  Trigger visibility when ancestor Grid is hovered  -->
-                                                                    <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=Grid}}" Value="True">
-                                                                        <Setter Property="Visibility" Value="Visible" />
-                                                                    </DataTrigger>
-                                                                </Style.Triggers>
-                                                            </Style>
-                                                        </Button.Style>
-                                                    </Button>
-                                                </Grid>
+                                                                        <!--  Trigger visibility when ancestor Grid is hovered  -->
+                                                                        <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=Grid}}" Value="True">
+                                                                            <Setter Property="Visibility" Value="Visible" />
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </Button.Style>
+                                                        </Button>
+                                                    </Grid>
                                                 </StackPanel>
-                                                
+
                                             </DataTemplate>
                                         </ItemsControl.ItemTemplate>
                                     </ItemsControl>
@@ -354,8 +237,5 @@
             </Setter.Value>
         </Setter>
     </Style>
-
-    <!--  Apply default style  -->
-    <Style BasedOn="{StaticResource DefaultFilterPanelStyle}" TargetType="{x:Type sdg:FilterPanel}" />
 
 </ResourceDictionary>

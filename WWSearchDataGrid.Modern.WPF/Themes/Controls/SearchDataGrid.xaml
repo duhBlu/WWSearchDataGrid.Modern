@@ -270,7 +270,7 @@
                             </ScrollViewer>
                             
                             <!-- FilterPanel -->
-                            <sdg:FilterPanel x:Name="PART_FilterPanel"
+                            <sdg:FilterPanel x:Name="PART_FilterPanel" Style="{StaticResource DefaultFilterPanelStyle}"
                                                 Grid.Row="1" />
                         </Grid>
                     </Border>
