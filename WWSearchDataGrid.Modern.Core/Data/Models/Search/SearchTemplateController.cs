@@ -139,6 +139,17 @@ namespace WWSearchDataGrid.Modern.Core
         #region Public Methods
 
         /// <summary>
+        /// Clears all search groups and adds a default empty group back
+        /// This ensures the UI always has something to display
+        /// </summary>
+        public void ClearAndReset()
+        {
+            SearchGroups.Clear();
+            AddSearchGroup(true, false); // Add default group without marking as changed
+            HasCustomExpression = false;
+        }
+
+        /// <summary>
         /// Evaluates collection-context filters like TopN, BottomN, AboveAverage, etc.
         /// </summary>
         /// <param name="items">The complete collection of items to filter</param>

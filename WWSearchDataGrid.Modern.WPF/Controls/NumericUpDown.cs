@@ -18,8 +18,8 @@ namespace WWSearchDataGrid.Modern.WPF
         #region Dependency Properties
 
         public static readonly DependencyProperty ValueProperty =
-            DependencyProperty.Register("Value", typeof(int), typeof(NumericUpDown),
-                new PropertyMetadata(0, OnValueChanged));
+            DependencyProperty.Register("Value", typeof(object), typeof(NumericUpDown),
+                new PropertyMetadata(0, OnValueChanged, CoerceValue));
 
         public static readonly DependencyProperty MinimumProperty =
             DependencyProperty.Register("Minimum", typeof(int), typeof(NumericUpDown),
@@ -37,10 +37,27 @@ namespace WWSearchDataGrid.Modern.WPF
 
         #region Properties
 
-        public int Value
+        public object Value
         {
-            get => (int)GetValue(ValueProperty);
+            get => GetValue(ValueProperty);
             set => SetValue(ValueProperty, value);
+        }
+
+        /// <summary>
+        /// Gets the value as an integer for internal calculations
+        /// </summary>
+        private int IntValue
+        {
+            get
+            {
+                if (Value == null)
+                    return 0;
+                
+                if (int.TryParse(Value.ToString(), out int result))
+                    return Math.Max(Minimum, Math.Min(Maximum, result));
+                
+                return 0;
+            }
         }
 
         public int Minimum
@@ -90,7 +107,7 @@ namespace WWSearchDataGrid.Modern.WPF
 
         private void IncreaseValue()
         {
-            var newValue = Value + Increment;
+            var newValue = IntValue + Increment;
             if (newValue <= Maximum)
             {
                 Value = newValue;
@@ -99,7 +116,7 @@ namespace WWSearchDataGrid.Modern.WPF
 
         private void DecreaseValue()
         {
-            var newValue = Value - Increment;
+            var newValue = IntValue - Increment;
             if (newValue >= Minimum)
             {
                 Value = newValue;
@@ -110,16 +127,34 @@ namespace WWSearchDataGrid.Modern.WPF
         {
             if (d is NumericUpDown control)
             {
-                var newValue = (int)e.NewValue;
-                if (newValue < control.Minimum)
-                {
-                    control.Value = control.Minimum;
-                }
-                else if (newValue > control.Maximum)
-                {
-                    control.Value = control.Maximum;
-                }
+                // The value will be coerced to be within bounds by the CoerceValue method
+                control.OnPropertyChanged(nameof(control.IntValue));
             }
+        }
+
+        private static object CoerceValue(DependencyObject d, object baseValue)
+        {
+            if (d is NumericUpDown control)
+            {
+                if (baseValue == null)
+                    return 0;
+
+                if (int.TryParse(baseValue.ToString(), out int intValue))
+                {
+                    // Coerce to be within bounds
+                    return Math.Max(control.Minimum, Math.Min(control.Maximum, intValue));
+                }
+
+                return 0;
+            }
+
+            return baseValue;
+        }
+
+        private void OnPropertyChanged(string propertyName)
+        {
+            // This would require implementing INotifyPropertyChanged if needed
+            // For now, we'll rely on the dependency property system
         }
 
         #endregion

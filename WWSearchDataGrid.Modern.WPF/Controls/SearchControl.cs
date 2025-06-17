@@ -506,11 +506,16 @@ namespace WWSearchDataGrid.Modern.WPF
                 if (SearchTemplateController == null)
                     return;
 
-                // Clear the search template groups
-                SearchTemplateController.SearchGroups.Clear();
-                SearchTemplateController.HasCustomExpression = false;
+                // Clear the search template groups and add a default one back
+                SearchTemplateController.ClearAndReset();
 
                 HasAdvancedFilter = false;
+
+                // Clear any data transformations for this column
+                if (SourceDataGrid != null && !string.IsNullOrEmpty(BindingPath))
+                {
+                    SourceDataGrid.ClearDataTransformation(BindingPath);
+                }
 
                 // Apply the updated (empty) filter to the grid
                 SourceDataGrid?.FilterItemsSource();
@@ -585,6 +590,12 @@ namespace WWSearchDataGrid.Modern.WPF
                 if (SearchTemplateController != null)
                 {
                     HasAdvancedFilter = SearchTemplateController.HasCustomExpression;
+
+                    // Process any data transformation filters
+                    if (SourceDataGrid != null)
+                    {
+                        SourceDataGrid.ProcessTransformationFilter(this);
+                    }
 
                     // Adjust column width if a filter is applied
                     if (HasAdvancedFilter && CurrentColumn != null)

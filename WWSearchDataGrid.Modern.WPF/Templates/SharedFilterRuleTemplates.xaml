@@ -88,15 +88,13 @@
         <StackPanel Orientation="Horizontal">
             <sdg:NumericUpDown Width="80"
                                Minimum="1"
-                               Maximum="1000"
-                               Value="{Binding SelectedValue}" />
-            <ComboBox Style="{StaticResource Default_ComboBox_Style}"
-                      Margin="5,0,0,0"
-                      Width="80"
-                      SelectedIndex="0">
-                <ComboBoxItem>Items</ComboBoxItem>
-                <ComboBoxItem>Percent</ComboBoxItem>
-            </ComboBox>
+                               Maximum="10000"
+                               Increment="1"
+                               Value="{Binding SelectedValue, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+            <TextBlock Text="items"
+                       Margin="5,0,0,0"
+                       VerticalAlignment="Center"
+                       Foreground="Gray" />
         </StackPanel>
     </DataTemplate>
 

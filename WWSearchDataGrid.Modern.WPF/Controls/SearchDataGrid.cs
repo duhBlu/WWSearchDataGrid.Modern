@@ -26,8 +26,11 @@ namespace WWSearchDataGrid.Modern.WPF
         private TokenSource tokenSource = new TokenSource();
         private ObservableCollection<SearchControl> dataColumns = new ObservableCollection<SearchControl>();
         private System.Collections.IEnumerable originalItemsSource;
+        private System.Collections.IEnumerable transformedItemsSource;
         private bool initialUpdateLayoutCompleted;
         private SearchTemplateController globalFilterController;
+        private Dictionary<string, IEnumerable<object>> _columnTransformationResults = new Dictionary<string, IEnumerable<object>>();
+        private bool _isApplyingTransformation = false;
 
         #endregion
 
@@ -104,9 +107,45 @@ namespace WWSearchDataGrid.Modern.WPF
         public System.Collections.IEnumerable OriginalItemsSource => originalItemsSource;
 
         /// <summary>
+        /// Gets the transformed items source (after data transformations but before traditional filtering)
+        /// </summary>
+        public System.Collections.IEnumerable TransformedItemsSource => transformedItemsSource ?? originalItemsSource;
+
+        /// <summary>
+        /// Gets the active data transformations by column path
+        /// </summary>
+        public Dictionary<string, DataTransformation> ActiveTransformations
+        {
+            get
+            {
+                // Create a dictionary showing which columns have active transformations
+                var result = new Dictionary<string, DataTransformation>();
+                foreach (var columnPath in _columnTransformationResults.Keys)
+                {
+                    // Create a dummy transformation to indicate this column has active transformations
+                    result[columnPath] = new DataTransformation(DataTransformationType.None, columnPath, null, ColumnDataType.String, "Active Transformation");
+                }
+                return result;
+            }
+        }
+
+        /// <summary>
         /// Gets the filter panel control
         /// </summary>
         public FilterPanel FilterPanel { get; private set; }
+
+        /// <summary>
+        /// Gets the count of original items for debugging purposes
+        /// </summary>
+        public int OriginalItemsCount 
+        { 
+            get 
+            { 
+                if (originalItemsSource == null) return 0;
+                if (originalItemsSource is System.Collections.ICollection collection) return collection.Count;
+                return originalItemsSource.Cast<object>().Count();
+            } 
+        }
 
         #endregion
 
@@ -298,8 +337,18 @@ namespace WWSearchDataGrid.Modern.WPF
         {
             base.OnItemsSourceChanged(oldValue, newValue);
 
-            // Store the original items source
-            originalItemsSource = newValue;
+            // Only store the original items source if we're not currently applying a transformation
+            // This prevents overwriting the original data when we set ItemsSource to transformed data
+            if (!_isApplyingTransformation)
+            {
+                originalItemsSource = newValue;
+                
+                // Clear any existing transformations when new data is loaded
+                if (_columnTransformationResults.Count > 0)
+                {
+                    _columnTransformationResults.Clear();
+                }
+            }
 
             // Register for collection changed events if the source supports it
             UnregisterCollectionChangedEvent(oldValue);
@@ -412,8 +461,11 @@ namespace WWSearchDataGrid.Modern.WPF
                 // Commit any edits
                 CommitEdit(DataGridEditingUnit.Row, true);
 
-                // Per-column mode - each column has its own filter
-                var activeFilters = DataColumns.Where(d => d.SearchTemplateController?.HasCustomExpression == true);
+                // Step 1: Apply data transformations first
+                ApplyDataTransformations();
+
+                // Step 2: Apply traditional filters to transformed data
+                var activeFilters = DataColumns.Where(d => d.SearchTemplateController?.HasCustomExpression == true && !IsTransformationFilter(d));
                 Items.Filter = item => activeFilters.All(f => EvaluateFilter(item, f));
 
                 // Update search filter property
@@ -515,17 +567,45 @@ namespace WWSearchDataGrid.Modern.WPF
             // Clear global filter if applicable
             if (globalFilterController != null)
             {
-                globalFilterController.SearchGroups.Clear();
-                globalFilterController.AddSearchGroup();
-                globalFilterController.HasCustomExpression = false;
+                globalFilterController.ClearAndReset();
             }
+
+            // Clear all data transformations
+            ClearAllDataTransformations();
 
             // Clear the filter
             Items.Filter = null;
             SearchFilter = null;
 
+            // Force restoration of original data
+            ForceRestoreOriginalData();
+
             // Notify that items have been filtered
             ItemsSourceFiltered?.Invoke(this, EventArgs.Empty);
+        }
+
+        /// <summary>
+        /// Forces restoration of the original data source
+        /// </summary>
+        public void ForceRestoreOriginalData()
+        {
+            if (originalItemsSource != null)
+            {
+                System.Diagnostics.Debug.WriteLine($"ForceRestoreOriginalData: Original count = {OriginalItemsCount}, Current ItemsSource count = {Items.Count}");
+                
+                transformedItemsSource = originalItemsSource;
+                
+                var currentFilter = Items.Filter;
+                Items.Filter = null;
+                
+                _isApplyingTransformation = true;
+                ItemsSource = originalItemsSource;
+                _isApplyingTransformation = false;
+                
+                Items.Filter = currentFilter;
+                
+                System.Diagnostics.Debug.WriteLine($"After restore: ItemsSource count = {Items.Count}");
+            }
         }
 
         /// <summary>
@@ -839,6 +919,374 @@ namespace WWSearchDataGrid.Modern.WPF
             {
                 System.Diagnostics.Debug.WriteLine($"Error in OnClearAllFiltersRequested: {ex.Message}");
             }
+        }
+
+        #endregion
+
+        #region Data Transformation Methods
+
+        /// <summary>
+        /// Sets a data transformation for a specific column
+        /// </summary>
+        /// <param name="columnPath">The column property path</param>
+        /// <param name="transformation">The transformation to apply</param>
+        public void SetDataTransformation(string columnPath, DataTransformation transformation)
+        {
+            if (string.IsNullOrEmpty(columnPath))
+                return;
+
+            if (transformation == null || transformation.Type == DataTransformationType.None)
+            {
+                ClearDataTransformation(columnPath);
+                return;
+            }
+
+            // Validate the transformation
+            if (!transformation.IsValid())
+            {
+                MessageBox.Show($"Invalid transformation: {transformation.GetDescription()}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+
+            // Set the column path if not already set
+            if (string.IsNullOrEmpty(transformation.ColumnPath))
+                transformation.ColumnPath = columnPath;
+
+            // Apply the transformation directly
+            var objectData = originalItemsSource.Cast<object>();
+            var result = DataTransformationEngine.ApplyTransformation(objectData, transformation);
+            _columnTransformationResults[columnPath] = result;
+
+            // Apply the transformations and filtering
+            FilterItemsSource();
+        }
+
+        /// <summary>
+        /// Clears the data transformation for a specific column
+        /// </summary>
+        /// <param name="columnPath">The column property path</param>
+        public void ClearDataTransformation(string columnPath)
+        {
+            if (string.IsNullOrEmpty(columnPath))
+                return;
+
+            if (_columnTransformationResults.ContainsKey(columnPath))
+            {
+                System.Diagnostics.Debug.WriteLine($"ClearDataTransformation: Clearing transformation for column {columnPath}");
+                _columnTransformationResults.Remove(columnPath);
+                
+                // If no transformations remain, restore original data
+                if (_columnTransformationResults.Count == 0)
+                {
+                    System.Diagnostics.Debug.WriteLine("No transformations remain - restoring original data");
+                    RestoreOriginalData();
+                }
+                else
+                {
+                    // Re-apply remaining transformations
+                    FilterItemsSource();
+                }
+            }
+        }
+
+        /// <summary>
+        /// Clears all data transformations
+        /// </summary>
+        public void ClearAllDataTransformations()
+        {
+            if (_columnTransformationResults.Count > 0)
+            {
+                System.Diagnostics.Debug.WriteLine($"ClearAllDataTransformations: Clearing {_columnTransformationResults.Count} transformations");
+                _columnTransformationResults.Clear();
+                
+                // Immediately restore original data
+                RestoreOriginalData();
+            }
+        }
+
+        /// <summary>
+        /// Gets the active data transformation for a column
+        /// </summary>
+        /// <param name="columnPath">The column property path</param>
+        /// <returns>The active transformation or null if none</returns>
+        public DataTransformation GetDataTransformation(string columnPath)
+        {
+            if (string.IsNullOrEmpty(columnPath))
+                return null;
+
+            // Return a dummy transformation if this column has active transformations
+            if (_columnTransformationResults.ContainsKey(columnPath))
+            {
+                return new DataTransformation(DataTransformationType.None, columnPath, null, ColumnDataType.String, "Active Transformation");
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Determines if there are any active data transformations
+        /// </summary>
+        /// <returns>True if any transformations are active</returns>
+        public bool HasActiveTransformations()
+        {
+            return _columnTransformationResults.Count > 0;
+        }
+
+        /// <summary>
+        /// Applies all active data transformations to create the transformed ItemsSource
+        /// </summary>
+        private void ApplyDataTransformations()
+        {
+            if (originalItemsSource == null)
+                return;
+
+            try
+            {
+                if (_columnTransformationResults.Count == 0)
+                {
+                    // No transformations - restore original data
+                    if (transformedItemsSource != originalItemsSource)
+                    {
+                        transformedItemsSource = originalItemsSource;
+                        
+                        // Restore the original ItemsSource
+                        var savedFilter = Items.Filter;
+                        Items.Filter = null;
+                        
+                        _isApplyingTransformation = true;
+                        ItemsSource = originalItemsSource;
+                        _isApplyingTransformation = false;
+                        
+                        Items.Filter = savedFilter;
+                    }
+                    return;
+                }
+
+                // Combine all transformation results across columns
+                IEnumerable<object> finalResult = null;
+                
+                if (_columnTransformationResults.Count == 1)
+                {
+                    // Single column transformation
+                    finalResult = _columnTransformationResults.Values.First();
+                }
+                else
+                {
+                    // Multiple column transformations - intersect them (AND logic between columns)
+                    finalResult = _columnTransformationResults.Values.First();
+                    foreach (var result in _columnTransformationResults.Values.Skip(1))
+                    {
+                        finalResult = finalResult.Intersect(result);
+                    }
+                }
+
+                transformedItemsSource = finalResult;
+
+                // Update the ItemsSource to use transformed data
+                var currentFilter = Items.Filter;
+                Items.Filter = null;
+                
+                _isApplyingTransformation = true;
+                ItemsSource = transformedItemsSource;
+                _isApplyingTransformation = false;
+                
+                Items.Filter = currentFilter;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error applying data transformations: {ex.Message}");
+                MessageBox.Show($"Error applying data transformations: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                
+                // Fall back to original data
+                RestoreOriginalData();
+            }
+        }
+
+        /// <summary>
+        /// Restores the original data when transformations are cleared or error occurs
+        /// </summary>
+        private void RestoreOriginalData()
+        {
+            try
+            {
+                transformedItemsSource = originalItemsSource;
+                
+                var currentFilter = Items.Filter;
+                Items.Filter = null;
+                
+                _isApplyingTransformation = true;
+                ItemsSource = originalItemsSource;
+                _isApplyingTransformation = false;
+                
+                Items.Filter = currentFilter;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error restoring original data: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Determines if a SearchControl represents a transformation filter
+        /// </summary>
+        /// <param name="searchControl">The search control to check</param>
+        /// <returns>True if it's a transformation filter</returns>
+        private bool IsTransformationFilter(SearchControl searchControl)
+        {
+            if (searchControl?.SearchTemplateController?.SearchGroups == null)
+                return false;
+
+            // Check if any search template in any group is a transformation type
+            return searchControl.SearchTemplateController.SearchGroups
+                .SelectMany(g => g.SearchTemplates)
+                .Any(t => DataTransformationEngine.IsTransformationType(t.SearchType));
+        }
+
+        /// <summary>
+        /// Processes a SearchControl to extract and apply any data transformations
+        /// </summary>
+        /// <param name="searchControl">The search control to process</param>
+        public void ProcessTransformationFilter(SearchControl searchControl)
+        {
+            if (searchControl?.SearchTemplateController?.SearchGroups == null || string.IsNullOrEmpty(searchControl.BindingPath))
+                return;
+
+            var columnPath = searchControl.BindingPath;
+            var hasAnyTransformations = false;
+            
+            // Process all search groups and build a combined transformation
+            var transformationResults = new List<IEnumerable<object>>();
+
+            foreach (var group in searchControl.SearchTemplateController.SearchGroups)
+            {
+                var groupTransformations = new List<DataTransformation>();
+                
+                // Collect all transformations in this group
+                foreach (var template in group.SearchTemplates)
+                {
+                    if (DataTransformationEngine.IsTransformationType(template.SearchType) && template.HasCustomFilter)
+                    {
+                        var transformationType = DataTransformationEngine.SearchTypeToTransformationType(template.SearchType);
+                        var transformation = new DataTransformation(
+                            transformationType,
+                            columnPath,
+                            template.SelectedValue,
+                            searchControl.SearchTemplateController.ColumnDataType,
+                            searchControl.CurrentColumn?.Header?.ToString()
+                        );
+
+                        if (transformation.IsValid())
+                        {
+                            groupTransformations.Add(transformation);
+                            hasAnyTransformations = true;
+                        }
+                    }
+                }
+
+                // Apply transformations within this group (OR logic for templates within a group)
+                if (groupTransformations.Count > 0)
+                {
+                    var groupResult = ApplyGroupTransformations(originalItemsSource, groupTransformations, group);
+                    if (groupResult != null)
+                        transformationResults.Add(groupResult);
+                }
+            }
+
+            if (hasAnyTransformations && transformationResults.Count > 0)
+            {
+                // Combine results from all groups (AND logic between groups)
+                var combinedResult = CombineTransformationResults(transformationResults, 
+                    searchControl.SearchTemplateController.SearchGroups.Count > 1);
+                
+                // Store the combined transformation result for this column
+                SetColumnTransformationResult(columnPath, combinedResult);
+            }
+            else
+            {
+                // No transformations found - clear any existing transformation for this column
+                ClearDataTransformation(columnPath);
+            }
+        }
+
+        /// <summary>
+        /// Applies transformations within a single search group (OR logic)
+        /// </summary>
+        private IEnumerable<object> ApplyGroupTransformations(System.Collections.IEnumerable originalData, 
+            List<DataTransformation> transformations, SearchTemplateGroup group)
+        {
+            if (transformations.Count == 0)
+                return null;
+
+            // Convert IEnumerable to IEnumerable<object> for DataTransformationEngine
+            var objectData = originalData.Cast<object>();
+
+            if (transformations.Count == 1)
+            {
+                // Single transformation
+                return DataTransformationEngine.ApplyTransformation(objectData, transformations[0]);
+            }
+
+            // Multiple transformations - combine with OR logic
+            var allResults = new HashSet<object>();
+            
+            foreach (var transformation in transformations)
+            {
+                var result = DataTransformationEngine.ApplyTransformation(objectData, transformation);
+                foreach (var item in result)
+                {
+                    allResults.Add(item);
+                }
+            }
+
+            return allResults;
+        }
+
+        /// <summary>
+        /// Combines transformation results from multiple groups
+        /// </summary>
+        private IEnumerable<object> CombineTransformationResults(List<IEnumerable<object>> results, bool useAndLogic)
+        {
+            if (results.Count == 0)
+                return Enumerable.Empty<object>();
+
+            if (results.Count == 1)
+                return results[0];
+
+            if (useAndLogic)
+            {
+                // AND logic between groups - intersection
+                var result = results[0];
+                for (int i = 1; i < results.Count; i++)
+                {
+                    result = result.Intersect(results[i]);
+                }
+                return result;
+            }
+            else
+            {
+                // OR logic - union
+                var allResults = new HashSet<object>();
+                foreach (var result in results)
+                {
+                    foreach (var item in result)
+                    {
+                        allResults.Add(item);
+                    }
+                }
+                return allResults;
+            }
+        }
+
+        /// <summary>
+        /// Sets the transformation result for a specific column
+        /// </summary>
+        private void SetColumnTransformationResult(string columnPath, IEnumerable<object> transformedData)
+        {
+            // Store the actual transformed data
+            _columnTransformationResults[columnPath] = transformedData;
+
+            // Trigger the filtering update
+            FilterItemsSource();
         }
 
         #endregion
