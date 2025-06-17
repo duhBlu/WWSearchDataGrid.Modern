@@ -669,11 +669,45 @@ namespace WWSearchDataGrid.Modern.WPF
                 {
                     filterInfo.FilterType = FilterType.Simple;
                     filterInfo.DisplayText = $"Contains '{column.SearchText}'";
+                    
+                    // Set component properties for simple filters
+                    filterInfo.SearchTypeText = "Contains";
+                    filterInfo.PrimaryValue = column.SearchText;
+                    filterInfo.HasNoInputValues = false;
+                    filterInfo.IsDateInterval = false;
+                    
+                    // Add single component to collection
+                    var simpleComponent = new FilterChipComponents
+                    {
+                        SearchTypeText = "Contains",
+                        PrimaryValue = column.SearchText,
+                        HasNoInputValues = false,
+                        IsDateInterval = false
+                    };
+                    simpleComponent.ParsePrimaryValueAsMultipleValues();
+                    filterInfo.FilterComponents.Add(simpleComponent);
                 }
                 else if (column.SearchTemplateController?.HasCustomExpression == true)
                 {
                     filterInfo.FilterType = FilterType.Advanced;
                     filterInfo.DisplayText = column.SearchTemplateController.GetFilterDisplayText();
+                    
+                    // Get structured components from SearchTemplateController
+                    var components = column.SearchTemplateController.GetFilterComponents();
+                    filterInfo.SearchTypeText = components.SearchTypeText;
+                    filterInfo.PrimaryValue = components.PrimaryValue;
+                    filterInfo.SecondaryValue = components.SecondaryValue;
+                    filterInfo.ValueOperatorText = components.ValueOperatorText;
+                    filterInfo.IsDateInterval = components.IsDateInterval;
+                    filterInfo.HasNoInputValues = components.HasNoInputValues;
+                    
+                    // Get all components for complex filters
+                    var allComponents = column.SearchTemplateController.GetAllFilterComponents();
+                    filterInfo.FilterComponents.Clear();
+                    foreach (var component in allComponents)
+                    {
+                        filterInfo.FilterComponents.Add(component);
+                    }
                 }
 
                 activeFilters.Add(filterInfo);

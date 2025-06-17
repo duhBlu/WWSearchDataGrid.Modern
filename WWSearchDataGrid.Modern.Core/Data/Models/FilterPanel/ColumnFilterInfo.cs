@@ -16,6 +16,13 @@ namespace WWSearchDataGrid.Modern.Core
         private bool isActive;
         private object filterData;
         private string conjunction;
+         private string searchTypeText;
+        private string primaryValue;
+        private string secondaryValue;
+        private bool isDateInterval;
+        private bool hasNoInputValues;
+        private string valueOperatorText;
+        private System.Collections.ObjectModel.ObservableCollection<FilterChipComponents> filterComponents;
 
         /// <summary>
         /// Gets or sets the display name of the column
@@ -79,5 +86,74 @@ namespace WWSearchDataGrid.Modern.Core
             get => conjunction;
             set => SetProperty(value, ref conjunction);
         }
+
+        /// <summary>
+        /// Gets or sets the search operation type description (e.g., "Contains", "Between", "Is null")
+        /// </summary>
+        public string SearchTypeText
+        {
+            get => searchTypeText;
+            set => SetProperty(value, ref searchTypeText);
+        }
+
+        /// <summary>
+        /// Gets or sets the primary input value (e.g., the search term, first date, etc.)
+        /// </summary>
+        public string PrimaryValue
+        {
+            get => primaryValue;
+            set => SetProperty(value, ref primaryValue);
+        }
+
+        /// <summary>
+        /// Gets or sets the secondary input value (e.g., second date in Between operations)
+        /// </summary>
+        public string SecondaryValue
+        {
+            get => secondaryValue;
+            set => SetProperty(value, ref secondaryValue);
+        }
+
+        /// <summary>
+        /// Gets or sets whether this filter has date interval values
+        /// </summary>
+        public bool IsDateInterval
+        {
+            get => isDateInterval;
+            set => SetProperty(value, ref isDateInterval);
+        }
+
+        /// <summary>
+        /// Gets or sets whether this filter requires no input values
+        /// </summary>
+        public bool HasNoInputValues
+        {
+            get => hasNoInputValues;
+            set => SetProperty(value, ref hasNoInputValues);
+        }
+
+        /// <summary>
+        /// Gets or sets the operator text between primary and secondary values (e.g., "and")
+        /// </summary>
+        public string ValueOperatorText
+        {
+            get => valueOperatorText;
+            set => SetProperty(value, ref valueOperatorText);
+        }
+
+        /// <summary>
+        /// Gets or sets the collection of filter components for complex filters with multiple conditions
+        /// </summary>
+        public System.Collections.ObjectModel.ObservableCollection<FilterChipComponents> FilterComponents
+        {
+            get
+            {
+                if (filterComponents == null)
+                    filterComponents = new System.Collections.ObjectModel.ObservableCollection<FilterChipComponents>();
+                return filterComponents;
+            }
+            set => SetProperty(value, ref filterComponents);
+        }
+
     }
 }

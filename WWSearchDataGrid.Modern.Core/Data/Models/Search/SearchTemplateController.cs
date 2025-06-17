@@ -667,6 +667,106 @@ namespace WWSearchDataGrid.Modern.Core
         }
 
         /// <summary>
+        /// Gets structured filter components for the current filter state
+        /// </summary>
+        /// <returns>Structured filter components for display</returns>
+        public FilterChipComponents GetFilterComponents()
+        {
+            try
+            {
+                if (!HasCustomExpression || SearchGroups.Count == 0)
+                {
+                    return new FilterChipComponents
+                    {
+                        SearchTypeText = "No filter",
+                        HasNoInputValues = true
+                    };
+                }
+
+                // For now, use the first template for simplicity
+                // In complex cases with multiple groups/templates, we'll combine them
+                var firstTemplate = SearchGroups.FirstOrDefault()?.SearchTemplates?.FirstOrDefault(t => t.HasCustomFilter);
+                if (firstTemplate != null)
+                {
+                    return GetTemplateComponents(firstTemplate);
+                }
+
+                // Fallback to parsing the display text
+                var displayText = GetFilterDisplayText();
+                return FilterDisplayTextParser.ParseDisplayText(displayText, SearchType.Contains);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error in GetFilterComponents: {ex.Message}");
+                return new FilterChipComponents
+                {
+                    SearchTypeText = "Advanced filter",
+                    HasNoInputValues = false
+                };
+            }
+        }
+
+        /// <summary>
+        /// Gets all filter components for display, including multiple search conditions with conjunctions
+        /// </summary>
+        /// <returns>Collection of all filter components</returns>
+        public System.Collections.Generic.List<FilterChipComponents> GetAllFilterComponents()
+        {
+            var components = new System.Collections.Generic.List<FilterChipComponents>();
+
+            try
+            {
+                if (!HasCustomExpression || SearchGroups.Count == 0)
+                {
+                    components.Add(new FilterChipComponents
+                    {
+                        SearchTypeText = "No filter",
+                        HasNoInputValues = true
+                    });
+                    return components;
+                }
+
+                bool isFirstComponent = true;
+
+                foreach (var group in SearchGroups)
+                {
+                    bool isFirstTemplateInGroup = true;
+                    foreach (var template in group.SearchTemplates.Where(t => t.HasCustomFilter))
+                    {
+                        var component = GetTemplateComponents(template);
+                        
+                        // Set conjunction for templates within the group
+                        if (!isFirstTemplateInGroup)
+                        {
+                            component.Conjunction = template.OperatorName?.ToUpper() ?? "AND";
+                        }
+                        else if (!isFirstComponent)
+                        {
+                            // First template in a group gets the group's operator
+                            component.Conjunction = group.OperatorName?.ToUpper() ?? "AND";
+                        }
+
+                        components.Add(component);
+                        isFirstTemplateInGroup = false;
+                        isFirstComponent = false;
+                    }
+                }
+
+                return components;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error in GetAllFilterComponents: {ex.Message}");
+                components.Add(new FilterChipComponents
+                {
+                    SearchTypeText = "Advanced filter",
+                    HasNoInputValues = false
+                });
+                return components;
+            }
+        }
+
+        /// <summary>
         /// Gets a human-readable display text for the current filter state
         /// </summary>
         /// <returns>Description of the active filters</returns>
@@ -907,6 +1007,190 @@ namespace WWSearchDataGrid.Modern.Core
             }
         }
 
+        /// <summary>
+        /// Gets structured components for a single search template
+        /// </summary>
+        private FilterChipComponents GetTemplateComponents(SearchTemplate template)
+        {
+            try
+            {
+                var value = template.SelectedValue?.ToString();
+                var secondaryValue = template.SelectedSecondaryValue?.ToString();
+                var components = new FilterChipComponents
+                {
+                    IsDateInterval = IsDateIntervalType(template.SearchType),
+                    HasNoInputValues = IsNoInputValueType(template.SearchType)
+                };
+
+                switch (template.SearchType)
+                {
+                    case SearchType.Contains:
+                        components.SearchTypeText = "Contains";
+                        components.PrimaryValue = value;
+                        break;
+                    case SearchType.DoesNotContain:
+                        components.SearchTypeText = "Does not contain";
+                        components.PrimaryValue = value;
+                        break;
+                    case SearchType.Equals:
+                        components.SearchTypeText = "=";
+                        components.PrimaryValue = value;
+                        break;
+                    case SearchType.NotEquals:
+                        components.SearchTypeText = "≠";
+                        components.PrimaryValue = value;
+                        break;
+                    case SearchType.StartsWith:
+                        components.SearchTypeText = "Starts with";
+                        components.PrimaryValue = value;
+                        break;
+                    case SearchType.EndsWith:
+                        components.SearchTypeText = "Ends with";
+                        components.PrimaryValue = value;
+                        break;
+                    case SearchType.Between:
+                        components.SearchTypeText = "Between";
+                        components.PrimaryValue = value;
+                        components.SecondaryValue = secondaryValue;
+                        components.ValueOperatorText = "and";
+                        break;
+                    case SearchType.NotBetween:
+                        components.SearchTypeText = "Not between";
+                        components.PrimaryValue = value;
+                        components.SecondaryValue = secondaryValue;
+                        components.ValueOperatorText = "and";
+                        break;
+                    case SearchType.BetweenDates:
+                        components.SearchTypeText = "Between dates";
+                        components.PrimaryValue = FormatDateValue(value);
+                        components.SecondaryValue = FormatDateValue(secondaryValue);
+                        components.ValueOperatorText = "and";
+                        break;
+                    case SearchType.GreaterThan:
+                        components.SearchTypeText = ">";
+                        components.PrimaryValue = value;
+                        break;
+                    case SearchType.GreaterThanOrEqualTo:
+                        components.SearchTypeText = ">=";
+                        components.PrimaryValue = value;
+                        break;
+                    case SearchType.LessThan:
+                        components.SearchTypeText = "<";
+                        components.PrimaryValue = value;
+                        break;
+                    case SearchType.LessThanOrEqualTo:
+                        components.SearchTypeText = "<=";
+                        components.PrimaryValue = value;
+                        break;
+                    case SearchType.IsLike:
+                        components.SearchTypeText = "Is like";
+                        components.PrimaryValue = value;
+                        break;
+                    case SearchType.IsNotLike:
+                        components.SearchTypeText = "Is not like";
+                        components.PrimaryValue = value;
+                        break;
+                    case SearchType.TopN:
+                        components.SearchTypeText = "Top";
+                        components.PrimaryValue = value;
+                        break;
+                    case SearchType.BottomN:
+                        components.SearchTypeText = "Bottom";
+                        components.PrimaryValue = value;
+                        break;
+                    case SearchType.IsAnyOf:
+                        components.SearchTypeText = "Is any of";
+                        components.PrimaryValue = FormatMultiValueFilter("", template.SelectedValues);
+                        PopulateValueItems(components, template.SelectedValues);
+                        break;
+                    case SearchType.IsNoneOf:
+                        components.SearchTypeText = "Is none of";
+                        components.PrimaryValue = FormatMultiValueFilter("", template.SelectedValues);
+                        PopulateValueItems(components, template.SelectedValues);
+                        break;
+                    case SearchType.IsOnAnyOfDates:
+                        components.SearchTypeText = "Is on any of";
+                        components.PrimaryValue = FormatDateListFilter("", template.SelectedDates);
+                        PopulateDateValueItems(components, template.SelectedDates);
+                        break;
+                    case SearchType.DateInterval:
+                        components.SearchTypeText = "Date interval";
+                        components.PrimaryValue = FormatDateIntervalFilter(template.DateIntervals);
+                        PopulateDateIntervalItems(components, template.DateIntervals);
+                        break;
+                    // No-input types
+                    case SearchType.IsNull:
+                        components.SearchTypeText = "Is null";
+                        break;
+                    case SearchType.IsNotNull:
+                        components.SearchTypeText = "Is not null";
+                        break;
+                    case SearchType.IsEmpty:
+                        components.SearchTypeText = "Is empty";
+                        break;
+                    case SearchType.IsNotEmpty:
+                        components.SearchTypeText = "Is not empty";
+                        break;
+                    case SearchType.AboveAverage:
+                        components.SearchTypeText = "Above average";
+                        break;
+                    case SearchType.BelowAverage:
+                        components.SearchTypeText = "Below average";
+                        break;
+                    case SearchType.Unique:
+                        components.SearchTypeText = "Unique values";
+                        break;
+                    case SearchType.Duplicate:
+                        components.SearchTypeText = "Duplicate values";
+                        break;
+                    case SearchType.Today:
+                        components.SearchTypeText = "Is today";
+                        break;
+                    case SearchType.Yesterday:
+                        components.SearchTypeText = "Is yesterday";
+                        break;
+                    default:
+                        components.SearchTypeText = template.SearchType.ToString();
+                        break;
+                }
+
+                // Try to parse PrimaryValue as multiple values if no explicit ValueItems were set
+                components.ParsePrimaryValueAsMultipleValues();
+
+                return components;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error in GetTemplateComponents: {ex.Message}");
+                return new FilterChipComponents
+                {
+                    SearchTypeText = "Filter",
+                    HasNoInputValues = false
+                };
+            }
+        }
+
+        private static bool IsDateIntervalType(SearchType searchType)
+        {
+            return searchType == SearchType.DateInterval ||
+                   searchType == SearchType.BetweenDates ||
+                   searchType == SearchType.IsOnAnyOfDates;
+        }
+
+        private static bool IsNoInputValueType(SearchType searchType)
+        {
+            return searchType == SearchType.IsNull ||
+                   searchType == SearchType.IsNotNull ||
+                   searchType == SearchType.IsEmpty ||
+                   searchType == SearchType.IsNotEmpty ||
+                   searchType == SearchType.AboveAverage ||
+                   searchType == SearchType.BelowAverage ||
+                   searchType == SearchType.Unique ||
+                   searchType == SearchType.Duplicate ||
+                   searchType == SearchType.Today ||
+                   searchType == SearchType.Yesterday;
+        }
+
         private string FormatDateIntervalFilter(System.Collections.IEnumerable dateIntervals)
         {
             if (dateIntervals == null)
@@ -924,13 +1208,64 @@ namespace WWSearchDataGrid.Modern.Core
             if (selectedIntervals.Count == 0)
                 return "Date intervals (none selected)";
 
-            if (selectedIntervals.Count <= 2)
+            return $"{string.Join(", ", selectedIntervals)}";
+        }
+
+        /// <summary>
+        /// Populates ValueItems collection from SelectedValues
+        /// </summary>
+        private void PopulateValueItems(FilterChipComponents components, System.Collections.IEnumerable selectedValues)
+        {
+            if (selectedValues == null) return;
+
+            components.ValueItems.Clear();
+            foreach (var item in selectedValues)
             {
-                return $"Date intervals [{string.Join(", ", selectedIntervals)}]";
+                if (item is FilterListValue filterValue)
+                {
+                    if (!string.IsNullOrEmpty(filterValue.Value?.ToString()))
+                    {
+                        components.ValueItems.Add(filterValue.Value.ToString());
+                    }
+                }
+                else if (item != null)
+                {
+                    components.ValueItems.Add(item.ToString());
+                }
             }
-            else
+        }
+
+        /// <summary>
+        /// Populates ValueItems collection from SelectedDates
+        /// </summary>
+        private void PopulateDateValueItems(FilterChipComponents components, System.Collections.IEnumerable selectedDates)
+        {
+            if (selectedDates == null) return;
+
+            components.ValueItems.Clear();
+            foreach (var date in selectedDates)
             {
-                return $"Date intervals [{string.Join(", ", selectedIntervals.Take(2))} and {selectedIntervals.Count - 2} more]";
+                if (date is DateTime dt)
+                {
+                    components.ValueItems.Add(dt.ToString("yyyy-MM-dd"));
+                }
+            }
+        }
+
+        /// <summary>
+        /// Populates ValueItems collection from DateIntervals
+        /// </summary>
+        private void PopulateDateIntervalItems(FilterChipComponents components, System.Collections.IEnumerable dateIntervals)
+        {
+            if (dateIntervals == null) return;
+
+            components.ValueItems.Clear();
+            foreach (var item in dateIntervals)
+            {
+                if (item is DateIntervalItem intervalItem && intervalItem.IsSelected)
+                {
+                    components.ValueItems.Add(intervalItem.DisplayName);
+                }
             }
         }
 

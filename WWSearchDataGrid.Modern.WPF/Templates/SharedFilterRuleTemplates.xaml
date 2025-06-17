@@ -251,7 +251,7 @@
             <ItemsControl ItemsSource="{Binding DateIntervals}">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                        <CheckBox IsChecked="{Binding IsSelected}" Margin="0,2">
+                        <CheckBox IsChecked="{Binding IsSelected}" Style="{StaticResource Default_CheckBox_Style}" Margin="0,2">
                             <CheckBox.Content>
                                 <TextBlock Text="{Binding DisplayName}" />
                             </CheckBox.Content>

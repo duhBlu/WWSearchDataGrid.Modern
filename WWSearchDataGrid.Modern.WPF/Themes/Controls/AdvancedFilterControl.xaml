@@ -280,28 +280,16 @@
                     <Border Background="{TemplateBinding Background}"
                             BorderBrush="{TemplateBinding BorderBrush}"
                             BorderThickness="{TemplateBinding BorderThickness}">
-                        <Grid Margin="12">
+                        <Grid Margin="5,0,5,10">
                             <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto" />
                                 <RowDefinition Height="*" />
                                 <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
 
-                            <!--  Header  -->
-                            <DockPanel Grid.Row="0" Margin="0,0,0,10">
-                                <TextBlock Text="Advanced Filter: "
-                                           FontWeight="Bold"
-                                           FontSize="16" />
-                                <TextBlock Text="{Binding SearchTemplateController.ColumnName, RelativeSource={RelativeSource TemplatedParent}}"
-                                           Margin="5,0,0,0"
-                                           FontWeight="Bold"
-                                           FontSize="16" />
-                            </DockPanel>
-
                             <!--  Tab Control  -->
                             <TabControl x:Name="PART_TabControl"
                                         Style="{StaticResource Default_TabControlPivot_Style}"
-                                        Grid.Row="1">
+                                        Grid.Row="0">
                                 <!--  Filter Rules Tab  -->
                                 <TabItem Header="Filter Rules">
                                     <ScrollViewer VerticalScrollBarVisibility="Auto">
