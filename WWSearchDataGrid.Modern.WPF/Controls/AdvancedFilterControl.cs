@@ -1064,6 +1064,24 @@ namespace WWSearchDataGrid.Modern.WPF
                 searchControl.GroupedFilterCombinations = combinations;
                 searchControl.GroupByColumnPath = groupByColumnPath;
                 
+                // Set grouped filtering information on the SearchTemplateController
+                SearchTemplateController.GroupedFilterCombinations = combinations;
+                SearchTemplateController.GroupByColumnPath = groupByColumnPath;
+                SearchTemplateController.CurrentColumnPath = currentColumnPath;
+                
+                // Try to get the grouped view model to extract all group data
+                if (FilterValueViewModel is GroupedTreeViewFilterValueViewModel groupedViewModel)
+                {
+                    // Extract all group data for analysis
+                    var allGroupData = new Dictionary<object, List<object>>();
+                    foreach (var group in groupedViewModel.AllGroups)
+                    {
+                        var groupValues = group.Children.Select(c => c.Value).ToList();
+                        allGroupData[group.GroupKey] = groupValues;
+                    }
+                    SearchTemplateController.AllGroupData = allGroupData;
+                }
+                
                 // Set the filter expression on the controller
                 SearchTemplateController.FilterExpression = groupedFilter;
                 SearchTemplateController.HasCustomExpression = true;

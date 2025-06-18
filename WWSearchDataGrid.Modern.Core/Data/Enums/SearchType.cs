@@ -52,7 +52,12 @@ namespace WWSearchDataGrid.Modern.Core
 
         // Uniqueness
         Unique,
-        Duplicate
+        Duplicate,
+
+        // Grouped filtering
+        GroupedInclusion,    // For positive group conditions (Region == 'Asia')
+        GroupedExclusion,    // For negative value conditions (Status != 'Delivered')
+        GroupedCombination   // For complex group-value combinations
     }
 
 }

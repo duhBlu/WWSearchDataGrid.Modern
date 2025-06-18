@@ -113,6 +113,38 @@ namespace WWSearchDataGrid.Modern.Core
             set => SetProperty(value, ref allowMultipleGroups); 
         }
 
+        /// <summary>
+        /// Gets or sets the grouped filter combinations for grouped filtering scenarios
+        /// </summary>
+        [JsonIgnore]
+        public List<(object GroupKey, object ChildValue)> GroupedFilterCombinations { get; set; }
+
+        /// <summary>
+        /// Gets or sets the group by column path for grouped filtering
+        /// </summary>
+        [JsonIgnore]
+        public string GroupByColumnPath { get; set; }
+
+        /// <summary>
+        /// Gets or sets the current column path for grouped filtering
+        /// </summary>
+        [JsonIgnore]
+        public string CurrentColumnPath { get; set; }
+
+        /// <summary>
+        /// Gets or sets all group data for grouped filtering analysis
+        /// </summary>
+        [JsonIgnore]
+        public Dictionary<object, List<object>> AllGroupData { get; set; }
+
+        /// <summary>
+        /// Gets whether this is a grouped filtering scenario
+        /// </summary>
+        [JsonIgnore]
+        public bool IsGroupedFiltering => GroupedFilterCombinations?.Any() == true && 
+                                          !string.IsNullOrEmpty(GroupByColumnPath) && 
+                                          !string.IsNullOrEmpty(CurrentColumnPath);
+
         #endregion
 
         #region Constructors
@@ -727,6 +759,12 @@ namespace WWSearchDataGrid.Modern.Core
 
             try
             {
+                // Check for grouped filtering scenario first
+                if (IsGroupedFiltering)
+                {
+                    return GetGroupedFilterComponents();
+                }
+
                 if (!HasCustomExpression || SearchGroups.Count == 0)
                 {
                     components.Add(new FilterChipComponents
@@ -774,6 +812,47 @@ namespace WWSearchDataGrid.Modern.Core
                     HasNoInputValues = false
                 });
                 return components;
+            }
+        }
+
+        /// <summary>
+        /// Gets filter components for grouped filtering scenarios
+        /// </summary>
+        /// <returns>Collection of filter components representing the grouped filter</returns>
+        private System.Collections.Generic.List<FilterChipComponents> GetGroupedFilterComponents()
+        {
+            try
+            {
+                if (GroupedFilterCombinations == null || !GroupedFilterCombinations.Any())
+                {
+                    return new System.Collections.Generic.List<FilterChipComponents>
+                    {
+                        new FilterChipComponents
+                        {
+                            SearchTypeText = "No filter",
+                            HasNoInputValues = true
+                        }
+                    };
+                }
+
+                // Use the GroupedFilterChipFactory to create optimal filter chips
+                return GroupedFilterChipFactory.CreateFilterChips(
+                    GroupedFilterCombinations,
+                    GroupByColumnPath,
+                    CurrentColumnPath,
+                    AllGroupData);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error in GetGroupedFilterComponents: {ex.Message}");
+                return new System.Collections.Generic.List<FilterChipComponents>
+                {
+                    new FilterChipComponents
+                    {
+                        SearchTypeText = "Advanced filter",
+                        HasNoInputValues = false
+                    }
+                };
             }
         }
 
