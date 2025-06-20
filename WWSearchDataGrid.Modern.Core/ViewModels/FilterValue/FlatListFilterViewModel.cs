@@ -316,5 +316,15 @@ namespace WWSearchDataGrid.Modern.Core
         {
             return SelectedItemsCount;
         }
+
+        public override List<FilterValueItem> GetAllValues()
+        {
+            return _allItems.ToList();
+        }
+
+        public override List<FilterValueItem> GetUnselectedValues()
+        {
+            return _allItems.Where(item => !item.IsSelected).ToList();
+        }
     }
 }

@@ -11,6 +11,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
 using WWSearchDataGrid.Modern.Core;
+using WWSearchDataGrid.Modern.Core.Common.Utilities;
 using WWSearchDataGrid.Modern.Core.Performance;
 
 namespace WWSearchDataGrid.Modern.WPF
@@ -946,12 +947,17 @@ namespace WWSearchDataGrid.Modern.WPF
                 }
                 else
                 {
-                    // Standard flat filtering
-                    var selectedValues = FilterValueViewModel.GetSelectedValues().ToList();
+                    // Standard flat filtering with optimization
+                    var allValues = FilterValueViewModel.GetAllValues();
+                    var selectedItems = allValues.Where(item => item.IsSelected).ToList();
 
                     // Only update if there are changes
-                    if (selectedValues.Any())
+                    if (selectedItems.Any())
                     {
+                        // Use optimizer to determine best filter strategy
+                        var optimizationResult = FilterSelectionOptimizer.OptimizeSelections(
+                            allValues, selectedItems, ColumnDataType);
+
                         // Clear and recreate more efficiently
                         SearchTemplateController.SearchGroups.Clear();
                         var group = new SearchTemplateGroup();
@@ -959,18 +965,21 @@ namespace WWSearchDataGrid.Modern.WPF
 
                         var template = new SearchTemplate(ColumnDataType)
                         {
-                            SearchType = SearchType.IsAnyOf
+                            SearchType = optimizationResult.RecommendedSearchType
                         };
 
-                        // Batch add values
+                        // Batch add values based on optimization result
                         template.SelectedValues.Clear();
-                        foreach (var value in selectedValues)
+                        foreach (var value in optimizationResult.FilterValues)
                         {
                             template.SelectedValues.Add(new FilterListValue { Value = value });
                         }
 
                         group.SearchTemplates.Add(template);
                         SearchTemplateController.UpdateFilterExpression();
+
+                        // Optional: Log optimization info for debugging
+                        System.Diagnostics.Debug.WriteLine($"Filter optimization: {optimizationResult.OptimizationReason}");
                     }
                 }
             }

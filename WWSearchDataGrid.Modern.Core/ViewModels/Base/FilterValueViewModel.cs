@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Timers;
 using WWSearchDataGrid.Modern.Core.Performance;
@@ -81,6 +82,18 @@ namespace WWSearchDataGrid.Modern.Core
         public abstract void SelectAll();
         public abstract void ClearAll();
         public abstract string GetSelectionSummary();
+
+        /// <summary>
+        /// Gets all available filter items regardless of selection state
+        /// </summary>
+        /// <returns>List of all filter value items</returns>
+        public abstract List<FilterValueItem> GetAllValues();
+
+        /// <summary>
+        /// Gets filter items that are NOT currently selected
+        /// </summary>
+        /// <returns>List of unselected filter value items</returns>
+        public abstract List<FilterValueItem> GetUnselectedValues();
 
         public virtual void ClearCache()
         {

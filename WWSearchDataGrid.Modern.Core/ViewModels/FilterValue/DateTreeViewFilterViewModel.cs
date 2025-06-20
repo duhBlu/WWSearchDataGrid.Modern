@@ -525,5 +525,44 @@ namespace WWSearchDataGrid.Modern.Core
             }
             OnPropertyChanged(nameof(SelectAllState));
         }
+
+        public override List<FilterValueItem> GetAllValues()
+        {
+            var allDates = new List<FilterValueItem>();
+
+            foreach (var year in _allYearGroups)
+            {
+                foreach (var month in year.Children.OfType<FilterValueGroup>())
+                {
+                    foreach (var day in month.Children.OfType<FilterValueItem>())
+                    {
+                        allDates.Add(day);
+                    }
+                }
+            }
+
+            return allDates;
+        }
+
+        public override List<FilterValueItem> GetUnselectedValues()
+        {
+            var unselectedDates = new List<FilterValueItem>();
+
+            foreach (var year in _allYearGroups)
+            {
+                foreach (var month in year.Children.OfType<FilterValueGroup>())
+                {
+                    foreach (var day in month.Children.OfType<FilterValueItem>())
+                    {
+                        if (!day.IsSelected)
+                        {
+                            unselectedDates.Add(day);
+                        }
+                    }
+                }
+            }
+
+            return unselectedDates;
+        }
     }
 }

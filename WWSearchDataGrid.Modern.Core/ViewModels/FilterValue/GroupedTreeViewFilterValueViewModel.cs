@@ -932,5 +932,17 @@ namespace WWSearchDataGrid.Modern.Core
                    type == typeof(float) || type == typeof(double) ||
                    type == typeof(decimal);
         }
+
+        public override List<FilterValueItem> GetAllValues()
+        {
+            return _allGroups.SelectMany(g => g.Children.OfType<FilterValueItem>()).ToList();
+        }
+
+        public override List<FilterValueItem> GetUnselectedValues()
+        {
+            return _allGroups.SelectMany(g => g.Children.OfType<FilterValueItem>())
+                            .Where(item => !item.IsSelected)
+                            .ToList();
+        }
     }
 }

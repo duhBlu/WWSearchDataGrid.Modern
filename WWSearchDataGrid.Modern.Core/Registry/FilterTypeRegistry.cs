@@ -113,7 +113,7 @@ namespace WWSearchDataGrid.Modern.Core
                     FilterInputTemplate.ComboBoxList, ColumnDataType.String, ColumnDataType.Number),
 
                 [SearchType.IsNoneOf] = new FilterTypeMetadata(SearchType.IsNoneOf, "Is none of",
-                    FilterInputTemplate.ComboBoxList, ColumnDataType.String, ColumnDataType.Number),
+                    FilterInputTemplate.ComboBoxList, ColumnDataType.String, ColumnDataType.Number, ColumnDataType.DateTime, ColumnDataType.Boolean),
 
                 [SearchType.IsOnAnyOfDates] = new FilterTypeMetadata(SearchType.IsOnAnyOfDates, "Is on any of the following",
                     FilterInputTemplate.DateTimePickerList, ColumnDataType.DateTime),
