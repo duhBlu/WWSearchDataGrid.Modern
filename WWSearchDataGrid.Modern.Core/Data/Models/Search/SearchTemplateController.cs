@@ -358,7 +358,7 @@ namespace WWSearchDataGrid.Modern.Core
 
             if (SearchGroups.Count > 0)
             {
-                UpdateOperatorVisibility(SearchGroups[0]);
+                UpdateOperatorVisibility();
                 UpdateGroupNumbers();
             }
         }
@@ -433,13 +433,7 @@ namespace WWSearchDataGrid.Modern.Core
                 }
             }
 
-            SearchGroups.ForEach(g =>
-            {
-                if (g.SearchTemplates.Count > 0)
-                {
-                    UpdateOperatorVisibility(g.SearchTemplates[0]);
-                }
-            });
+            UpdateOperatorVisibility();
         }
 
         /// <summary>
@@ -473,6 +467,9 @@ namespace WWSearchDataGrid.Modern.Core
 
             AddSearchGroup(SearchGroups.Count == 0, false);
             SearchGroups.ForEach(g => g.SearchTemplates.ForEach(t => t.LoadAvailableValues(ColumnValues)));
+            
+            // Ensure operator visibility is properly set after loading
+            UpdateOperatorVisibility();
         }
 
         /// <summary>
@@ -609,17 +606,7 @@ namespace WWSearchDataGrid.Modern.Core
 
             if (SearchGroups.Count > 0)
             {
-                UpdateOperatorVisibility(SearchGroups[0]);
-
-                SearchGroups.ForEach(g =>
-                {
-                    if (g.SearchTemplates.Count > 0)
-                    {
-                        g.SearchTemplates.Skip(1).ForEach(t => t.IsOperatorVisible = true);
-                        UpdateOperatorVisibility(g.SearchTemplates[0]);
-                    }
-                });
-
+                UpdateOperatorVisibility();
                 UpdateGroupNumbers();
             }
 
@@ -645,7 +632,7 @@ namespace WWSearchDataGrid.Modern.Core
                     // Update operator visibility on the first remaining group
                     if (SearchGroups.Count > 0)
                     {
-                        UpdateOperatorVisibility(SearchGroups[0]);
+                        UpdateOperatorVisibility();
                     }
                 }
                 else if (SearchGroups.Count == 1)
@@ -668,7 +655,7 @@ namespace WWSearchDataGrid.Modern.Core
                     else
                     {
                         // Update operator visibility on the first remaining group
-                        UpdateOperatorVisibility(SearchGroups[0]);
+                        UpdateOperatorVisibility();
                     }
                     UpdateGroupNumbers();
                 }
@@ -1360,14 +1347,24 @@ namespace WWSearchDataGrid.Modern.Core
         }
 
         /// <summary>
-        /// Updates the visibility of logical operators
+        /// Updates the visibility of logical operators for all groups and templates
         /// </summary>
-        /// <param name="operator">Operator to update</param>
-        private void UpdateOperatorVisibility(ILogicalOperatorProvider @operator)
+        /// <param name="firstOperator">First operator (optional parameter for backward compatibility)</param>
+        internal void UpdateOperatorVisibility(ILogicalOperatorProvider firstOperator = null)
         {
-            @operator.IsOperatorVisible = false;
-            @operator.OperatorFunction = Expression.Or;
-            @operator.OperatorName = "Or";
+            // Update visibility for all search groups (group-level operators)
+            for (int i = 0; i < SearchGroups.Count; i++)
+            {
+                // First group should have operator hidden, subsequent groups should show it
+                SearchGroups[i].IsOperatorVisible = i > 0;
+                
+                // Update visibility for templates within each group (template-level operators)
+                for (int j = 0; j < SearchGroups[i].SearchTemplates.Count; j++)
+                {
+                    // First template in each group should have operator hidden, subsequent templates should show it
+                    SearchGroups[i].SearchTemplates[j].IsOperatorVisible = j > 0;
+                }
+            }
             OnPropertyChanged(string.Empty);
         }
 

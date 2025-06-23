@@ -131,299 +131,307 @@
                                                         </Grid.ColumnDefinitions>
                                                         <Border Grid.Column="0"
                                                                 Background="Transparent"
-                                                                BorderBrush="DimGray"
-                                                                BorderThickness="1"
                                                                 Padding="2"
-                                                                CornerRadius="3">
+                                                                BorderThickness="1">
+                                                            <Border.BorderBrush>
+                                                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                                                        <GradientStop Color="DimGray"    Offset="0.00" />
+                                                                        <GradientStop Color="DimGray"    Offset="0.02" />
+                                                                        <GradientStop Color="Transparent" Offset="0.02" />
+                                                                        <GradientStop Color="Transparent" Offset="0.98" />
+                                                                        <GradientStop Color="DimGray"    Offset="0.98" />
+                                                                        <GradientStop Color="DimGray"    Offset="1.00" />
+                                                                </LinearGradientBrush>
+                                                            </Border.BorderBrush>
                                                             <StackPanel Orientation="Horizontal" Margin="2">
 
-                                                                <!--  Column Name Component  -->
-                                                                <Border Background="#ffc69b"
+                                                                    <!--  Column Name Component  -->
+                                                                    <Border Background="#ffc69b"
                                                                         Margin="0,0,2,0"
                                                                         Padding="4,2"
                                                                         CornerRadius="2">
-                                                                    <TextBlock Foreground="Black"
+                                                                        <TextBlock Foreground="Black"
                                                                                Text="{Binding ColumnName}"
                                                                                VerticalAlignment="Center"
                                                                                FontWeight="SemiBold" />
-                                                                </Border>
+                                                                    </Border>
 
-                                                                <!--  Filter Components Collection with Fallback  -->
-                                                                <Grid>
-                                                                    <!--  Use ItemsControl for multiple components  -->
-                                                                    <ItemsControl ItemsSource="{Binding FilterComponents}">
-                                                                        <ItemsControl.Style>
-                                                                            <Style TargetType="ItemsControl">
-                                                                                <Setter Property="Visibility" Value="Visible" />
-                                                                                <Style.Triggers>
-                                                                                    <DataTrigger Binding="{Binding FilterComponents.Count}" Value="0">
-                                                                                        <Setter Property="Visibility" Value="Collapsed" />
-                                                                                    </DataTrigger>
-                                                                                </Style.Triggers>
-                                                                            </Style>
-                                                                        </ItemsControl.Style>
-                                                                        <ItemsControl.ItemsPanel>
-                                                                            <ItemsPanelTemplate>
-                                                                                <StackPanel Orientation="Horizontal" />
-                                                                            </ItemsPanelTemplate>
-                                                                        </ItemsControl.ItemsPanel>
-                                                                        <ItemsControl.ItemTemplate>
-                                                                            <DataTemplate>
-                                                                                <StackPanel Orientation="Horizontal">
+                                                                    <!--  Filter Components Collection with Fallback  -->
+                                                                    <Grid>
+                                                                        <!--  Use ItemsControl for multiple components  -->
+                                                                        <ItemsControl ItemsSource="{Binding FilterComponents}">
+                                                                            <ItemsControl.Style>
+                                                                                <Style TargetType="ItemsControl">
+                                                                                    <Setter Property="Visibility" Value="Visible" />
+                                                                                    <Style.Triggers>
+                                                                                        <DataTrigger Binding="{Binding FilterComponents.Count}" Value="0">
+                                                                                            <Setter Property="Visibility" Value="Collapsed" />
+                                                                                        </DataTrigger>
+                                                                                    </Style.Triggers>
+                                                                                </Style>
+                                                                            </ItemsControl.Style>
+                                                                            <ItemsControl.ItemsPanel>
+                                                                                <ItemsPanelTemplate>
+                                                                                    <StackPanel Orientation="Horizontal" />
+                                                                                </ItemsPanelTemplate>
+                                                                            </ItemsControl.ItemsPanel>
+                                                                            <ItemsControl.ItemTemplate>
+                                                                                <DataTemplate>
+                                                                                    <StackPanel Orientation="Horizontal">
 
-                                                                                    <!--  Conjunction (AND/OR) for multiple conditions  -->
-                                                                                    <Border Background="Transparent"
+                                                                                        <!--  Conjunction (AND/OR) for multiple conditions  -->
+                                                                                        <Border Background="Transparent"
                                                                                             Visibility="{Binding Conjunction, Converter={StaticResource StringToVisibilityConverter}}"
                                                                                             Margin="2,0,2,0"
                                                                                             Padding="4,2"
                                                                                             VerticalAlignment="Center"
                                                                                             CornerRadius="2">
-                                                                                        <TextBlock Text="{Binding Conjunction}"
+                                                                                            <TextBlock Text="{Binding Conjunction}"
                                                                                                    VerticalAlignment="Center"
                                                                                                    FontWeight="Bold"
                                                                                                    FontSize="10" />
-                                                                                    </Border>
+                                                                                        </Border>
 
-                                                                                    <!--  Search Type Component  -->
-                                                                                    <Border Margin="0,0,2,0"
+                                                                                        <!--  Search Type Component  -->
+                                                                                        <Border Margin="0,0,2,0"
                                                                                             Padding="4,2"
                                                                                             CornerRadius="2">
-                                                                                        <Border.Style>
-                                                                                            <Style TargetType="Border">
-                                                                                                <Setter Property="Background" Value="Transparent" />
-                                                                                                <Style.Triggers>
-                                                                                                    <DataTrigger Binding="{Binding HasNoInputValues}" Value="True">
-                                                                                                        <Setter Property="Background" Value="#bcd7e7" />
-                                                                                                    </DataTrigger>
-                                                                                                </Style.Triggers>
-                                                                                            </Style>
-                                                                                        </Border.Style>
-                                                                                        <TextBlock Text="{Binding SearchTypeText}"
-                                                                                                   VerticalAlignment="Center"
-                                                                                                   FontSize="12" />
-                                                                                    </Border>
-
-                                                                                    <!--  Value Components - Multiple Values or Single Value  -->
-                                                                                    <Grid>
-                                                                                        <!--  Multiple Value Items  -->
-                                                                                        <ItemsControl ItemsSource="{Binding ValueItems}">
-                                                                                            <ItemsControl.Style>
-                                                                                                <Style TargetType="ItemsControl">
-                                                                                                    <Setter Property="Visibility" Value="Collapsed" />
-                                                                                                    <Style.Triggers>
-                                                                                                        <DataTrigger Binding="{Binding HasMultipleValues}" Value="True">
-                                                                                                            <Setter Property="Visibility" Value="Visible" />
-                                                                                                        </DataTrigger>
-                                                                                                        <DataTrigger Binding="{Binding HasNoInputValues}" Value="True">
-                                                                                                            <Setter Property="Visibility" Value="Collapsed" />
-                                                                                                        </DataTrigger>
-                                                                                                    </Style.Triggers>
-                                                                                                </Style>
-                                                                                            </ItemsControl.Style>
-                                                                                            <ItemsControl.ItemsPanel>
-                                                                                                <ItemsPanelTemplate>
-                                                                                                    <StackPanel Orientation="Horizontal" />
-                                                                                                </ItemsPanelTemplate>
-                                                                                            </ItemsControl.ItemsPanel>
-                                                                                            <ItemsControl.ItemTemplate>
-                                                                                                <DataTemplate>
-                                                                                                    <Border Margin="0,0,2,0"
-                                                                                                            Padding="4,2"
-                                                                                                            CornerRadius="2">
-                                                                                                        <Border.Style>
-                                                                                                            <Style TargetType="Border">
-                                                                                                                <Setter Property="Background" Value="#bcd7e7" />
-                                                                                                            </Style>
-                                                                                                        </Border.Style>
-                                                                                                        <TextBlock Text="{Binding}" VerticalAlignment="Center" />
-                                                                                                    </Border>
-                                                                                                </DataTemplate>
-                                                                                            </ItemsControl.ItemTemplate>
-                                                                                        </ItemsControl>
-
-                                                                                        <!--  Single Primary Value  -->
-                                                                                        <Border Margin="0,0,2,0"
-                                                                                                Padding="4,2"
-                                                                                                CornerRadius="2">
                                                                                             <Border.Style>
                                                                                                 <Style TargetType="Border">
-                                                                                                    <Setter Property="Background" Value="#bbe2c5" />
-                                                                                                    <Setter Property="Visibility" Value="Visible" />
+                                                                                                    <Setter Property="Background" Value="Transparent" />
                                                                                                     <Style.Triggers>
-                                                                                                        <DataTrigger Binding="{Binding IsDateInterval}" Value="True">
-                                                                                                            <Setter Property="Background" Value="#bcd7e7" />
-                                                                                                        </DataTrigger>
                                                                                                         <DataTrigger Binding="{Binding HasNoInputValues}" Value="True">
-                                                                                                            <Setter Property="Visibility" Value="Collapsed" />
-                                                                                                        </DataTrigger>
-                                                                                                        <DataTrigger Binding="{Binding HasMultipleValues}" Value="True">
-                                                                                                            <Setter Property="Visibility" Value="Collapsed" />
+                                                                                                            <Setter Property="Background" Value="#bcd7e7" />
                                                                                                         </DataTrigger>
                                                                                                     </Style.Triggers>
                                                                                                 </Style>
                                                                                             </Border.Style>
-                                                                                            <TextBlock Text="{Binding PrimaryValue}" VerticalAlignment="Center" />
+                                                                                            <TextBlock Text="{Binding SearchTypeText}"
+                                                                                                   VerticalAlignment="Center"
+                                                                                                   FontSize="12" />
                                                                                         </Border>
-                                                                                    </Grid>
 
-                                                                                    <!--  Value Operator (e.g., "and" for Between operations)  -->
-                                                                                    <Border Background="Transparent"
+                                                                                        <!--  Value Components - Multiple Values or Single Value  -->
+                                                                                        <Grid>
+                                                                                            <!--  Multiple Value Items  -->
+                                                                                            <ItemsControl ItemsSource="{Binding ValueItems}">
+                                                                                                <ItemsControl.Style>
+                                                                                                    <Style TargetType="ItemsControl">
+                                                                                                        <Setter Property="Visibility" Value="Collapsed" />
+                                                                                                        <Style.Triggers>
+                                                                                                            <DataTrigger Binding="{Binding HasMultipleValues}" Value="True">
+                                                                                                                <Setter Property="Visibility" Value="Visible" />
+                                                                                                            </DataTrigger>
+                                                                                                            <DataTrigger Binding="{Binding HasNoInputValues}" Value="True">
+                                                                                                                <Setter Property="Visibility" Value="Collapsed" />
+                                                                                                            </DataTrigger>
+                                                                                                        </Style.Triggers>
+                                                                                                    </Style>
+                                                                                                </ItemsControl.Style>
+                                                                                                <ItemsControl.ItemsPanel>
+                                                                                                    <ItemsPanelTemplate>
+                                                                                                        <StackPanel Orientation="Horizontal" />
+                                                                                                    </ItemsPanelTemplate>
+                                                                                                </ItemsControl.ItemsPanel>
+                                                                                                <ItemsControl.ItemTemplate>
+                                                                                                    <DataTemplate>
+                                                                                                        <Border Margin="0,0,2,0"
+                                                                                                            Padding="4,2"
+                                                                                                            CornerRadius="2">
+                                                                                                            <Border.Style>
+                                                                                                                <Style TargetType="Border">
+                                                                                                                    <Setter Property="Background" Value="#bbe2c5" />
+                                                                                                                </Style>
+                                                                                                            </Border.Style>
+                                                                                                            <TextBlock Text="{Binding}" VerticalAlignment="Center" />
+                                                                                                        </Border>
+                                                                                                    </DataTemplate>
+                                                                                                </ItemsControl.ItemTemplate>
+                                                                                            </ItemsControl>
+
+                                                                                            <!--  Single Primary Value  -->
+                                                                                            <Border Margin="0,0,2,0"
+                                                                                                Padding="4,2"
+                                                                                                CornerRadius="2">
+                                                                                                <Border.Style>
+                                                                                                    <Style TargetType="Border">
+                                                                                                        <Setter Property="Background" Value="#bbe2c5" />
+                                                                                                        <Setter Property="Visibility" Value="Visible" />
+                                                                                                        <Style.Triggers>
+                                                                                                            <DataTrigger Binding="{Binding IsDateInterval}" Value="True">
+                                                                                                                <Setter Property="Background" Value="#bcd7e7" />
+                                                                                                            </DataTrigger>
+                                                                                                            <DataTrigger Binding="{Binding HasNoInputValues}" Value="True">
+                                                                                                                <Setter Property="Visibility" Value="Collapsed" />
+                                                                                                            </DataTrigger>
+                                                                                                            <DataTrigger Binding="{Binding HasMultipleValues}" Value="True">
+                                                                                                                <Setter Property="Visibility" Value="Collapsed" />
+                                                                                                            </DataTrigger>
+                                                                                                        </Style.Triggers>
+                                                                                                    </Style>
+                                                                                                </Border.Style>
+                                                                                                <TextBlock Text="{Binding PrimaryValue}" VerticalAlignment="Center" />
+                                                                                            </Border>
+                                                                                        </Grid>
+
+                                                                                        <!--  Value Operator (e.g., "and" for Between operations)  -->
+                                                                                        <Border Background="Transparent"
                                                                                             Visibility="{Binding ValueOperatorText, Converter={StaticResource StringToVisibilityConverter}}"
                                                                                             Margin="0,0,2,0"
                                                                                             Padding="4,2"
                                                                                             CornerRadius="2">
-                                                                                        <TextBlock Text="{Binding ValueOperatorText}" VerticalAlignment="Center" />
-                                                                                    </Border>
+                                                                                            <TextBlock Text="{Binding ValueOperatorText}" VerticalAlignment="Center" />
+                                                                                        </Border>
 
-                                                                                    <!--  Secondary Value Component  -->
-                                                                                    <Border Visibility="{Binding SecondaryValue, Converter={StaticResource StringToVisibilityConverter}}"
+                                                                                        <!--  Secondary Value Component  -->
+                                                                                        <Border Visibility="{Binding SecondaryValue, Converter={StaticResource StringToVisibilityConverter}}"
                                                                                             Margin="0,0,2,0"
                                                                                             Padding="4,2"
                                                                                             CornerRadius="2">
-                                                                                        <Border.Style>
-                                                                                            <Style TargetType="Border">
-                                                                                                <Setter Property="Background" Value="#bbe2c5" />
-                                                                                                <Style.Triggers>
-                                                                                                    <DataTrigger Binding="{Binding IsDateInterval}" Value="True">
-                                                                                                        <Setter Property="Background" Value="#bcd7e7" />
-                                                                                                    </DataTrigger>
-                                                                                                </Style.Triggers>
-                                                                                            </Style>
-                                                                                        </Border.Style>
-                                                                                        <TextBlock Text="{Binding SecondaryValue}" VerticalAlignment="Center" />
-                                                                                    </Border>
+                                                                                            <Border.Style>
+                                                                                                <Style TargetType="Border">
+                                                                                                    <Setter Property="Background" Value="#bbe2c5" />
+                                                                                                    <Style.Triggers>
+                                                                                                        <DataTrigger Binding="{Binding IsDateInterval}" Value="True">
+                                                                                                            <Setter Property="Background" Value="#bcd7e7" />
+                                                                                                        </DataTrigger>
+                                                                                                    </Style.Triggers>
+                                                                                                </Style>
+                                                                                            </Border.Style>
+                                                                                            <TextBlock Text="{Binding SecondaryValue}" VerticalAlignment="Center" />
+                                                                                        </Border>
 
-                                                                                </StackPanel>
-                                                                            </DataTemplate>
-                                                                        </ItemsControl.ItemTemplate>
-                                                                    </ItemsControl>
+                                                                                    </StackPanel>
+                                                                                </DataTemplate>
+                                                                            </ItemsControl.ItemTemplate>
+                                                                        </ItemsControl>
 
-                                                                    <!--  Fallback to legacy display when FilterComponents is empty  -->
-                                                                    <StackPanel Orientation="Horizontal">
-                                                                        <StackPanel.Style>
-                                                                            <Style TargetType="StackPanel">
-                                                                                <Setter Property="Visibility" Value="Collapsed" />
-                                                                                <Style.Triggers>
-                                                                                    <DataTrigger Binding="{Binding FilterComponents.Count}" Value="0">
-                                                                                        <Setter Property="Visibility" Value="Visible" />
-                                                                                    </DataTrigger>
-                                                                                </Style.Triggers>
-                                                                            </Style>
-                                                                        </StackPanel.Style>
-
-                                                                        <!--  Fallback Search Type Component  -->
-                                                                        <Border Margin="0,0,2,0"
-                                                                                Padding="4,2"
-                                                                                CornerRadius="2">
-                                                                            <Border.Style>
-                                                                                <Style TargetType="Border">
-                                                                                    <Setter Property="Background" Value="Transparent" />
+                                                                        <!--  Fallback to legacy display when FilterComponents is empty  -->
+                                                                        <StackPanel Orientation="Horizontal">
+                                                                            <StackPanel.Style>
+                                                                                <Style TargetType="StackPanel">
+                                                                                    <Setter Property="Visibility" Value="Collapsed" />
                                                                                     <Style.Triggers>
-                                                                                        <DataTrigger Binding="{Binding HasNoInputValues}" Value="True">
-                                                                                            <Setter Property="Background" Value="LightGreen" />
+                                                                                        <DataTrigger Binding="{Binding FilterComponents.Count}" Value="0">
+                                                                                            <Setter Property="Visibility" Value="Visible" />
                                                                                         </DataTrigger>
                                                                                     </Style.Triggers>
                                                                                 </Style>
-                                                                            </Border.Style>
-                                                                            <TextBlock Text="{Binding SearchTypeText}" VerticalAlignment="Center" />
-                                                                        </Border>
+                                                                            </StackPanel.Style>
 
-                                                                        <!--  Fallback Value Components  -->
-                                                                        <Grid>
-                                                                            <!--  Fallback Multiple Value Items  -->
-                                                                            <ItemsControl ItemsSource="{Binding FilterComponents[0].ValueItems}">
-                                                                                <ItemsControl.Style>
-                                                                                    <Style TargetType="ItemsControl">
-                                                                                        <Setter Property="Visibility" Value="Collapsed" />
-                                                                                        <Style.Triggers>
-                                                                                            <MultiDataTrigger>
-                                                                                                <MultiDataTrigger.Conditions>
-                                                                                                    <Condition Binding="{Binding FilterComponents.Count}" Value="1" />
-                                                                                                    <Condition Binding="{Binding FilterComponents[0].HasMultipleValues}" Value="True" />
-                                                                                                </MultiDataTrigger.Conditions>
-                                                                                                <Setter Property="Visibility" Value="Visible" />
-                                                                                            </MultiDataTrigger>
-                                                                                        </Style.Triggers>
-                                                                                    </Style>
-                                                                                </ItemsControl.Style>
-                                                                                <ItemsControl.ItemsPanel>
-                                                                                    <ItemsPanelTemplate>
-                                                                                        <StackPanel Orientation="Horizontal" />
-                                                                                    </ItemsPanelTemplate>
-                                                                                </ItemsControl.ItemsPanel>
-                                                                                <ItemsControl.ItemTemplate>
-                                                                                    <DataTemplate>
-                                                                                        <Border Margin="0,0,2,0"
-                                                                                                Padding="4,2"
-                                                                                                CornerRadius="2"
-                                                                                                Background="#bcd7e7">
-                                                                                            <TextBlock Text="{Binding}" VerticalAlignment="Center" />
-                                                                                        </Border>
-                                                                                    </DataTemplate>
-                                                                                </ItemsControl.ItemTemplate>
-                                                                            </ItemsControl>
-
-                                                                            <!--  Fallback Single Primary Value  -->
+                                                                            <!--  Fallback Search Type Component  -->
                                                                             <Border Margin="0,0,2,0"
-                                                                                    Padding="4,2"
-                                                                                    CornerRadius="2">
+                                                                                Padding="4,2"
+                                                                                CornerRadius="2">
                                                                                 <Border.Style>
                                                                                     <Style TargetType="Border">
-                                                                                        <Setter Property="Background" Value="LightBlue" />
-                                                                                        <Setter Property="Visibility" Value="Visible" />
+                                                                                        <Setter Property="Background" Value="Transparent" />
                                                                                         <Style.Triggers>
-                                                                                            <DataTrigger Binding="{Binding IsDateInterval}" Value="True">
+                                                                                            <DataTrigger Binding="{Binding HasNoInputValues}" Value="True">
                                                                                                 <Setter Property="Background" Value="LightGreen" />
                                                                                             </DataTrigger>
-                                                                                            <DataTrigger Binding="{Binding HasNoInputValues}" Value="True">
-                                                                                                <Setter Property="Visibility" Value="Collapsed" />
-                                                                                            </DataTrigger>
-                                                                                            <MultiDataTrigger>
-                                                                                                <MultiDataTrigger.Conditions>
-                                                                                                    <Condition Binding="{Binding FilterComponents.Count}" Value="1" />
-                                                                                                    <Condition Binding="{Binding FilterComponents[0].HasMultipleValues}" Value="True" />
-                                                                                                </MultiDataTrigger.Conditions>
-                                                                                                <Setter Property="Visibility" Value="Collapsed" />
-                                                                                            </MultiDataTrigger>
                                                                                         </Style.Triggers>
                                                                                     </Style>
                                                                                 </Border.Style>
-                                                                                <TextBlock Text="{Binding PrimaryValue}" VerticalAlignment="Center" />
+                                                                                <TextBlock Text="{Binding SearchTypeText}" VerticalAlignment="Center" />
                                                                             </Border>
-                                                                        </Grid>
 
-                                                                        <!--  Fallback Value Operator  -->
-                                                                        <Border Background="Transparent"
+                                                                            <!--  Fallback Value Components  -->
+                                                                            <Grid>
+                                                                                <!--  Fallback Multiple Value Items  -->
+                                                                                <ItemsControl ItemsSource="{Binding FilterComponents[0].ValueItems}">
+                                                                                    <ItemsControl.Style>
+                                                                                        <Style TargetType="ItemsControl">
+                                                                                            <Setter Property="Visibility" Value="Collapsed" />
+                                                                                            <Style.Triggers>
+                                                                                                <MultiDataTrigger>
+                                                                                                    <MultiDataTrigger.Conditions>
+                                                                                                        <Condition Binding="{Binding FilterComponents.Count}" Value="1" />
+                                                                                                        <Condition Binding="{Binding FilterComponents[0].HasMultipleValues}" Value="True" />
+                                                                                                    </MultiDataTrigger.Conditions>
+                                                                                                    <Setter Property="Visibility" Value="Visible" />
+                                                                                                </MultiDataTrigger>
+                                                                                            </Style.Triggers>
+                                                                                        </Style>
+                                                                                    </ItemsControl.Style>
+                                                                                    <ItemsControl.ItemsPanel>
+                                                                                        <ItemsPanelTemplate>
+                                                                                            <StackPanel Orientation="Horizontal" />
+                                                                                        </ItemsPanelTemplate>
+                                                                                    </ItemsControl.ItemsPanel>
+                                                                                    <ItemsControl.ItemTemplate>
+                                                                                        <DataTemplate>
+                                                                                            <Border Margin="0,0,2,0"
+                                                                                                Padding="4,2"
+                                                                                                CornerRadius="2"
+                                                                                                Background="#bcd7e7">
+                                                                                                <TextBlock Text="{Binding}" VerticalAlignment="Center" />
+                                                                                            </Border>
+                                                                                        </DataTemplate>
+                                                                                    </ItemsControl.ItemTemplate>
+                                                                                </ItemsControl>
+
+                                                                                <!--  Fallback Single Primary Value  -->
+                                                                                <Border Margin="0,0,2,0"
+                                                                                    Padding="4,2"
+                                                                                    CornerRadius="2">
+                                                                                    <Border.Style>
+                                                                                        <Style TargetType="Border">
+                                                                                            <Setter Property="Background" Value="LightBlue" />
+                                                                                            <Setter Property="Visibility" Value="Visible" />
+                                                                                            <Style.Triggers>
+                                                                                                <DataTrigger Binding="{Binding IsDateInterval}" Value="True">
+                                                                                                    <Setter Property="Background" Value="LightGreen" />
+                                                                                                </DataTrigger>
+                                                                                                <DataTrigger Binding="{Binding HasNoInputValues}" Value="True">
+                                                                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                                                                </DataTrigger>
+                                                                                                <MultiDataTrigger>
+                                                                                                    <MultiDataTrigger.Conditions>
+                                                                                                        <Condition Binding="{Binding FilterComponents.Count}" Value="1" />
+                                                                                                        <Condition Binding="{Binding FilterComponents[0].HasMultipleValues}" Value="True" />
+                                                                                                    </MultiDataTrigger.Conditions>
+                                                                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                                                                </MultiDataTrigger>
+                                                                                            </Style.Triggers>
+                                                                                        </Style>
+                                                                                    </Border.Style>
+                                                                                    <TextBlock Text="{Binding PrimaryValue}" VerticalAlignment="Center" />
+                                                                                </Border>
+                                                                            </Grid>
+
+                                                                            <!--  Fallback Value Operator  -->
+                                                                            <Border Background="Transparent"
                                                                                 Visibility="{Binding ValueOperatorText, Converter={StaticResource StringToVisibilityConverter}}"
                                                                                 Margin="0,0,2,0"
                                                                                 Padding="4,2"
                                                                                 CornerRadius="2">
-                                                                            <TextBlock Text="{Binding ValueOperatorText}" VerticalAlignment="Center" />
-                                                                        </Border>
+                                                                                <TextBlock Text="{Binding ValueOperatorText}" VerticalAlignment="Center" />
+                                                                            </Border>
 
-                                                                        <!--  Fallback Secondary Value Component  -->
-                                                                        <Border Visibility="{Binding SecondaryValue, Converter={StaticResource StringToVisibilityConverter}}"
+                                                                            <!--  Fallback Secondary Value Component  -->
+                                                                            <Border Visibility="{Binding SecondaryValue, Converter={StaticResource StringToVisibilityConverter}}"
                                                                                 Margin="0,0,2,0"
                                                                                 Padding="4,2"
                                                                                 CornerRadius="2">
-                                                                            <Border.Style>
-                                                                                <Style TargetType="Border">
-                                                                                    <Setter Property="Background" Value="LightBlue" />
-                                                                                    <Style.Triggers>
-                                                                                        <DataTrigger Binding="{Binding IsDateInterval}" Value="True">
-                                                                                            <Setter Property="Background" Value="LightGreen" />
-                                                                                        </DataTrigger>
-                                                                                    </Style.Triggers>
-                                                                                </Style>
-                                                                            </Border.Style>
-                                                                            <TextBlock Text="{Binding SecondaryValue}" VerticalAlignment="Center" />
-                                                                        </Border>
+                                                                                <Border.Style>
+                                                                                    <Style TargetType="Border">
+                                                                                        <Setter Property="Background" Value="LightBlue" />
+                                                                                        <Style.Triggers>
+                                                                                            <DataTrigger Binding="{Binding IsDateInterval}" Value="True">
+                                                                                                <Setter Property="Background" Value="LightGreen" />
+                                                                                            </DataTrigger>
+                                                                                        </Style.Triggers>
+                                                                                    </Style>
+                                                                                </Border.Style>
+                                                                                <TextBlock Text="{Binding SecondaryValue}" VerticalAlignment="Center" />
+                                                                            </Border>
 
-                                                                    </StackPanel>
-                                                                </Grid>
+                                                                        </StackPanel>
+                                                                    </Grid>
 
-                                                            </StackPanel>
-                                                        </Border>
+                                                                </StackPanel>
+                                                            </Border>
 
                                                         <!--  Close Button  -->
                                                         <Button Grid.Column="1"
@@ -434,10 +442,12 @@
                                                                 VerticalAlignment="Top"
                                                                 Width="12"
                                                                 Height="12"
+                                                                Background="Transparent"
                                                                 FontFamily="Segoe MDL2 Assets"
+                                                                Margin="1,-2,0,0"
                                                                 FontSize="8"
                                                                 Content="&#xE8BB;"
-                                                                ToolTip="Remove this filter">
+                                                                ToolTip="Remove Filter Chip">
                                                             <Button.Style>
                                                                 <Style BasedOn="{StaticResource TransparentFontIcon_Button_Style}" TargetType="Button">
                                                                     <Setter Property="Visibility" Value="Hidden" />

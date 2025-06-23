@@ -214,11 +214,12 @@
                                 </ListBox.ItemContainerStyle>
                                 <ListBox.ItemTemplate>
                                     <DataTemplate>
-                                        <GroupBox Padding="12">
+                                        <GroupBox Padding="8">
                                             <GroupBox.Header>
                                                 <DockPanel Margin="0,0,0,8" LastChildFill="True">
                                                     <ComboBox DockPanel.Dock="Left"
                                                               Style="{StaticResource Default_ComboBox_Style}"
+                                                              Visibility="{Binding SearchTemplateGroup.IsOperatorVisible, Converter={StaticResource BooleanToVisibilityConverter}}"
                                                               Margin="0,0,8,0"
                                                               VerticalContentAlignment="Center"
                                                               Width="65"

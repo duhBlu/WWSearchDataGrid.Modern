@@ -253,6 +253,9 @@ namespace WWSearchDataGrid.Modern.WPF
                     }
                 }
 
+                // Update operator visibility based on unified group ordering
+                UpdateUnifiedOperatorVisibility();
+
                 IsLoading = false;
 
                 // Load available values asynchronously to prevent UI freezing
@@ -606,10 +609,42 @@ namespace WWSearchDataGrid.Modern.WPF
                         AllFilterGroups.Add(filterGroupInfo);
                     }
                 }
+
+                // Update operator visibility based on unified group ordering
+                UpdateUnifiedOperatorVisibility();
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Error refreshing filter groups: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Updates operator visibility based on unified AllFilterGroups ordering
+        /// </summary>
+        private void UpdateUnifiedOperatorVisibility()
+        {
+            try
+            {
+                // Update group-level operator visibility based on unified ordering
+                for (int i = 0; i < AllFilterGroups.Count; i++)
+                {
+                    var group = AllFilterGroups[i].SearchTemplateGroup;
+                    
+                    // First group in the unified view should have operator hidden, subsequent groups should show it
+                    group.IsOperatorVisible = i > 0;
+                    
+                    // Update template-level operator visibility within each group
+                    for (int j = 0; j < group.SearchTemplates.Count; j++)
+                    {
+                        // First template in each group should have operator hidden, subsequent templates should show it
+                        group.SearchTemplates[j].IsOperatorVisible = j > 0;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error updating unified operator visibility: {ex.Message}");
             }
         }
 
