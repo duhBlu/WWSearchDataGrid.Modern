@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using WWSearchDataGrid.Modern.WPF;
+using WWSearchDataGrid.Modern.SampleApp.Models;
 
 namespace WWSearchDataGrid.Modern.SampleApp
 {
@@ -126,117 +127,9 @@ namespace WWSearchDataGrid.Modern.SampleApp
         {
             for (int i = 0; i < count; i++)
             {
-                Items.Add(CreateDataItem(i));
+                Items.Add(CreateComprehensiveDataItem(i));
             }
         }
-
-        /// <summary>
-        /// Creates a data item with test values
-        /// </summary>
-        /// <param name="index">Index to use for generating values</param>
-        /// <returns>A new data item</returns>
-        private DataItem CreateDataItem(int index)
-        {
-            // Reuse the same pattern so that “random” is deterministic per index:
-            var random = new Random(index);
-            var baseIndex = index % 50; // forces a repeat every 50 rows
-
-            // --- existing pools ---
-            var stringPool = new[] { "Apple", "Banana", "Cherry", "Date", "Elderberry", null, "", "apple", "banana" };
-            var floatSet = new[] { 100f, 200f, 300f, 400f, 500f, 600f, 700f };
-            var doubleSet = new[] { 1.01, 1.02, 2.05, 2.06, 3.00 };
-            var decimalSet = new[] { 107.005m, 108.005m, 109.005m, 107.005m }; // duplicates
-            var comboOptions = ComboBoxItems.Select(c => c.Id).ToList();
-            var stringComboOptions = ComboBoxStringValues.ToList();
-            var today = DateTime.Today;
-
-            // 1) Product names (so every row gets a recognizable product)
-            var productNames = new[]
-            {
-                "Laptop", "Smartphone", "Tablet", "Headphones", "Monitor",
-                "Keyboard", "Mouse", "Printer", "Webcam", "External HDD"
-            };
-
-            // 2) Categories (will repeat every few rows => grouping)
-            var categories = new[]
-            {
-                "Electronics", "Accessories", "Office Supplies",
-                "Gaming", "Home Appliances"
-            };
-
-            // 3) Currency codes (small set => duplicates)
-            var currencyCodes = new[] { "USD", "EUR", "GBP", "JPY", "CAD" };
-
-            // 4) Regions (duplicates periodically)
-            var regions = new[]
-            {
-                "North America", "Europe", "Asia", "South America", "Australia"
-            };
-
-            // 5) Order statuses (duplicates frequently)
-            var statuses = new[] { "Pending", "Shipped", "Delivered", "Cancelled" };
-
-            // Now assemble the DataItem:
-            return new DataItem
-            {
-                // --- existing fields ---
-                BoolValue = index % 3 == 0,
-                NullableBoolValue = index % 7 == 0 ? null : (bool?)(index % 2 == 0),
-
-                IntValue = index,
-                NullableIntValue = index % 13 == 0 ? null : (int?)(baseIndex),
-
-                LongValue = index * 100_000L,
-
-                FloatValue = floatSet[index % floatSet.Length],
-                NullableFloatValue = index % 11 == 0 ? null : (float?)(floatSet[baseIndex % floatSet.Length]),
-
-                DoubleValue = doubleSet[index % doubleSet.Length],
-                NullableDoubleValue = index % 9 == 0 ? null : (double?)(doubleSet[baseIndex % doubleSet.Length]),
-
-                DecimalValue = decimalSet[index % decimalSet.Length],
-                NullableDecimalValue = index % 6 == 0 ? null : (decimal?)(decimalSet[baseIndex % decimalSet.Length]),
-
-                StringValue = stringPool[index % stringPool.Length],
-
-                DateTimeValue = today.AddDays(-(index % 365)),
-                NullableDateTimeValue = index % 10 == 0 ? null : (DateTime?)(today.AddDays(-(baseIndex % 30))),
-
-                ComboBoxValueId = comboOptions[index % comboOptions.Count],
-                SelectedComboBoxStringValue = stringComboOptions[index % stringComboOptions.Count],
-
-                PropertyValues = new List<Tuple<string, string>>
-                {
-                    Tuple.Create("KeyA", index % 5 == 0 ? null : $"Val{baseIndex % 3}"),
-                    Tuple.Create("KeyB", $"Val{(index + 1) % 5}"),
-                    Tuple.Create("KeyC", $"Val{(index + 2) % 4}")
-                },
-                        PropertyDictionary = new Dictionary<string, object>
-                {
-                    { "DictKeyA", baseIndex },
-                    { "DictKeyB", today.AddDays(- (index % 90)) },
-                    { "DictKeyC", stringPool[(index + 3) % stringPool.Length] },
-                    { "DictKeyD", index % 2 == 0 ? (object)"SetA" : "SetB" }
-                },
-
-                // --- NEW realistic/groupable fields ---
-                ProductName = productNames[index % productNames.Length],
-                Category = categories[baseIndex % categories.Length],
-                CurrencyCode = currencyCodes[baseIndex % currencyCodes.Length],
-
-                // Price: anywhere from $5.00 to $999.99, deterministic via Random(index)
-                Price = (decimal)(random.Next(500, 100_000)) / 100m,
-
-                Quantity = random.Next(1, 101),                        // 1–100
-
-                // OrderDate: pick any day in the past 365 days
-                OrderDate = today.AddDays(-random.Next(0, 365)),
-
-                Region = regions[index % regions.Length],
-                Status = statuses[index % statuses.Length]
-            };
-        }
-
 
         /// <summary>
         /// Generates a random data item
@@ -246,7 +139,7 @@ namespace WWSearchDataGrid.Modern.SampleApp
         {
             var random = new Random();
             int index = random.Next(1, 1000);
-            return CreateDataItem(index);
+            return CreateComprehensiveDataItem(index);
         }
 
         /// <summary>
@@ -277,6 +170,182 @@ namespace WWSearchDataGrid.Modern.SampleApp
                 "String Option 4",
                 "String Option 5"
             };
+        }
+
+        /// <summary>
+        /// Creates a data item with comprehensive test values covering all data types
+        /// </summary>
+        /// <param name="index">Index to use for generating values</param>
+        /// <returns>A new data item</returns>
+        private DataItem CreateComprehensiveDataItem(int index)
+        {
+            var random = new Random(index);
+            var today = DateTime.Today;
+            var baseDate = today.AddYears(-2);
+
+            // Customer Names - 2500+ combinations (50 first × 50 last)
+            var firstNames = new[]
+            {
+                "Alice", "Bob", "Carol", "David", "Eve", "Frank", "Grace", "Henry", "Ivy", "Jack",
+                "Kate", "Leo", "Mary", "Nick", "Olivia", "Paul", "Quinn", "Rita", "Sam", "Tina",
+                "Uma", "Victor", "Wendy", "Xavier", "Yara", "Zack", "Anna", "Ben", "Chloe", "Dan",
+                "Emma", "Felix", "Gina", "Hugo", "Iris", "Jake", "Kara", "Liam", "Mia", "Noah",
+                "Ava", "Blake", "Clara", "Dean", "Ella", "Finn", "Hailey", "Ian", "Jade", "Kyle"
+            };
+            var lastNames = new[]
+            {
+                "Anderson", "Brown", "Clark", "Davis", "Evans", "Fisher", "Garcia", "Harris", "Jackson", "Johnson",
+                "King", "Lopez", "Martinez", "Nelson", "O'Connor", "Parker", "Quinn", "Rodriguez", "Smith", "Taylor",
+                "Underwood", "Valdez", "Wilson", "Young", "Zhang", "Adams", "Baker", "Cooper", "Dixon", "Edwards",
+                "Ford", "Green", "Hall", "Irving", "Jones", "Kelly", "Lewis", "Moore", "Nixon", "Owen",
+                "Powell", "Reed", "Stone", "Thomas", "White", "Allen", "Bell", "Carter", "Foster", "Gray"
+            };
+
+            // Product Categories - 15-20 distinct values
+            var categories = new[]
+            {
+                "Electronics", "Computers", "Mobile Devices", "Audio Equipment", "Gaming",
+                "Home Appliances", "Kitchen & Dining", "Office Supplies", "Furniture", "Sports & Outdoors",
+                "Health & Beauty", "Automotive", "Books & Media", "Clothing", "Jewelry",
+                "Tools & Hardware", "Garden & Patio", "Pet Supplies", "Baby & Kids", "Travel Accessories"
+            };
+
+            // Regions - 8 geographic regions
+            var regions = new[]
+            {
+                "North America", "South America", "Europe", "Asia Pacific", 
+                "Middle East", "Africa", "Central Asia", "Oceania"
+            };
+
+            // Generate comprehensive data
+            var customerName = $"{firstNames[random.Next(firstNames.Length)]} {lastNames[random.Next(lastNames.Length)]}";
+            var orderDateTime = baseDate.AddDays(random.Next(0, 730)).AddHours(random.Next(8, 18)).AddMinutes(random.Next(0, 60));
+            var statusValue = (OrderStatus)random.Next(0, Enum.GetValues<OrderStatus>().Length);
+            var priorityValue = (Priority)random.Next(0, Enum.GetValues<Priority>().Length);
+
+            return new DataItem
+            {
+                // Essential business context
+                CustomerName = customerName,
+                ProductCategory = categories[random.Next(categories.Length)],
+                Region = regions[random.Next(regions.Length)],
+
+                // Boolean types - weighted distributions
+                BoolValue = random.NextDouble() < 0.7,
+                NullableBoolValue = random.NextDouble() < 0.1 ? null : (bool?)(random.NextDouble() < 0.6),
+
+                // Integer types - varied ranges
+                IntValue = random.Next(1, 100000),
+                NullableIntValue = random.NextDouble() < 0.15 ? null : (int?)random.Next(1, 50000),
+                LongValue = random.NextInt64(1000000, 9999999999),
+                NullableLongValue = random.NextDouble() < 0.12 ? null : (long?)random.NextInt64(1000, 999999),
+                ShortValue = (short)random.Next(1, 32767),
+                NullableShortValue = random.NextDouble() < 0.18 ? null : (short?)random.Next(1, 1000),
+                ByteValue = (byte)random.Next(0, 255),
+                NullableByteValue = random.NextDouble() < 0.20 ? null : (byte?)random.Next(0, 100),
+
+                // Floating-point and decimal types
+                FloatValue = (float)(random.NextDouble() * 10000),
+                NullableFloatValue = random.NextDouble() < 0.14 ? null : (float?)(random.NextDouble() * 1000),
+                DoubleValue = random.NextDouble() * 100000,
+                NullableDoubleValue = random.NextDouble() < 0.16 ? null : (double?)(random.NextDouble() * 10000),
+                DecimalValue = (decimal)(random.NextDouble() * 50000),
+                NullableDecimalValue = random.NextDouble() < 0.13 ? null : (decimal?)(random.NextDouble() * 5000),
+
+                // Text types
+                StringValue = GenerateVariedString(random),
+                CharValue = (char)random.Next(65, 91), // A-Z
+                NullableCharValue = random.NextDouble() < 0.25 ? null : (char?)((char)random.Next(97, 123)), // a-z
+
+                // Date and time types with precision
+                DateTimeValue = orderDateTime.AddDays(random.Next(-30, 30)),
+                NullableDateTimeValue = random.NextDouble() < 0.17 ? null : (DateTime?)orderDateTime.AddHours(random.Next(-100, 100)),
+                TimeSpanValue = TimeSpan.FromMinutes(random.Next(30, 480)),
+                NullableTimeSpanValue = random.NextDouble() < 0.19 ? null : (TimeSpan?)TimeSpan.FromHours(random.NextDouble() * 24),
+
+                // GUID types
+                GuidValue = Guid.NewGuid(),
+                NullableGuidValue = random.NextDouble() < 0.22 ? null : (Guid?)Guid.NewGuid(),
+
+                // Enum types
+                StatusValue = statusValue,
+                NullableStatusValue = random.NextDouble() < 0.21 ? null : (OrderStatus?)statusValue,
+                PriorityValue = priorityValue,
+                NullablePriorityValue = random.NextDouble() < 0.23 ? null : (Priority?)priorityValue,
+
+                // Business datetimes with time precision
+                OrderDateTime = orderDateTime,
+                ShippedDateTime = statusValue >= OrderStatus.Shipped ? (DateTime?)orderDateTime.AddDays(random.Next(1, 7)) : null,
+                DueDateTime = orderDateTime.AddDays(random.Next(7, 30)).AddHours(random.Next(8, 18)),
+                CompletedDateTime = statusValue == OrderStatus.Completed ? (DateTime?)orderDateTime.AddDays(random.Next(3, 14)) : null,
+                ProcessingTime = TimeSpan.FromMinutes(random.Next(15, 300)),
+                DeliveryTime = statusValue >= OrderStatus.Delivered ? (TimeSpan?)TimeSpan.FromDays(random.Next(1, 10)) : null,
+
+                // Legacy fields for compatibility
+                ComboBoxValueId = ComboBoxItems.Skip(random.Next(ComboBoxItems.Count)).First().Id,
+                SelectedComboBoxStringValue = ComboBoxStringValues.Skip(random.Next(ComboBoxStringValues.Count)).First(),
+                PropertyValues = new List<Tuple<string, string>>
+                {
+                    Tuple.Create("KeyA", random.NextDouble() < 0.1 ? null : $"Value{random.Next(1, 100)}"),
+                    Tuple.Create("KeyB", $"Data{random.Next(1, 50)}"),
+                    Tuple.Create("KeyC", $"Item{random.Next(1, 25)}")
+                },
+                PropertyDictionary = new Dictionary<string, object>
+                {
+                    { "DictKeyA", random.Next(1, 1000) },
+                    { "DictKeyB", orderDateTime.AddDays(-random.Next(0, 90)) },
+                    { "DictKeyC", GenerateVariedString(random) },
+                    { "DictKeyD", random.NextDouble() < 0.5 ? (object)"GroupA" : "GroupB" }
+                },
+
+                // Legacy business fields
+                ProductName = GenerateProductName(random),
+                Category = categories[random.Next(categories.Length)],
+                CurrencyCode = GenerateCurrencyCode(random),
+                Price = (decimal)(random.NextDouble() * 5000 + 10),
+                Quantity = random.Next(1, 200),
+                OrderDate = orderDateTime.Date,
+                Status = statusValue.ToString()
+            };
+        }
+
+        /// <summary>
+        /// Generates varied string values for testing
+        /// </summary>
+        private string GenerateVariedString(Random random)
+        {
+            var stringTypes = new[]
+            {
+                // Regular strings
+                "Alpha", "Beta", "Gamma", "Delta", "Epsilon", "Zeta", "Eta", "Theta",
+                "Product", "Service", "Item", "Component", "Module", "System", "Process",
+                // Special cases
+                null, "", " ", "test", "TEST", "Test", "123", "abc123", "test@example.com"
+            };
+            
+            return stringTypes[random.Next(stringTypes.Length)];
+        }
+
+        /// <summary>
+        /// Generates varied product names
+        /// </summary>
+        private string GenerateProductName(Random random)
+        {
+            var adjectives = new[] { "Premium", "Professional", "Standard", "Deluxe", "Basic", "Advanced", "Ultra", "Pro" };
+            var products = new[] { "Laptop", "Monitor", "Keyboard", "Mouse", "Headset", "Tablet", "Phone", "Camera", "Printer", "Scanner" };
+            
+            return random.NextDouble() < 0.3 ? 
+                $"{adjectives[random.Next(adjectives.Length)]} {products[random.Next(products.Length)]}" :
+                products[random.Next(products.Length)];
+        }
+
+        /// <summary>
+        /// Generates currency codes with realistic distribution
+        /// </summary>
+        private string GenerateCurrencyCode(Random random)
+        {
+            var currencies = new[] { "USD", "EUR", "GBP", "JPY", "CAD", "AUD", "CHF", "CNY", "SEK", "NOK" };
+            return currencies[random.Next(currencies.Length)];
         }
 
         #endregion

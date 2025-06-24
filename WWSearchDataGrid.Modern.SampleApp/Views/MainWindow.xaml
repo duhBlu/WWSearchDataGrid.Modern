@@ -81,10 +81,16 @@
                         Orientation="Horizontal"
                         Margin="15,0,0,0"
                         VerticalAlignment="Center">
-                <TextBlock Text="Items: "
+                <TextBlock Text="Total Data Items: "
                            VerticalAlignment="Center"
                            FontWeight="Bold" />
                 <TextBlock Text="{Binding ItemCount}" VerticalAlignment="Center" />
+                
+                <TextBlock Text="Filtered Rows: "
+                           Margin="10,0,0,0"
+                           VerticalAlignment="Center"
+                           FontWeight="Bold" />
+                <TextBlock Text="{Binding ElementName=DataGrid, Path=Items.Count}" VerticalAlignment="Center" />
             </StackPanel>
 
             <!--  Buttons  -->
@@ -92,28 +98,28 @@
                         Orientation="Horizontal"
                         HorizontalAlignment="Right">
                 <sdg:NumericUpDown Value="{Binding ItemsToGenerate, Mode=TwoWay}" />
-                <Button Background="#007ACC"
+                <Button Style="{StaticResource DefaultButtonStyle}"
+                        Background="#007ACC"
                         Foreground="White"
-                        Style="{StaticResource DefaultButtonStyle}"
                         Command="{Binding PopulateDataCommand}"
                         Margin="5"
                         Padding="10,5"
                         Content="Generate Data" />
 
-                <Button Command="{Binding AddItemCommand}"
-                        Style="{StaticResource DefaultButtonStyle}"
+                <Button Style="{StaticResource DefaultButtonStyle}"
+                        Command="{Binding AddItemCommand}"
                         Margin="5"
                         Padding="10,5"
                         Content="Add Item" />
 
-                <Button Command="{Binding RemoveItemCommand}"
-                        Style="{StaticResource DefaultButtonStyle}"
+                <Button Style="{StaticResource DefaultButtonStyle}"
+                        Command="{Binding RemoveItemCommand}"
                         Margin="5"
                         Padding="10,5"
                         Content="Remove Item" />
 
-                <Button Command="{Binding ClearDataCommand}"
-                        Style="{StaticResource DefaultButtonStyle}"
+                <Button Style="{StaticResource DefaultButtonStyle}"
+                        Command="{Binding ClearDataCommand}"
                         Margin="5"
                         Padding="10,5"
                         Content="Clear Data" />
@@ -130,112 +136,179 @@
                                 IsReadOnly="False"
                                 Margin="10"
                                 ItemsSource="{Binding Items}"
-                                CanUserAddRows="True">
+                                CanUserAddRows="False">
 
                 <sdg:SearchDataGrid.Columns>
-                    <!--  Boolean Values  -->
-                    <DataGridCheckBoxColumn Width="80"
-                                            sdg:SearchControl.ShowInAdvancedFilter="False"
-                                            Header="Boolean"
-                                            Binding="{Binding BoolValue}" />
+                    <!--  Essential Business Context  -->
+                    <DataGridTextColumn Width="120"
+                                        sdg:AdvancedFilterControl.GroupByColumn="Region"
+                                        Header="Customer Name"
+                                        Binding="{Binding CustomerName}" />
 
+                    <DataGridTextColumn Width="140"
+                                        Header="Product Category"
+                                        Binding="{Binding ProductCategory}" />
+
+                    <DataGridTextColumn Width="120"
+                                        Header="Region"
+                                        Binding="{Binding Region}" />
+
+                    <!--  Boolean Types  -->
+                    <DataGridCheckBoxColumn Width="80"
+                                            Header="Bool Value"
+                                            Binding="{Binding BoolValue}" />
                     <DataGridCheckBoxColumn Width="100"
                                             Header="Nullable Bool"
                                             Binding="{Binding NullableBoolValue}" />
 
-                    <!--  Numeric Values  -->
+                    <!--  Integer Types  -->
                     <DataGridTextColumn Width="80"
-                                        Header="Integer"
+                                        Header="Int"
                                         Binding="{Binding IntValue}" />
-
                     <DataGridTextColumn Width="90"
                                         Header="Nullable Int"
                                         Binding="{Binding NullableIntValue}" />
-
-                    <DataGridTextColumn Width="80"
+                    <DataGridTextColumn Width="90"
                                         Header="Long"
                                         Binding="{Binding LongValue}" />
-
                     <DataGridTextColumn Width="100"
-                                        Header="Decimal"
-                                        Binding="{Binding DecimalValue, StringFormat=N2}" />
+                                        Header="Nullable Long"
+                                        Binding="{Binding NullableLongValue}" />
+                    <DataGridTextColumn Width="70"
+                                        Header="Short"
+                                        Binding="{Binding ShortValue}" />
+                    <DataGridTextColumn Width="90"
+                                        Header="Nullable Short"
+                                        Binding="{Binding NullableShortValue}" />
+                    <DataGridTextColumn Width="60"
+                                        Header="Byte"
+                                        Binding="{Binding ByteValue}" />
+                    <DataGridTextColumn Width="80"
+                                        Header="Nullable Byte"
+                                        Binding="{Binding NullableByteValue}" />
 
-                    <DataGridTextColumn Width="100"
-                                        Header="Double"
-                                        Binding="{Binding DoubleValue, StringFormat=N2}" />
-
+                    <!--  Floating-point and Decimal Types  -->
                     <DataGridTextColumn Width="80"
                                         Header="Float"
                                         Binding="{Binding FloatValue, StringFormat=N2}" />
+                    <DataGridTextColumn Width="100"
+                                        Header="Nullable Float"
+                                        Binding="{Binding NullableFloatValue, StringFormat=N2}" />
+                    <DataGridTextColumn Width="90"
+                                        Header="Double"
+                                        Binding="{Binding DoubleValue, StringFormat=N2}" />
+                    <DataGridTextColumn Width="110"
+                                        Header="Nullable Double"
+                                        Binding="{Binding NullableDoubleValue, StringFormat=N2}" />
+                    <DataGridTextColumn Width="90"
+                                        Header="Decimal"
+                                        Binding="{Binding DecimalValue, StringFormat=N2}" />
+                    <DataGridTextColumn Width="110"
+                                        Header="Nullable Decimal"
+                                        Binding="{Binding NullableDecimalValue, StringFormat=N2}" />
 
-                    <!--  DateTime Values  -->
-                    <DataGridTextColumn Width="150"
+                    <!--  Text Types  -->
+                    <DataGridTextColumn Width="100"
+                                        Header="String Value"
+                                        Binding="{Binding StringValue}" />
+                    <DataGridTextColumn Width="60"
+                                        Header="Char"
+                                        Binding="{Binding CharValue}" />
+                    <DataGridTextColumn Width="80"
+                                        Header="Nullable Char"
+                                        Binding="{Binding NullableCharValue}" />
+
+                    <!--  Date and Time Types with Precision  -->
+                    <DataGridTextColumn Width="140"
                                         Header="DateTime"
                                         Binding="{Binding DateTimeValue, StringFormat=g}" />
-
                     <DataGridTextColumn Width="150"
                                         Header="Nullable DateTime"
                                         Binding="{Binding NullableDateTimeValue, StringFormat=g}" />
-
-                    <!--  String Value  -->
+                    <DataGridTextColumn Width="100"
+                                        Header="TimeSpan"
+                                        Binding="{Binding TimeSpanValue}" />
                     <DataGridTextColumn Width="120"
-                                        Header="String"
-                                        Binding="{Binding StringValue}" />
+                                        Header="Nullable TimeSpan"
+                                        Binding="{Binding NullableTimeSpanValue}" />
 
-                    <!--  ComboBox Values  -->
+                    <!--  GUID Types  -->
+                    <DataGridTextColumn Width="120"
+                                        Header="GUID"
+                                        Binding="{Binding GuidValue}" />
+                    <DataGridTextColumn Width="130"
+                                        Header="Nullable GUID"
+                                        Binding="{Binding NullableGuidValue}" />
+
+                    <!--  Enum Types  -->
+                    <DataGridTextColumn Width="100"
+                                        Header="Status Enum"
+                                        Binding="{Binding StatusValue}" />
+                    <DataGridTextColumn Width="120"
+                                        Header="Nullable Status"
+                                        Binding="{Binding NullableStatusValue}" />
+                    <DataGridTextColumn Width="80"
+                                        Header="Priority"
+                                        Binding="{Binding PriorityValue}" />
+                    <DataGridTextColumn Width="100"
+                                        Header="Nullable Priority"
+                                        Binding="{Binding NullablePriorityValue}" />
+
+                    <!--  Business DateTime Fields with Time Precision  -->
+                    <DataGridTextColumn Width="150"
+                                        Header="Order DateTime"
+                                        Binding="{Binding OrderDateTime, StringFormat=g}" />
+                    <DataGridTextColumn Width="150"
+                                        Header="Shipped DateTime"
+                                        Binding="{Binding ShippedDateTime, StringFormat=g}" />
+                    <DataGridTextColumn Width="150"
+                                        Header="Due DateTime"
+                                        Binding="{Binding DueDateTime, StringFormat=g}" />
+                    <DataGridTextColumn Width="160"
+                                        Header="Completed DateTime"
+                                        Binding="{Binding CompletedDateTime, StringFormat=g}" />
+                    <DataGridTextColumn Width="120"
+                                        Header="Processing Time"
+                                        Binding="{Binding ProcessingTime}" />
+                    <DataGridTextColumn Width="110"
+                                        Header="Delivery Time"
+                                        Binding="{Binding DeliveryTime}" />
+
+                    <!--  Legacy Business Fields  -->
+                    <DataGridTextColumn Width="120"
+                                        sdg:AdvancedFilterControl.GroupByColumn="ProductCategory"
+                                        Header="Product Name"
+                                        Binding="{Binding ProductName}" />
+                    <DataGridTextColumn Width="100"
+                                        Header="Category"
+                                        Binding="{Binding Category}" />
+                    <DataGridTextColumn Width="80"
+                                        Header="Currency"
+                                        Binding="{Binding CurrencyCode}" />
+                    <DataGridTextColumn Width="80"
+                                        Header="Price"
+                                        Binding="{Binding Price, StringFormat=C2}" />
+                    <DataGridTextColumn Width="70"
+                                        Header="Quantity"
+                                        Binding="{Binding Quantity}" />
+                    <DataGridTextColumn Width="100"
+                                        Header="Order Date"
+                                        Binding="{Binding OrderDate, StringFormat=d}" />
+                    <DataGridTextColumn Width="80"
+                                        Header="Status"
+                                        Binding="{Binding Status}" />
+
+                    <!--  Legacy ComboBox Fields  -->
                     <DataGridComboBoxColumn Width="120"
                                             Header="ComboBox ID"
                                             ItemsSource="{Binding Source={StaticResource ComboBoxItemsSource}}"
                                             DisplayMemberPath="Name"
                                             SelectedValuePath="Id"
                                             SelectedValueBinding="{Binding ComboBoxValueId}" />
-
                     <DataGridComboBoxColumn Width="140"
                                             Header="ComboBox String"
                                             ItemsSource="{Binding Source={StaticResource ComboBoxStringSource}}"
                                             SelectedItemBinding="{Binding SelectedComboBoxStringValue}" />
-
-                    <!--  1) Product Name (string)  -->
-                    <DataGridTextColumn Width="150"
-                                        Header="Product Name"
-                                        Binding="{Binding ProductName}" />
-
-                    <!--  2) Category (string; good for grouping/duplicates)  -->
-                    <DataGridTextColumn Width="120"
-                                        Header="Category"
-                                        Binding="{Binding Category}" />
-
-                    <!--  3) Price (decimal)  -->
-                    <!--  Using StringFormat='C2' will show currency symbol (depending on your culture)  -->
-                    <DataGridTextColumn Width="100"
-                                        Header="Price"
-                                        Binding="{Binding Price, StringFormat=C2}" />
-
-                    <!--  4) Currency Code (e.g. USD, EUR)  -->
-                    <DataGridTextColumn Width="80"
-                                        Header="Currency"
-                                        Binding="{Binding CurrencyCode}" />
-
-                    <!--  5) Quantity (int)  -->
-                    <DataGridTextColumn Width="80"
-                                        Header="Quantity"
-                                        Binding="{Binding Quantity}" />
-
-                    <!--  6) Order Date  -->
-                    <DataGridTextColumn Width="140"
-                                        Header="Order Date"
-                                        Binding="{Binding OrderDate, StringFormat=d}" />
-
-                    <!--  7) Region (string)  -->
-                    <DataGridTextColumn Width="140"
-                                        Header="Region"
-                                        Binding="{Binding Region}" />
-
-                    <!--  8) Status (string)  -->
-                    <DataGridTextColumn Width="120"
-                                        sdg:AdvancedFilterControl.GroupByColumn="Region"
-                                        Header="Status"
-                                        Binding="{Binding Status}" />
                 </sdg:SearchDataGrid.Columns>
             </sdg:SearchDataGrid>
         </Grid>
