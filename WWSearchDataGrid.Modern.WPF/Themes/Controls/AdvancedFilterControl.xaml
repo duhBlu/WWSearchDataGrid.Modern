@@ -115,9 +115,9 @@
                         </Grid.RowDefinitions>
                         <TabPanel x:Name="HeaderPanel"
                                   Grid.Row="0"
-                                  HorizontalAlignment="Center"
                                   Background="Transparent"
                                   Margin="4,0,4,5"
+                                  HorizontalAlignment="Center"
                                   IsItemsHost="True" />
                         <Border x:Name="ContentPanel"
                                 Grid.Row="1"
@@ -201,7 +201,15 @@
                                               SelectedItem="{Binding SearchType}">
                                         <ComboBox.ItemTemplate>
                                             <DataTemplate>
-                                                <TextBlock Text="{Binding Converter={StaticResource EnumToStringConverter}}" />
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Image Source="{Binding Converter={StaticResource SearchTypeToIconConverter}}"
+                                                           Margin="0,0,6,0"
+                                                           VerticalAlignment="Center"
+                                                           Width="24"
+                                                           Height="24"
+                                                           UseLayoutRounding="True" />
+                                                    <TextBlock Text="{Binding Converter={StaticResource EnumToStringConverter}}" VerticalAlignment="Center" />
+                                                </StackPanel>
                                             </DataTemplate>
                                         </ComboBox.ItemTemplate>
                                     </ComboBox>

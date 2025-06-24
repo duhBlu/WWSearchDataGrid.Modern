@@ -11,6 +11,8 @@
 
     <!--  Converters  -->
     <converters:SearchTypeToBetweenVisibilityConverter x:Key="BetweenValueVisibilityConverter" />
+    <converters:SearchTypeToIconConverter x:Key="SearchTypeToIconConverter" />
+    <converters:DateIntervalToIconConverter x:Key="DateIntervalToIconConverter" />
     <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
     <converters:FilterInputTemplateToVisibilityConverter x:Key="FilterInputTemplateToVisibilityConverter" />
     <converters:EnumToStringConverter x:Key="EnumToStringConverter" />
@@ -251,7 +253,14 @@
                     <DataTemplate>
                         <CheckBox IsChecked="{Binding IsSelected}" Style="{StaticResource Default_CheckBox_Style}" Margin="0,2">
                             <CheckBox.Content>
-                                <TextBlock Text="{Binding DisplayName}" />
+                                <StackPanel Orientation="Horizontal">
+                                    <Image Source="{Binding Interval, Converter={StaticResource DateIntervalToIconConverter}}"
+                                           Width="16" Height="16"
+                                           Margin="0,0,6,0"
+                                           VerticalAlignment="Center" />
+                                    <TextBlock Text="{Binding DisplayName}"
+                                               VerticalAlignment="Center" />
+                                </StackPanel>
                             </CheckBox.Content>
                         </CheckBox>
                     </DataTemplate>
