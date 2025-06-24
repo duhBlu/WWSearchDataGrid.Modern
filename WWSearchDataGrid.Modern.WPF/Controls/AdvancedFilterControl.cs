@@ -951,8 +951,14 @@ namespace WWSearchDataGrid.Modern.WPF
                     var allValues = FilterValueViewModel.GetAllValues();
                     var selectedItems = allValues.Where(item => item.IsSelected).ToList();
 
-                    // Only update if there are changes
-                    if (selectedItems.Any())
+                    // Check if all items are selected
+                    if (selectedItems.Count == allValues.Count && allValues.Count > 0)
+                    {
+                        // All items selected - clear the filter instead of creating one
+                        SearchTemplateController.SearchGroups.Clear();
+                        SearchTemplateController.UpdateFilterExpression();
+                    }
+                    else if (selectedItems.Any())
                     {
                         // Use optimizer to determine best filter strategy
                         var optimizationResult = FilterSelectionOptimizer.OptimizeSelections(
@@ -978,8 +984,12 @@ namespace WWSearchDataGrid.Modern.WPF
                         group.SearchTemplates.Add(template);
                         SearchTemplateController.UpdateFilterExpression();
 
-                        // Optional: Log optimization info for debugging
-                        System.Diagnostics.Debug.WriteLine($"Filter optimization: {optimizationResult.OptimizationReason}");
+                    }
+                    else
+                    {
+                        // No items selected - also clear filter
+                        SearchTemplateController.SearchGroups.Clear();
+                        SearchTemplateController.UpdateFilterExpression();
                     }
                 }
             }

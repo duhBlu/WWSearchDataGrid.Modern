@@ -380,6 +380,32 @@ namespace WWSearchDataGrid.Modern.WPF
                 }
             }
 
+            // Copy SelectedDates collection
+            if (original.SelectedDates?.Any() == true)
+            {
+                clone.SelectedDates.Clear();
+                foreach (DateTime date in original.SelectedDates)
+                {
+                    clone.SelectedDates.Add(date);
+                }
+            }
+
+            // Copy DateIntervals collection with IsSelected states
+            if (original.DateIntervals?.Any() == true)
+            {
+                clone.DateIntervals.Clear();
+                foreach (DateIntervalItem originalItem in original.DateIntervals)
+                {
+                    var clonedItem = new DateIntervalItem
+                    {
+                        Interval = originalItem.Interval,
+                        DisplayName = originalItem.DisplayName,
+                        IsSelected = originalItem.IsSelected
+                    };
+                    clone.DateIntervals.Add(clonedItem);
+                }
+            }
+
             // Copy available values
             clone.LoadAvailableValues(columnValues);
 
