@@ -36,13 +36,19 @@ namespace WWSearchDataGrid.Modern.Core
             {
                 if (SetProperty(value, ref operatorName))
                 {
-                    if (value == "And")
+                    // Use case-insensitive comparison and handle edge cases
+                    if (string.Equals(value, "And", StringComparison.OrdinalIgnoreCase))
                     {
                         OperatorFunction = Expression.And;
                     }
-                    else
+                    else if (string.Equals(value, "Or", StringComparison.OrdinalIgnoreCase))
                     {
                         OperatorFunction = Expression.Or;
+                    }
+                    else
+                    {
+                        // Handle unexpected values - default to And for safety
+                        OperatorFunction = Expression.And;
                     }
                 }
             }

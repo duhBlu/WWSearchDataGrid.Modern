@@ -80,13 +80,13 @@ namespace WWSearchDataGrid.Modern.Core.Common.Utilities
                 };
             }
 
-            // Skip optimization for small datasets
+            // Skip optimization for small datasets - but still optimize single item selections
             if (totalCount < MinimumItemsForOptimization)
             {
                 var reason = $"Dataset too small ({totalCount} items) - optimization threshold is {MinimumItemsForOptimization}";
                 return new OptimizedFilterResult
                 {
-                    RecommendedSearchType = SearchType.IsAnyOf,
+                    RecommendedSearchType = selectedCount == 1 ? SearchType.Equals : SearchType.IsAnyOf,
                     FilterValues = selectedItems.Select(item => item.Value).ToList(),
                     UseExclusionLogic = false,
                     OptimizationReason = reason,
@@ -122,13 +122,13 @@ namespace WWSearchDataGrid.Modern.Core.Common.Utilities
                 };
             }
 
-            // Use standard inclusion logic
+            // Use standard inclusion logic - optimize for single item selections
             var noOptimizationInfo = FilterOptimizationInfo.CreateUnoptimized(
                 $"Inclusion optimal: {selectedCount} included vs {totalCount - selectedCount} excluded (ratio: {selectionRatio:P1})");
             
             return new OptimizedFilterResult
             {
-                RecommendedSearchType = SearchType.IsAnyOf,
+                RecommendedSearchType = selectedCount == 1 ? SearchType.Equals : SearchType.IsAnyOf,
                 FilterValues = selectedItems.Select(item => item.Value).ToList(),
                 UseExclusionLogic = false,
                 OptimizationReason = $"Inclusion optimal: {selectedCount} included vs {totalCount - selectedCount} excluded (ratio: {selectionRatio:P1})",

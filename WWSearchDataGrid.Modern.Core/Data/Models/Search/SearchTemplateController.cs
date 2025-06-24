@@ -547,9 +547,16 @@ namespace WWSearchDataGrid.Modern.Core
                         continue;
 
                     // Combine with previous group expressions
-                    groupExpression = groupExpression == null
-                        ? templateExpression
-                        : groupExpression.Compose(templateExpression, group.OperatorFunction);
+                    if (groupExpression == null)
+                    {
+                        groupExpression = templateExpression;
+                    }
+                    else
+                    {
+                        // Ensure OperatorFunction is not null, default to And if it is
+                        var operatorFunc = group.OperatorFunction ?? Expression.And;
+                        groupExpression = groupExpression.Compose(templateExpression, operatorFunc);
+                    }
                 }
 
                 // Compile the expression for non-collection-context filters
@@ -948,7 +955,25 @@ namespace WWSearchDataGrid.Modern.Core
                     case SearchType.Equals:
                         return $"= '{value}'";
                     case SearchType.NotEquals:
-                        return $"≠ '{value}'";
+                        // For NotEquals (exclusion logic), the actual excluded value is in SelectedValues
+                        if (template.SelectedValues?.Any() == true)
+                        {
+                            var firstValue = template.SelectedValues.First();
+                            string excludedValue;
+                            if (firstValue is FilterListValue filterValue)
+                            {
+                                excludedValue = filterValue.Value?.ToString() ?? "null";
+                            }
+                            else
+                            {
+                                excludedValue = firstValue?.ToString() ?? "null";
+                            }
+                            return $"≠ '{excludedValue}'";
+                        }
+                        else
+                        {
+                            return $"≠ '{value}'"; // Fallback to SelectedValue
+                        }
                     case SearchType.StartsWith:
                         return $"Starts with '{value}'";
                     case SearchType.EndsWith:
@@ -1115,7 +1140,23 @@ namespace WWSearchDataGrid.Modern.Core
                         break;
                     case SearchType.NotEquals:
                         components.SearchTypeText = "≠";
-                        components.PrimaryValue = value;
+                        // For NotEquals (exclusion logic), the actual excluded value is in SelectedValues
+                        if (template.SelectedValues?.Any() == true)
+                        {
+                            var firstValue = template.SelectedValues.First();
+                            if (firstValue is FilterListValue filterValue)
+                            {
+                                components.PrimaryValue = filterValue.Value?.ToString();
+                            }
+                            else
+                            {
+                                components.PrimaryValue = firstValue?.ToString();
+                            }
+                        }
+                        else
+                        {
+                            components.PrimaryValue = value; // Fallback to SelectedValue
+                        }
                         break;
                     case SearchType.StartsWith:
                         components.SearchTypeText = "Starts with";

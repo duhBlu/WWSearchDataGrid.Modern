@@ -602,6 +602,11 @@ namespace WWSearchDataGrid.Modern.WPF
             {
                 SearchTemplateController.SearchTemplateType = typeof(SearchTemplate);
 
+                if (SearchTemplateController.SearchGroups.Count == 0)
+                {
+                    SearchTemplateController.AddSearchGroup(true, false);
+                }
+
                 // Convert existing templates
                 foreach (var group in SearchTemplateController.SearchGroups)
                 {
@@ -974,11 +979,20 @@ namespace WWSearchDataGrid.Modern.WPF
                             SearchType = optimizationResult.RecommendedSearchType
                         };
 
-                        // Batch add values based on optimization result
-                        template.SelectedValues.Clear();
-                        foreach (var value in optimizationResult.FilterValues)
+                        // Set values based on optimization result and search type
+                        if (optimizationResult.RecommendedSearchType == SearchType.Equals && optimizationResult.FilterValues.Count == 1)
                         {
-                            template.SelectedValues.Add(new FilterListValue { Value = value });
+                            // For single value Equals, set SelectedValue (singular)
+                            template.SelectedValue = optimizationResult.FilterValues.First();
+                        }
+                        else
+                        {
+                            // For multi-value search types (IsAnyOf, IsNoneOf, NotEquals), use SelectedValues (plural)
+                            template.SelectedValues.Clear();
+                            foreach (var value in optimizationResult.FilterValues)
+                            {
+                                template.SelectedValues.Add(new FilterListValue { Value = value });
+                            }
                         }
 
                         group.SearchTemplates.Add(template);

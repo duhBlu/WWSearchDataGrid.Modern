@@ -530,11 +530,19 @@ namespace WWSearchDataGrid.Modern.WPF
                 ApplyDataTransformations();
 
                 // Step 2: Apply traditional filters to transformed data
-                var activeFilters = DataColumns.Where(d => d.SearchTemplateController?.HasCustomExpression == true && !IsTransformationFilter(d));
-                Items.Filter = item => activeFilters.All(f => EvaluateFilter(item, f));
-
-                // Update search filter property
-                SearchFilter = Items.Filter;
+                // Check if filters are enabled before applying - respects FilterPanel checkbox
+                if (FilterPanel?.FiltersEnabled == true)
+                {
+                    var activeFilters = DataColumns.Where(d => d.SearchTemplateController?.HasCustomExpression == true && !IsTransformationFilter(d));
+                    Items.Filter = item => activeFilters.All(f => EvaluateFilter(item, f));
+                    SearchFilter = Items.Filter;
+                }
+                else
+                {
+                    // Filters are disabled - clear filter but preserve definitions
+                    Items.Filter = null;
+                    SearchFilter = null;
+                }
 
                 // Notify that items have been filtered
                 ItemsSourceFiltered?.Invoke(this, EventArgs.Empty);
@@ -890,9 +898,15 @@ namespace WWSearchDataGrid.Modern.WPF
                 }
                 else
                 {
-                    // Disable filtering without clearing filter definitions
+                    // Clear ALL filtering - both regular filters AND transformations
                     Items.Filter = null;
                     SearchFilter = null;
+                    
+                    // Also restore original data if transformations are active
+                    if (HasActiveTransformations())
+                    {
+                        RestoreOriginalDataQuick();
+                    }
                 }
             }
             catch (Exception ex)
@@ -1152,10 +1166,8 @@ namespace WWSearchDataGrid.Modern.WPF
                 }
                 else
                 {
-                    // Convert LINQ results to ObservableCollection for editing support
-                    var resultList = finalResult.ToList();
-                    var observableResult = new ObservableCollection<object>(resultList);
-                    transformedItemsSource = observableResult;
+                    // Only convert if necessary, use List instead of ObservableCollection for better performance
+                    transformedItemsSource = finalResult.ToList();
                 }
 
                 // Update the ItemsSource to use transformed data
@@ -1199,6 +1211,36 @@ namespace WWSearchDataGrid.Modern.WPF
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Error restoring original data: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Fast restore without expensive conversions - temporarily bypasses transformations without clearing them
+        /// </summary>
+        private void RestoreOriginalDataQuick()
+        {
+            try
+            {
+                if (originalItemsSource == null) return;
+                
+                // DON'T clear transformation results - just temporarily bypass them
+                // This preserves transformation definitions for when filters are re-enabled
+                
+                // Direct assignment - no conversions
+                transformedItemsSource = originalItemsSource;
+                
+                var currentFilter = Items.Filter;
+                Items.Filter = null;
+                
+                _isApplyingTransformation = true;
+                ItemsSource = originalItemsSource;  // Direct reference
+                _isApplyingTransformation = false;
+                
+                Items.Filter = currentFilter;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error in fast restore: {ex.Message}");
             }
         }
 
