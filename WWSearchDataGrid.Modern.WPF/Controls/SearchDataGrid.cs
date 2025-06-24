@@ -533,8 +533,16 @@ namespace WWSearchDataGrid.Modern.WPF
                 // Check if filters are enabled before applying - respects FilterPanel checkbox
                 if (FilterPanel?.FiltersEnabled == true)
                 {
-                    var activeFilters = DataColumns.Where(d => d.SearchTemplateController?.HasCustomExpression == true && !IsTransformationFilter(d));
-                    Items.Filter = item => activeFilters.All(f => EvaluateFilter(item, f));
+                    var activeFilters = DataColumns.Where(d => d.SearchTemplateController?.HasCustomExpression == true && !IsTransformationFilter(d)).ToList();
+                    
+                    if (activeFilters.Any())
+                    {
+                        Items.Filter = item => EvaluateMultiColumnFilter(item, activeFilters);
+                    }
+                    else
+                    {
+                        Items.Filter = null;
+                    }
                     SearchFilter = Items.Filter;
                 }
                 else
@@ -624,6 +632,42 @@ namespace WWSearchDataGrid.Modern.WPF
             {
                 return false;
             }
+        }
+
+        private bool EvaluateMultiColumnFilter(object item, System.Collections.Generic.List<SearchControl> activeFilters)
+        {
+            if (!activeFilters.Any())
+                return true;
+
+            // First filter is always included (no preceding operator)
+            bool result = EvaluateFilter(item, activeFilters[0]);
+
+            // Process remaining filters with their logical operators
+            for (int i = 1; i < activeFilters.Count; i++)
+            {
+                var filter = activeFilters[i];
+                bool filterResult = EvaluateFilter(item, filter);
+
+                // Get the logical operator for this column from its SearchTemplateController
+                // The operator defines how this column should be combined with previous results
+                string operatorName = "AND"; // Default to AND
+                if (filter.SearchTemplateController?.SearchGroups?.Count > 0)
+                {
+                    operatorName = filter.SearchTemplateController.SearchGroups[0].OperatorName?.ToUpper() ?? "AND";
+                }
+
+                // Apply the logical operator
+                if (operatorName == "OR")
+                {
+                    result = result || filterResult;
+                }
+                else // AND or any other value
+                {
+                    result = result && filterResult;
+                }
+            }
+
+            return result;
         }
 
         /// <summary>
