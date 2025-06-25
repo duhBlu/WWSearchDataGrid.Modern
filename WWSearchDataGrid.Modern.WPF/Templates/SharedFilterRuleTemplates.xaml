@@ -256,6 +256,7 @@
                                 <StackPanel Orientation="Horizontal">
                                     <Image Source="{Binding Interval, Converter={StaticResource DateIntervalToIconConverter}}"
                                            Width="16" Height="16"
+                                           Visibility="Collapsed"
                                            Margin="0,0,6,0"
                                            VerticalAlignment="Center" />
                                     <TextBlock Text="{Binding DisplayName}"

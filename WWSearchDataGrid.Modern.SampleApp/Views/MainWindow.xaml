@@ -63,10 +63,57 @@
         <Border DockPanel.Dock="Top"
                 Background="DodgerBlue"
                 Padding="10">
+            <StackPanel Orientation="Vertical">
+                
             <TextBlock Foreground="White"
                        Text="SearchDataGrid Demo Application"
                        FontSize="18"
                        FontWeight="Bold" />
+                <StackPanel Orientation="Horizontal" Background="white">
+                    <StackPanel.Resources>
+                        <ScaleTransform ScaleX="0.8" 
+                                        ScaleY="0.8" x:Key="scale" />
+                    </StackPanel.Resources>
+                    <!--<Image Height="18" Width="18" Margin="5" Source="{StaticResource EqualsDrawingImage}" />
+                    <Image Height="18" Width="18" Margin="5" Source="{StaticResource Does_not_equalDrawingImage}" />
+                    <Image Height="18" Width="18" Margin="5" Source="{StaticResource Is_greater_thanDrawingImage}" />
+                    <Image Height="18" Width="18" Margin="5" Source="{StaticResource Is_greater_than_or_equal_toDrawingImage}" />
+                    <Image Height="18" Width="18" Margin="5" Source="{StaticResource Is_less_thanDrawingImage}" />
+                    <Image Height="18" Width="18" Margin="5" Source="{StaticResource Is_less_than_or_equal_toDrawingImage}" />
+                    <Image Height="18" Width="18" Margin="5" Source="{StaticResource Is_betweenDrawingImage}" />
+                    <Image Height="18" Width="18" Margin="5" Source="{StaticResource Is_not_betweenDrawingImage}" />
+                    <Image Height="18" Width="18" Margin="5" Source="{StaticResource ContainsDrawingImage}" />
+                    <Image Height="18" Width="18" Margin="5" Source="{StaticResource Does_not_containDrawingImage}" />
+                    <Image Height="18" Width="18" Margin="5" Source="{StaticResource Starts_withDrawingImage}" />
+                    <Image Height="18" Width="18" Margin="5" Source="{StaticResource Ends_withDrawingImage}" />
+                    <Image Height="18" Width="18" Margin="5" Source="{StaticResource Is_likeDrawingImage}" />
+                    <Image Height="18" Width="18" Margin="5" Source="{StaticResource Is_not_likeDrawingImage}" />
+                    <Image Height="18" Width="18" Margin="5" Source="{StaticResource Is_any_ofDrawingImage}" />
+                    <Image Height="18" Width="18" Margin="5" Source="{StaticResource Is_none_ofDrawingImage}" />
+                    <Image Height="18" Width="18" Margin="5" Source="{StaticResource Top_NDrawingImage}" />
+                    <Image Height="18" Width="18" Margin="5" Source="{StaticResource Bottom_NDrawingImage}" />
+                    <Image Height="18" Width="18" Margin="5" Source="{StaticResource Above_averageDrawingImage}" />
+                    <Image Height="18" Width="18" Margin="5" Source="{StaticResource Below_AverageDrawingImage}" />
+                    <Image Height="18" Width="18" Margin="5" Source="{StaticResource Is_null_or_blankDrawingImage}" />
+                    <Image Height="18" Width="18" Margin="5" Source="{StaticResource Is_not_null_or_blankDrawingImage}" />
+                    <Image Height="18" Width="18" Margin="5" Source="{StaticResource UniqueDrawingImage}" />
+                    <Image Height="18" Width="18" Margin="5" Source="{StaticResource DuplicateDrawingImage}" />
+                    <Image Height="18" Width="18" Margin="5" Source="{StaticResource Is_Beyond_This_YearDrawingImage}" />
+                    <Image Height="18" Width="18" Margin="5" Source="{StaticResource Is_Later_This_YearDrawingImage}" />
+                    <Image Height="18" Width="18" Margin="5" Source="{StaticResource Is_Later_This_MonthDrawingImage}" />
+                    <Image Height="18" Width="18" Margin="5" Source="{StaticResource Is_Next_WeekDrawingImage}" />
+                    <Image Height="18" Width="18" Margin="5" Source="{StaticResource Is_Later_This_WeekDrawingImage}" />
+                    <Image Height="18" Width="18" Margin="5" Source="{StaticResource Is_TomorrowDrawingImage}" />
+                    <Image Height="18" Width="18" Margin="5" Source="{StaticResource Is_TodayDrawingImage}" />
+                    <Image Height="18" Width="18" Margin="5" Source="{StaticResource Is_YesterdayDrawingImage}" />
+                    <Image Height="18" Width="18" Margin="5" Source="{StaticResource Is_Earlier_This_WeekDrawingImage}" />
+                    <Image Height="18" Width="18" Margin="5" Source="{StaticResource Is_Last_WeekDrawingImage}" />
+                    <Image Height="18" Width="18" Margin="5" Source="{StaticResource Is_Earlier_This_MonthDrawingImage}" />
+                    <Image Height="18" Width="18" Margin="5" Source="{StaticResource Is_Earlier_This_MonthDrawingImage}" />
+                    <Image Height="18" Width="18" Margin="5" Source="{StaticResource Is_Earlier_This_YearDrawingImage}" />
+                    <Image Height="18" Width="18" Margin="5" Source="{StaticResource Is_Prior_This_YearDrawingImage}" />-->
+                </StackPanel>
+            </StackPanel>
         </Border>
 
         <!--  Control Panel  -->
