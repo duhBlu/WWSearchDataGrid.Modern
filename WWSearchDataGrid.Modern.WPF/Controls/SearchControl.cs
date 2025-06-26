@@ -20,7 +20,7 @@ namespace WWSearchDataGrid.Modern.WPF
 
         private TextBox searchTextBox;
         private Button advancedFilterButton;
-        private Window? advancedFilterWindow;
+        private Window advancedFilterWindow;
         private bool isAdvancedFilterOpen;
         private Timer _changeTimer;
 

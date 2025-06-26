@@ -23,13 +23,17 @@ namespace WWSearchDataGrid.Modern.WPF
         {
             if (item is FilterValueViewModel viewModel)
             {
-                return viewModel switch
+                switch (viewModel)
                 {
-                    FlatListFilterValueViewModel => FlatListTemplate,
-                    GroupedTreeViewFilterValueViewModel => GroupedTreeViewTemplate,
-                    DateTreeViewFilterValueViewModel => DateTreeViewTemplate,
-                    _ => base.SelectTemplate(item, container)
-                };
+                    case FlatListFilterValueViewModel _:
+                        return FlatListTemplate;
+                    case GroupedTreeViewFilterValueViewModel _:
+                        return GroupedTreeViewTemplate;
+                    case DateTreeViewFilterValueViewModel _:
+                        return DateTreeViewTemplate;
+                    default:
+                        return base.SelectTemplate(item, container);
+                }
             }
             return base.SelectTemplate(item, container);
         }

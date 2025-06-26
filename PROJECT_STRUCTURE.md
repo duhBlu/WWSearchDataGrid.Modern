@@ -1,67 +1,222 @@
-# Project Structure - WWSearchDataGrid.Modern.WPF
+﻿# WWSearchDataGrid.Modern - Project Structure & Agent Navigation Guide
 
-This document outlines the organization of the WPF project following best practices for custom controls and XAML-based UI components.
+## Overview
+WWSearchDataGrid.Modern is a comprehensive WPF data grid library with advanced search and filtering capabilities. This document provides a complete guide for AI agents to efficiently navigate and understand the codebase without reading the entire project.
 
-## Folder Structure
+## Solution Structure
 
-### `/Controls/` - Custom Controls (Code-Only)
-Contains custom controls that inherit from base WPF controls and use Generic.xaml for styling.
-**No XAML files should be in this folder** - only `.cs` files.
+```
+WWSearchDataGrid.Modern.sln
+├── WWSearchDataGrid.Modern.Core/         (Core logic - .NET Standard 2.0)
+├── WWSearchDataGrid.Modern.WPF/          (WPF controls - .NET 9.0-windows)
+├── WWSearchDataGrid.Modern.SampleApp/    (Demo application - .NET 9.0-windows)
+└── Samples/                              (Solution folder)
+```
 
-- `AdvancedFilterControl.cs` - Custom control for advanced filtering UI
-- `FilterEditDialog.cs` - Custom control for editing multiple column filters
-- `FilterPanel.cs` - Custom control for displaying active filter chips
-- `NumericUpDown.cs` - Custom numeric input control  
-- `SearchControl.cs` - Custom control for column search functionality
-- `SearchDataGrid.cs` - Main custom DataGrid with search capabilities
+## Quick Build & Run Commands
 
-### `/Themes/Controls/` - Custom Control Styles
-Contains XAML theme files that define the default styles and templates for custom controls.
-**Only styling XAML files** - no code-behind.
+```bash
+# Build entire solution
+dotnet build WWSearchDataGrid.Modern.sln
 
-- `AdvancedFilterControl.xaml` - Default style and template for AdvancedFilterControl
-- `FilterEditDialog.xaml` - Default style and template for FilterEditDialog
-- `FilterPanel.xaml` - Default style and template for FilterPanel  
-- `NumericUpDown.xaml` - Default style and template for NumericUpDown
-- `SearchControl.xaml` - Default style and template for SearchControl
-- `SearchDataGrid.xaml` - Default style and template for SearchDataGrid
+# Run sample application
+dotnet run --project WWSearchDataGrid.Modern.SampleApp/WWSearchDataGrid.Modern.SampleApp.csproj
+```
 
-### `/Themes/Generic.xaml`
-Main theme file that merges all control-specific theme files. This is the standard WPF convention for custom control libraries.
+## Core Architecture (WWSearchDataGrid.Modern.Core)
 
-### `/Templates/` - Reusable Templates
-Contains reusable DataTemplates and TemplateSelectors.
+### Key Classes & Their Responsibilities
 
-- `FilterValueTemplates.xaml` - Templates for different filter value input types
-- `FilterValueTemplateSelector.cs` - Logic for selecting appropriate templates
+#### 🎯 **SearchEngine.cs** (`/Search/SearchEngine.cs`)
+- **Purpose**: Static class providing core filter evaluation logic
+- **Key Method**: `EvaluateCondition(object columnValue, SearchCondition searchCondition)`
+- **Handles**: 25+ search types (Contains, Between, DateInterval, IsEmpty, etc.)
+- **When to modify**: Adding new search types or changing comparison logic
 
-### `/Converters/` - Value Converters
-Contains IValueConverter implementations for data binding.
+#### 🎯 **SearchTemplateController.cs** (`/Data/Models/Search/SearchTemplateController.cs`)
+- **Purpose**: Central coordinator managing filter expressions and search groups
+- **Key Methods**: 
+  - `UpdateFilterExpression()` - Compiles filter expressions for performance
+  - `GetFilterDisplayText()` - Generates human-readable filter descriptions
+- **Manages**: Search groups, templates, logical operators (AND/OR)
+- **When to modify**: Complex filtering logic, expression compilation
 
-### `/Resources/` - Static Resources
-Contains icons, images, and other static resources.
+#### 🎯 **SearchTemplate.cs** (`/Data/Models/Search/SearchTemplate.cs`)
+- **Purpose**: Configurable filter template for individual search criteria
+- **Key Methods**: 
+  - `BuildExpression(Type targetType)` - Creates LINQ expressions
+  - `LoadAvailableValues(HashSet<object> columnValues)` - Populates dropdown values
+- **Handles**: Value selection, data type detection, expression building
 
-## Design Principles
+#### 🎯 **SearchCondition.cs** (`/Data/Models/Search/SearchCondition.cs`)
+- **Purpose**: Model representing individual search criteria
+- **Contains**: SearchType, values, data type information
+- **Used by**: SearchEngine for condition evaluation
 
-1. **Custom Controls Only** (`/Controls/`) - All UI components are custom controls for maximum reusability and styling flexibility
-2. **Generic Styling** - All controls use Generic.xaml approach for easy end-user customization
-3. **Separation of Concerns** - Logic in `.cs`, styling/presentation in `/Themes/`
-4. **Reusability** - Templates and converters are designed for reuse across components
-5. **Maintainability** - Clear folder structure makes it easy to find and modify components
-6. **End-User Friendly** - Easy for consumers to create custom styles without dealing with code-behind
+### Search Types Supported
+```csharp
+Contains, DoesNotContain, StartsWith, EndsWith, Equals, NotEquals,
+LessThan, LessThanOrEqualTo, GreaterThan, GreaterThanOrEqualTo,
+Between, NotBetween, IsEmpty, IsNotEmpty, IsAnyOf, IsNoneOf,
+DateInterval, BetweenDates, IsOnAnyOfDates, Yesterday, Today, Tomorrow,
+TopN, BottomN, AboveAverage, BelowAverage, Unique, Duplicate
+```
 
-## Naming Conventions
+## WPF Implementation (WWSearchDataGrid.Modern.WPF)
 
-- **Custom Controls**: `{Name}Control.cs` or `{Name}Dialog.cs` in `/Controls/`, styled in `/Themes/Controls/{Name}Control.xaml` or `/Themes/Controls/{Name}Dialog.xaml`
-- **Converters**: `{Purpose}Converter.cs` in `/Converters/`
-- **Templates**: `{Purpose}Templates.xaml` in `/Templates/`
+### 📁 **Project Structure** (WPF Best Practices)
 
-## Benefits of This Approach
+#### `/Controls/` - Custom Controls (Code-Only)
+**⚠️ NO XAML FILES - Only .cs files**
 
-- **Consistent Architecture** - All components follow the same custom control pattern
-- **Easy Styling** - End users can easily override any control's appearance via Generic.xaml
-- **No Code-Behind** - Eliminates XAML code-behind files that are harder to customize
-- **Professional Library Feel** - Behaves like built-in WPF controls
-- **Better IntelliSense** - Custom controls provide better design-time support
+- **`SearchDataGrid.cs`** - Main control extending DataGrid
+  - **Features**: Per-column filtering, global filtering, filter panel integration
+  - **Key Properties**: `FilteringMode`, `FilterPanel`, `OriginalItemsSource`
+  - **Key Methods**: `ApplyFilters()`, `UpdateFilterPanel()`, `GetActiveColumnFilters()`
 
-This structure follows WPF best practices and makes the codebase more maintainable and easier to understand.
+- **`SearchControl.cs`** - Individual column filter control
+  - **Features**: Simple text search, advanced filter dialog
+  - **Key Properties**: `SearchText`, `CurrentColumn`, `SourceDataGrid`
+  - **Manages**: SearchTemplateController instances per column
+
+- **`AdvancedFilterControl.cs`** - Complex multi-criteria filter UI
+  - **Features**: Multiple search groups, drag-drop reordering, value selection
+  - **Key Properties**: `SearchTemplateController`, `ValueSelectionSummary`
+  - **Commands**: Add/Remove search groups and templates
+
+- **`FilterPanel.cs`** - Active filter chips display
+  - **Features**: Toggle filters, remove individual filters, edit filters
+  - **Key Properties**: `ActiveFilters`, `FiltersEnabled`, `HasActiveFilters`
+  - **Events**: Filter removal, clear all, edit requests
+
+- **`NumericUpDown.cs`** - Custom numeric input control
+- **`FilterEditDialog.cs`** - Multi-column filter editing dialog
+
+#### `/Themes/Controls/` - XAML Styling (Presentation Only)
+**⚠️ Only styling XAML - No code-behind**
+- Corresponding .xaml files for each control in `/Controls/`
+- Defines default styles and templates using WPF Generic.xaml pattern
+
+#### `/Themes/Generic.xaml` - Main Theme Merger
+- Standard WPF convention for custom control libraries
+- Merges all control-specific theme files
+
+#### `/Templates/` - Reusable Components
+- **`FilterValueTemplates.xaml`** - Input templates for different data types
+- **`FilterValueTemplateSelector.cs`** - Logic for template selection
+
+#### `/Converters/` - Value Converters
+- IValueConverter implementations for data binding
+
+#### `/Resources/` - Static Assets
+- Icons, images, and other static resources
+
+### 🔄 **Data Flow Architecture**
+
+```
+User Input → SearchControl → SearchTemplateController → SearchEngine → FilterExpression → SearchDataGrid
+     ↓              ↓                    ↓                    ↓              ↓              ↓
+SearchText    Manages State     Builds Expressions    Evaluates Items   Compiles Logic   Filters Data
+```
+
+## Sample Application (WWSearchDataGrid.Modern.SampleApp)
+
+### Key Files for Understanding Usage
+
+- **`MainViewModel.cs`** - Demonstrates data binding and commands
+- **`MainWindow.xaml`** - Shows SearchDataGrid integration
+- **`DataItem.cs`** - Sample model class with various data types
+
+### Sample Data Features
+- 5000+ generated items by default
+- Multiple data types (string, int, DateTime, decimal, enum)
+- Demonstrates filtering performance
+
+## 🛠️ **Common Development Scenarios**
+
+### Adding New Search Types
+1. **Add to enum**: `SearchType` in Core project
+2. **Update evaluation**: `SearchEngine.EvaluateCondition()` method
+3. **Add display text**: `SearchTemplateController.GetSearchTypeDisplayText()`
+
+### Modifying Filter Logic
+- **Core evaluation**: `SearchEngine.cs:EvaluateCondition`
+- **Expression building**: `SearchTemplate.cs:BuildExpression`
+- **UI display**: Template files in `/Themes/Controls/`
+
+### Performance Optimization
+- **Expression compilation**: `SearchTemplateController.UpdateFilterExpression`
+- **Value caching**: Built-in caching for column values
+- **Async loading**: `LoadColumnValuesAsync()` methods
+
+### UI Customization
+- **Control appearance**: Modify XAML in `/Themes/Controls/`
+- **Templates**: Update `/Templates/FilterValueTemplates.xaml`
+- **Styling**: Override styles in consuming applications
+
+## 🎯 **Key Design Patterns**
+
+- **MVVM**: ObservableObject base class throughout
+- **Template Pattern**: SearchTemplate for extensible filtering
+- **Expression Trees**: Dynamic compilation for performance
+- **Command Pattern**: RelayCommand for UI interactions
+- **Custom Controls**: WPF Generic.xaml pattern for reusability
+
+## 📦 **Dependencies**
+
+### Core (.NET Standard 2.0)
+- Newtonsoft.Json
+- System.Text.Json
+
+### WPF (.NET 9.0-windows)
+- Microsoft.Xaml.Behaviors.Wpf
+
+### Sample App (.NET 9.0-windows)
+- CommunityToolkit.Mvvm
+
+## 🚨 **Important File Paths for Common Issues**
+
+### Filter Logic Problems
+- **Core evaluation**: `WWSearchDataGrid.Modern.Core/Search/SearchEngine.cs`
+- **Expression building**: `WWSearchDataGrid.Modern.Core/Data/Models/Search/SearchTemplate.cs`
+- **Controller logic**: `WWSearchDataGrid.Modern.Core/Data/Models/Search/SearchTemplateController.cs`
+
+### UI Issues
+- **Main DataGrid**: `WWSearchDataGrid.Modern.WPF/Controls/SearchDataGrid.cs`
+- **Column filters**: `WWSearchDataGrid.Modern.WPF/Controls/SearchControl.cs`
+- **Advanced dialog**: `WWSearchDataGrid.Modern.WPF/Controls/AdvancedFilterControl.cs`
+- **Filter chips**: `WWSearchDataGrid.Modern.WPF/Controls/FilterPanel.cs`
+
+### Styling Problems
+- **Default styles**: `WWSearchDataGrid.Modern.WPF/Themes/Generic.xaml`
+- **Individual controls**: `WWSearchDataGrid.Modern.WPF/Themes/Controls/*.xaml`
+- **Templates**: `WWSearchDataGrid.Modern.WPF/Templates/FilterValueTemplates.xaml`
+
+### Performance Issues
+- **Expression compilation**: `SearchTemplateController.UpdateFilterExpression()`
+- **Value caching**: Methods with `LoadColumnValuesAsync` or `Cache` in name
+- **Collection filtering**: `SearchDataGrid.ApplyFilters()` method
+
+## 📋 **Feature Checklist**
+
+### ✅ **Implemented Features**
+- Per-column and global filtering modes
+- 25+ search types with extensible architecture
+- Advanced multi-criteria filtering with logical operators
+- Real-time filter chips with enable/disable toggle
+- Drag-drop filter reordering
+- Async value loading and caching
+- Expression tree compilation for performance
+- Grouped filtering support
+- Date interval filtering
+- Custom search templates
+- MVVM pattern throughout
+
+### 🎯 **Architecture Benefits**
+- **Extensible**: Easy to add new search types
+- **Performant**: Expression compilation and caching
+- **Customizable**: WPF Generic.xaml pattern
+- **Maintainable**: Clear separation of concerns
+- **Professional**: Behaves like built-in WPF controls
+
+This README serves as a navigation guide for AI agents to quickly locate relevant code sections without reading the entire project. Use the file paths and class descriptions to efficiently target specific functionality areas.
