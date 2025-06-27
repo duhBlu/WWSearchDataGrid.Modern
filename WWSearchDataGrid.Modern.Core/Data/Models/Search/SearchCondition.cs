@@ -9,7 +9,6 @@ namespace WWSearchDataGrid.Modern.Core
     /// </summary>
     public class SearchCondition
     {
-        private Type underlyingType;
 
         #region Properties
 

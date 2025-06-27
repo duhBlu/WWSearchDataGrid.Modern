@@ -259,9 +259,9 @@ namespace WWSearchDataGrid.Modern.WPF
 
         private DispatcherTimer _availableValuesUpdateTimer;
 
-        private void OnSourceDataGridCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+        private void OnSourceDataGridCollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
         {
-            void ApplyAvailableValuesUpdate(object? sender, EventArgs e)
+            void ApplyAvailableValuesUpdate(object sender, EventArgs e)
             {
                 _availableValuesUpdateTimer?.Stop();
 

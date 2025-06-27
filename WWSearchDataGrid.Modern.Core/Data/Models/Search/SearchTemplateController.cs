@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Text.Json.Serialization;
+using WWSearchDataGrid.Modern.Core.Services;
 
 namespace WWSearchDataGrid.Modern.Core
 {
@@ -16,9 +17,13 @@ namespace WWSearchDataGrid.Modern.Core
 
         private bool hasCustomExpression;
         private HashSet<Tuple<string, string>> displayValueMappings;
-        private bool isTemplateItemMoving;
         private Type targetColumnType;
         private ColumnDataType columnDataType = ColumnDataType.String;
+        
+        // Service dependencies
+        private readonly IFilterExpressionBuilder _filterExpressionBuilder;
+        private readonly SearchTemplateValidator _validator;
+        private readonly ColumnValueLoader _columnValueLoader;
 
         #endregion
 
@@ -164,6 +169,28 @@ namespace WWSearchDataGrid.Modern.Core
         {
             // Always use SearchTemplate regardless of what's passed
             SearchTemplateType = typeof(SearchTemplate);
+            
+            // Initialize services
+            _filterExpressionBuilder = new FilterExpressionBuilder();
+            _validator = new SearchTemplateValidator();
+            _columnValueLoader = new ColumnValueLoader();
+        }
+        
+        /// <summary>
+        /// Initializes a new instance with custom service dependencies for testing
+        /// </summary>
+        /// <param name="filterExpressionBuilder">Filter expression builder service</param>
+        /// <param name="validator">Template validator service</param>
+        /// <param name="columnValueLoader">Column value loader service</param>
+        internal SearchTemplateController(
+            IFilterExpressionBuilder filterExpressionBuilder,
+            SearchTemplateValidator validator,
+            ColumnValueLoader columnValueLoader)
+        {
+            SearchTemplateType = typeof(SearchTemplate);
+            _filterExpressionBuilder = filterExpressionBuilder ?? throw new ArgumentNullException(nameof(filterExpressionBuilder));
+            _validator = validator ?? throw new ArgumentNullException(nameof(validator));
+            _columnValueLoader = columnValueLoader ?? throw new ArgumentNullException(nameof(columnValueLoader));
         }
 
         #endregion
@@ -182,152 +209,6 @@ namespace WWSearchDataGrid.Modern.Core
         }
 
         /// <summary>
-        /// Evaluates collection-context filters like TopN, BottomN, AboveAverage, etc.
-        /// </summary>
-        /// <param name="items">The complete collection of items to filter</param>
-        /// <param name="bindingPath">The property path to evaluate</param>
-        /// <param name="template">The search template with the filter criteria</param>
-        /// <returns>A filtered collection of items</returns>
-        public IEnumerable<object> EvaluateCollectionContextFilters(IEnumerable<object> items, string bindingPath, SearchTemplate template)
-        {
-            if (items == null || string.IsNullOrEmpty(bindingPath))
-                return items;
-
-            var searchCondition = new SearchCondition(
-                targetColumnType,
-                template.SearchType,
-                template.SelectedValue,
-                template.SelectedSecondaryValue,
-                template.SelectedValue != null ? (int?)Convert.ToInt32(template.SelectedValue) : null);
-
-            // Get property values from all items
-            var propertyValues = items
-                .Select(item => GetPropertyValue(item, bindingPath))
-                .Where(value => value != null)
-                .ToList();
-
-            switch (template.SearchType)
-            {
-                case SearchType.TopN:
-                    if (searchCondition.CountValue.HasValue)
-                    {
-                        // For numeric values, sort and take top N
-                        if (propertyValues.All(v => v is IComparable))
-                        {
-                            var sortedItems = items
-                                .Select(item => new { Item = item, Value = GetPropertyValue(item, bindingPath) })
-                                .Where(x => x.Value != null && x.Value is IComparable)
-                                .OrderByDescending(x => x.Value)
-                                .Take(searchCondition.CountValue.Value)
-                                .Select(x => x.Item);
-
-                            return sortedItems;
-                        }
-                    }
-                    break;
-
-                case SearchType.BottomN:
-                    if (searchCondition.CountValue.HasValue)
-                    {
-                        // For numeric values, sort and take bottom N
-                        if (propertyValues.All(v => v is IComparable))
-                        {
-                            var sortedItems = items
-                                .Select(item => new { Item = item, Value = GetPropertyValue(item, bindingPath) })
-                                .Where(x => x.Value != null && x.Value is IComparable)
-                                .OrderBy(x => x.Value)
-                                .Take(searchCondition.CountValue.Value)
-                                .Select(x => x.Item);
-
-                            return sortedItems;
-                        }
-                    }
-                    break;
-
-                case SearchType.AboveAverage:
-                    // For numeric values, calculate average and filter
-                    if (propertyValues.All(v => v is IConvertible))
-                    {
-                        double average = propertyValues
-                            .Cast<IConvertible>()
-                            .Select(v => Convert.ToDouble(v))
-                            .Average();
-
-                        return items
-                            .Where(item =>
-                            {
-                                var value = GetPropertyValue(item, bindingPath);
-                                return value != null && value is IConvertible &&
-                                       Convert.ToDouble(value) > average;
-                            });
-                    }
-                    break;
-
-                case SearchType.BelowAverage:
-                    // For numeric values, calculate average and filter
-                    if (propertyValues.All(v => v is IConvertible))
-                    {
-                        double average = propertyValues
-                            .Cast<IConvertible>()
-                            .Select(v => Convert.ToDouble(v))
-                            .Average();
-
-                        return items
-                            .Where(item =>
-                            {
-                                var value = GetPropertyValue(item, bindingPath);
-                                return value != null && value is IConvertible &&
-                                       Convert.ToDouble(value) < average;
-                            });
-                    }
-                    break;
-
-                case SearchType.Unique:
-                    // Group by value and select items with unique values
-                    return items
-                        .GroupBy(item => GetPropertyValue(item, bindingPath)?.ToString())
-                        .Where(g => g.Count() == 1)
-                        .SelectMany(g => g);
-
-                case SearchType.Duplicate:
-                    // Group by value and select items with duplicate values
-                    return items
-                        .GroupBy(item => GetPropertyValue(item, bindingPath)?.ToString())
-                        .Where(g => g.Count() > 1)
-                        .SelectMany(g => g);
-            }
-
-            return items;
-        }
-
-        /// <summary>
-        /// Gets a property value from an object using a binding path
-        /// </summary>
-        private object GetPropertyValue(object item, string bindingPath)
-        {
-            if (item == null || string.IsNullOrEmpty(bindingPath))
-                return null;
-
-            // Simple property access - in a real implementation, you'd want to use
-            // reflection or a more robust property path resolver
-            var properties = bindingPath.Split('.');
-            object value = item;
-
-            foreach (var prop in properties)
-            {
-                var propInfo = value.GetType().GetProperty(prop);
-                if (propInfo == null)
-                    return null;
-
-                value = propInfo.GetValue(value);
-                if (value == null)
-                    return null;
-            }
-
-            return value;
-        }
-
-        /// <summary>
         /// Adds a new search group
         /// </summary>
         /// <param name="canAddGroup">Whether a group can be added</param>
@@ -335,26 +216,29 @@ namespace WWSearchDataGrid.Modern.Core
         /// <param name="referenceGroup">Reference group for positioning</param>
         public void AddSearchGroup(bool canAddGroup = true, bool markAsChanged = true, SearchTemplateGroup referenceGroup = null)
         {
-            if (canAddGroup)
+            if (!canAddGroup) return;
+            
+            // Validate the operation
+            var validationResult = _validator.ValidateAddSearchGroup(SearchGroups, AllowMultipleGroups);
+            if (!validationResult.IsValid)
             {
-                // Check if we can add a group (first group always allowed, additional groups only if AllowMultipleGroups is true)
-                if (SearchGroups.Count == 0 || AllowMultipleGroups)
-                {
-                    var newGroup = new SearchTemplateGroup();
-                    
-                    if (referenceGroup != null && SearchGroups.Contains(referenceGroup))
-                    {
-                        int insertIndex = SearchGroups.IndexOf(referenceGroup) + 1;
-                        SearchGroups.Insert(insertIndex, newGroup);
-                    }
-                    else
-                    {
-                        SearchGroups.Add(newGroup);
-                    }
-                    
-                    AddSearchTemplate(true, markAsChanged, null, newGroup);
-                }
+                System.Diagnostics.Debug.WriteLine($"Cannot add search group: {validationResult.ErrorMessage}");
+                return;
             }
+
+            var newGroup = new SearchTemplateGroup();
+            
+            if (referenceGroup != null && SearchGroups.Contains(referenceGroup))
+            {
+                int insertIndex = SearchGroups.IndexOf(referenceGroup) + 1;
+                SearchGroups.Insert(insertIndex, newGroup);
+            }
+            else
+            {
+                SearchGroups.Add(newGroup);
+            }
+            
+            AddSearchTemplate(true, markAsChanged, null, newGroup);
 
             if (SearchGroups.Count > 0)
             {
@@ -372,64 +256,40 @@ namespace WWSearchDataGrid.Modern.Core
         /// <param name="group">Group to add the template to</param>
         public void AddSearchTemplate(bool canAddTemplate = true, bool markAsChanged = true, SearchTemplate referenceTemplate = null, SearchTemplateGroup group = null)
         {
-            if (canAddTemplate)
+            if (!canAddTemplate) return;
+            
+            SearchTemplateGroup targetGroup = DetermineTargetGroup(group, referenceTemplate);
+            
+            // Validate the operation
+            var validationResult = _validator.ValidateAddSearchTemplate(targetGroup, SearchGroups);
+            if (!validationResult.IsValid)
             {
-                SearchTemplateGroup targetGroup;
+                System.Diagnostics.Debug.WriteLine($"Cannot add search template: {validationResult.ErrorMessage}");
+                return;
+            }
 
-                // Handle null parameters with proper fallback logic
-                if (group != null)
+            // Create new SearchTemplate with column data type
+            var newTemplate = new SearchTemplate(ColumnValues, ColumnDataType);
+            newTemplate.HasChanges = markAsChanged;
+
+            // Add the template at the appropriate position
+            if (referenceTemplate == null)
+            {
+                // No reference template - add to the end
+                targetGroup.SearchTemplates.Add(newTemplate);
+            }
+            else
+            {
+                // Insert after the reference template if it exists in the target group
+                int referenceIndex = targetGroup.SearchTemplates.IndexOf(referenceTemplate);
+                if (referenceIndex >= 0)
                 {
-                    // Use the explicitly provided group
-                    targetGroup = group;
-                }
-                else if (referenceTemplate != null)
-                {
-                    // Find the group containing the reference template
-                    targetGroup = SearchGroups.FirstOrDefault(g => g.SearchTemplates.Contains(referenceTemplate));
-                    if (targetGroup == null)
-                    {
-                        // Fallback: if reference template not found, use the first group or create one
-                        targetGroup = SearchGroups.FirstOrDefault() ?? new SearchTemplateGroup();
-                        if (!SearchGroups.Contains(targetGroup))
-                        {
-                            SearchGroups.Add(targetGroup);
-                        }
-                    }
+                    targetGroup.SearchTemplates.Insert(referenceIndex + 1, newTemplate);
                 }
                 else
                 {
-                    // Both group and referenceTemplate are null - use first available group or create one
-                    targetGroup = SearchGroups.FirstOrDefault();
-                    if (targetGroup == null)
-                    {
-                        targetGroup = new SearchTemplateGroup();
-                        SearchGroups.Add(targetGroup);
-                    }
-                }
-
-                // Create new SearchTemplate with column data type
-                var newTemplate = new SearchTemplate(ColumnValues, ColumnDataType);
-                newTemplate.HasChanges = markAsChanged;
-
-                // Add the template at the appropriate position
-                if (referenceTemplate == null)
-                {
-                    // No reference template - add to the end
+                    // Reference template not in target group - add to the end
                     targetGroup.SearchTemplates.Add(newTemplate);
-                }
-                else
-                {
-                    // Insert after the reference template if it exists in the target group
-                    int referenceIndex = targetGroup.SearchTemplates.IndexOf(referenceTemplate);
-                    if (referenceIndex >= 0)
-                    {
-                        targetGroup.SearchTemplates.Insert(referenceIndex + 1, newTemplate);
-                    }
-                    else
-                    {
-                        // Reference template not in target group - add to the end
-                        targetGroup.SearchTemplates.Add(newTemplate);
-                    }
                 }
             }
 
@@ -449,15 +309,19 @@ namespace WWSearchDataGrid.Modern.Core
             HashSet<Tuple<string, string>> displayValueMappings = null,
             string bindingPath = null)
         {
-            this.displayValueMappings = displayValueMappings;
-            ColumnValues = new HashSet<object>(values);
-            ColumnName = header;
-
-            // Auto-detect column data type
-            if (values.Any())
+            // Use the column value loader service
+            var loadResult = _columnValueLoader.LoadColumnData(header, values, displayValueMappings, bindingPath);
+            
+            if (!loadResult.IsSuccess)
             {
-                ColumnDataType = ReflectionHelper.DetermineColumnDataType(values);
+                System.Diagnostics.Debug.WriteLine($"Error loading column data: {loadResult.ErrorMessage}");
+                return;
             }
+            
+            this.displayValueMappings = loadResult.DisplayValueMappings;
+            ColumnValues = loadResult.ColumnValues;
+            ColumnName = loadResult.ColumnName;
+            ColumnDataType = loadResult.ColumnDataType;
 
             // Store column values by binding path for global filtering
             if (!string.IsNullOrEmpty(bindingPath))
@@ -480,111 +344,38 @@ namespace WWSearchDataGrid.Modern.Core
         {
             try
             {
-                Expression<Func<object, bool>> groupExpression = null;
-
+                // Determine target column type
                 if (forceTargetTypeAsString)
                 {
                     targetColumnType = typeof(string);
                 }
                 else
                 {
-                    // Determine column type from available values or metadata
-                    targetColumnType = DetermineTargetColumnType();
+                    targetColumnType = _filterExpressionBuilder.DetermineTargetColumnType(ColumnDataType, ColumnValues);
                 }
 
-                // Track if we have collection-context filters that need special handling
-                bool hasCollectionContextFilters = false;
-
-                foreach (var group in SearchGroups)
+                // Use the filter expression builder service
+                var result = _filterExpressionBuilder.BuildFilterExpression(SearchGroups, targetColumnType, forceTargetTypeAsString);
+                
+                if (!result.IsSuccess)
                 {
-                    Expression<Func<object, bool>> templateExpression = null;
-
-                    foreach (var template in group.SearchTemplates)
-                    {
-                        template.HasChanges = false;
-
-                        // Check if this is a collection-context filter
-                        if (template.SearchType == SearchType.TopN ||
-                            template.SearchType == SearchType.BottomN ||
-                            template.SearchType == SearchType.AboveAverage ||
-                            template.SearchType == SearchType.BelowAverage ||
-                            template.SearchType == SearchType.Unique ||
-                            template.SearchType == SearchType.Duplicate)
-                        {
-                            hasCollectionContextFilters = true;
-                            continue; // Skip for now, will be handled separately
-                        }
-
-                        Expression<Func<object, bool>> currentExpression;
-
-                        try
-                        {
-                            // All templates now implement BuildExpression
-                            currentExpression = template.BuildExpression(targetColumnType);
-                        }
-                        catch (Exception ex)
-                        {
-                            Console.WriteLine($"Error building expression for template: {ex.Message}");
-
-                            // Fallback to basic expression
-                            var searchCondition = new SearchCondition(
-                                targetColumnType,
-                                template.SearchType,
-                                template.SelectedValue,
-                                template.SelectedSecondaryValue);
-
-                            currentExpression = obj => SearchEngine.EvaluateCondition(obj, searchCondition);
-                        }
-
-                        // Combine with previous expressions in this group
-                        templateExpression = templateExpression == null
-                            ? currentExpression
-                            : templateExpression.Compose(currentExpression, template.OperatorFunction);
-                    }
-
-                    // Skip empty groups
-                    if (templateExpression == null)
-                        continue;
-
-                    // Combine with previous group expressions
-                    if (groupExpression == null)
-                    {
-                        groupExpression = templateExpression;
-                    }
-                    else
-                    {
-                        // Ensure OperatorFunction is not null, default to And if it is
-                        var operatorFunc = group.OperatorFunction ?? Expression.And;
-                        groupExpression = groupExpression.Compose(templateExpression, operatorFunc);
-                    }
-                }
-
-                // Compile the expression for non-collection-context filters
-                if (groupExpression != null)
-                {
-                    FilterExpression = groupExpression.Compile();
-                }
-                else if (hasCollectionContextFilters)
-                {
-                    // For collection-context filters, we'll need to handle them differently
-                    // This would typically be done at the data grid level or in the UI
-                    FilterExpression = obj => true; // Placeholder, actual filtering done elsewhere
+                    System.Diagnostics.Debug.WriteLine($"Error building filter expression: {result.ErrorMessage}");
+                    FilterExpression = null;
+                    HasCustomExpression = false;
                 }
                 else
                 {
-                    FilterExpression = null;
+                    FilterExpression = result.FilterExpression;
+                    HasCustomExpression = result.HasCustomExpression;
                 }
-
-                // Update the custom expression flag
-                HasCustomExpression = SearchGroups.Count > 0 &&
-                    (SearchGroups.Count > 1 || SearchGroups.Any(g => g.SearchTemplates.Any(t => t.HasCustomFilter)));
 
                 OnPropertyChanged(string.Empty);
             }
             catch (Exception ex)
             {
-                // Log or handle the exception
-                Console.WriteLine($"Error updating filter expression: {ex}");
+                System.Diagnostics.Debug.WriteLine($"Error updating filter expression: {ex}");
+                FilterExpression = null;
+                HasCustomExpression = false;
             }
         }
 
@@ -601,7 +392,15 @@ namespace WWSearchDataGrid.Modern.Core
             SearchTemplate template,
             int targetIndex)
         {
-            isTemplateItemMoving = true;
+            // Validate the move operation
+            var validationResult = _validator.ValidateTemplateMoveOperation(
+                sourceGroup, targetGroup, template, targetIndex, SearchGroups);
+                
+            if (!validationResult.IsValid)
+            {
+                System.Diagnostics.Debug.WriteLine($"Cannot move template: {validationResult.ErrorMessage}");
+                return;
+            }
 
             sourceGroup.SearchTemplates.Remove(template);
             targetGroup.SearchTemplates.Insert(targetIndex, template);
@@ -616,8 +415,6 @@ namespace WWSearchDataGrid.Modern.Core
                 UpdateOperatorVisibility();
                 UpdateGroupNumbers();
             }
-
-            isTemplateItemMoving = false;
         }
 
         /// <summary>
@@ -626,46 +423,53 @@ namespace WWSearchDataGrid.Modern.Core
         /// <param name="group">Group to remove</param>
         public void RemoveSearchGroup(SearchTemplateGroup group)
         {
-            if (SearchGroups.Contains(group))
+            // Validate the removal operation
+            var validationResult = _validator.ValidateRemoveSearchGroup(group, SearchGroups, AllowMultipleGroups);
+            if (!validationResult.IsValid)
             {
-                // If multiple groups are allowed, or this isn't the last group, remove it normally
-                if (AllowMultipleGroups && SearchGroups.Count > 1)
+                System.Diagnostics.Debug.WriteLine($"Cannot remove search group: {validationResult.ErrorMessage}");
+                return;
+            }
+            
+            if (!SearchGroups.Contains(group)) return;
+
+            // If multiple groups are allowed, or this isn't the last group, remove it normally
+            if (AllowMultipleGroups && SearchGroups.Count > 1)
+            {
+                group.SearchTemplates.Clear();
+                SearchGroups.Remove(group);
+                UpdateFilterExpression();
+                UpdateGroupNumbers();
+                
+                // Update operator visibility on the first remaining group
+                if (SearchGroups.Count > 0)
                 {
-                    group.SearchTemplates.Clear();
-                    SearchGroups.Remove(group);
-                    UpdateFilterExpression();
-                    UpdateGroupNumbers();
-                    
-                    // Update operator visibility on the first remaining group
-                    if (SearchGroups.Count > 0)
-                    {
-                        UpdateOperatorVisibility();
-                    }
+                    UpdateOperatorVisibility();
                 }
-                else if (SearchGroups.Count == 1)
+            }
+            else if (SearchGroups.Count == 1)
+            {
+                // For the last remaining group, clear and reset instead of removing
+                group.SearchTemplates.Clear();
+                AddSearchTemplate(true, false, null, group);
+                UpdateFilterExpression();
+            }
+            else
+            {
+                // Multiple groups exist but AllowMultipleGroups is false - shouldn't happen normally
+                group.SearchTemplates.Clear();
+                SearchGroups.Remove(group);
+                UpdateFilterExpression();
+                if (SearchGroups.Count == 0)
                 {
-                    // For the last remaining group, clear and reset instead of removing
-                    group.SearchTemplates.Clear();
-                    AddSearchTemplate(true, false, null, group);
-                    UpdateFilterExpression();
+                    AddSearchGroup(true, false);
                 }
                 else
                 {
-                    // Multiple groups exist but AllowMultipleGroups is false - shouldn't happen normally
-                    group.SearchTemplates.Clear();
-                    SearchGroups.Remove(group);
-                    UpdateFilterExpression();
-                    if (SearchGroups.Count == 0)
-                    {
-                        AddSearchGroup(true, false);
-                    }
-                    else
-                    {
-                        // Update operator visibility on the first remaining group
-                        UpdateOperatorVisibility();
-                    }
-                    UpdateGroupNumbers();
+                    // Update operator visibility on the first remaining group
+                    UpdateOperatorVisibility();
                 }
+                UpdateGroupNumbers();
             }
             
             OnPropertyChanged(nameof(SearchGroups));
@@ -677,13 +481,28 @@ namespace WWSearchDataGrid.Modern.Core
         /// <param name="template">Template to remove</param>
         public void RemoveSearchTemplate(SearchTemplate template)
         {
-            var group = SearchGroups.First(g => g.SearchTemplates.Contains(template));
+            var group = SearchGroups.FirstOrDefault(g => g.SearchTemplates.Contains(template));
+            if (group == null) return;
+            
+            // Validate the removal operation
+            var validationResult = _validator.ValidateRemoveSearchTemplate(template, group);
+            if (!validationResult.IsValid)
+            {
+                System.Diagnostics.Debug.WriteLine($"Cannot remove search template: {validationResult.ErrorMessage}");
+                return;
+            }
 
             if (group.SearchTemplates.Count > 1)
             {
                 group.SearchTemplates.Remove(template);
                 UpdateFilterExpression();
-                AddSearchTemplate(group.SearchTemplates.Count == 0, true, template, group);
+            }
+            else
+            {
+                // If this is the last template, add a new empty one after removing
+                group.SearchTemplates.Remove(template);
+                AddSearchTemplate(true, true, null, group);
+                UpdateFilterExpression();
             }
         }
 
@@ -1319,6 +1138,7 @@ namespace WWSearchDataGrid.Modern.Core
             {
                 if (item is DateIntervalItem intervalItem && intervalItem.IsSelected)
                 {
+
                     selectedIntervals.Add(intervalItem.DisplayName);
                 }
             }
@@ -1420,57 +1240,43 @@ namespace WWSearchDataGrid.Modern.Core
             }
         }
 
-        private Type DetermineTargetColumnType()
+        /// <summary>
+        /// Determines the target group for adding a template
+        /// </summary>
+        private SearchTemplateGroup DetermineTargetGroup(SearchTemplateGroup group, SearchTemplate referenceTemplate)
         {
-            // First, try to use the explicitly set ColumnDataType
-            switch (ColumnDataType)
+            // Handle null parameters with proper fallback logic
+            if (group != null)
             {
-                case ColumnDataType.DateTime:
-                    return typeof(DateTime);
-                case ColumnDataType.Number:
-                    // Try to determine the specific numeric type from values
-                    return DetermineNumericType();
-                case ColumnDataType.Boolean:
-                    return typeof(bool);
-                case ColumnDataType.Enum:
-                    // Try to determine the enum type from values
-                    return DetermineEnumType();
-                default:
-                    return typeof(string);
+                // Use the explicitly provided group
+                return group;
             }
-        }
-
-        private Type DetermineNumericType()
-        {
-            if (ColumnValues?.Any() == true)
+            else if (referenceTemplate != null)
             {
-                var firstNumericValue = ColumnValues.FirstOrDefault(v => v != null && IsNumericValue(v));
-                if (firstNumericValue != null)
+                // Find the group containing the reference template
+                var targetGroup = SearchGroups.FirstOrDefault(g => g.SearchTemplates.Contains(referenceTemplate));
+                if (targetGroup == null)
                 {
-                    return firstNumericValue.GetType();
+                    // Fallback: if reference template not found, use the first group or create one
+                    targetGroup = SearchGroups.FirstOrDefault() ?? new SearchTemplateGroup();
+                    if (!SearchGroups.Contains(targetGroup))
+                    {
+                        SearchGroups.Add(targetGroup);
+                    }
                 }
+                return targetGroup;
             }
-            return typeof(decimal); // Default to decimal for numeric operations
-        }
-
-        private Type DetermineEnumType()
-        {
-            if (ColumnValues?.Any() == true)
+            else
             {
-                var firstEnumValue = ColumnValues.FirstOrDefault(v => v != null && v.GetType().IsEnum);
-                if (firstEnumValue != null)
+                // Both group and referenceTemplate are null - use first available group or create one
+                var targetGroup = SearchGroups.FirstOrDefault();
+                if (targetGroup == null)
                 {
-                    return firstEnumValue.GetType();
+                    targetGroup = new SearchTemplateGroup();
+                    SearchGroups.Add(targetGroup);
                 }
+                return targetGroup;
             }
-            return typeof(string); // Fallback to string
-        }
-
-        private bool IsNumericValue(object value)
-        {
-            return value is byte || value is sbyte || value is short || value is ushort ||
-                   value is int || value is uint || value is long || value is ulong ||
-                   value is float || value is double || value is decimal;
         }
 
         #endregion

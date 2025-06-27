@@ -232,7 +232,7 @@ namespace WWSearchDataGrid.Modern.Core
         /// <summary>
         /// Sets the selection state without triggering events
         /// </summary>
-        public void SetIsSelectedSilent(bool value, bool notifyPropertyChanged = true)
+        public new void SetIsSelectedSilent(bool value, bool notifyPropertyChanged = true)
         {
             isUpdating = true;
             try

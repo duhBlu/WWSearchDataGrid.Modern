@@ -13,6 +13,7 @@ using System.Windows.Threading;
 using WWSearchDataGrid.Modern.Core;
 using WWSearchDataGrid.Modern.Core.Common.Utilities;
 using WWSearchDataGrid.Modern.Core.Performance;
+using WWSearchDataGrid.Modern.WPF.Services;
 
 namespace WWSearchDataGrid.Modern.WPF
 {
@@ -33,6 +34,7 @@ namespace WWSearchDataGrid.Modern.WPF
         private ColumnDataType columnDataType;
 
         private readonly ColumnValueCache _cache = ColumnValueCache.Instance;
+        private readonly IFilterApplicationService _filterApplicationService;
         private DispatcherTimer _tabSwitchTimer;
         private TabItem _pendingTab;
         private bool _isInitialized;
@@ -232,6 +234,18 @@ namespace WWSearchDataGrid.Modern.WPF
         /// </summary>
         public AdvancedFilterControl()
         {
+            _filterApplicationService = new FilterApplicationService();
+            Loaded += OnControlLoaded;
+            Unloaded += OnUnloaded;
+        }
+        
+        /// <summary>
+        /// Initializes a new instance with custom filter application service for testing
+        /// </summary>
+        /// <param name="filterApplicationService">Filter application service</param>
+        internal AdvancedFilterControl(IFilterApplicationService filterApplicationService)
+        {
+            _filterApplicationService = filterApplicationService ?? throw new ArgumentNullException(nameof(filterApplicationService));
             Loaded += OnControlLoaded;
             Unloaded += OnUnloaded;
         }
@@ -491,7 +505,7 @@ namespace WWSearchDataGrid.Modern.WPF
                 groupedViewModel.GroupByColumn = groupByColumn;
 
                 // Load grouped data
-                await LoadGroupedDataForViewModel(groupedViewModel, searchControl, items, groupByColumn);
+                LoadGroupedDataForViewModel(groupedViewModel, searchControl, items, groupByColumn);
 
                 FilterValueViewModel = groupedViewModel;
 
@@ -520,7 +534,7 @@ namespace WWSearchDataGrid.Modern.WPF
         /// <summary>
         /// Loads grouped data for the filter values view model
         /// </summary>
-        private async Task LoadGroupedDataForViewModel(GroupedTreeViewFilterValueViewModel groupedViewModel,
+        private void LoadGroupedDataForViewModel(GroupedTreeViewFilterValueViewModel groupedViewModel,
             SearchControl searchControl, List<object> items, string groupByColumn)
         {
             // Create grouped data based on the GroupBy column
@@ -758,7 +772,7 @@ namespace WWSearchDataGrid.Modern.WPF
                     }
                 }
 
-                await RefreshFilterValueViewModel();
+                RefreshFilterValueViewModel();
             }
             catch (Exception ex)
             {
@@ -770,10 +784,10 @@ namespace WWSearchDataGrid.Modern.WPF
         {
             // Reload all column values when the entire ItemsSource changes
             await LoadColumnValuesAsync();
-            await RefreshFilterValueViewModel();
+            RefreshFilterValueViewModel();
         }
 
-        private async Task RefreshFilterValueViewModel()
+        private void RefreshFilterValueViewModel()
         {
             if (FilterValueViewModel != null && DataContext is SearchControl searchControl)
             {
@@ -904,251 +918,136 @@ namespace WWSearchDataGrid.Modern.WPF
         /// </summary>
         private void ApplyFilter()
         {
-            if (SearchTemplateController != null)
+            if (SearchTemplateController == null) return;
+            
+            FilterApplicationResult result;
+            
+            // Check which tab is active
+            if (tabControl?.SelectedIndex == 1) // Filter Values tab
             {
-                // Check which tab is active
-                if (tabControl?.SelectedIndex == 1) // Filter Values tab
-                {
-                    // Apply filter based on selected values
-                    ApplyValueBasedFilter();
-                }
-                else // Filter Rules tab
-                {
-                    // Apply rule-based filter
-                    SearchTemplateController.UpdateFilterExpression();
-                }
+                // Apply filter based on selected values using the service
+                result = _filterApplicationService.ApplyValueBasedFilter(
+                    FilterValueViewModel, SearchTemplateController, ColumnDataType);
+            }
+            else // Filter Rules tab
+            {
+                // Apply rule-based filter using the service
+                result = _filterApplicationService.ApplyRuleBasedFilter(SearchTemplateController);
+            }
+            
+            if (!result.IsSuccess)
+            {
+                System.Diagnostics.Debug.WriteLine($"Filter application failed: {result.ErrorMessage}");
+                return;
+            }
 
-                // Determine if we're in per-column or global mode
-                if (DataContext is SearchControl searchControl)
+            // Determine if we're in per-column or global mode
+            if (DataContext is SearchControl searchControl)
+            {
+                // Per-column mode
+                if (searchControl.SourceDataGrid != null)
                 {
-                    // Per-column mode
-                    if (searchControl.SourceDataGrid != null)
+                    searchControl.HasAdvancedFilter = result.HasCustomExpression;
+                    
+                    // Handle grouped filtering if needed
+                    if (result.FilterType == FilterApplicationType.GroupedValueBased)
                     {
-                        searchControl.HasAdvancedFilter = SearchTemplateController.HasCustomExpression;
-                        searchControl.SourceDataGrid.FilterItemsSource();
-                        CloseWindow();
+                        searchControl.GroupedFilterCombinations = SearchTemplateController.GroupedFilterCombinations;
+                        searchControl.GroupByColumnPath = SearchTemplateController.GroupByColumnPath;
                     }
-                }
-                else if (DataContext is SearchDataGrid dataGrid)
-                {
-                    // Global mode
-                    dataGrid.FilterItemsSource();
+                    
+                    searchControl.SourceDataGrid.FilterItemsSource();
                     CloseWindow();
                 }
+            }
+            else if (DataContext is SearchDataGrid dataGrid)
+            {
+                // Global mode
+                dataGrid.FilterItemsSource();
+                CloseWindow();
             }
         }
 
         /// <summary>
-        /// Apply filter based on selected values with better performance
+        /// Legacy method - kept for backward compatibility but now delegates to service
         /// </summary>
+        [Obsolete("Use FilterApplicationService.ApplyValueBasedFilter instead", false)]
         private void ApplyValueBasedFilter()
         {
-            if (FilterValueViewModel != null)
+            var result = _filterApplicationService.ApplyValueBasedFilter(
+                FilterValueViewModel, SearchTemplateController, ColumnDataType);
+                
+            if (!result.IsSuccess)
             {
-                // Check if this is grouped filtering
-                if (FilterValueViewModel is GroupedTreeViewFilterValueViewModel groupedViewModel && groupedViewModel.IsGroupedFiltering)
-                {
-                    ApplyGroupedValueBasedFilter(groupedViewModel);
-                }
-                else
-                {
-                    // Standard flat filtering with optimization
-                    var allValues = FilterValueViewModel.GetAllValues();
-                    var selectedItems = allValues.Where(item => item.IsSelected).ToList();
-
-                    // Check if all items are selected
-                    if (selectedItems.Count == allValues.Count && allValues.Count > 0)
-                    {
-                        // All items selected - clear the filter instead of creating one
-                        SearchTemplateController.SearchGroups.Clear();
-                        SearchTemplateController.UpdateFilterExpression();
-                    }
-                    else if (selectedItems.Any())
-                    {
-                        // Use optimizer to determine best filter strategy
-                        var optimizationResult = FilterSelectionOptimizer.OptimizeSelections(
-                            allValues, selectedItems, ColumnDataType);
-
-                        // Clear and recreate more efficiently
-                        SearchTemplateController.SearchGroups.Clear();
-                        var group = new SearchTemplateGroup();
-                        SearchTemplateController.SearchGroups.Add(group);
-
-                        var template = new SearchTemplate(ColumnDataType)
-                        {
-                            SearchType = optimizationResult.RecommendedSearchType
-                        };
-
-                        // Set values based on optimization result and search type
-                        if (optimizationResult.RecommendedSearchType == SearchType.Equals && optimizationResult.FilterValues.Count == 1)
-                        {
-                            // For single value Equals, set SelectedValue (singular)
-                            template.SelectedValue = optimizationResult.FilterValues.First();
-                        }
-                        else
-                        {
-                            // For multi-value search types (IsAnyOf, IsNoneOf, NotEquals), use SelectedValues (plural)
-                            template.SelectedValues.Clear();
-                            foreach (var value in optimizationResult.FilterValues)
-                            {
-                                template.SelectedValues.Add(new FilterListValue { Value = value });
-                            }
-                        }
-
-                        group.SearchTemplates.Add(template);
-                        SearchTemplateController.UpdateFilterExpression();
-
-                    }
-                    else
-                    {
-                        // No items selected - also clear filter
-                        SearchTemplateController.SearchGroups.Clear();
-                        SearchTemplateController.UpdateFilterExpression();
-                    }
-                }
+                System.Diagnostics.Debug.WriteLine($"Legacy filter application failed: {result.ErrorMessage}");
             }
         }
         
         /// <summary>
-        /// Apply grouped filtering that respects group-child combinations
+        /// Legacy method - kept for backward compatibility but now delegates to service
         /// </summary>
+        [Obsolete("Use FilterApplicationService.ApplyGroupedValueBasedFilter instead", false)]
         private void ApplyGroupedValueBasedFilter(GroupedTreeViewFilterValueViewModel groupedViewModel)
         {
-            var groupChildCombinations = groupedViewModel.GetSelectedGroupChildCombinations().ToList();
-            
-            if (!groupChildCombinations.Any())
-            {
-                // No selections - clear filters
-                SearchTemplateController.SearchGroups.Clear();
-                SearchTemplateController.AddSearchGroup();
-                SearchTemplateController.HasCustomExpression = false;
-                return;
-            }
-            
-            // Get the binding paths for both columns
             string currentColumnPath = null;
-            string groupByColumnPath = groupedViewModel.GroupByColumn;
-            
             if (DataContext is SearchControl searchControl)
             {
                 currentColumnPath = searchControl.BindingPath;
             }
             
-            if (string.IsNullOrEmpty(currentColumnPath) || string.IsNullOrEmpty(groupByColumnPath))
+            var result = _filterApplicationService.ApplyGroupedValueBasedFilter(
+                groupedViewModel, SearchTemplateController, currentColumnPath, groupedViewModel.GroupByColumn);
+                
+            if (!result.IsSuccess)
             {
-                // Fallback to regular filtering if we can't determine the paths
-                var selectedValues = groupedViewModel.GetSelectedValues().ToList();
-                if (selectedValues.Any())
-                {
-                    SearchTemplateController.SearchGroups.Clear();
-                    var group = new SearchTemplateGroup();
-                    SearchTemplateController.SearchGroups.Add(group);
-
-                    var template = new SearchTemplate(ColumnDataType)
-                    {
-                        SearchType = SearchType.IsAnyOf
-                    };
-
-                    foreach (var value in selectedValues)
-                    {
-                        template.SelectedValues.Add(new FilterListValue { Value = value });
-                    }
-
-                    group.SearchTemplates.Add(template);
-                    SearchTemplateController.UpdateFilterExpression();
-                }
-                return;
+                System.Diagnostics.Debug.WriteLine($"Legacy grouped filter application failed: {result.ErrorMessage}");
             }
-            
-            // Clear existing groups and create a custom filter expression
-            SearchTemplateController.SearchGroups.Clear();
-            
-            // Create a custom filter expression that handles grouped logic
-            CreateGroupedFilterExpression(groupChildCombinations, currentColumnPath, groupByColumnPath);
         }
         
         /// <summary>
-        /// Creates a custom filter expression for grouped filtering
+        /// Legacy method - functionality moved to FilterApplicationService
         /// </summary>
+        [Obsolete("This functionality has been moved to FilterApplicationService", true)]
         private void CreateGroupedFilterExpression(List<(object GroupKey, object ChildValue)> combinations, 
             string currentColumnPath, string groupByColumnPath)
         {
-            if (DataContext is SearchControl searchControl)
-            {
-                // Create a custom filter function that checks both the group column and current column
-                Func<object, bool> groupedFilter = columnValue =>
-                {
-                    try
-                    {
-                        // We need to check against the entire data item, not just the column value
-                        // Unfortunately, we only get the column value here, so we need a different approach
-                        
-                        // For now, return true if the column value matches any selected child value
-                        // This is a limitation - we'll need to enhance the SearchTemplateController
-                        return combinations.Any(c => Equals(c.ChildValue, columnValue));
-                    }
-                    catch
-                    {
-                        return false;
-                    }
-                };
-                
-                // Store the grouped combinations for use in a custom evaluation
-                searchControl.GroupedFilterCombinations = combinations;
-                searchControl.GroupByColumnPath = groupByColumnPath;
-                
-                // Set grouped filtering information on the SearchTemplateController
-                SearchTemplateController.GroupedFilterCombinations = combinations;
-                SearchTemplateController.GroupByColumnPath = groupByColumnPath;
-                SearchTemplateController.CurrentColumnPath = currentColumnPath;
-                
-                // Try to get the grouped view model to extract all group data
-                if (FilterValueViewModel is GroupedTreeViewFilterValueViewModel groupedViewModel)
-                {
-                    // Extract all group data for analysis
-                    var allGroupData = new Dictionary<object, List<object>>();
-                    foreach (var group in groupedViewModel.AllGroups)
-                    {
-                        var groupValues = group.Children.Select(c => c.Value).ToList();
-                        allGroupData[group.GroupKey] = groupValues;
-                    }
-                    SearchTemplateController.AllGroupData = allGroupData;
-                }
-                
-                // Set the filter expression on the controller
-                SearchTemplateController.FilterExpression = groupedFilter;
-                SearchTemplateController.HasCustomExpression = true;
-            }
+            throw new NotSupportedException("This method has been replaced by FilterApplicationService.CreateGroupedFilterExpression");
         }
 
         /// <summary>
-        /// Clear the filter
+        /// Clear the filter using the filter application service
         /// </summary>
         private void ClearFilter()
         {
-            if (SearchTemplateController != null)
+            if (SearchTemplateController == null) return;
+            
+            var result = _filterApplicationService.ClearAllFilters(SearchTemplateController);
+            
+            if (!result.IsSuccess)
             {
-                SearchTemplateController.SearchGroups.Clear();
-                SearchTemplateController.AddSearchGroup();
-                SearchTemplateController.HasCustomExpression = false;
+                System.Diagnostics.Debug.WriteLine($"Filter clearing failed: {result.ErrorMessage}");
+                return;
+            }
+            
+            // Add a default group back
+            SearchTemplateController.AddSearchGroup();
 
-                // Determine if we're in per-column or global mode
-                if (DataContext is SearchControl searchControl)
-                {
-                    // Per-column mode
-                    searchControl.SearchText = string.Empty;
-                    searchControl.HasAdvancedFilter = false;
+            // Determine if we're in per-column or global mode
+            if (DataContext is SearchControl searchControl)
+            {
+                // Per-column mode
+                searchControl.SearchText = string.Empty;
+                searchControl.HasAdvancedFilter = false;
 
-                    if (searchControl.SourceDataGrid != null)
-                    {
-                        searchControl.SourceDataGrid.FilterItemsSource();
-                    }
-                }
-                else if (DataContext is SearchDataGrid dataGrid)
+                if (searchControl.SourceDataGrid != null)
                 {
-                    // Global mode - clear all filters
-                    dataGrid.ClearAllFilters();
+                    searchControl.SourceDataGrid.FilterItemsSource();
                 }
+            }
+            else if (DataContext is SearchDataGrid dataGrid)
+            {
+                // Global mode - clear all filters
+                dataGrid.ClearAllFilters();
             }
         }
 
