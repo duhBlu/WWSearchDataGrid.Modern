@@ -27,6 +27,10 @@ namespace WWSearchDataGrid.Modern.WPF
             DependencyProperty.Register("HasActiveFilters", typeof(bool), typeof(FilterPanel),
                 new PropertyMetadata(false));
 
+        public static readonly DependencyProperty IsExpandedProperty =
+            DependencyProperty.Register("IsExpanded", typeof(bool), typeof(FilterPanel),
+                new PropertyMetadata(false));
+
         #endregion
 
         #region Properties
@@ -59,6 +63,15 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
+        /// Gets or sets whether the filter panel is expanded to show all filters
+        /// </summary>
+        public bool IsExpanded
+        {
+            get => (bool)GetValue(IsExpandedProperty);
+            set => SetValue(IsExpandedProperty, value);
+        }
+
+        /// <summary>
         /// Gets the command to toggle all filters on/off
         /// </summary>
         public ICommand ToggleFiltersCommand { get; private set; }
@@ -77,6 +90,11 @@ namespace WWSearchDataGrid.Modern.WPF
         /// Gets the command to clear all filters
         /// </summary>
         public ICommand ClearAllFiltersCommand { get; private set; }
+
+        /// <summary>
+        /// Gets the command to toggle the expand/collapse state
+        /// </summary>
+        public ICommand ToggleExpandCommand { get; private set; }
 
         #endregion
 
@@ -187,6 +205,7 @@ namespace WWSearchDataGrid.Modern.WPF
             RemoveFilterCommand = new RelayCommand<ColumnFilterInfo>(ExecuteRemoveFilter, CanRemoveFilter);
             EditFiltersCommand = new RelayCommand(ExecuteEditFilters, CanEditFilters);
             ClearAllFiltersCommand = new RelayCommand(ExecuteClearAllFilters, CanClearAllFilters);
+            ToggleExpandCommand = new RelayCommand(ExecuteToggleExpand);
         }
 
         #endregion
@@ -250,6 +269,14 @@ namespace WWSearchDataGrid.Modern.WPF
         private bool CanClearAllFilters(object parameter)
         {
             return HasActiveFilters;
+        }
+
+        /// <summary>
+        /// Executes the toggle expand command
+        /// </summary>
+        private void ExecuteToggleExpand(object parameter)
+        {
+            IsExpanded = !IsExpanded;
         }
 
         #endregion
