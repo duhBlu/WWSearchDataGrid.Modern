@@ -37,12 +37,86 @@
         <Setter Property="ScrollViewer.IsDeferredScrollingEnabled" Value="True" />
     </Style>
 
+    <!--  Filter TextBox Style  -->
+    <Style x:Key="Filter_TextBox_Style" TargetType="{x:Type TextBox}">
+        <Setter Property="Foreground" Value="Black" />
+        <Setter Property="Background" Value="White" />
+        <Setter Property="BorderBrush" Value="#CCCCCC" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Padding" Value="8,4" />
+        <Setter Property="MinHeight" Value="32" />
+        <Setter Property="MinWidth" Value="150" />
+        <Setter Property="HorizontalContentAlignment" Value="Left" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type TextBox}">
+                    <Grid>
+                        <Border x:Name="Border"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="4" />
+                        
+                        <ScrollViewer x:Name="PART_ContentHost"
+                                      Margin="{TemplateBinding Padding}"
+                                      HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                      VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                      Background="Transparent" />
+                        
+                        <TextBlock x:Name="PlaceholderText"
+                                   Foreground="#888888"
+                                   Text="{TemplateBinding Tag}"
+                                   Visibility="Collapsed"
+                                   IsHitTestVisible="False"
+                                   Margin="{TemplateBinding Padding}"
+                                   HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                   VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Border" Property="BorderBrush" Value="#888888" />
+                            <Setter TargetName="Border" Property="Background" Value="#f9f9f9" />
+                        </Trigger>
+                        <Trigger Property="IsKeyboardFocused" Value="True">
+                            <Setter TargetName="Border" Property="BorderBrush" Value="#0078D4" />
+                        </Trigger>
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="Text" Value="" />
+                                <Condition Property="IsKeyboardFocusWithin" Value="False" />
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="PlaceholderText" Property="Visibility" Value="Visible" />
+                        </MultiTrigger>
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="Text" Value="{x:Null}" />
+                                <Condition Property="IsKeyboardFocusWithin" Value="False" />
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="PlaceholderText" Property="Visibility" Value="Visible" />
+                        </MultiTrigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.6" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
     <!--  Single ComboBox Template  -->
     <DataTemplate x:Key="SingleComboBoxTemplate">
         <ComboBox Style="{StaticResource VirtualizedEditable_Combobox_Style}"
                   Text="{Binding SelectedValue}"
                   Tag="Type or select..."
                   ItemsSource="{Binding AvailableValues}" />
+    </DataTemplate>
+
+    <!--  Single TextBox Template  -->
+    <DataTemplate x:Key="SingleTextBoxTemplate">
+        <TextBox Style="{StaticResource Filter_TextBox_Style}"
+                 Text="{Binding SelectedValue, UpdateSourceTrigger=PropertyChanged}"
+                 Tag="Enter text..." />
     </DataTemplate>
 
     <!--  Dual ComboBox Template  -->

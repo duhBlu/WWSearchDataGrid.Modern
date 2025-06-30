@@ -10,6 +10,7 @@ namespace WWSearchDataGrid.Modern.Core
     public enum FilterInputTemplate
     {
         SingleComboBox,
+        SingleTextBox,
         DualComboBox,
         DualDateTimePicker,
         NumericUpDown,

@@ -248,6 +248,7 @@ namespace WWSearchDataGrid.Modern.Core
 
             ColumnDataType = dataType;
             InitializeDateIntervals();
+            UpdateInputTemplate();
         }
 
         public SearchTemplate(HashSet<object> availableValues, ColumnDataType dataType)

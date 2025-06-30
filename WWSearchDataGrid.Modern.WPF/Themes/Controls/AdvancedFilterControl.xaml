@@ -248,6 +248,9 @@
                                                 <DataTrigger Binding="{Binding InputTemplate}" Value="SingleComboBox">
                                                     <Setter Property="ContentTemplate" Value="{StaticResource SingleComboBoxTemplate}" />
                                                 </DataTrigger>
+                                                <DataTrigger Binding="{Binding InputTemplate}" Value="SingleTextBox">
+                                                    <Setter Property="ContentTemplate" Value="{StaticResource SingleTextBoxTemplate}" />
+                                                </DataTrigger>
                                                 <DataTrigger Binding="{Binding InputTemplate}" Value="DualComboBox">
                                                     <Setter Property="ContentTemplate" Value="{StaticResource DualComboBoxTemplate}" />
                                                 </DataTrigger>
