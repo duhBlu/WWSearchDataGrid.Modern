@@ -78,7 +78,7 @@
                             BorderBrush="#E1E5E9"
                             BorderThickness="0,1,0,0"
                             Visibility="{Binding HasActiveFilters, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource BooleanToVisibilityConverter}}"
-                            Padding="12,8">
+                            Margin="0,0">
 
                         <Grid>
                             <Grid.ColumnDefinitions>
@@ -92,13 +92,23 @@
 
                             <!--  Filters Enabled Checkbox  -->
                             <CheckBox x:Name="PART_FiltersEnabledCheckBox"
-                                      Style="{StaticResource Default_CheckBox_Style}"
                                       Grid.Column="0"
                                       IsChecked="{Binding FiltersEnabled, RelativeSource={RelativeSource TemplatedParent}}"
-                                      Margin="0,0,8,0"
-                                      VerticalAlignment="Center"
                                       Content="Filters Active"
-                                      ToolTip="Enable or disable all filters without clearing filter definitions" />
+                                      ToolTip="Enable or disable all filters without clearing filter definitions">
+                                <CheckBox.Style>
+                                    <Style BasedOn="{StaticResource Default_CheckBox_Style}" TargetType="{x:Type CheckBox}">
+                                        <Setter Property="VerticalAlignment" Value="Top" />
+                                        <Setter Property="Margin" Value="4,12,4,0" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsExpanded, RelativeSource={RelativeSource TemplatedParent}}" Value="False">
+                                                <Setter Property="VerticalAlignment" Value="Center" />
+                                                <Setter Property="Margin" Value="4,4,4,0" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </CheckBox.Style>
+                            </CheckBox>
 
                             <!--  Filter Chips Area with Overflow Handling  -->
                             <Grid Grid.Column="1" VerticalAlignment="Center">
@@ -109,25 +119,26 @@
                                         <GradientStop Color="#FFF8F9FA" Offset="1" />
                                     </LinearGradientBrush>
                                 </Grid.Resources>
-                                
+
                                 <!--  Filter Chips Container  -->
                                 <Border x:Name="PART_FilterChipsContainer" ClipToBounds="True">
                                     <Border.Style>
                                         <Style TargetType="Border">
-                                            <Setter Property="Height" Value="32" />
+                                            <Setter Property="Height" Value="Auto" />
                                             <Style.Triggers>
                                                 <DataTrigger Binding="{Binding IsExpanded, RelativeSource={RelativeSource TemplatedParent}}" Value="True">
                                                     <Setter Property="Height" Value="Auto" />
+                                                    <Setter Property="MaxHeight" Value="200" />
                                                 </DataTrigger>
                                             </Style.Triggers>
                                         </Style>
                                     </Border.Style>
-                                    
+
                                     <ItemsControl x:Name="PART_FiltersItemsControl" ItemsSource="{Binding ActiveFilters, RelativeSource={RelativeSource TemplatedParent}}">
                                         <ItemsControl.Style>
                                             <Style TargetType="ItemsControl">
                                                 <Setter Property="VerticalAlignment" Value="Center" />
-                                                <!-- Default collapsed state: use StackPanel for single line -->
+                                                <!--  Default collapsed state: use StackPanel for single line  -->
                                                 <Setter Property="ItemsPanel">
                                                     <Setter.Value>
                                                         <ItemsPanelTemplate>
@@ -136,12 +147,12 @@
                                                     </Setter.Value>
                                                 </Setter>
                                                 <Style.Triggers>
-                                                    <!-- Expanded state: use WrapPanel for multiple lines -->
+                                                    <!--  Expanded state: use WrapPanel for multiple lines  -->
                                                     <DataTrigger Binding="{Binding IsExpanded, RelativeSource={RelativeSource TemplatedParent}}" Value="True">
                                                         <Setter Property="ItemsPanel">
                                                             <Setter.Value>
                                                                 <ItemsPanelTemplate>
-                                                                    <WrapPanel Orientation="Horizontal" VerticalAlignment="Top" ItemHeight="28" />
+                                                                    <WrapPanel Orientation="Horizontal" VerticalAlignment="Top" />
                                                                 </ItemsPanelTemplate>
                                                             </Setter.Value>
                                                         </Setter>
@@ -157,18 +168,28 @@
                                                                Foreground="#333"
                                                                Text="{Binding Conjunction}"
                                                                Visibility="Visible"
-                                                               Margin="0,0,12,0"
                                                                VerticalAlignment="Center"
                                                                FontWeight="Bold"
-                                                               FontSize="12" />
+                                                               FontSize="12">
+                                                        <TextBlock.Style>
+                                                            <Style TargetType="{x:Type TextBlock}">
+                                                                <Setter Property="Margin" Value="0,0,8,-4" />
+                                                                <Style.Triggers>
+                                                                    <Trigger Property="Text" Value="">
+                                                                        <Setter Property="Margin" Value="0" />
+                                                                    </Trigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </TextBlock.Style>
+                                                    </TextBlock>
 
                                                     <!--  Filter chip  -->
-                                                    <Grid Background="Transparent" VerticalAlignment="Center">
+                                                    <Grid Background="Transparent" Margin="0,-2,0,-2">
                                                         <Grid.ColumnDefinitions>
                                                             <ColumnDefinition Width="Auto" />
                                                             <ColumnDefinition Width="Auto" />
                                                         </Grid.ColumnDefinitions>
-                                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" >
+                                                        <StackPanel Orientation="Horizontal">
                                                             <StackPanel.Resources>
                                                                 <!--  if you still want a gradient on the brackets  -->
                                                                 <LinearGradientBrush x:Key="BracketGradientBrush" StartPoint="0,0" EndPoint="1,1">
@@ -178,24 +199,21 @@
                                                             </StackPanel.Resources>
                                                             <TextBlock Foreground="{StaticResource BracketGradientBrush}"
                                                                        Text="["
-                                                                       Margin="0,0,-4,0"
-                                                                       VerticalAlignment="Center"
-                                                                       FontSize="28"
+                                                                       Margin="0,0,-3,0"
+                                                                       FontSize="32"
                                                                        FontWeight="Thin" />
                                                             <Border Grid.Column="0"
                                                                     Background="Transparent"
                                                                     BorderBrush="Transparent"
                                                                     BorderThickness="1"
-                                                                    Padding="0"
-                                                                    Margin="0,2,0,0"
-                                                                    
-                                                                    VerticalAlignment="Center">
+                                                                    Margin="0,0,0,0"
+                                                                    Padding="0">
 
-                                                                <StackPanel Orientation="Horizontal" Margin="2,3,2,0" VerticalAlignment="Center">
+                                                                <StackPanel Orientation="Horizontal">
 
                                                                     <!--  Column Name Component  -->
                                                                     <Border Background="#ffc69b"
-                                                                            Margin="0,2,2,-1"
+                                                                            Margin="0,7,2,0"
                                                                             Padding="4,2"
                                                                             Height="22"
                                                                             CornerRadius="2">
@@ -208,7 +226,7 @@
                                                                     <!--  Filter Components Collection with Fallback  -->
                                                                     <Grid>
                                                                         <!--  Use ItemsControl for multiple components  -->
-                                                                        <ItemsControl ItemsSource="{Binding FilterComponents}" Margin="0,0,0,0">
+                                                                        <ItemsControl Margin="0,3,0,0" ItemsSource="{Binding FilterComponents}">
                                                                             <ItemsControl.Style>
                                                                                 <Style TargetType="ItemsControl">
                                                                                     <Setter Property="Visibility" Value="Visible" />
@@ -242,7 +260,7 @@
                                                                                         </Border>
 
                                                                                         <!--  Search Type Component  -->
-                                                                                        <Border Margin="0,0,2,0"
+                                                                                        <Border Margin="0,0,2,-4"
                                                                                                 Padding="4,2"
                                                                                                 Height="22"
                                                                                                 CornerRadius="2">
@@ -264,7 +282,7 @@
                                                                                         <!--  Value Components - Multiple Values or Single Value  -->
                                                                                         <Grid>
                                                                                             <!--  Multiple Value Items  -->
-                                                                                            <ItemsControl ItemsSource="{Binding ValueItems}" Margin="0,0,0,-4">
+                                                                                            <ItemsControl Margin="0,0,0,-4" ItemsSource="{Binding ValueItems}">
                                                                                                 <ItemsControl.Style>
                                                                                                     <Style TargetType="ItemsControl">
                                                                                                         <Setter Property="Visibility" Value="Collapsed" />
@@ -301,7 +319,7 @@
                                                                                             </ItemsControl>
 
                                                                                             <!--  Single Primary Value  -->
-                                                                                            <Border Margin="0,0,2,0"
+                                                                                            <Border Margin="0,0,2,-4"
                                                                                                     Padding="4,2"
                                                                                                     Height="22"
                                                                                                     CornerRadius="2">
@@ -491,10 +509,9 @@
                                                             </Border>
                                                             <TextBlock Foreground="{StaticResource BracketGradientBrush}"
                                                                        Text="]"
-                                                                       Margin="-6,0,0,0"
-                                                                       VerticalAlignment="Center"
+                                                                       Margin="-5,0,0,0"
                                                                        FontWeight="Thin"
-                                                                       FontSize="28" />
+                                                                       FontSize="32" />
                                                         </StackPanel>
 
                                                         <!--  Close Button  -->
@@ -503,14 +520,12 @@
                                                                 Cursor="Hand"
                                                                 Command="{Binding RemoveFilterCommand, RelativeSource={RelativeSource AncestorType=sdg:FilterPanel}}"
                                                                 CommandParameter="{Binding}"
-                                                                Margin="0,1,0,0"
+                                                                Margin="-2,10,0,0"
                                                                 HorizontalAlignment="Right"
                                                                 VerticalAlignment="Top"
-                                                                Width="12"
-                                                                Height="12"
                                                                 FontFamily="Segoe MDL2 Assets"
-                                                                FontSize="8"
-                                                                Content="&#xE8BB;"
+                                                                FontSize="12"
+                                                                Content="&#xEB90;"
                                                                 ToolTip="Remove Filter Chip">
                                                             <Button.Style>
                                                                 <Style BasedOn="{StaticResource TransparentFontIcon_Button_Style}" TargetType="Button">
@@ -541,12 +556,12 @@
                                         </ItemsControl.ItemTemplate>
                                     </ItemsControl>
                                 </Border>
-                                
+
                                 <!--  Fade Overlay for Overflow Effect  -->
-                                <Border x:Name="PART_FadeOverlay" 
-                                        HorizontalAlignment="Right" 
-                                        Width="20" 
-                                        Background="{StaticResource FadeGradient}">
+                                <Border x:Name="PART_FadeOverlay"
+                                        Background="{StaticResource FadeGradient}"
+                                        HorizontalAlignment="Right"
+                                        Width="60">
                                     <Border.Style>
                                         <Style TargetType="Border">
                                             <Setter Property="Visibility" Value="Collapsed" />
@@ -565,21 +580,29 @@
                             </Grid>
 
                             <!--  Action Buttons  -->
-                            <StackPanel Grid.Column="2"
-                                        Orientation="Horizontal"
-                                        Margin="8,0,0,0"
-                                        VerticalAlignment="Center">
-
+                            <StackPanel Grid.Column="2" Orientation="Horizontal">
+                                <StackPanel.Style>
+                                    <Style TargetType="{x:Type StackPanel}">
+                                        <Setter Property="VerticalAlignment" Value="Top" />
+                                        <Setter Property="Margin" Value="8,12,4,0" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsExpanded, RelativeSource={RelativeSource TemplatedParent}}" Value="False">
+                                                <Setter Property="VerticalAlignment" Value="Center" />
+                                                <Setter Property="Margin" Value="8,0,4,0" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </StackPanel.Style>
                                 <!--  Expand/Collapse Toggle Button  -->
                                 <Button x:Name="PART_ExpandButton"
+                                        Background="Transparent"
                                         Command="{Binding ToggleExpandCommand, RelativeSource={RelativeSource TemplatedParent}}"
                                         Margin="0,0,8,0"
-                                        Width="32"
-                                        Height="32"
+                                        FontWeight="ExtraBlack"
                                         FontSize="14">
                                     <Button.Style>
                                         <Style BasedOn="{StaticResource TransparentFontIcon_Button_Style}" TargetType="{x:Type Button}">
-                                            <Setter Property="Content" Value="&#xE898;" />
+                                            <Setter Property="Content" Value="&#xE712;" />
                                             <Setter Property="ToolTip" Value="Expand filter panel" />
                                             <Style.Triggers>
                                                 <DataTrigger Binding="{Binding IsExpanded, RelativeSource={RelativeSource TemplatedParent}}" Value="True">
@@ -587,11 +610,9 @@
                                                     <Setter Property="ToolTip" Value="Collapse filter panel" />
                                                 </DataTrigger>
                                                 <Trigger Property="IsMouseOver" Value="True">
-                                                    <Setter Property="Background" Value="#ebeced" />
                                                     <Setter Property="Foreground" Value="#1c1c1c" />
                                                 </Trigger>
                                                 <Trigger Property="IsPressed" Value="True">
-                                                    <Setter Property="Background" Value="#d4d5d6" />
                                                     <Setter Property="Foreground" Value="#000000" />
                                                 </Trigger>
                                             </Style.Triggers>
@@ -600,10 +621,10 @@
                                 </Button>
 
                                 <Button x:Name="PART_EditButton"
+                                        Background="Transparent"
                                         Command="{Binding EditFiltersCommand, RelativeSource={RelativeSource TemplatedParent}}"
                                         Margin="0,0,8,0"
-                                        Width="32"
-                                        Height="32"
+                                        FontWeight="ExtraBlack"
                                         Content="&#xE70F;"
                                         FontSize="14"
                                         ToolTip="Open advanced filter editor">
@@ -611,11 +632,9 @@
                                         <Style BasedOn="{StaticResource TransparentFontIcon_Button_Style}" TargetType="{x:Type Button}">
                                             <Style.Triggers>
                                                 <Trigger Property="IsMouseOver" Value="True">
-                                                    <Setter Property="Background" Value="#ebeced" />
                                                     <Setter Property="Foreground" Value="#1c1c1c" />
                                                 </Trigger>
                                                 <Trigger Property="IsPressed" Value="True">
-                                                    <Setter Property="Background" Value="#d4d5d6" />
                                                     <Setter Property="Foreground" Value="#000000" />
                                                 </Trigger>
                                             </Style.Triggers>
@@ -624,21 +643,18 @@
                                 </Button>
 
                                 <Button x:Name="PART_ClearAllButton"
+                                        Background="Transparent"
                                         Command="{Binding ClearAllFiltersCommand, RelativeSource={RelativeSource TemplatedParent}}"
-                                        Width="32"
-                                        Height="32"
-                                        Content="&#xE894;"
+                                        Content="&#xE653;"
                                         FontSize="14"
                                         ToolTip="Clear all filters">
                                     <Button.Style>
                                         <Style BasedOn="{StaticResource TransparentFontIcon_Button_Style}" TargetType="{x:Type Button}">
                                             <Style.Triggers>
                                                 <Trigger Property="IsMouseOver" Value="True">
-                                                    <Setter Property="Background" Value="#ebeced" />
                                                     <Setter Property="Foreground" Value="#CC0000" />
                                                 </Trigger>
                                                 <Trigger Property="IsPressed" Value="True">
-                                                    <Setter Property="Background" Value="#d4d5d6" />
                                                     <Setter Property="Foreground" Value="#990000" />
                                                 </Trigger>
                                             </Style.Triggers>
