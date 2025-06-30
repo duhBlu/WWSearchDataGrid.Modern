@@ -94,7 +94,7 @@
 
                                     <!--  FilterEditDialog specific buttons  -->
                                     <StackPanel Grid.Column="4" Orientation="Horizontal">
-                                        <Button Command="{Binding DataContext.RemoveSearchTemplateCommand, RelativeSource={RelativeSource AncestorType=sdg:FilterEditDialog}}"
+                                        <Button Command="{Binding RemoveSearchTemplateCommand, RelativeSource={RelativeSource AncestorType=sdg:FilterEditDialog}}"
                                                 CommandParameter="{Binding}"
                                                 Margin="0,0,4,0"
                                                 Style="{StaticResource TransparentFontIcon_Button_Style}"
@@ -102,7 +102,7 @@
                                                 ToolTip="Remove"
                                                 Padding="8"
                                                 Content="&#xE10A;" />
-                                        <Button Command="{Binding DataContext.AddSearchTemplateCommand, RelativeSource={RelativeSource AncestorType=sdg:FilterEditDialog}}"
+                                        <Button Command="{Binding AddSearchTemplateCommand, RelativeSource={RelativeSource AncestorType=sdg:FilterEditDialog}}"
                                                 CommandParameter="{Binding}"
                                                 Height="{Binding ActualWidth, RelativeSource={RelativeSource Self}}"
                                                 Padding="8"

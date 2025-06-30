@@ -129,31 +129,40 @@
                                                             <ColumnDefinition Width="Auto" />
                                                             <ColumnDefinition Width="Auto" />
                                                         </Grid.ColumnDefinitions>
-                                                        <Border Grid.Column="0"
-                                                                Background="Transparent"
-                                                                Padding="2"
-                                                                BorderThickness="1">
-                                                            <Border.BorderBrush>
-                                                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                                                                        <GradientStop Color="DimGray"    Offset="0.00" />
-                                                                        <GradientStop Color="DimGray"    Offset="0.02" />
-                                                                        <GradientStop Color="Transparent" Offset="0.02" />
-                                                                        <GradientStop Color="Transparent" Offset="0.98" />
-                                                                        <GradientStop Color="DimGray"    Offset="0.98" />
-                                                                        <GradientStop Color="DimGray"    Offset="1.00" />
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <StackPanel.Resources>
+                                                                <!--  if you still want a gradient on the brackets  -->
+                                                                <LinearGradientBrush x:Key="BracketGradientBrush" StartPoint="0,0" EndPoint="1,1">
+                                                                    <GradientStop Color="#989890" Offset="0" />
+                                                                    <GradientStop Color="#72726c" Offset="1" />
                                                                 </LinearGradientBrush>
-                                                            </Border.BorderBrush>
-                                                            <StackPanel Orientation="Horizontal" Margin="2">
+                                                            </StackPanel.Resources>
+                                                            <TextBlock Foreground="{StaticResource BracketGradientBrush}"
+                                                                       Text="["
+                                                                       Margin="0,0,2,0"
+                                                                       VerticalAlignment="Bottom"
+                                                                       FontSize="30"
+                                                                       FontWeight="Thin" />
+                                                            <Border Grid.Column="0"
+                                                                    Background="Transparent"
+                                                                    BorderBrush="Transparent"
+                                                                    BorderThickness="1"
+                                                                    Padding="2">
+
+                                                                <StackPanel Orientation="Horizontal" Margin="2">
+
+
+
 
                                                                     <!--  Column Name Component  -->
                                                                     <Border Background="#ffc69b"
-                                                                        Margin="0,0,2,0"
-                                                                        Padding="4,2"
-                                                                        CornerRadius="2">
+                                                                            Margin="0,0,2,0"
+                                                                            Padding="4,2"
+                                                                            CornerRadius="2">
                                                                         <TextBlock Foreground="Black"
-                                                                               Text="{Binding ColumnName}"
-                                                                               VerticalAlignment="Center"
-                                                                               FontWeight="SemiBold" />
+                                                                                   Text="{Binding ColumnName}"
+                                                                                   VerticalAlignment="Center"
+                                                                                   FontWeight="SemiBold" />
                                                                     </Border>
 
                                                                     <!--  Filter Components Collection with Fallback  -->
@@ -181,21 +190,21 @@
 
                                                                                         <!--  Conjunction (AND/OR) for multiple conditions  -->
                                                                                         <Border Background="Transparent"
-                                                                                            Visibility="{Binding Conjunction, Converter={StaticResource StringToVisibilityConverter}}"
-                                                                                            Margin="2,0,2,0"
-                                                                                            Padding="4,2"
-                                                                                            VerticalAlignment="Center"
-                                                                                            CornerRadius="2">
+                                                                                                Visibility="{Binding Conjunction, Converter={StaticResource StringToVisibilityConverter}}"
+                                                                                                Margin="2,0,2,0"
+                                                                                                Padding="4,2"
+                                                                                                VerticalAlignment="Center"
+                                                                                                CornerRadius="2">
                                                                                             <TextBlock Text="{Binding Conjunction}"
-                                                                                                   VerticalAlignment="Center"
-                                                                                                   FontWeight="Bold"
-                                                                                                   FontSize="10" />
+                                                                                                       VerticalAlignment="Center"
+                                                                                                       FontWeight="Bold"
+                                                                                                       FontSize="10" />
                                                                                         </Border>
 
                                                                                         <!--  Search Type Component  -->
                                                                                         <Border Margin="0,0,2,0"
-                                                                                            Padding="4,2"
-                                                                                            CornerRadius="2">
+                                                                                                Padding="4,2"
+                                                                                                CornerRadius="2">
                                                                                             <Border.Style>
                                                                                                 <Style TargetType="Border">
                                                                                                     <Setter Property="Background" Value="Transparent" />
@@ -207,8 +216,8 @@
                                                                                                 </Style>
                                                                                             </Border.Style>
                                                                                             <TextBlock Text="{Binding SearchTypeText}"
-                                                                                                   VerticalAlignment="Center"
-                                                                                                   FontSize="12" />
+                                                                                                       VerticalAlignment="Center"
+                                                                                                       FontSize="12" />
                                                                                         </Border>
 
                                                                                         <!--  Value Components - Multiple Values or Single Value  -->
@@ -236,8 +245,8 @@
                                                                                                 <ItemsControl.ItemTemplate>
                                                                                                     <DataTemplate>
                                                                                                         <Border Margin="0,0,2,0"
-                                                                                                            Padding="4,2"
-                                                                                                            CornerRadius="2">
+                                                                                                                Padding="4,2"
+                                                                                                                CornerRadius="2">
                                                                                                             <Border.Style>
                                                                                                                 <Style TargetType="Border">
                                                                                                                     <Setter Property="Background" Value="#bbe2c5" />
@@ -251,8 +260,8 @@
 
                                                                                             <!--  Single Primary Value  -->
                                                                                             <Border Margin="0,0,2,0"
-                                                                                                Padding="4,2"
-                                                                                                CornerRadius="2">
+                                                                                                    Padding="4,2"
+                                                                                                    CornerRadius="2">
                                                                                                 <Border.Style>
                                                                                                     <Style TargetType="Border">
                                                                                                         <Setter Property="Background" Value="#bbe2c5" />
@@ -276,18 +285,18 @@
 
                                                                                         <!--  Value Operator (e.g., "and" for Between operations)  -->
                                                                                         <Border Background="Transparent"
-                                                                                            Visibility="{Binding ValueOperatorText, Converter={StaticResource StringToVisibilityConverter}}"
-                                                                                            Margin="0,0,2,0"
-                                                                                            Padding="4,2"
-                                                                                            CornerRadius="2">
+                                                                                                Visibility="{Binding ValueOperatorText, Converter={StaticResource StringToVisibilityConverter}}"
+                                                                                                Margin="0,0,2,0"
+                                                                                                Padding="4,2"
+                                                                                                CornerRadius="2">
                                                                                             <TextBlock Text="{Binding ValueOperatorText}" VerticalAlignment="Center" />
                                                                                         </Border>
 
                                                                                         <!--  Secondary Value Component  -->
                                                                                         <Border Visibility="{Binding SecondaryValue, Converter={StaticResource StringToVisibilityConverter}}"
-                                                                                            Margin="0,0,2,0"
-                                                                                            Padding="4,2"
-                                                                                            CornerRadius="2">
+                                                                                                Margin="0,0,2,0"
+                                                                                                Padding="4,2"
+                                                                                                CornerRadius="2">
                                                                                             <Border.Style>
                                                                                                 <Style TargetType="Border">
                                                                                                     <Setter Property="Background" Value="#bbe2c5" />
@@ -321,8 +330,8 @@
 
                                                                             <!--  Fallback Search Type Component  -->
                                                                             <Border Margin="0,0,2,0"
-                                                                                Padding="4,2"
-                                                                                CornerRadius="2">
+                                                                                    Padding="4,2"
+                                                                                    CornerRadius="2">
                                                                                 <Border.Style>
                                                                                     <Style TargetType="Border">
                                                                                         <Setter Property="Background" Value="Transparent" />
@@ -361,10 +370,10 @@
                                                                                     </ItemsControl.ItemsPanel>
                                                                                     <ItemsControl.ItemTemplate>
                                                                                         <DataTemplate>
-                                                                                            <Border Margin="0,0,2,0"
-                                                                                                Padding="4,2"
-                                                                                                CornerRadius="2"
-                                                                                                Background="#bcd7e7">
+                                                                                            <Border Background="#bcd7e7"
+                                                                                                    Margin="0,0,2,0"
+                                                                                                    Padding="4,2"
+                                                                                                    CornerRadius="2">
                                                                                                 <TextBlock Text="{Binding}" VerticalAlignment="Center" />
                                                                                             </Border>
                                                                                         </DataTemplate>
@@ -373,8 +382,8 @@
 
                                                                                 <!--  Fallback Single Primary Value  -->
                                                                                 <Border Margin="0,0,2,0"
-                                                                                    Padding="4,2"
-                                                                                    CornerRadius="2">
+                                                                                        Padding="4,2"
+                                                                                        CornerRadius="2">
                                                                                     <Border.Style>
                                                                                         <Style TargetType="Border">
                                                                                             <Setter Property="Background" Value="LightBlue" />
@@ -402,18 +411,18 @@
 
                                                                             <!--  Fallback Value Operator  -->
                                                                             <Border Background="Transparent"
-                                                                                Visibility="{Binding ValueOperatorText, Converter={StaticResource StringToVisibilityConverter}}"
-                                                                                Margin="0,0,2,0"
-                                                                                Padding="4,2"
-                                                                                CornerRadius="2">
+                                                                                    Visibility="{Binding ValueOperatorText, Converter={StaticResource StringToVisibilityConverter}}"
+                                                                                    Margin="0,0,2,0"
+                                                                                    Padding="4,2"
+                                                                                    CornerRadius="2">
                                                                                 <TextBlock Text="{Binding ValueOperatorText}" VerticalAlignment="Center" />
                                                                             </Border>
 
                                                                             <!--  Fallback Secondary Value Component  -->
                                                                             <Border Visibility="{Binding SecondaryValue, Converter={StaticResource StringToVisibilityConverter}}"
-                                                                                Margin="0,0,2,0"
-                                                                                Padding="4,2"
-                                                                                CornerRadius="2">
+                                                                                    Margin="0,0,2,0"
+                                                                                    Padding="4,2"
+                                                                                    CornerRadius="2">
                                                                                 <Border.Style>
                                                                                     <Style TargetType="Border">
                                                                                         <Setter Property="Background" Value="LightBlue" />
@@ -429,22 +438,29 @@
 
                                                                         </StackPanel>
                                                                     </Grid>
-
                                                                 </StackPanel>
                                                             </Border>
+                                                            <TextBlock Foreground="{StaticResource BracketGradientBrush}"
+                                                                       Text="]"
+                                                                       Margin="-1,0,0,0"
+                                                                       
+                                                                       VerticalAlignment="Bottom"
+                                                                       FontWeight="Thin"
+                                                                       FontSize="30" />
+                                                        </StackPanel>
 
                                                         <!--  Close Button  -->
                                                         <Button Grid.Column="1"
+                                                                Background="Transparent"
                                                                 Cursor="Hand"
                                                                 Command="{Binding RemoveFilterCommand, RelativeSource={RelativeSource AncestorType=sdg:FilterPanel}}"
                                                                 CommandParameter="{Binding}"
+                                                                Margin="0,1,0,0"
                                                                 HorizontalAlignment="Right"
                                                                 VerticalAlignment="Top"
                                                                 Width="12"
                                                                 Height="12"
-                                                                Background="Transparent"
                                                                 FontFamily="Segoe MDL2 Assets"
-                                                                Margin="1,-2,0,0"
                                                                 FontSize="8"
                                                                 Content="&#xE8BB;"
                                                                 ToolTip="Remove Filter Chip">

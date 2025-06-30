@@ -307,7 +307,6 @@
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
@@ -353,48 +352,9 @@
                       IsThreeState="True"
                       Content="Select All" />
 
-            <!--  Expand/Collapse All Bar  -->
-            <StackPanel Grid.Row="3"
-                        Orientation="Horizontal"
-                        Margin="0,0,0,8">
-                <Button x:Name="ExpandAllButton"
-                        Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
-                        Margin="0,0,8,0"
-                        Padding="4,2"
-                        ToolTip="Expand All Groups">
-                    <StackPanel Orientation="Horizontal">
-                        <Path Fill="#666"
-                              Data="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z"
-                              Margin="0,0,4,0"
-                              Width="10"
-                              Height="10"
-                              Stretch="Uniform" />
-                        <TextBlock Foreground="#666"
-                                   Text="Expand All"
-                                   FontSize="11" />
-                    </StackPanel>
-                </Button>
-
-                <Button x:Name="CollapseAllButton"
-                        Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
-                        Padding="4,2"
-                        ToolTip="Collapse All Groups">
-                    <StackPanel Orientation="Horizontal">
-                        <Path Fill="#666"
-                              Data="M19,13H5V11H19V13Z"
-                              Margin="0,0,4,0"
-                              Width="10"
-                              Height="10"
-                              Stretch="Uniform" />
-                        <TextBlock Foreground="#666"
-                                   Text="Collapse All"
-                                   FontSize="11" />
-                    </StackPanel>
-                </Button>
-            </StackPanel>
 
             <!--  Virtualized TreeView  -->
-            <TreeView Grid.Row="4"
+            <TreeView Grid.Row="3"
                       BorderThickness="0"
                       ItemsSource="{Binding GroupedValues}"
                       VirtualizingPanel.IsVirtualizing="True"
@@ -498,7 +458,7 @@
             </TreeView>
 
             <!--  Selection Summary  -->
-            <Border Grid.Row="5"
+            <Border Grid.Row="4"
                     Background="#F5F5F5"
                     BorderBrush="#DDDDDD"
                     BorderThickness="0,1,0,0"
