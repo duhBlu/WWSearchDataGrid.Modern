@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Text;
 
 namespace WWSearchDataGrid.Modern.Core
@@ -144,12 +145,12 @@ namespace WWSearchDataGrid.Modern.Core
         /// <summary>
         /// Gets or sets the collection of filter components for complex filters with multiple conditions
         /// </summary>
-        public System.Collections.ObjectModel.ObservableCollection<FilterChipComponents> FilterComponents
+        public ObservableCollection<FilterChipComponents> FilterComponents
         {
             get
             {
                 if (filterComponents == null)
-                    filterComponents = new System.Collections.ObjectModel.ObservableCollection<FilterChipComponents>();
+                    filterComponents = new ObservableCollection<FilterChipComponents>();
                 return filterComponents;
             }
             set => SetProperty(value, ref filterComponents);

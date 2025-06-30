@@ -1,4 +1,5 @@
 using System;
+using System.Collections.ObjectModel;
 using System.Text.RegularExpressions;
 
 namespace WWSearchDataGrid.Modern.Core
@@ -290,7 +291,7 @@ namespace WWSearchDataGrid.Modern.Core
         /// <summary>
         /// Gets or sets the collection of individual values for multi-value filters
         /// </summary>
-        public System.Collections.ObjectModel.ObservableCollection<string> ValueItems { get; set; } = new System.Collections.ObjectModel.ObservableCollection<string>();
+        public ObservableCollection<string> ValueItems { get; set; } = new ObservableCollection<string>();
 
         /// <summary>
         /// Gets whether this component has multiple value items

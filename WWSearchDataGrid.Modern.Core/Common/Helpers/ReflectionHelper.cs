@@ -64,7 +64,7 @@ namespace WWSearchDataGrid.Modern.Core
             return ColumnDataType.String;
         }
 
-        private static bool IsNumericType(Type type)
+        public static bool IsNumericType(Type type)
         {
             return type == typeof(byte) || type == typeof(sbyte) ||
                    type == typeof(short) || type == typeof(ushort) ||
@@ -72,6 +72,13 @@ namespace WWSearchDataGrid.Modern.Core
                    type == typeof(long) || type == typeof(ulong) ||
                    type == typeof(float) || type == typeof(double) ||
                    type == typeof(decimal);
+        }
+
+        public static bool IsNumericValue(object value)
+        {
+            return value is byte || value is sbyte || value is short || value is ushort ||
+                   value is int || value is uint || value is long || value is ulong ||
+                   value is float || value is double || value is decimal;
         }
     }
 }

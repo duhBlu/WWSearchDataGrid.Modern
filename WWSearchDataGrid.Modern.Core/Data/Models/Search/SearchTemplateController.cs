@@ -566,9 +566,9 @@ namespace WWSearchDataGrid.Modern.Core
         /// Gets all filter components for display, including multiple search conditions with conjunctions
         /// </summary>
         /// <returns>Collection of all filter components</returns>
-        public System.Collections.Generic.List<FilterChipComponents> GetAllFilterComponents()
+        public List<FilterChipComponents> GetAllFilterComponents()
         {
-            var components = new System.Collections.Generic.List<FilterChipComponents>();
+            var components = new List<FilterChipComponents>();
 
             try
             {
@@ -632,13 +632,13 @@ namespace WWSearchDataGrid.Modern.Core
         /// Gets filter components for grouped filtering scenarios
         /// </summary>
         /// <returns>Collection of filter components representing the grouped filter</returns>
-        private System.Collections.Generic.List<FilterChipComponents> GetGroupedFilterComponents()
+        private List<FilterChipComponents> GetGroupedFilterComponents()
         {
             try
             {
                 if (GroupedFilterCombinations == null || !GroupedFilterCombinations.Any())
                 {
-                    return new System.Collections.Generic.List<FilterChipComponents>
+                    return new List<FilterChipComponents>
                     {
                         new FilterChipComponents
                         {
@@ -658,7 +658,7 @@ namespace WWSearchDataGrid.Modern.Core
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Error in GetGroupedFilterComponents: {ex.Message}");
-                return new System.Collections.Generic.List<FilterChipComponents>
+                return new List<FilterChipComponents>
                 {
                     new FilterChipComponents
                     {

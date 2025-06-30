@@ -157,7 +157,7 @@ namespace WWSearchDataGrid.Modern.Core
                     if (DateTime.TryParse(stringValue, out DateTime dateTimeValue))
                         return Convert.ChangeType(value, underlyingType);
                 }
-                else if (IsNumericType(underlyingType))
+                else if (ReflectionHelper.IsNumericType(underlyingType))
                 {
                     if (decimal.TryParse(stringValue, out decimal decimalValue))
                         return Convert.ChangeType(value, underlyingType);
@@ -275,7 +275,7 @@ namespace WWSearchDataGrid.Modern.Core
                 {
                     IsDateTime = true;
                 }
-                else if (IsNumericType(underlyingType))
+                else if (ReflectionHelper.IsNumericType(underlyingType))
                 {
                     IsNumeric = true;
                 }
@@ -306,7 +306,7 @@ namespace WWSearchDataGrid.Modern.Core
                 {
                     IsDateTime = true;
                 }
-                else if (IsNumericValue(valueToCheck) || decimal.TryParse(valueToCheck.ToString(), out _))
+                else if (ReflectionHelper.IsNumericValue(valueToCheck) || decimal.TryParse(valueToCheck.ToString(), out _))
                 {
                     IsNumeric = true;
                 }
@@ -324,23 +324,6 @@ namespace WWSearchDataGrid.Modern.Core
                 // Ultimate fallback
                 IsString = true;
             }
-        }
-
-        private bool IsNumericValue(object value)
-        {
-            return value is byte || value is sbyte || value is short || value is ushort ||
-                   value is int || value is uint || value is long || value is ulong ||
-                   value is float || value is double || value is decimal;
-        }
-
-        private bool IsNumericType(Type type)
-        {
-            return type == typeof(byte) || type == typeof(sbyte) ||
-                   type == typeof(short) || type == typeof(ushort) ||
-                   type == typeof(int) || type == typeof(uint) ||
-                   type == typeof(long) || type == typeof(ulong) ||
-                   type == typeof(float) || type == typeof(double) ||
-                   type == typeof(decimal);
         }
 
         #endregion

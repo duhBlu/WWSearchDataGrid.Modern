@@ -166,7 +166,7 @@ namespace WWSearchDataGrid.Modern.Core.Services
         {
             if (columnValues?.Any() == true)
             {
-                var firstNumericValue = columnValues.FirstOrDefault(v => v != null && IsNumericValue(v));
+                var firstNumericValue = columnValues.FirstOrDefault(v => v != null && ReflectionHelper.IsNumericValue(v));
                 if (firstNumericValue != null)
                 {
                     return firstNumericValue.GetType();
@@ -189,16 +189,6 @@ namespace WWSearchDataGrid.Modern.Core.Services
                 }
             }
             return typeof(string); // Fallback to string
-        }
-
-        /// <summary>
-        /// Checks if a value is numeric
-        /// </summary>
-        private bool IsNumericValue(object value)
-        {
-            return value is byte || value is sbyte || value is short || value is ushort ||
-                   value is int || value is uint || value is long || value is ulong ||
-                   value is float || value is double || value is decimal;
         }
     }
 }
