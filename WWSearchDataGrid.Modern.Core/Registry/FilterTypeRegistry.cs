@@ -36,16 +36,16 @@ namespace WWSearchDataGrid.Modern.Core
                     FilterInputTemplate.SingleComboBox, ColumnDataType.Number, ColumnDataType.DateTime),
 
                 [SearchType.Contains] = new FilterTypeMetadata(SearchType.Contains, "Contains",
-                    FilterInputTemplate.SingleComboBox, ColumnDataType.String),
+                    FilterInputTemplate.SingleComboBox, ColumnDataType.String, ColumnDataType.Number),
 
                 [SearchType.DoesNotContain] = new FilterTypeMetadata(SearchType.DoesNotContain, "Does not contain",
-                    FilterInputTemplate.SingleComboBox, ColumnDataType.String),
+                    FilterInputTemplate.SingleComboBox, ColumnDataType.String, ColumnDataType.Number),
 
                 [SearchType.StartsWith] = new FilterTypeMetadata(SearchType.StartsWith, "Starts with",
-                    FilterInputTemplate.SingleComboBox, ColumnDataType.String),
+                    FilterInputTemplate.SingleComboBox, ColumnDataType.String, ColumnDataType.Number),
 
                 [SearchType.EndsWith] = new FilterTypeMetadata(SearchType.EndsWith, "Ends with",
-                    FilterInputTemplate.SingleComboBox, ColumnDataType.String),
+                    FilterInputTemplate.SingleComboBox, ColumnDataType.String, ColumnDataType.Number),
 
                 [SearchType.IsLike] = new FilterTypeMetadata(SearchType.IsLike, "Is like",
                     FilterInputTemplate.SingleComboBox, ColumnDataType.String),

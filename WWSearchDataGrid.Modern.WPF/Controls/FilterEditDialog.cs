@@ -463,6 +463,12 @@ namespace WWSearchDataGrid.Modern.WPF
                     }
                 }
 
+                // Synchronize SearchControl states after applying changes
+                foreach (var columnInfo in FilteredColumns)
+                {
+                    SynchronizeSearchControlState(columnInfo);
+                }
+
                 // Apply filters to the data grid
                 SourceDataGrid?.FilterItemsSource();
                 SourceDataGrid?.UpdateFilterPanel();
@@ -470,6 +476,40 @@ namespace WWSearchDataGrid.Modern.WPF
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Error applying changes: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Synchronizes SearchControl state with the applied filter changes
+        /// </summary>
+        private void SynchronizeSearchControlState(FilteredColumnInfo columnInfo)
+        {
+            try
+            {
+                if (columnInfo?.SearchControl == null || columnInfo.OriginalController == null)
+                    return;
+
+                var searchControl = columnInfo.SearchControl;
+                var controller = columnInfo.OriginalController;
+
+                // Check if we have advanced filters (custom expressions)
+                bool hasAdvancedFilter = controller.HasCustomExpression;
+
+                if (hasAdvancedFilter)
+                {
+                    // Clear the search text when advanced filters are applied
+                    searchControl.SearchText = string.Empty;
+                    searchControl.HasAdvancedFilter = true;
+                }
+                else
+                {
+                    // No advanced filters - allow normal text filtering
+                    searchControl.HasAdvancedFilter = false;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error synchronizing SearchControl state: {ex.Message}");
             }
         }
 
