@@ -1125,7 +1125,7 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
-        /// Apply the filter and close the window
+        /// Apply the filter and close the window using intelligent filter selection
         /// </summary>
         private void ApplyFilter()
         {
@@ -1147,23 +1147,12 @@ namespace WWSearchDataGrid.Modern.WPF
                 }
             }
             
-            FilterApplicationResult result;
+            // INTELLIGENT FILTER APPLICATION: Use content-based decision making instead of tab-based
+            var selectedTabIndex = tabControl?.SelectedIndex ?? -1;
+            System.Diagnostics.Debug.WriteLine($"ApplyFilter: tabControl.SelectedIndex = {selectedTabIndex} (provided as context only)");
             
-            // Check which tab is active
-            System.Diagnostics.Debug.WriteLine($"ApplyFilter: tabControl.SelectedIndex = {tabControl?.SelectedIndex}");
-            if (tabControl?.SelectedIndex == 1) // Filter Values tab
-            {
-                // Apply filter based on selected values using the service
-                System.Diagnostics.Debug.WriteLine($"ApplyFilter: Using VALUE-BASED filter path");
-                result = _filterApplicationService.ApplyValueBasedFilter(
-                    FilterValueViewModel, SearchTemplateController, ColumnDataType);
-            }
-            else // Filter Rules tab
-            {
-                // Apply rule-based filter using the service
-                System.Diagnostics.Debug.WriteLine($"ApplyFilter: Using RULE-BASED filter path with {SearchTemplateController.SearchGroups.Count} groups");
-                result = _filterApplicationService.ApplyRuleBasedFilter(SearchTemplateController);
-            }
+            var result = _filterApplicationService.ApplyIntelligentFilter(
+                FilterValueViewModel, SearchTemplateController, ColumnDataType, selectedTabIndex);
             
             if (!result.IsSuccess)
             {
@@ -1172,7 +1161,7 @@ namespace WWSearchDataGrid.Modern.WPF
             }
             
             // Debug logging after applying filter
-            System.Diagnostics.Debug.WriteLine($"ApplyFilter: Filter applied successfully. HasCustomExpression = {result.HasCustomExpression}");
+            System.Diagnostics.Debug.WriteLine($"ApplyFilter: Filter applied successfully using {result.FilterType}. HasCustomExpression = {result.HasCustomExpression}");
 
             // Determine if we're in per-column or global mode
             if (DataContext is SearchControl searchControl)

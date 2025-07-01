@@ -11,8 +11,234 @@ namespace WWSearchDataGrid.Modern.WPF.Services
     /// </summary>
     public class FilterApplicationService : IFilterApplicationService
     {
+        #region Filter Context Detection
+
         /// <summary>
-        /// Applies value-based filtering from selected filter values
+        /// Determines if the SearchTemplateController has meaningful custom filter rules
+        /// </summary>
+        private bool HasCustomFilterRules(SearchTemplateController searchTemplateController)
+        {
+            if (searchTemplateController == null)
+                return false;
+
+            // Check if we have a custom expression already set
+            if (searchTemplateController.HasCustomExpression)
+            {
+                System.Diagnostics.Debug.WriteLine("HasCustomFilterRules: Found HasCustomExpression = true");
+                return true;
+            }
+
+            // Check if we have any groups with meaningful templates
+            if (searchTemplateController.SearchGroups?.Any() == true)
+            {
+                foreach (var group in searchTemplateController.SearchGroups)
+                {
+                    if (group.SearchTemplates?.Any() == true)
+                    {
+                        foreach (var template in group.SearchTemplates)
+                        {
+                            // Check if template has configured search criteria
+                            if (HasMeaningfulSearchCriteria(template))
+                            {
+                                System.Diagnostics.Debug.WriteLine($"HasCustomFilterRules: Found meaningful template with SearchType = {template.SearchType}");
+                                return true;
+                            }
+                        }
+                    }
+                }
+            }
+
+            System.Diagnostics.Debug.WriteLine("HasCustomFilterRules: No custom rules found");
+            return false;
+        }
+
+        /// <summary>
+        /// Determines if a search template has meaningful search criteria configured
+        /// </summary>
+        private bool HasMeaningfulSearchCriteria(SearchTemplate template)
+        {
+            if (template == null)
+                return false;
+
+            // Check if template has a non-default search type with values
+            switch (template.SearchType)
+            {
+                case SearchType.Contains:
+                case SearchType.DoesNotContain:
+                case SearchType.StartsWith:
+                case SearchType.EndsWith:
+                case SearchType.Equals:
+                case SearchType.NotEquals:
+                case SearchType.LessThan:
+                case SearchType.LessThanOrEqualTo:
+                case SearchType.GreaterThan:
+                case SearchType.GreaterThanOrEqualTo:
+                case SearchType.IsLike:
+                case SearchType.IsNotLike:
+                    return !string.IsNullOrEmpty(template.SelectedValue?.ToString());
+
+                case SearchType.Between:
+                case SearchType.NotBetween:
+                case SearchType.BetweenDates:
+                    return template.SelectedValue != null && template.SelectedSecondaryValue != null;
+
+                case SearchType.IsAnyOf:
+                case SearchType.IsNoneOf:
+                case SearchType.IsOnAnyOfDates:
+                    return template.SelectedValues?.Any() == true;
+
+                case SearchType.IsNull:
+                case SearchType.IsNotNull:
+                case SearchType.IsEmpty:
+                case SearchType.IsNotEmpty:
+                case SearchType.Yesterday:
+                case SearchType.Today:
+                case SearchType.AboveAverage:
+                case SearchType.BelowAverage:
+                case SearchType.Unique:
+                case SearchType.Duplicate:
+                    return true; // These don't need values
+
+                case SearchType.DateInterval:
+                    return template.SelectedValue != null; // Should have interval type
+
+                case SearchType.TopN:
+                case SearchType.BottomN:
+                    return template.SelectedValue != null && int.TryParse(template.SelectedValue.ToString(), out var n) && n > 0;
+
+                case SearchType.GroupedInclusion:
+                case SearchType.GroupedExclusion:
+                case SearchType.GroupedCombination:
+                    return true; // These are complex grouping operations that are meaningful
+
+                default:
+                    return false;
+            }
+        }
+
+        /// <summary>
+        /// Determines if filter value selections represent actual filtering intent
+        /// </summary>
+        private bool HasMeaningfulValueSelections(FilterValueViewModel filterValueViewModel)
+        {
+            if (filterValueViewModel == null)
+                return false;
+
+            var allValues = filterValueViewModel.GetAllValues();
+            var selectedItems = allValues.Where(item => item.IsSelected).ToList();
+
+            // If no values or all values selected, this is not meaningful filtering
+            if (!selectedItems.Any() || selectedItems.Count == allValues.Count)
+            {
+                System.Diagnostics.Debug.WriteLine($"HasMeaningfulValueSelections: {selectedItems.Count}/{allValues.Count} selected - not meaningful");
+                return false;
+            }
+
+            System.Diagnostics.Debug.WriteLine($"HasMeaningfulValueSelections: {selectedItems.Count}/{allValues.Count} selected - meaningful");
+            return true;
+        }
+
+        /// <summary>
+        /// Determines if rule-based filtering should take precedence over value-based filtering
+        /// </summary>
+        private bool ShouldPreferRuleBasedFiltering(SearchTemplateController searchTemplateController, FilterValueViewModel filterValueViewModel)
+        {
+            var hasCustomRules = HasCustomFilterRules(searchTemplateController);
+            var hasMeaningfulValues = HasMeaningfulValueSelections(filterValueViewModel);
+
+            System.Diagnostics.Debug.WriteLine($"ShouldPreferRuleBasedFiltering: hasCustomRules={hasCustomRules}, hasMeaningfulValues={hasMeaningfulValues}");
+
+            // If we have custom rules and no meaningful value selections, prefer rules
+            if (hasCustomRules && !hasMeaningfulValues)
+            {
+                System.Diagnostics.Debug.WriteLine("ShouldPreferRuleBasedFiltering: Preferring rules - has custom rules but no meaningful values");
+                return true;
+            }
+
+            // If we have custom rules and meaningful value selections, still prefer rules to preserve custom expressions
+            // This prevents operator changes from being lost when "all values selected"
+            if (hasCustomRules && hasMeaningfulValues)
+            {
+                System.Diagnostics.Debug.WriteLine("ShouldPreferRuleBasedFiltering: Preferring rules - has both custom rules and meaningful values");
+                return true;
+            }
+
+            System.Diagnostics.Debug.WriteLine("ShouldPreferRuleBasedFiltering: Preferring value-based filtering");
+            return false;
+        }
+
+        #endregion
+
+        #region Intelligent Filter Application
+
+        /// <summary>
+        /// Intelligently applies the most appropriate filter method based on content rather than UI state
+        /// </summary>
+        public FilterApplicationResult ApplyIntelligentFilter(
+            FilterValueViewModel filterValueViewModel,
+            SearchTemplateController searchTemplateController,
+            ColumnDataType columnDataType,
+            int selectedTabIndex = -1)
+        {
+            try
+            {
+                if (searchTemplateController == null)
+                {
+                    return FilterApplicationResult.Failure("Search template controller is null");
+                }
+
+                var hasCustomRules = HasCustomFilterRules(searchTemplateController);
+                var hasMeaningfulValues = HasMeaningfulValueSelections(filterValueViewModel);
+                var isValuesTabSelected = selectedTabIndex == 1;
+
+                System.Diagnostics.Debug.WriteLine($"ApplyIntelligentFilter: hasCustomRules={hasCustomRules}, hasMeaningfulValues={hasMeaningfulValues}, isValuesTabSelected={isValuesTabSelected}");
+
+                // Decision matrix for intelligent filtering
+                if (hasCustomRules && !hasMeaningfulValues)
+                {
+                    // Custom rules exist but no meaningful value selections - use rules
+                    System.Diagnostics.Debug.WriteLine("ApplyIntelligentFilter: Using rule-based filtering - custom rules without meaningful values");
+                    return ApplyRuleBasedFilter(searchTemplateController);
+                }
+                else if (hasCustomRules && hasMeaningfulValues)
+                {
+                    // Both custom rules and meaningful values exist
+                    if (isValuesTabSelected)
+                    {
+                        // User is on values tab - but still preserve rules if they exist
+                        System.Diagnostics.Debug.WriteLine("ApplyIntelligentFilter: Values tab selected but custom rules exist - preserving rules");
+                        return ApplyRuleBasedFilter(searchTemplateController);
+                    }
+                    else
+                    {
+                        // User is on rules tab - use rules
+                        System.Diagnostics.Debug.WriteLine("ApplyIntelligentFilter: Using rule-based filtering - rules tab with custom rules");
+                        return ApplyRuleBasedFilter(searchTemplateController);
+                    }
+                }
+                else if (!hasCustomRules && hasMeaningfulValues)
+                {
+                    // No custom rules but meaningful value selections - use values
+                    System.Diagnostics.Debug.WriteLine("ApplyIntelligentFilter: Using value-based filtering - meaningful values without custom rules");
+                    return ApplyValueBasedFilter(filterValueViewModel, searchTemplateController, columnDataType);
+                }
+                else
+                {
+                    // No custom rules and no meaningful values - clear filter
+                    System.Diagnostics.Debug.WriteLine("ApplyIntelligentFilter: Clearing filters - no custom rules or meaningful values");
+                    return ClearAllFilters(searchTemplateController);
+                }
+            }
+            catch (Exception ex)
+            {
+                return FilterApplicationResult.Failure($"Error applying intelligent filter: {ex.Message}");
+            }
+        }
+
+        #endregion
+
+        /// <summary>
+        /// Applies value-based filtering from selected filter values with intelligent rule preservation
         /// </summary>
         public FilterApplicationResult ApplyValueBasedFilter(
             FilterValueViewModel filterValueViewModel,
@@ -31,6 +257,13 @@ namespace WWSearchDataGrid.Modern.WPF.Services
                     return FilterApplicationResult.Failure("Search template controller is null");
                 }
 
+                // INTELLIGENT DECISION LOGIC: Check if we should prefer rule-based filtering instead
+                if (ShouldPreferRuleBasedFiltering(searchTemplateController, filterValueViewModel))
+                {
+                    System.Diagnostics.Debug.WriteLine("ApplyValueBasedFilter: Delegating to rule-based filtering due to existing custom rules");
+                    return ApplyRuleBasedFilter(searchTemplateController);
+                }
+
                 // Check if this is grouped filtering
                 if (filterValueViewModel is GroupedTreeViewFilterValueViewModel groupedViewModel && 
                     groupedViewModel.IsGroupedFiltering)
@@ -42,11 +275,20 @@ namespace WWSearchDataGrid.Modern.WPF.Services
                 var allValues = filterValueViewModel.GetAllValues();
                 var selectedItems = allValues.Where(item => item.IsSelected).ToList();
 
-                // Check if all items are selected
+                // Enhanced logic: Only clear if no custom rules exist AND all items are selected
                 if (selectedItems.Count == allValues.Count && allValues.Count > 0)
                 {
-                    // All items selected - clear the filter instead of creating one
-                    return ClearAllFilters(searchTemplateController);
+                    // Check one more time for custom rules before clearing
+                    if (HasCustomFilterRules(searchTemplateController))
+                    {
+                        System.Diagnostics.Debug.WriteLine("ApplyValueBasedFilter: All values selected but custom rules exist - preserving rules");
+                        return ApplyRuleBasedFilter(searchTemplateController);
+                    }
+                    else
+                    {
+                        System.Diagnostics.Debug.WriteLine("ApplyValueBasedFilter: All values selected and no custom rules - clearing filter");
+                        return ClearAllFilters(searchTemplateController);
+                    }
                 }
                 else if (selectedItems.Any())
                 {
@@ -54,7 +296,7 @@ namespace WWSearchDataGrid.Modern.WPF.Services
                     var optimizationResult = FilterSelectionOptimizer.OptimizeSelections(
                         allValues, selectedItems, columnDataType);
 
-                    var operatorName = searchTemplateController.SearchGroups.FirstOrDefault().OperatorName;
+                    var operatorName = searchTemplateController.SearchGroups.FirstOrDefault()?.OperatorName ?? "And";
 
                     // Clear and recreate more efficiently
                     searchTemplateController.SearchGroups.Clear();
@@ -90,8 +332,17 @@ namespace WWSearchDataGrid.Modern.WPF.Services
                 }
                 else
                 {
-                    // No items selected - also clear filter
-                    return ClearAllFilters(searchTemplateController);
+                    // No items selected - check for custom rules before clearing
+                    if (HasCustomFilterRules(searchTemplateController))
+                    {
+                        System.Diagnostics.Debug.WriteLine("ApplyValueBasedFilter: No values selected but custom rules exist - preserving rules");
+                        return ApplyRuleBasedFilter(searchTemplateController);
+                    }
+                    else
+                    {
+                        System.Diagnostics.Debug.WriteLine("ApplyValueBasedFilter: No values selected and no custom rules - clearing filter");
+                        return ClearAllFilters(searchTemplateController);
+                    }
                 }
             }
             catch (Exception ex)

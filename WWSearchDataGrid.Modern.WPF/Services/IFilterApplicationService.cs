@@ -49,6 +49,20 @@ namespace WWSearchDataGrid.Modern.WPF.Services
         /// <param name="searchTemplateController">Search template controller to clear</param>
         /// <returns>Filter application result</returns>
         FilterApplicationResult ClearAllFilters(SearchTemplateController searchTemplateController);
+
+        /// <summary>
+        /// Intelligently applies the most appropriate filter method based on content rather than UI state
+        /// </summary>
+        /// <param name="filterValueViewModel">Filter value view model containing selections</param>
+        /// <param name="searchTemplateController">Search template controller to update</param>
+        /// <param name="columnDataType">Column data type for optimization</param>
+        /// <param name="selectedTabIndex">Currently selected tab index for context (optional)</param>
+        /// <returns>Filter application result</returns>
+        FilterApplicationResult ApplyIntelligentFilter(
+            FilterValueViewModel filterValueViewModel,
+            SearchTemplateController searchTemplateController,
+            ColumnDataType columnDataType,
+            int selectedTabIndex = -1);
     }
 
     /// <summary>
