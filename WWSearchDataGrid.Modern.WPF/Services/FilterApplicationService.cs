@@ -54,9 +54,11 @@ namespace WWSearchDataGrid.Modern.WPF.Services
                     var optimizationResult = FilterSelectionOptimizer.OptimizeSelections(
                         allValues, selectedItems, columnDataType);
 
+                    var operatorName = searchTemplateController.SearchGroups.FirstOrDefault().OperatorName;
+
                     // Clear and recreate more efficiently
                     searchTemplateController.SearchGroups.Clear();
-                    var group = new SearchTemplateGroup();
+                    var group = new SearchTemplateGroup() { OperatorName = operatorName };
                     searchTemplateController.SearchGroups.Add(group);
 
                     var template = new SearchTemplate(columnDataType)

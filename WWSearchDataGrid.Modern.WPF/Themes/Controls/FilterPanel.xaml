@@ -173,7 +173,7 @@
                                                                FontSize="12">
                                                         <TextBlock.Style>
                                                             <Style TargetType="{x:Type TextBlock}">
-                                                                <Setter Property="Margin" Value="0,0,8,-4" />
+                                                                <Setter Property="Margin" Value="0,0,12,-4" />
                                                                 <Style.Triggers>
                                                                     <Trigger Property="Text" Value="">
                                                                         <Setter Property="Margin" Value="0" />
@@ -249,7 +249,7 @@
                                                                                         <!--  Conjunction (AND/OR) for multiple conditions  -->
                                                                                         <Border Background="Transparent"
                                                                                                 Visibility="{Binding Conjunction, Converter={StaticResource StringToVisibilityConverter}}"
-                                                                                                Margin="2,0,2,0"
+                                                                                                Margin="2,0,2,-4"
                                                                                                 Padding="4,2"
                                                                                                 VerticalAlignment="Center"
                                                                                                 CornerRadius="2">
