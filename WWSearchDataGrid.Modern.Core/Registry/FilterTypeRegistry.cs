@@ -134,6 +134,30 @@ namespace WWSearchDataGrid.Modern.Core
             return Registry.Values.Where(m => m.SupportedDataTypes.Contains(dataType));
         }
 
+        /// <summary>
+        /// Gets filter types for a data type, optionally filtering out null-related search types for non-nullable types
+        /// </summary>
+        /// <param name="dataType">The column data type</param>
+        /// <param name="isNullable">Whether the column type allows null values</param>
+        /// <returns>Filtered collection of filter type metadata</returns>
+        public static IEnumerable<FilterTypeMetadata> GetFiltersForDataType(ColumnDataType dataType, bool isNullable)
+        {
+            var baseFilters = Registry.Values.Where(m => m.SupportedDataTypes.Contains(dataType));
+
+            // If the type is not nullable, filter out null-related search types
+            if (!isNullable)
+            {
+                baseFilters = baseFilters.Where(m => 
+                    m.SearchType != SearchType.IsNull && 
+                    m.SearchType != SearchType.IsNotNull &&
+                    // For non-nullable non-string types, also exclude IsEmpty/IsNotEmpty
+                    (dataType == ColumnDataType.String || 
+                     (m.SearchType != SearchType.IsEmpty && m.SearchType != SearchType.IsNotEmpty)));
+            }
+
+            return baseFilters;
+        }
+
         public static bool IsValidForDataType(SearchType searchType, ColumnDataType dataType)
         {
             var metadata = GetMetadata(searchType);

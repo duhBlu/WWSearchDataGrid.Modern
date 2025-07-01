@@ -80,5 +80,51 @@ namespace WWSearchDataGrid.Modern.Core
                    value is int || value is uint || value is long || value is ulong ||
                    value is float || value is double || value is decimal;
         }
+
+        /// <summary>
+        /// Determines if a Type allows null values
+        /// </summary>
+        /// <param name="type">The type to check</param>
+        /// <returns>True if the type can be null, false otherwise</returns>
+        public static bool IsNullableType(Type type)
+        {
+            if (type == null)
+                return false;
+
+            // Reference types (including string) are always nullable
+            if (!type.IsValueType)
+                return true;
+
+            // Check if it's a nullable value type (Nullable<T>)
+            return Nullable.GetUnderlyingType(type) != null;
+        }
+
+        /// <summary>
+        /// Determines if a Type allows null values by examining column values
+        /// </summary>
+        /// <param name="columnValues">Column values to analyze for null presence and actual types</param>
+        /// <returns>True if the type can be null, false otherwise</returns>
+        public static bool IsNullableFromValues(IEnumerable<object> columnValues)
+        {
+            if (columnValues == null)
+                return true;
+
+            var valuesList = columnValues.ToList();
+            
+            // If we have null values in the data, the type must be nullable
+            if (valuesList.Any(v => v == null))
+                return true;
+
+            // If we have no values, assume nullable
+            if (!valuesList.Any())
+                return true;
+
+            // Get the actual type from the first non-null value
+            var firstValue = valuesList.FirstOrDefault(v => v != null);
+            if (firstValue == null)
+                return true;
+
+            return IsNullableType(firstValue.GetType());
+        }
     }
 }
