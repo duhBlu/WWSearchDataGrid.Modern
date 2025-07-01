@@ -167,7 +167,6 @@
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="Auto" />
                                         <ColumnDefinition Width="Auto" />
-                                        <ColumnDefinition Width="Auto" />
                                         <ColumnDefinition Width="*" />
                                         <ColumnDefinition Width="Auto" />
                                     </Grid.ColumnDefinitions>
@@ -180,20 +179,10 @@
                                                FontFamily="Segoe MDL2 Assets"
                                                ToolTip="Grip Handle" />
 
-                                    <ComboBox Style="{StaticResource Default_ComboBox_Style}"
-                                              Grid.Column="1"
-                                              Visibility="{Binding IsOperatorVisible, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                              Margin="0,0,8,0"
-                                              VerticalContentAlignment="Center"
-                                              Width="80"
-                                              SelectedItem="{Binding OperatorName}">
-                                        <sys:String>And</sys:String>
-                                        <sys:String>Or</sys:String>
-                                    </ComboBox>
 
                                     <ComboBox x:Name="PART_SearchTypeCombo"
                                               Style="{StaticResource Default_ComboBox_Style}"
-                                              Grid.Column="2"
+                                              Grid.Column="1"
                                               Margin="0,0,8,0"
                                               VerticalContentAlignment="Center"
                                               Width="180"
@@ -216,7 +205,7 @@
                                     </ComboBox>
 
                                     <!--  AdvancedFilterControl specific buttons  -->
-                                    <StackPanel Grid.Column="4" Orientation="Horizontal">
+                                    <StackPanel Grid.Column="3" Orientation="Horizontal">
                                         <Button Style="{StaticResource TransparentFontIcon_Button_Style}"
                                                 Command="{Binding RemoveSearchTemplateCommand, RelativeSource={RelativeSource AncestorType=sdg:AdvancedFilterControl}}"
                                                 CommandParameter="{Binding}"
@@ -294,14 +283,33 @@
                             BorderThickness="{TemplateBinding BorderThickness}">
                         <Grid Margin="5,0,5,10">
                             <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
                                 <RowDefinition Height="*" />
                                 <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
 
+                            <!--  Operator ComboBox  -->
+                            <StackPanel Grid.Row="0" 
+                                        Orientation="Horizontal" 
+                                        Margin="0,5,0,10"
+                                        Visibility="{Binding IsOperatorVisible, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                <TextBlock Text="Combine with previous filters using:" 
+                                           VerticalAlignment="Center" 
+                                           Margin="0,0,8,0" />
+                                <ComboBox x:Name="PART_OperatorComboBox"
+                                          Style="{StaticResource Default_ComboBox_Style}"
+                                          Width="80"
+                                          VerticalContentAlignment="Center"
+                                          SelectedItem="{Binding GroupOperatorName, RelativeSource={RelativeSource TemplatedParent}}">
+                                    <sys:String>And</sys:String>
+                                    <sys:String>Or</sys:String>
+                                </ComboBox>
+                            </StackPanel>
+
                             <!--  Tab Control  -->
                             <TabControl x:Name="PART_TabControl"
                                         Style="{StaticResource Default_TabControlPivot_Style}"
-                                        Grid.Row="0">
+                                        Grid.Row="1">
                                 <!--  Filter Rules Tab  -->
                                 <TabItem Header="Filter Rules">
                                     <ScrollViewer VerticalScrollBarVisibility="Auto">

@@ -116,13 +116,22 @@ namespace WWSearchDataGrid.Modern.Core
         {
             get
             {
-                return SelectedValue != null ||
-                       SelectedSecondaryValue != null ||
-                       SearchType != SearchType.Contains ||
-                       (SearchType == SearchType.IsAnyOf && SelectedValues.Any()) ||
-                       (SearchType == SearchType.IsNoneOf && SelectedValues.Any()) ||
-                       (SearchType == SearchType.IsOnAnyOfDates && SelectedDates.Any()) ||
-                       (SearchType == SearchType.DateInterval && DateIntervals.Any(i => i.IsSelected));
+                var hasSelectedValue = SelectedValue != null;
+                var hasSelectedSecondaryValue = SelectedSecondaryValue != null;
+                var isNonDefaultSearchType = SearchType != SearchType.Contains;
+                var hasSelectedValues = (SearchType == SearchType.IsAnyOf && SelectedValues.Any()) ||
+                                      (SearchType == SearchType.IsNoneOf && SelectedValues.Any());
+                var hasSelectedDates = SearchType == SearchType.IsOnAnyOfDates && SelectedDates.Any();
+                var hasSelectedDateIntervals = SearchType == SearchType.DateInterval && DateIntervals.Any(i => i.IsSelected);
+                
+                var result = hasSelectedValue || hasSelectedSecondaryValue || isNonDefaultSearchType || 
+                           hasSelectedValues || hasSelectedDates || hasSelectedDateIntervals;
+                
+                System.Diagnostics.Debug.WriteLine($"SearchTemplate.HasCustomFilter: SearchType={SearchType}, SelectedValue={SelectedValue}, result={result}");
+                System.Diagnostics.Debug.WriteLine($"  hasSelectedValue={hasSelectedValue}, hasSelectedSecondaryValue={hasSelectedSecondaryValue}");
+                System.Diagnostics.Debug.WriteLine($"  isNonDefaultSearchType={isNonDefaultSearchType}, hasSelectedValues={hasSelectedValues}");
+                
+                return result;
             }
         }
 

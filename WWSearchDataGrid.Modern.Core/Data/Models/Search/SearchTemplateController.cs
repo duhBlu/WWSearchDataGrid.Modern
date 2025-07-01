@@ -344,6 +344,8 @@ namespace WWSearchDataGrid.Modern.Core
         {
             try
             {
+                System.Diagnostics.Debug.WriteLine($"UpdateFilterExpression: Starting with {SearchGroups.Count} search groups");
+                
                 // Determine target column type
                 if (forceTargetTypeAsString)
                 {
@@ -354,6 +356,8 @@ namespace WWSearchDataGrid.Modern.Core
                     targetColumnType = _filterExpressionBuilder.DetermineTargetColumnType(ColumnDataType, ColumnValues);
                 }
 
+                System.Diagnostics.Debug.WriteLine($"UpdateFilterExpression: About to call BuildFilterExpression with {SearchGroups.Count} groups");
+                
                 // Use the filter expression builder service
                 var result = _filterExpressionBuilder.BuildFilterExpression(SearchGroups, targetColumnType, forceTargetTypeAsString);
                 

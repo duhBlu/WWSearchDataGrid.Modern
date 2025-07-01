@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
+using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
@@ -20,7 +21,7 @@ namespace WWSearchDataGrid.Modern.WPF
     /// <summary>
     /// Enhanced advanced filter control with tabbed interface
     /// </summary>
-    public class AdvancedFilterControl : Control
+    public class AdvancedFilterControl : Control, INotifyPropertyChanged
     {
         #region Fields
 
@@ -32,6 +33,7 @@ namespace WWSearchDataGrid.Modern.WPF
         private TextBox valueSearchBox;
         private TextBlock valuesSummary;
         private ColumnDataType columnDataType;
+        private ComboBox operatorComboBox;
 
         private readonly ColumnValueCache _cache = ColumnValueCache.Instance;
         private readonly IFilterApplicationService _filterApplicationService;
@@ -39,6 +41,9 @@ namespace WWSearchDataGrid.Modern.WPF
         private TabItem _pendingTab;
         private bool _isInitialized;
         private string _columnKey;
+        
+        // Timer for debouncing operator visibility updates
+        private DispatcherTimer _operatorVisibilityUpdateTimer;
 
         #endregion
 
@@ -56,6 +61,13 @@ namespace WWSearchDataGrid.Modern.WPF
         public static readonly DependencyProperty GroupByColumnProperty =
             DependencyProperty.RegisterAttached("GroupByColumn", typeof(string), typeof(AdvancedFilterControl),
                 new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.Inherits));
+
+        /// <summary>
+        /// Dependency property for controlling operator ComboBox visibility
+        /// </summary>
+        public static readonly DependencyProperty IsOperatorVisibleProperty =
+            DependencyProperty.Register(nameof(IsOperatorVisible), typeof(bool), typeof(AdvancedFilterControl),
+                new PropertyMetadata(false));
 
         #endregion Dependency Properties
 
@@ -99,6 +111,72 @@ namespace WWSearchDataGrid.Modern.WPF
         public string ValueSelectionSummary => FilterValueViewModel?.GetSelectionSummary() ?? "No values selected";
 
         /// <summary>
+        /// Gets or sets whether the operator ComboBox is visible
+        /// </summary>
+        public bool IsOperatorVisible
+        {
+            get => (bool)GetValue(IsOperatorVisibleProperty);
+            set => SetValue(IsOperatorVisibleProperty, value);
+        }
+
+        /// <summary>
+        /// Gets or sets the operator name for the first search group (safe access)
+        /// </summary>
+        public string GroupOperatorName
+        {
+            get
+            {
+                if (SearchTemplateController?.SearchGroups?.Count > 0)
+                {
+                    return SearchTemplateController.SearchGroups[0].OperatorName ?? "And";
+                }
+                return "And";
+            }
+            set
+            {
+                if (SearchTemplateController?.SearchGroups?.Count > 0)
+                {
+                    var currentValue = SearchTemplateController.SearchGroups[0].OperatorName;
+                    if (currentValue != value)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"GroupOperatorName: Changing from '{currentValue}' to '{value}'");
+                        
+                        // Log filter state BEFORE change
+                        var firstGroup = SearchTemplateController.SearchGroups[0];
+                        System.Diagnostics.Debug.WriteLine($"BEFORE operator change - Group has {firstGroup.SearchTemplates.Count} templates:");
+                        for (int i = 0; i < firstGroup.SearchTemplates.Count; i++)
+                        {
+                            var template = firstGroup.SearchTemplates[i];
+                            System.Diagnostics.Debug.WriteLine($"  Template {i}: SearchType={template.SearchType}, HasCustomFilter={template.HasCustomFilter}, SelectedValue={template.SelectedValue}");
+                        }
+                        System.Diagnostics.Debug.WriteLine($"BEFORE - SearchTemplateController.HasCustomExpression = {SearchTemplateController.HasCustomExpression}");
+                        
+                        SearchTemplateController.SearchGroups[0].OperatorName = value;
+                        
+                        // Force update the filter expression to ensure HasCustomExpression is recalculated
+                        SearchTemplateController.UpdateFilterExpression();
+                        
+                        OnPropertyChanged(nameof(GroupOperatorName));
+                        
+                        // Log filter state AFTER change
+                        System.Diagnostics.Debug.WriteLine($"AFTER operator change - Group has {firstGroup.SearchTemplates.Count} templates:");
+                        for (int i = 0; i < firstGroup.SearchTemplates.Count; i++)
+                        {
+                            var template = firstGroup.SearchTemplates[i];
+                            System.Diagnostics.Debug.WriteLine($"  Template {i}: SearchType={template.SearchType}, HasCustomFilter={template.HasCustomFilter}, SelectedValue={template.SelectedValue}");
+                        }
+                        System.Diagnostics.Debug.WriteLine($"AFTER - SearchTemplateController.HasCustomExpression = {SearchTemplateController.HasCustomExpression}");
+                        System.Diagnostics.Debug.WriteLine($"GroupOperatorName: Changed successfully. SearchGroups[0].OperatorName = {SearchTemplateController.SearchGroups[0].OperatorName}");
+                    }
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine($"GroupOperatorName: Cannot set value '{value}' - no SearchGroups available");
+                }
+            }
+        }
+
+        /// <summary>
         /// Gets the list of available data columns from the parent SearchDataGrid
         /// </summary>
         public IEnumerable<SearchControl> DataColumns
@@ -114,6 +192,45 @@ namespace WWSearchDataGrid.Modern.WPF
                     return dataGrid.DataColumns;
                 }
                 return Enumerable.Empty<SearchControl>();
+            }
+        }
+
+        /// <summary>
+        /// Determines if there are active filters in columns that precede the current column
+        /// </summary>
+        private bool HasPrecedingColumnFilters()
+        {
+            if (!(DataContext is SearchControl currentSearchControl) || currentSearchControl.CurrentColumn == null)
+            {
+                System.Diagnostics.Debug.WriteLine("HasPrecedingColumnFilters: No current search control or column");
+                return false;
+            }
+
+            try
+            {
+                var currentDisplayIndex = currentSearchControl.CurrentColumn.DisplayIndex;
+                var dataColumns = DataColumns.ToList();
+
+                System.Diagnostics.Debug.WriteLine($"HasPrecedingColumnFilters: Current column '{currentSearchControl.CurrentColumn.Header}' has DisplayIndex {currentDisplayIndex}");
+
+                var precedingColumnsWithFilters = dataColumns
+                    .Where(col => col.CurrentColumn != null && 
+                                  col.CurrentColumn.DisplayIndex < currentDisplayIndex &&
+                                  col.HasActiveFilter)
+                    .ToList();
+
+                System.Diagnostics.Debug.WriteLine($"HasPrecedingColumnFilters: Found {precedingColumnsWithFilters.Count} preceding columns with filters");
+                foreach (var col in precedingColumnsWithFilters)
+                {
+                    System.Diagnostics.Debug.WriteLine($"  - Column '{col.CurrentColumn.Header}' (DisplayIndex: {col.CurrentColumn.DisplayIndex}, HasActiveFilter: {col.HasActiveFilter})");
+                }
+
+                return precedingColumnsWithFilters.Any();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error checking preceding column filters: {ex.Message}");
+                return false;
             }
         }
 
@@ -154,6 +271,7 @@ namespace WWSearchDataGrid.Modern.WPF
         {
             SearchTemplateGroup group = p as SearchTemplateGroup;
             SearchTemplateController?.AddSearchGroup(true, true, group);
+            UpdateOperatorVisibility();
         });
 
         /// <summary>
@@ -163,6 +281,7 @@ namespace WWSearchDataGrid.Modern.WPF
         {
             SearchTemplateGroup group = p as SearchTemplateGroup;
             SearchTemplateController?.RemoveSearchGroup(group);
+            UpdateOperatorVisibility();
         });
 
         /// <summary>
@@ -180,7 +299,7 @@ namespace WWSearchDataGrid.Modern.WPF
             var index = group.SearchTemplates.IndexOf(template);
             group.SearchTemplates.Insert(index + 1, newTemplate);
 
-            UpdateTemplateOperatorVisibility();
+            UpdateOperatorVisibility();
         });
 
         /// <summary>
@@ -190,6 +309,7 @@ namespace WWSearchDataGrid.Modern.WPF
         {
             SearchTemplate template = p as SearchTemplate;
             SearchTemplateController?.RemoveSearchTemplate(template);
+            UpdateOperatorVisibility();
         });
 
         /// <summary>
@@ -265,6 +385,9 @@ namespace WWSearchDataGrid.Modern.WPF
             // We'll set it up when needed in SetupListBoxReference method
             SetupListBoxReference();
 
+            // Find operator combo box
+            operatorComboBox = GetTemplateChild("PART_OperatorComboBox") as ComboBox;
+
             // Find tab control
             tabControl = GetTemplateChild("PART_TabControl") as TabControl;
 
@@ -278,24 +401,8 @@ namespace WWSearchDataGrid.Modern.WPF
             // Find values summary
             valuesSummary = GetTemplateChild("PART_ValuesSummary") as TextBlock;
 
-            // Find and hook up the buttons
-            applyButton = GetTemplateChild("PART_ApplyButton") as Button;
-            if (applyButton != null)
-            {
-                applyButton.Click += (s, e) => ApplyFilter();
-            }
-
-            clearButton = GetTemplateChild("PART_ClearButton") as Button;
-            if (clearButton != null)
-            {
-                clearButton.Click += (s, e) => ClearFilter();
-            }
-
-            closeButton = GetTemplateChild("PART_CloseButton") as Button;
-            if (closeButton != null)
-            {
-                closeButton.Click += (s, e) => CloseWindow();
-            }
+            // Initial operator visibility update
+            UpdateOperatorVisibility();
         }
 
         /// <summary>
@@ -348,6 +455,13 @@ namespace WWSearchDataGrid.Modern.WPF
             {
                 SearchTemplateController.PropertyChanged += OnSearchTemplateControllerPropertyChanged;
             }
+
+            // Set up filter change monitoring and initial operator visibility  
+            SetupFilterChangeMonitoring();
+            UpdateOperatorVisibility();
+            
+            // Ensure template operators are visible after everything is loaded
+            UpdateTemplateOperatorVisibility();
         }
 
         /// <summary>
@@ -642,6 +756,9 @@ namespace WWSearchDataGrid.Modern.WPF
                         }
                     }
                 }
+
+                // Update template operator visibility after initialization
+                UpdateTemplateOperatorVisibility();
             }
         }
 
@@ -802,25 +919,119 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
-        /// Optimized template updating to reduce unnecessary operations
+        /// Updates operator visibility for both group-level and template-level operators
+        /// </summary>
+        private void UpdateOperatorVisibility()
+        {
+            try
+            {
+                var hasPrecedingFilters = HasPrecedingColumnFilters();
+                
+                // Update the control-level operator visibility
+                IsOperatorVisible = hasPrecedingFilters;
+                
+                // Always ensure we have a SearchTemplateController and at least one group
+                if (SearchTemplateController == null)
+                    return;
+
+                // Ensure we have at least one group
+                if (SearchTemplateController.SearchGroups.Count == 0)
+                {
+                    SearchTemplateController.AddSearchGroup(true, false);
+                }
+
+                // Update template-level operator visibility
+                UpdateTemplateOperatorVisibility();
+                
+                // Notify that the GroupOperatorName might have changed (in case the SearchGroups were just created)
+                OnPropertyChanged(nameof(GroupOperatorName));
+                
+                System.Diagnostics.Debug.WriteLine($"UpdateOperatorVisibility: IsOperatorVisible = {IsOperatorVisible}");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error updating operator visibility: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Sets up monitoring for filter changes to update operator visibility
+        /// </summary>
+        private void SetupFilterChangeMonitoring()
+        {
+            if (!(DataContext is SearchControl currentSearchControl) || currentSearchControl.SourceDataGrid == null)
+                return;
+
+            try
+            {
+                // Set up a timer for debounced updates (in case multiple filters change quickly)
+                _operatorVisibilityUpdateTimer = new DispatcherTimer
+                {
+                    Interval = TimeSpan.FromMilliseconds(100)
+                };
+                _operatorVisibilityUpdateTimer.Tick += (s, e) =>
+                {
+                    _operatorVisibilityUpdateTimer.Stop();
+                    UpdateOperatorVisibility();
+                };
+
+                // Subscribe to the SearchDataGrid's filter events if available
+                // This is a much simpler approach than trying to monitor individual SearchTemplateControllers
+                currentSearchControl.SourceDataGrid.ItemsSourceFiltered += OnFilteringCompleted;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error setting up filter change monitoring: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Handles completion of filtering operations to update operator visibility
+        /// </summary>
+        private void OnFilteringCompleted(object sender, EventArgs e)
+        {
+            // Debounce the update to avoid excessive calls
+            _operatorVisibilityUpdateTimer?.Stop();
+            _operatorVisibilityUpdateTimer?.Start();
+        }
+
+        /// <summary>
+        /// Forces an update of operator visibility (can be called externally)
+        /// </summary>
+        public void RefreshOperatorVisibility()
+        {
+            UpdateOperatorVisibility();
+        }
+
+        /// <summary>
+        /// Updates template-level operator visibility (for templates within groups)
         /// </summary>
         private void UpdateTemplateOperatorVisibility()
         {
             if (SearchTemplateController != null)
             {
                 var groups = SearchTemplateController.SearchGroups;
+                System.Diagnostics.Debug.WriteLine($"UpdateTemplateOperatorVisibility: Found {groups.Count} groups");
 
                 // Use a single pass to update all templates
                 for (int g = 0; g < groups.Count; g++)
                 {
                     var group = groups[g];
                     var templates = group.SearchTemplates;
+                    System.Diagnostics.Debug.WriteLine($"UpdateTemplateOperatorVisibility: Group {g} has {templates.Count} templates");
 
+                    // Template-level operators: show for all templates after the first in each group
                     for (int t = 0; t < templates.Count; t++)
                     {
-                        templates[t].IsOperatorVisible = t > 0;
+                        var shouldBeVisible = t > 0;
+                        templates[t].IsOperatorVisible = shouldBeVisible;
+                        System.Diagnostics.Debug.WriteLine($"UpdateTemplateOperatorVisibility: Template {t} in group {g} - IsOperatorVisible = {shouldBeVisible}");
                     }
                 }
+            }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine("UpdateTemplateOperatorVisibility: SearchTemplateController is null");
             }
         }
 
@@ -920,18 +1131,37 @@ namespace WWSearchDataGrid.Modern.WPF
         {
             if (SearchTemplateController == null) return;
             
+            // Debug logging before applying filter
+            System.Diagnostics.Debug.WriteLine($"ApplyFilter: About to apply filter");
+            System.Diagnostics.Debug.WriteLine($"ApplyFilter: SearchGroups.Count = {SearchTemplateController.SearchGroups.Count}");
+            if (SearchTemplateController.SearchGroups.Count > 0)
+            {
+                var firstGroup = SearchTemplateController.SearchGroups[0];
+                System.Diagnostics.Debug.WriteLine($"ApplyFilter: First group OperatorName = {firstGroup.OperatorName}");
+                System.Diagnostics.Debug.WriteLine($"ApplyFilter: First group has {firstGroup.SearchTemplates.Count} templates");
+                
+                for (int i = 0; i < firstGroup.SearchTemplates.Count; i++)
+                {
+                    var template = firstGroup.SearchTemplates[i];
+                    System.Diagnostics.Debug.WriteLine($"ApplyFilter: Template {i} - SearchType = {template.SearchType}, HasCustomFilter = {template.HasCustomFilter}, SelectedValue = {template.SelectedValue}");
+                }
+            }
+            
             FilterApplicationResult result;
             
             // Check which tab is active
+            System.Diagnostics.Debug.WriteLine($"ApplyFilter: tabControl.SelectedIndex = {tabControl?.SelectedIndex}");
             if (tabControl?.SelectedIndex == 1) // Filter Values tab
             {
                 // Apply filter based on selected values using the service
+                System.Diagnostics.Debug.WriteLine($"ApplyFilter: Using VALUE-BASED filter path");
                 result = _filterApplicationService.ApplyValueBasedFilter(
                     FilterValueViewModel, SearchTemplateController, ColumnDataType);
             }
             else // Filter Rules tab
             {
                 // Apply rule-based filter using the service
+                System.Diagnostics.Debug.WriteLine($"ApplyFilter: Using RULE-BASED filter path with {SearchTemplateController.SearchGroups.Count} groups");
                 result = _filterApplicationService.ApplyRuleBasedFilter(SearchTemplateController);
             }
             
@@ -940,6 +1170,9 @@ namespace WWSearchDataGrid.Modern.WPF
                 System.Diagnostics.Debug.WriteLine($"Filter application failed: {result.ErrorMessage}");
                 return;
             }
+            
+            // Debug logging after applying filter
+            System.Diagnostics.Debug.WriteLine($"ApplyFilter: Filter applied successfully. HasCustomExpression = {result.HasCustomExpression}");
 
             // Determine if we're in per-column or global mode
             if (DataContext is SearchControl searchControl)
@@ -1075,12 +1308,23 @@ namespace WWSearchDataGrid.Modern.WPF
             {
                 searchControl.SourceDataGrid.CollectionChanged -= OnSourceDataGridCollectionChanged;
                 searchControl.SourceDataGrid.ItemsSourceChanged -= OnItemsSourceChanged;
+                
+                // Unsubscribe from filter completion events
+                searchControl.SourceDataGrid.ItemsSourceFiltered -= OnFilteringCompleted;
             }
 
             // Unhook SearchTemplateController property changes
             if (SearchTemplateController != null)
             {
                 SearchTemplateController.PropertyChanged -= OnSearchTemplateControllerPropertyChanged;
+            }
+
+            // Clean up operator visibility update timer
+            if (_operatorVisibilityUpdateTimer != null)
+            {
+                _operatorVisibilityUpdateTimer.Stop();
+                _operatorVisibilityUpdateTimer.Tick -= null;
+                _operatorVisibilityUpdateTimer = null;
             }
 
             // Clean up ListBox event handlers
@@ -1108,8 +1352,17 @@ namespace WWSearchDataGrid.Modern.WPF
         /// </summary>
         protected virtual void OnPropertyChanged(string propertyName)
         {
-            // This would typically use INotifyPropertyChanged implementation
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
+
+        #endregion
+
+        #region INotifyPropertyChanged
+
+        /// <summary>
+        /// Event raised when a property value changes
+        /// </summary>
+        public event PropertyChangedEventHandler PropertyChanged;
 
         #endregion
     }

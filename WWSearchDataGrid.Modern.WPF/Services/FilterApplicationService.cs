@@ -160,6 +160,13 @@ namespace WWSearchDataGrid.Modern.WPF.Services
                     return FilterApplicationResult.Failure("Search template controller is null");
                 }
 
+                System.Diagnostics.Debug.WriteLine($"ApplyRuleBasedFilter: Starting with {searchTemplateController.SearchGroups.Count} search groups");
+                for (int i = 0; i < searchTemplateController.SearchGroups.Count; i++)
+                {
+                    var group = searchTemplateController.SearchGroups[i];
+                    System.Diagnostics.Debug.WriteLine($"ApplyRuleBasedFilter: Group {i} has {group.SearchTemplates.Count} templates, OperatorName = {group.OperatorName}");
+                }
+
                 searchTemplateController.UpdateFilterExpression();
                 
                 return FilterApplicationResult.Success(FilterApplicationType.RuleBased, 
