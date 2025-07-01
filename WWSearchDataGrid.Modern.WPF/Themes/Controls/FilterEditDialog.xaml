@@ -179,12 +179,12 @@
                                 BorderThickness="0,0,0,1"
                                 Padding="16,12">
                             <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
 
-                                <StackPanel Grid.Column="0">
+                                <StackPanel Grid.Row="0">
                                     <TextBlock Foreground="#333"
                                                Text="Edit Column Filters"
                                                FontSize="18"
@@ -194,6 +194,66 @@
                                                Margin="0,2,0,0"
                                                FontSize="12" />
                                 </StackPanel>
+                                
+                                <!--  Column Management Section  -->
+                                <DockPanel Grid.Row="1" 
+                                           Margin="0,12,0,0">
+                                    <Label Content="Add Column:" 
+                                           DockPanel.Dock="Left"
+                                           VerticalAlignment="Center"
+                                           Margin="0,0,8,0" />
+                                    <Button Content="Add" 
+                                            DockPanel.Dock="Right"
+                                            Command="{Binding AddColumnCommand, RelativeSource={RelativeSource TemplatedParent}}"
+                                            CommandParameter="{Binding SelectedItem, ElementName=AvailableColumnsComboBox}"
+                                            Margin="8,0,0,0"
+                                            Padding="12,4"
+                                            Background="#4CAF50"
+                                            Foreground="White"
+                                            BorderBrush="#45a049"
+                                            BorderThickness="1">
+                                        <Button.Style>
+                                            <Style TargetType="Button">
+                                                <Setter Property="Template">
+                                                    <Setter.Value>
+                                                        <ControlTemplate TargetType="Button">
+                                                            <Border Background="{TemplateBinding Background}"
+                                                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                                                    Padding="{TemplateBinding Padding}"
+                                                                    CornerRadius="4">
+                                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                            </Border>
+                                                            <ControlTemplate.Triggers>
+                                                                <Trigger Property="IsMouseOver" Value="True">
+                                                                    <Setter Property="Background" Value="#45a049" />
+                                                                </Trigger>
+                                                                <Trigger Property="IsPressed" Value="True">
+                                                                    <Setter Property="Background" Value="#3e8e41" />
+                                                                </Trigger>
+                                                                <Trigger Property="IsEnabled" Value="False">
+                                                                    <Setter Property="Background" Value="#F9F9F9" />
+                                                                    <Setter Property="Foreground" Value="#999" />
+                                                                </Trigger>
+                                                            </ControlTemplate.Triggers>
+                                                        </ControlTemplate>
+                                                    </Setter.Value>
+                                                </Setter>
+                                            </Style>
+                                        </Button.Style>
+                                    </Button>
+                                    <ComboBox Name="AvailableColumnsComboBox" 
+                                              ItemsSource="{Binding AvailableColumns, RelativeSource={RelativeSource TemplatedParent}}"
+                                              Style="{StaticResource Default_ComboBox_Style}"
+                                              MinWidth="200"
+                                              VerticalContentAlignment="Center">
+                                        <ComboBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding DisplayName}" />
+                                            </DataTemplate>
+                                        </ComboBox.ItemTemplate>
+                                    </ComboBox>
+                                </DockPanel>
                             </Grid>
                         </Border>
 
@@ -238,6 +298,18 @@
                                                         <sys:String>And</sys:String>
                                                         <sys:String>Or</sys:String>
                                                     </ComboBox>
+
+                                                    <Button DockPanel.Dock="Right"
+                                                            Command="{Binding RemoveColumnCommand, RelativeSource={RelativeSource AncestorType=sdg:FilterEditDialog}}"
+                                                            CommandParameter="{Binding ColumnInfo}"
+                                                            Margin="8,0,0,0"
+                                                            Style="{StaticResource TransparentFontIcon_Button_Style}"
+                                                            Height="{Binding ActualWidth, RelativeSource={RelativeSource Self}}"
+                                                            Width="24"
+                                                            ToolTip="Remove Column"
+                                                            Padding="4"
+                                                            Content="&#xE10A;"
+                                                            Foreground="#D32F2F" />
 
                                                     <TextBlock DockPanel.Dock="Left"
                                                                Text="{Binding DisplayName}"

@@ -5,6 +5,7 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media;
 using WWSearchDataGrid.Modern.Core;
 
 namespace WWSearchDataGrid.Modern.WPF
@@ -95,6 +96,11 @@ namespace WWSearchDataGrid.Modern.WPF
             set => SetValue(IsLoadingProperty, value);
         }
 
+        /// <summary>
+        /// Gets the collection of available columns that can be added to the filter
+        /// </summary>
+        public ObservableCollection<ColumnDisplayInfo> AvailableColumns { get; private set; }
+
         #endregion
 
         #region Commands
@@ -134,6 +140,20 @@ namespace WWSearchDataGrid.Modern.WPF
         /// </summary>
         public ICommand RemoveSearchTemplateCommand => new RelayCommand<SearchTemplate>(template => ExecuteRemoveSearchTemplate(template));
 
+        /// <summary>
+        /// Add column command
+        /// </summary>
+        public ICommand AddColumnCommand => new RelayCommand<ColumnDisplayInfo>(
+            columnInfo => ExecuteAddColumn(columnInfo?.Column),
+            columnInfo => columnInfo?.Column != null && !FilteredColumns.Any(fc => fc.BindingPath == columnInfo.Column.SortMemberPath));
+
+        /// <summary>
+        /// Remove column command
+        /// </summary>
+        public ICommand RemoveColumnCommand => new RelayCommand<FilteredColumnInfo>(
+            columnInfo => ExecuteRemoveColumn(columnInfo),
+            columnInfo => columnInfo != null && FilteredColumns.Count > 1);
+
         #endregion
 
         #region Events
@@ -155,6 +175,7 @@ namespace WWSearchDataGrid.Modern.WPF
             DefaultStyleKey = typeof(FilterEditDialog);
             FilteredColumns = new ObservableCollection<FilteredColumnInfo>();
             AllFilterGroups = new ObservableCollection<FilterGroupInfo>();
+            AvailableColumns = new ObservableCollection<ColumnDisplayInfo>();
         }
 
         #endregion
@@ -255,6 +276,9 @@ namespace WWSearchDataGrid.Modern.WPF
 
                 // Update operator visibility based on unified group ordering
                 UpdateUnifiedOperatorVisibility();
+                
+                // Refresh available columns list
+                RefreshAvailableColumns();
 
                 IsLoading = false;
 
@@ -492,8 +516,13 @@ namespace WWSearchDataGrid.Modern.WPF
                 var searchControl = columnInfo.SearchControl;
                 var controller = columnInfo.OriginalController;
 
-                // Check if we have advanced filters (custom expressions)
+                // Force recalculation of the filter expression to ensure HasCustomExpression is accurate
+                controller.UpdateFilterExpression();
+                
+                // Now check if we have advanced filters (custom expressions) - this will be accurate
                 bool hasAdvancedFilter = controller.HasCustomExpression;
+
+                System.Diagnostics.Debug.WriteLine($"SynchronizeSearchControlState: Column '{columnInfo.ColumnName}' HasCustomExpression={hasAdvancedFilter}");
 
                 if (hasAdvancedFilter)
                 {
@@ -541,11 +570,10 @@ namespace WWSearchDataGrid.Modern.WPF
                     target.SearchGroups.Add(targetGroup);
                 }
 
-                // Copy other properties
-                target.HasCustomExpression = source.HasCustomExpression;
-
-                // Update the filter expression
+                // Update the filter expression - this will recalculate HasCustomExpression properly
                 target.UpdateFilterExpression();
+                
+                System.Diagnostics.Debug.WriteLine($"CopyControllerChanges: After UpdateFilterExpression, HasCustomExpression={target.HasCustomExpression}");
             }
             catch (Exception ex)
             {
@@ -714,6 +742,231 @@ namespace WWSearchDataGrid.Modern.WPF
             }
         }
 
+        /// <summary>
+        /// Refreshes the available columns list based on current filtered columns
+        /// </summary>
+        private void RefreshAvailableColumns()
+        {
+            try
+            {
+                if (SourceDataGrid == null)
+                {
+                    AvailableColumns.Clear();
+                    return;
+                }
+
+                // Get all columns that are not currently filtered
+                var filteredBindingPaths = FilteredColumns.Select(fc => fc.BindingPath).ToHashSet();
+                var availableColumns = SourceDataGrid.Columns
+                    .Where(c => !string.IsNullOrEmpty(c.SortMemberPath) && !filteredBindingPaths.Contains(c.SortMemberPath))
+                    .ToList();
+
+                AvailableColumns.Clear();
+                foreach (var column in availableColumns)
+                {
+                    var displayInfo = new ColumnDisplayInfo
+                    {
+                        Column = column,
+                        DisplayName = GetColumnDisplayName(column)
+                    };
+                    AvailableColumns.Add(displayInfo);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error refreshing available columns: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Gets a display-friendly name for a column, handling complex headers
+        /// </summary>
+        private string GetColumnDisplayName(DataGridColumn column)
+        {
+            try
+            {
+                if (column?.Header == null)
+                    return "Unknown Column";
+
+                // If header is a string, use it directly
+                if (column.Header is string headerText)
+                    return headerText;
+
+                // If header is a FrameworkElement, try to extract text content
+                if (column.Header is FrameworkElement element)
+                {
+                    // Try common text-containing controls
+                    if (element is TextBlock textBlock)
+                        return textBlock.Text ?? "Text Block";
+                    if (element is Label label)
+                        return label.Content?.ToString() ?? "Label";
+                    if (element is Button button)
+                        return button.Content?.ToString() ?? "Button";
+                    
+                    // For other controls, return the type name
+                    return element.GetType().Name;
+                }
+
+                // For any other object, use its string representation
+                return column.Header.ToString() ?? "Unknown";
+            }
+            catch
+            {
+                return "Unknown Column";
+            }
+        }
+
+        /// <summary>
+        /// Executes the add column command
+        /// </summary>
+        private void ExecuteAddColumn(DataGridColumn column)
+        {
+            try
+            {
+                if (column == null || string.IsNullOrEmpty(column.SortMemberPath))
+                    return;
+
+                // Find the corresponding SearchControl - first check in DataColumns collection
+                var searchControl = SourceDataGrid.DataColumns.FirstOrDefault(dc => dc.BindingPath == column.SortMemberPath);
+                
+                if (searchControl == null)
+                {
+                    // Create a new SearchControl for this column
+                    searchControl = CreateSearchControlForColumn(column);
+                    if (searchControl == null)
+                        return;
+                }
+
+                // Create a new FilteredColumnInfo
+                var columnInfo = new FilteredColumnInfo
+                {
+                    ColumnName = column.Header?.ToString() ?? "Unknown Column",
+                    BindingPath = column.SortMemberPath,
+                    OriginalController = searchControl.SearchTemplateController,
+                    WorkingController = CloneSearchTemplateController(searchControl.SearchTemplateController),
+                    SearchControl = searchControl
+                };
+
+                // Ensure the working controller has at least one search group
+                if (columnInfo.WorkingController.SearchGroups.Count == 0)
+                {
+                    columnInfo.WorkingController.AddSearchGroup(true, false);
+                }
+
+                // Add to FilteredColumns
+                FilteredColumns.Add(columnInfo);
+
+                // Add to AllFilterGroups
+                foreach (var group in columnInfo.WorkingController.SearchGroups)
+                {
+                    var filterGroupInfo = new FilterGroupInfo
+                    {
+                        SearchTemplateGroup = group,
+                        ColumnInfo = columnInfo,
+                        DisplayName = columnInfo.ColumnName
+                    };
+                    AllFilterGroups.Add(filterGroupInfo);
+                }
+
+                // Update operator visibility and refresh available columns
+                UpdateUnifiedOperatorVisibility();
+                RefreshAvailableColumns();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error adding column: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Creates a new SearchControl for the specified column
+        /// </summary>
+        private SearchControl CreateSearchControlForColumn(DataGridColumn column)
+        {
+            try
+            {
+                var searchControl = new SearchControl
+                {
+                    CurrentColumn = column,
+                    SourceDataGrid = SourceDataGrid
+                };
+
+                // The SearchControl will automatically initialize itself when CurrentColumn and SourceDataGrid are set
+                // This includes creating the SearchTemplateController and setting BindingPath
+                
+                // Ensure the controller is properly initialized and has default groups
+                if (searchControl.SearchTemplateController != null)
+                {
+                    searchControl.SearchTemplateController.AllowMultipleGroups = true;
+                    
+                    // Ensure there's at least one search group with a template
+                    if (searchControl.SearchTemplateController.SearchGroups.Count == 0)
+                    {
+                        searchControl.SearchTemplateController.AddSearchGroup(true, false);
+                    }
+                }
+
+                return searchControl;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error creating SearchControl for column: {ex.Message}");
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Determines the column data type from a .NET type
+        /// </summary>
+        private ColumnDataType DetermineColumnDataType(Type propertyType)
+        {
+            var underlyingType = Nullable.GetUnderlyingType(propertyType) ?? propertyType;
+
+            if (underlyingType == typeof(DateTime))
+                return ColumnDataType.DateTime;
+            else if (underlyingType == typeof(bool))
+                return ColumnDataType.Boolean;
+            else if (underlyingType == typeof(int) || underlyingType == typeof(long) || 
+                     underlyingType == typeof(short) || underlyingType == typeof(byte) ||
+                     underlyingType == typeof(decimal) || underlyingType == typeof(double) || 
+                     underlyingType == typeof(float))
+                return ColumnDataType.Number;
+            else if (underlyingType.IsEnum)
+                return ColumnDataType.Enum;
+            else
+                return ColumnDataType.String;
+        }
+
+        /// <summary>
+        /// Executes the remove column command
+        /// </summary>
+        private void ExecuteRemoveColumn(FilteredColumnInfo columnInfo)
+        {
+            try
+            {
+                if (columnInfo == null)
+                    return;
+
+                // Remove from FilteredColumns
+                FilteredColumns.Remove(columnInfo);
+
+                // Remove associated groups from AllFilterGroups
+                var groupsToRemove = AllFilterGroups.Where(fg => fg.ColumnInfo == columnInfo).ToList();
+                foreach (var group in groupsToRemove)
+                {
+                    AllFilterGroups.Remove(group);
+                }
+
+                // Update operator visibility and refresh available columns
+                UpdateUnifiedOperatorVisibility();
+                RefreshAvailableColumns();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error removing column: {ex.Message}");
+            }
+        }
+
         #endregion
     }
 
@@ -767,6 +1020,30 @@ namespace WWSearchDataGrid.Modern.WPF
         /// Gets or sets the display name for the group header
         /// </summary>
         public string DisplayName { get; set; }
+    }
+
+    /// <summary>
+    /// Information about a column for display in combo boxes
+    /// </summary>
+    public class ColumnDisplayInfo
+    {
+        /// <summary>
+        /// Gets or sets the actual DataGrid column
+        /// </summary>
+        public DataGridColumn Column { get; set; }
+
+        /// <summary>
+        /// Gets or sets the display-friendly name for the column
+        /// </summary>
+        public string DisplayName { get; set; }
+
+        /// <summary>
+        /// Returns the display name when the object is converted to string
+        /// </summary>
+        public override string ToString()
+        {
+            return DisplayName ?? "Unknown Column";
+        }
     }
 
     /// <summary>
