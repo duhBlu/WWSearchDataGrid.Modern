@@ -320,42 +320,6 @@
                     <DataGridTextColumn Width="110"
                                         Header="Delivery Time"
                                         Binding="{Binding DeliveryTime}" />
-
-                    <!--  Legacy Business Fields  -->
-                    <DataGridTextColumn Width="120"
-                                        sdg:AdvancedFilterControl.GroupByColumn="ProductCategory"
-                                        Header="Product Name"
-                                        Binding="{Binding ProductName}" />
-                    <DataGridTextColumn Width="100"
-                                        Header="Category"
-                                        Binding="{Binding Category}" />
-                    <DataGridTextColumn Width="80"
-                                        Header="Currency"
-                                        Binding="{Binding CurrencyCode}" />
-                    <DataGridTextColumn Width="80"
-                                        Header="Price"
-                                        Binding="{Binding Price, StringFormat=C2}" />
-                    <DataGridTextColumn Width="70"
-                                        Header="Quantity"
-                                        Binding="{Binding Quantity}" />
-                    <DataGridTextColumn Width="100"
-                                        Header="Order Date"
-                                        Binding="{Binding OrderDate, StringFormat=d}" />
-                    <DataGridTextColumn Width="80"
-                                        Header="Status"
-                                        Binding="{Binding Status}" />
-
-                    <!--  Legacy ComboBox Fields  -->
-                    <DataGridComboBoxColumn Width="120"
-                                            Header="ComboBox ID"
-                                            ItemsSource="{Binding Source={StaticResource ComboBoxItemsSource}}"
-                                            DisplayMemberPath="Name"
-                                            SelectedValuePath="Id"
-                                            SelectedValueBinding="{Binding ComboBoxValueId}" />
-                    <DataGridComboBoxColumn Width="140"
-                                            Header="ComboBox String"
-                                            ItemsSource="{Binding Source={StaticResource ComboBoxStringSource}}"
-                                            SelectedItemBinding="{Binding SelectedComboBoxStringValue}" />
                 </sdg:SearchDataGrid.Columns>
             </sdg:SearchDataGrid>
         </Grid>

@@ -23,7 +23,7 @@ namespace WWSearchDataGrid.Modern.Core
         private bool isDateInterval;
         private bool hasNoInputValues;
         private string valueOperatorText;
-        private System.Collections.ObjectModel.ObservableCollection<FilterChipComponents> filterComponents;
+        private ObservableCollection<FilterChipComponents> filterComponents;
 
         /// <summary>
         /// Gets or sets the display name of the column

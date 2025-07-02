@@ -1191,52 +1191,6 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
-        /// Legacy method - kept for backward compatibility but now delegates to service
-        /// </summary>
-        [Obsolete("Use FilterApplicationService.ApplyValueBasedFilter instead", false)]
-        private void ApplyValueBasedFilter()
-        {
-            var result = _filterApplicationService.ApplyValueBasedFilter(
-                FilterValueViewModel, SearchTemplateController, ColumnDataType);
-                
-            if (!result.IsSuccess)
-            {
-                System.Diagnostics.Debug.WriteLine($"Legacy filter application failed: {result.ErrorMessage}");
-            }
-        }
-        
-        /// <summary>
-        /// Legacy method - kept for backward compatibility but now delegates to service
-        /// </summary>
-        [Obsolete("Use FilterApplicationService.ApplyGroupedValueBasedFilter instead", false)]
-        private void ApplyGroupedValueBasedFilter(GroupedTreeViewFilterValueViewModel groupedViewModel)
-        {
-            string currentColumnPath = null;
-            if (DataContext is SearchControl searchControl)
-            {
-                currentColumnPath = searchControl.BindingPath;
-            }
-            
-            var result = _filterApplicationService.ApplyGroupedValueBasedFilter(
-                groupedViewModel, SearchTemplateController, currentColumnPath, groupedViewModel.GroupByColumn);
-                
-            if (!result.IsSuccess)
-            {
-                System.Diagnostics.Debug.WriteLine($"Legacy grouped filter application failed: {result.ErrorMessage}");
-            }
-        }
-        
-        /// <summary>
-        /// Legacy method - functionality moved to FilterApplicationService
-        /// </summary>
-        [Obsolete("This functionality has been moved to FilterApplicationService", true)]
-        private void CreateGroupedFilterExpression(List<(object GroupKey, object ChildValue)> combinations, 
-            string currentColumnPath, string groupByColumnPath)
-        {
-            throw new NotSupportedException("This method has been replaced by FilterApplicationService.CreateGroupedFilterExpression");
-        }
-
-        /// <summary>
         /// Clear the filter using the filter application service
         /// </summary>
         private void ClearFilter()

@@ -1,0 +1,168 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:templates="clr-namespace:WWSearchDataGrid.Modern.WPF.Templates"
+                    xmlns:sdg="clr-namespace:WWSearchDataGrid.Modern.WPF">
+
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF;component/Themes/Common/CommonStyles.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+
+    <!--  Token Template Selector  -->
+    <templates:FilterTokenTemplateSelector x:Key="FilterTokenTemplateSelector">
+
+        <!--  Opening Bracket Token Template  -->
+        <templates:FilterTokenTemplateSelector.OpenBracketTemplate>
+            <DataTemplate>
+                <Border Background="Transparent"
+                        BorderThickness="1"
+                        Margin="0,0,-8,0"
+                        Width="10"
+                        Height="26">
+                    <Border.BorderBrush>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                            <GradientStop Color="#9a9a9a" Offset="0" />
+                            <GradientStop Color="#9a9a9a" Offset="0.5" />
+                            <GradientStop Color="Transparent" Offset="0.51" />
+                            <GradientStop Color="Transparent" Offset="1" />
+                        </LinearGradientBrush>
+                    </Border.BorderBrush>
+                </Border>
+            </DataTemplate>
+        </templates:FilterTokenTemplateSelector.OpenBracketTemplate>
+
+        <!--  Column Name Token Template  -->
+        <templates:FilterTokenTemplateSelector.ColumnNameTemplate>
+            <DataTemplate>
+                <Border Background="#ffc69b"
+                        Margin="1,3"
+                        Padding="6,3"
+                        Height="24"
+                        CornerRadius="6">
+                    <TextBlock Foreground="Black"
+                               Text="{Binding DisplayText}"
+                               VerticalAlignment="Center"
+                               FontWeight="SemiBold" />
+                </Border>
+            </DataTemplate>
+        </templates:FilterTokenTemplateSelector.ColumnNameTemplate>
+
+        <!--  Search Type Token Template  -->
+        <templates:FilterTokenTemplateSelector.SearchTypeTemplate>
+            <DataTemplate>
+                <Border Background="Transparent"
+                        Margin="2,1"
+                        Padding="4,3"
+                        Height="24">
+                    <TextBlock Foreground="#666"
+                               Text="{Binding DisplayText}"
+                               VerticalAlignment="Center"
+                               FontSize="12" />
+                </Border>
+            </DataTemplate>
+        </templates:FilterTokenTemplateSelector.SearchTypeTemplate>
+
+        <!--  Value Token Template  -->
+        <templates:FilterTokenTemplateSelector.ValueTemplate>
+            <DataTemplate>
+                <Border Background="#bbe2c5"
+                        Margin="1,1"
+                        Padding="6,3"
+                        Height="24"
+                        CornerRadius="6">
+                    <TextBlock Foreground="Black"
+                               Text="{Binding DisplayText}"
+                               VerticalAlignment="Center" />
+                </Border>
+            </DataTemplate>
+        </templates:FilterTokenTemplateSelector.ValueTemplate>
+
+        <!--  Operator Token Template  -->
+        <templates:FilterTokenTemplateSelector.OperatorTemplate>
+            <DataTemplate>
+                <Border Background="Transparent"
+                        Margin="1,1"
+                        Padding="3,3"
+                        Height="24">
+                    <TextBlock Foreground="#888"
+                               Text="{Binding DisplayText}"
+                               VerticalAlignment="Center"
+                               FontSize="11" />
+                </Border>
+            </DataTemplate>
+        </templates:FilterTokenTemplateSelector.OperatorTemplate>
+
+        <!--  Closing Bracket Token Template  -->
+        <templates:FilterTokenTemplateSelector.CloseBracketTemplate>
+            <DataTemplate>
+                <Border Background="Transparent"
+                        BorderThickness="1"
+                        Margin="-8,0,0,0"
+                        Width="10"
+                        Height="26">
+                    <Border.BorderBrush>
+                        <LinearGradientBrush StartPoint="1,0" EndPoint="0,0">
+                            <GradientStop Color="#9a9a9a" Offset="0" />
+                            <GradientStop Color="#9a9a9a" Offset="0.5" />
+                            <GradientStop Color="Transparent" Offset="0.51" />
+                            <GradientStop Color="Transparent" Offset="1" />
+                        </LinearGradientBrush>
+                    </Border.BorderBrush>
+                </Border>
+            </DataTemplate>
+        </templates:FilterTokenTemplateSelector.CloseBracketTemplate>
+
+        <!--  Logical Connector Token Template  -->
+        <templates:FilterTokenTemplateSelector.LogicalConnectorTemplate>
+            <DataTemplate>
+                <Border Background="#cee8fb"
+                        Margin="4,1,10,0"
+                        Padding="8,3"
+                        Height="24"
+                        CornerRadius="6">
+                    <TextBlock Foreground="#0078D4"
+                               Text="{Binding DisplayText}"
+                               VerticalAlignment="Center"
+                               FontWeight="Bold"
+                               FontSize="11" />
+                </Border>
+            </DataTemplate>
+        </templates:FilterTokenTemplateSelector.LogicalConnectorTemplate>
+
+        <!--  Remove Action Token Template  -->
+        <templates:FilterTokenTemplateSelector.RemoveActionTemplate>
+            <DataTemplate>
+                <Button Background="Transparent"
+                        BorderBrush="Transparent"
+                        Cursor="Hand"
+                        Command="{Binding RemoveTokenFilterCommand, RelativeSource={RelativeSource AncestorType=sdg:FilterPanel}}"
+                        CommandParameter="{Binding}"
+                        Margin="-3,-2,-7,0"
+                        Width="20"
+                        VerticalAlignment="Top"
+                        Height="20"
+                        FontFamily="Segoe MDL2 Assets"
+                        FontSize="10"
+                        Content="&#xEB90;"
+                        ToolTip="Remove Filter">
+                    <Button.Style>
+                        <Style BasedOn="{StaticResource TransparentFontIcon_Button_Style}" TargetType="Button">
+                            <Setter Property="Foreground" Value="#666" />
+                            <Style.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="Foreground" Value="#CC0000" />
+                                    <Setter Property="Background" Value="#FFF0F0" />
+                                </Trigger>
+                                <Trigger Property="IsPressed" Value="True">
+                                    <Setter Property="Foreground" Value="#990000" />
+                                    <Setter Property="Background" Value="#FFE0E0" />
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
+            </DataTemplate>
+        </templates:FilterTokenTemplateSelector.RemoveActionTemplate>
+
+    </templates:FilterTokenTemplateSelector>
+
+</ResourceDictionary>
