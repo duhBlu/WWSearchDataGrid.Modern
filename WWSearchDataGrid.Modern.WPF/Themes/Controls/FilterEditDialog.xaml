@@ -208,9 +208,9 @@
                                             CommandParameter="{Binding SelectedItem, ElementName=AvailableColumnsComboBox}"
                                             Margin="8,0,0,0"
                                             Padding="12,4"
-                                            Background="#4CAF50"
+                                            Background="#2296f3"
                                             Foreground="White"
-                                            BorderBrush="#45a049"
+                                            BorderBrush="#1a76c0"
                                             BorderThickness="1">
                                         <Button.Style>
                                             <Style TargetType="Button">
@@ -244,7 +244,7 @@
                                     </Button>
                                     <ComboBox Name="AvailableColumnsComboBox" 
                                               ItemsSource="{Binding AvailableColumns, RelativeSource={RelativeSource TemplatedParent}}"
-                                              Style="{StaticResource Default_ComboBox_Style}"
+                                              Style="{StaticResource Editable_ComboBox_Style}"
                                               MinWidth="200"
                                               VerticalContentAlignment="Center">
                                         <ComboBox.ItemTemplate>
