@@ -17,7 +17,6 @@ namespace WWSearchDataGrid.Modern.WPF
     {
         #region Fields
 
-        private TabControl tabControl; // Legacy - kept for compatibility
         private ListBox filterGroupsListBox;
         private Button applyButton;
         private Button cancelButton;
@@ -190,7 +189,6 @@ namespace WWSearchDataGrid.Modern.WPF
             base.OnApplyTemplate();
 
             // Get template parts
-            tabControl = GetTemplateChild("PART_TabControl") as TabControl; // Legacy
             filterGroupsListBox = GetTemplateChild("PART_FilterGroupsListBox") as ListBox;
             applyButton = GetTemplateChild("PART_ApplyButton") as Button;
             cancelButton = GetTemplateChild("PART_CancelButton") as Button;
@@ -666,18 +664,6 @@ namespace WWSearchDataGrid.Modern.WPF
             {
                 System.Diagnostics.Debug.WriteLine($"Error removing search template: {ex.Message}");
             }
-        }
-
-        /// <summary>
-        /// Gets the currently selected column info from the tab control (legacy method, kept for compatibility)
-        /// </summary>
-        private FilteredColumnInfo GetCurrentColumnInfo()
-        {
-            if (tabControl?.SelectedItem is FilteredColumnInfo columnInfo)
-            {
-                return columnInfo;
-            }
-            return FilteredColumns?.FirstOrDefault();
         }
 
         /// <summary>

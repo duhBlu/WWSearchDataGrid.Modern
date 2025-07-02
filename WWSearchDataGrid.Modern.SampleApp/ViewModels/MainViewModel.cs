@@ -280,32 +280,6 @@ namespace WWSearchDataGrid.Modern.SampleApp
                 CompletedDateTime = statusValue == OrderStatus.Completed ? (DateTime?)orderDateTime.AddDays(random.Next(3, 14)) : null,
                 ProcessingTime = TimeSpan.FromMinutes(random.Next(15, 300)),
                 DeliveryTime = statusValue >= OrderStatus.Delivered ? (TimeSpan?)TimeSpan.FromDays(random.Next(1, 10)) : null,
-
-                // Legacy fields for compatibility
-                ComboBoxValueId = ComboBoxItems.Skip(random.Next(ComboBoxItems.Count)).First().Id,
-                SelectedComboBoxStringValue = ComboBoxStringValues.Skip(random.Next(ComboBoxStringValues.Count)).First(),
-                PropertyValues = new List<Tuple<string, string>>
-                {
-                    Tuple.Create("KeyA", random.NextDouble() < 0.1 ? null : $"Value{random.Next(1, 100)}"),
-                    Tuple.Create("KeyB", $"Data{random.Next(1, 50)}"),
-                    Tuple.Create("KeyC", $"Item{random.Next(1, 25)}")
-                },
-                PropertyDictionary = new Dictionary<string, object>
-                {
-                    { "DictKeyA", random.Next(1, 1000) },
-                    { "DictKeyB", orderDateTime.AddDays(-random.Next(0, 90)) },
-                    { "DictKeyC", GenerateVariedString(random) },
-                    { "DictKeyD", random.NextDouble() < 0.5 ? (object)"GroupA" : "GroupB" }
-                },
-
-                // Legacy business fields
-                ProductName = GenerateProductName(random),
-                Category = categories[random.Next(categories.Length)],
-                CurrencyCode = GenerateCurrencyCode(random),
-                Price = (decimal)(random.NextDouble() * 5000 + 10),
-                Quantity = random.Next(1, 200),
-                OrderDate = orderDateTime.Date,
-                Status = statusValue.ToString()
             };
         }
 
@@ -324,28 +298,6 @@ namespace WWSearchDataGrid.Modern.SampleApp
             };
             
             return stringTypes[random.Next(stringTypes.Length)];
-        }
-
-        /// <summary>
-        /// Generates varied product names
-        /// </summary>
-        private string GenerateProductName(Random random)
-        {
-            var adjectives = new[] { "Premium", "Professional", "Standard", "Deluxe", "Basic", "Advanced", "Ultra", "Pro" };
-            var products = new[] { "Laptop", "Monitor", "Keyboard", "Mouse", "Headset", "Tablet", "Phone", "Camera", "Printer", "Scanner" };
-            
-            return random.NextDouble() < 0.3 ? 
-                $"{adjectives[random.Next(adjectives.Length)]} {products[random.Next(products.Length)]}" :
-                products[random.Next(products.Length)];
-        }
-
-        /// <summary>
-        /// Generates currency codes with realistic distribution
-        /// </summary>
-        private string GenerateCurrencyCode(Random random)
-        {
-            var currencies = new[] { "USD", "EUR", "GBP", "JPY", "CAD", "AUD", "CHF", "CNY", "SEK", "NOK" };
-            return currencies[random.Next(currencies.Length)];
         }
 
         #endregion

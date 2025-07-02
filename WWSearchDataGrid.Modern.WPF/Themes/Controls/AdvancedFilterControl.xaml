@@ -9,7 +9,7 @@
         <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF;component/Themes/Common/CommonStyles.xaml" />
         <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF;component/Templates/FilterValueTemplates.xaml" />
         <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF;component/Templates/SharedFilterRuleTemplates.xaml" />
-        <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF;component/Themes/Controls/NumericUpDown.xaml" />
+        <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF;component/Themes/Controls/primitives/NumericUpDown.xaml" />
     </ResourceDictionary.MergedDictionaries>
 
     <!--  Converters  -->

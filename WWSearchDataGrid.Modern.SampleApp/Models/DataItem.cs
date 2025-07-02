@@ -62,20 +62,5 @@ namespace WWSearchDataGrid.Modern.SampleApp
         public DateTime? CompletedDateTime { get; set; }
         public TimeSpan ProcessingTime { get; set; }
         public TimeSpan? DeliveryTime { get; set; }
-
-        // Legacy fields for compatibility
-        public int ComboBoxValueId { get; set; }
-        public string SelectedComboBoxStringValue { get; set; }
-        public List<Tuple<string, string>> PropertyValues { get; set; }
-        public Dictionary<string, object> PropertyDictionary { get; set; }
-
-        // Legacy business fields
-        public string ProductName { get; set; }
-        public string Category { get; set; }
-        public string CurrencyCode { get; set; }
-        public decimal Price { get; set; }
-        public int Quantity { get; set; }
-        public DateTime OrderDate { get; set; }
-        public string Status { get; set; }
     }
 }
