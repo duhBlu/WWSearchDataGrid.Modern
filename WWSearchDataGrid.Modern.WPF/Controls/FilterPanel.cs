@@ -358,6 +358,7 @@ namespace WWSearchDataGrid.Modern.WPF
             if (token?.SourceFilter != null)
             {
                 FilterRemoved?.Invoke(this, new RemoveFilterEventArgs(token.SourceFilter));
+                CheckForOverflow();
             }
         }
 
@@ -470,8 +471,13 @@ namespace WWSearchDataGrid.Modern.WPF
                 
                 // Check if content width exceeds available space
                 var availableWidth = ActualWidth - 200; // Account for buttons and margins
-                HasOverflow = tokenizedControl.DesiredSize.Width > availableWidth || 
-                             tokenizedControl.ActualWidth > availableWidth;
+                HasOverflow = tokenizedControl.DesiredSize.Width > availableWidth;
+
+                // Collapse the panel if we no longer have overflow content
+                if (!HasOverflow && IsExpanded)
+                {
+                    IsExpanded = false;
+                }
             }
         }
 
