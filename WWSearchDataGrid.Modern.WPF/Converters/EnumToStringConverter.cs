@@ -18,7 +18,7 @@ namespace WWSearchDataGrid.Modern.WPF.Converters
         {
             if (value is SearchType searchType)
             {
-                var metadata = FilterTypeRegistry.GetMetadata(searchType);
+                var metadata = SearchTypeRegistry.GetMetadata(searchType);
                 return metadata?.DisplayName ?? searchType.ToString();
             }
             return value?.ToString() ?? string.Empty;

@@ -235,7 +235,7 @@ namespace WWSearchDataGrid.Modern.WPF
         {
             if (d is FilterPanel panel)
             {
-                panel.Dispatcher.BeginInvoke(new Action(panel.CheckForOverflow), System.Windows.Threading.DispatcherPriority.Loaded);
+                panel.Dispatcher.BeginInvoke(() => panel.CheckForOverflow(), System.Windows.Threading.DispatcherPriority.Loaded);
             }
         }
 
@@ -292,25 +292,6 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
-        /// Executes the remove filter command
-        /// </summary>
-        private void ExecuteRemoveFilter(ColumnFilterInfo filterInfo)
-        {
-            if (filterInfo != null)
-            {
-                FilterRemoved?.Invoke(this, new RemoveFilterEventArgs(filterInfo));
-            }
-        }
-
-        /// <summary>
-        /// Determines whether a filter can be removed
-        /// </summary>
-        private bool CanRemoveFilter(ColumnFilterInfo filterInfo)
-        {
-            return filterInfo != null && filterInfo.IsActive;
-        }
-
-        /// <summary>
         /// Executes the edit filters command
         /// </summary>
         private void ExecuteEditFilters(object parameter)
@@ -358,7 +339,7 @@ namespace WWSearchDataGrid.Modern.WPF
             if (token?.SourceFilter != null)
             {
                 FilterRemoved?.Invoke(this, new RemoveFilterEventArgs(token.SourceFilter));
-                CheckForOverflow();
+                CheckForOverflow(true);
             }
         }
 
@@ -432,7 +413,7 @@ namespace WWSearchDataGrid.Modern.WPF
             }
             
             // Check for overflow after token update
-            Dispatcher.BeginInvoke(new Action(CheckForOverflow), System.Windows.Threading.DispatcherPriority.Loaded);
+            Dispatcher.BeginInvoke(() => CheckForOverflow(), System.Windows.Threading.DispatcherPriority.Loaded);
         }
 
         /// <summary>
@@ -454,9 +435,9 @@ namespace WWSearchDataGrid.Modern.WPF
         /// <summary>
         /// Checks if the filter content overflows the available space
         /// </summary>
-        private void CheckForOverflow()
+        private void CheckForOverflow(bool isRemovingFilter = false)
         {
-            if (IsExpanded)
+            if (IsExpanded && !isRemovingFilter)
             {
                 HasOverflow = false;
                 return;

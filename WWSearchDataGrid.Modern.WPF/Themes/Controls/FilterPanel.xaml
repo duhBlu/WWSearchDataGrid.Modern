@@ -230,7 +230,6 @@
                                         Command="{Binding EditFiltersCommand, RelativeSource={RelativeSource TemplatedParent}}"
                                         Width="24"
                                         Height="24"
-                                        FontWeight="ExtraBlack"
                                         Content="&#xE70F;"
                                         FontSize="14"
                                         ToolTip="Open advanced filter editor">
@@ -254,7 +253,7 @@
                                         Command="{Binding ClearAllFiltersCommand, RelativeSource={RelativeSource TemplatedParent}}"
                                         Width="24"
                                         Height="24"
-                                        Content="&#xE653;"
+                                        Content="&#xE711;"
                                         FontSize="14"
                                         ToolTip="Clear all filters">
                                     <Button.Style>

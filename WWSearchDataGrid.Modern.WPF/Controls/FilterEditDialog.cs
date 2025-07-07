@@ -15,15 +15,6 @@ namespace WWSearchDataGrid.Modern.WPF
     /// </summary>
     public class FilterEditDialog : Control
     {
-        #region Fields
-
-        private ListBox filterGroupsListBox;
-        private Button applyButton;
-        private Button cancelButton;
-        private Button closeButton;
-
-        #endregion
-
         #region Dependency Properties
 
         public static readonly DependencyProperty SourceDataGridProperty =
@@ -115,21 +106,6 @@ namespace WWSearchDataGrid.Modern.WPF
         public ICommand CancelCommand => new RelayCommand(_ => ExecuteCancel());
 
         /// <summary>
-        /// Close command
-        /// </summary>
-        public ICommand CloseCommand => new RelayCommand(_ => ExecuteClose());
-
-        /// <summary>
-        /// Add search group command
-        /// </summary>
-        public ICommand AddSearchGroupCommand => new RelayCommand<SearchTemplateGroup>(group => ExecuteAddSearchGroup(group));
-
-        /// <summary>
-        /// Remove search group command
-        /// </summary>
-        public ICommand RemoveSearchGroupCommand => new RelayCommand<SearchTemplateGroup>(group => ExecuteRemoveSearchGroup(group));
-
-        /// <summary>
         /// Add search template command
         /// </summary>
         public ICommand AddSearchTemplateCommand => new RelayCommand<SearchTemplate>(template => ExecuteAddSearchTemplate(template));
@@ -187,22 +163,6 @@ namespace WWSearchDataGrid.Modern.WPF
         public override void OnApplyTemplate()
         {
             base.OnApplyTemplate();
-
-            // Get template parts
-            filterGroupsListBox = GetTemplateChild("PART_FilterGroupsListBox") as ListBox;
-            applyButton = GetTemplateChild("PART_ApplyButton") as Button;
-            cancelButton = GetTemplateChild("PART_CancelButton") as Button;
-            closeButton = GetTemplateChild("PART_CloseButton") as Button;
-
-            // Wire up button events
-            if (applyButton != null)
-                applyButton.Click += (s, e) => ExecuteApply();
-
-            if (cancelButton != null)
-                cancelButton.Click += (s, e) => ExecuteCancel();
-
-            if (closeButton != null)
-                closeButton.Click += (s, e) => ExecuteClose();
 
             // Initialize the dialog if we have a data grid
             if (SourceDataGrid != null)
@@ -455,15 +415,6 @@ namespace WWSearchDataGrid.Modern.WPF
         /// Executes the cancel command
         /// </summary>
         private void ExecuteCancel()
-        {
-            DialogAccepted = false;
-            DialogClosing?.Invoke(this, new DialogClosingEventArgs(false));
-        }
-
-        /// <summary>
-        /// Executes the close command
-        /// </summary>
-        private void ExecuteClose()
         {
             DialogAccepted = false;
             DialogClosing?.Invoke(this, new DialogClosingEventArgs(false));

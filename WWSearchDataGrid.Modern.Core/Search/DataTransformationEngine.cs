@@ -91,8 +91,8 @@ namespace WWSearchDataGrid.Modern.Core
                 return items;
 
             return items
-                .Select(item => new { Item = item, Value = GetColumnValue(item, transformation.ColumnPath) })
-                .Where(x => x.Value != null && IsComparableValue(x.Value))
+                .Select(item => new { Item = item, Value = ReflectionHelper.GetPropValue(item, transformation.ColumnPath) })
+                .Where(x => x.Value != null && ReflectionHelper.IsComparableValue(x.Value))
                 .OrderByDescending(x => x.Value)
                 .Take(count)
                 .Select(x => x.Item);
@@ -108,8 +108,8 @@ namespace WWSearchDataGrid.Modern.Core
                 return items;
 
             return items
-                .Select(item => new { Item = item, Value = GetColumnValue(item, transformation.ColumnPath) })
-                .Where(x => x.Value != null && IsComparableValue(x.Value))
+                .Select(item => new { Item = item, Value = ReflectionHelper.GetPropValue(item, transformation.ColumnPath) })
+                .Where(x => x.Value != null && ReflectionHelper.IsComparableValue(x.Value))
                 .OrderBy(x => x.Value)
                 .Take(count)
                 .Select(x => x.Item);
@@ -121,8 +121,8 @@ namespace WWSearchDataGrid.Modern.Core
         private static IEnumerable<object> ApplyAboveAverage(List<object> items, DataTransformation transformation)
         {
             var numericValues = items
-                .Select(item => GetColumnValue(item, transformation.ColumnPath))
-                .Where(value => value != null && IsNumericValue(value))
+                .Select(item => ReflectionHelper.GetPropValue(item, transformation.ColumnPath))
+                .Where(value => value != null && ReflectionHelper.IsNumericValue(value))
                 .Select(value => ConvertToDouble(value))
                 .Where(value => !double.IsNaN(value))
                 .ToList();
@@ -134,8 +134,8 @@ namespace WWSearchDataGrid.Modern.Core
 
             return items.Where(item =>
             {
-                var value = GetColumnValue(item, transformation.ColumnPath);
-                if (value == null || !IsNumericValue(value))
+                var value = ReflectionHelper.GetPropValue(item, transformation.ColumnPath);
+                if (value == null || !ReflectionHelper.IsNumericValue(value))
                     return false;
 
                 double numericValue = ConvertToDouble(value);
@@ -149,8 +149,8 @@ namespace WWSearchDataGrid.Modern.Core
         private static IEnumerable<object> ApplyBelowAverage(List<object> items, DataTransformation transformation)
         {
             var numericValues = items
-                .Select(item => GetColumnValue(item, transformation.ColumnPath))
-                .Where(value => value != null && IsNumericValue(value))
+                .Select(item => ReflectionHelper.GetPropValue(item, transformation.ColumnPath))
+                .Where(value => value != null && ReflectionHelper.IsNumericValue(value))
                 .Select(value => ConvertToDouble(value))
                 .Where(value => !double.IsNaN(value))
                 .ToList();
@@ -162,8 +162,8 @@ namespace WWSearchDataGrid.Modern.Core
 
             return items.Where(item =>
             {
-                var value = GetColumnValue(item, transformation.ColumnPath);
-                if (value == null || !IsNumericValue(value))
+                var value = ReflectionHelper.GetPropValue(item, transformation.ColumnPath);
+                if (value == null || !ReflectionHelper.IsNumericValue(value))
                     return false;
 
                 double numericValue = ConvertToDouble(value);
@@ -177,7 +177,7 @@ namespace WWSearchDataGrid.Modern.Core
         private static IEnumerable<object> ApplyUnique(List<object> items, DataTransformation transformation)
         {
             return items
-                .GroupBy(item => GetColumnValue(item, transformation.ColumnPath)?.ToString() ?? "")
+                .GroupBy(item => ReflectionHelper.GetPropValue(item, transformation.ColumnPath)?.ToString() ?? "")
                 .Where(group => group.Count() == 1)
                 .SelectMany(group => group);
         }
@@ -188,77 +188,11 @@ namespace WWSearchDataGrid.Modern.Core
         private static IEnumerable<object> ApplyDuplicate(List<object> items, DataTransformation transformation)
         {
             return items
-                .GroupBy(item => GetColumnValue(item, transformation.ColumnPath)?.ToString() ?? "")
+                .GroupBy(item => ReflectionHelper.GetPropValue(item, transformation.ColumnPath)?.ToString() ?? "")
                 .Where(group => group.Count() > 1)
                 .SelectMany(group => group);
         }
 
-        /// <summary>
-        /// Gets a property value from an object using a binding path
-        /// </summary>
-        /// <param name="item">The object to get the value from</param>
-        /// <param name="bindingPath">The property path (supports nested properties with dot notation)</param>
-        /// <returns>The property value or null if not found</returns>
-        private static object GetColumnValue(object item, string bindingPath)
-        {
-            if (item == null || string.IsNullOrEmpty(bindingPath))
-                return null;
-
-            try
-            {
-                // Use ReflectionHelper if available, otherwise use simple reflection
-                return ReflectionHelper.GetPropValue(item, bindingPath);
-            }
-            catch
-            {
-                // Fallback to simple property access
-                try
-                {
-                    var properties = bindingPath.Split('.');
-                    object value = item;
-
-                    foreach (var prop in properties)
-                    {
-                        if (value == null)
-                            return null;
-
-                        var propInfo = value.GetType().GetProperty(prop);
-                        if (propInfo == null)
-                            return null;
-
-                        value = propInfo.GetValue(value);
-                    }
-
-                    return value;
-                }
-                catch
-                {
-                    return null;
-                }
-            }
-        }
-
-        /// <summary>
-        /// Determines if a value is comparable (implements IComparable)
-        /// </summary>
-        /// <param name="value">The value to check</param>
-        /// <returns>True if the value is comparable</returns>
-        private static bool IsComparableValue(object value)
-        {
-            return value is IComparable;
-        }
-
-        /// <summary>
-        /// Determines if a value is numeric
-        /// </summary>
-        /// <param name="value">The value to check</param>
-        /// <returns>True if the value is numeric</returns>
-        private static bool IsNumericValue(object value)
-        {
-            return value is byte || value is sbyte || value is short || value is ushort ||
-                   value is int || value is uint || value is long || value is ulong ||
-                   value is float || value is double || value is decimal;
-        }
 
         /// <summary>
         /// Converts a value to double for averaging calculations

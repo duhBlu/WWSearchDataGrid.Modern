@@ -24,7 +24,6 @@ namespace WWSearchDataGrid.Modern.WPF.Services
             // Check if we have a custom expression already set
             if (searchTemplateController.HasCustomExpression)
             {
-                System.Diagnostics.Debug.WriteLine("HasCustomFilterRules: Found HasCustomExpression = true");
                 return true;
             }
 
@@ -40,7 +39,6 @@ namespace WWSearchDataGrid.Modern.WPF.Services
                             // Check if template has configured search criteria
                             if (HasMeaningfulSearchCriteria(template))
                             {
-                                System.Diagnostics.Debug.WriteLine($"HasCustomFilterRules: Found meaningful template with SearchType = {template.SearchType}");
                                 return true;
                             }
                         }
@@ -48,7 +46,6 @@ namespace WWSearchDataGrid.Modern.WPF.Services
                 }
             }
 
-            System.Diagnostics.Debug.WriteLine("HasCustomFilterRules: No custom rules found");
             return false;
         }
 
@@ -130,11 +127,9 @@ namespace WWSearchDataGrid.Modern.WPF.Services
             // If no values or all values selected, this is not meaningful filtering
             if (!selectedItems.Any() || selectedItems.Count == allValues.Count)
             {
-                System.Diagnostics.Debug.WriteLine($"HasMeaningfulValueSelections: {selectedItems.Count}/{allValues.Count} selected - not meaningful");
                 return false;
             }
 
-            System.Diagnostics.Debug.WriteLine($"HasMeaningfulValueSelections: {selectedItems.Count}/{allValues.Count} selected - meaningful");
             return true;
         }
 
@@ -146,12 +141,10 @@ namespace WWSearchDataGrid.Modern.WPF.Services
             var hasCustomRules = HasCustomFilterRules(searchTemplateController);
             var hasMeaningfulValues = HasMeaningfulValueSelections(filterValueViewModel);
 
-            System.Diagnostics.Debug.WriteLine($"ShouldPreferRuleBasedFiltering: hasCustomRules={hasCustomRules}, hasMeaningfulValues={hasMeaningfulValues}");
 
             // If we have custom rules and no meaningful value selections, prefer rules
             if (hasCustomRules && !hasMeaningfulValues)
             {
-                System.Diagnostics.Debug.WriteLine("ShouldPreferRuleBasedFiltering: Preferring rules - has custom rules but no meaningful values");
                 return true;
             }
 
@@ -159,11 +152,9 @@ namespace WWSearchDataGrid.Modern.WPF.Services
             // This prevents operator changes from being lost when "all values selected"
             if (hasCustomRules && hasMeaningfulValues)
             {
-                System.Diagnostics.Debug.WriteLine("ShouldPreferRuleBasedFiltering: Preferring rules - has both custom rules and meaningful values");
                 return true;
             }
 
-            System.Diagnostics.Debug.WriteLine("ShouldPreferRuleBasedFiltering: Preferring value-based filtering");
             return false;
         }
 
@@ -191,13 +182,11 @@ namespace WWSearchDataGrid.Modern.WPF.Services
                 var hasMeaningfulValues = HasMeaningfulValueSelections(filterValueViewModel);
                 var isValuesTabSelected = selectedTabIndex == 1;
 
-                System.Diagnostics.Debug.WriteLine($"ApplyIntelligentFilter: hasCustomRules={hasCustomRules}, hasMeaningfulValues={hasMeaningfulValues}, isValuesTabSelected={isValuesTabSelected}");
 
                 // Decision matrix for intelligent filtering
                 if (hasCustomRules && !hasMeaningfulValues)
                 {
                     // Custom rules exist but no meaningful value selections - use rules
-                    System.Diagnostics.Debug.WriteLine("ApplyIntelligentFilter: Using rule-based filtering - custom rules without meaningful values");
                     return ApplyRuleBasedFilter(searchTemplateController);
                 }
                 else if (hasCustomRules && hasMeaningfulValues)
@@ -206,26 +195,22 @@ namespace WWSearchDataGrid.Modern.WPF.Services
                     if (isValuesTabSelected)
                     {
                         // User is on values tab - but still preserve rules if they exist
-                        System.Diagnostics.Debug.WriteLine("ApplyIntelligentFilter: Values tab selected but custom rules exist - preserving rules");
                         return ApplyRuleBasedFilter(searchTemplateController);
                     }
                     else
                     {
                         // User is on rules tab - use rules
-                        System.Diagnostics.Debug.WriteLine("ApplyIntelligentFilter: Using rule-based filtering - rules tab with custom rules");
                         return ApplyRuleBasedFilter(searchTemplateController);
                     }
                 }
                 else if (!hasCustomRules && hasMeaningfulValues)
                 {
                     // No custom rules but meaningful value selections - use values
-                    System.Diagnostics.Debug.WriteLine("ApplyIntelligentFilter: Using value-based filtering - meaningful values without custom rules");
                     return ApplyValueBasedFilter(filterValueViewModel, searchTemplateController, columnDataType);
                 }
                 else
                 {
                     // No custom rules and no meaningful values - clear filter
-                    System.Diagnostics.Debug.WriteLine("ApplyIntelligentFilter: Clearing filters - no custom rules or meaningful values");
                     return ClearAllFilters(searchTemplateController);
                 }
             }
@@ -260,7 +245,6 @@ namespace WWSearchDataGrid.Modern.WPF.Services
                 // INTELLIGENT DECISION LOGIC: Check if we should prefer rule-based filtering instead
                 if (ShouldPreferRuleBasedFiltering(searchTemplateController, filterValueViewModel))
                 {
-                    System.Diagnostics.Debug.WriteLine("ApplyValueBasedFilter: Delegating to rule-based filtering due to existing custom rules");
                     return ApplyRuleBasedFilter(searchTemplateController);
                 }
 
@@ -275,18 +259,16 @@ namespace WWSearchDataGrid.Modern.WPF.Services
                 var allValues = filterValueViewModel.GetAllValues();
                 var selectedItems = allValues.Where(item => item.IsSelected).ToList();
 
-                // Enhanced logic: Only clear if no custom rules exist AND all items are selected
+                // Only clear if no custom rules exist AND all items are selected
                 if (selectedItems.Count == allValues.Count && allValues.Count > 0)
                 {
                     // Check one more time for custom rules before clearing
                     if (HasCustomFilterRules(searchTemplateController))
                     {
-                        System.Diagnostics.Debug.WriteLine("ApplyValueBasedFilter: All values selected but custom rules exist - preserving rules");
                         return ApplyRuleBasedFilter(searchTemplateController);
                     }
                     else
                     {
-                        System.Diagnostics.Debug.WriteLine("ApplyValueBasedFilter: All values selected and no custom rules - clearing filter");
                         return ClearAllFilters(searchTemplateController);
                     }
                 }
@@ -335,12 +317,10 @@ namespace WWSearchDataGrid.Modern.WPF.Services
                     // No items selected - check for custom rules before clearing
                     if (HasCustomFilterRules(searchTemplateController))
                     {
-                        System.Diagnostics.Debug.WriteLine("ApplyValueBasedFilter: No values selected but custom rules exist - preserving rules");
                         return ApplyRuleBasedFilter(searchTemplateController);
                     }
                     else
                     {
-                        System.Diagnostics.Debug.WriteLine("ApplyValueBasedFilter: No values selected and no custom rules - clearing filter");
                         return ClearAllFilters(searchTemplateController);
                     }
                 }
@@ -413,11 +393,9 @@ namespace WWSearchDataGrid.Modern.WPF.Services
                     return FilterApplicationResult.Failure("Search template controller is null");
                 }
 
-                System.Diagnostics.Debug.WriteLine($"ApplyRuleBasedFilter: Starting with {searchTemplateController.SearchGroups.Count} search groups");
                 for (int i = 0; i < searchTemplateController.SearchGroups.Count; i++)
                 {
                     var group = searchTemplateController.SearchGroups[i];
-                    System.Diagnostics.Debug.WriteLine($"ApplyRuleBasedFilter: Group {i} has {group.SearchTemplates.Count} templates, OperatorName = {group.OperatorName}");
                 }
 
                 searchTemplateController.UpdateFilterExpression();

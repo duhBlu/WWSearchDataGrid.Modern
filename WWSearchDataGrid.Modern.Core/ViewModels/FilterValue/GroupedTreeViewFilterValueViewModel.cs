@@ -557,7 +557,7 @@ namespace WWSearchDataGrid.Modern.Core
             }
 
             // Numeric grouping
-            if (IsNumericType(type))
+            if (ReflectionHelper.IsNumericType(type))
             {
                 return v =>
                 {
@@ -921,16 +921,6 @@ namespace WWSearchDataGrid.Modern.Core
                 return $"All {totalCount} values selected";
             else
                 return $"{selectedCount} of {totalCount} values selected";
-        }
-
-        private bool IsNumericType(Type type)
-        {
-            return type == typeof(byte) || type == typeof(sbyte) ||
-                   type == typeof(short) || type == typeof(ushort) ||
-                   type == typeof(int) || type == typeof(uint) ||
-                   type == typeof(long) || type == typeof(ulong) ||
-                   type == typeof(float) || type == typeof(double) ||
-                   type == typeof(decimal);
         }
 
         public override List<FilterValueItem> GetAllValues()

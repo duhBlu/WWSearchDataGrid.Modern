@@ -34,16 +34,16 @@ namespace WWSearchDataGrid.Modern.Core
                 // Convert both values to the same type for comparison
                 if (searchCondition.IsDateTime)
                 {
-                    var columnDate = ConvertToDateTime(columnValue);
-                    var comparisonDate = ConvertToDateTime(comparisonValue);
+                    var columnDate = TypeTranslatorHelper.ConvertToDateTime(columnValue);
+                    var comparisonDate = TypeTranslatorHelper.ConvertToDateTime(comparisonValue);
 
                     if (columnDate.HasValue && comparisonDate.HasValue)
                         return columnDate.Value.CompareTo(comparisonDate.Value);
                 }
                 else if (searchCondition.IsNumeric)
                 {
-                    var columnDecimal = ConvertToDecimal(columnValue);
-                    var comparisonDecimal = ConvertToDecimal(comparisonValue);
+                    var columnDecimal = TypeTranslatorHelper.ConvertToDecimal(columnValue);
+                    var comparisonDecimal = TypeTranslatorHelper.ConvertToDecimal(comparisonValue);
 
                     if (columnDecimal.HasValue && comparisonDecimal.HasValue)
                         return columnDecimal.Value.CompareTo(comparisonDecimal.Value);
@@ -63,30 +63,6 @@ namespace WWSearchDataGrid.Modern.Core
                 System.Diagnostics.Debug.WriteLine($"Error in CompareValues: {ex.Message}");
                 throw new InvalidSearchException($"Unable to compare values: {ex.Message}", ex);
             }
-        }
-
-        private static DateTime? ConvertToDateTime(object value)
-        {
-            if (value is DateTime dt)
-                return dt;
-            if (DateTime.TryParse(value.ToString(), out DateTime parsed))
-                return parsed;
-            return null;
-        }
-
-        private static decimal? ConvertToDecimal(object value)
-        {
-            if (value is decimal dec)
-                return dec;
-            if (value is int i)
-                return (decimal)i;
-            if (value is double d)
-                return (decimal)d;
-            if (value is float f)
-                return (decimal)f;
-            if (decimal.TryParse(value.ToString(), out decimal parsed))
-                return parsed;
-            return null;
         }
 
         /// <summary>

@@ -128,10 +128,6 @@ namespace WWSearchDataGrid.Modern.Core
                 var result = hasSelectedValue || hasSelectedSecondaryValue || isNonDefaultSearchType || 
                            hasSelectedValues || hasSelectedDates || hasSelectedDateIntervals;
                 
-                System.Diagnostics.Debug.WriteLine($"SearchTemplate.HasCustomFilter: SearchType={SearchType}, SelectedValue={SelectedValue}, result={result}");
-                System.Diagnostics.Debug.WriteLine($"  hasSelectedValue={hasSelectedValue}, hasSelectedSecondaryValue={hasSelectedSecondaryValue}");
-                System.Diagnostics.Debug.WriteLine($"  isNonDefaultSearchType={isNonDefaultSearchType}, hasSelectedValues={hasSelectedValues}");
-                
                 return result;
             }
         }
@@ -297,7 +293,7 @@ namespace WWSearchDataGrid.Modern.Core
 
         private void UpdateInputTemplate()
         {
-            var metadata = FilterTypeRegistry.GetMetadata(SearchType);
+            var metadata = SearchTypeRegistry.GetMetadata(SearchType);
             if (metadata != null)
             {
                 InputTemplate = metadata.InputTemplate;
@@ -315,7 +311,7 @@ namespace WWSearchDataGrid.Modern.Core
                 isNullable = ReflectionHelper.IsNullableFromValues(ColumnValues);
             }
 
-            var validTypes = FilterTypeRegistry.GetFiltersForDataType(ColumnDataType, isNullable);
+            var validTypes = SearchTypeRegistry.GetFiltersForDataType(ColumnDataType, isNullable);
             foreach (var filterType in validTypes)
             {
                 ValidSearchTypes.Add(filterType.SearchType);

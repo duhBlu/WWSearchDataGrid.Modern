@@ -8,131 +8,129 @@ namespace WWSearchDataGrid.Modern.Core
     /// <summary>
     /// Registry of all filter types and their metadata
     /// </summary>
-    public static class FilterTypeRegistry
+    public static class SearchTypeRegistry
     {
-        private static readonly Dictionary<SearchType, FilterTypeMetadata> Registry;
+        private static readonly Dictionary<SearchType, SearchTypeMetadata> Registry;
 
-        static FilterTypeRegistry()
+        static SearchTypeRegistry()
         {
-            Registry = new Dictionary<SearchType, FilterTypeMetadata>
+            Registry = new Dictionary<SearchType, SearchTypeMetadata>
             {
                 // Single ComboBox filters
-                [SearchType.Equals] = new FilterTypeMetadata(SearchType.Equals, "Equals",
+                [SearchType.Equals] = new SearchTypeMetadata(SearchType.Equals, "Equals",
                     FilterInputTemplate.SingleComboBox, ColumnDataType.String, ColumnDataType.Number, ColumnDataType.DateTime, ColumnDataType.Boolean, ColumnDataType.Enum),
 
-                [SearchType.NotEquals] = new FilterTypeMetadata(SearchType.NotEquals, "Does not equal",
+                [SearchType.NotEquals] = new SearchTypeMetadata(SearchType.NotEquals, "Does not equal",
                     FilterInputTemplate.SingleComboBox, ColumnDataType.String, ColumnDataType.Number, ColumnDataType.DateTime, ColumnDataType.Boolean, ColumnDataType.Enum),
 
-                [SearchType.GreaterThan] = new FilterTypeMetadata(SearchType.GreaterThan, "Is greater than",
+                [SearchType.GreaterThan] = new SearchTypeMetadata(SearchType.GreaterThan, "Is greater than",
                     FilterInputTemplate.SingleComboBox, ColumnDataType.Number, ColumnDataType.DateTime),
 
-                [SearchType.GreaterThanOrEqualTo] = new FilterTypeMetadata(SearchType.GreaterThanOrEqualTo, "Is greater than or equal to",
+                [SearchType.GreaterThanOrEqualTo] = new SearchTypeMetadata(SearchType.GreaterThanOrEqualTo, "Is greater than or equal to",
                     FilterInputTemplate.SingleComboBox, ColumnDataType.Number, ColumnDataType.DateTime),
 
-                [SearchType.LessThan] = new FilterTypeMetadata(SearchType.LessThan, "Is less than",
+                [SearchType.LessThan] = new SearchTypeMetadata(SearchType.LessThan, "Is less than",
                     FilterInputTemplate.SingleComboBox, ColumnDataType.Number, ColumnDataType.DateTime),
 
-                [SearchType.LessThanOrEqualTo] = new FilterTypeMetadata(SearchType.LessThanOrEqualTo, "Is less than or equal to",
+                [SearchType.LessThanOrEqualTo] = new SearchTypeMetadata(SearchType.LessThanOrEqualTo, "Is less than or equal to",
                     FilterInputTemplate.SingleComboBox, ColumnDataType.Number, ColumnDataType.DateTime),
 
-                [SearchType.Contains] = new FilterTypeMetadata(SearchType.Contains, "Contains",
+                [SearchType.Contains] = new SearchTypeMetadata(SearchType.Contains, "Contains",
                     FilterInputTemplate.SingleTextBox, ColumnDataType.String, ColumnDataType.Number, ColumnDataType.Enum),
 
-                [SearchType.DoesNotContain] = new FilterTypeMetadata(SearchType.DoesNotContain, "Does not contain",
+                [SearchType.DoesNotContain] = new SearchTypeMetadata(SearchType.DoesNotContain, "Does not contain",
                     FilterInputTemplate.SingleTextBox, ColumnDataType.String, ColumnDataType.Number, ColumnDataType.Enum),
 
-                [SearchType.StartsWith] = new FilterTypeMetadata(SearchType.StartsWith, "Starts with",
+                [SearchType.StartsWith] = new SearchTypeMetadata(SearchType.StartsWith, "Starts with",
                     FilterInputTemplate.SingleTextBox, ColumnDataType.String, ColumnDataType.Number, ColumnDataType.Enum),
 
-                [SearchType.EndsWith] = new FilterTypeMetadata(SearchType.EndsWith, "Ends with",
+                [SearchType.EndsWith] = new SearchTypeMetadata(SearchType.EndsWith, "Ends with",
                     FilterInputTemplate.SingleTextBox, ColumnDataType.String, ColumnDataType.Number, ColumnDataType.Enum),
 
-                [SearchType.IsLike] = new FilterTypeMetadata(SearchType.IsLike, "Is like",
-                    FilterInputTemplate.SingleTextBox, ColumnDataType.String, ColumnDataType.Enum),
+                [SearchType.IsLike] = new SearchTypeMetadata(SearchType.IsLike, "Is like",
+                    FilterInputTemplate.SingleTextBox, ColumnDataType.String, ColumnDataType.Number, ColumnDataType.Enum),
 
-                [SearchType.IsNotLike] = new FilterTypeMetadata(SearchType.IsNotLike, "Is not like",
-                    FilterInputTemplate.SingleTextBox, ColumnDataType.String, ColumnDataType.Enum),
+                [SearchType.IsNotLike] = new SearchTypeMetadata(SearchType.IsNotLike, "Is not like",
+                    FilterInputTemplate.SingleTextBox, ColumnDataType.String, ColumnDataType.Number, ColumnDataType.Enum),
 
                 // Dual ComboBox filters
-                [SearchType.Between] = new FilterTypeMetadata(SearchType.Between, "Is between",
+                [SearchType.Between] = new SearchTypeMetadata(SearchType.Between, "Is between",
                     FilterInputTemplate.DualComboBox, ColumnDataType.Number, ColumnDataType.String),
 
-                [SearchType.NotBetween] = new FilterTypeMetadata(SearchType.NotBetween, "Is not between",
+                [SearchType.NotBetween] = new SearchTypeMetadata(SearchType.NotBetween, "Is not between",
                     FilterInputTemplate.DualComboBox, ColumnDataType.Number, ColumnDataType.String),
 
                 // Dual DateTime filters
-                [SearchType.BetweenDates] = new FilterTypeMetadata(SearchType.BetweenDates, "Is between dates",
+                [SearchType.BetweenDates] = new SearchTypeMetadata(SearchType.BetweenDates, "Is between dates",
                     FilterInputTemplate.DualDateTimePicker, ColumnDataType.DateTime),
 
                 // Numeric UpDown filters
-                [SearchType.TopN] = new FilterTypeMetadata(SearchType.TopN, "Top N",
+                [SearchType.TopN] = new SearchTypeMetadata(SearchType.TopN, "Top N",
                     FilterInputTemplate.NumericUpDown, ColumnDataType.Number)
                 { RequiresCollection = true },
 
-                [SearchType.BottomN] = new FilterTypeMetadata(SearchType.BottomN, "Bottom N",
+                [SearchType.BottomN] = new SearchTypeMetadata(SearchType.BottomN, "Bottom N",
                     FilterInputTemplate.NumericUpDown, ColumnDataType.Number)
                 { RequiresCollection = true },
 
                 // No input filters
-                [SearchType.AboveAverage] = new FilterTypeMetadata(SearchType.AboveAverage, "Above average",
+                [SearchType.AboveAverage] = new SearchTypeMetadata(SearchType.AboveAverage, "Above average",
                     FilterInputTemplate.NoInput, ColumnDataType.Number)
                 { RequiresCollection = true },
 
-                [SearchType.BelowAverage] = new FilterTypeMetadata(SearchType.BelowAverage, "Below average",
+                [SearchType.BelowAverage] = new SearchTypeMetadata(SearchType.BelowAverage, "Below average",
                     FilterInputTemplate.NoInput, ColumnDataType.Number)
                 { RequiresCollection = true },
 
-                [SearchType.IsEmpty] = new FilterTypeMetadata(SearchType.IsEmpty, "Is blank",
+                [SearchType.IsEmpty] = new SearchTypeMetadata(SearchType.IsEmpty, "Is blank",
                     FilterInputTemplate.NoInput, ColumnDataType.String),
 
-                [SearchType.IsNotEmpty] = new FilterTypeMetadata(SearchType.IsNotEmpty, "Is not blank",
+                [SearchType.IsNotEmpty] = new SearchTypeMetadata(SearchType.IsNotEmpty, "Is not blank",
                     FilterInputTemplate.NoInput, ColumnDataType.String),
 
-                [SearchType.IsNull] = new FilterTypeMetadata(SearchType.IsNull, "Is null",
+                [SearchType.IsNull] = new SearchTypeMetadata(SearchType.IsNull, "Is null",
                     FilterInputTemplate.NoInput, ColumnDataType.String, ColumnDataType.Number, ColumnDataType.DateTime, ColumnDataType.Boolean, ColumnDataType.Enum),
 
-                [SearchType.IsNotNull] = new FilterTypeMetadata(SearchType.IsNotNull, "Is not null",
+                [SearchType.IsNotNull] = new SearchTypeMetadata(SearchType.IsNotNull, "Is not null",
                     FilterInputTemplate.NoInput, ColumnDataType.String, ColumnDataType.Number, ColumnDataType.DateTime, ColumnDataType.Boolean, ColumnDataType.Enum),
 
-                [SearchType.Unique] = new FilterTypeMetadata(SearchType.Unique, "Unique",
+                [SearchType.Unique] = new SearchTypeMetadata(SearchType.Unique, "Unique",
                     FilterInputTemplate.NoInput, ColumnDataType.String, ColumnDataType.Number, ColumnDataType.DateTime)
                 { RequiresCollection = true },
 
-                [SearchType.Duplicate] = new FilterTypeMetadata(SearchType.Duplicate, "Duplicate",
+                [SearchType.Duplicate] = new SearchTypeMetadata(SearchType.Duplicate, "Duplicate",
                     FilterInputTemplate.NoInput, ColumnDataType.String, ColumnDataType.Number, ColumnDataType.DateTime)
                 { RequiresCollection = true },
 
-                [SearchType.Yesterday] = new FilterTypeMetadata(SearchType.Yesterday, "Is yesterday",
+                [SearchType.Yesterday] = new SearchTypeMetadata(SearchType.Yesterday, "Is yesterday",
                     FilterInputTemplate.NoInput, ColumnDataType.DateTime),
 
-                [SearchType.Today] = new FilterTypeMetadata(SearchType.Today, "Is today",
+                [SearchType.Today] = new SearchTypeMetadata(SearchType.Today, "Is today",
                     FilterInputTemplate.NoInput, ColumnDataType.DateTime),
 
                 // List-based filters
-                [SearchType.IsAnyOf] = new FilterTypeMetadata(
-                    SearchType.IsAnyOf, 
-                    "Is any of",
-                    FilterInputTemplate.ComboBoxList, 
-                    ColumnDataType.String, ColumnDataType.Number, ColumnDataType.Enum),
+                [SearchType.IsAnyOf] = new SearchTypeMetadata(
+                    SearchType.IsAnyOf, "Is any of",
+                    FilterInputTemplate.ComboBoxList, ColumnDataType.String, ColumnDataType.Number, ColumnDataType.Enum),
 
-                [SearchType.IsNoneOf] = new FilterTypeMetadata(SearchType.IsNoneOf, "Is none of",
+                [SearchType.IsNoneOf] = new SearchTypeMetadata(SearchType.IsNoneOf, "Is none of",
                     FilterInputTemplate.ComboBoxList, ColumnDataType.String, ColumnDataType.Number, ColumnDataType.DateTime, ColumnDataType.Boolean, ColumnDataType.Enum),
 
-                [SearchType.IsOnAnyOfDates] = new FilterTypeMetadata(SearchType.IsOnAnyOfDates, "Is on any of the following",
+                [SearchType.IsOnAnyOfDates] = new SearchTypeMetadata(SearchType.IsOnAnyOfDates, "Is on any of the following",
                     FilterInputTemplate.DateTimePickerList, ColumnDataType.DateTime),
 
                 // Date interval filter
-                [SearchType.DateInterval] = new FilterTypeMetadata(SearchType.DateInterval, "Date intervals",
+                [SearchType.DateInterval] = new SearchTypeMetadata(SearchType.DateInterval, "Date intervals",
                     FilterInputTemplate.DateIntervalCheckList, ColumnDataType.DateTime)
             };
         }
 
-        public static FilterTypeMetadata GetMetadata(SearchType searchType)
+        public static SearchTypeMetadata GetMetadata(SearchType searchType)
         {
             return Registry.TryGetValue(searchType, out var metadata) ? metadata : null;
         }
 
-        public static IEnumerable<FilterTypeMetadata> GetFiltersForDataType(ColumnDataType dataType)
+        public static IEnumerable<SearchTypeMetadata> GetFiltersForDataType(ColumnDataType dataType)
         {
             return Registry.Values.Where(m => m.SupportedDataTypes.Contains(dataType));
         }
@@ -143,7 +141,7 @@ namespace WWSearchDataGrid.Modern.Core
         /// <param name="dataType">The column data type</param>
         /// <param name="isNullable">Whether the column type allows null values</param>
         /// <returns>Filtered collection of filter type metadata</returns>
-        public static IEnumerable<FilterTypeMetadata> GetFiltersForDataType(ColumnDataType dataType, bool isNullable)
+        public static IEnumerable<SearchTypeMetadata> GetFiltersForDataType(ColumnDataType dataType, bool isNullable)
         {
             var baseFilters = Registry.Values.Where(m => m.SupportedDataTypes.Contains(dataType));
 

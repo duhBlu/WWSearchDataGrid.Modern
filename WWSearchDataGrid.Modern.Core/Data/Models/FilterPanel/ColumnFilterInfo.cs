@@ -12,12 +12,11 @@ namespace WWSearchDataGrid.Modern.Core
     {
         private string columnName;
         private string bindingPath;
-        private FilterType filterType;
         private string displayText;
         private bool isActive;
         private object filterData;
         private string conjunction;
-         private string searchTypeText;
+        private string searchTypeText;
         private string primaryValue;
         private string secondaryValue;
         private bool isDateInterval;
@@ -41,15 +40,6 @@ namespace WWSearchDataGrid.Modern.Core
         {
             get => bindingPath;
             set => SetProperty(value, ref bindingPath);
-        }
-
-        /// <summary>
-        /// Gets or sets the type of filter applied
-        /// </summary>
-        public FilterType FilterType
-        {
-            get => filterType;
-            set => SetProperty(value, ref filterType);
         }
 
         /// <summary>

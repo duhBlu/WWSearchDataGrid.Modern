@@ -864,7 +864,6 @@ namespace WWSearchDataGrid.Modern.WPF
                 // Determine filter type and display text
                 if (!string.IsNullOrWhiteSpace(column.SearchText))
                 {
-                    filterInfo.FilterType = FilterType.Simple;
                     filterInfo.DisplayText = $"Contains '{column.SearchText}'";
                     
                     // Set component properties for simple filters
@@ -886,7 +885,6 @@ namespace WWSearchDataGrid.Modern.WPF
                 }
                 else if (column.SearchTemplateController?.HasCustomExpression == true)
                 {
-                    filterInfo.FilterType = FilterType.Advanced;
                     filterInfo.DisplayText = column.SearchTemplateController.GetFilterDisplayText();
                     
                     // Get structured components from SearchTemplateController

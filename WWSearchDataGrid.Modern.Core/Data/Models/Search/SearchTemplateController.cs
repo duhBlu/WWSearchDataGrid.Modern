@@ -1309,15 +1309,9 @@ namespace WWSearchDataGrid.Modern.Core
             if (searchTypeToApply.HasValue)
             {
                 // Check if the search type is compatible with the column data type
-                if (FilterTypeRegistry.IsValidForDataType(searchTypeToApply.Value, ColumnDataType))
+                if (SearchTypeRegistry.IsValidForDataType(searchTypeToApply.Value, ColumnDataType))
                 {
                     template.SearchType = searchTypeToApply.Value;
-                    System.Diagnostics.Debug.WriteLine($"Applied default search type {searchTypeToApply.Value} to template for column data type {ColumnDataType}");
-                }
-                else
-                {
-                    System.Diagnostics.Debug.WriteLine($"Default search type {searchTypeToApply.Value} is not compatible with column data type {ColumnDataType}, using default Contains");
-                    // Keep the default SearchType.Contains that was set in the SearchTemplate constructor
                 }
             }
         }

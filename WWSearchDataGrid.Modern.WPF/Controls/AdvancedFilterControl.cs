@@ -25,7 +25,6 @@ namespace WWSearchDataGrid.Modern.WPF
     {
         #region Fields
 
-        private ListBox groupsListBox;
         private Button applyButton;
         private Button clearButton;
         private Button closeButton;
@@ -152,17 +151,13 @@ namespace WWSearchDataGrid.Modern.WPF
                     var currentValue = SearchTemplateController.SearchGroups[0].OperatorName;
                     if (currentValue != value)
                     {
-                        System.Diagnostics.Debug.WriteLine($"GroupOperatorName: Changing from '{currentValue}' to '{value}'");
                         
                         // Log filter state BEFORE change
                         var firstGroup = SearchTemplateController.SearchGroups[0];
-                        System.Diagnostics.Debug.WriteLine($"BEFORE operator change - Group has {firstGroup.SearchTemplates.Count} templates:");
                         for (int i = 0; i < firstGroup.SearchTemplates.Count; i++)
                         {
                             var template = firstGroup.SearchTemplates[i];
-                            System.Diagnostics.Debug.WriteLine($"  Template {i}: SearchType={template.SearchType}, HasCustomFilter={template.HasCustomFilter}, SelectedValue={template.SelectedValue}");
                         }
-                        System.Diagnostics.Debug.WriteLine($"BEFORE - SearchTemplateController.HasCustomExpression = {SearchTemplateController.HasCustomExpression}");
                         
                         SearchTemplateController.SearchGroups[0].OperatorName = value;
                         
@@ -171,15 +166,10 @@ namespace WWSearchDataGrid.Modern.WPF
                         
                         OnPropertyChanged(nameof(GroupOperatorName));
                         
-                        // Log filter state AFTER change
-                        System.Diagnostics.Debug.WriteLine($"AFTER operator change - Group has {firstGroup.SearchTemplates.Count} templates:");
                         for (int i = 0; i < firstGroup.SearchTemplates.Count; i++)
                         {
                             var template = firstGroup.SearchTemplates[i];
-                            System.Diagnostics.Debug.WriteLine($"  Template {i}: SearchType={template.SearchType}, HasCustomFilter={template.HasCustomFilter}, SelectedValue={template.SelectedValue}");
                         }
-                        System.Diagnostics.Debug.WriteLine($"AFTER - SearchTemplateController.HasCustomExpression = {SearchTemplateController.HasCustomExpression}");
-                        System.Diagnostics.Debug.WriteLine($"GroupOperatorName: Changed successfully. SearchGroups[0].OperatorName = {SearchTemplateController.SearchGroups[0].OperatorName}");
                     }
                 }
                 else
@@ -215,7 +205,6 @@ namespace WWSearchDataGrid.Modern.WPF
         {
             if (!(DataContext is SearchControl currentSearchControl) || currentSearchControl.CurrentColumn == null)
             {
-                System.Diagnostics.Debug.WriteLine("HasPrecedingColumnFilters: No current search control or column");
                 return false;
             }
 
@@ -224,19 +213,11 @@ namespace WWSearchDataGrid.Modern.WPF
                 var currentDisplayIndex = currentSearchControl.CurrentColumn.DisplayIndex;
                 var dataColumns = DataColumns.ToList();
 
-                System.Diagnostics.Debug.WriteLine($"HasPrecedingColumnFilters: Current column '{currentSearchControl.CurrentColumn.Header}' has DisplayIndex {currentDisplayIndex}");
-
                 var precedingColumnsWithFilters = dataColumns
                     .Where(col => col.CurrentColumn != null && 
                                   col.CurrentColumn.DisplayIndex < currentDisplayIndex &&
                                   col.HasActiveFilter)
                     .ToList();
-
-                System.Diagnostics.Debug.WriteLine($"HasPrecedingColumnFilters: Found {precedingColumnsWithFilters.Count} preceding columns with filters");
-                foreach (var col in precedingColumnsWithFilters)
-                {
-                    System.Diagnostics.Debug.WriteLine($"  - Column '{col.CurrentColumn.Header}' (DisplayIndex: {col.CurrentColumn.DisplayIndex}, HasActiveFilter: {col.HasActiveFilter})");
-                }
 
                 return precedingColumnsWithFilters.Any();
             }
@@ -278,26 +259,6 @@ namespace WWSearchDataGrid.Modern.WPF
         #endregion
 
         #region Commands
-
-        /// <summary>
-        /// Add search group command
-        /// </summary>
-        public ICommand AddSearchGroupCommand => new RelayCommand(p =>
-        {
-            SearchTemplateGroup group = p as SearchTemplateGroup;
-            SearchTemplateController?.AddSearchGroup(true, true, group);
-            UpdateOperatorVisibility();
-        });
-
-        /// <summary>
-        /// Remove search group command
-        /// </summary>
-        public ICommand RemoveSearchGroupCommand => new RelayCommand(p =>
-        {
-            SearchTemplateGroup group = p as SearchTemplateGroup;
-            SearchTemplateController?.RemoveSearchGroup(group);
-            UpdateOperatorVisibility();
-        });
 
         /// <summary>
         /// Add search template command
@@ -500,38 +461,14 @@ namespace WWSearchDataGrid.Modern.WPF
         /// </summary>
         private void SetupListBoxReference()
         {
-            // Clean up existing ListBox event handlers
-            if (groupsListBox != null)
-            {
-                groupsListBox.AllowDrop = false;
-                groupsListBox.PreviewMouseLeftButtonDown -= OnListBoxPreviewMouseLeftButtonDown;
-                groupsListBox.Drop -= OnListBoxDrop;
-                groupsListBox = null;
-            }
-
             // Only try to find and setup ListBox if AllowMultipleGroups is true
             if (SearchTemplateController?.AllowMultipleGroups == true)
             {
                 // The ListBox is created dynamically in the DataTemplate, so we need to wait for it
                 Dispatcher.BeginInvoke(new Action(() =>
                 {
-                    groupsListBox = FindNameInVisualTree("PART_GroupsListBox") as ListBox;
-                    if (groupsListBox != null)
-                    {
-                        groupsListBox.AllowDrop = true;
-                        groupsListBox.PreviewMouseLeftButtonDown += OnListBoxPreviewMouseLeftButtonDown;
-                        groupsListBox.Drop += OnListBoxDrop;
-                    }
                 }), System.Windows.Threading.DispatcherPriority.Loaded);
             }
-        }
-
-        /// <summary>
-        /// Finds a named element in the visual tree (including DataTemplates)
-        /// </summary>
-        private DependencyObject FindNameInVisualTree(string name)
-        {
-            return FindChildByName(this, name);
         }
 
         /// <summary>
@@ -964,8 +901,6 @@ namespace WWSearchDataGrid.Modern.WPF
                 
                 // Notify that the GroupOperatorName might have changed (in case the SearchGroups were just created)
                 OnPropertyChanged(nameof(GroupOperatorName));
-                
-                System.Diagnostics.Debug.WriteLine($"UpdateOperatorVisibility: IsOperatorVisible = {IsOperatorVisible}");
             }
             catch (Exception ex)
             {
@@ -1015,14 +950,6 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
-        /// Forces an update of operator visibility (can be called externally)
-        /// </summary>
-        public void RefreshOperatorVisibility()
-        {
-            UpdateOperatorVisibility();
-        }
-
-        /// <summary>
         /// Updates template-level operator visibility (for templates within groups)
         /// </summary>
         private void UpdateTemplateOperatorVisibility()
@@ -1030,21 +957,18 @@ namespace WWSearchDataGrid.Modern.WPF
             if (SearchTemplateController != null)
             {
                 var groups = SearchTemplateController.SearchGroups;
-                System.Diagnostics.Debug.WriteLine($"UpdateTemplateOperatorVisibility: Found {groups.Count} groups");
 
                 // Use a single pass to update all templates
                 for (int g = 0; g < groups.Count; g++)
                 {
                     var group = groups[g];
                     var templates = group.SearchTemplates;
-                    System.Diagnostics.Debug.WriteLine($"UpdateTemplateOperatorVisibility: Group {g} has {templates.Count} templates");
 
                     // Template-level operators: show for all templates after the first in each group
                     for (int t = 0; t < templates.Count; t++)
                     {
                         var shouldBeVisible = t > 0;
                         templates[t].IsOperatorVisible = shouldBeVisible;
-                        System.Diagnostics.Debug.WriteLine($"UpdateTemplateOperatorVisibility: Template {t} in group {g} - IsOperatorVisible = {shouldBeVisible}");
                     }
                 }
             }
@@ -1055,95 +979,6 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
-        /// Handle mouse down on the list box for drag and drop
-        /// </summary>
-        private void OnListBoxPreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
-        {
-            if (e.OriginalSource is FrameworkElement element)
-            {
-                // Find the drag handle
-                if (FindVisualParent<TextBlock>(element) is TextBlock dragHandle &&
-                    dragHandle.Name == "DragHandle")
-                {
-                    // Get the item and start drag
-                    var listBoxItem = FindVisualParent<ListBoxItem>(element);
-                    if (listBoxItem != null)
-                    {
-                        var data = listBoxItem.DataContext;
-                        DragDrop.DoDragDrop(listBoxItem, data, DragDropEffects.Move);
-                        e.Handled = true;
-                    }
-                }
-            }
-        }
-
-        /// <summary>
-        /// Handle drop on the list box
-        /// </summary>
-        private void OnListBoxDrop(object sender, DragEventArgs e)
-        {
-            if (e.Data.GetDataPresent(typeof(SearchTemplate)))
-            {
-                var template = e.Data.GetData(typeof(SearchTemplate)) as SearchTemplate;
-                var targetElement = e.OriginalSource as FrameworkElement;
-
-                if (template != null && targetElement != null)
-                {
-                    // Find the target group and position
-                    var targetGroup = FindVisualParent<GroupBox>(targetElement)?.DataContext as SearchTemplateGroup;
-                    var sourceGroup = FindParentGroup(template);
-
-                    if (targetGroup != null && sourceGroup != null)
-                    {
-                        // Find the target index
-                        int targetIndex = 0;
-                        var targetItem = FindVisualParent<ListBoxItem>(targetElement);
-                        if (targetItem != null)
-                        {
-                            var targetTemplate = targetItem.DataContext as SearchTemplate;
-                            if (targetTemplate != null)
-                            {
-                                targetIndex = targetGroup.SearchTemplates.IndexOf(targetTemplate);
-                            }
-                        }
-
-                        // Move the template
-                        SearchTemplateController.MoveSearchTemplate(sourceGroup, targetGroup, template, targetIndex);
-                    }
-                }
-            }
-        }
-
-        /// <summary>
-        /// Find the parent group for a template
-        /// </summary>
-        private SearchTemplateGroup FindParentGroup(SearchTemplate template)
-        {
-            foreach (var group in SearchTemplateController.SearchGroups)
-            {
-                if (group.SearchTemplates.Contains(template))
-                {
-                    return group;
-                }
-            }
-
-            return null;
-        }
-
-        /// <summary>
-        /// Find a visual parent of the specified type
-        /// </summary>
-        private static T FindVisualParent<T>(DependencyObject child) where T : DependencyObject
-        {
-            while (child != null && !(child is T))
-            {
-                child = VisualTreeHelper.GetParent(child);
-            }
-
-            return child as T;
-        }
-
-        /// <summary>
         /// Apply the filter and close the window using intelligent filter selection
         /// </summary>
         private void ApplyFilter()
@@ -1151,36 +986,25 @@ namespace WWSearchDataGrid.Modern.WPF
             if (SearchTemplateController == null) return;
             
             // Debug logging before applying filter
-            System.Diagnostics.Debug.WriteLine($"ApplyFilter: About to apply filter");
-            System.Diagnostics.Debug.WriteLine($"ApplyFilter: SearchGroups.Count = {SearchTemplateController.SearchGroups.Count}");
             if (SearchTemplateController.SearchGroups.Count > 0)
             {
                 var firstGroup = SearchTemplateController.SearchGroups[0];
-                System.Diagnostics.Debug.WriteLine($"ApplyFilter: First group OperatorName = {firstGroup.OperatorName}");
-                System.Diagnostics.Debug.WriteLine($"ApplyFilter: First group has {firstGroup.SearchTemplates.Count} templates");
-                
                 for (int i = 0; i < firstGroup.SearchTemplates.Count; i++)
                 {
                     var template = firstGroup.SearchTemplates[i];
-                    System.Diagnostics.Debug.WriteLine($"ApplyFilter: Template {i} - SearchType = {template.SearchType}, HasCustomFilter = {template.HasCustomFilter}, SelectedValue = {template.SelectedValue}");
                 }
             }
             
             // INTELLIGENT FILTER APPLICATION: Use content-based decision making instead of tab-based
             var selectedTabIndex = tabControl?.SelectedIndex ?? -1;
-            System.Diagnostics.Debug.WriteLine($"ApplyFilter: tabControl.SelectedIndex = {selectedTabIndex} (provided as context only)");
             
             var result = _filterApplicationService.ApplyIntelligentFilter(
                 FilterValueViewModel, SearchTemplateController, ColumnDataType, selectedTabIndex);
             
             if (!result.IsSuccess)
             {
-                System.Diagnostics.Debug.WriteLine($"Filter application failed: {result.ErrorMessage}");
                 return;
             }
-            
-            // Debug logging after applying filter
-            System.Diagnostics.Debug.WriteLine($"ApplyFilter: Filter applied successfully using {result.FilterType}. HasCustomExpression = {result.HasCustomExpression}");
 
             // Determine if we're in per-column or global mode
             if (DataContext is SearchControl searchControl)
@@ -1287,15 +1111,6 @@ namespace WWSearchDataGrid.Modern.WPF
                 _operatorVisibilityUpdateTimer.Stop();
                 _operatorVisibilityUpdateTimer.Tick -= null;
                 _operatorVisibilityUpdateTimer = null;
-            }
-
-            // Clean up ListBox event handlers
-            if (groupsListBox != null)
-            {
-                groupsListBox.AllowDrop = false;
-                groupsListBox.PreviewMouseLeftButtonDown -= OnListBoxPreviewMouseLeftButtonDown;
-                groupsListBox.Drop -= OnListBoxDrop;
-                groupsListBox = null;
             }
 
             _isInitialized = false;

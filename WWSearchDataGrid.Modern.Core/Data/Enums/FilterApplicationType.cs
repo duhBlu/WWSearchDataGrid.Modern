@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace WWSearchDataGrid.Modern.Core.Data.Enums
+namespace WWSearchDataGrid.Modern.Core
 {
     /// <summary>
     /// Types of filter applications

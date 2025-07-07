@@ -112,26 +112,19 @@ namespace WWSearchDataGrid.Modern.Core.Services
                 var hasMultipleGroups = searchGroups.Count > 1;
                 var hasCustomFilterTemplates = searchGroups.Any(g => g.SearchTemplates.Any(t => t.HasCustomFilter));
                 
-                System.Diagnostics.Debug.WriteLine($"FilterExpressionBuilder: searchGroups.Count = {searchGroups.Count}");
-                System.Diagnostics.Debug.WriteLine($"FilterExpressionBuilder: hasMultipleGroups = {hasMultipleGroups}");
-                System.Diagnostics.Debug.WriteLine($"FilterExpressionBuilder: hasCustomFilterTemplates = {hasCustomFilterTemplates}");
-                
                 if (searchGroups.Count > 0)
                 {
                     for (int i = 0; i < searchGroups.Count; i++)
                     {
                         var group = searchGroups[i];
-                        System.Diagnostics.Debug.WriteLine($"FilterExpressionBuilder: Group {i} has {group.SearchTemplates.Count} templates");
                         for (int j = 0; j < group.SearchTemplates.Count; j++)
                         {
                             var template = group.SearchTemplates[j];
-                            System.Diagnostics.Debug.WriteLine($"FilterExpressionBuilder: Group {i} Template {j} - HasCustomFilter = {template.HasCustomFilter}");
                         }
                     }
                 }
                 
                 result.HasCustomExpression = searchGroups.Count > 0 && (hasMultipleGroups || hasCustomFilterTemplates);
-                System.Diagnostics.Debug.WriteLine($"FilterExpressionBuilder: Final HasCustomExpression = {result.HasCustomExpression}");
 
                 result.HasCollectionContextFilters = hasCollectionContextFilters;
             }

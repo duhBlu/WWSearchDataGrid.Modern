@@ -185,8 +185,8 @@ namespace WWSearchDataGrid.Modern.Core
             {
                 if (IsNumeric)
                 {
-                    var primaryDecimal = ConvertToDecimal(PrimaryValue);
-                    var secondaryDecimal = ConvertToDecimal(SecondaryValue);
+                    var primaryDecimal = TypeTranslatorHelper.ConvertToDecimal(PrimaryValue);
+                    var secondaryDecimal = TypeTranslatorHelper.ConvertToDecimal(SecondaryValue);
 
                     if (primaryDecimal.HasValue && secondaryDecimal.HasValue && primaryDecimal > secondaryDecimal)
                     {
@@ -197,8 +197,8 @@ namespace WWSearchDataGrid.Modern.Core
                 }
                 else if (IsDateTime)
                 {
-                    var primaryDate = ConvertToDateTime(PrimaryValue);
-                    var secondaryDate = ConvertToDateTime(SecondaryValue);
+                    var primaryDate = TypeTranslatorHelper.ConvertToDateTime(PrimaryValue);
+                    var secondaryDate = TypeTranslatorHelper.ConvertToDateTime(SecondaryValue);
 
                     if (primaryDate.HasValue && secondaryDate.HasValue && primaryDate > secondaryDate)
                     {
@@ -222,21 +222,6 @@ namespace WWSearchDataGrid.Modern.Core
             }
         }
 
-        private decimal? ConvertToDecimal(object value)
-        {
-            if (value == null) return null;
-            if (value is decimal d) return d;
-            if (decimal.TryParse(value.ToString(), out decimal result)) return result;
-            return null;
-        }
-
-        private DateTime? ConvertToDateTime(object value)
-        {
-            if (value == null) return null;
-            if (value is DateTime dt) return dt;
-            if (DateTime.TryParse(value.ToString(), out DateTime result)) return result;
-            return null;
-        }
 
         /// <summary>
         /// Clears all values

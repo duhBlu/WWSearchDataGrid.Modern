@@ -126,5 +126,15 @@ namespace WWSearchDataGrid.Modern.Core
 
             return IsNullableType(firstValue.GetType());
         }
+
+        /// <summary>
+        /// Determines if a value is comparable (implements IComparable)
+        /// </summary>
+        /// <param name="value">The value to check</param>
+        /// <returns>True if the value is comparable</returns>
+        public static bool IsComparableValue(object value)
+        {
+            return value is IComparable;
+        }
     }
 }
