@@ -40,9 +40,14 @@ namespace WWSearchDataGrid.Modern.WPF.Templates
         public DataTemplate CloseBracketTemplate { get; set; }
 
         /// <summary>
-        /// Gets or sets the template for logical connector tokens
+        /// Gets or sets the template for search group logical connector tokens
         /// </summary>
-        public DataTemplate LogicalConnectorTemplate { get; set; }
+        public DataTemplate GroupLogicalConnectorTemplate { get; set; }
+
+        /// <summary>
+        /// Gets or sets the template for search template logical connector tokens
+        /// </summary>
+        public DataTemplate TemplateLogicalConnectorTemplate { get; set; }
 
         /// <summary>
         /// Gets or sets the template for remove action tokens
@@ -67,7 +72,8 @@ namespace WWSearchDataGrid.Modern.WPF.Templates
                     FilterTokenType.Value => ValueTemplate,
                     FilterTokenType.Operator => OperatorTemplate,
                     FilterTokenType.CloseBracket => CloseBracketTemplate,
-                    FilterTokenType.LogicalConnector => LogicalConnectorTemplate,
+                    FilterTokenType.GroupLogicalConnectorToken => GroupLogicalConnectorTemplate,
+                    FilterTokenType.TemplateLogicalConnectorToken => TemplateLogicalConnectorTemplate,
                     FilterTokenType.RemoveAction => RemoveActionTemplate,
                     _ => base.SelectTemplate(item, container)
                 };

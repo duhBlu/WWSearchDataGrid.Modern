@@ -636,7 +636,7 @@ namespace WWSearchDataGrid.Modern.WPF
                     fg.SearchTemplateGroup.SearchTemplates.Contains(referenceTemplate));
                 if (filterGroupInfo?.ColumnInfo?.WorkingController != null)
                 {
-                    filterGroupInfo.ColumnInfo.WorkingController.AddSearchTemplate(true, true, referenceTemplate);
+                    filterGroupInfo.ColumnInfo.WorkingController.AddSearchTemplate(true, referenceTemplate);
                 }
             }
             catch (Exception ex)

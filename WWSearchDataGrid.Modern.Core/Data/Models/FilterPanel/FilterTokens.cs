@@ -95,10 +95,21 @@ namespace WWSearchDataGrid.Modern.Core
     /// <summary>
     /// Token representing a logical connector between filters
     /// </summary>
-    public class LogicalConnectorToken : FilterTokenBase
+    public class GroupLogicalConnectorToken : FilterTokenBase
     {
-        public LogicalConnectorToken(string connectorText, string filterId, int orderIndex, ColumnFilterInfo sourceFilter)
-            : base(connectorText, FilterTokenType.LogicalConnector, filterId, orderIndex, sourceFilter)
+        public GroupLogicalConnectorToken(string connectorText, string filterId, int orderIndex, ColumnFilterInfo sourceFilter)
+            : base(connectorText, FilterTokenType.GroupLogicalConnectorToken, filterId, orderIndex, sourceFilter)
+        {
+        }
+    }
+    
+    /// <summary>
+    /// Token representing a logical connector between filters
+    /// </summary>
+    public class TemplateLogicalConnectorToken : FilterTokenBase
+    {
+        public TemplateLogicalConnectorToken(string connectorText, string filterId, int orderIndex, ColumnFilterInfo sourceFilter)
+            : base(connectorText, FilterTokenType.TemplateLogicalConnectorToken, filterId, orderIndex, sourceFilter)
         {
         }
     }

@@ -69,6 +69,12 @@ namespace WWSearchDataGrid.Modern.WPF
             DependencyProperty.Register(nameof(IsOperatorVisible), typeof(bool), typeof(AdvancedFilterControl),
                 new PropertyMetadata(false));
 
+        private static readonly DependencyPropertyKey ValueSelectionSummaryPropertyKey =
+            DependencyProperty.RegisterReadOnly("ValueSelectionSummary", typeof(string), typeof(AdvancedFilterControl),
+                new PropertyMetadata("No values selected"));
+
+        public static readonly DependencyProperty ValueSelectionSummaryProperty = ValueSelectionSummaryPropertyKey.DependencyProperty;
+
         #endregion Dependency Properties
 
         #region Properties
@@ -249,16 +255,6 @@ namespace WWSearchDataGrid.Modern.WPF
         /// </summary>
         public static void SetGroupByColumn(DependencyObject element, string value) =>
             element.SetValue(GroupByColumnProperty, value);
-
-        #endregion
-
-        #region Dependency Properties
-
-        private static readonly DependencyPropertyKey ValueSelectionSummaryPropertyKey =
-            DependencyProperty.RegisterReadOnly("ValueSelectionSummary", typeof(string), typeof(AdvancedFilterControl),
-                new PropertyMetadata("No values selected"));
-
-        public static readonly DependencyProperty ValueSelectionSummaryProperty = ValueSelectionSummaryPropertyKey.DependencyProperty;
 
         #endregion
 

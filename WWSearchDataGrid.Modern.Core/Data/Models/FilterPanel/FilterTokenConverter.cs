@@ -32,7 +32,7 @@ namespace WWSearchDataGrid.Modern.Core
                 // Add logical connector for non-first filters
                 if (filterIndex > 0 && !string.IsNullOrEmpty(filter.Conjunction))
                 {
-                    tokens.Add(new LogicalConnectorToken(filter.Conjunction, filterId, orderIndex++, filter));
+                    tokens.Add(new GroupLogicalConnectorToken(filter.Conjunction, filterId, orderIndex++, filter));
                 }
 
                 // Add opening bracket token
@@ -67,7 +67,7 @@ namespace WWSearchDataGrid.Modern.Core
             // Add conjunction if present
             if (!string.IsNullOrEmpty(component.Conjunction))
             {
-                tokens.Add(new LogicalConnectorToken(component.Conjunction, filterId, orderIndex++, sourceFilter));
+                tokens.Add(new TemplateLogicalConnectorToken(component.Conjunction, filterId, orderIndex++, sourceFilter));
             }
 
             // Add search type token

@@ -128,8 +128,8 @@
             </DataTemplate>
         </templates:FilterTokenTemplateSelector.CloseBracketTemplate>
 
-        <!--  Logical Connector Token Template  -->
-        <templates:FilterTokenTemplateSelector.LogicalConnectorTemplate>
+        <!--  Search Template group logical Connector Token Template  -->
+        <templates:FilterTokenTemplateSelector.GroupLogicalConnectorTemplate>
             <DataTemplate>
                 <Border Background="#cee8fb"
                         Margin="4,1,14,0"
@@ -145,7 +145,26 @@
                                FontSize="11" />
                 </Border>
             </DataTemplate>
-        </templates:FilterTokenTemplateSelector.LogicalConnectorTemplate>
+        </templates:FilterTokenTemplateSelector.GroupLogicalConnectorTemplate>
+        
+        <!-- Search Template Logical Connector Token Template  -->
+        <templates:FilterTokenTemplateSelector.TemplateLogicalConnectorTemplate>
+            <DataTemplate>
+                <Border Background="#cee8fb"
+                        Margin="6,2,2,0"
+                        Padding="5,1"
+                        Height="22"
+                        CornerRadius="6"
+                        behaviors:TokenHoverBehavior.IsEnabled="True"
+                        Tag="{Binding FilterId}">
+                    <TextBlock Foreground="#0078D4"
+                               Text="{Binding DisplayText}"
+                               VerticalAlignment="Center"
+                               FontWeight="Bold"
+                               FontSize="10" />
+                </Border>
+            </DataTemplate>
+        </templates:FilterTokenTemplateSelector.TemplateLogicalConnectorTemplate>
 
         <!--  Remove Action Token Template  -->
         <templates:FilterTokenTemplateSelector.RemoveActionTemplate>

@@ -79,9 +79,14 @@ namespace WWSearchDataGrid.Modern.Core
         CloseBracket,
 
         /// <summary>
-        /// Logical connector between filters (e.g., "AND", "OR")
+        /// Logical connector between search template group filters (e.g., "AND", "OR")
         /// </summary>
-        LogicalConnector,
+        GroupLogicalConnectorToken,
+
+        /// <summary>
+        /// Logical connector between search template filters (e.g., "AND", "OR")
+        /// </summary>
+        TemplateLogicalConnectorToken,
 
         /// <summary>
         /// Remove action token for the entire logical filter

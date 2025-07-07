@@ -25,6 +25,8 @@ namespace WWSearchDataGrid.Modern.Core
         private readonly SearchTemplateValidator _validator;
         private readonly ColumnValueLoader _columnValueLoader;
 
+        private SearchType? defaultSearchType;
+
         #endregion
 
         #region Properties
@@ -80,6 +82,15 @@ namespace WWSearchDataGrid.Modern.Core
         {
             get => hasCustomExpression;
             set => SetProperty(value, ref hasCustomExpression);
+        }
+
+        /// <summary>
+        /// Gets or sets the default search type for new templates
+        /// </summary>
+        public SearchType? DefaultSearchType
+        {
+            get => defaultSearchType;
+            set => SetProperty(value, ref defaultSearchType);
         }
 
         /// <summary>
@@ -238,7 +249,7 @@ namespace WWSearchDataGrid.Modern.Core
                 SearchGroups.Add(newGroup);
             }
             
-            AddSearchTemplate(true, markAsChanged, null, newGroup);
+            AddSearchTemplate(markAsChanged, null, newGroup);
 
             if (SearchGroups.Count > 0)
             {
@@ -250,14 +261,11 @@ namespace WWSearchDataGrid.Modern.Core
         /// <summary>
         /// Adds a new search template to a group
         /// </summary>
-        /// <param name="canAddTemplate">Whether a template can be added</param>
         /// <param name="markAsChanged">Whether to mark the template as changed</param>
         /// <param name="referenceTemplate">Reference template for positioning</param>
         /// <param name="group">Group to add the template to</param>
-        public void AddSearchTemplate(bool canAddTemplate = true, bool markAsChanged = true, SearchTemplate referenceTemplate = null, SearchTemplateGroup group = null)
+        public void AddSearchTemplate(bool markAsChanged = true, SearchTemplate referenceTemplate = null, SearchTemplateGroup group = null)
         {
-            if (!canAddTemplate) return;
-            
             SearchTemplateGroup targetGroup = DetermineTargetGroup(group, referenceTemplate);
             
             // Validate the operation
@@ -455,7 +463,7 @@ namespace WWSearchDataGrid.Modern.Core
             {
                 // For the last remaining group, clear and reset instead of removing
                 group.SearchTemplates.Clear();
-                AddSearchTemplate(true, false, null, group);
+                AddSearchTemplate(false, null, group);
                 UpdateFilterExpression();
             }
             else
@@ -505,7 +513,7 @@ namespace WWSearchDataGrid.Modern.Core
             {
                 // If this is the last template, add a new empty one after removing
                 group.SearchTemplates.Remove(template);
-                AddSearchTemplate(true, true, null, group);
+                AddSearchTemplate(true, null, group);
                 UpdateFilterExpression();
             }
         }
