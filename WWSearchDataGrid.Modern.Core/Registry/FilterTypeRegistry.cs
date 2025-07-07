@@ -18,10 +18,10 @@ namespace WWSearchDataGrid.Modern.Core
             {
                 // Single ComboBox filters
                 [SearchType.Equals] = new FilterTypeMetadata(SearchType.Equals, "Equals",
-                    FilterInputTemplate.SingleComboBox, ColumnDataType.String, ColumnDataType.Number, ColumnDataType.DateTime, ColumnDataType.Boolean),
+                    FilterInputTemplate.SingleComboBox, ColumnDataType.String, ColumnDataType.Number, ColumnDataType.DateTime, ColumnDataType.Boolean, ColumnDataType.Enum),
 
                 [SearchType.NotEquals] = new FilterTypeMetadata(SearchType.NotEquals, "Does not equal",
-                    FilterInputTemplate.SingleComboBox, ColumnDataType.String, ColumnDataType.Number, ColumnDataType.DateTime, ColumnDataType.Boolean),
+                    FilterInputTemplate.SingleComboBox, ColumnDataType.String, ColumnDataType.Number, ColumnDataType.DateTime, ColumnDataType.Boolean, ColumnDataType.Enum),
 
                 [SearchType.GreaterThan] = new FilterTypeMetadata(SearchType.GreaterThan, "Is greater than",
                     FilterInputTemplate.SingleComboBox, ColumnDataType.Number, ColumnDataType.DateTime),
@@ -36,22 +36,22 @@ namespace WWSearchDataGrid.Modern.Core
                     FilterInputTemplate.SingleComboBox, ColumnDataType.Number, ColumnDataType.DateTime),
 
                 [SearchType.Contains] = new FilterTypeMetadata(SearchType.Contains, "Contains",
-                    FilterInputTemplate.SingleTextBox, ColumnDataType.String, ColumnDataType.Number),
+                    FilterInputTemplate.SingleTextBox, ColumnDataType.String, ColumnDataType.Number, ColumnDataType.Enum),
 
                 [SearchType.DoesNotContain] = new FilterTypeMetadata(SearchType.DoesNotContain, "Does not contain",
-                    FilterInputTemplate.SingleTextBox, ColumnDataType.String, ColumnDataType.Number),
+                    FilterInputTemplate.SingleTextBox, ColumnDataType.String, ColumnDataType.Number, ColumnDataType.Enum),
 
                 [SearchType.StartsWith] = new FilterTypeMetadata(SearchType.StartsWith, "Starts with",
-                    FilterInputTemplate.SingleTextBox, ColumnDataType.String, ColumnDataType.Number),
+                    FilterInputTemplate.SingleTextBox, ColumnDataType.String, ColumnDataType.Number, ColumnDataType.Enum),
 
                 [SearchType.EndsWith] = new FilterTypeMetadata(SearchType.EndsWith, "Ends with",
-                    FilterInputTemplate.SingleTextBox, ColumnDataType.String, ColumnDataType.Number),
+                    FilterInputTemplate.SingleTextBox, ColumnDataType.String, ColumnDataType.Number, ColumnDataType.Enum),
 
                 [SearchType.IsLike] = new FilterTypeMetadata(SearchType.IsLike, "Is like",
-                    FilterInputTemplate.SingleTextBox, ColumnDataType.String),
+                    FilterInputTemplate.SingleTextBox, ColumnDataType.String, ColumnDataType.Enum),
 
                 [SearchType.IsNotLike] = new FilterTypeMetadata(SearchType.IsNotLike, "Is not like",
-                    FilterInputTemplate.SingleTextBox, ColumnDataType.String),
+                    FilterInputTemplate.SingleTextBox, ColumnDataType.String, ColumnDataType.Enum),
 
                 // Dual ComboBox filters
                 [SearchType.Between] = new FilterTypeMetadata(SearchType.Between, "Is between",
@@ -89,10 +89,10 @@ namespace WWSearchDataGrid.Modern.Core
                     FilterInputTemplate.NoInput, ColumnDataType.String),
 
                 [SearchType.IsNull] = new FilterTypeMetadata(SearchType.IsNull, "Is null",
-                    FilterInputTemplate.NoInput, ColumnDataType.String, ColumnDataType.Number, ColumnDataType.DateTime, ColumnDataType.Boolean),
+                    FilterInputTemplate.NoInput, ColumnDataType.String, ColumnDataType.Number, ColumnDataType.DateTime, ColumnDataType.Boolean, ColumnDataType.Enum),
 
                 [SearchType.IsNotNull] = new FilterTypeMetadata(SearchType.IsNotNull, "Is not null",
-                    FilterInputTemplate.NoInput, ColumnDataType.String, ColumnDataType.Number, ColumnDataType.DateTime, ColumnDataType.Boolean),
+                    FilterInputTemplate.NoInput, ColumnDataType.String, ColumnDataType.Number, ColumnDataType.DateTime, ColumnDataType.Boolean, ColumnDataType.Enum),
 
                 [SearchType.Unique] = new FilterTypeMetadata(SearchType.Unique, "Unique",
                     FilterInputTemplate.NoInput, ColumnDataType.String, ColumnDataType.Number, ColumnDataType.DateTime)
@@ -109,11 +109,14 @@ namespace WWSearchDataGrid.Modern.Core
                     FilterInputTemplate.NoInput, ColumnDataType.DateTime),
 
                 // List-based filters
-                [SearchType.IsAnyOf] = new FilterTypeMetadata(SearchType.IsAnyOf, "Is any of",
-                    FilterInputTemplate.ComboBoxList, ColumnDataType.String, ColumnDataType.Number),
+                [SearchType.IsAnyOf] = new FilterTypeMetadata(
+                    SearchType.IsAnyOf, 
+                    "Is any of",
+                    FilterInputTemplate.ComboBoxList, 
+                    ColumnDataType.String, ColumnDataType.Number, ColumnDataType.Enum),
 
                 [SearchType.IsNoneOf] = new FilterTypeMetadata(SearchType.IsNoneOf, "Is none of",
-                    FilterInputTemplate.ComboBoxList, ColumnDataType.String, ColumnDataType.Number, ColumnDataType.DateTime, ColumnDataType.Boolean),
+                    FilterInputTemplate.ComboBoxList, ColumnDataType.String, ColumnDataType.Number, ColumnDataType.DateTime, ColumnDataType.Boolean, ColumnDataType.Enum),
 
                 [SearchType.IsOnAnyOfDates] = new FilterTypeMetadata(SearchType.IsOnAnyOfDates, "Is on any of the following",
                     FilterInputTemplate.DateTimePickerList, ColumnDataType.DateTime),

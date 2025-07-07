@@ -435,6 +435,13 @@ namespace WWSearchDataGrid.Modern.WPF
                 // Set column properties
                 SearchTemplateController.ColumnName = CurrentColumn.Header;
                 BindingPath = CurrentColumn.SortMemberPath;
+                
+                // Set default search type from column's attached property
+                var defaultSearchType = AdvancedFilterControl.GetDefaultSearchType(CurrentColumn);
+                if (defaultSearchType != SearchType.Contains) // Only set if different from default
+                {
+                    SearchTemplateController.DefaultSearchType = defaultSearchType;
+                }
 
                 // Add this control to the data grid's columns if not already there
                 if (!SourceDataGrid.DataColumns.Contains(this))

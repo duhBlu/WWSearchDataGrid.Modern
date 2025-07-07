@@ -258,12 +258,14 @@ namespace WWSearchDataGrid.Modern.Core
             }
         }
 
+
         /// <summary>
-        /// Adds a new search template to a group
+        /// Adds a new search template to a group with an optional default search type
         /// </summary>
         /// <param name="markAsChanged">Whether to mark the template as changed</param>
         /// <param name="referenceTemplate">Reference template for positioning</param>
         /// <param name="group">Group to add the template to</param>
+        /// <param name="defaultSearchType">Optional default search type to use if compatible</param>
         public void AddSearchTemplate(bool markAsChanged = true, SearchTemplate referenceTemplate = null, SearchTemplateGroup group = null)
         {
             SearchTemplateGroup targetGroup = DetermineTargetGroup(group, referenceTemplate);
@@ -279,6 +281,9 @@ namespace WWSearchDataGrid.Modern.Core
             // Create new SearchTemplate with column data type
             var newTemplate = new SearchTemplate(ColumnValues, ColumnDataType);
             newTemplate.HasChanges = markAsChanged;
+
+            // Apply default search type if provided and compatible
+            ApplyDefaultSearchType(newTemplate, defaultSearchType);
 
             // Add the template at the appropriate position
             if (referenceTemplate == null)
@@ -1288,6 +1293,32 @@ namespace WWSearchDataGrid.Modern.Core
                     SearchGroups.Add(targetGroup);
                 }
                 return targetGroup;
+            }
+        }
+
+        /// <summary>
+        /// Applies the default search type to a template if it's compatible with the column data type
+        /// </summary>
+        /// <param name="template">The template to apply the default search type to</param>
+        /// <param name="defaultSearchType">The default search type to apply</param>
+        private void ApplyDefaultSearchType(SearchTemplate template, SearchType? defaultSearchType)
+        {
+            // Use the parameter first, then fall back to the property
+            var searchTypeToApply = defaultSearchType ?? DefaultSearchType;
+
+            if (searchTypeToApply.HasValue)
+            {
+                // Check if the search type is compatible with the column data type
+                if (FilterTypeRegistry.IsValidForDataType(searchTypeToApply.Value, ColumnDataType))
+                {
+                    template.SearchType = searchTypeToApply.Value;
+                    System.Diagnostics.Debug.WriteLine($"Applied default search type {searchTypeToApply.Value} to template for column data type {ColumnDataType}");
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine($"Default search type {searchTypeToApply.Value} is not compatible with column data type {ColumnDataType}, using default Contains");
+                    // Keep the default SearchType.Contains that was set in the SearchTemplate constructor
+                }
             }
         }
 

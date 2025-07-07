@@ -83,7 +83,7 @@
                             BorderBrush="#E1E5E9"
                             BorderThickness="0,1,0,0"
                             Visibility="{Binding HasActiveFilters, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource BooleanToVisibilityConverter}}"
-                            Margin="0,0">
+                            >
 
                         <Grid>
                             <Grid.ColumnDefinitions>
@@ -152,6 +152,7 @@
                                     Grid.Column="1"
                                     Margin="0,0,-1,0"
                                     HorizontalAlignment="Right"
+                                    IsHitTestVisible="False"
                                     Width="60">
                                 <Border.Background>
                                     <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">

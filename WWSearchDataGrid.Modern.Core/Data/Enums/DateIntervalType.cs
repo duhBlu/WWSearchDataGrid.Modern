@@ -48,5 +48,4 @@ namespace WWSearchDataGrid.Modern.Core
         /// <summary>Tomorrow’s date.</summary>
         Tomorrow
     }
-
 }

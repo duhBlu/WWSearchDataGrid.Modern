@@ -63,6 +63,13 @@ namespace WWSearchDataGrid.Modern.WPF
                 new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.Inherits));
 
         /// <summary>
+        /// Attached property for specifying the default search type for filter templates
+        /// </summary>
+        public static readonly DependencyProperty DefaultSearchTypeProperty =
+            DependencyProperty.RegisterAttached("DefaultSearchType", typeof(SearchType), typeof(AdvancedFilterControl),
+                new FrameworkPropertyMetadata(SearchType.Contains, FrameworkPropertyMetadataOptions.Inherits));
+
+        /// <summary>
         /// Dependency property for controlling operator ComboBox visibility
         /// </summary>
         public static readonly DependencyProperty IsOperatorVisibleProperty =
@@ -256,6 +263,18 @@ namespace WWSearchDataGrid.Modern.WPF
         public static void SetGroupByColumn(DependencyObject element, string value) =>
             element.SetValue(GroupByColumnProperty, value);
 
+        /// <summary>
+        /// Gets the default search type for an element
+        /// </summary>
+        public static SearchType GetDefaultSearchType(DependencyObject element) =>
+            (SearchType)element.GetValue(DefaultSearchTypeProperty);
+
+        /// <summary>
+        /// Sets the default search type for an element
+        /// </summary>
+        public static void SetDefaultSearchType(DependencyObject element, SearchType value) =>
+            element.SetValue(DefaultSearchTypeProperty, value);
+
         #endregion
 
         #region Commands
@@ -287,13 +306,17 @@ namespace WWSearchDataGrid.Modern.WPF
         {
             SearchTemplate template = p as SearchTemplate;
 
-            // When adding new template, ensure it's the smart type
-            var newTemplate = new SearchTemplate(ColumnDataType);
-            newTemplate.LoadAvailableValues(SearchTemplateController.ColumnValues);
+            // Get the default search type from the column (if any)
+            SearchType? defaultSearchType = null;
+            if (DataContext is SearchControl searchControl && searchControl.CurrentColumn != null)
+            {
+                defaultSearchType = GetDefaultSearchType(searchControl.CurrentColumn);
+            }
 
             var group = SearchTemplateController.SearchGroups.First(g => g.SearchTemplates.Contains(template));
-            var index = group.SearchTemplates.IndexOf(template);
-            group.SearchTemplates.Insert(index + 1, newTemplate);
+            
+            // Use the new AddSearchTemplate overload with default search type
+            SearchTemplateController.AddSearchTemplate(true, template, group);
 
             UpdateOperatorVisibility();
         });
