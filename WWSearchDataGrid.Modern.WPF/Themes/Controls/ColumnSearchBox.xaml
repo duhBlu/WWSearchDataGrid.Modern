@@ -6,11 +6,11 @@
     <converters:IntToVisibilityConverter x:Key="IntToVisibilityConverter" />
     <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
     
-    <!--  SearchControl Style  -->
-    <Style x:Key="DefaultSearchControlStyle" TargetType="{x:Type sdg:SearchControl}">
+    <!--  ColumnSearchBox Style  -->
+    <Style x:Key="DefaultColumnSearchBoxStyle" TargetType="{x:Type sdg:ColumnSearchBox}">
         <Setter Property="Template">
             <Setter.Value>
-                <ControlTemplate TargetType="{x:Type sdg:SearchControl}">
+                <ControlTemplate TargetType="{x:Type sdg:ColumnSearchBox}">
                     <Border Background="{TemplateBinding Background}"
                             BorderBrush="{TemplateBinding BorderBrush}"
                             BorderThickness="{TemplateBinding BorderThickness}"
@@ -28,7 +28,7 @@
                                          Background="Transparent"
                                          BorderThickness="0"
                                          Text="{Binding SearchText, RelativeSource={RelativeSource TemplatedParent}, UpdateSourceTrigger=PropertyChanged}"
-                                         IsReadOnly="{Binding HasAdvancedFilter, RelativeSource={RelativeSource AncestorType={x:Type sdg:SearchControl}}}"
+                                         IsReadOnly="{Binding HasAdvancedFilter, RelativeSource={RelativeSource AncestorType={x:Type sdg:ColumnSearchBox}}}"
                                          Padding="6,2"
                                          VerticalAlignment="Center"
                                          VerticalContentAlignment="Center"
@@ -38,7 +38,7 @@
 
                                 <TextBlock Foreground="DarkSlateGray"
                                            Text="Advanced Filter"
-                                           Visibility="{Binding HasAdvancedFilter, RelativeSource={RelativeSource AncestorType={x:Type sdg:SearchControl}}, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                           Visibility="{Binding HasAdvancedFilter, RelativeSource={RelativeSource AncestorType={x:Type sdg:ColumnSearchBox}}, Converter={StaticResource BooleanToVisibilityConverter}}"
                                            IsHitTestVisible="False"
                                            Margin="6,2"
                                            VerticalAlignment="Center"
@@ -48,9 +48,9 @@
                             </Grid>
 
                             <Button Grid.Column="1"
-                                    Visibility="{Binding SearchText.Length, RelativeSource={RelativeSource AncestorType={x:Type sdg:SearchControl}}, Converter={StaticResource IntToVisibilityConverter}}"
+                                    Visibility="{Binding SearchText.Length, RelativeSource={RelativeSource AncestorType={x:Type sdg:ColumnSearchBox}}, Converter={StaticResource IntToVisibilityConverter}}"
                                     Cursor="Hand"
-                                    Command="{Binding ClearSearchTextCommand, RelativeSource={RelativeSource AncestorType=sdg:SearchControl}}"
+                                    Command="{Binding ClearSearchTextCommand, RelativeSource={RelativeSource AncestorType=sdg:ColumnSearchBox}}"
                                     Margin="2,1,5,1"
                                     Padding="4"
                                     VerticalAlignment="Center"
@@ -153,11 +153,11 @@
                                             <MultiDataTrigger>
                                                 <MultiDataTrigger.Conditions>
                                                     <Condition Binding="{Binding ShowInAdvancedFilter, RelativeSource={RelativeSource TemplatedParent}}" Value="True" />
-                                                    <Condition Binding="{Binding SearchText, RelativeSource={RelativeSource AncestorType={x:Type sdg:SearchControl}}}" Value="" />
+                                                    <Condition Binding="{Binding SearchText, RelativeSource={RelativeSource AncestorType={x:Type sdg:ColumnSearchBox}}}" Value="" />
                                                 </MultiDataTrigger.Conditions>
                                                 <Setter Property="Visibility" Value="Visible" />
                                             </MultiDataTrigger>
-                                            <DataTrigger Binding="{Binding HasAdvancedFilter, RelativeSource={RelativeSource AncestorType={x:Type sdg:SearchControl}}}" Value="True">
+                                            <DataTrigger Binding="{Binding HasAdvancedFilter, RelativeSource={RelativeSource AncestorType={x:Type sdg:ColumnSearchBox}}}" Value="True">
                                                 <Setter Property="Background" Value="#0078D4" />
                                                 <Setter Property="BorderBrush" Value="#0078D4" />
                                                 <Setter Property="Foreground" Value="White" />

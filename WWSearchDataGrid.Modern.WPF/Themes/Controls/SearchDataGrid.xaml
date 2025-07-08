@@ -3,7 +3,7 @@
                     xmlns:sdg="clr-namespace:WWSearchDataGrid.Modern.WPF"
                     xmlns:converters="clr-namespace:WWSearchDataGrid.Modern.WPF.Converters">
     <ResourceDictionary.MergedDictionaries>
-        <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF;component/Themes/Controls/SearchControl.xaml" />
+        <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF;component/Themes/Controls/ColumnSearchBox.xaml" />
         <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF;component/Themes/Controls/FilterPanel.xaml" />
     </ResourceDictionary.MergedDictionaries>
 
@@ -97,8 +97,8 @@
                         </Grid.RowDefinitions>
 
                         <!--  Search Control  -->
-                        <sdg:SearchControl x:Name="PART_SearchControl"
-                                           Style="{Binding Mode=OneWay, Source={StaticResource DefaultSearchControlStyle}}"
+                        <sdg:ColumnSearchBox x:Name="PART_ColumnSearchBox"
+                                           Style="{Binding Mode=OneWay, Source={StaticResource DefaultColumnSearchBoxStyle}}"
                                            Grid.Row="0"
                                            BorderThickness="0"
                                            Margin="0,1,1,0"
@@ -156,7 +156,7 @@
 
                     <ControlTemplate.Triggers>
                         <DataTrigger Binding="{Binding ActualHasItems, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type sdg:SearchDataGrid}}}" Value="False">
-                            <Setter TargetName="PART_SearchControl" Property="Visibility" Value="Collapsed" />
+                            <Setter TargetName="PART_ColumnSearchBox" Property="Visibility" Value="Collapsed" />
                             <Setter TargetName="HeaderBorder" Property="BorderThickness" Value="0,0,0,1" />
                         </DataTrigger>
 

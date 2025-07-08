@@ -74,12 +74,12 @@ TopN, BottomN, AboveAverage, BelowAverage, Unique, Duplicate
   - **Key Properties**: `FilteringMode`, `FilterPanel`, `OriginalItemsSource`
   - **Key Methods**: `ApplyFilters()`, `UpdateFilterPanel()`, `GetActiveColumnFilters()`
 
-- **`SearchControl.cs`** - Individual column filter control
+- **`ColumnSearchBox.cs`** - Individual column filter control
   - **Features**: Simple text search, advanced filter dialog
   - **Key Properties**: `SearchText`, `CurrentColumn`, `SourceDataGrid`
   - **Manages**: SearchTemplateController instances per column
 
-- **`AdvancedFilterControl.cs`** - Complex multi-criteria filter UI
+- **`RuleValueFilterEditor.cs`** - Complex multi-criteria filter UI
   - **Features**: Multiple search groups, drag-drop reordering, value selection
   - **Key Properties**: `SearchTemplateController`, `ValueSelectionSummary`
   - **Commands**: Add/Remove search groups and templates
@@ -90,7 +90,7 @@ TopN, BottomN, AboveAverage, BelowAverage, Unique, Duplicate
   - **Events**: Filter removal, clear all, edit requests
 
 - **`NumericUpDown.cs`** - Custom numeric input control
-- **`FilterEditDialog.cs`** - Multi-column filter editing dialog
+- **`GroupedRuleFilterEditor.cs`** - Multi-column filter editing dialog
 
 #### `/Themes/Controls/` - XAML Styling (Presentation Only)
 **⚠️ Only styling XAML - No code-behind**
@@ -114,7 +114,7 @@ TopN, BottomN, AboveAverage, BelowAverage, Unique, Duplicate
 ### 🔄 **Data Flow Architecture**
 
 ```
-User Input → SearchControl → SearchTemplateController → SearchEngine → FilterExpression → SearchDataGrid
+User Input → ColumnSearchBox → SearchTemplateController → SearchEngine → FilterExpression → SearchDataGrid
      ↓              ↓                    ↓                    ↓              ↓              ↓
 SearchText    Manages State     Builds Expressions    Evaluates Items   Compiles Logic   Filters Data
 ```
@@ -183,8 +183,8 @@ SearchText    Manages State     Builds Expressions    Evaluates Items   Compiles
 
 ### UI Issues
 - **Main DataGrid**: `WWSearchDataGrid.Modern.WPF/Controls/SearchDataGrid.cs`
-- **Column filters**: `WWSearchDataGrid.Modern.WPF/Controls/SearchControl.cs`
-- **Advanced dialog**: `WWSearchDataGrid.Modern.WPF/Controls/AdvancedFilterControl.cs`
+- **Column filters**: `WWSearchDataGrid.Modern.WPF/Controls/ColumnSearchBox.cs`
+- **Advanced dialog**: `WWSearchDataGrid.Modern.WPF/Controls/RuleValueFilterEditor.cs`
 - **Filter chips**: `WWSearchDataGrid.Modern.WPF/Controls/FilterPanel.cs`
 
 ### Styling Problems

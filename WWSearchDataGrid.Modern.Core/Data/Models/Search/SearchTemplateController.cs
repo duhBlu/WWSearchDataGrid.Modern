@@ -279,8 +279,10 @@ namespace WWSearchDataGrid.Modern.Core
             }
 
             // Create new SearchTemplate with column data type
-            var newTemplate = new SearchTemplate(ColumnValues, ColumnDataType);
-            newTemplate.HasChanges = markAsChanged;
+            var newTemplate = new SearchTemplate(ColumnValues, ColumnDataType)
+            {
+                HasChanges = markAsChanged
+            };
 
             // Apply default search type if provided and compatible
             ApplyDefaultSearchType(newTemplate, defaultSearchType);
@@ -357,8 +359,6 @@ namespace WWSearchDataGrid.Modern.Core
         {
             try
             {
-                System.Diagnostics.Debug.WriteLine($"UpdateFilterExpression: Starting with {SearchGroups.Count} search groups");
-                
                 // Determine target column type
                 if (forceTargetTypeAsString)
                 {
@@ -369,14 +369,11 @@ namespace WWSearchDataGrid.Modern.Core
                     targetColumnType = _filterExpressionBuilder.DetermineTargetColumnType(ColumnDataType, ColumnValues);
                 }
 
-                System.Diagnostics.Debug.WriteLine($"UpdateFilterExpression: About to call BuildFilterExpression with {SearchGroups.Count} groups");
-                
                 // Use the filter expression builder service
                 var result = _filterExpressionBuilder.BuildFilterExpression(SearchGroups, targetColumnType, forceTargetTypeAsString);
                 
                 if (!result.IsSuccess)
                 {
-                    System.Diagnostics.Debug.WriteLine($"Error building filter expression: {result.ErrorMessage}");
                     FilterExpression = null;
                     HasCustomExpression = false;
                 }
@@ -1228,7 +1225,7 @@ namespace WWSearchDataGrid.Modern.Core
         /// Updates the visibility of logical operators for all groups and templates
         /// </summary>
         /// <param name="firstOperator">First operator (optional parameter for backward compatibility)</param>
-        internal void UpdateOperatorVisibility(ILogicalOperatorProvider firstOperator = null)
+        internal void UpdateOperatorVisibility()
         {
             // Update visibility for all search groups (group-level operators)
             for (int i = 0; i < SearchGroups.Count; i++)

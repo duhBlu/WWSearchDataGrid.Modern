@@ -14,7 +14,7 @@ namespace WWSearchDataGrid.Modern.WPF
     /// <summary>
     /// Search control for filtering data grid columns
     /// </summary>
-    public class SearchControl : Control
+    public class ColumnSearchBox : Control
     {
         #region Fields
 
@@ -29,27 +29,27 @@ namespace WWSearchDataGrid.Modern.WPF
         #region Dependency Properties
 
         public static readonly DependencyProperty CurrentColumnProperty =
-            DependencyProperty.Register("CurrentColumn", typeof(DataGridColumn), typeof(SearchControl),
+            DependencyProperty.Register("CurrentColumn", typeof(DataGridColumn), typeof(ColumnSearchBox),
                 new PropertyMetadata(null, OnCurrentColumnChanged));
 
         public static readonly DependencyProperty SourceDataGridProperty =
-            DependencyProperty.Register("SourceDataGrid", typeof(SearchDataGrid), typeof(SearchControl),
+            DependencyProperty.Register("SourceDataGrid", typeof(SearchDataGrid), typeof(ColumnSearchBox),
                 new PropertyMetadata(null, OnSourceDataGridChanged));
 
         public static readonly DependencyProperty SearchTextProperty =
-            DependencyProperty.Register("SearchText", typeof(string), typeof(SearchControl),
+            DependencyProperty.Register("SearchText", typeof(string), typeof(ColumnSearchBox),
                 new PropertyMetadata(string.Empty, OnSearchTextChanged));
 
         public static readonly DependencyProperty HasAdvancedFilterProperty =
-            DependencyProperty.Register("HasAdvancedFilter", typeof(bool), typeof(SearchControl),
+            DependencyProperty.Register("HasAdvancedFilter", typeof(bool), typeof(ColumnSearchBox),
                 new PropertyMetadata(false));
 
         public static readonly DependencyProperty CustomSearchTemplateProperty =
-            DependencyProperty.RegisterAttached("CustomSearchTemplate", typeof(Type), typeof(SearchControl),
+            DependencyProperty.RegisterAttached("CustomSearchTemplate", typeof(Type), typeof(ColumnSearchBox),
                 new FrameworkPropertyMetadata(typeof(SearchTemplate)));
 
         public static readonly DependencyProperty ShowInAdvancedFilterProperty =
-            DependencyProperty.RegisterAttached("ShowInAdvancedFilter", typeof(bool), typeof(SearchControl),
+            DependencyProperty.RegisterAttached("ShowInAdvancedFilter", typeof(bool), typeof(ColumnSearchBox),
                 new FrameworkPropertyMetadata(true, FrameworkPropertyMetadataOptions.Inherits));
 
         #endregion
@@ -154,9 +154,9 @@ namespace WWSearchDataGrid.Modern.WPF
         #region Constructors
 
         /// <summary>
-        /// Initializes a new instance of the SearchControl class
+        /// Initializes a new instance of the ColumnSearchBox class
         /// </summary>
-        public SearchControl()
+        public ColumnSearchBox()
         {
             Loaded += OnControlLoaded;
             Unloaded += OnControlUnloaded;
@@ -244,8 +244,7 @@ namespace WWSearchDataGrid.Modern.WPF
 
         private static void OnSourceDataGridChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
-            var control = d as SearchControl;
-            if (control == null) return;
+            if (d is not ColumnSearchBox control) return;
 
             // Unregister events from old grid
             if (e.OldValue is SearchDataGrid oldGrid)
@@ -330,7 +329,7 @@ namespace WWSearchDataGrid.Modern.WPF
 
         private static void OnCurrentColumnChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
-            if (d is SearchControl control && e.NewValue is DataGridColumn column)
+            if (d is ColumnSearchBox control && e.NewValue is DataGridColumn column)
             {
                 control.BindingPath = column.SortMemberPath;
                 control.ShowInAdvancedFilter = GetShowInAdvancedFilter(control.CurrentColumn);
@@ -340,7 +339,7 @@ namespace WWSearchDataGrid.Modern.WPF
 
         private static void OnSearchTextChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
-            if (d is SearchControl control && !control.isAdvancedFilterOpen)
+            if (d is ColumnSearchBox control && !control.isAdvancedFilterOpen)
             {
                 // If text is empty, clear the filter immediately
                 if (string.IsNullOrWhiteSpace((string)e.NewValue))
@@ -367,8 +366,7 @@ namespace WWSearchDataGrid.Modern.WPF
                 ClearFilter();
             else if (e.Key == Key.Enter)
             {
-                if (_changeTimer != null)
-                    _changeTimer.Stop();
+                _changeTimer?.Stop();
 
                 if (string.IsNullOrWhiteSpace(SearchText))
                     ClearFilterInternal();
@@ -405,8 +403,10 @@ namespace WWSearchDataGrid.Modern.WPF
         {
             if (_changeTimer == null)
             {
-                _changeTimer = new Timer(250);
-                _changeTimer.AutoReset = false;
+                _changeTimer = new Timer(250)
+                {
+                    AutoReset = false
+                };
                 _changeTimer.Elapsed += OnChangeTimerElapsed;
             }
 
@@ -437,7 +437,7 @@ namespace WWSearchDataGrid.Modern.WPF
                 BindingPath = CurrentColumn.SortMemberPath;
                 
                 // Set default search type from column's attached property
-                var defaultSearchType = AdvancedFilterControl.GetDefaultSearchType(CurrentColumn);
+                var defaultSearchType = RuleValueFilterEditor.GetDefaultSearchType(CurrentColumn);
                 if (defaultSearchType != SearchType.Contains) // Only set if different from default
                 {
                     SearchTemplateController.DefaultSearchType = defaultSearchType;
@@ -564,7 +564,7 @@ namespace WWSearchDataGrid.Modern.WPF
                         WindowStartupLocation = WindowStartupLocation.CenterOwner
                     };
 
-                    var filterControl = new AdvancedFilterControl
+                    var filterControl = new RuleValueFilterEditor
                     {
                         SearchTemplateController = SearchTemplateController,
                         DataContext = this
@@ -599,10 +599,7 @@ namespace WWSearchDataGrid.Modern.WPF
                     HasAdvancedFilter = SearchTemplateController.HasCustomExpression;
 
                     // Process any data transformation filters
-                    if (SourceDataGrid != null)
-                    {
-                        SourceDataGrid.ProcessTransformationFilter(this);
-                    }
+                    SourceDataGrid?.ProcessTransformationFilter(this);
 
                     // Adjust column width if a filter is applied
                     if (HasAdvancedFilter && CurrentColumn != null)
@@ -694,8 +691,7 @@ namespace WWSearchDataGrid.Modern.WPF
             try
             {
                 // Stop the timer if it's running
-                if (_changeTimer != null)
-                    _changeTimer.Stop();
+                _changeTimer?.Stop();
 
                 // Clear the search text
                 SearchText = string.Empty;
@@ -761,9 +757,8 @@ namespace WWSearchDataGrid.Modern.WPF
             if (eventField == null)
                 return Array.Empty<EventHandler>();
 
-            var eventDelegate = eventField.GetValue(window) as Delegate;
 
-            if (eventDelegate == null)
+            if (eventField.GetValue(window) is not Delegate eventDelegate)
                 return Array.Empty<EventHandler>();
 
             return eventDelegate.GetInvocationList().Cast<EventHandler>();

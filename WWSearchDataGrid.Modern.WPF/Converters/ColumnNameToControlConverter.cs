@@ -9,7 +9,7 @@ using System.Windows.Data;
 namespace WWSearchDataGrid.Modern.WPF.Converters
 {
     /// <summary>
-    /// Converter that finds the SearchControl matching a column name
+    /// Converter that finds the ColumnSearchBox matching a column name
     /// </summary>
     public class ColumnNameToControlConverter : IMultiValueConverter
     {
@@ -20,9 +20,8 @@ namespace WWSearchDataGrid.Modern.WPF.Converters
 
             string columnName = values[0] as string;
             string bindingPath = values[1] as string;
-            var dataColumns = values[2] as System.Collections.Generic.IEnumerable<SearchControl>;
 
-            if (string.IsNullOrEmpty(columnName) || dataColumns == null)
+            if (string.IsNullOrEmpty(columnName) || values[2] is not System.Collections.Generic.IEnumerable<ColumnSearchBox> dataColumns)
                 return null;
 
             // Find the matching column control
@@ -33,12 +32,12 @@ namespace WWSearchDataGrid.Modern.WPF.Converters
 
         public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)
         {
-            if (value is SearchControl searchControl)
+            if (value is ColumnSearchBox columnSearchBox)
             {
                 return new object[]
                 {
-                    searchControl.CurrentColumn?.Header?.ToString(),
-                    searchControl.BindingPath,
+                    columnSearchBox.CurrentColumn?.Header?.ToString(),
+                    columnSearchBox.BindingPath,
                     null
                 };
             }

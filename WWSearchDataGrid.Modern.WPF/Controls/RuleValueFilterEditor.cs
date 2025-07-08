@@ -21,13 +21,13 @@ namespace WWSearchDataGrid.Modern.WPF
     /// <summary>
     /// Enhanced advanced filter control with tabbed interface
     /// </summary>
-    public class AdvancedFilterControl : Control, INotifyPropertyChanged
+    public class RuleValueFilterEditor : Control, INotifyPropertyChanged
     {
         #region Fields
 
-        private Button applyButton;
-        private Button clearButton;
-        private Button closeButton;
+        private readonly Button applyButton;
+        private readonly Button clearButton;
+        private readonly Button closeButton;
         private TabControl tabControl;
         private TextBox valueSearchBox;
         private TextBlock valuesSummary;
@@ -51,32 +51,32 @@ namespace WWSearchDataGrid.Modern.WPF
         public static readonly DependencyProperty FilterValueViewModelProperty =
             DependencyProperty.Register(nameof(FilterValueViewModel),
                 typeof(FilterValueViewModel),
-                typeof(AdvancedFilterControl),
+                typeof(RuleValueFilterEditor),
                 new PropertyMetadata(null));
 
         /// <summary>
         /// Attached property for specifying the GroupBy column for filter values
         /// </summary>
         public static readonly DependencyProperty GroupByColumnProperty =
-            DependencyProperty.RegisterAttached("GroupByColumn", typeof(string), typeof(AdvancedFilterControl),
+            DependencyProperty.RegisterAttached("GroupByColumn", typeof(string), typeof(RuleValueFilterEditor),
                 new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.Inherits));
 
         /// <summary>
         /// Attached property for specifying the default search type for filter templates
         /// </summary>
         public static readonly DependencyProperty DefaultSearchTypeProperty =
-            DependencyProperty.RegisterAttached("DefaultSearchType", typeof(SearchType), typeof(AdvancedFilterControl),
+            DependencyProperty.RegisterAttached("DefaultSearchType", typeof(SearchType), typeof(RuleValueFilterEditor),
                 new FrameworkPropertyMetadata(SearchType.Contains, FrameworkPropertyMetadataOptions.Inherits));
 
         /// <summary>
         /// Dependency property for controlling operator ComboBox visibility
         /// </summary>
         public static readonly DependencyProperty IsOperatorVisibleProperty =
-            DependencyProperty.Register(nameof(IsOperatorVisible), typeof(bool), typeof(AdvancedFilterControl),
+            DependencyProperty.Register(nameof(IsOperatorVisible), typeof(bool), typeof(RuleValueFilterEditor),
                 new PropertyMetadata(false));
 
         private static readonly DependencyPropertyKey ValueSelectionSummaryPropertyKey =
-            DependencyProperty.RegisterReadOnly("ValueSelectionSummary", typeof(string), typeof(AdvancedFilterControl),
+            DependencyProperty.RegisterReadOnly("ValueSelectionSummary", typeof(string), typeof(RuleValueFilterEditor),
                 new PropertyMetadata("No values selected"));
 
         public static readonly DependencyProperty ValueSelectionSummaryProperty = ValueSelectionSummaryPropertyKey.DependencyProperty;
@@ -151,30 +151,13 @@ namespace WWSearchDataGrid.Modern.WPF
                     var currentValue = SearchTemplateController.SearchGroups[0].OperatorName;
                     if (currentValue != value)
                     {
-                        
-                        // Log filter state BEFORE change
-                        var firstGroup = SearchTemplateController.SearchGroups[0];
-                        for (int i = 0; i < firstGroup.SearchTemplates.Count; i++)
-                        {
-                            var template = firstGroup.SearchTemplates[i];
-                        }
-                        
                         SearchTemplateController.SearchGroups[0].OperatorName = value;
                         
                         // Force update the filter expression to ensure HasCustomExpression is recalculated
                         SearchTemplateController.UpdateFilterExpression();
                         
                         OnPropertyChanged(nameof(GroupOperatorName));
-                        
-                        for (int i = 0; i < firstGroup.SearchTemplates.Count; i++)
-                        {
-                            var template = firstGroup.SearchTemplates[i];
-                        }
                     }
-                }
-                else
-                {
-                    System.Diagnostics.Debug.WriteLine($"GroupOperatorName: Cannot set value '{value}' - no SearchGroups available");
                 }
             }
         }
@@ -182,19 +165,19 @@ namespace WWSearchDataGrid.Modern.WPF
         /// <summary>
         /// Gets the list of available data columns from the parent SearchDataGrid
         /// </summary>
-        public IEnumerable<SearchControl> DataColumns
+        public IEnumerable<ColumnSearchBox> DataColumns
         {
             get
             {
-                if (DataContext is SearchControl searchControl && searchControl.SourceDataGrid != null)
+                if (DataContext is ColumnSearchBox columnSearchBox && columnSearchBox.SourceDataGrid != null)
                 {
-                    return searchControl.SourceDataGrid.DataColumns;
+                    return columnSearchBox.SourceDataGrid.DataColumns;
                 }
                 else if (DataContext is SearchDataGrid dataGrid)
                 {
                     return dataGrid.DataColumns;
                 }
-                return Enumerable.Empty<SearchControl>();
+                return Enumerable.Empty<ColumnSearchBox>();
             }
         }
 
@@ -203,14 +186,14 @@ namespace WWSearchDataGrid.Modern.WPF
         /// </summary>
         private bool HasPrecedingColumnFilters()
         {
-            if (!(DataContext is SearchControl currentSearchControl) || currentSearchControl.CurrentColumn == null)
+            if (!(DataContext is ColumnSearchBox currentColumnSearchBox) || currentColumnSearchBox.CurrentColumn == null)
             {
                 return false;
             }
 
             try
             {
-                var currentDisplayIndex = currentSearchControl.CurrentColumn.DisplayIndex;
+                var currentDisplayIndex = currentColumnSearchBox.CurrentColumn.DisplayIndex;
                 var dataColumns = DataColumns.ToList();
 
                 var precedingColumnsWithFilters = dataColumns
@@ -219,7 +202,7 @@ namespace WWSearchDataGrid.Modern.WPF
                                   col.HasActiveFilter)
                     .ToList();
 
-                return precedingColumnsWithFilters.Any();
+                return precedingColumnsWithFilters.Count > 0;
             }
             catch (Exception ex)
             {
@@ -269,9 +252,9 @@ namespace WWSearchDataGrid.Modern.WPF
 
             // Get the default search type from the column (if any)
             SearchType? defaultSearchType = null;
-            if (DataContext is SearchControl searchControl && searchControl.CurrentColumn != null)
+            if (DataContext is ColumnSearchBox columnSearchBox && columnSearchBox.CurrentColumn != null)
             {
-                defaultSearchType = GetDefaultSearchType(searchControl.CurrentColumn);
+                defaultSearchType = GetDefaultSearchType(columnSearchBox.CurrentColumn);
             }
 
             var group = SearchTemplateController.SearchGroups.First(g => g.SearchTemplates.Contains(template));
@@ -330,9 +313,9 @@ namespace WWSearchDataGrid.Modern.WPF
         #region Constructors
 
         /// <summary>
-        /// Initializes a new instance of the AdvancedFilterControl class
+        /// Initializes a new instance of the RuleValueFilterEditor class
         /// </summary>
-        public AdvancedFilterControl()
+        public RuleValueFilterEditor()
         {
             _filterApplicationService = new FilterApplicationService();
             Loaded += OnControlLoaded;
@@ -343,7 +326,7 @@ namespace WWSearchDataGrid.Modern.WPF
         /// Initializes a new instance with custom filter application service for testing
         /// </summary>
         /// <param name="filterApplicationService">Filter application service</param>
-        internal AdvancedFilterControl(IFilterApplicationService filterApplicationService)
+        internal RuleValueFilterEditor(IFilterApplicationService filterApplicationService)
         {
             _filterApplicationService = filterApplicationService ?? throw new ArgumentNullException(nameof(filterApplicationService));
             Loaded += OnControlLoaded;
@@ -424,10 +407,10 @@ namespace WWSearchDataGrid.Modern.WPF
                 tabControl.SelectionChanged += OnTabControlSelectionChanged;
             }
 
-            if (DataContext is SearchControl searchControl && searchControl.SourceDataGrid != null)
+            if (DataContext is ColumnSearchBox columnSearchBox && columnSearchBox.SourceDataGrid != null)
             {
-                searchControl.SourceDataGrid.CollectionChanged += OnSourceDataGridCollectionChanged;
-                searchControl.SourceDataGrid.ItemsSourceChanged += OnItemsSourceChanged;
+                columnSearchBox.SourceDataGrid.CollectionChanged += OnSourceDataGridCollectionChanged;
+                columnSearchBox.SourceDataGrid.ItemsSourceChanged += OnItemsSourceChanged;
             }
 
             // Hook up AllowMultipleGroups property change notification
@@ -474,7 +457,7 @@ namespace WWSearchDataGrid.Modern.WPF
         /// <summary>
         /// Recursively searches for a child element by name in the visual tree
         /// </summary>
-        private DependencyObject FindChildByName(DependencyObject parent, string name)
+        private static DependencyObject FindChildByName(DependencyObject parent, string name)
         {
             if (parent == null) return null;
 
@@ -500,11 +483,11 @@ namespace WWSearchDataGrid.Modern.WPF
         /// </summary>
         private string GenerateColumnKey()
         {
-            if (DataContext is SearchControl searchControl)
+            if (DataContext is ColumnSearchBox columnSearchBox)
             {
-                return $"{searchControl.CurrentColumn?.Header}_{searchControl.BindingPath}";
+                return $"{columnSearchBox.CurrentColumn?.Header}_{columnSearchBox.BindingPath}";
             }
-            else if (DataContext is SearchDataGrid dataGrid)
+            else if (DataContext is SearchDataGrid)
             {
                 return "GlobalFilter";
             }
@@ -521,13 +504,13 @@ namespace WWSearchDataGrid.Modern.WPF
                 return;
 
             // Check if we're in per-column or global mode
-            if (DataContext is SearchControl searchControl)
+            if (DataContext is ColumnSearchBox columnSearchBox)
             {
-                var bindingPath = searchControl.BindingPath;
-                if (!string.IsNullOrEmpty(bindingPath) && searchControl.SourceDataGrid?.OriginalItemsSource != null)
+                var bindingPath = columnSearchBox.BindingPath;
+                if (!string.IsNullOrEmpty(bindingPath) && columnSearchBox.SourceDataGrid?.OriginalItemsSource != null)
                 {
                     // Use the original unfiltered items source to preserve all possible values
-                    var items = searchControl.SourceDataGrid.OriginalItemsSource.Cast<object>().ToList();
+                    var items = columnSearchBox.SourceDataGrid.OriginalItemsSource.Cast<object>().ToList();
                     await _cache.UpdateColumnValuesAsync(_columnKey, items, bindingPath);
 
                     // Update controller with cached values
@@ -536,7 +519,7 @@ namespace WWSearchDataGrid.Modern.WPF
                     SearchTemplateController.ColumnDataType = metadata.DataType;
 
                     // Create and set up the FilterValueViewModel first
-                    await SetupFilterValueViewModel(searchControl, items, metadata);
+                    await SetupFilterValueViewModel(columnSearchBox, items, metadata);
                 }
             }
             else if (DataContext is SearchDataGrid dataGrid)
@@ -563,19 +546,21 @@ namespace WWSearchDataGrid.Modern.WPF
         /// <summary>
         /// Sets up the FilterValueViewModel with proper data
         /// </summary>
-        private async Task SetupFilterValueViewModel(SearchControl searchControl, List<object> items, dynamic metadata)
+        private async Task SetupFilterValueViewModel(ColumnSearchBox columnSearchBox, List<object> items, dynamic metadata)
         {
             // Check if GroupBy column is specified
-            var groupByColumn = GetGroupByColumn(searchControl.CurrentColumn);
+            var groupByColumn = GetGroupByColumn(columnSearchBox.CurrentColumn);
 
             if (!string.IsNullOrEmpty(groupByColumn))
             {
                 // Create grouped tree view model
-                var groupedViewModel = new GroupedTreeViewFilterValueViewModel();
-                groupedViewModel.GroupByColumn = groupByColumn;
+                var groupedViewModel = new GroupedTreeViewFilterValueViewModel
+                {
+                    GroupByColumn = groupByColumn
+                };
 
                 // Load grouped data
-                LoadGroupedDataForViewModel(groupedViewModel, searchControl, items, groupByColumn);
+                LoadGroupedDataForViewModel(groupedViewModel, columnSearchBox, items, groupByColumn);
 
                 FilterValueViewModel = groupedViewModel;
 
@@ -604,8 +589,8 @@ namespace WWSearchDataGrid.Modern.WPF
         /// <summary>
         /// Loads grouped data for the filter values view model
         /// </summary>
-        private void LoadGroupedDataForViewModel(GroupedTreeViewFilterValueViewModel groupedViewModel,
-            SearchControl searchControl, List<object> items, string groupByColumn)
+        private static void LoadGroupedDataForViewModel(GroupedTreeViewFilterValueViewModel groupedViewModel,
+            ColumnSearchBox columnSearchBox, List<object> items, string groupByColumn)
         {
             // Create grouped data based on the GroupBy column
             var groupedData = new Dictionary<object, List<object>>();
@@ -619,19 +604,21 @@ namespace WWSearchDataGrid.Modern.WPF
                     var groupKey = ReflectionHelper.GetPropValue(item, groupByColumn);
 
                     // Get the actual value from the current column (the column being filtered)
-                    var value = ReflectionHelper.GetPropValue(item, searchControl.BindingPath);
+                    var value = ReflectionHelper.GetPropValue(item, columnSearchBox.BindingPath);
 
                     // Group the current column's values by the GroupBy column's values
-                    if (!groupedData.ContainsKey(groupKey))
+                    if (!groupedData.TryGetValue(groupKey, out var list))
                     {
-                        groupedData[groupKey] = new List<object>();
+                        list = new List<object>();
+                        groupedData[groupKey] = list;
                     }
 
                     // Only add unique values to each group
-                    if (!groupedData[groupKey].Contains(value))
+                    if (!list.Contains(value))
                     {
-                        groupedData[groupKey].Add(value);
+                        list.Add(value);
                     }
+
 
                     // Store display name for the group key
                     var displayName = groupKey?.ToString() ?? "(No Value)";
@@ -659,9 +646,9 @@ namespace WWSearchDataGrid.Modern.WPF
             if (SearchTemplateController == null)
             {
                 // Get the mode from the source SearchDataGrid
-                if (DataContext is SearchControl searchControl && searchControl.SourceDataGrid != null)
+                if (DataContext is ColumnSearchBox columnSearchBox && columnSearchBox.SourceDataGrid != null)
                 {
-                    SearchTemplateController = searchControl.SearchTemplateController;
+                    SearchTemplateController = columnSearchBox.SearchTemplateController;
                 }
                 else if (DataContext is SearchDataGrid dataGrid)
                 {
@@ -723,7 +710,7 @@ namespace WWSearchDataGrid.Modern.WPF
         /// </summary>
         private void DetermineColumnDataType()
         {
-            if (SearchTemplateController != null && SearchTemplateController.ColumnValues.Any())
+            if (SearchTemplateController != null && SearchTemplateController.ColumnValues.Count > 0)
             {
                 ColumnDataType = ReflectionHelper.DetermineColumnDataType(SearchTemplateController.ColumnValues);
             }
@@ -811,7 +798,7 @@ namespace WWSearchDataGrid.Modern.WPF
                 if (!FilterValueViewModel.IsLoaded)
                 {
                     var metadata = _cache.GetOrCreateMetadata(_columnKey, string.Empty);
-                    if (metadata.Values.Any())
+                    if (metadata.Values.Count > 0)
                     {
                         FilterValueViewModel.LoadValuesWithCounts(metadata.Values, metadata.ValueCounts);
                     }
@@ -825,7 +812,7 @@ namespace WWSearchDataGrid.Modern.WPF
 
         private async void OnSourceDataGridCollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
         {
-            if (string.IsNullOrEmpty(_columnKey) || DataContext is not SearchControl searchControl)
+            if (string.IsNullOrEmpty(_columnKey) || DataContext is not ColumnSearchBox columnSearchBox)
                 return;
 
             try
@@ -833,15 +820,15 @@ namespace WWSearchDataGrid.Modern.WPF
                 // Try incremental update first
                 if (e.Action == NotifyCollectionChangedAction.Add || e.Action == NotifyCollectionChangedAction.Remove)
                 {
-                    await _cache.UpdateColumnValuesIncrementalAsync(_columnKey, e, searchControl.BindingPath);
+                    await _cache.UpdateColumnValuesIncrementalAsync(_columnKey, e, columnSearchBox.BindingPath);
                 }
                 else
                 {
                     // Fall back to full reload for complex changes
-                    var items = searchControl.SourceDataGrid.OriginalItemsSource?.Cast<object>().ToList();
-                    if (items?.Any() == true)
+                    var items = columnSearchBox.SourceDataGrid.OriginalItemsSource?.Cast<object>().ToList();
+                    if (items?.Count > 0)
                     {
-                        await _cache.UpdateColumnValuesAsync(_columnKey, items, searchControl.BindingPath);
+                        await _cache.UpdateColumnValuesAsync(_columnKey, items, columnSearchBox.BindingPath);
                     }
                 }
 
@@ -862,9 +849,9 @@ namespace WWSearchDataGrid.Modern.WPF
 
         private void RefreshFilterValueViewModel()
         {
-            if (FilterValueViewModel != null && DataContext is SearchControl searchControl)
+            if (FilterValueViewModel != null && DataContext is ColumnSearchBox columnSearchBox)
             {
-                var metadata = _cache.GetOrCreateMetadata(_columnKey, searchControl.BindingPath);
+                var metadata = _cache.GetOrCreateMetadata(_columnKey, columnSearchBox.BindingPath);
 
                 // Reload the view model with updated values
                 FilterValueViewModel.LoadValuesWithCounts(metadata.Values, metadata.ValueCounts);
@@ -913,7 +900,7 @@ namespace WWSearchDataGrid.Modern.WPF
         /// </summary>
         private void SetupFilterChangeMonitoring()
         {
-            if (!(DataContext is SearchControl currentSearchControl) || currentSearchControl.SourceDataGrid == null)
+            if (!(DataContext is ColumnSearchBox currentColumnSearchBox) || currentColumnSearchBox.SourceDataGrid == null)
                 return;
 
             try
@@ -931,7 +918,7 @@ namespace WWSearchDataGrid.Modern.WPF
 
                 // Subscribe to the SearchDataGrid's filter events if available
                 // This is a much simpler approach than trying to monitor individual SearchTemplateControllers
-                currentSearchControl.SourceDataGrid.ItemsSourceFiltered += OnFilteringCompleted;
+                currentColumnSearchBox.SourceDataGrid.ItemsSourceFiltered += OnFilteringCompleted;
             }
             catch (Exception ex)
             {
@@ -972,10 +959,6 @@ namespace WWSearchDataGrid.Modern.WPF
                     }
                 }
             }
-            else
-            {
-                System.Diagnostics.Debug.WriteLine("UpdateTemplateOperatorVisibility: SearchTemplateController is null");
-            }
         }
 
         /// <summary>
@@ -1007,21 +990,21 @@ namespace WWSearchDataGrid.Modern.WPF
             }
 
             // Determine if we're in per-column or global mode
-            if (DataContext is SearchControl searchControl)
+            if (DataContext is ColumnSearchBox columnSearchBox)
             {
                 // Per-column mode
-                if (searchControl.SourceDataGrid != null)
+                if (columnSearchBox.SourceDataGrid != null)
                 {
-                    searchControl.HasAdvancedFilter = result.HasCustomExpression;
+                    columnSearchBox.HasAdvancedFilter = result.HasCustomExpression;
                     
                     // Handle grouped filtering if needed
                     if (result.FilterType == FilterApplicationType.GroupedValueBased)
                     {
-                        searchControl.GroupedFilterCombinations = SearchTemplateController.GroupedFilterCombinations;
-                        searchControl.GroupByColumnPath = SearchTemplateController.GroupByColumnPath;
+                        columnSearchBox.GroupedFilterCombinations = SearchTemplateController.GroupedFilterCombinations;
+                        columnSearchBox.GroupByColumnPath = SearchTemplateController.GroupByColumnPath;
                     }
-                    
-                    searchControl.SourceDataGrid.FilterItemsSource();
+
+                    columnSearchBox.SourceDataGrid.FilterItemsSource();
                     CloseWindow();
                 }
             }
@@ -1052,16 +1035,13 @@ namespace WWSearchDataGrid.Modern.WPF
             SearchTemplateController.AddSearchGroup();
 
             // Determine if we're in per-column or global mode
-            if (DataContext is SearchControl searchControl)
+            if (DataContext is ColumnSearchBox columnSearchBox)
             {
                 // Per-column mode
-                searchControl.SearchText = string.Empty;
-                searchControl.HasAdvancedFilter = false;
+                columnSearchBox.SearchText = string.Empty;
+                columnSearchBox.HasAdvancedFilter = false;
 
-                if (searchControl.SourceDataGrid != null)
-                {
-                    searchControl.SourceDataGrid.FilterItemsSource();
-                }
+                columnSearchBox.SourceDataGrid?.FilterItemsSource();
             }
             else if (DataContext is SearchDataGrid dataGrid)
             {
@@ -1090,13 +1070,13 @@ namespace WWSearchDataGrid.Modern.WPF
                 tabControl.SelectionChanged -= OnTabControlSelectionChanged;
             }
 
-            if (DataContext is SearchControl searchControl && searchControl.SourceDataGrid != null)
+            if (DataContext is ColumnSearchBox columnSearchBox && columnSearchBox.SourceDataGrid != null)
             {
-                searchControl.SourceDataGrid.CollectionChanged -= OnSourceDataGridCollectionChanged;
-                searchControl.SourceDataGrid.ItemsSourceChanged -= OnItemsSourceChanged;
-                
+                columnSearchBox.SourceDataGrid.CollectionChanged -= OnSourceDataGridCollectionChanged;
+                columnSearchBox.SourceDataGrid.ItemsSourceChanged -= OnItemsSourceChanged;
+
                 // Unsubscribe from filter completion events
-                searchControl.SourceDataGrid.ItemsSourceFiltered -= OnFilteringCompleted;
+                columnSearchBox.SourceDataGrid.ItemsSourceFiltered -= OnFilteringCompleted;
             }
 
             // Unhook SearchTemplateController property changes

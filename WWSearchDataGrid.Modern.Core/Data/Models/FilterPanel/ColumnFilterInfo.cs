@@ -61,7 +61,7 @@ namespace WWSearchDataGrid.Modern.Core
         }
 
         /// <summary>
-        /// Gets or sets the filter data reference (SearchControl or SearchTemplateController)
+        /// Gets or sets the filter data reference (ColumnSearchBox or SearchTemplateController)
         /// </summary>
         public object FilterData
         {

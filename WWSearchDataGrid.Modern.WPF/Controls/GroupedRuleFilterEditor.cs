@@ -11,30 +11,30 @@ using WWSearchDataGrid.Modern.Core;
 namespace WWSearchDataGrid.Modern.WPF
 {
     /// <summary>
-    /// FilterEditDialog provides a tabbed interface for editing column filters
+    /// GroupedRuleFilterEditor provides a tabbed interface for editing column filters
     /// </summary>
-    public class FilterEditDialog : Control
+    public class GroupedRuleFilterEditor : Control
     {
         #region Dependency Properties
 
         public static readonly DependencyProperty SourceDataGridProperty =
-            DependencyProperty.Register("SourceDataGrid", typeof(SearchDataGrid), typeof(FilterEditDialog),
+            DependencyProperty.Register("SourceDataGrid", typeof(SearchDataGrid), typeof(GroupedRuleFilterEditor),
                 new PropertyMetadata(null, OnSourceDataGridChanged));
 
         public static readonly DependencyProperty FilteredColumnsProperty =
-            DependencyProperty.Register("FilteredColumns", typeof(ObservableCollection<FilteredColumnInfo>), typeof(FilterEditDialog),
+            DependencyProperty.Register("FilteredColumns", typeof(ObservableCollection<FilteredColumnInfo>), typeof(GroupedRuleFilterEditor),
                 new PropertyMetadata(null));
 
         public static readonly DependencyProperty AllFilterGroupsProperty =
-            DependencyProperty.Register("AllFilterGroups", typeof(ObservableCollection<FilterGroupInfo>), typeof(FilterEditDialog),
+            DependencyProperty.Register("AllFilterGroups", typeof(ObservableCollection<FilterGroupInfo>), typeof(GroupedRuleFilterEditor),
                 new PropertyMetadata(null));
 
         public static readonly DependencyProperty DialogAcceptedProperty =
-            DependencyProperty.Register("DialogAccepted", typeof(bool), typeof(FilterEditDialog),
+            DependencyProperty.Register("DialogAccepted", typeof(bool), typeof(GroupedRuleFilterEditor),
                 new PropertyMetadata(false));
 
         public static readonly DependencyProperty IsLoadingProperty =
-            DependencyProperty.Register("IsLoading", typeof(bool), typeof(FilterEditDialog),
+            DependencyProperty.Register("IsLoading", typeof(bool), typeof(GroupedRuleFilterEditor),
                 new PropertyMetadata(false));
 
         #endregion
@@ -143,11 +143,11 @@ namespace WWSearchDataGrid.Modern.WPF
         #region Constructors
 
         /// <summary>
-        /// Initializes a new instance of the FilterEditDialog class
+        /// Initializes a new instance of the GroupedRuleFilterEditor class
         /// </summary>
-        public FilterEditDialog()
+        public GroupedRuleFilterEditor()
         {
-            DefaultStyleKey = typeof(FilterEditDialog);
+            DefaultStyleKey = typeof(GroupedRuleFilterEditor);
             FilteredColumns = new ObservableCollection<FilteredColumnInfo>();
             AllFilterGroups = new ObservableCollection<FilterGroupInfo>();
             AvailableColumns = new ObservableCollection<ColumnDisplayInfo>();
@@ -180,7 +180,7 @@ namespace WWSearchDataGrid.Modern.WPF
         /// </summary>
         private static void OnSourceDataGridChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
-            if (d is FilterEditDialog dialog && e.NewValue is SearchDataGrid dataGrid)
+            if (d is GroupedRuleFilterEditor dialog && e.NewValue is SearchDataGrid)
             {
                 dialog.InitializeFilteredColumns();
             }
@@ -213,7 +213,7 @@ namespace WWSearchDataGrid.Modern.WPF
                         BindingPath = column.BindingPath ?? "Unknown",
                         OriginalController = column.SearchTemplateController,
                         WorkingController = CloneSearchTemplateController(column.SearchTemplateController),
-                        SearchControl = column
+                        ColumnSearchBox = column
                     };
 
                     FilteredColumns.Add(columnInfo);
@@ -288,7 +288,7 @@ namespace WWSearchDataGrid.Modern.WPF
         /// <summary>
         /// Clones a SearchTemplateController for editing
         /// </summary>
-        private SearchTemplateController CloneSearchTemplateController(SearchTemplateController original)
+        private static SearchTemplateController CloneSearchTemplateController(SearchTemplateController original)
         {
             try
             {
@@ -297,13 +297,11 @@ namespace WWSearchDataGrid.Modern.WPF
                     ColumnName = original.ColumnName,
                     ColumnDataType = original.ColumnDataType,
                     HasCustomExpression = original.HasCustomExpression,
-                    AllowMultipleGroups = true  // Enable multiple groups for FilterEditDialog
+                    AllowMultipleGroups = true,  // Enable multiple groups for GroupedRuleFilterEditor
+                    ColumnValues = original.ColumnValues,
+                    ColumnValuesByPath = original.ColumnValuesByPath,
+                    PropertyValues = original.PropertyValues,
                 };
-
-                // Share reference to column values instead of deep copying (performance optimization)
-                clone.ColumnValues = original.ColumnValues;
-                clone.ColumnValuesByPath = original.ColumnValuesByPath;
-                clone.PropertyValues = original.PropertyValues;
 
                 // Clone search groups
                 foreach (var originalGroup in original.SearchGroups)
@@ -337,7 +335,7 @@ namespace WWSearchDataGrid.Modern.WPF
         /// <summary>
         /// Clones a search template
         /// </summary>
-        private SearchTemplate CloneSearchTemplate(SearchTemplate original, HashSet<object> columnValues, ColumnDataType dataType)
+        private static SearchTemplate CloneSearchTemplate(SearchTemplate original, HashSet<object> columnValues, ColumnDataType dataType)
         {
             var clone = new SearchTemplate(columnValues, dataType)
             {
@@ -436,10 +434,10 @@ namespace WWSearchDataGrid.Modern.WPF
                     }
                 }
 
-                // Synchronize SearchControl states after applying changes
+                // Synchronize ColumnSearchBox states after applying changes
                 foreach (var columnInfo in FilteredColumns)
                 {
-                    SynchronizeSearchControlState(columnInfo);
+                    SynchronizeColumnSearchBoxState(columnInfo);
                 }
 
                 // Apply filters to the data grid
@@ -453,16 +451,16 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
-        /// Synchronizes SearchControl state with the applied filter changes
+        /// Synchronizes ColumnSearchBox state with the applied filter changes
         /// </summary>
-        private void SynchronizeSearchControlState(FilteredColumnInfo columnInfo)
+        private static void SynchronizeColumnSearchBoxState(FilteredColumnInfo columnInfo)
         {
             try
             {
-                if (columnInfo?.SearchControl == null || columnInfo.OriginalController == null)
+                if (columnInfo?.ColumnSearchBox == null || columnInfo.OriginalController == null)
                     return;
 
-                var searchControl = columnInfo.SearchControl;
+                var columnSearchBox = columnInfo.ColumnSearchBox;
                 var controller = columnInfo.OriginalController;
 
                 // Force recalculation of the filter expression to ensure HasCustomExpression is accurate
@@ -471,30 +469,28 @@ namespace WWSearchDataGrid.Modern.WPF
                 // Now check if we have advanced filters (custom expressions) - this will be accurate
                 bool hasAdvancedFilter = controller.HasCustomExpression;
 
-                System.Diagnostics.Debug.WriteLine($"SynchronizeSearchControlState: Column '{columnInfo.ColumnName}' HasCustomExpression={hasAdvancedFilter}");
-
                 if (hasAdvancedFilter)
                 {
                     // Clear the search text when advanced filters are applied
-                    searchControl.SearchText = string.Empty;
-                    searchControl.HasAdvancedFilter = true;
+                    columnSearchBox.SearchText = string.Empty;
+                    columnSearchBox.HasAdvancedFilter = true;
                 }
                 else
                 {
                     // No advanced filters - allow normal text filtering
-                    searchControl.HasAdvancedFilter = false;
+                    columnSearchBox.HasAdvancedFilter = false;
                 }
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error synchronizing SearchControl state: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"Error synchronizing ColumnSearchBox state: {ex.Message}");
             }
         }
 
         /// <summary>
         /// Copies changes from working controller to original controller
         /// </summary>
-        private void CopyControllerChanges(SearchTemplateController source, SearchTemplateController target)
+        private static void CopyControllerChanges(SearchTemplateController source, SearchTemplateController target)
         {
             try
             {
@@ -527,51 +523,6 @@ namespace WWSearchDataGrid.Modern.WPF
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Error copying controller changes: {ex.Message}");
-            }
-        }
-
-        /// <summary>
-        /// Executes add search group command
-        /// </summary>
-        private void ExecuteAddSearchGroup(SearchTemplateGroup referenceGroup)
-        {
-            try
-            {
-                // Find the column info that contains this group
-                var filterGroupInfo = AllFilterGroups.FirstOrDefault(fg => fg.SearchTemplateGroup == referenceGroup);
-                if (filterGroupInfo?.ColumnInfo?.WorkingController != null)
-                {
-                    var newGroup = new SearchTemplateGroup();
-                    filterGroupInfo.ColumnInfo.WorkingController.AddSearchGroup(true, true, referenceGroup);
-                    
-                    // Add the new group to our unified collection
-                    RefreshAllFilterGroups();
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Error adding search group: {ex.Message}");
-            }
-        }
-
-        /// <summary>
-        /// Executes remove search group command
-        /// </summary>
-        private void ExecuteRemoveSearchGroup(SearchTemplateGroup group)
-        {
-            try
-            {
-                // Find the column info that contains this group
-                var filterGroupInfo = AllFilterGroups.FirstOrDefault(fg => fg.SearchTemplateGroup == group);
-                if (filterGroupInfo?.ColumnInfo?.WorkingController != null)
-                {
-                    filterGroupInfo.ColumnInfo.WorkingController.RemoveSearchGroup(group);
-                    RefreshAllFilterGroups();
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Error removing search group: {ex.Message}");
             }
         }
 
@@ -614,39 +565,6 @@ namespace WWSearchDataGrid.Modern.WPF
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Error removing search template: {ex.Message}");
-            }
-        }
-
-        /// <summary>
-        /// Refreshes the AllFilterGroups collection after changes
-        /// </summary>
-        private void RefreshAllFilterGroups()
-        {
-            try
-            {
-                AllFilterGroups.Clear();
-
-                foreach (var columnInfo in FilteredColumns)
-                {
-                    foreach (var group in columnInfo.WorkingController.SearchGroups)
-                    {
-                        var filterGroupInfo = new FilterGroupInfo
-                        {
-                            SearchTemplateGroup = group,
-                            ColumnInfo = columnInfo,
-                            DisplayName = $"Advanced Filter: {columnInfo.ColumnName}"
-                        };
-
-                        AllFilterGroups.Add(filterGroupInfo);
-                    }
-                }
-
-                // Update operator visibility based on unified group ordering
-                UpdateUnifiedOperatorVisibility();
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Error refreshing filter groups: {ex.Message}");
             }
         }
 
@@ -718,7 +636,7 @@ namespace WWSearchDataGrid.Modern.WPF
         /// <summary>
         /// Gets a display-friendly name for a column, handling complex headers
         /// </summary>
-        private string GetColumnDisplayName(DataGridColumn column)
+        private static string GetColumnDisplayName(DataGridColumn column)
         {
             try
             {
@@ -763,14 +681,14 @@ namespace WWSearchDataGrid.Modern.WPF
                 if (column == null || string.IsNullOrEmpty(column.SortMemberPath))
                     return;
 
-                // Find the corresponding SearchControl - first check in DataColumns collection
-                var searchControl = SourceDataGrid.DataColumns.FirstOrDefault(dc => dc.BindingPath == column.SortMemberPath);
+                // Find the corresponding ColumnSearchBox - first check in DataColumns collection
+                var columnSearchBox = SourceDataGrid.DataColumns.FirstOrDefault(dc => dc.BindingPath == column.SortMemberPath);
                 
-                if (searchControl == null)
+                if (columnSearchBox == null)
                 {
-                    // Create a new SearchControl for this column
-                    searchControl = CreateSearchControlForColumn(column);
-                    if (searchControl == null)
+                    // Create a new ColumnSearchBox for this column
+                    columnSearchBox = CreateColumnSearchBoxForColumn(column);
+                    if (columnSearchBox == null)
                         return;
                 }
 
@@ -779,9 +697,9 @@ namespace WWSearchDataGrid.Modern.WPF
                 {
                     ColumnName = column.Header?.ToString() ?? "Unknown Column",
                     BindingPath = column.SortMemberPath,
-                    OriginalController = searchControl.SearchTemplateController,
-                    WorkingController = CloneSearchTemplateController(searchControl.SearchTemplateController),
-                    SearchControl = searchControl
+                    OriginalController = columnSearchBox.SearchTemplateController,
+                    WorkingController = CloneSearchTemplateController(columnSearchBox.SearchTemplateController),
+                    ColumnSearchBox = columnSearchBox
                 };
 
                 // Ensure the working controller has at least one search group
@@ -816,62 +734,40 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
-        /// Creates a new SearchControl for the specified column
+        /// Creates a new ColumnSearchBox for the specified column
         /// </summary>
-        private SearchControl CreateSearchControlForColumn(DataGridColumn column)
+        private ColumnSearchBox CreateColumnSearchBoxForColumn(DataGridColumn column)
         {
             try
             {
-                var searchControl = new SearchControl
+                var columnSearchBox = new ColumnSearchBox
                 {
                     CurrentColumn = column,
                     SourceDataGrid = SourceDataGrid
                 };
 
-                // The SearchControl will automatically initialize itself when CurrentColumn and SourceDataGrid are set
+                // The ColumnSearchBox will automatically initialize itself when CurrentColumn and SourceDataGrid are set
                 // This includes creating the SearchTemplateController and setting BindingPath
-                
+
                 // Ensure the controller is properly initialized and has default groups
-                if (searchControl.SearchTemplateController != null)
+                if (columnSearchBox.SearchTemplateController != null)
                 {
-                    searchControl.SearchTemplateController.AllowMultipleGroups = true;
+                    columnSearchBox.SearchTemplateController.AllowMultipleGroups = true;
                     
                     // Ensure there's at least one search group with a template
-                    if (searchControl.SearchTemplateController.SearchGroups.Count == 0)
+                    if (columnSearchBox.SearchTemplateController.SearchGroups.Count == 0)
                     {
-                        searchControl.SearchTemplateController.AddSearchGroup(true, false);
+                        columnSearchBox.SearchTemplateController.AddSearchGroup(true, false);
                     }
                 }
 
-                return searchControl;
+                return columnSearchBox;
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error creating SearchControl for column: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"Error creating ColumnSearchBox for column: {ex.Message}");
                 return null;
             }
-        }
-
-        /// <summary>
-        /// Determines the column data type from a .NET type
-        /// </summary>
-        private ColumnDataType DetermineColumnDataType(Type propertyType)
-        {
-            var underlyingType = Nullable.GetUnderlyingType(propertyType) ?? propertyType;
-
-            if (underlyingType == typeof(DateTime))
-                return ColumnDataType.DateTime;
-            else if (underlyingType == typeof(bool))
-                return ColumnDataType.Boolean;
-            else if (underlyingType == typeof(int) || underlyingType == typeof(long) || 
-                     underlyingType == typeof(short) || underlyingType == typeof(byte) ||
-                     underlyingType == typeof(decimal) || underlyingType == typeof(double) || 
-                     underlyingType == typeof(float))
-                return ColumnDataType.Number;
-            else if (underlyingType.IsEnum)
-                return ColumnDataType.Enum;
-            else
-                return ColumnDataType.String;
         }
 
         /// <summary>
@@ -935,7 +831,7 @@ namespace WWSearchDataGrid.Modern.WPF
         /// <summary>
         /// Gets or sets the search control reference
         /// </summary>
-        public SearchControl SearchControl { get; set; }
+        public ColumnSearchBox ColumnSearchBox { get; set; }
     }
 
     /// <summary>

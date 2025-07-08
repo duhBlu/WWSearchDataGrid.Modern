@@ -23,13 +23,13 @@ namespace WWSearchDataGrid.Modern.WPF
     {
         #region Fields
 
-        private TokenSource tokenSource = new TokenSource();
-        private ObservableCollection<SearchControl> dataColumns = new ObservableCollection<SearchControl>();
+        private readonly TokenSource tokenSource = new TokenSource();
+        private readonly ObservableCollection<ColumnSearchBox> dataColumns = new ObservableCollection<ColumnSearchBox>();
         private System.Collections.IEnumerable originalItemsSource;
         private System.Collections.IEnumerable transformedItemsSource;
         private bool initialUpdateLayoutCompleted;
         private SearchTemplateController globalFilterController;
-        private Dictionary<string, IEnumerable<object>> _columnTransformationResults = new Dictionary<string, IEnumerable<object>>();
+        private readonly Dictionary<string, IEnumerable<object>> _columnTransformationResults = new Dictionary<string, IEnumerable<object>>();
         private bool _isApplyingTransformation = false;
         private bool _isEditingTransformedData = false;
 
@@ -52,7 +52,7 @@ namespace WWSearchDataGrid.Modern.WPF
         /// <summary>
         /// Gets the data columns collection
         /// </summary>
-        public ObservableCollection<SearchControl> DataColumns
+        public ObservableCollection<ColumnSearchBox> DataColumns
         {
             get { return dataColumns; }
         }
@@ -535,7 +535,7 @@ namespace WWSearchDataGrid.Modern.WPF
                 {
                     var activeFilters = DataColumns.Where(d => d.SearchTemplateController?.HasCustomExpression == true && !IsTransformationFilter(d)).ToList();
                     
-                    if (activeFilters.Any())
+                    if (activeFilters.Count > 0)
                     {
                         Items.Filter = item => EvaluateMultiColumnFilter(item, activeFilters);
                     }
@@ -584,7 +584,7 @@ namespace WWSearchDataGrid.Modern.WPF
                 Owner = Application.Current.MainWindow
             };
 
-            var filterControl = new AdvancedFilterControl
+            var filterControl = new RuleValueFilterEditor
             {
                 SearchTemplateController = GlobalFilterController,
                 DataContext = this
@@ -606,7 +606,7 @@ namespace WWSearchDataGrid.Modern.WPF
         /// <summary>
         /// Evaluate a filter against an item for per-column filtering
         /// </summary>
-        private bool EvaluateFilter(object item, SearchControl filter)
+        private static bool EvaluateFilter(object item, ColumnSearchBox filter)
         {
             try
             {
@@ -634,9 +634,9 @@ namespace WWSearchDataGrid.Modern.WPF
             }
         }
 
-        private bool EvaluateMultiColumnFilter(object item, System.Collections.Generic.List<SearchControl> activeFilters)
+        private static bool EvaluateMultiColumnFilter(object item, System.Collections.Generic.List<ColumnSearchBox> activeFilters)
         {
-            if (!activeFilters.Any())
+            if (!(activeFilters.Count > 0))
                 return true;
 
             // First filter is always included (no preceding operator)
@@ -682,10 +682,7 @@ namespace WWSearchDataGrid.Modern.WPF
             }
 
             // Clear global filter if applicable
-            if (globalFilterController != null)
-            {
-                globalFilterController.ClearAndReset();
-            }
+            globalFilterController?.ClearAndReset();
 
             // Clear all data transformations
             ClearAllDataTransformations();
@@ -708,8 +705,6 @@ namespace WWSearchDataGrid.Modern.WPF
         {
             if (originalItemsSource != null)
             {
-                System.Diagnostics.Debug.WriteLine($"ForceRestoreOriginalData: Original count = {OriginalItemsCount}, Current ItemsSource count = {Items.Count}");
-                
                 transformedItemsSource = originalItemsSource;
                 
                 var currentFilter = Items.Filter;
@@ -748,7 +743,7 @@ namespace WWSearchDataGrid.Modern.WPF
                     filterData = new
                     {
                         FilterMode = "Global",
-                        SearchGroups = GlobalFilterController.SearchGroups
+                        GlobalFilterController.SearchGroups
                     };
 
                     // Serialize to JSON
@@ -964,9 +959,9 @@ namespace WWSearchDataGrid.Modern.WPF
         {
             try
             {
-                if (e.FilterInfo?.FilterData is SearchControl searchControl)
+                if (e.FilterInfo?.FilterData is ColumnSearchBox columnSearchBox)
                 {
-                    searchControl.ClearFilter();
+                    columnSearchBox.ClearFilter();
                     FilterItemsSource();
                     UpdateFilterPanel();
                 }
@@ -984,8 +979,8 @@ namespace WWSearchDataGrid.Modern.WPF
         {
             try
             {
-                // Create the FilterEditDialog custom control
-                var filterEditDialog = new FilterEditDialog
+                // Create the GroupedRuleFilterEditor custom control
+                var GroupedRuleFilterEditor = new GroupedRuleFilterEditor
                 {
                     SourceDataGrid = this
                 };
@@ -1000,12 +995,12 @@ namespace WWSearchDataGrid.Modern.WPF
                     MinWidth = 700,
                     WindowStartupLocation = WindowStartupLocation.CenterOwner,
                     Owner = Window.GetWindow(this),
-                    Content = filterEditDialog,
+                    Content = GroupedRuleFilterEditor,
                     Background = System.Windows.Media.Brushes.White
                 };
 
                 // Handle dialog closing
-                filterEditDialog.DialogClosing += (s, args) =>
+                GroupedRuleFilterEditor.DialogClosing += (s, args) =>
                 {
                     window.Close();
                     
@@ -1287,37 +1282,37 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
-        /// Determines if a SearchControl represents a transformation filter
+        /// Determines if a ColumnSearchBox represents a transformation filter
         /// </summary>
-        /// <param name="searchControl">The search control to check</param>
+        /// <param name="ColumnSearchBox">The search control to check</param>
         /// <returns>True if it's a transformation filter</returns>
-        private bool IsTransformationFilter(SearchControl searchControl)
+        private static bool IsTransformationFilter(ColumnSearchBox columnSearchBox)
         {
-            if (searchControl?.SearchTemplateController?.SearchGroups == null)
+            if (columnSearchBox?.SearchTemplateController?.SearchGroups == null)
                 return false;
 
             // Check if any search template in any group is a transformation type
-            return searchControl.SearchTemplateController.SearchGroups
+            return columnSearchBox.SearchTemplateController.SearchGroups
                 .SelectMany(g => g.SearchTemplates)
                 .Any(t => DataTransformationEngine.IsTransformationType(t.SearchType));
         }
 
         /// <summary>
-        /// Processes a SearchControl to extract and apply any data transformations
+        /// Processes a ColumnSearchBox to extract and apply any data transformations
         /// </summary>
-        /// <param name="searchControl">The search control to process</param>
-        public void ProcessTransformationFilter(SearchControl searchControl)
+        /// <param name="columnSearchBox">The search control to process</param>
+        public void ProcessTransformationFilter(ColumnSearchBox columnSearchBox)
         {
-            if (searchControl?.SearchTemplateController?.SearchGroups == null || string.IsNullOrEmpty(searchControl.BindingPath))
+            if (columnSearchBox?.SearchTemplateController?.SearchGroups == null || string.IsNullOrEmpty(columnSearchBox.BindingPath))
                 return;
 
-            var columnPath = searchControl.BindingPath;
+            var columnPath = columnSearchBox.BindingPath;
             var hasAnyTransformations = false;
             
             // Process all search groups and build a combined transformation
             var transformationResults = new List<IEnumerable<object>>();
 
-            foreach (var group in searchControl.SearchTemplateController.SearchGroups)
+            foreach (var group in columnSearchBox.SearchTemplateController.SearchGroups)
             {
                 var groupTransformations = new List<DataTransformation>();
                 
@@ -1331,8 +1326,8 @@ namespace WWSearchDataGrid.Modern.WPF
                             transformationType,
                             columnPath,
                             template.SelectedValue,
-                            searchControl.SearchTemplateController.ColumnDataType,
-                            searchControl.CurrentColumn?.Header?.ToString()
+                            columnSearchBox.SearchTemplateController.ColumnDataType,
+                            columnSearchBox.CurrentColumn?.Header?.ToString()
                         );
 
                         if (transformation.IsValid())
@@ -1356,7 +1351,7 @@ namespace WWSearchDataGrid.Modern.WPF
             {
                 // Combine results from all groups (AND logic between groups)
                 var combinedResult = CombineTransformationResults(transformationResults, 
-                    searchControl.SearchTemplateController.SearchGroups.Count > 1);
+                    columnSearchBox.SearchTemplateController.SearchGroups.Count > 1);
                 
                 // Store the combined transformation result for this column
                 SetColumnTransformationResult(columnPath, combinedResult);
@@ -1371,7 +1366,7 @@ namespace WWSearchDataGrid.Modern.WPF
         /// <summary>
         /// Applies transformations within a single search group (OR logic)
         /// </summary>
-        private IEnumerable<object> ApplyGroupTransformations(System.Collections.IEnumerable originalData, 
+        private static IEnumerable<object> ApplyGroupTransformations(System.Collections.IEnumerable originalData, 
             List<DataTransformation> transformations, SearchTemplateGroup group)
         {
             if (transformations.Count == 0)
@@ -1404,7 +1399,7 @@ namespace WWSearchDataGrid.Modern.WPF
         /// <summary>
         /// Combines transformation results from multiple groups
         /// </summary>
-        private IEnumerable<object> CombineTransformationResults(List<IEnumerable<object>> results, bool useAndLogic)
+        private static IEnumerable<object> CombineTransformationResults(List<IEnumerable<object>> results, bool useAndLogic)
         {
             if (results.Count == 0)
                 return Enumerable.Empty<object>();

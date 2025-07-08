@@ -213,8 +213,7 @@ namespace WWSearchDataGrid.Modern.Core
                 {
                     removeValueCommand = new RelayCommand(value =>
                     {
-                        var listValue = value as FilterListValue;
-                        if (listValue != null)
+                        if (value is FilterListValue listValue)
                         {
                             SelectedValues.Remove(listValue);
                         }

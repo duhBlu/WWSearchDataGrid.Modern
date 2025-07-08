@@ -82,9 +82,7 @@
                     <Border Background="#F8F9FA"
                             BorderBrush="#E1E5E9"
                             BorderThickness="0,1,0,0"
-                            Visibility="{Binding HasActiveFilters, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource BooleanToVisibilityConverter}}"
-                            >
-
+                            Visibility="{Binding HasActiveFilters, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource BooleanToVisibilityConverter}}"                          >
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto" />

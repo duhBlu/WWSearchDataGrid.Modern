@@ -188,7 +188,7 @@
                 <sdg:SearchDataGrid.Columns>
                     <!--  Essential Business Context  -->
                     <DataGridTextColumn Width="120"
-                                        sdg:AdvancedFilterControl.GroupByColumn="Region"
+                                        sdg:RuleValueFilterEditor.GroupByColumn="Region"
                                         Header="Customer Name"
                                         Binding="{Binding CustomerName}" />
 
@@ -198,7 +198,7 @@
 
                     <DataGridTextColumn Width="120"
                                         Header="Region"
-                                        sdg:AdvancedFilterControl.DefaultSearchType="StartsWith"
+                                        sdg:RuleValueFilterEditor.DefaultSearchType="StartsWith"
                                         Binding="{Binding Region}" />
 
                     <!--  Boolean Types  -->
@@ -207,7 +207,7 @@
                                             Binding="{Binding BoolValue}" />
                     <DataGridCheckBoxColumn Width="100"
                                             Header="Nullable Bool"
-                                            sdg:AdvancedFilterControl.DefaultSearchType="IsNotNull"
+                                            sdg:RuleValueFilterEditor.DefaultSearchType="IsNotNull"
                                             Binding="{Binding NullableBoolValue}" />
 
                     <!--  Integer Types  -->
@@ -259,7 +259,7 @@
                     <!--  Text Types  -->
                     <DataGridTextColumn Width="100"
                                         Header="String Value"
-                                        sdg:AdvancedFilterControl.DefaultSearchType="EndsWith"
+                                        sdg:RuleValueFilterEditor.DefaultSearchType="EndsWith"
                                         Binding="{Binding StringValue}" />
                     <DataGridTextColumn Width="60"
                                         Header="Char"
@@ -271,7 +271,7 @@
                     <!--  Date and Time Types with Precision  -->
                     <DataGridTextColumn Width="140"
                                         Header="DateTime"
-                                        sdg:AdvancedFilterControl.DefaultSearchType="Today"
+                                        sdg:RuleValueFilterEditor.DefaultSearchType="Today"
                                         Binding="{Binding DateTimeValue, StringFormat=g}" />
                     <DataGridTextColumn Width="150"
                                         Header="Nullable DateTime"

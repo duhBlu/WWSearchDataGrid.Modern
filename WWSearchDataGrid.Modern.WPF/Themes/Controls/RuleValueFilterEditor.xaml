@@ -135,7 +135,7 @@
         </Setter>
     </Style>
 
-    <!--  AdvancedFilterControl-specific Search Group Content Template  -->
+    <!--  RuleValueFilterEditor-specific Search Group Content Template  -->
     <DataTemplate x:Key="AdvancedFilterSearchGroupContentTemplate" DataType="{x:Type sdgCore:SearchTemplateGroup}">
         <ItemsControl ItemsSource="{Binding SearchTemplates}"
                       VirtualizingPanel.IsVirtualizing="True"
@@ -207,10 +207,10 @@
                                         </ComboBox.ItemTemplate>
                                     </ComboBox>
 
-                                    <!--  AdvancedFilterControl specific buttons  -->
+                                    <!--  RuleValueFilterEditor specific buttons  -->
                                     <StackPanel Grid.Column="4" Orientation="Horizontal">
                                         <Button Style="{StaticResource TransparentFontIcon_Button_Style}"
-                                                Command="{Binding RemoveSearchTemplateCommand, RelativeSource={RelativeSource AncestorType=sdg:AdvancedFilterControl}}"
+                                                Command="{Binding RemoveSearchTemplateCommand, RelativeSource={RelativeSource AncestorType=sdg:RuleValueFilterEditor}}"
                                                 CommandParameter="{Binding}"
                                                 Margin="0,0,4,0"
                                                 Padding="4"
@@ -219,7 +219,7 @@
                                                 FontFamily="Segoe MDL2 Assets"
                                                 Content="&#xE10A;" />
                                         <Button Style="{StaticResource TransparentFontIcon_Button_Style}"
-                                                Command="{Binding AddSearchTemplateCommand, RelativeSource={RelativeSource AncestorType=sdg:AdvancedFilterControl}}"
+                                                Command="{Binding AddSearchTemplateCommand, RelativeSource={RelativeSource AncestorType=sdg:RuleValueFilterEditor}}"
                                                 CommandParameter="{Binding}"
                                                 Padding="4"
                                                 Height="{Binding ActualWidth, RelativeSource={RelativeSource Self}}"
@@ -276,11 +276,11 @@
         </ItemsControl>
     </DataTemplate>
 
-    <!--  AdvancedFilterControl Style  -->
-    <Style x:Key="Default_AdvancedFilterControl_Style" TargetType="{x:Type sdg:AdvancedFilterControl}">
+    <!--  RuleValueFilterEditor Style  -->
+    <Style x:Key="Default_RuleValueFilterEditor_Style" TargetType="{x:Type sdg:RuleValueFilterEditor}">
         <Setter Property="Template">
             <Setter.Value>
-                <ControlTemplate TargetType="{x:Type sdg:AdvancedFilterControl}">
+                <ControlTemplate TargetType="{x:Type sdg:RuleValueFilterEditor}">
                     <Border Background="{TemplateBinding Background}"
                             BorderBrush="{TemplateBinding BorderBrush}"
                             BorderThickness="{TemplateBinding BorderThickness}">
@@ -394,6 +394,6 @@
         <Setter Property="SnapsToDevicePixels" Value="True" />
     </Style>
 
-    <Style BasedOn="{StaticResource Default_AdvancedFilterControl_Style}" TargetType="{x:Type sdg:AdvancedFilterControl}" />
+    <Style BasedOn="{StaticResource Default_RuleValueFilterEditor_Style}" TargetType="{x:Type sdg:RuleValueFilterEditor}" />
 
 </ResourceDictionary>
