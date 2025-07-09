@@ -15,7 +15,7 @@ namespace WWSearchDataGrid.Modern.Core
         private string displayText;
         private bool isActive;
         private object filterData;
-        private string conjunction;
+        private string logicalOperator;
         private string searchTypeText;
         private string primaryValue;
         private string secondaryValue;
@@ -70,12 +70,12 @@ namespace WWSearchDataGrid.Modern.Core
         }
 
         /// <summary>
-        /// Gets or sets the conjunction to be displayed before this filter (e.g., "AND", "OR")
+        /// Gets or sets the operator to be displayed before this filter (e.g., "AND", "OR")
         /// </summary>
-        public string Conjunction
+        public string Operator
         {
-            get => conjunction;
-            set => SetProperty(value, ref conjunction);
+            get => logicalOperator;
+            set => SetProperty(value, ref logicalOperator);
         }
 
         /// <summary>

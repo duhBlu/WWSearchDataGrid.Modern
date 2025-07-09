@@ -824,26 +824,26 @@ namespace WWSearchDataGrid.Modern.WPF
         /// Gets the active column filters for the filter panel
         /// </summary>
         /// <returns>Collection of active filter information</returns>
-        public System.Collections.Generic.IEnumerable<ColumnFilterInfo> GetActiveColumnFilters()
+        public IEnumerable<ColumnFilterInfo> GetActiveColumnFilters()
         {
-            var activeFilters = new System.Collections.Generic.List<ColumnFilterInfo>();
+            var activeFilters = new List<ColumnFilterInfo>();
             bool isFirstFilter = true;
 
             foreach (var column in DataColumns.Where(c => c.HasActiveFilter))
             {
-                // Extract the actual conjunction from the SearchTemplateController
-                string conjunction = string.Empty;
+                // Extract the actual operator from the SearchTemplateController
+                string logicalOperator = string.Empty;
                 if (!isFirstFilter)
                 {
-                    // Use the first SearchTemplateGroup's OperatorName as the conjunction for this column
+                    // Use the first SearchTemplateGroup's OperatorName as the operator for this column
                     if (column.SearchTemplateController?.SearchGroups?.Count > 0)
                     {
-                        conjunction = column.SearchTemplateController.SearchGroups[0].OperatorName?.ToUpper() ?? "AND";
+                        logicalOperator = column.SearchTemplateController.SearchGroups[0].OperatorName?.ToUpper() ?? "AND";
                     }
                     else
                     {
                         // Default to "AND" if no groups exist
-                        conjunction = "AND";
+                        logicalOperator = "AND";
                     }
                 }
 
@@ -853,7 +853,7 @@ namespace WWSearchDataGrid.Modern.WPF
                     BindingPath = column.BindingPath,
                     IsActive = true,
                     FilterData = column,
-                    Conjunction = conjunction
+                    Operator = logicalOperator
                 };
 
                 // Determine filter type and display text

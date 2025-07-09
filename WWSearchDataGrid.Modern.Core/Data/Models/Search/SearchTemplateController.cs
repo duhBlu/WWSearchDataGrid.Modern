@@ -577,7 +577,7 @@ namespace WWSearchDataGrid.Modern.Core
         }
 
         /// <summary>
-        /// Gets all filter components for display, including multiple search conditions with conjunctions
+        /// Gets all filter components for display, including multiple search conditions with operators
         /// </summary>
         /// <returns>Collection of all filter components</returns>
         public List<FilterChipComponents> GetAllFilterComponents()
@@ -611,15 +611,15 @@ namespace WWSearchDataGrid.Modern.Core
                     {
                         var component = GetTemplateComponents(template);
                         
-                        // Set conjunction for templates within the group
+                        // Set operators for templates within the group
                         if (!isFirstTemplateInGroup)
                         {
-                            component.Conjunction = template.OperatorName?.ToUpper() ?? "AND";
+                            component.Operator = template.OperatorName?.ToUpper() ?? "And";
                         }
                         else if (!isFirstComponent)
                         {
                             // First template in a group gets the group's operator
-                            component.Conjunction = group.OperatorName?.ToUpper() ?? "AND";
+                            component.Operator = group.OperatorName?.ToUpper() ?? "And";
                         }
 
                         components.Add(component);
@@ -727,7 +727,7 @@ namespace WWSearchDataGrid.Modern.Core
 
                             for (int i = 1; i < templateTexts.Count; i++)
                             {
-                                var operatorName = templateTexts[i].template.OperatorName?.ToUpper() ?? "AND";
+                                var operatorName = templateTexts[i].template.OperatorName?.ToUpper() ?? "And";
                                 combinedText.Append($" {operatorName} ");
                                 combinedText.Append(templateTexts[i].text);
                             }

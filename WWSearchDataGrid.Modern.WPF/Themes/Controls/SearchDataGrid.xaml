@@ -215,7 +215,8 @@
                             <ScrollViewer x:Name="DG_ScrollViewer"
                                           Grid.Row="0"
                                           Focusable="false"
-                                          CanContentScroll="true">
+                                          CanContentScroll="true"
+                                          sdg:HorizontalScrollBehavior.EnableShiftMouseWheelScroll="True">
                                 <ScrollViewer.Template>
                                     <ControlTemplate TargetType="ScrollViewer">
                                         <Grid>

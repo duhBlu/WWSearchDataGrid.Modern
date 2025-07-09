@@ -46,9 +46,13 @@ namespace WWSearchDataGrid.Modern.Core
             get { return operatorName; }
             set
             {
-                if (SetProperty(value, ref operatorName))
+                // Normalize to title case (e.g., "OR" -> "Or", "and" -> "And")
+                var normalizedValue = string.IsNullOrEmpty(value) ? value : 
+                    char.ToUpper(value[0]) + (value.Length > 1 ? value.Substring(1).ToLower() : string.Empty);
+                
+                if (SetProperty(normalizedValue, ref operatorName))
                 {
-                    if(value.ToLower() == "and")
+                    if(normalizedValue?.ToLower() == "and")
                     {
                         OperatorFunction = Expression.And;
                     }

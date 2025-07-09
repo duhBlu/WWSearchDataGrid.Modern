@@ -130,7 +130,7 @@ namespace WWSearchDataGrid.Modern.Core
                         {
                             SearchTypeText = "=",
                             PrimaryValue = groupCondition.IncludedValues.First()?.ToString() ?? "(blank)",
-                            Conjunction = "AND"
+                            Operator = "And"
                         };
                         chips.Add(valueChip);
                     }
@@ -141,7 +141,7 @@ namespace WWSearchDataGrid.Modern.Core
                         {
                             SearchTypeText = "Is any of",
                             PrimaryValue = $"[{string.Join(", ", groupCondition.IncludedValues.Select(v => $"'{v}'"))}]",
-                            Conjunction = "AND"
+                            Operator = "And"
                         };
                         valueChip.ParsePrimaryValueAsMultipleValues();
                         chips.Add(valueChip);
@@ -156,7 +156,7 @@ namespace WWSearchDataGrid.Modern.Core
                         {
                             SearchTypeText = "≠",
                             PrimaryValue = groupCondition.ExcludedValues.First()?.ToString() ?? "(blank)",
-                            Conjunction = "AND"
+                            Operator = "And"
                         };
                         chips.Add(valueChip);
                     }
@@ -167,7 +167,7 @@ namespace WWSearchDataGrid.Modern.Core
                         {
                             SearchTypeText = "Is none of",
                             PrimaryValue = $"[{string.Join(", ", groupCondition.ExcludedValues.Select(v => $"'{v}'"))}]",
-                            Conjunction = "AND"
+                            Operator = "And"
                         };
                         valueChip.ParsePrimaryValueAsMultipleValues();
                         chips.Add(valueChip);
@@ -175,10 +175,10 @@ namespace WWSearchDataGrid.Modern.Core
                 }
             }
 
-            // Handle multiple groups with OR conjunction
+            // Handle multiple groups with OR Operator
             if (analysis.GroupConditions.Count > 1)
             {
-                // Set OR conjunction for subsequent groups
+                // Set OR Operator for subsequent groups
                 bool isFirstGroup = true;
                 int chipIndex = 0;
                 
@@ -186,7 +186,7 @@ namespace WWSearchDataGrid.Modern.Core
                 {
                     if (!isFirstGroup && chipIndex < chips.Count)
                     {
-                        chips[chipIndex].Conjunction = "OR";
+                        chips[chipIndex].Operator = "OR";
                     }
                     
                     // Skip over chips for this group (group chip + value chips)

@@ -594,7 +594,7 @@ namespace WWSearchDataGrid.Modern.WPF
                 // If this is not the first template, set OR operator
                 if (existingContainsTemplates.Any())
                 {
-                    newTemplate.OperatorName = "OR";
+                    newTemplate.OperatorName = "Or";
                 }
                 
                 firstGroup.SearchTemplates.Add(newTemplate);
@@ -751,7 +751,7 @@ namespace WWSearchDataGrid.Modern.WPF
                         // If this is not the first template, set OR operator
                         if (existingContainsTemplates.Any())
                         {
-                            _temporarySearchTemplate.OperatorName = "OR";
+                            _temporarySearchTemplate.OperatorName = "Or";
                         }
                         
                         firstGroup.SearchTemplates.Add(_temporarySearchTemplate);

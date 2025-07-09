@@ -185,7 +185,7 @@ namespace WWSearchDataGrid.Modern.Core
             {
                 components.PrimaryValue = matches[0].Groups[1].Value;
                 components.SecondaryValue = matches[1].Groups[1].Value;
-                components.ValueOperatorText = "and";
+                components.ValueOperatorText = "And";
             }
         }
 
@@ -200,7 +200,7 @@ namespace WWSearchDataGrid.Modern.Core
             {
                 components.PrimaryValue = matches[0].Groups[1].Value;
                 components.SecondaryValue = matches[1].Groups[1].Value;
-                components.ValueOperatorText = "and";
+                components.ValueOperatorText = "And";
             }
         }
 
@@ -284,9 +284,9 @@ namespace WWSearchDataGrid.Modern.Core
         public bool HasNoInputValues { get; set; }
 
         /// <summary>
-        /// Gets or sets the conjunction text for this component (e.g., "AND", "OR")
+        /// Gets or sets the operator text for this component (e.g., "AND", "OR")
         /// </summary>
-        public string Conjunction { get; set; }
+        public string Operator { get; set; }
 
         /// <summary>
         /// Gets or sets the collection of individual values for multi-value filters
