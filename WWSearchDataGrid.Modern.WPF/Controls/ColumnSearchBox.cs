@@ -164,7 +164,7 @@ namespace WWSearchDataGrid.Modern.WPF
             Unloaded += OnControlUnloaded;
             
             // Make the control non-focusable so focus goes directly to child elements
-            Focusable = false;
+            //Focusable = false;
             
             // Handle container-level focus events
             LostFocus += OnColumnSearchBoxLostFocus;
@@ -365,10 +365,10 @@ namespace WWSearchDataGrid.Modern.WPF
         {
             if (d is ColumnSearchBox control && !control.isAdvancedFilterOpen)
             {
-                // If text is empty, clear the filter immediately
+                // If text is empty, clear only the temporary template
                 if (string.IsNullOrWhiteSpace((string)e.NewValue))
                 {
-                    //control.ClearFilterInternal();
+                    control.ClearTemporaryTemplate();
                 }
                 else
                 {
@@ -403,16 +403,21 @@ namespace WWSearchDataGrid.Modern.WPF
                     ClearSearchTextOnly();
                 }
             }
+            else if (e.Key == Key.Tab && (Keyboard.Modifiers & ModifierKeys.Shift) == ModifierKeys.Shift)
+            {
+                e.Handled = true;                         // stop DataGrid from stealing it
+                var req = new TraversalRequest(FocusNavigationDirection.Previous);
+                // move focus *from* the ColumnSearchBox to its previous peer
+                (this as UIElement).MoveFocus(req);
+            }
         }
-
-
 
         private void OnAdvancedFilterButtonClick(object sender, RoutedEventArgs e) => ShowInAdvancedFilterWindow();
 
         private void OnColumnSearchBoxGotFocus(object sender, RoutedEventArgs e)
         {
             // Redirect focus to the textbox when the container gets focus
-            if (searchTextBox != null && !searchTextBox.IsFocused)
+            if (e.OriginalSource == this && searchTextBox != null && !searchTextBox.IsFocused)
             {
                 searchTextBox.Focus();
                 e.Handled = true;
@@ -662,6 +667,41 @@ namespace WWSearchDataGrid.Modern.WPF
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Error in ClearSearchTextAndTemporaryFilter: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Clears only the temporary template when search text becomes empty
+        /// This is used when user manually backspaces all text
+        /// </summary>
+        private void ClearTemporaryTemplate()
+        {
+            try
+            {
+                // Stop the timer if it's running
+                _changeTimer?.Stop();
+
+                // Remove only the temporary template if it exists
+                if (_temporarySearchTemplate != null && SearchTemplateController?.SearchGroups?.Count > 0)
+                {
+                    var firstGroup = SearchTemplateController.SearchGroups[0];
+                    firstGroup.SearchTemplates.Remove(_temporarySearchTemplate);
+                    _temporarySearchTemplate = null;
+                    
+                    // Update the filter expression and apply to grid
+                    SearchTemplateController.UpdateFilterExpression();
+                    SourceDataGrid?.FilterItemsSource();
+                    
+                    // Update HasAdvancedFilter state
+                    HasAdvancedFilter = SearchTemplateController?.HasCustomExpression ?? false;
+                    
+                    // Update filter panel
+                    SourceDataGrid?.UpdateFilterPanel();
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error in ClearTemporaryTemplate: {ex.Message}");
             }
         }
 
