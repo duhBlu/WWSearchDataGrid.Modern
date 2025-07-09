@@ -248,7 +248,7 @@ namespace WWSearchDataGrid.Modern.Core
             {
                 SearchGroups.Add(newGroup);
             }
-            
+
             AddSearchTemplate(markAsChanged, null, newGroup);
 
             if (SearchGroups.Count > 0)

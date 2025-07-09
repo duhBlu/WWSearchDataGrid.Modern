@@ -857,8 +857,32 @@ namespace WWSearchDataGrid.Modern.WPF
                 };
 
                 // Determine filter type and display text
-                if (!string.IsNullOrWhiteSpace(column.SearchText))
+                // PRIORITY: Always check SearchTemplateController first (handles incremental Contains filters)
+                if (column.SearchTemplateController?.HasCustomExpression == true)
                 {
+                    filterInfo.DisplayText = column.SearchTemplateController.GetFilterDisplayText();
+                    
+                    // Get structured components from SearchTemplateController
+                    var components = column.SearchTemplateController.GetFilterComponents();
+                    filterInfo.SearchTypeText = components.SearchTypeText;
+                    filterInfo.PrimaryValue = components.PrimaryValue;
+                    filterInfo.SecondaryValue = components.SecondaryValue;
+                    filterInfo.ValueOperatorText = components.ValueOperatorText;
+                    filterInfo.IsDateInterval = components.IsDateInterval;
+                    filterInfo.HasNoInputValues = components.HasNoInputValues;
+                    
+                    // Get all components for complex filters (including multiple Contains templates)
+                    var allComponents = column.SearchTemplateController.GetAllFilterComponents();
+                    filterInfo.FilterComponents.Clear();
+                    foreach (var component in allComponents)
+                    {
+                        filterInfo.FilterComponents.Add(component);
+                    }
+                }
+                else if (!string.IsNullOrWhiteSpace(column.SearchText))
+                {
+                    // Fallback: Only use SearchText if no SearchTemplateController data exists
+                    // This handles the case where user is typing but hasn't confirmed any filters yet
                     filterInfo.DisplayText = $"Contains '{column.SearchText}'";
                     
                     // Set component properties for simple filters
@@ -877,27 +901,6 @@ namespace WWSearchDataGrid.Modern.WPF
                     };
                     simpleComponent.ParsePrimaryValueAsMultipleValues();
                     filterInfo.FilterComponents.Add(simpleComponent);
-                }
-                else if (column.SearchTemplateController?.HasCustomExpression == true)
-                {
-                    filterInfo.DisplayText = column.SearchTemplateController.GetFilterDisplayText();
-                    
-                    // Get structured components from SearchTemplateController
-                    var components = column.SearchTemplateController.GetFilterComponents();
-                    filterInfo.SearchTypeText = components.SearchTypeText;
-                    filterInfo.PrimaryValue = components.PrimaryValue;
-                    filterInfo.SecondaryValue = components.SecondaryValue;
-                    filterInfo.ValueOperatorText = components.ValueOperatorText;
-                    filterInfo.IsDateInterval = components.IsDateInterval;
-                    filterInfo.HasNoInputValues = components.HasNoInputValues;
-                    
-                    // Get all components for complex filters
-                    var allComponents = column.SearchTemplateController.GetAllFilterComponents();
-                    filterInfo.FilterComponents.Clear();
-                    foreach (var component in allComponents)
-                    {
-                        filterInfo.FilterComponents.Add(component);
-                    }
                 }
 
                 activeFilters.Add(filterInfo);

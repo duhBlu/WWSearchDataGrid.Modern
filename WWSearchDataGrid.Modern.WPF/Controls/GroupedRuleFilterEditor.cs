@@ -469,17 +469,9 @@ namespace WWSearchDataGrid.Modern.WPF
                 // Now check if we have advanced filters (custom expressions) - this will be accurate
                 bool hasAdvancedFilter = controller.HasCustomExpression;
 
-                if (hasAdvancedFilter)
-                {
-                    // Clear the search text when advanced filters are applied
-                    columnSearchBox.SearchText = string.Empty;
-                    columnSearchBox.HasAdvancedFilter = true;
-                }
-                else
-                {
-                    // No advanced filters - allow normal text filtering
-                    columnSearchBox.HasAdvancedFilter = false;
-                }
+                // Set HasAdvancedFilter state but don't clear search text
+                // This allows incremental search to work alongside advanced filters
+                columnSearchBox.HasAdvancedFilter = hasAdvancedFilter;
             }
             catch (Exception ex)
             {

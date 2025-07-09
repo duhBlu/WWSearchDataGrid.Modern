@@ -23,29 +23,19 @@
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
 
-                            <Grid Grid.Column="0">
-                                <TextBox x:Name="PART_SearchTextBox"
-                                         Background="Transparent"
-                                         BorderThickness="0"
-                                         Text="{Binding SearchText, RelativeSource={RelativeSource TemplatedParent}, UpdateSourceTrigger=PropertyChanged}"
-                                         IsReadOnly="{Binding HasAdvancedFilter, RelativeSource={RelativeSource AncestorType={x:Type sdg:ColumnSearchBox}}}"
-                                         Padding="6,2"
-                                         VerticalAlignment="Center"
-                                         VerticalContentAlignment="Center"
-                                         Height="28"
-                                         FontSize="12"
-                                         FontFamily="Segoe UI" />
+                            <TextBox x:Name="PART_SearchTextBox"
+                                        Background="Transparent"
+                                        Grid.Column="0"
+                                        BorderThickness="0"
+                                        Text="{Binding SearchText, RelativeSource={RelativeSource TemplatedParent}, UpdateSourceTrigger=PropertyChanged}"
+                                        Padding="6,2"
+                                        VerticalAlignment="Center"
+                                        VerticalContentAlignment="Center"
+                                        TabIndex="0"
+                                        Height="28"
+                                        FontSize="12"
+                                        FontFamily="Segoe UI" />
 
-                                <TextBlock Foreground="DarkSlateGray"
-                                           Text="Advanced Filter"
-                                           Visibility="{Binding HasAdvancedFilter, RelativeSource={RelativeSource AncestorType={x:Type sdg:ColumnSearchBox}}, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                           IsHitTestVisible="False"
-                                           Margin="6,2"
-                                           VerticalAlignment="Center"
-                                           FontSize="12"
-                                           FontFamily="Segoe UI"
-                                           FontWeight="SemiBold" />
-                            </Grid>
 
                             <Button Grid.Column="1"
                                     Visibility="{Binding SearchText.Length, RelativeSource={RelativeSource AncestorType={x:Type sdg:ColumnSearchBox}}, Converter={StaticResource IntToVisibilityConverter}}"
@@ -53,6 +43,9 @@
                                     Command="{Binding ClearSearchTextCommand, RelativeSource={RelativeSource AncestorType=sdg:ColumnSearchBox}}"
                                     Margin="2,1,5,1"
                                     Padding="4"
+                                    Focusable="true"
+                                    TabIndex="1"
+                                    KeyboardNavigation.IsTabStop="True"
                                     VerticalAlignment="Center"
                                     ToolTip="Clear filter"
                                     FontFamily="Segoe MDL2 Assets"
@@ -107,6 +100,8 @@
                                     Grid.Column="2"
                                     Cursor="Hand"
                                     Margin="2,1,5,1"
+                                    TabIndex="2"
+                                    KeyboardNavigation.IsTabStop="True"
                                     Padding="4"
                                     VerticalAlignment="Center"
                                     ToolTip="Advanced Filter"

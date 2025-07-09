@@ -48,7 +48,7 @@ namespace WWSearchDataGrid.Modern.Core
             {
                 if (SetProperty(value, ref operatorName))
                 {
-                    if(value == "And")
+                    if(value.ToLower() == "and")
                     {
                         OperatorFunction = Expression.And;
                     }
@@ -119,13 +119,12 @@ namespace WWSearchDataGrid.Modern.Core
             {
                 var hasSelectedValue = SelectedValue != null;
                 var hasSelectedSecondaryValue = SelectedSecondaryValue != null;
-                var isNonDefaultSearchType = SearchType != SearchType.Contains;
                 var hasSelectedValues = (SearchType == SearchType.IsAnyOf && SelectedValues.Any()) ||
                                       (SearchType == SearchType.IsNoneOf && SelectedValues.Any());
                 var hasSelectedDates = SearchType == SearchType.IsOnAnyOfDates && SelectedDates.Any();
                 var hasSelectedDateIntervals = SearchType == SearchType.DateInterval && DateIntervals.Any(i => i.IsSelected);
                 
-                var result = hasSelectedValue || hasSelectedSecondaryValue || isNonDefaultSearchType || 
+                var result = hasSelectedValue || hasSelectedSecondaryValue || 
                            hasSelectedValues || hasSelectedDates || hasSelectedDateIntervals;
                 
                 return result;
