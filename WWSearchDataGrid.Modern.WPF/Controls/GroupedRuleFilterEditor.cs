@@ -301,6 +301,7 @@ namespace WWSearchDataGrid.Modern.WPF
                     ColumnValues = original.ColumnValues,
                     ColumnValuesByPath = original.ColumnValuesByPath,
                     PropertyValues = original.PropertyValues,
+                    DefaultSearchType = original.DefaultSearchType,
                 };
 
                 // Clone search groups
