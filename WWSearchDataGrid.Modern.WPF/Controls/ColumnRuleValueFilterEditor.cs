@@ -518,6 +518,13 @@ namespace WWSearchDataGrid.Modern.WPF
                     SearchTemplateController.ColumnValues = new HashSet<object>(metadata.Values);
                     SearchTemplateController.ColumnDataType = metadata.DataType;
 
+                    // Connect SearchTemplateController to unified cache system
+                    SearchTemplateController.ConnectToCache(_columnKey, _cache);
+                    
+                    // Register WPF-specific providers for thread-safe UI updates
+                    SearchTemplateController.RegisterProvidersWithCache(_columnKey, _cache, 
+                        collection => new Services.SearchTemplateItemsSourceProvider(collection));
+
                     // Create and set up the FilterValueViewModel first
                     await SetupFilterValueViewModel(columnSearchBox, items, metadata);
                 }
@@ -694,7 +701,18 @@ namespace WWSearchDataGrid.Modern.WPF
                                 OperatorName = oldTemplate.OperatorName,
                                 IsOperatorVisible = oldTemplate.IsOperatorVisible
                             };
-                            newTemplate.LoadAvailableValues(oldTemplate.AvailableValues);
+                            // Connect to cache if available, otherwise use traditional method
+                            if (SearchTemplateController != null && SearchTemplateController.ColumnValues.Any())
+                            {
+                                // Connect to shared cache source
+                                newTemplate.ConnectToSharedSource(_columnKey, _cache);
+                            }
+                            else
+                            {
+                                // Fallback: Convert ObservableCollection to HashSet for LoadAvailableValues
+                                var availableValuesHashSet = new HashSet<object>(oldTemplate.AvailableValues);
+                                newTemplate.LoadAvailableValues(availableValuesHashSet);
+                            }
                             group.SearchTemplates[i] = newTemplate;
                         }
                     }

@@ -55,10 +55,10 @@ namespace WWSearchDataGrid.Modern.Core
 
                 // Dual ComboBox filters
                 [SearchType.Between] = new SearchTypeMetadata(SearchType.Between, "Is between",
-                    FilterInputTemplate.DualComboBox, ColumnDataType.Number, ColumnDataType.String),
+                    FilterInputTemplate.DualComboBox, ColumnDataType.Number),
 
                 [SearchType.NotBetween] = new SearchTypeMetadata(SearchType.NotBetween, "Is not between",
-                    FilterInputTemplate.DualComboBox, ColumnDataType.Number, ColumnDataType.String),
+                    FilterInputTemplate.DualComboBox, ColumnDataType.Number),
 
                 // Dual DateTime filters
                 [SearchType.BetweenDates] = new SearchTypeMetadata(SearchType.BetweenDates, "Is between dates",

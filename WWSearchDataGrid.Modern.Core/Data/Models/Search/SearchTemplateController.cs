@@ -27,6 +27,11 @@ namespace WWSearchDataGrid.Modern.Core
 
         private SearchType? defaultSearchType;
 
+        // Cache connection tracking
+        private string _connectedColumnKey;
+        private Performance.ColumnValueCache _connectedCache;
+        private bool _providersRegistered;
+
         #endregion
 
         #region Properties
@@ -279,13 +284,27 @@ namespace WWSearchDataGrid.Modern.Core
             }
 
             // Create new SearchTemplate with column data type
-            var newTemplate = new SearchTemplate(ColumnValues, ColumnDataType)
+            var newTemplate = new SearchTemplate(ColumnDataType)
             {
                 HasChanges = markAsChanged
             };
 
             // Apply default search type if provided and compatible
             ApplyDefaultSearchType(newTemplate, defaultSearchType);
+
+            // Connect to cache if available
+            if (_connectedCache != null && !string.IsNullOrEmpty(_connectedColumnKey))
+            {
+                newTemplate.ConnectToSharedSource(_connectedColumnKey, _connectedCache);
+                
+                // Note: Provider registration will be handled by the WPF layer
+                // We cannot register here because we don't have access to the WPF dispatcher
+            }
+            else if (ColumnValues != null && ColumnValues.Any())
+            {
+                // Fallback to traditional method if cache not connected
+                newTemplate.LoadAvailableValues(ColumnValues);
+            }
 
             // Add the template at the appropriate position
             if (referenceTemplate == null)
@@ -1311,6 +1330,72 @@ namespace WWSearchDataGrid.Modern.Core
                     template.SearchType = searchTypeToApply.Value;
                 }
             }
+        }
+
+        /// <summary>
+        /// Connects all SearchTemplates in this controller to use shared cache sources
+        /// </summary>
+        public void ConnectToCache(string columnKey, Performance.ColumnValueCache cache)
+        {
+            if (cache == null || string.IsNullOrEmpty(columnKey))
+                return;
+
+            // Reset registration flag if connecting to a different cache or column
+            if (_connectedColumnKey != columnKey || _connectedCache != cache)
+            {
+                _providersRegistered = false;
+            }
+
+            // Store connection parameters for new templates
+            _connectedColumnKey = columnKey;
+            _connectedCache = cache;
+
+            // Connect all existing templates to the shared source
+            foreach (var group in SearchGroups)
+            {
+                foreach (var template in group.SearchTemplates.OfType<SearchTemplate>())
+                {
+                    template.ConnectToSharedSource(columnKey, cache);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Registers providers for all SearchTemplates with proper WPF dispatcher handling
+        /// This method should be called from the WPF layer after ConnectToCache
+        /// </summary>
+        public void RegisterProvidersWithCache(string columnKey, Performance.ColumnValueCache cache, Func<System.Collections.ObjectModel.ObservableCollection<object>, Performance.ISharedItemsSourceProvider> providerFactory)
+        {
+            if (cache == null || string.IsNullOrEmpty(columnKey) || providerFactory == null)
+                return;
+
+            // Avoid duplicate registrations
+            if (_providersRegistered && _connectedColumnKey == columnKey && _connectedCache == cache)
+                return;
+
+            foreach (var group in SearchGroups)
+            {
+                foreach (var template in group.SearchTemplates.OfType<SearchTemplate>())
+                {
+                    var provider = providerFactory(template.AvailableValues);
+                    cache.RegisterSharedItemsSourceProvider(columnKey, provider);
+                }
+            }
+
+            _providersRegistered = true;
+        }
+
+        /// <summary>
+        /// Registers a provider for a single SearchTemplate - used when new templates are added after initial connection
+        /// This method should be called from the WPF layer
+        /// </summary>
+        public void RegisterSingleTemplateProvider(SearchTemplate template, string columnKey, Performance.ColumnValueCache cache, Func<System.Collections.ObjectModel.ObservableCollection<object>, Performance.ISharedItemsSourceProvider> providerFactory)
+        {
+            if (template == null || cache == null || string.IsNullOrEmpty(columnKey) || providerFactory == null)
+                return;
+
+            var provider = providerFactory(template.AvailableValues);
+            cache.RegisterSharedItemsSourceProvider(columnKey, provider);
         }
 
         #endregion

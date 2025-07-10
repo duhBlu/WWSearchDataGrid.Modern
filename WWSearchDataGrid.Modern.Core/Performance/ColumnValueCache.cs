@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Timers;
 
 namespace WWSearchDataGrid.Modern.Core.Performance
 {
@@ -31,6 +32,21 @@ namespace WWSearchDataGrid.Modern.Core.Performance
         private readonly ConcurrentDictionary<string, FilterValueViewModel> _filterViewModelCache =
             new ConcurrentDictionary<string, FilterValueViewModel>();
 
+        private readonly ConcurrentDictionary<string, List<ISharedItemsSourceProvider>> _sharedItemsSourceProviders =
+            new ConcurrentDictionary<string, List<ISharedItemsSourceProvider>>();
+
+        private readonly ConcurrentDictionary<string, BulkOperationTracker> _bulkOperationTrackers =
+            new ConcurrentDictionary<string, BulkOperationTracker>();
+
+        #endregion
+
+        #region Events
+
+        /// <summary>
+        /// Raised when a shared ItemsSource is updated
+        /// </summary>
+        public event EventHandler<SharedItemsSourceChangedEventArgs> SharedItemsSourceChanged;
+
         #endregion
 
         #region Public Methods
@@ -49,6 +65,46 @@ namespace WWSearchDataGrid.Modern.Core.Performance
                 ValueCounts = new NullSafeDictionary<object, int>(),
                 LastUpdated = DateTime.MinValue
             });
+        }
+
+        /// <summary>
+        /// Registers a shared items source provider for a column
+        /// </summary>
+        public void RegisterSharedItemsSourceProvider(string columnKey, ISharedItemsSourceProvider provider)
+        {
+            if (provider == null || string.IsNullOrEmpty(columnKey))
+                return;
+
+            var providers = _sharedItemsSourceProviders.GetOrAdd(columnKey, _ => new List<ISharedItemsSourceProvider>());
+            
+            lock (providers)
+            {
+                providers.Add(provider);
+            }
+            
+            // If metadata already exists, populate the provider immediately
+            if (_columnMetadata.TryGetValue(columnKey, out var metadata))
+            {
+                lock (metadata.SyncRoot)
+                {
+                    provider.UpdateItems(metadata.SortedValues);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Gets the current values for a column for immediate synchronization
+        /// </summary>
+        public List<object> GetCurrentValues(string columnKey)
+        {
+            if (_columnMetadata.TryGetValue(columnKey, out var metadata))
+            {
+                lock (metadata.SyncRoot)
+                {
+                    return metadata.SortedValues.ToList();
+                }
+            }
+            return new List<object>();
         }
 
         /// <summary>
@@ -93,6 +149,9 @@ namespace WWSearchDataGrid.Modern.Core.Performance
 
                 // Invalidate related view models
                 InvalidateFilterViewModels(columnKey);
+                
+                // Update shared ItemsSource
+                UpdateSharedItemsSourceProvider(columnKey, metadata);
             });
         }
 
@@ -102,6 +161,27 @@ namespace WWSearchDataGrid.Modern.Core.Performance
         public async Task UpdateColumnValuesIncrementalAsync(string columnKey, NotifyCollectionChangedEventArgs e, string bindingPath)
         {
             var metadata = GetOrCreateMetadata(columnKey, bindingPath);
+
+            // Check for bulk operations
+            if (DetectBulkOperation(columnKey, e))
+            {
+                var tracker = _bulkOperationTrackers.GetOrAdd(columnKey, _ => new BulkOperationTracker());
+                tracker.IsBulkOperation = true;
+                
+                // Start or reset the batch timer
+                if (tracker.BatchTimer == null)
+                {
+                    tracker.BatchTimer = new Timer(200); // 200ms delay
+                    tracker.BatchTimer.Elapsed += (s, args) => HandleBulkOperationEnd(columnKey);
+                    tracker.BatchTimer.AutoReset = false;
+                }
+                
+                tracker.BatchTimer.Stop();
+                tracker.BatchTimer.Start();
+                
+                // Don't process individual updates during bulk operations
+                return;
+            }
 
             await Task.Run(() =>
             {
@@ -157,6 +237,9 @@ namespace WWSearchDataGrid.Modern.Core.Performance
 
             // Notify any listening filter view models
             InvalidateFilterViewModels(columnKey);
+            
+            // Update shared ItemsSource incrementally
+            UpdateSharedItemsSourceProviderIncremental(columnKey, e, bindingPath);
         }
 
         /// <summary>
@@ -241,6 +324,9 @@ namespace WWSearchDataGrid.Modern.Core.Performance
 
             // Update view models incrementally
             UpdateFilterViewModelsIncremental(columnKey, value, true);
+            
+            // Update shared ItemsSource incrementally
+            UpdateSharedItemsSourceProviderWithValue(columnKey, value, true);
         }
 
         /// <summary>
@@ -269,6 +355,9 @@ namespace WWSearchDataGrid.Modern.Core.Performance
 
             // Update view models incrementally
             UpdateFilterViewModelsIncremental(columnKey, value, false);
+            
+            // Update shared ItemsSource incrementally
+            UpdateSharedItemsSourceProviderWithValue(columnKey, value, false);
         }
 
         /// <summary>
@@ -284,6 +373,15 @@ namespace WWSearchDataGrid.Modern.Core.Performance
             {
                 _filterViewModelCache.TryRemove(key, out _);
             }
+            
+            // Remove shared ItemsSource provider
+            _sharedItemsSourceProviders.TryRemove(columnKey, out _);
+            
+            // Remove bulk operation tracker
+            if (_bulkOperationTrackers.TryRemove(columnKey, out var tracker))
+            {
+                tracker.BatchTimer?.Dispose();
+            }
         }
 
         /// <summary>
@@ -293,6 +391,14 @@ namespace WWSearchDataGrid.Modern.Core.Performance
         {
             _columnMetadata.Clear();
             _filterViewModelCache.Clear();
+            _sharedItemsSourceProviders.Clear();
+            
+            // Dispose all bulk operation trackers
+            foreach (var tracker in _bulkOperationTrackers.Values)
+            {
+                tracker.BatchTimer?.Dispose();
+            }
+            _bulkOperationTrackers.Clear();
         }
 
         #endregion
@@ -364,21 +470,217 @@ namespace WWSearchDataGrid.Modern.Core.Performance
             }
         }
 
-        #endregion
-
-        #region Helper Classes
-
-        private class ObjectStringComparer : IComparer<object>
+        private void UpdateSharedItemsSourceProvider(string columnKey, ColumnValueMetadata metadata)
         {
-            public int Compare(object x, object y)
+            if (_sharedItemsSourceProviders.TryGetValue(columnKey, out var providers))
             {
-                return string.Compare(x?.ToString() ?? string.Empty,
-                                    y?.ToString() ?? string.Empty,
-                                    StringComparison.Ordinal);
+                lock (metadata.SyncRoot)
+                {
+                    var values = metadata.SortedValues.ToList(); // Create a copy for thread safety
+                    
+                    lock (providers)
+                    {
+                        foreach (var provider in providers)
+                        {
+                            provider.UpdateItems(values);
+                        }
+                    }
+                }
+                
+                SharedItemsSourceChanged?.Invoke(this, new SharedItemsSourceChangedEventArgs(columnKey, SharedItemsSourceChangeType.FullUpdate));
+            }
+        }
+
+        private void UpdateSharedItemsSourceProviderIncremental(string columnKey, NotifyCollectionChangedEventArgs e, string bindingPath)
+        {
+            if (!_sharedItemsSourceProviders.TryGetValue(columnKey, out var providers))
+                return;
+
+            lock (providers)
+            {
+                foreach (var provider in providers)
+                {
+                    switch (e.Action)
+                    {
+                        case NotifyCollectionChangedAction.Add:
+                            if (e.NewItems != null)
+                            {
+                                foreach (var item in e.NewItems)
+                                {
+                                    var value = ReflectionHelper.GetPropValue(item, bindingPath);
+                                    provider.AddItem(value);
+                                }
+                            }
+                            break;
+
+                        case NotifyCollectionChangedAction.Remove:
+                            if (e.OldItems != null)
+                            {
+                                foreach (var item in e.OldItems)
+                                {
+                                    var value = ReflectionHelper.GetPropValue(item, bindingPath);
+                                    // Only remove if not in metadata (count went to 0)
+                                    if (_columnMetadata.TryGetValue(columnKey, out var metadata) && 
+                                        !metadata.Values.Contains(value))
+                                    {
+                                        provider.RemoveItem(value);
+                                    }
+                                }
+                            }
+                            break;
+                    }
+                }
+            }
+            
+            SharedItemsSourceChanged?.Invoke(this, new SharedItemsSourceChangedEventArgs(columnKey, SharedItemsSourceChangeType.IncrementalUpdate));
+        }
+
+        private void UpdateSharedItemsSourceProviderWithValue(string columnKey, object value, bool isAdd)
+        {
+            if (!_sharedItemsSourceProviders.TryGetValue(columnKey, out var providers))
+                return;
+
+            lock (providers)
+            {
+                foreach (var provider in providers)
+                {
+                    if (isAdd)
+                    {
+                        provider.AddItem(value);
+                    }
+                    else
+                    {
+                        // Only remove if not in metadata (count went to 0)
+                        if (_columnMetadata.TryGetValue(columnKey, out var metadata) && 
+                            !metadata.Values.Contains(value))
+                        {
+                            provider.RemoveItem(value);
+                        }
+                    }
+                }
+            }
+            
+            SharedItemsSourceChanged?.Invoke(this, new SharedItemsSourceChangedEventArgs(columnKey, SharedItemsSourceChangeType.IncrementalUpdate));
+        }
+
+
+        private bool DetectBulkOperation(string columnKey, NotifyCollectionChangedEventArgs e)
+        {
+            var tracker = _bulkOperationTrackers.GetOrAdd(columnKey, _ => new BulkOperationTracker());
+            
+            // Consider bulk if multiple items being added at once
+            if (e.Action == NotifyCollectionChangedAction.Add && e.NewItems?.Count > 1)
+                return true;
+            
+            // Or if rapid successive operations (within 50ms)
+            var now = DateTime.Now;
+            if ((now - tracker.LastOperationTime).TotalMilliseconds < 50)
+            {
+                tracker.OperationCount++;
+                if (tracker.OperationCount > 5) // Threshold for bulk detection
+                    return true;
+            }
+            else
+            {
+                tracker.OperationCount = 1;
+            }
+            
+            tracker.LastOperationTime = now;
+            return false;
+        }
+
+        private void HandleBulkOperationEnd(string columnKey)
+        {
+            if (_bulkOperationTrackers.TryGetValue(columnKey, out var tracker))
+            {
+                tracker.IsBulkOperation = false;
+                tracker.OperationCount = 0;
+                
+                // Trigger full reload of shared ItemsSource providers
+                if (_columnMetadata.TryGetValue(columnKey, out var metadata))
+                {
+                    UpdateSharedItemsSourceProvider(columnKey, metadata);
+                }
+                
+                // Invalidate filter view models
+                InvalidateFilterViewModels(columnKey);
             }
         }
 
         #endregion
+
+        #region Helper Classes
+
+        /// <summary>
+        /// Tracks bulk operations for performance optimization
+        /// </summary>
+        public class BulkOperationTracker
+        {
+            public bool IsBulkOperation { get; set; }
+            public DateTime LastOperationTime { get; set; }
+            public int OperationCount { get; set; }
+            public Timer BatchTimer { get; set; }
+        }
+
+        #endregion
+    }
+
+    /// <summary>
+    /// Interface for objects that can provide shared items source collections
+    /// </summary>
+    public interface ISharedItemsSourceProvider
+    {
+        /// <summary>
+        /// Updates the entire collection with new items
+        /// </summary>
+        void UpdateItems(IEnumerable<object> items);
+
+        /// <summary>
+        /// Adds a single item to the collection
+        /// </summary>
+        void AddItem(object item);
+
+        /// <summary>
+        /// Removes a single item from the collection
+        /// </summary>
+        void RemoveItem(object item);
+    }
+
+    /// <summary>
+    /// Event arguments for shared items source changes
+    /// </summary>
+    public class SharedItemsSourceChangedEventArgs : EventArgs
+    {
+        public string ColumnKey { get; }
+        public SharedItemsSourceChangeType ChangeType { get; }
+
+        public SharedItemsSourceChangedEventArgs(string columnKey, SharedItemsSourceChangeType changeType)
+        {
+            ColumnKey = columnKey;
+            ChangeType = changeType;
+        }
+    }
+
+    /// <summary>
+    /// Types of changes that can occur to a shared items source
+    /// </summary>
+    public enum SharedItemsSourceChangeType
+    {
+        FullUpdate,
+        IncrementalUpdate
+    }
+
+    /// <summary>
+    /// Helper class for object comparison
+    /// </summary>
+    internal class ObjectStringComparer : IComparer<object>
+    {
+        public int Compare(object x, object y)
+        {
+            return string.Compare(x?.ToString() ?? string.Empty,
+                                y?.ToString() ?? string.Empty,
+                                StringComparison.Ordinal);
+        }
     }
 
     /// <summary>

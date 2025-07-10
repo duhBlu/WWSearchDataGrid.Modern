@@ -85,7 +85,12 @@ namespace WWSearchDataGrid.Modern.Core
             set { SetProperty(value, ref isOperatorVisible); }
         }
 
-        public HashSet<object> AvailableValues { get; set; } = new HashSet<object>();
+        private ObservableCollection<object> availableValues = new ObservableCollection<object>();
+        public ObservableCollection<object> AvailableValues 
+        { 
+            get { return availableValues; }
+            private set { SetProperty(value, ref availableValues); }
+        }
 
         public object SelectedValue
         {
@@ -368,24 +373,83 @@ namespace WWSearchDataGrid.Modern.Core
             // Store the original column values for nullability analysis
             ColumnValues = columnValues;
 
-            var newValues = new HashSet<object>();
+            AvailableValues.Clear();
 
-            foreach (var v in columnValues.Where(v => v != null).OrderBy(v => v.ToStringEmptyIfNull()))
-            {
-                newValues.Add(v);
-            }
-
+            // Add null first if present
             if (columnValues.Any(v => v == null))
             {
-                newValues = new HashSet<object>(new object[] { null }.Concat(newValues));
+                AvailableValues.Add(null);
             }
 
-            AvailableValues = newValues;
-            OnPropertyChanged(nameof(AvailableValues));
+            // Add non-null values in sorted order
+            foreach (var v in columnValues.Where(v => v != null).OrderBy(v => v.ToStringEmptyIfNull()))
+            {
+                AvailableValues.Add(v);
+            }
 
             if (columnValues.Any())
             {
                 ColumnDataType = ReflectionHelper.DetermineColumnDataType(columnValues);
+            }
+        }
+
+        /// <summary>
+        /// Connects this SearchTemplate to use a shared data source from the cache
+        /// This method will be called from the WPF layer to register the provider
+        /// </summary>
+        public void ConnectToSharedSource(string columnKey, Performance.ColumnValueCache cache)
+        {
+            if (cache == null || string.IsNullOrEmpty(columnKey))
+                return;
+
+            // Get current values from cache
+            var currentValues = cache.GetCurrentValues(columnKey);
+            
+            // Preserve existing items and sync with cache values without disrupting bindings
+            SyncAvailableValues(currentValues);
+            
+            // Note: The WPF layer will register the provider with proper dispatcher handling
+        }
+
+        /// <summary>
+        /// Synchronizes AvailableValues with cache values while preserving existing items and their bindings
+        /// </summary>
+        private void SyncAvailableValues(IEnumerable<object> cacheValues)
+        {
+            var cacheValuesList = cacheValues?.ToList() ?? new List<object>();
+            var currentItems = AvailableValues.ToList();
+
+            // Remove items that are no longer in cache
+            for (int i = currentItems.Count - 1; i >= 0; i--)
+            {
+                if (!cacheValuesList.Contains(currentItems[i]))
+                {
+                    AvailableValues.RemoveAt(i);
+                }
+            }
+
+            // Add new items from cache that aren't already present
+            foreach (var cacheValue in cacheValuesList)
+            {
+                if (!AvailableValues.Contains(cacheValue))
+                {
+                    // Insert in sorted order
+                    var valueStr = cacheValue?.ToString() ?? string.Empty;
+                    int insertIndex = 0;
+                    
+                    for (int i = 0; i < AvailableValues.Count; i++)
+                    {
+                        var existingStr = AvailableValues[i]?.ToString() ?? string.Empty;
+                        if (string.Compare(valueStr, existingStr, StringComparison.Ordinal) < 0)
+                        {
+                            insertIndex = i;
+                            break;
+                        }
+                        insertIndex = i + 1;
+                    }
+                    
+                    AvailableValues.Insert(insertIndex, cacheValue);
+                }
             }
         }
 
@@ -480,4 +544,5 @@ namespace WWSearchDataGrid.Modern.Core
 
         #endregion
     }
+
 }
