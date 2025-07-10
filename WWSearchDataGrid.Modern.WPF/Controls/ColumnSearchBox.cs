@@ -528,7 +528,7 @@ namespace WWSearchDataGrid.Modern.WPF
                 BindingPath = CurrentColumn.SortMemberPath;
                 
                 // Set default search type from column's attached property
-                var defaultSearchType = RuleValueFilterEditor.GetDefaultSearchType(CurrentColumn);
+                var defaultSearchType = ColumnRuleValueFilterEditor.GetDefaultSearchType(CurrentColumn);
                 if (defaultSearchType != SearchType.Contains) // Only set if different from default
                 {
                     SearchTemplateController.DefaultSearchType = defaultSearchType;
@@ -875,7 +875,7 @@ namespace WWSearchDataGrid.Modern.WPF
                         WindowStartupLocation = WindowStartupLocation.CenterOwner
                     };
 
-                    var filterControl = new RuleValueFilterEditor
+                    var filterControl = new ColumnRuleValueFilterEditor
                     {
                         SearchTemplateController = SearchTemplateController,
                         DataContext = this

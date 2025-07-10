@@ -19,9 +19,9 @@ using WWSearchDataGrid.Modern.WPF.Services;
 namespace WWSearchDataGrid.Modern.WPF
 {
     /// <summary>
-    /// Enhanced advanced filter control with tabbed interface
+    /// Details filter control with tabbed interface
     /// </summary>
-    public class RuleValueFilterEditor : Control, INotifyPropertyChanged
+    public class ColumnRuleValueFilterEditor : Control, INotifyPropertyChanged
     {
         #region Fields
 
@@ -51,32 +51,32 @@ namespace WWSearchDataGrid.Modern.WPF
         public static readonly DependencyProperty FilterValueViewModelProperty =
             DependencyProperty.Register(nameof(FilterValueViewModel),
                 typeof(FilterValueViewModel),
-                typeof(RuleValueFilterEditor),
+                typeof(ColumnRuleValueFilterEditor),
                 new PropertyMetadata(null));
 
         /// <summary>
         /// Attached property for specifying the GroupBy column for filter values
         /// </summary>
         public static readonly DependencyProperty GroupByColumnProperty =
-            DependencyProperty.RegisterAttached("GroupByColumn", typeof(string), typeof(RuleValueFilterEditor),
+            DependencyProperty.RegisterAttached("GroupByColumn", typeof(string), typeof(ColumnRuleValueFilterEditor),
                 new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.Inherits));
 
         /// <summary>
         /// Attached property for specifying the default search type for filter templates
         /// </summary>
         public static readonly DependencyProperty DefaultSearchTypeProperty =
-            DependencyProperty.RegisterAttached("DefaultSearchType", typeof(SearchType), typeof(RuleValueFilterEditor),
+            DependencyProperty.RegisterAttached("DefaultSearchType", typeof(SearchType), typeof(ColumnRuleValueFilterEditor),
                 new FrameworkPropertyMetadata(SearchType.Contains, FrameworkPropertyMetadataOptions.Inherits));
 
         /// <summary>
         /// Dependency property for controlling operator ComboBox visibility
         /// </summary>
         public static readonly DependencyProperty IsOperatorVisibleProperty =
-            DependencyProperty.Register(nameof(IsOperatorVisible), typeof(bool), typeof(RuleValueFilterEditor),
+            DependencyProperty.Register(nameof(IsOperatorVisible), typeof(bool), typeof(ColumnRuleValueFilterEditor),
                 new PropertyMetadata(false));
 
         private static readonly DependencyPropertyKey ValueSelectionSummaryPropertyKey =
-            DependencyProperty.RegisterReadOnly("ValueSelectionSummary", typeof(string), typeof(RuleValueFilterEditor),
+            DependencyProperty.RegisterReadOnly("ValueSelectionSummary", typeof(string), typeof(ColumnRuleValueFilterEditor),
                 new PropertyMetadata("No values selected"));
 
         public static readonly DependencyProperty ValueSelectionSummaryProperty = ValueSelectionSummaryPropertyKey.DependencyProperty;
@@ -313,9 +313,9 @@ namespace WWSearchDataGrid.Modern.WPF
         #region Constructors
 
         /// <summary>
-        /// Initializes a new instance of the RuleValueFilterEditor class
+        /// Initializes a new instance of the ColumnRuleValueFilterEditor class
         /// </summary>
-        public RuleValueFilterEditor()
+        public ColumnRuleValueFilterEditor()
         {
             _filterApplicationService = new FilterApplicationService();
             Loaded += OnControlLoaded;
@@ -326,7 +326,7 @@ namespace WWSearchDataGrid.Modern.WPF
         /// Initializes a new instance with custom filter application service for testing
         /// </summary>
         /// <param name="filterApplicationService">Filter application service</param>
-        internal RuleValueFilterEditor(IFilterApplicationService filterApplicationService)
+        internal ColumnRuleValueFilterEditor(IFilterApplicationService filterApplicationService)
         {
             _filterApplicationService = filterApplicationService ?? throw new ArgumentNullException(nameof(filterApplicationService));
             Loaded += OnControlLoaded;

@@ -79,7 +79,7 @@ TopN, BottomN, AboveAverage, BelowAverage, Unique, Duplicate
   - **Key Properties**: `SearchText`, `CurrentColumn`, `SourceDataGrid`
   - **Manages**: SearchTemplateController instances per column
 
-- **`RuleValueFilterEditor.cs`** - Complex multi-criteria filter UI
+- **`ColumnRuleValueFilterEditor.cs`** - Complex multi-criteria filter UI
   - **Features**: Multiple search groups, drag-drop reordering, value selection
   - **Key Properties**: `SearchTemplateController`, `ValueSelectionSummary`
   - **Commands**: Add/Remove search groups and templates
@@ -184,7 +184,7 @@ SearchText    Manages State     Builds Expressions    Evaluates Items   Compiles
 ### UI Issues
 - **Main DataGrid**: `WWSearchDataGrid.Modern.WPF/Controls/SearchDataGrid.cs`
 - **Column filters**: `WWSearchDataGrid.Modern.WPF/Controls/ColumnSearchBox.cs`
-- **Advanced dialog**: `WWSearchDataGrid.Modern.WPF/Controls/RuleValueFilterEditor.cs`
+- **Advanced dialog**: `WWSearchDataGrid.Modern.WPF/Controls/ColumnRuleValueFilterEditor.cs`
 - **Filter chips**: `WWSearchDataGrid.Modern.WPF/Controls/FilterPanel.cs`
 
 ### Styling Problems

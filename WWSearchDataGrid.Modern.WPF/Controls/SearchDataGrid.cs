@@ -584,7 +584,7 @@ namespace WWSearchDataGrid.Modern.WPF
                 Owner = Application.Current.MainWindow
             };
 
-            var filterControl = new RuleValueFilterEditor
+            var filterControl = new ColumnRuleValueFilterEditor
             {
                 SearchTemplateController = GlobalFilterController,
                 DataContext = this
