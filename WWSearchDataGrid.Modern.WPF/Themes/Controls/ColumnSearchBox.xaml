@@ -148,7 +148,7 @@
                                             </Trigger>
                                             <MultiDataTrigger>
                                                 <MultiDataTrigger.Conditions>
-                                                    <Condition Binding="{Binding ShowInAdvancedFilter, RelativeSource={RelativeSource TemplatedParent}}" Value="True" />
+                                                    <Condition Binding="{Binding AllowRuleValueFiltering, RelativeSource={RelativeSource TemplatedParent}}" Value="True" />
                                                     <Condition Binding="{Binding SearchText, RelativeSource={RelativeSource AncestorType={x:Type sdg:ColumnSearchBox}}}" Value="" />
                                                 </MultiDataTrigger.Conditions>
                                                 <Setter Property="Visibility" Value="Visible" />

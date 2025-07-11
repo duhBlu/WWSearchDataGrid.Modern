@@ -21,7 +21,7 @@ namespace WWSearchDataGrid.Modern.WPF
     /// <summary>
     /// Details filter control with tabbed interface
     /// </summary>
-    public class ColumnRuleValueFilterEditor : Control, INotifyPropertyChanged
+    public class ColumnFilterEditor : Control, INotifyPropertyChanged
     {
         #region Fields
 
@@ -51,32 +51,32 @@ namespace WWSearchDataGrid.Modern.WPF
         public static readonly DependencyProperty FilterValueViewModelProperty =
             DependencyProperty.Register(nameof(FilterValueViewModel),
                 typeof(FilterValueViewModel),
-                typeof(ColumnRuleValueFilterEditor),
+                typeof(ColumnFilterEditor),
                 new PropertyMetadata(null));
 
         /// <summary>
         /// Attached property for specifying the GroupBy column for filter values
         /// </summary>
         public static readonly DependencyProperty GroupByColumnProperty =
-            DependencyProperty.RegisterAttached("GroupByColumn", typeof(string), typeof(ColumnRuleValueFilterEditor),
+            DependencyProperty.RegisterAttached("GroupByColumn", typeof(string), typeof(ColumnFilterEditor),
                 new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.Inherits));
 
         /// <summary>
         /// Attached property for specifying the default search type for filter templates
         /// </summary>
         public static readonly DependencyProperty DefaultSearchTypeProperty =
-            DependencyProperty.RegisterAttached("DefaultSearchType", typeof(SearchType), typeof(ColumnRuleValueFilterEditor),
+            DependencyProperty.RegisterAttached("DefaultSearchType", typeof(SearchType), typeof(ColumnFilterEditor),
                 new FrameworkPropertyMetadata(SearchType.Contains, FrameworkPropertyMetadataOptions.Inherits));
 
         /// <summary>
         /// Dependency property for controlling operator ComboBox visibility
         /// </summary>
         public static readonly DependencyProperty IsOperatorVisibleProperty =
-            DependencyProperty.Register(nameof(IsOperatorVisible), typeof(bool), typeof(ColumnRuleValueFilterEditor),
+            DependencyProperty.Register(nameof(IsOperatorVisible), typeof(bool), typeof(ColumnFilterEditor),
                 new PropertyMetadata(false));
 
         private static readonly DependencyPropertyKey ValueSelectionSummaryPropertyKey =
-            DependencyProperty.RegisterReadOnly("ValueSelectionSummary", typeof(string), typeof(ColumnRuleValueFilterEditor),
+            DependencyProperty.RegisterReadOnly("ValueSelectionSummary", typeof(string), typeof(ColumnFilterEditor),
                 new PropertyMetadata("No values selected"));
 
         public static readonly DependencyProperty ValueSelectionSummaryProperty = ValueSelectionSummaryPropertyKey.DependencyProperty;
@@ -313,9 +313,9 @@ namespace WWSearchDataGrid.Modern.WPF
         #region Constructors
 
         /// <summary>
-        /// Initializes a new instance of the ColumnRuleValueFilterEditor class
+        /// Initializes a new instance of the ColumnFilterEditor class
         /// </summary>
-        public ColumnRuleValueFilterEditor()
+        public ColumnFilterEditor()
         {
             _filterApplicationService = new FilterApplicationService();
             Loaded += OnControlLoaded;
@@ -326,7 +326,7 @@ namespace WWSearchDataGrid.Modern.WPF
         /// Initializes a new instance with custom filter application service for testing
         /// </summary>
         /// <param name="filterApplicationService">Filter application service</param>
-        internal ColumnRuleValueFilterEditor(IFilterApplicationService filterApplicationService)
+        internal ColumnFilterEditor(IFilterApplicationService filterApplicationService)
         {
             _filterApplicationService = filterApplicationService ?? throw new ArgumentNullException(nameof(filterApplicationService));
             Loaded += OnControlLoaded;

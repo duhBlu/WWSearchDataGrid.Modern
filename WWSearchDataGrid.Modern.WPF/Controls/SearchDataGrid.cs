@@ -584,7 +584,7 @@ namespace WWSearchDataGrid.Modern.WPF
                 Owner = Application.Current.MainWindow
             };
 
-            var filterControl = new ColumnRuleValueFilterEditor
+            var filterControl = new ColumnFilterEditor
             {
                 SearchTemplateController = GlobalFilterController,
                 DataContext = this
@@ -982,8 +982,8 @@ namespace WWSearchDataGrid.Modern.WPF
         {
             try
             {
-                // Create the GroupedRuleFilterEditor custom control
-                var GroupedRuleFilterEditor = new GroupedRuleFilterEditor
+                // Create the DataGridFilterEditor custom control
+                var DataGridFilterEditor = new DataGridFilterEditor
                 {
                     SourceDataGrid = this
                 };
@@ -998,12 +998,12 @@ namespace WWSearchDataGrid.Modern.WPF
                     MinWidth = 700,
                     WindowStartupLocation = WindowStartupLocation.CenterOwner,
                     Owner = Window.GetWindow(this),
-                    Content = GroupedRuleFilterEditor,
+                    Content = DataGridFilterEditor,
                     Background = System.Windows.Media.Brushes.White
                 };
 
                 // Handle dialog closing
-                GroupedRuleFilterEditor.DialogClosing += (s, args) =>
+                DataGridFilterEditor.DialogClosing += (s, args) =>
                 {
                     window.Close();
                     

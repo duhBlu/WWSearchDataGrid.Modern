@@ -84,9 +84,9 @@
                                         </ComboBox.ItemTemplate>
                                     </ComboBox>
 
-                                    <!--  GroupedRuleFilterEditor specific buttons  -->
+                                    <!--  DataGridFilterEditor specific buttons  -->
                                     <StackPanel Grid.Column="4" Orientation="Horizontal">
-                                        <Button Command="{Binding RemoveSearchTemplateCommand, RelativeSource={RelativeSource AncestorType=sdg:GroupedRuleFilterEditor}}"
+                                        <Button Command="{Binding RemoveSearchTemplateCommand, RelativeSource={RelativeSource AncestorType=sdg:DataGridFilterEditor}}"
                                                 CommandParameter="{Binding}"
                                                 Margin="0,0,4,0"
                                                 Style="{StaticResource TransparentFontIcon_Button_Style}"
@@ -94,7 +94,7 @@
                                                 ToolTip="Remove"
                                                 Padding="8"
                                                 Content="&#xE10A;" />
-                                        <Button Command="{Binding AddSearchTemplateCommand, RelativeSource={RelativeSource AncestorType=sdg:GroupedRuleFilterEditor}}"
+                                        <Button Command="{Binding AddSearchTemplateCommand, RelativeSource={RelativeSource AncestorType=sdg:DataGridFilterEditor}}"
                                                 CommandParameter="{Binding}"
                                                 Height="{Binding ActualWidth, RelativeSource={RelativeSource Self}}"
                                                 Padding="8"
@@ -152,11 +152,11 @@
     </DataTemplate>
 
 
-    <!--  Default GroupedRuleFilterEditor Style  -->
-    <Style x:Key="DefaultGroupedRuleFilterEditorStyle" TargetType="{x:Type sdg:GroupedRuleFilterEditor}">
+    <!--  Default DataGridFilterEditor Style  -->
+    <Style x:Key="DefaultDataGridFilterEditorStyle" TargetType="{x:Type sdg:DataGridFilterEditor}">
         <Setter Property="Template">
             <Setter.Value>
-                <ControlTemplate TargetType="{x:Type sdg:GroupedRuleFilterEditor}">
+                <ControlTemplate TargetType="{x:Type sdg:DataGridFilterEditor}">
                     <Grid Background="White">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
@@ -292,7 +292,7 @@
                                                     </ComboBox>
 
                                                     <Button DockPanel.Dock="Right"
-                                                            Command="{Binding RemoveColumnCommand, RelativeSource={RelativeSource AncestorType=sdg:GroupedRuleFilterEditor}}"
+                                                            Command="{Binding RemoveColumnCommand, RelativeSource={RelativeSource AncestorType=sdg:DataGridFilterEditor}}"
                                                             CommandParameter="{Binding ColumnInfo}"
                                                             Margin="8,0,0,0"
                                                             Style="{StaticResource TransparentFontIcon_Button_Style}"
@@ -466,6 +466,6 @@
     </Style>
 
     <!--  Apply default style  -->
-    <Style BasedOn="{StaticResource DefaultGroupedRuleFilterEditorStyle}" TargetType="{x:Type sdg:GroupedRuleFilterEditor}" />
+    <Style BasedOn="{StaticResource DefaultDataGridFilterEditorStyle}" TargetType="{x:Type sdg:DataGridFilterEditor}" />
 
 </ResourceDictionary>

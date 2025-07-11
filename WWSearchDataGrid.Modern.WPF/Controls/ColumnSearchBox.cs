@@ -50,8 +50,8 @@ namespace WWSearchDataGrid.Modern.WPF
             DependencyProperty.RegisterAttached("CustomSearchTemplate", typeof(Type), typeof(ColumnSearchBox),
                 new FrameworkPropertyMetadata(typeof(SearchTemplate)));
 
-        public static readonly DependencyProperty ShowInAdvancedFilterProperty =
-            DependencyProperty.RegisterAttached("ShowInAdvancedFilter", typeof(bool), typeof(ColumnSearchBox),
+        public static readonly DependencyProperty AllowRuleValueFilteringProperty =
+            DependencyProperty.RegisterAttached("AllowRuleValueFiltering", typeof(bool), typeof(ColumnSearchBox),
                 new FrameworkPropertyMetadata(true, FrameworkPropertyMetadataOptions.Inherits));
 
         #endregion
@@ -116,10 +116,10 @@ namespace WWSearchDataGrid.Modern.WPF
         /// <summary>
         /// Gets or sets whether to show the advanced filter button
         /// </summary>
-        public bool ShowInAdvancedFilter
+        public bool AllowRuleValueFiltering
         {
-            get => (bool)GetValue(ShowInAdvancedFilterProperty);
-            set => SetValue(ShowInAdvancedFilterProperty, value);
+            get => (bool)GetValue(AllowRuleValueFilteringProperty);
+            set => SetValue(AllowRuleValueFilteringProperty, value);
         }
 
         /// <summary>
@@ -190,14 +190,14 @@ namespace WWSearchDataGrid.Modern.WPF
         /// <summary>
         /// Sets whether to show the advanced filter
         /// </summary>
-        public static void SetShowInAdvancedFilter(DependencyObject element, bool value) =>
-            element.SetValue(ShowInAdvancedFilterProperty, value);
+        public static void SetAllowRuleValueFiltering(DependencyObject element, bool value) =>
+            element.SetValue(AllowRuleValueFilteringProperty, value);
 
         /// <summary>
         /// Gets whether to show the advanced filter
         /// </summary>
-        public static bool GetShowInAdvancedFilter(DependencyObject element) =>
-            (bool)element.GetValue(ShowInAdvancedFilterProperty);
+        public static bool GetAllowRuleValueFiltering(DependencyObject element) =>
+            (bool)element.GetValue(AllowRuleValueFilteringProperty);
 
         #endregion
 
@@ -356,7 +356,7 @@ namespace WWSearchDataGrid.Modern.WPF
             if (d is ColumnSearchBox control && e.NewValue is DataGridColumn column)
             {
                 control.BindingPath = column.SortMemberPath;
-                control.ShowInAdvancedFilter = GetShowInAdvancedFilter(control.CurrentColumn);
+                control.AllowRuleValueFiltering = GetAllowRuleValueFiltering(control.CurrentColumn);
                 control.InitializeSearchTemplateController();
             }
         }
@@ -412,7 +412,7 @@ namespace WWSearchDataGrid.Modern.WPF
             }
         }
 
-        private void OnAdvancedFilterButtonClick(object sender, RoutedEventArgs e) => ShowInAdvancedFilterWindow();
+        private void OnAdvancedFilterButtonClick(object sender, RoutedEventArgs e) => AllowRuleValueFilteringWindow();
 
         private void OnColumnSearchBoxGotFocus(object sender, RoutedEventArgs e)
         {
@@ -528,7 +528,7 @@ namespace WWSearchDataGrid.Modern.WPF
                 BindingPath = CurrentColumn.SortMemberPath;
                 
                 // Set default search type from column's attached property
-                var defaultSearchType = ColumnRuleValueFilterEditor.GetDefaultSearchType(CurrentColumn);
+                var defaultSearchType = ColumnFilterEditor.GetDefaultSearchType(CurrentColumn);
                 if (defaultSearchType != SearchType.Contains) // Only set if different from default
                 {
                     SearchTemplateController.DefaultSearchType = defaultSearchType;
@@ -847,7 +847,7 @@ namespace WWSearchDataGrid.Modern.WPF
         /// <summary>
         /// Shows the advanced filter window
         /// </summary>
-        private void ShowInAdvancedFilterWindow()
+        private void AllowRuleValueFilteringWindow()
         {
             try
             {
@@ -875,7 +875,7 @@ namespace WWSearchDataGrid.Modern.WPF
                         WindowStartupLocation = WindowStartupLocation.CenterOwner
                     };
 
-                    var filterControl = new ColumnRuleValueFilterEditor
+                    var filterControl = new ColumnFilterEditor
                     {
                         SearchTemplateController = SearchTemplateController,
                         DataContext = this
@@ -890,7 +890,7 @@ namespace WWSearchDataGrid.Modern.WPF
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error in ShowInAdvancedFilterWindow: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"Error in AllowRuleValueFilteringWindow: {ex.Message}");
                 CloseAdvancedFilterWindow(false);
             }
         }

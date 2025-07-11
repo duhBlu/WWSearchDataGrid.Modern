@@ -11,30 +11,30 @@ using WWSearchDataGrid.Modern.Core;
 namespace WWSearchDataGrid.Modern.WPF
 {
     /// <summary>
-    /// GroupedRuleFilterEditor provides a tabbed interface for editing column filters
+    /// DataGridFilterEditor provides a tabbed interface for editing column filters
     /// </summary>
-    public class GroupedRuleFilterEditor : Control
+    public class DataGridFilterEditor : Control
     {
         #region Dependency Properties
 
         public static readonly DependencyProperty SourceDataGridProperty =
-            DependencyProperty.Register("SourceDataGrid", typeof(SearchDataGrid), typeof(GroupedRuleFilterEditor),
+            DependencyProperty.Register("SourceDataGrid", typeof(SearchDataGrid), typeof(DataGridFilterEditor),
                 new PropertyMetadata(null, OnSourceDataGridChanged));
 
         public static readonly DependencyProperty FilteredColumnsProperty =
-            DependencyProperty.Register("FilteredColumns", typeof(ObservableCollection<FilteredColumnInfo>), typeof(GroupedRuleFilterEditor),
+            DependencyProperty.Register("FilteredColumns", typeof(ObservableCollection<FilteredColumnInfo>), typeof(DataGridFilterEditor),
                 new PropertyMetadata(null));
 
         public static readonly DependencyProperty AllFilterGroupsProperty =
-            DependencyProperty.Register("AllFilterGroups", typeof(ObservableCollection<FilterGroupInfo>), typeof(GroupedRuleFilterEditor),
+            DependencyProperty.Register("AllFilterGroups", typeof(ObservableCollection<FilterGroupInfo>), typeof(DataGridFilterEditor),
                 new PropertyMetadata(null));
 
         public static readonly DependencyProperty DialogAcceptedProperty =
-            DependencyProperty.Register("DialogAccepted", typeof(bool), typeof(GroupedRuleFilterEditor),
+            DependencyProperty.Register("DialogAccepted", typeof(bool), typeof(DataGridFilterEditor),
                 new PropertyMetadata(false));
 
         public static readonly DependencyProperty IsLoadingProperty =
-            DependencyProperty.Register("IsLoading", typeof(bool), typeof(GroupedRuleFilterEditor),
+            DependencyProperty.Register("IsLoading", typeof(bool), typeof(DataGridFilterEditor),
                 new PropertyMetadata(false));
 
         #endregion
@@ -143,11 +143,11 @@ namespace WWSearchDataGrid.Modern.WPF
         #region Constructors
 
         /// <summary>
-        /// Initializes a new instance of the GroupedRuleFilterEditor class
+        /// Initializes a new instance of the DataGridFilterEditor class
         /// </summary>
-        public GroupedRuleFilterEditor()
+        public DataGridFilterEditor()
         {
-            DefaultStyleKey = typeof(GroupedRuleFilterEditor);
+            DefaultStyleKey = typeof(DataGridFilterEditor);
             FilteredColumns = new ObservableCollection<FilteredColumnInfo>();
             AllFilterGroups = new ObservableCollection<FilterGroupInfo>();
             AvailableColumns = new ObservableCollection<ColumnDisplayInfo>();
@@ -180,7 +180,7 @@ namespace WWSearchDataGrid.Modern.WPF
         /// </summary>
         private static void OnSourceDataGridChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
-            if (d is GroupedRuleFilterEditor dialog && e.NewValue is SearchDataGrid)
+            if (d is DataGridFilterEditor dialog && e.NewValue is SearchDataGrid)
             {
                 dialog.InitializeFilteredColumns();
             }
@@ -297,7 +297,7 @@ namespace WWSearchDataGrid.Modern.WPF
                     ColumnName = original.ColumnName,
                     ColumnDataType = original.ColumnDataType,
                     HasCustomExpression = original.HasCustomExpression,
-                    AllowMultipleGroups = true,  // Enable multiple groups for GroupedRuleFilterEditor
+                    AllowMultipleGroups = true,  // Enable multiple groups for DataGridFilterEditor
                     ColumnValues = original.ColumnValues,
                     ColumnValuesByPath = original.ColumnValuesByPath,
                     PropertyValues = original.PropertyValues,
@@ -606,7 +606,9 @@ namespace WWSearchDataGrid.Modern.WPF
                 // Get all columns that are not currently filtered
                 var filteredBindingPaths = FilteredColumns.Select(fc => fc.BindingPath).ToHashSet();
                 var availableColumns = SourceDataGrid.Columns
-                    .Where(c => !string.IsNullOrEmpty(c.SortMemberPath) && !filteredBindingPaths.Contains(c.SortMemberPath))
+                    .Where(c => !string.IsNullOrEmpty(c.SortMemberPath) && 
+                    !filteredBindingPaths.Contains(c.SortMemberPath) &&
+                    ShouldIncludeInAdvancedFilter(c))
                     .ToList();
 
                 AvailableColumns.Clear();
@@ -623,6 +625,27 @@ namespace WWSearchDataGrid.Modern.WPF
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Error refreshing available columns: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Determines whether a column should be included in the advanced filter
+        /// </summary>
+        /// <param name="column">The column to check</param>
+        /// <returns>True if the column should be included, false otherwise</returns>
+        private bool ShouldIncludeInAdvancedFilter(DataGridColumn column)
+        {
+            try
+            {
+                // Check if the column has the AllowRuleValueFiltering attached property set to false
+                bool showInAdvancedFilter = ColumnSearchBox.GetAllowRuleValueFiltering(column);
+                return showInAdvancedFilter;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error checking AllowRuleValueFiltering for column {column?.Header}: {ex.Message}");
+                // Default to true if we can't determine the property value
+                return true;
             }
         }
 
