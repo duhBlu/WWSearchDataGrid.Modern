@@ -252,13 +252,18 @@ namespace WWSearchDataGrid.Modern.Core
 
         private void OnGroupPropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
         {
-            if (e.PropertyName == nameof(FilterValueItem.IsSelected))
-            {               
-                // Don't update during bulk operations
+            if (e.PropertyName == nameof(FilterValueGroup.IsSelected))
+            {
+                var group = (FilterValueGroup)sender;
+
+                // if this was a month, also refresh the containing year
+                var year = _allYearGroups.FirstOrDefault(y => y.Children.Contains(group));
+                if (year != null)
+                    year.UpdateGroupSelectionState();
+
+                // update the SelectAll checkbox
                 if (!_isBulkUpdating)
-                {
                     UpdateSelectAllState();
-                }
             }
         }
 
@@ -266,18 +271,20 @@ namespace WWSearchDataGrid.Modern.Core
         {
             if (e.PropertyName == nameof(FilterValueItem.IsSelected))
             {
-                var item = sender as FilterValueItem;
-                if (item?.Parent != null)
-                {
-                    // Update parent group state
-                    item.Parent.UpdateGroupSelectionState();
-                }
-                
-                // Don't update during bulk operations
+                var day = (FilterValueItem)sender;
+
+                // 1) update the month
+                var month = day.Parent;
+                month.UpdateGroupSelectionState();
+
+                // 2) update the year that contains that month
+                var year = _allYearGroups.FirstOrDefault(y => y.Children.OfType<FilterValueGroup>().Contains(month));
+                if (year != null)
+                    year.UpdateGroupSelectionState();
+
+                // 3) update the SelectAll checkbox
                 if (!_isBulkUpdating)
-                {
                     UpdateSelectAllState();
-                }
             }
         }
 
