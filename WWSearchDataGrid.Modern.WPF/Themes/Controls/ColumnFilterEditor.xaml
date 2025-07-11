@@ -21,6 +21,13 @@
 
     <!--  Hardcoded TabItem Pivot Style  -->
     <Style x:Key="Default_TabItemPivot_Style" TargetType="{x:Type TabItem}">
+        <Style.Resources>
+            <SolidColorBrush x:Key="TabItem.HeaderForeground.Default" Color="#FF666666" />
+            <SolidColorBrush x:Key="TabItem.HeaderForeground.Selected" Color="#FF000000" />
+            <SolidColorBrush x:Key="TabItem.HeaderForeground.MouseOver" Color="#FF333333" />
+            <SolidColorBrush x:Key="TabItem.HeaderForeground.Disabled" Color="#FF999999" />
+            <SolidColorBrush x:Key="TabItem.SelectionIndicatorBrush" Color="#FF0067C0" />
+        </Style.Resources>
         <Setter Property="OverridesDefaultStyle" Value="True" />
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="Padding" Value="10,0" />
@@ -39,7 +46,7 @@
                                               Focusable="False"
                                               HorizontalAlignment="Stretch"
                                               VerticalAlignment="Center"
-                                              TextElement.Foreground="#666"
+                                              TextElement.Foreground="{StaticResource TabItem.HeaderForeground.Default}"
                                               TextElement.FontSize="14"
                                               TextElement.FontFamily="Segoe UI"
                                               TextElement.FontWeight="Normal"
@@ -47,7 +54,7 @@
                                               ContentSource="Header"
                                               SnapsToDevicePixels="True" />
                             <Rectangle x:Name="SelectedPipe"
-                                       Fill="#0067C0"
+                                       Fill="{StaticResource TabItem.SelectionIndicatorBrush}"
                                        Margin="0,0,0,2"
                                        HorizontalAlignment="Stretch"
                                        VerticalAlignment="Bottom"
@@ -70,14 +77,14 @@
                                 <Condition SourceName="Border" Property="IsMouseOver" Value="False" />
                             </MultiTrigger.Conditions>
                             <Setter Property="Panel.ZIndex" Value="1" />
-                            <Setter TargetName="ContentPresenter" Property="TextElement.Foreground" Value="#000" />
+                            <Setter TargetName="ContentPresenter" Property="TextElement.Foreground" Value="{StaticResource TabItem.HeaderForeground.Selected}" />
                         </MultiTrigger>
                         <MultiTrigger>
                             <MultiTrigger.Conditions>
                                 <Condition Property="IsSelected" Value="False" />
                                 <Condition SourceName="Border" Property="IsMouseOver" Value="True" />
                             </MultiTrigger.Conditions>
-                            <Setter TargetName="ContentPresenter" Property="TextElement.Foreground" Value="#333" />
+                            <Setter TargetName="ContentPresenter" Property="TextElement.Foreground" Value="{StaticResource TabItem.HeaderForeground.MouseOver}" />
                             <Setter TargetName="SelectedPipe" Property="Visibility" Value="Collapsed" />
                         </MultiTrigger>
                         <MultiTrigger>
@@ -86,10 +93,10 @@
                                 <Condition SourceName="Border" Property="IsMouseOver" Value="True" />
                             </MultiTrigger.Conditions>
                             <Setter Property="Panel.ZIndex" Value="1" />
-                            <Setter TargetName="ContentPresenter" Property="TextElement.Foreground" Value="#000" />
+                            <Setter TargetName="ContentPresenter" Property="TextElement.Foreground" Value="{StaticResource TabItem.HeaderForeground.Selected}" />
                         </MultiTrigger>
                         <Trigger Property="IsEnabled" Value="False">
-                            <Setter TargetName="ContentPresenter" Property="TextElement.Foreground" Value="#999" />
+                            <Setter TargetName="ContentPresenter" Property="TextElement.Foreground" Value="{StaticResource TabItem.HeaderForeground.Disabled}" />
                             <Setter TargetName="SelectedPipe" Property="Visibility" Value="Collapsed" />
                         </Trigger>
                     </ControlTemplate.Triggers>
@@ -100,8 +107,13 @@
 
     <!--  Basic TabControl Pivot Style with no external dependencies  -->
     <Style x:Key="Default_TabControlPivot_Style" TargetType="{x:Type TabControl}">
+        <Style.Resources>
+            <SolidColorBrush x:Key="TabControl.BackgroundBrush" Color="#FFFFFFFF" />
+            <SolidColorBrush x:Key="TabControl.ContentBackgroundBrush" Color="#FFFFFFFF" />
+            <SolidColorBrush x:Key="TabControl.ContentBorderBrush" Color="#FFCCCCCC" />
+        </Style.Resources>
         <Setter Property="OverridesDefaultStyle" Value="True" />
-        <Setter Property="Background" Value="White" />
+        <Setter Property="Background" Value="{StaticResource TabControl.BackgroundBrush}" />
         <Setter Property="FontFamily" Value="Segoe UI" />
         <Setter Property="FontSize" Value="13" />
         <Setter Property="ItemContainerStyle" Value="{StaticResource Default_TabItemPivot_Style}" />
@@ -121,9 +133,9 @@
                                   IsItemsHost="True" />
                         <Border x:Name="ContentPanel"
                                 Grid.Row="1"
-                                Background="White"
-                                BorderBrush="#CCC"
-                                BorderThickness="1,1,1,1">
+                                Background="{StaticResource TabControl.ContentBackgroundBrush}"
+                                BorderBrush="{StaticResource TabControl.ContentBorderBrush}"
+                                BorderThickness="1">
                             <ContentPresenter x:Name="PART_SelectedContentHost"
                                               Margin="8"
                                               VerticalAlignment="Stretch"
@@ -137,6 +149,10 @@
 
     <!--  ColumnFilterEditor-specific Search Group Content Template  -->
     <DataTemplate x:Key="AdvancedFilterSearchGroupContentTemplate" DataType="{x:Type sdgCore:SearchTemplateGroup}">
+        <DataTemplate.Resources>
+            <SolidColorBrush x:Key="SearchTemplateGroup.GroupBackgroundBrush" Color="#FFFAFAFA" />
+            <SolidColorBrush x:Key="SearchTemplateGroup.GroupBorderBrush" Color="#FFDDDDDD" />
+        </DataTemplate.Resources>
         <ItemsControl ItemsSource="{Binding SearchTemplates}"
                       VirtualizingPanel.IsVirtualizing="True"
                       VirtualizingPanel.VirtualizationMode="Recycling"
@@ -151,8 +167,8 @@
                     <StackPanel Orientation="Vertical"
                                 Margin="0,4"
                                 HorizontalAlignment="Stretch">
-                        <Border Background="#FAFAFA"
-                                BorderBrush="#DDD"
+                        <Border Background="{StaticResource SearchTemplateGroup.GroupBackgroundBrush}"
+                                BorderBrush="{StaticResource SearchTemplateGroup.GroupBorderBrush}"
                                 BorderThickness="1"
                                 Padding="6"
                                 CornerRadius="8">
@@ -278,6 +294,10 @@
 
     <!--  ColumnFilterEditor Style  -->
     <Style x:Key="Default_ColumnFilterEditor_Style" TargetType="{x:Type sdg:ColumnFilterEditor}">
+        <Style.Resources>
+            <SolidColorBrush x:Key="ColumnFilterEditor.BackgroundBrush" Color="#FFFFFFFF" />
+            <SolidColorBrush x:Key="ColumnFilterEditor.BorderBrush" Color="#FFCCCCCC" />
+        </Style.Resources>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type sdg:ColumnFilterEditor}">
@@ -388,8 +408,8 @@
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
-        <Setter Property="Background" Value="White" />
-        <Setter Property="BorderBrush" Value="#CCC" />
+        <Setter Property="Background" Value="{StaticResource ColumnFilterEditor.BackgroundBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource ColumnFilterEditor.BorderBrush}" />
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="SnapsToDevicePixels" Value="True" />
     </Style>

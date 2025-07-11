@@ -57,13 +57,13 @@
                                 BorderBrush="{TemplateBinding BorderBrush}"
                                 BorderThickness="{TemplateBinding BorderThickness}"
                                 CornerRadius="4" />
-                        
+
                         <ScrollViewer x:Name="PART_ContentHost"
+                                      Background="Transparent"
                                       Margin="{TemplateBinding Padding}"
                                       HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                      VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
-                                      Background="Transparent" />
-                        
+                                      VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
+
                         <TextBlock x:Name="PlaceholderText"
                                    Foreground="#888888"
                                    Text="{TemplateBinding Tag}"
@@ -167,10 +167,10 @@
                                Maximum="10000"
                                Increment="1"
                                Value="{Binding SelectedValue, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-            <TextBlock Text="items"
+            <TextBlock Foreground="Gray"
+                       Text="items"
                        Margin="5,0,0,0"
-                       VerticalAlignment="Center"
-                       Foreground="Gray" />
+                       VerticalAlignment="Center" />
         </StackPanel>
     </DataTemplate>
 
@@ -239,8 +239,8 @@
                                 </Grid.ColumnDefinitions>
                                 <ComboBox Style="{StaticResource VirtualizedEditable_Combobox_Style}"
                                           Grid.Column="0"
-                                          Tag="Type or select..."
                                           Text="{Binding Value}"
+                                          Tag="Type or select..."
                                           ItemsSource="{Binding DataContext.AvailableValues, RelativeSource={RelativeSource AncestorType=ListBox}}" />
                                 <Button Style="{StaticResource TransparentFontIcon_Button_Style}"
                                         Grid.Column="1"
@@ -325,16 +325,18 @@
             <ItemsControl ItemsSource="{Binding DateIntervals}">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                        <CheckBox IsChecked="{Binding IsSelected}" Style="{StaticResource Default_CheckBox_Style}" Margin="0,2">
+                        <CheckBox Style="{StaticResource Default_CheckBox_Style}"
+                                  IsChecked="{Binding IsSelected}"
+                                  Margin="0,2">
                             <CheckBox.Content>
                                 <StackPanel Orientation="Horizontal">
                                     <Image Source="{Binding Interval, Converter={StaticResource DateIntervalToIconConverter}}"
-                                           Width="16" Height="16"
                                            Visibility="Collapsed"
                                            Margin="0,0,6,0"
-                                           VerticalAlignment="Center" />
-                                    <TextBlock Text="{Binding DisplayName}"
-                                               VerticalAlignment="Center" />
+                                           VerticalAlignment="Center"
+                                           Width="16"
+                                           Height="16" />
+                                    <TextBlock Text="{Binding DisplayName}" VerticalAlignment="Center" />
                                 </StackPanel>
                             </CheckBox.Content>
                         </CheckBox>

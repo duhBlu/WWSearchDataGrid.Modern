@@ -8,19 +8,28 @@
     </ResourceDictionary.MergedDictionaries>
 
     <Style x:Key="DefaultSelectAllButtonStyle" TargetType="{x:Type Button}">
+        <Style.Resources>
+            <!--  Select-All button brushes  -->
+            <SolidColorBrush x:Key="SelectAllButton.Background.Default" Color="#FFF0F0F0" />
+            <SolidColorBrush x:Key="SelectAllButton.BorderBrush.Default" Color="#FFDDDDDD" />
+            <SolidColorBrush x:Key="SelectAllButton.ArrowFillBrush" Color="#FF666666" />
+            <SolidColorBrush x:Key="SelectAllButton.Background.Hover" Color="#FFE0F0FF" />
+            <SolidColorBrush x:Key="SelectAllButton.Background.Pressed" Color="#FFCCE0FF" />
+        </Style.Resources>
+
         <Setter Property="Cursor" Value="Hand" />
         <Setter Property="Width" Value="{Binding RowHeaderWidth, RelativeSource={RelativeSource AncestorType={x:Type sdg:SearchDataGrid}}}" />
         <Setter Property="Template">
             <Setter.Value>
-                <ControlTemplate TargetType="Button">
+                <ControlTemplate TargetType="{x:Type Button}">
                     <Grid>
                         <Border x:Name="Border"
-                                Background="#F0F0F0"
-                                BorderBrush="#DDDDDD"
+                                Background="{StaticResource SelectAllButton.Background.Default}"
+                                BorderBrush="{StaticResource SelectAllButton.BorderBrush.Default}"
                                 BorderThickness="0,0,1,1"
                                 SnapsToDevicePixels="True" />
                         <Polygon x:Name="Arrow"
-                                 Fill="#666"
+                                 Fill="{StaticResource SelectAllButton.ArrowFillBrush}"
                                  Opacity="0.5"
                                  Margin="8,8,3,3"
                                  HorizontalAlignment="Right"
@@ -31,11 +40,11 @@
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter TargetName="Arrow" Property="Opacity" Value="0.8" />
-                            <Setter TargetName="Border" Property="Background" Value="#E0F0FF" />
+                            <Setter TargetName="Border" Property="Background" Value="{StaticResource SelectAllButton.Background.Hover}" />
                         </Trigger>
                         <Trigger Property="IsPressed" Value="True">
                             <Setter TargetName="Arrow" Property="Opacity" Value="1" />
-                            <Setter TargetName="Border" Property="Background" Value="#CCE0FF" />
+                            <Setter TargetName="Border" Property="Background" Value="{StaticResource SelectAllButton.Background.Pressed}" />
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter TargetName="Arrow" Property="Visibility" Value="Collapsed" />
@@ -47,13 +56,20 @@
     </Style>
 
     <Style x:Key="DefaultSearchDataGridRowHeaderStyle" TargetType="DataGridRowHeader">
+        <Style.Resources>
+            <SolidColorBrush x:Key="RowHeader.Foreground.Default" Color="#FF444444" />
+            <SolidColorBrush x:Key="RowHeader.Background.Default" Color="#FFF9F9F9" />
+            <SolidColorBrush x:Key="RowHeader.BorderBrush.Default" Color="#FFDDDDDD" />
+            <SolidColorBrush x:Key="RowHeader.HoverBackgroundBrush" Color="#FFF0F0F0" />
+            <SolidColorBrush x:Key="RowHeader.SelectedForegroundBrush" Color="White" />
+        </Style.Resources>
         <Setter Property="HorizontalContentAlignment" Value="Center" />
         <Setter Property="VerticalContentAlignment" Value="Center" />
         <Setter Property="Padding" Value="4,0" />
         <Setter Property="FontWeight" Value="Normal" />
-        <Setter Property="Foreground" Value="#FF444444" />
-        <Setter Property="Background" Value="#F9F9F9" />
-        <Setter Property="BorderBrush" Value="#FFDDDDDD" />
+        <Setter Property="Foreground" Value="{StaticResource RowHeader.Foreground.Default}" />
+        <Setter Property="Background" Value="{StaticResource RowHeader.Background.Default}" />
+        <Setter Property="BorderBrush" Value="{StaticResource RowHeader.BorderBrush.Default}" />
         <Setter Property="BorderThickness" Value="0,0,1,1" />
         <Setter Property="Template">
             <Setter.Value>
@@ -66,16 +82,14 @@
                                           VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
                                           SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" />
                     </Border>
-
                     <ControlTemplate.Triggers>
                         <!--  Hover  -->
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="HeaderBorder" Property="Background" Value="#FFF0F0F0" />
+                            <Setter TargetName="HeaderBorder" Property="Background" Value="{StaticResource RowHeader.HoverBackgroundBrush}" />
                         </Trigger>
-
-                        <!--  Selected Row  -->
-                        <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType={x:Type DataGridRow}}}" Value="True">
-                            <Setter Property="Foreground" Value="White" />
+                        <!--  Selected row  -->
+                        <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=DataGridRow}}" Value="True">
+                            <Setter Property="Foreground" Value="{StaticResource RowHeader.SelectedForegroundBrush}" />
                         </DataTrigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -87,6 +101,25 @@
 
     <!--  Search Grid Column Header Style  -->
     <Style x:Key="DefaultSearchDataGridColumnHeaderStyle" TargetType="{x:Type DataGridColumnHeader}">
+        <Style.Resources>
+            <!--  Semantic brushes for column header  -->
+            <SolidColorBrush x:Key="ColumnHeader.Background.Default" Color="#FFF9F9F9" />
+            <SolidColorBrush x:Key="ColumnHeader.BorderBrush.Default" Color="#FFDDDDDD" />
+            <SolidColorBrush x:Key="ColumnHeader.Foreground.Default" Color="#FF333333" />
+            <SolidColorBrush x:Key="ColumnHeader.Background.Hover" Color="#FFF0F0F0" />
+            <SolidColorBrush x:Key="ColumnHeader.Background.Pressed" Color="#FFE0E0E0" />
+            <SolidColorBrush x:Key="ColumnHeader.ArrowBrush" Color="#FF333333" />
+        </Style.Resources>
+
+        <!--  Default properties  -->
+        <Setter Property="Foreground" Value="{StaticResource ColumnHeader.Foreground.Default}" />
+        <Setter Property="Background" Value="{StaticResource ColumnHeader.Background.Default}" />
+        <Setter Property="BorderBrush" Value="{StaticResource ColumnHeader.BorderBrush.Default}" />
+        <Setter Property="BorderThickness" Value="0,0,1,1" />
+        <Setter Property="Padding" Value="8,4" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type DataGridColumnHeader}">
@@ -98,19 +131,19 @@
 
                         <!--  Search Control  -->
                         <sdg:ColumnSearchBox x:Name="PART_ColumnSearchBox"
-                                           Style="{Binding Mode=OneWay, Source={StaticResource DefaultColumnSearchBoxStyle}}"
-                                           Grid.Row="0"
-                                           BorderThickness="0"
-                                           Margin="0,1,1,0"
-                                           CurrentColumn="{Binding Column, RelativeSource={RelativeSource TemplatedParent}}"
-                                           SourceDataGrid="{Binding Mode=OneWay, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type sdg:SearchDataGrid}}}" />
+                                             Style="{StaticResource DefaultColumnSearchBoxStyle}"
+                                             Grid.Row="0"
+                                             BorderThickness="0"
+                                             Margin="0,1,1,0"
+                                             CurrentColumn="{Binding Column, RelativeSource={RelativeSource TemplatedParent}}"
+                                             SourceDataGrid="{Binding RelativeSource={RelativeSource AncestorType=sdg:SearchDataGrid}}" />
 
                         <!--  Header Content  -->
                         <Border x:Name="HeaderBorder"
                                 Grid.Row="1"
                                 Background="{TemplateBinding Background}"
                                 BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="0,1,1,1"
+                                BorderThickness="{TemplateBinding BorderThickness}"
                                 Padding="{TemplateBinding Padding}">
                             <Grid>
                                 <Grid.ColumnDefinitions>
@@ -144,10 +177,9 @@
                                HorizontalAlignment="Left"
                                Width="1" />
 
-
                         <Thumb x:Name="PART_RightHeaderGripper"
                                Grid.RowSpan="2"
-                               BorderBrush="{Binding VerticalGridLinesBrush, RelativeSource={RelativeSource AncestorType={x:Type sdg:SearchDataGrid}}}"
+                               BorderBrush="{Binding VerticalGridLinesBrush, RelativeSource={RelativeSource AncestorType=sdg:SearchDataGrid}}"
                                BorderThickness="1,0,0,0"
                                Cursor="SizeWE"
                                HorizontalAlignment="Right"
@@ -155,140 +187,57 @@
                     </Grid>
 
                     <ControlTemplate.Triggers>
-                        <DataTrigger Binding="{Binding ActualHasItems, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type sdg:SearchDataGrid}}}" Value="False">
+                        <!--  Hide search box when no items  -->
+                        <DataTrigger Binding="{Binding ActualHasItems, RelativeSource={RelativeSource AncestorType=sdg:SearchDataGrid}}" Value="False">
                             <Setter TargetName="PART_ColumnSearchBox" Property="Visibility" Value="Collapsed" />
                             <Setter TargetName="HeaderBorder" Property="BorderThickness" Value="0,0,0,1" />
                         </DataTrigger>
 
-                        <!--  Sort Direction  -->
+                        <!--  Sort direction indicators  -->
                         <Trigger Property="SortDirection" Value="Ascending">
                             <Setter TargetName="SortArrow" Property="Visibility" Value="Visible" />
                             <Setter TargetName="SortArrow" Property="Text" Value="&#xE972;" />
                         </Trigger>
-
                         <Trigger Property="SortDirection" Value="Descending">
                             <Setter TargetName="SortArrow" Property="Visibility" Value="Visible" />
                             <Setter TargetName="SortArrow" Property="Text" Value="&#xE971;" />
                         </Trigger>
 
-                        <!--  Mouse States  -->
+                        <!--  MouseOver and Pressed backgrounds  -->
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="HeaderBorder" Property="Background" Value="#FFF0F0F0" />
+                            <Setter TargetName="HeaderBorder" Property="Background" Value="{StaticResource ColumnHeader.Background.Hover}" />
                         </Trigger>
-
                         <Trigger Property="IsPressed" Value="True">
-                            <Setter TargetName="HeaderBorder" Property="Background" Value="#FFE0E0E0" />
+                            <Setter TargetName="HeaderBorder" Property="Background" Value="{StaticResource ColumnHeader.Background.Pressed}" />
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
-        <Setter Property="Foreground" Value="#FF333333" />
-        <Setter Property="Background" Value="#FFF9F9F9" />
-        <Setter Property="BorderBrush" Value="#FFDDDDDD" />
-        <Setter Property="BorderThickness" Value="0,0,1,1" />
-        <Setter Property="Padding" Value="8,4" />
-        <Setter Property="HorizontalContentAlignment" Value="Center" />
-        <Setter Property="VerticalContentAlignment" Value="Center" />
     </Style>
+
 
     <Style BasedOn="{StaticResource DefaultSearchDataGridColumnHeaderStyle}" TargetType="{x:Type DataGridColumnHeader}" />
 
     <!--  Modern Search DataGrid Style  -->
     <Style x:Key="DefaultSearchDataGridStyle" TargetType="{x:Type sdg:SearchDataGrid}">
-        <Setter Property="Template">
-            <Setter.Value>
-                <ControlTemplate TargetType="{x:Type sdg:SearchDataGrid}">
-                    <Border Background="{TemplateBinding Background}"
-                            BorderBrush="{TemplateBinding BorderBrush}"
-                            BorderThickness="{TemplateBinding BorderThickness}"
-                            SnapsToDevicePixels="True">
-                        <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="*" />      
-                                <!--  DataGrid  -->
-                                <RowDefinition Height="Auto" />   
-                                <!--  FilterPanel  -->
-                            </Grid.RowDefinitions>
-
-                            <!--  Main DataGrid  -->
-                            <ScrollViewer x:Name="DG_ScrollViewer"
-                                          Grid.Row="0"
-                                          Focusable="false"
-                                          CanContentScroll="true"
-                                          sdg:HorizontalScrollBehavior.EnableShiftMouseWheelScroll="True">
-                                <ScrollViewer.Template>
-                                    <ControlTemplate TargetType="ScrollViewer">
-                                        <Grid>
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="Auto" />
-                                                <ColumnDefinition Width="*" />
-                                                <ColumnDefinition Width="Auto" />
-                                            </Grid.ColumnDefinitions>
-                                            <Grid.RowDefinitions>
-                                                <RowDefinition Height="Auto" />
-                                                <RowDefinition Height="*" />
-                                                <RowDefinition Height="Auto" />
-                                            </Grid.RowDefinitions>
-
-                                            <!--  Per-Column Select All  -->
-                                            <Button Style="{StaticResource DefaultSelectAllButtonStyle}"
-                                                    Focusable="false"
-                                                    Command="{x:Static DataGrid.SelectAllCommand}" />
-
-                                            <!--  Column Headers  -->
-                                            <DataGridColumnHeadersPresenter x:Name="PART_ColumnHeadersPresenter" Grid.Column="1" />
-
-                                            <!--  Rows  -->
-                                            <ScrollContentPresenter x:Name="PART_ScrollContentPresenter"
-                                                                    Grid.Row="1"
-                                                                    Grid.ColumnSpan="2"
-                                                                    CanContentScroll="{TemplateBinding CanContentScroll}" />
-
-                                            <!--  Scrollbars  -->
-                                            <ScrollBar x:Name="PART_VerticalScrollBar"
-                                                       Grid.Row="1"
-                                                       Grid.Column="2"
-                                                       Orientation="Vertical"
-                                                       Visibility="{TemplateBinding ComputedVerticalScrollBarVisibility}"
-                                                       Maximum="{TemplateBinding ScrollableHeight}"
-                                                       ViewportSize="{TemplateBinding ViewportHeight}"
-                                                       Value="{Binding VerticalOffset, Mode=OneWay, RelativeSource={RelativeSource TemplatedParent}}" />
-                                            <Grid Grid.Row="2" Grid.Column="1">
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="{Binding NonFrozenColumnsViewportHorizontalOffset, RelativeSource={RelativeSource AncestorType={x:Type DataGrid}}}" />
-                                                    <ColumnDefinition Width="*" />
-                                                </Grid.ColumnDefinitions>
-                                                <ScrollBar x:Name="PART_HorizontalScrollBar"
-                                                           Grid.Column="1"
-                                                           Orientation="Horizontal"
-                                                           Visibility="{TemplateBinding ComputedHorizontalScrollBarVisibility}"
-                                                           Maximum="{TemplateBinding ScrollableWidth}"
-                                                           ViewportSize="{TemplateBinding ViewportWidth}"
-                                                           Value="{Binding HorizontalOffset, Mode=OneWay, RelativeSource={RelativeSource TemplatedParent}}" />
-                                            </Grid>
-                                        </Grid>
-                                    </ControlTemplate>
-                                </ScrollViewer.Template>
-                                <ItemsPresenter SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" />
-                            </ScrollViewer>
-
-                            <!--  FilterPanel  -->
-                            <sdg:FilterPanel x:Name="PART_FilterPanel" Grid.Row="1" />
-                        </Grid>
-                    </Border>
-                </ControlTemplate>
-            </Setter.Value>
-        </Setter>
-        <Setter Property="Background" Value="White" />
+        <Style.Resources>
+            <!--  Semantic brushes for SearchDataGrid  -->
+            <SolidColorBrush x:Key="SearchDataGrid.BackgroundBrush" Color="White" />
+            <SolidColorBrush x:Key="SearchDataGrid.BorderBrush" Color="#FFDDDDDD" />
+            <SolidColorBrush x:Key="SearchDataGrid.RowBackgroundBrush" Color="White" />
+            <SolidColorBrush x:Key="SearchDataGrid.AlternatingRowBackgroundBrush" Color="#FFF9F9F9" />
+            <SolidColorBrush x:Key="SearchDataGrid.GridLinesBrush" Color="#FFDDDDDD" />
+        </Style.Resources>
+        <Setter Property="Background" Value="{StaticResource SearchDataGrid.BackgroundBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource SearchDataGrid.BorderBrush}" />
+        <Setter Property="RowBackground" Value="{StaticResource SearchDataGrid.RowBackgroundBrush}" />
+        <Setter Property="AlternatingRowBackground" Value="{StaticResource SearchDataGrid.AlternatingRowBackgroundBrush}" />
+        <Setter Property="HorizontalGridLinesBrush" Value="{StaticResource SearchDataGrid.GridLinesBrush}" />
+        <Setter Property="VerticalGridLinesBrush" Value="{StaticResource SearchDataGrid.GridLinesBrush}" />
         <Setter Property="RowHeaderStyle" Value="{StaticResource DefaultSearchDataGridRowHeaderStyle}" />
         <Setter Property="ColumnHeaderStyle" Value="{StaticResource DefaultSearchDataGridColumnHeaderStyle}" />
         <Setter Property="RowHeaderWidth" Value="24" />
-        <Setter Property="BorderBrush" Value="#FFDDDDDD" />
-        <Setter Property="RowBackground" Value="White" />
-        <Setter Property="AlternatingRowBackground" Value="#FFF9F9F9" />
-        <Setter Property="HorizontalGridLinesBrush" Value="#FFDDDDDD" />
-        <Setter Property="VerticalGridLinesBrush" Value="#FFDDDDDD" />
         <Setter Property="HeadersVisibility" Value="All" />
         <Setter Property="GridLinesVisibility" Value="All" />
         <Setter Property="CanUserAddRows" Value="False" />
@@ -308,7 +257,95 @@
         <Setter Property="VirtualizingPanel.VirtualizationMode" Value="Recycling" />
         <Setter Property="VirtualizingPanel.ScrollUnit" Value="Item" />
         <Setter Property="ScrollViewer.IsDeferredScrollingEnabled" Value="True" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type sdg:SearchDataGrid}">
+                    <Border Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            SnapsToDevicePixels="True">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="*" />
+                                <!--  Main DataGrid  -->
+                                <RowDefinition Height="Auto" />
+                                <!--  FilterPanel  -->
+                            </Grid.RowDefinitions>
+
+                            <!--  Main DataGrid ScrollViewer  -->
+                            <ScrollViewer x:Name="DG_ScrollViewer"
+                                          Grid.Row="0"
+                                          Focusable="False"
+                                          sdg:HorizontalScrollBehavior.EnableShiftMouseWheelScroll="True"
+                                          CanContentScroll="True">
+                                <ScrollViewer.Template>
+                                    <ControlTemplate TargetType="ScrollViewer">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto" />
+                                                <RowDefinition Height="*" />
+                                                <RowDefinition Height="Auto" />
+                                            </Grid.RowDefinitions>
+
+                                            <!--  Per-Column Select All  -->
+                                            <Button Style="{StaticResource DefaultSelectAllButtonStyle}"
+                                                    Focusable="False"
+                                                    Command="{x:Static DataGrid.SelectAllCommand}" />
+
+                                            <!--  Column Headers  -->
+                                            <DataGridColumnHeadersPresenter x:Name="PART_ColumnHeadersPresenter" Grid.Column="1" />
+
+                                            <!--  Rows  -->
+                                            <ScrollContentPresenter x:Name="PART_ScrollContentPresenter"
+                                                                    Grid.Row="1"
+                                                                    Grid.ColumnSpan="2"
+                                                                    CanContentScroll="{TemplateBinding CanContentScroll}" />
+
+                                            <!--  Vertical ScrollBar  -->
+                                            <ScrollBar x:Name="PART_VerticalScrollBar"
+                                                       Grid.Row="1"
+                                                       Grid.Column="2"
+                                                       Orientation="Vertical"
+                                                       Visibility="{TemplateBinding ComputedVerticalScrollBarVisibility}"
+                                                       Maximum="{TemplateBinding ScrollableHeight}"
+                                                       ViewportSize="{TemplateBinding ViewportHeight}"
+                                                       Value="{Binding VerticalOffset, Mode=OneWay, RelativeSource={RelativeSource TemplatedParent}}" />
+
+                                            <!--  Horizontal ScrollBar  -->
+                                            <Grid Grid.Row="2" Grid.Column="1">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="{Binding NonFrozenColumnsViewportHorizontalOffset, RelativeSource={RelativeSource AncestorType=DataGrid}}" />
+                                                    <ColumnDefinition Width="*" />
+                                                </Grid.ColumnDefinitions>
+                                                <ScrollBar x:Name="PART_HorizontalScrollBar"
+                                                           Grid.Column="1"
+                                                           Orientation="Horizontal"
+                                                           Visibility="{TemplateBinding ComputedHorizontalScrollBarVisibility}"
+                                                           Maximum="{TemplateBinding ScrollableWidth}"
+                                                           ViewportSize="{TemplateBinding ViewportWidth}"
+                                                           Value="{Binding HorizontalOffset, Mode=OneWay, RelativeSource={RelativeSource TemplatedParent}}" />
+                                            </Grid>
+                                        </Grid>
+                                    </ControlTemplate>
+                                </ScrollViewer.Template>
+
+                                <ItemsPresenter SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" />
+                            </ScrollViewer>
+
+                            <!--  FilterPanel  -->
+                            <sdg:FilterPanel x:Name="PART_FilterPanel" Grid.Row="1" />
+                        </Grid>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
     </Style>
+
 
     <Style BasedOn="{StaticResource DefaultSearchDataGridStyle}" TargetType="{x:Type sdg:SearchDataGrid}" />
 

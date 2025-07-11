@@ -33,10 +33,6 @@ namespace WWSearchDataGrid.Modern.WPF
             DependencyProperty.Register("DialogAccepted", typeof(bool), typeof(DataGridFilterEditor),
                 new PropertyMetadata(false));
 
-        public static readonly DependencyProperty IsLoadingProperty =
-            DependencyProperty.Register("IsLoading", typeof(bool), typeof(DataGridFilterEditor),
-                new PropertyMetadata(false));
-
         #endregion
 
         #region Properties
@@ -75,15 +71,6 @@ namespace WWSearchDataGrid.Modern.WPF
         {
             get => (bool)GetValue(DialogAcceptedProperty);
             set => SetValue(DialogAcceptedProperty, value);
-        }
-
-        /// <summary>
-        /// Gets or sets whether the dialog is currently loading data
-        /// </summary>
-        public bool IsLoading
-        {
-            get => (bool)GetValue(IsLoadingProperty);
-            set => SetValue(IsLoadingProperty, value);
         }
 
         /// <summary>
@@ -196,7 +183,6 @@ namespace WWSearchDataGrid.Modern.WPF
 
             try
             {
-                IsLoading = true;
                 FilteredColumns.Clear();
                 AllFilterGroups.Clear();
 
@@ -238,14 +224,12 @@ namespace WWSearchDataGrid.Modern.WPF
                 // Refresh available columns list
                 RefreshAvailableColumns();
 
-                IsLoading = false;
 
                 // Load available values asynchronously to prevent UI freezing
                 _ = LoadAvailableValuesAsync();
             }
             catch (Exception ex)
             {
-                IsLoading = false;
                 System.Diagnostics.Debug.WriteLine($"Error initializing filtered columns: {ex.Message}");
             }
         }

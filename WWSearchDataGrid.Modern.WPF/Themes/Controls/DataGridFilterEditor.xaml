@@ -14,7 +14,11 @@
     <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
     <converters:EnumToStringConverter x:Key="EnumToStringConverter" />
 
-    <DataTemplate x:Key="FilterEditSearchGroupContentTemplate" DataType="{x:Type sdgCore:SearchTemplateGroup}">
+    <DataTemplate x:Key="SearchGroupContentTemplate" DataType="{x:Type sdgCore:SearchTemplateGroup}">
+        <DataTemplate.Resources>
+            <SolidColorBrush x:Key="SearchGroupContent.BackgroundBrush" Color="#FAFAFA" />
+            <SolidColorBrush x:Key="SearchGroupContent.BorderBrush" Color="#DDDDDD" />
+        </DataTemplate.Resources>
         <ItemsControl ItemsSource="{Binding SearchTemplates}"
                       VirtualizingPanel.IsVirtualizing="True"
                       VirtualizingPanel.VirtualizationMode="Recycling"
@@ -29,8 +33,8 @@
                     <StackPanel Orientation="Vertical"
                                 Margin="0,4"
                                 HorizontalAlignment="Stretch">
-                        <Border Background="#FAFAFA"
-                                BorderBrush="#DDD"
+                        <Border Background="{StaticResource SearchGroupContent.BackgroundBrush}"
+                                BorderBrush="{StaticResource SearchGroupContent.BorderBrush}"
                                 BorderThickness="1"
                                 Padding="6"
                                 CornerRadius="8">
@@ -39,7 +43,6 @@
                                     <RowDefinition Height="Auto" />
                                     <RowDefinition Height="Auto" />
                                 </Grid.RowDefinitions>
-
                                 <!--  Filter Type Row  -->
                                 <Grid Grid.Row="0">
                                     <Grid.ColumnDefinitions>
@@ -62,10 +65,10 @@
                                     </ComboBox>
 
                                     <ComboBox x:Name="PART_SearchTypeCombo"
+                                              Style="{StaticResource Default_ComboBox_Style}"
                                               Grid.Column="2"
                                               Margin="0,0,8,0"
                                               VerticalContentAlignment="Center"
-                                              Style="{StaticResource Default_ComboBox_Style}"
                                               Width="180"
                                               ItemsSource="{Binding ValidSearchTypes}"
                                               SelectedItem="{Binding SearchType}">
@@ -73,33 +76,32 @@
                                             <DataTemplate>
                                                 <StackPanel Orientation="Horizontal">
                                                     <Image Source="{Binding Converter={StaticResource SearchTypeToIconConverter}}"
-                                                           Width="16" Height="16"
                                                            Visibility="Collapsed"
                                                            Margin="0,0,6,0"
-                                                           VerticalAlignment="Center" />
-                                                    <TextBlock Text="{Binding Converter={StaticResource EnumToStringConverter}}"
-                                                               VerticalAlignment="Center" />
+                                                           VerticalAlignment="Center"
+                                                           Width="16"
+                                                           Height="16" />
+                                                    <TextBlock Text="{Binding Converter={StaticResource EnumToStringConverter}}" VerticalAlignment="Center" />
                                                 </StackPanel>
                                             </DataTemplate>
                                         </ComboBox.ItemTemplate>
                                     </ComboBox>
 
-                                    <!--  DataGridFilterEditor specific buttons  -->
                                     <StackPanel Grid.Column="4" Orientation="Horizontal">
-                                        <Button Command="{Binding RemoveSearchTemplateCommand, RelativeSource={RelativeSource AncestorType=sdg:DataGridFilterEditor}}"
+                                        <Button Style="{StaticResource TransparentFontIcon_Button_Style}"
+                                                Command="{Binding RemoveSearchTemplateCommand, RelativeSource={RelativeSource AncestorType=sdg:DataGridFilterEditor}}"
                                                 CommandParameter="{Binding}"
                                                 Margin="0,0,4,0"
-                                                Style="{StaticResource TransparentFontIcon_Button_Style}"
+                                                Padding="8"
                                                 Height="{Binding ActualWidth, RelativeSource={RelativeSource Self}}"
                                                 ToolTip="Remove"
-                                                Padding="8"
                                                 Content="&#xE10A;" />
-                                        <Button Command="{Binding AddSearchTemplateCommand, RelativeSource={RelativeSource AncestorType=sdg:DataGridFilterEditor}}"
+                                        <Button Style="{StaticResource TransparentFontIcon_Button_Style}"
+                                                Command="{Binding AddSearchTemplateCommand, RelativeSource={RelativeSource AncestorType=sdg:DataGridFilterEditor}}"
                                                 CommandParameter="{Binding}"
-                                                Height="{Binding ActualWidth, RelativeSource={RelativeSource Self}}"
                                                 Padding="8"
+                                                Height="{Binding ActualWidth, RelativeSource={RelativeSource Self}}"
                                                 ToolTip="Add"
-                                                Style="{StaticResource TransparentFontIcon_Button_Style}"
                                                 Content="&#xE109;" />
                                     </StackPanel>
                                 </Grid>
@@ -154,10 +156,49 @@
 
     <!--  Default DataGridFilterEditor Style  -->
     <Style x:Key="DefaultDataGridFilterEditorStyle" TargetType="{x:Type sdg:DataGridFilterEditor}">
+        <Style.Resources>
+            <!--  overall  -->
+            <SolidColorBrush x:Key="DataGridFilterEditor.BackgroundBrush" Color="#FFFFFFFF" />
+            <!--  header  -->
+            <SolidColorBrush x:Key="DataGridFilterEditor.HeaderBackgroundBrush" Color="#F8F9FA" />
+            <SolidColorBrush x:Key="DataGridFilterEditor.HeaderBorderBrush" Color="#E1E5E9" />
+            <SolidColorBrush x:Key="DataGridFilterEditor.HeaderTitleBrush" Color="#333333" />
+            <SolidColorBrush x:Key="DataGridFilterEditor.HeaderSubtitleBrush" Color="#666666" />
+            <!--  add column button  -->
+            <SolidColorBrush x:Key="DataGridFilterEditor.AddButton.Background.Default" Color="#2296F3" />
+            <SolidColorBrush x:Key="DataGridFilterEditor.AddButton.Foreground.Default" Color="#FFFFFFFF" />
+            <SolidColorBrush x:Key="DataGridFilterEditor.AddButton.BorderBrush.Default" Color="#1A76C0" />
+            <SolidColorBrush x:Key="DataGridFilterEditor.AddButton.Background.Hover" Color="#238EFF" />
+            <SolidColorBrush x:Key="DataGridFilterEditor.AddButton.Background.Pressed" Color="#1B71CC" />
+            <SolidColorBrush x:Key="DataGridFilterEditor.AddButton.Background.Disabled" Color="#F9F9F9" />
+            <SolidColorBrush x:Key="DataGridFilterEditor.AddButton.Foreground.Disabled" Color="#999999" />
+            <!--  loading  -->
+            <SolidColorBrush x:Key="DataGridFilterEditor.LoadingTextBrush" Color="#333333" />
+            <SolidColorBrush x:Key="DataGridFilterEditor.ProgressBar.BackgroundBrush" Color="#F0F0F0" />
+            <SolidColorBrush x:Key="DataGridFilterEditor.ProgressBar.ForegroundBrush" Color="#2196F3" />
+            <!--  footer  -->
+            <SolidColorBrush x:Key="DataGridFilterEditor.FooterBackgroundBrush" Color="#F8F9FA" />
+            <SolidColorBrush x:Key="DataGridFilterEditor.FooterBorderBrush" Color="#E1E5E9" />
+            <!--  apply button  -->
+            <SolidColorBrush x:Key="DataGridFilterEditor.ApplyButton.Background.Default" Color="#2196F3" />
+            <SolidColorBrush x:Key="DataGridFilterEditor.ApplyButton.Foreground.Default" Color="#FFFFFFFF" />
+            <SolidColorBrush x:Key="DataGridFilterEditor.ApplyButton.BorderBrush.Default" Color="#1976D2" />
+            <SolidColorBrush x:Key="DataGridFilterEditor.ApplyButton.Background.Hover" Color="#1976D2" />
+            <SolidColorBrush x:Key="DataGridFilterEditor.ApplyButton.Background.Pressed" Color="#1565C0" />
+            <SolidColorBrush x:Key="DataGridFilterEditor.ApplyButton.Background.Disabled" Color="#F9F9F9" />
+            <SolidColorBrush x:Key="DataGridFilterEditor.ApplyButton.Foreground.Disabled" Color="#999999" />
+            <!--  cancel button  -->
+            <SolidColorBrush x:Key="DataGridFilterEditor.CancelButton.Background.Default" Color="#F5F5F5" />
+            <SolidColorBrush x:Key="DataGridFilterEditor.CancelButton.BorderBrush.Default" Color="#CCCCCC" />
+            <SolidColorBrush x:Key="DataGridFilterEditor.CancelButton.Background.Hover" Color="#E0E0E0" />
+            <SolidColorBrush x:Key="DataGridFilterEditor.CancelButton.Background.Pressed" Color="#D0D0D0" />
+            <SolidColorBrush x:Key="DataGridFilterEditor.CancelButton.Background.Disabled" Color="#F9F9F9" />
+            <SolidColorBrush x:Key="DataGridFilterEditor.CancelButton.Foreground.Disabled" Color="#999999" />
+        </Style.Resources>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type sdg:DataGridFilterEditor}">
-                    <Grid Background="White">
+                    <Grid Background="{TemplateBinding Background}">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="*" />
@@ -166,8 +207,8 @@
 
                         <!--  Header  -->
                         <Border Grid.Row="0"
-                                Background="#F8F9FA"
-                                BorderBrush="#E1E5E9"
+                                Background="{StaticResource DataGridFilterEditor.HeaderBackgroundBrush}"
+                                BorderBrush="{StaticResource DataGridFilterEditor.HeaderBorderBrush}"
                                 BorderThickness="0,0,0,1"
                                 Padding="16,12">
                             <Grid>
@@ -175,35 +216,31 @@
                                     <RowDefinition Height="Auto" />
                                     <RowDefinition Height="Auto" />
                                 </Grid.RowDefinitions>
-
                                 <StackPanel Grid.Row="0">
-                                    <TextBlock Foreground="#333"
+                                    <TextBlock Foreground="{StaticResource DataGridFilterEditor.HeaderTitleBrush}"
                                                Text="Edit Column Filters"
                                                FontSize="18"
                                                FontWeight="SemiBold" />
-                                    <TextBlock Foreground="#666"
+                                    <TextBlock Foreground="{StaticResource DataGridFilterEditor.HeaderSubtitleBrush}"
                                                Text="Configure advanced filters for each column"
                                                Margin="0,2,0,0"
                                                FontSize="12" />
                                 </StackPanel>
-                                
-                                <!--  Column Management Section  -->
-                                <DockPanel Grid.Row="1" 
-                                           Margin="0,12,0,0">
-                                    <Label Content="Add Column:" 
-                                           DockPanel.Dock="Left"
+                                <!--  Column Management  -->
+                                <DockPanel Grid.Row="1" Margin="0,12,0,0">
+                                    <Label DockPanel.Dock="Left"
+                                           Margin="0,0,8,0"
                                            VerticalAlignment="Center"
-                                           Margin="0,0,8,0" />
-                                    <Button Content="Add" 
-                                            DockPanel.Dock="Right"
+                                           Content="Add Column:" />
+                                    <Button DockPanel.Dock="Right"
+                                            Background="{StaticResource DataGridFilterEditor.AddButton.Background.Default}"
+                                            Foreground="{StaticResource DataGridFilterEditor.AddButton.Foreground.Default}"
+                                            BorderBrush="{StaticResource DataGridFilterEditor.AddButton.BorderBrush.Default}"
+                                            BorderThickness="1"
                                             Command="{Binding AddColumnCommand, RelativeSource={RelativeSource TemplatedParent}}"
                                             CommandParameter="{Binding SelectedItem, ElementName=AvailableColumnsComboBox}"
-                                            Margin="8,0,0,0"
                                             Padding="12,4"
-                                            Background="#2296f3"
-                                            Foreground="White"
-                                            BorderBrush="#1a76c0"
-                                            BorderThickness="1">
+                                            Content="Add">
                                         <Button.Style>
                                             <Style TargetType="Button">
                                                 <Setter Property="Template">
@@ -218,14 +255,14 @@
                                                             </Border>
                                                             <ControlTemplate.Triggers>
                                                                 <Trigger Property="IsMouseOver" Value="True">
-                                                                    <Setter Property="Background" Value="#45a049" />
+                                                                    <Setter Property="Background" Value="{StaticResource DataGridFilterEditor.AddButton.Background.Hover}" />
                                                                 </Trigger>
                                                                 <Trigger Property="IsPressed" Value="True">
-                                                                    <Setter Property="Background" Value="#3e8e41" />
+                                                                    <Setter Property="Background" Value="{StaticResource DataGridFilterEditor.AddButton.Background.Pressed}" />
                                                                 </Trigger>
                                                                 <Trigger Property="IsEnabled" Value="False">
-                                                                    <Setter Property="Background" Value="#F9F9F9" />
-                                                                    <Setter Property="Foreground" Value="#999" />
+                                                                    <Setter Property="Background" Value="{StaticResource DataGridFilterEditor.AddButton.Background.Disabled}" />
+                                                                    <Setter Property="Foreground" Value="{StaticResource DataGridFilterEditor.AddButton.Foreground.Disabled}" />
                                                                 </Trigger>
                                                             </ControlTemplate.Triggers>
                                                         </ControlTemplate>
@@ -234,11 +271,11 @@
                                             </Style>
                                         </Button.Style>
                                     </Button>
-                                    <ComboBox Name="AvailableColumnsComboBox" 
-                                              ItemsSource="{Binding AvailableColumns, RelativeSource={RelativeSource TemplatedParent}}"
+                                    <ComboBox x:Name="AvailableColumnsComboBox"
                                               Style="{StaticResource Editable_ComboBox_Style}"
+                                              VerticalContentAlignment="Center"
                                               MinWidth="200"
-                                              VerticalContentAlignment="Center">
+                                              ItemsSource="{Binding AvailableColumns, RelativeSource={RelativeSource TemplatedParent}}">
                                         <ComboBox.ItemTemplate>
                                             <DataTemplate>
                                                 <TextBlock Text="{Binding DisplayName}" />
@@ -248,7 +285,7 @@
                                 </DockPanel>
                             </Grid>
                         </Border>
-
+                        
                         <!--  Main Content - Single ListBox with All Filter Groups  -->
                         <ScrollViewer Grid.Row="1"
                                       Margin="16"
@@ -280,8 +317,8 @@
                                         <GroupBox Padding="8">
                                             <GroupBox.Header>
                                                 <DockPanel Margin="0,0,0,8" LastChildFill="True">
-                                                    <ComboBox DockPanel.Dock="Left"
-                                                              Style="{StaticResource Default_ComboBox_Style}"
+                                                    <ComboBox Style="{StaticResource Default_ComboBox_Style}"
+                                                              DockPanel.Dock="Left"
                                                               Visibility="{Binding SearchTemplateGroup.IsOperatorVisible, Converter={StaticResource BooleanToVisibilityConverter}}"
                                                               Margin="0,0,8,0"
                                                               VerticalContentAlignment="Center"
@@ -291,17 +328,16 @@
                                                         <sys:String>Or</sys:String>
                                                     </ComboBox>
 
-                                                    <Button DockPanel.Dock="Right"
+                                                    <Button Style="{StaticResource TransparentFontIcon_Button_Style}"
+                                                            DockPanel.Dock="Right"
                                                             Command="{Binding RemoveColumnCommand, RelativeSource={RelativeSource AncestorType=sdg:DataGridFilterEditor}}"
                                                             CommandParameter="{Binding ColumnInfo}"
                                                             Margin="8,0,0,0"
-                                                            Style="{StaticResource TransparentFontIcon_Button_Style}"
-                                                            Height="{Binding ActualWidth, RelativeSource={RelativeSource Self}}"
-                                                            Width="24"
-                                                            ToolTip="Remove Column"
                                                             Padding="4"
-                                                            Content="&#xE10A;"
-                                                            Foreground="#D32F2F" />
+                                                            Width="24"
+                                                            Height="{Binding ActualWidth, RelativeSource={RelativeSource Self}}"
+                                                            ToolTip="Remove Column"
+                                                            Content="&#xE10A;" />
 
                                                     <TextBlock DockPanel.Dock="Left"
                                                                Text="{Binding DisplayName}"
@@ -312,45 +348,16 @@
                                             </GroupBox.Header>
 
                                             <!--  Use the shared template for the group content  -->
-                                            <ContentPresenter Content="{Binding SearchTemplateGroup}" ContentTemplate="{StaticResource FilterEditSearchGroupContentTemplate}" />
+                                            <ContentPresenter Content="{Binding SearchTemplateGroup}" ContentTemplate="{StaticResource SearchGroupContentTemplate}" />
                                         </GroupBox>
                                     </DataTemplate>
                                 </ListBox.ItemTemplate>
                             </ListBox>
                         </ScrollViewer>
 
-                        <!--  Loading Indicator  -->
-                        <Grid Grid.Row="1"
-                              Background="White"
-                              Opacity="0.8">
-                            <Grid.Style>
-                                <Style TargetType="Grid">
-                                    <Setter Property="Visibility" Value="Collapsed" />
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding IsLoading, RelativeSource={RelativeSource TemplatedParent}}" Value="True">
-                                            <Setter Property="Visibility" Value="Visible" />
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </Grid.Style>
-                            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-                                <TextBlock Foreground="#333"
-                                           Text="Loading filter data..."
-                                           Margin="0,0,0,16"
-                                           HorizontalAlignment="Center"
-                                           FontSize="16"
-                                           FontWeight="Medium" />
-                                <ProgressBar Background="#F0F0F0"
-                                             Foreground="#2196F3"
-                                             Width="200"
-                                             Height="4"
-                                             IsIndeterminate="True" />
-                            </StackPanel>
-                        </Grid>
-
                         <!--  No Filters Message  -->
                         <TextBlock Grid.Row="1"
-                                   Foreground="Gray"
+                                   Foreground="{StaticResource DataGridFilterEditor.HeaderSubtitleBrush}"
                                    Text="No active filters to edit.&#x0a;&#x0a;Apply filters to columns first, then use this dialog to modify them."
                                    Margin="20"
                                    HorizontalAlignment="Center"
@@ -371,19 +378,17 @@
 
                         <!--  Footer  -->
                         <Border Grid.Row="2"
-                                Background="#F8F9FA"
-                                BorderBrush="#E1E5E9"
+                                Background="{StaticResource DataGridFilterEditor.FooterBackgroundBrush}"
+                                BorderBrush="{StaticResource DataGridFilterEditor.FooterBorderBrush}"
                                 BorderThickness="0,1,0,0"
                                 Padding="16,12">
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-
                                 <Button x:Name="PART_ApplyButton"
-                                        Background="#2196F3"
-                                        Foreground="White"
-                                        BorderBrush="#1976D2"
+                                        Background="{StaticResource DataGridFilterEditor.ApplyButton.Background.Default}"
+                                        Foreground="{StaticResource DataGridFilterEditor.ApplyButton.Foreground.Default}"
+                                        BorderBrush="{StaticResource DataGridFilterEditor.ApplyButton.BorderBrush.Default}"
                                         BorderThickness="1"
                                         Command="{Binding ApplyCommand, RelativeSource={RelativeSource TemplatedParent}}"
-                                        Margin="4,0"
                                         Padding="16,8"
                                         MinWidth="80"
                                         Content="Apply">
@@ -401,14 +406,14 @@
                                                         </Border>
                                                         <ControlTemplate.Triggers>
                                                             <Trigger Property="IsMouseOver" Value="True">
-                                                                <Setter Property="Background" Value="#1976D2" />
+                                                                <Setter Property="Background" Value="{StaticResource DataGridFilterEditor.ApplyButton.Background.Hover}" />
                                                             </Trigger>
                                                             <Trigger Property="IsPressed" Value="True">
-                                                                <Setter Property="Background" Value="#1565C0" />
+                                                                <Setter Property="Background" Value="{StaticResource DataGridFilterEditor.ApplyButton.Background.Pressed}" />
                                                             </Trigger>
                                                             <Trigger Property="IsEnabled" Value="False">
-                                                                <Setter Property="Background" Value="#F9F9F9" />
-                                                                <Setter Property="Foreground" Value="#999" />
+                                                                <Setter Property="Background" Value="{StaticResource DataGridFilterEditor.ApplyButton.Background.Disabled}" />
+                                                                <Setter Property="Foreground" Value="{StaticResource DataGridFilterEditor.ApplyButton.Foreground.Disabled}" />
                                                             </Trigger>
                                                         </ControlTemplate.Triggers>
                                                     </ControlTemplate>
@@ -424,11 +429,10 @@
                                 </Button>
 
                                 <Button x:Name="PART_CancelButton"
-                                        Background="#F5F5F5"
-                                        BorderBrush="#CCC"
+                                        Background="{StaticResource DataGridFilterEditor.CancelButton.Background.Default}"
+                                        BorderBrush="{StaticResource DataGridFilterEditor.CancelButton.BorderBrush.Default}"
                                         BorderThickness="1"
                                         Command="{Binding CancelCommand, RelativeSource={RelativeSource TemplatedParent}}"
-                                        Margin="4,0"
                                         Padding="16,8"
                                         MinWidth="80"
                                         Content="Cancel">
@@ -443,22 +447,22 @@
                                             </Border>
                                             <ControlTemplate.Triggers>
                                                 <Trigger Property="IsMouseOver" Value="True">
-                                                    <Setter Property="Background" Value="#E0E0E0" />
+                                                    <Setter Property="Background" Value="{StaticResource DataGridFilterEditor.CancelButton.Background.Hover}" />
                                                 </Trigger>
                                                 <Trigger Property="IsPressed" Value="True">
-                                                    <Setter Property="Background" Value="#D0D0D0" />
+                                                    <Setter Property="Background" Value="{StaticResource DataGridFilterEditor.CancelButton.Background.Pressed}" />
                                                 </Trigger>
                                                 <Trigger Property="IsEnabled" Value="False">
-                                                    <Setter Property="Background" Value="#F9F9F9" />
-                                                    <Setter Property="Foreground" Value="#999" />
+                                                    <Setter Property="Background" Value="{StaticResource DataGridFilterEditor.CancelButton.Background.Disabled}" />
+                                                    <Setter Property="Foreground" Value="{StaticResource DataGridFilterEditor.CancelButton.Foreground.Disabled}" />
                                                 </Trigger>
                                             </ControlTemplate.Triggers>
                                         </ControlTemplate>
                                     </Button.Template>
                                 </Button>
-
                             </StackPanel>
                         </Border>
+
                     </Grid>
                 </ControlTemplate>
             </Setter.Value>
