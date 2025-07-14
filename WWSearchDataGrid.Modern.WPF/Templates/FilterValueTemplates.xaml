@@ -14,107 +14,6 @@
     <converters:CountToVisibilityConverter x:Key="CountToVisibilityConverter" />
     <converters:IntToVisibilityConverter x:Key="IntToVisibilityConverter" />
 
-    <!--  Colors and Brushes  -->
-    <Color x:Key="PrimaryColor">#0078D4</Color>
-    <SolidColorBrush x:Key="SelectionBrush" Color="{StaticResource PrimaryColor}" />
-    <SolidColorBrush x:Key="HoverBrush" Color="#F3F3F3" />
-    <SolidColorBrush x:Key="BorderBrush" Color="#DDDDDD" />
-    <SolidColorBrush x:Key="GrayTextBrush" Color="#666" />
-
-    <!--  Search TextBox Style  -->
-    <Style x:Key="SearchTextBoxStyle" TargetType="TextBox">
-        <Setter Property="Padding" Value="8,6" />
-        <Setter Property="FontSize" Value="12" />
-        <Setter Property="Template">
-            <Setter.Value>
-                <ControlTemplate TargetType="TextBox">
-                    <Border Background="White"
-                            BorderBrush="{StaticResource BorderBrush}"
-                            BorderThickness="1"
-                            CornerRadius="4">
-                        <Grid>
-                            <!--  Search Icon  -->
-                            <TextBlock x:Name="SearchIcon"
-                                       Foreground="{StaticResource GrayTextBrush}"
-                                       Text="&#xE721;"
-                                       IsHitTestVisible="False"
-                                       Margin="8,0,0,0"
-                                       HorizontalAlignment="Left"
-                                       VerticalAlignment="Center"
-                                       FontFamily="Segoe MDL2 Assets"
-                                       FontSize="12" />
-
-                            <!--  Placeholder text  -->
-                            <TextBlock x:Name="PlaceholderText"
-                                       Foreground="{StaticResource GrayTextBrush}"
-                                       Text="{TemplateBinding Tag}"
-                                       Visibility="Collapsed"
-                                       IsHitTestVisible="False"
-                                       Margin="30,0,30,0"
-                                       VerticalAlignment="Center" />
-
-                            <ScrollViewer x:Name="PART_ContentHost"
-                                          Margin="26,0,26,0"
-                                          VerticalAlignment="Center" />
-
-                            <!--  Clear Button  -->
-                            <Button x:Name="ClearButton"
-                                    Background="Transparent"
-                                    BorderThickness="0"
-                                    Visibility="Collapsed"
-                                    Cursor="Hand"
-                                    Margin="0,0,6,0"
-                                    HorizontalAlignment="Right"
-                                    VerticalAlignment="Center"
-                                    Width="16"
-                                    Height="16"
-                                    ToolTip="Clear search">
-                                <Button.Template>
-                                    <ControlTemplate TargetType="Button">
-                                        <Border Background="{TemplateBinding Background}" CornerRadius="8">
-                                            <TextBlock Foreground="{StaticResource GrayTextBrush}"
-                                                       Text="&#xE711;"
-                                                       HorizontalAlignment="Center"
-                                                       VerticalAlignment="Center"
-                                                       FontFamily="Segoe MDL2 Assets"
-                                                       FontSize="10" />
-                                        </Border>
-                                        <ControlTemplate.Triggers>
-                                            <Trigger Property="IsMouseOver" Value="True">
-                                                <Setter Property="Background" Value="#FFF0F0F0" />
-                                            </Trigger>
-                                        </ControlTemplate.Triggers>
-                                    </ControlTemplate>
-                                </Button.Template>
-                            </Button>
-                        </Grid>
-                    </Border>
-                    <ControlTemplate.Triggers>
-                        <MultiTrigger>
-                            <MultiTrigger.Conditions>
-                                <Condition Property="Text" Value="" />
-                                <Condition Property="IsFocused" Value="False" />
-                            </MultiTrigger.Conditions>
-                            <Setter TargetName="PlaceholderText" Property="Visibility" Value="Visible" />
-                        </MultiTrigger>
-                        <Trigger Property="Text" Value="">
-                            <Setter TargetName="ClearButton" Property="Visibility" Value="Collapsed" />
-                        </Trigger>
-                        <Trigger Property="Text" Value="{x:Null}">
-                            <Setter TargetName="ClearButton" Property="Visibility" Value="Collapsed" />
-                        </Trigger>
-                        <DataTrigger Binding="{Binding Text.Length, RelativeSource={RelativeSource Self}}" Value="0">
-                            <Setter TargetName="ClearButton" Property="Visibility" Value="Collapsed" />
-                        </DataTrigger>
-                        <Trigger Property="Text" Value="">
-                            <Setter TargetName="ClearButton" Property="Visibility" Value="Collapsed" />
-                        </Trigger>
-                    </ControlTemplate.Triggers>
-                </ControlTemplate>
-            </Setter.Value>
-        </Setter>
-    </Style>
-
     <!--  TreeView Item Style  -->
     <Style x:Key="TreeViewItemStyle" TargetType="TreeViewItem">
         <Setter Property="IsExpanded" Value="False" />
@@ -229,12 +128,11 @@
             </Grid.RowDefinitions>
 
             <!--  Search Box  -->
-            <TextBox x:Name="PART_FlatSearchBox"
-                     Style="{StaticResource SearchTextBoxStyle}"
-                     Grid.Row="0"
-                     Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
-                     Margin="0,0,0,8"
-                     Tag="Search values..." />
+            <sdg:SearchTextBox x:Name="PART_FlatSearchBox"
+                                    Watermark="Search values..."
+                                    Text="{Binding SearchText,UpdateSourceTrigger=PropertyChanged}"
+                                    Grid.Row="0"
+                                    Margin="0,0,0,8" />
 
             <!--  Select All Checkbox  -->
             <CheckBox Style="{StaticResource Default_CheckBox_Style}"
@@ -337,13 +235,12 @@
             </Border>
 
             <!--  Search Box  -->
-            <TextBox x:Name="PART_GroupSearchBox"
-                     Style="{StaticResource SearchTextBoxStyle}"
-                     Grid.Row="1"
-                     Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
-                     Margin="0,0,0,8"
-                     Tag="Search groups and values..." />
-
+            <sdg:SearchTextBox x:Name="PART_GroupSearchBox"
+                        Watermark="Search groups and values..."
+                        Text="{Binding SearchText,UpdateSourceTrigger=PropertyChanged}"
+                        Grid.Row="0"
+                        Margin="0,0,0,8" />
+            
             <!--  Select All Checkbox  -->
             <CheckBox Style="{StaticResource Default_CheckBox_Style}"
                       Grid.Row="2"
@@ -351,7 +248,6 @@
                       Margin="0,0,0,8"
                       IsThreeState="True"
                       Content="Select All" />
-
 
             <!--  Virtualized TreeView  -->
             <TreeView Grid.Row="3"
@@ -495,12 +391,11 @@
             </Border>
 
             <!--  Search Box  -->
-            <TextBox x:Name="PART_DateSearchBox"
-                     Style="{StaticResource SearchTextBoxStyle}"
-                     Grid.Row="1"
-                     Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
-                     Margin="0,0,0,8"
-                     Tag="Search dates (e.g., 2023, January, 15)..." />
+            <sdg:SearchTextBox x:Name="PART_DateSearchBox"
+                        Watermark="Search dates (e.g., 2023, January, 15)..."
+                        Text="{Binding SearchText,UpdateSourceTrigger=PropertyChanged}"
+                        Grid.Row="0"
+                        Margin="0,0,0,8" />
 
             <!--  Select All Checkbox  -->
             <CheckBox Style="{StaticResource Default_CheckBox_Style}"

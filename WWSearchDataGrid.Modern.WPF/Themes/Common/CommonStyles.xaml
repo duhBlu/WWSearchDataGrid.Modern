@@ -220,8 +220,6 @@
 
     <!--#endregion Buttons-->
 
-
-
     <!--#region Combobox-->
 
     <SolidColorBrush x:Key="ComboBox.BackgroundBrush" Color="White" />
@@ -234,8 +232,6 @@
 
     <SolidColorBrush x:Key="ComboBoxPopup.BackgroundBrush" Color="White" />
     <SolidColorBrush x:Key="ComboBoxPopup.BorderBrush" Color="#CCCCCC" />
-
-
 
     <SolidColorBrush x:Key="ComboBoxToggleButton.GlyphBrush.Normal" Color="Black" />
     <SolidColorBrush x:Key="ComboBoxToggleButton.GlyphBrush.Disabled" Color="#888888" />
@@ -342,7 +338,6 @@
         </Setter>
     </Style>
 
-
     <Style x:Key="Default_ComboBox_Style" TargetType="{x:Type ComboBox}">
         <Setter Property="ItemContainerStyle" Value="{StaticResource Default_ComboBoxItem_Style}" />
         <Setter Property="Foreground" Value="{StaticResource ComboBox.ForegroundBrush}" />
@@ -354,6 +349,18 @@
         <Setter Property="MinWidth" Value="65" />
         <Setter Property="HorizontalContentAlignment" Value="Stretch" />
         <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="VirtualizingPanel.IsVirtualizing" Value="True" />
+        <Setter Property="VirtualizingPanel.VirtualizationMode" Value="Recycling" />
+        <Setter Property="ScrollViewer.IsDeferredScrollingEnabled" Value="True" />
+        <Setter Property="ItemsPanel">
+            <Setter.Value>
+                <ItemsPanelTemplate>
+                    <VirtualizingStackPanel VirtualizingPanel.IsVirtualizing="True"
+                                    VirtualizingPanel.VirtualizationMode="Recycling"
+                                    VirtualizingPanel.ScrollUnit="Item" />
+                </ItemsPanelTemplate>
+            </Setter.Value>
+        </Setter>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type ComboBox}">
@@ -450,7 +457,6 @@
     </Style>
 
     <Style x:Key="Editable_ComboBox_Style"
-           BasedOn="{StaticResource Default_ComboBox_Style}"
            TargetType="{x:Type ComboBox}">
         <Setter Property="IsEditable" Value="True" />
         <Setter Property="Template">

@@ -7,6 +7,7 @@
 
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF;component/Themes/Common/CommonStyles.xaml" />
+        <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF;component/Themes/Controls/Primitives/SearchTextBox.xaml" />
     </ResourceDictionary.MergedDictionaries>
 
     <!--  Converters  -->
@@ -17,96 +18,9 @@
     <converters:FilterInputTemplateToVisibilityConverter x:Key="FilterInputTemplateToVisibilityConverter" />
     <converters:EnumToStringConverter x:Key="EnumToStringConverter" />
 
-    <!--  Data Templates for different input types  -->
-
-    <Style x:Key="VirtualizedEditable_Combobox_Style"
-           BasedOn="{StaticResource Editable_ComboBox_Style}"
-           TargetType="{x:Type ComboBox}">
-        <Setter Property="ItemsPanel">
-            <Setter.Value>
-                <ItemsPanelTemplate>
-                    <VirtualizingStackPanel VirtualizingPanel.IsVirtualizing="True"
-                                            VirtualizingPanel.VirtualizationMode="Recycling"
-                                            VirtualizingPanel.ScrollUnit="Item" />
-                </ItemsPanelTemplate>
-            </Setter.Value>
-        </Setter>
-        <Setter Property="MinWidth" Value="150" />
-        <Setter Property="VirtualizingPanel.IsVirtualizing" Value="True" />
-        <Setter Property="VirtualizingPanel.VirtualizationMode" Value="Recycling" />
-        <Setter Property="ScrollViewer.IsDeferredScrollingEnabled" Value="True" />
-    </Style>
-
-    <!--  Filter TextBox Style  -->
-    <Style x:Key="Filter_TextBox_Style" TargetType="{x:Type TextBox}">
-        <Setter Property="Foreground" Value="Black" />
-        <Setter Property="Background" Value="White" />
-        <Setter Property="BorderBrush" Value="#CCCCCC" />
-        <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="Padding" Value="8,4" />
-        <Setter Property="MinHeight" Value="32" />
-        <Setter Property="MinWidth" Value="150" />
-        <Setter Property="HorizontalContentAlignment" Value="Left" />
-        <Setter Property="VerticalContentAlignment" Value="Center" />
-        <Setter Property="Template">
-            <Setter.Value>
-                <ControlTemplate TargetType="{x:Type TextBox}">
-                    <Grid>
-                        <Border x:Name="Border"
-                                Background="{TemplateBinding Background}"
-                                BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="{TemplateBinding BorderThickness}"
-                                CornerRadius="4" />
-                        
-                        <ScrollViewer x:Name="PART_ContentHost"
-                                      Margin="{TemplateBinding Padding}"
-                                      HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                      VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
-                                      Background="Transparent" />
-                        
-                        <TextBlock x:Name="PlaceholderText"
-                                   Foreground="#888888"
-                                   Text="{TemplateBinding Tag}"
-                                   Visibility="Collapsed"
-                                   IsHitTestVisible="False"
-                                   Margin="{TemplateBinding Padding}"
-                                   HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                   VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
-                    </Grid>
-                    <ControlTemplate.Triggers>
-                        <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Border" Property="BorderBrush" Value="#888888" />
-                            <Setter TargetName="Border" Property="Background" Value="#f9f9f9" />
-                        </Trigger>
-                        <Trigger Property="IsKeyboardFocused" Value="True">
-                            <Setter TargetName="Border" Property="BorderBrush" Value="#0078D4" />
-                        </Trigger>
-                        <MultiTrigger>
-                            <MultiTrigger.Conditions>
-                                <Condition Property="Text" Value="" />
-                                <Condition Property="IsKeyboardFocusWithin" Value="False" />
-                            </MultiTrigger.Conditions>
-                            <Setter TargetName="PlaceholderText" Property="Visibility" Value="Visible" />
-                        </MultiTrigger>
-                        <MultiTrigger>
-                            <MultiTrigger.Conditions>
-                                <Condition Property="Text" Value="{x:Null}" />
-                                <Condition Property="IsKeyboardFocusWithin" Value="False" />
-                            </MultiTrigger.Conditions>
-                            <Setter TargetName="PlaceholderText" Property="Visibility" Value="Visible" />
-                        </MultiTrigger>
-                        <Trigger Property="IsEnabled" Value="False">
-                            <Setter Property="Opacity" Value="0.6" />
-                        </Trigger>
-                    </ControlTemplate.Triggers>
-                </ControlTemplate>
-            </Setter.Value>
-        </Setter>
-    </Style>
-
     <!--  Single ComboBox Template  -->
     <DataTemplate x:Key="SingleComboBoxTemplate">
-        <ComboBox Style="{StaticResource VirtualizedEditable_Combobox_Style}"
+        <ComboBox Style="{StaticResource Editable_ComboBox_Style}"
                   Text="{Binding SelectedValue}"
                   Tag="Type or select..."
                   ItemsSource="{Binding AvailableValues}" />
@@ -114,9 +28,7 @@
 
     <!--  Single TextBox Template  -->
     <DataTemplate x:Key="SingleTextBoxTemplate">
-        <TextBox Style="{StaticResource Filter_TextBox_Style}"
-                 Text="{Binding SelectedValue, UpdateSourceTrigger=PropertyChanged}"
-                 Tag="Enter text..." />
+        <sdg:SearchTextBox Text="{Binding SelectedValue, UpdateSourceTrigger=PropertyChanged}" Watermark="Enter text..." ShowSearchIcon="False" />
     </DataTemplate>
 
     <!--  Dual ComboBox Template  -->
@@ -125,7 +37,7 @@
             <TextBlock Text="From:"
                        Margin="0,0,5,0"
                        VerticalAlignment="Center" />
-            <ComboBox Style="{StaticResource VirtualizedEditable_Combobox_Style}"
+            <ComboBox Style="{StaticResource Editable_ComboBox_Style}"
                       Text="{Binding SelectedValue, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
                       MinWidth="120"
                       Tag="Type or select..."
@@ -133,7 +45,7 @@
             <TextBlock Text="To:"
                        Margin="10,0,5,0"
                        VerticalAlignment="Center" />
-            <ComboBox Style="{StaticResource VirtualizedEditable_Combobox_Style}"
+            <ComboBox Style="{StaticResource Editable_ComboBox_Style}"
                       Text="{Binding SelectedSecondaryValue, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
                       MinWidth="120"
                       Tag="Type or select..."
@@ -167,10 +79,10 @@
                                Maximum="10000"
                                Increment="1"
                                Value="{Binding SelectedValue, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-            <TextBlock Text="items"
+            <TextBlock Foreground="Gray"
+                       Text="items"
                        Margin="5,0,0,0"
-                       VerticalAlignment="Center"
-                       Foreground="Gray" />
+                       VerticalAlignment="Center" />
         </StackPanel>
     </DataTemplate>
 
@@ -237,10 +149,10 @@
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
-                                <ComboBox Style="{StaticResource VirtualizedEditable_Combobox_Style}"
+                                <ComboBox Style="{StaticResource Editable_ComboBox_Style}"
                                           Grid.Column="0"
-                                          Tag="Type or select..."
                                           Text="{Binding Value}"
+                                          Tag="Type or select..."
                                           ItemsSource="{Binding DataContext.AvailableValues, RelativeSource={RelativeSource AncestorType=ListBox}}" />
                                 <Button Style="{StaticResource TransparentFontIcon_Button_Style}"
                                         Grid.Column="1"
@@ -325,16 +237,18 @@
             <ItemsControl ItemsSource="{Binding DateIntervals}">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                        <CheckBox IsChecked="{Binding IsSelected}" Style="{StaticResource Default_CheckBox_Style}" Margin="0,2">
+                        <CheckBox Style="{StaticResource Default_CheckBox_Style}"
+                                  IsChecked="{Binding IsSelected}"
+                                  Margin="0,2">
                             <CheckBox.Content>
                                 <StackPanel Orientation="Horizontal">
                                     <Image Source="{Binding Interval, Converter={StaticResource DateIntervalToIconConverter}}"
-                                           Width="16" Height="16"
                                            Visibility="Collapsed"
                                            Margin="0,0,6,0"
-                                           VerticalAlignment="Center" />
-                                    <TextBlock Text="{Binding DisplayName}"
-                                               VerticalAlignment="Center" />
+                                           VerticalAlignment="Center"
+                                           Width="16"
+                                           Height="16" />
+                                    <TextBlock Text="{Binding DisplayName}" VerticalAlignment="Center" />
                                 </StackPanel>
                             </CheckBox.Content>
                         </CheckBox>
