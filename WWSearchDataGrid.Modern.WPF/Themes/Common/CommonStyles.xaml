@@ -237,17 +237,18 @@
 
 
 
-    
+    <SolidColorBrush x:Key="ComboBoxToggleButton.GlyphBrush.Normal" Color="Black" />
+    <SolidColorBrush x:Key="ComboBoxToggleButton.GlyphBrush.Disabled" Color="#888888" />
+    <SolidColorBrush x:Key="ComboBoxToggleButton.BackgroundBrush.Hover" Color="#E0E0E0" />
+    <SolidColorBrush x:Key="ComboBoxToggleButton.BackgroundBrush.Pressed" Color="#D0D0D0" />
 
-    
+    <SolidColorBrush x:Key="ComboBoxItem.Background.MouseOver" Color="#F3F9FF" />
+    <SolidColorBrush x:Key="ComboBoxItem.Background.Selected" Color="#E5F1FB" />
+    <SolidColorBrush x:Key="ComboBoxItem.BorderBrush.MouseOver" Color="#0078D4" />
+    <SolidColorBrush x:Key="ComboBoxItem.BorderBrush.Selected" Color="#005A9E" />
+    <SolidColorBrush x:Key="ComboBoxItem.Foreground.Disabled" Color="#888888" />
 
     <Style x:Key="Default_ComboBoxToggleButton_Style" TargetType="{x:Type ToggleButton}">
-        <Style.Resources>
-            <SolidColorBrush x:Key="ComboBoxToggleButton.GlyphBrush.Normal" Color="Black" />
-            <SolidColorBrush x:Key="ComboBoxToggleButton.GlyphBrush.Disabled" Color="#888888" />
-            <SolidColorBrush x:Key="ComboBoxToggleButton.BackgroundBrush.Hover" Color="#E0E0E0" />
-            <SolidColorBrush x:Key="ComboBoxToggleButton.BackgroundBrush.Pressed" Color="#D0D0D0" />
-        </Style.Resources>
         <Setter Property="OverridesDefaultStyle" Value="True" />
         <Setter Property="IsTabStop" Value="False" />
         <Setter Property="Focusable" Value="False" />
@@ -299,21 +300,13 @@
 
 
     <Style x:Key="Default_ComboBoxItem_Style" TargetType="{x:Type ComboBoxItem}">
-        <Style.Resources>
-            <SolidColorBrush x:Key="ComboBoxItem.Foreground.Normal" Color="#FF000000" />
-            <SolidColorBrush x:Key="ComboBoxItem.Background.MouseOver" Color="#F3F9FF" />
-            <SolidColorBrush x:Key="ComboBoxItem.Background.Selected" Color="#E5F1FB" />
-            <SolidColorBrush x:Key="ComboBoxItem.BorderBrush.MouseOver" Color="#0078D4" />
-            <SolidColorBrush x:Key="ComboBoxItem.BorderBrush.Selected" Color="#005A9E" />
-            <SolidColorBrush x:Key="ComboBoxItem.Foreground.Disabled" Color="#888888" />
-        </Style.Resources>
         <Setter Property="SnapsToDevicePixels" Value="True" />
         <Setter Property="OverridesDefaultStyle" Value="True" />
         <Setter Property="HorizontalContentAlignment" Value="Stretch" />
         <Setter Property="VerticalContentAlignment" Value="Center" />
         <Setter Property="Padding" Value="12,6" />
         <Setter Property="Background" Value="Transparent" />
-        <Setter Property="Foreground" Value="{StaticResource ComboBoxItem.Foreground.Normal}" />
+        <Setter Property="Foreground" Value="Black" />
         <Setter Property="FocusVisualStyle" Value="{x:Null}" />
         <Setter Property="Template">
             <Setter.Value>

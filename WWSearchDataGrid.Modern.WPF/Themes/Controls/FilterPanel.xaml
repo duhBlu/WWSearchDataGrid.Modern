@@ -14,47 +14,83 @@
     <converters:StringToVisibilityConverter x:Key="StringToVisibilityConverter" />
     <converters:GreaterThanConverter x:Key="GreaterThanConverter" />
 
+    <Color x:Key="PrimaryColor">#0078D4</Color>
+    <SolidColorBrush x:Key="SelectionBrush" Color="{StaticResource PrimaryColor}" />
+
+    <!--  Action Button Style  -->
+    <Style x:Key="FilterPanelActionButtonStyle" TargetType="Button">
+        <Setter Property="Background" Value="#F5F5F5" />
+        <Setter Property="BorderBrush" Value="#CCC" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Padding" Value="12,6" />
+        <Setter Property="Margin" Value="4,0" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            Padding="{TemplateBinding Padding}"
+                            CornerRadius="4">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter Property="Background" Value="#E0E0E0" />
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter Property="Background" Value="#D0D0D0" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Background" Value="#F9F9F9" />
+                            <Setter Property="Foreground" Value="#999" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!--  Transparent Font Icon Button Style  -->
+    <Style x:Key="TransparentFontIcon_Button_Style" TargetType="Button">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Foreground" Value="#666" />
+        <Setter Property="FontFamily" Value="Segoe MDL2 Assets" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            Padding="{TemplateBinding Padding}"
+                            CornerRadius="3">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!--  Default FilterPanel Style  -->
     <Style x:Key="Default_FilterPanel_Style" TargetType="{x:Type sdg:FilterPanel}">
-        <Style.Resources>
-            <!--  Panel base brushes  -->
-            <SolidColorBrush x:Key="FilterPanel.BackgroundBrush" Color="#FFF8F9FA" />
-            <SolidColorBrush x:Key="FilterPanel.BorderBrush" Color="#FFE1E5E9" />
-
-            <!--  Fade overlay gradient stops  -->
-            <Color x:Key="FilterPanel.FadeGradientStartColor">#00FFFFFF</Color>
-            <SolidColorBrush x:Key="FilterPanel.FadeGradientEndBrush" Color="{StaticResource FilterPanel.BackgroundBrush}" />
-
-            <!--  Toggle/expand button brushes  -->
-            <SolidColorBrush x:Key="FilterPanel.ToggleHoverBackgroundBrush" Color="#FFEEEEEE" />
-            <SolidColorBrush x:Key="FilterPanel.ToggleHoverForegroundBrush" Color="#FF1C1C1C" />
-            <SolidColorBrush x:Key="FilterPanel.TogglePressedBackgroundBrush" Color="#FFDDDDDD" />
-            <SolidColorBrush x:Key="FilterPanel.TogglePressedForegroundBrush" Color="#FF000000" />
-
-            <!--  Edit button brushes  -->
-            <SolidColorBrush x:Key="FilterPanel.EditHoverBackgroundBrush" Color="#FFEEEEEE" />
-            <SolidColorBrush x:Key="FilterPanel.EditHoverForegroundBrush" Color="#FF1C1C1C" />
-            <SolidColorBrush x:Key="FilterPanel.EditPressedBackgroundBrush" Color="#FFDDDDDD" />
-            <SolidColorBrush x:Key="FilterPanel.EditPressedForegroundBrush" Color="#FF000000" />
-
-            <!--  Clear-all button brushes  -->
-            <SolidColorBrush x:Key="FilterPanel.ClearAllHoverBackgroundBrush" Color="#FFEEEEEE" />
-            <SolidColorBrush x:Key="FilterPanel.ClearAllHoverForegroundBrush" Color="#FFCC0000" />
-            <SolidColorBrush x:Key="FilterPanel.ClearAllPressedBackgroundBrush" Color="#FFDDDDDD" />
-            <SolidColorBrush x:Key="FilterPanel.ClearAllPressedForegroundBrush" Color="#FF990000" />
-        </Style.Resources>
-
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type sdg:FilterPanel}">
-                    <Border Background="{StaticResource FilterPanel.BackgroundBrush}"
-                            BorderBrush="{StaticResource FilterPanel.BorderBrush}"
+                    <Border Background="#F8F9FA"
+                            BorderBrush="#E1E5E9"
                             BorderThickness="0,1,0,0"
-                            Visibility="{Binding HasActiveFilters, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            Visibility="{Binding HasActiveFilters, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource BooleanToVisibilityConverter}}"                          >
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto" />
+                                <!--  Filters enabled checkbox  -->
                                 <ColumnDefinition Width="*" />
+                                <!--  Filter tokens  -->
                                 <ColumnDefinition Width="Auto" />
+                                <!--  Action buttons  -->
                             </Grid.ColumnDefinitions>
 
                             <!--  Filters Enabled Checkbox  -->
@@ -63,7 +99,7 @@
                                       IsChecked="{Binding FiltersEnabled, RelativeSource={RelativeSource TemplatedParent}}"
                                       ToolTip="Enable or disable all filters without clearing filter definitions">
                                 <CheckBox.Style>
-                                    <Style BasedOn="{StaticResource Default_CheckBox_Style}" TargetType="CheckBox">
+                                    <Style BasedOn="{StaticResource Default_CheckBox_Style}" TargetType="{x:Type CheckBox}">
                                         <Setter Property="VerticalAlignment" Value="Top" />
                                         <Setter Property="Margin" Value="6,6,0,0" />
                                         <Style.Triggers>
@@ -76,13 +112,16 @@
                                 </CheckBox.Style>
                             </CheckBox>
 
-                            <!--  Tokenized filters area  -->
+                            <!--  Filter Tokens Area  -->
                             <Grid Grid.Column="1" VerticalAlignment="Center">
+
+                                <!--  Tokenized Filter Display  -->
                                 <ItemsControl x:Name="PART_TokenizedFiltersControl"
                                               ItemsSource="{Binding FilterTokens, RelativeSource={RelativeSource TemplatedParent}}"
                                               ItemTemplateSelector="{StaticResource FilterTokenTemplateSelector}">
                                     <ItemsControl.Style>
                                         <Style TargetType="ItemsControl">
+                                            <!--  Default collapsed state: use StackPanel for single line  -->
                                             <Setter Property="ItemsPanel">
                                                 <Setter.Value>
                                                     <ItemsPanelTemplate>
@@ -91,6 +130,7 @@
                                                 </Setter.Value>
                                             </Setter>
                                             <Style.Triggers>
+                                                <!--  Expanded state: use WrapPanel for multiple lines  -->
                                                 <DataTrigger Binding="{Binding IsExpanded, RelativeSource={RelativeSource TemplatedParent}}" Value="True">
                                                     <Setter Property="ItemsPanel">
                                                         <Setter.Value>
@@ -106,17 +146,16 @@
                                 </ItemsControl>
                             </Grid>
 
-                            <!--  Fade overlay  -->
                             <Border x:Name="PART_FadeOverlay"
                                     Grid.Column="1"
-                                    IsHitTestVisible="False"
                                     Margin="0,0,-1,0"
                                     HorizontalAlignment="Right"
+                                    IsHitTestVisible="False"
                                     Width="60">
                                 <Border.Background>
                                     <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                                        <GradientStop Color="{StaticResource FilterPanel.FadeGradientStartColor}" Offset="0" />
-                                        <GradientStop Color="{StaticResource FilterPanel.FadeGradientEndBrush}" Offset="1" />
+                                        <GradientStop Color="#00FFFFFF" Offset="0" />
+                                        <GradientStop Color="#FFF8F9FA" Offset="1" />
                                     </LinearGradientBrush>
                                 </Border.Background>
                                 <Border.Style>
@@ -134,11 +173,10 @@
                                     </Style>
                                 </Border.Style>
                             </Border>
-
-                            <!--  Action buttons  -->
+                            <!--  Action Buttons  -->
                             <StackPanel Grid.Column="2" Orientation="Horizontal">
                                 <StackPanel.Style>
-                                    <Style TargetType="StackPanel">
+                                    <Style TargetType="{x:Type StackPanel}">
                                         <Setter Property="VerticalAlignment" Value="Bottom" />
                                         <Setter Property="Margin" Value="0,0,4,7" />
                                         <Style.Triggers>
@@ -150,7 +188,7 @@
                                     </Style>
                                 </StackPanel.Style>
 
-                                <!--  Expand/Collapse toggle  -->
+                                <!--  Expand/Collapse Toggle Button  -->
                                 <Button x:Name="PART_ExpandButton"
                                         Command="{Binding ToggleExpandCommand, RelativeSource={RelativeSource TemplatedParent}}"
                                         Width="24"
@@ -158,12 +196,13 @@
                                         FontWeight="ExtraBlack"
                                         FontSize="14">
                                     <Button.Style>
-                                        <Style BasedOn="{StaticResource TransparentFontIcon_Button_Style}" TargetType="Button">
+                                        <Style BasedOn="{StaticResource TransparentFontIcon_Button_Style}" TargetType="{x:Type Button}">
                                             <Setter Property="Content" Value="&#xE712;" />
                                             <Setter Property="Background" Value="Transparent" />
                                             <Setter Property="ToolTip" Value="Expand filter panel" />
                                             <Setter Property="Visibility" Value="Visible" />
                                             <Style.Triggers>
+                                                <!--  Hide expand button when there's no overflow  -->
                                                 <DataTrigger Binding="{Binding HasOverflow, RelativeSource={RelativeSource TemplatedParent}}" Value="False">
                                                     <Setter Property="Visibility" Value="Collapsed" />
                                                 </DataTrigger>
@@ -173,19 +212,18 @@
                                                     <Setter Property="Visibility" Value="Visible" />
                                                 </DataTrigger>
                                                 <Trigger Property="IsMouseOver" Value="True">
-                                                    <Setter Property="Background" Value="{StaticResource FilterPanel.ToggleHoverBackgroundBrush}" />
-                                                    <Setter Property="Foreground" Value="{StaticResource FilterPanel.ToggleHoverForegroundBrush}" />
+                                                    <Setter Property="Background" Value="#eee" />
+                                                    <Setter Property="Foreground" Value="#1c1c1c" />
                                                 </Trigger>
                                                 <Trigger Property="IsPressed" Value="True">
-                                                    <Setter Property="Background" Value="{StaticResource FilterPanel.TogglePressedBackgroundBrush}" />
-                                                    <Setter Property="Foreground" Value="{StaticResource FilterPanel.TogglePressedForegroundBrush}" />
+                                                    <Setter Property="Background" Value="#ddd" />
+                                                    <Setter Property="Foreground" Value="#000000" />
                                                 </Trigger>
                                             </Style.Triggers>
                                         </Style>
                                     </Button.Style>
                                 </Button>
 
-                                <!--  Edit button  -->
                                 <Button x:Name="PART_EditButton"
                                         Command="{Binding EditFiltersCommand, RelativeSource={RelativeSource TemplatedParent}}"
                                         Width="24"
@@ -194,22 +232,21 @@
                                         FontSize="14"
                                         ToolTip="Open advanced filter editor">
                                     <Button.Style>
-                                        <Style BasedOn="{StaticResource TransparentFontIcon_Button_Style}" TargetType="Button">
+                                        <Style BasedOn="{StaticResource TransparentFontIcon_Button_Style}" TargetType="{x:Type Button}">
                                             <Style.Triggers>
                                                 <Trigger Property="IsMouseOver" Value="True">
-                                                    <Setter Property="Background" Value="{StaticResource FilterPanel.EditHoverBackgroundBrush}" />
-                                                    <Setter Property="Foreground" Value="{StaticResource FilterPanel.EditHoverForegroundBrush}" />
+                                                    <Setter Property="Foreground" Value="#1c1c1c" />
+                                                    <Setter Property="Background" Value="#eee" />
                                                 </Trigger>
                                                 <Trigger Property="IsPressed" Value="True">
-                                                    <Setter Property="Background" Value="{StaticResource FilterPanel.EditPressedBackgroundBrush}" />
-                                                    <Setter Property="Foreground" Value="{StaticResource FilterPanel.EditPressedForegroundBrush}" />
+                                                    <Setter Property="Background" Value="#ddd" />
+                                                    <Setter Property="Foreground" Value="#000000" />
                                                 </Trigger>
                                             </Style.Triggers>
                                         </Style>
                                     </Button.Style>
                                 </Button>
 
-                                <!--  Clear All button  -->
                                 <Button x:Name="PART_ClearAllButton"
                                         Command="{Binding ClearAllFiltersCommand, RelativeSource={RelativeSource TemplatedParent}}"
                                         Width="24"
@@ -218,15 +255,15 @@
                                         FontSize="14"
                                         ToolTip="Clear all filters">
                                     <Button.Style>
-                                        <Style BasedOn="{StaticResource TransparentFontIcon_Button_Style}" TargetType="Button">
+                                        <Style BasedOn="{StaticResource TransparentFontIcon_Button_Style}" TargetType="{x:Type Button}">
                                             <Style.Triggers>
                                                 <Trigger Property="IsMouseOver" Value="True">
-                                                    <Setter Property="Background" Value="{StaticResource FilterPanel.ClearAllHoverBackgroundBrush}" />
-                                                    <Setter Property="Foreground" Value="{StaticResource FilterPanel.ClearAllHoverForegroundBrush}" />
+                                                    <Setter Property="Background" Value="#eee" />
+                                                    <Setter Property="Foreground" Value="#CC0000" />
                                                 </Trigger>
                                                 <Trigger Property="IsPressed" Value="True">
-                                                    <Setter Property="Background" Value="{StaticResource FilterPanel.ClearAllPressedBackgroundBrush}" />
-                                                    <Setter Property="Foreground" Value="{StaticResource FilterPanel.ClearAllPressedForegroundBrush}" />
+                                                    <Setter Property="Background" Value="#ddd" />
+                                                    <Setter Property="Foreground" Value="#990000" />
                                                 </Trigger>
                                             </Style.Triggers>
                                         </Style>
