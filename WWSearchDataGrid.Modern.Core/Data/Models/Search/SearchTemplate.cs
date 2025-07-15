@@ -128,7 +128,10 @@ namespace WWSearchDataGrid.Modern.Core
             {
                 var hasSelectedValue = SelectedValue != null;
                 var hasSelectedSecondaryValue = SelectedSecondaryValue != null;
-                var isNonDefaultSearchType = SearchType != (SearchTemplateController?.DefaultSearchType ?? SearchType.Contains);
+
+                var isNonDefaultSearchType = SearchTemplateController != null &&
+                                                    SearchType != SearchTemplateController.DefaultSearchType;
+
                 var hasSelectedValues = (SearchType == SearchType.IsAnyOf && SelectedValues.Any()) ||
                                       (SearchType == SearchType.IsNoneOf && SelectedValues.Any());
                 var hasSelectedDates = SearchType == SearchType.IsOnAnyOfDates && SelectedDates.Any();
