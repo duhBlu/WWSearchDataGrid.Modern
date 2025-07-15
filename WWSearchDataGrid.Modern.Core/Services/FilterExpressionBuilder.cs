@@ -148,12 +148,10 @@ namespace WWSearchDataGrid.Modern.Core.Services
                 case ColumnDataType.DateTime:
                     return typeof(DateTime);
                 case ColumnDataType.Number:
-                    // Try to determine the specific numeric type from values
                     return DetermineNumericType(columnValues);
                 case ColumnDataType.Boolean:
                     return typeof(bool);
                 case ColumnDataType.Enum:
-                    // Try to determine the enum type from values
                     return DetermineEnumType(columnValues);
                 default:
                     return typeof(string);

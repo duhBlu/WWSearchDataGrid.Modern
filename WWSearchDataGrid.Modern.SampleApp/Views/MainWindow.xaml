@@ -209,6 +209,7 @@
                     <DataGridCheckBoxColumn Width="100"
                                             Header="Nullable Bool"
                                             sdg:ColumnFilterEditor.DefaultSearchType="IsNotNull"
+                                            sdg:ColumnFilterEditor.GroupByColumn="Region"
                                             Binding="{Binding NullableBoolValue}" />
 
                     <!--  Integer Types  -->

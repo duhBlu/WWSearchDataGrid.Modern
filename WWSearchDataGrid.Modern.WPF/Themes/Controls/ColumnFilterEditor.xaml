@@ -152,7 +152,8 @@
                     <StackPanel Orientation="Vertical"
                                 Margin="0,4"
                                 HorizontalAlignment="Stretch">
-                        <Border Background="#FAFAFA"
+                        <Border x:Name="searchTemplateContainer"
+                                Background="#FAFAFA"
                                 BorderBrush="#DDD"
                                 BorderThickness="1"
                                 Padding="6"
@@ -178,7 +179,7 @@
                                               Visibility="{Binding IsOperatorVisible, Converter={StaticResource BooleanToVisibilityConverter}}"
                                               Margin="0,0,8,0"
                                               VerticalContentAlignment="Center"
-                                              Width="80"
+                                              Width="Auto"
                                               SelectedItem="{Binding OperatorName}">
                                         <sys:String>And</sys:String>
                                         <sys:String>Or</sys:String>
@@ -189,7 +190,7 @@
                                               Grid.Column="2"
                                               Margin="0,0,8,0"
                                               VerticalContentAlignment="Center"
-                                              Width="180"
+                                              Width="Auto"
                                               ItemsSource="{Binding ValidSearchTypes}"
                                               SelectedItem="{Binding SearchType}">
                                         <ComboBox.ItemTemplate>
@@ -208,26 +209,23 @@
                                         </ComboBox.ItemTemplate>
                                     </ComboBox>
 
-                                    <!--  ColumnFilterEditor specific buttons  -->
-                                    <StackPanel Grid.Column="4" Orientation="Horizontal">
-                                        <Button Style="{StaticResource TransparentFontIcon_Button_Style}"
-                                                Command="{Binding RemoveSearchTemplateCommand, RelativeSource={RelativeSource AncestorType=sdg:ColumnFilterEditor}}"
-                                                CommandParameter="{Binding}"
-                                                Margin="0,0,4,0"
-                                                Padding="4"
-                                                Height="{Binding ActualWidth, RelativeSource={RelativeSource Self}}"
-                                                ToolTip="Remove"
-                                                FontFamily="Segoe MDL2 Assets"
-                                                Content="&#xE10A;" />
-                                        <Button Style="{StaticResource TransparentFontIcon_Button_Style}"
-                                                Command="{Binding AddSearchTemplateCommand, RelativeSource={RelativeSource AncestorType=sdg:ColumnFilterEditor}}"
-                                                CommandParameter="{Binding}"
-                                                Padding="4"
-                                                Height="{Binding ActualWidth, RelativeSource={RelativeSource Self}}"
-                                                ToolTip="Add"
-                                                FontFamily="Segoe MDL2 Assets"
-                                                Content="&#xE109;" />
-                                    </StackPanel>
+                                    <!--  ColumnFilterEditor Remove/Clear SearchTemplate button  -->
+                                    <Button Grid.Column="4"
+                                            Style="{StaticResource TransparentFontIcon_Button_Style}"
+                                            Command="{Binding RemoveSearchTemplateCommand, RelativeSource={RelativeSource AncestorType=sdg:ColumnFilterEditor}}"
+                                            CommandParameter="{Binding}"
+                                            Margin="0,0,0,0"
+                                            Padding="4"
+                                            Height="{Binding ActualWidth, RelativeSource={RelativeSource Self}}"
+                                            ToolTip="Remove"
+                                            FontFamily="Segoe MDL2 Assets"
+                                            Content="&#xE10A;">
+                                        <!--<Button.Visibility>
+                                            <Binding Path="IsMouseOver"
+                                                     Converter="{StaticResource BooleanToVisibilityConverter}"
+                                                     ElementName="searchTemplateContainer" />
+                                        </Button.Visibility>-->
+                                    </Button>
                                 </Grid>
 
                                 <!--  Value Input Row  -->
@@ -316,31 +314,56 @@
                                 <!--  Filter Rules Tab  -->
                                 <TabItem Header="Filter Rules">
                                     <ScrollViewer VerticalScrollBarVisibility="Auto">
-                                        <ContentControl Content="{Binding SearchTemplateController, RelativeSource={RelativeSource TemplatedParent}}">
-                                            <ContentControl.Style>
-                                                <Style TargetType="ContentControl">
-                                                    <!--  Default template for single group mode - direct display  -->
-                                                    <Setter Property="ContentTemplate">
-                                                        <Setter.Value>
-                                                            <DataTemplate>
-                                                                <ItemsControl ItemsSource="{Binding SearchGroups}" VirtualizingPanel.IsVirtualizing="False">
-                                                                    <ItemsControl.ItemsPanel>
-                                                                        <ItemsPanelTemplate>
-                                                                            <StackPanel Orientation="Vertical" />
-                                                                        </ItemsPanelTemplate>
-                                                                    </ItemsControl.ItemsPanel>
-                                                                    <ItemsControl.ItemTemplate>
-                                                                        <DataTemplate DataType="{x:Type sdgCore:SearchTemplateGroup}">
-                                                                            <ContentPresenter Content="{Binding}" ContentTemplate="{StaticResource AdvancedFilterSearchGroupContentTemplate}" />
-                                                                        </DataTemplate>
-                                                                    </ItemsControl.ItemTemplate>
-                                                                </ItemsControl>
-                                                            </DataTemplate>
-                                                        </Setter.Value>
-                                                    </Setter>
-                                                </Style>
-                                            </ContentControl.Style>
-                                        </ContentControl>
+                                        <Grid>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto" />
+                                                <RowDefinition Height="Auto" />
+                                            </Grid.RowDefinitions>
+
+                                            <!--  Existing search groups  -->
+                                            <ContentControl Grid.Row="0" Content="{Binding SearchTemplateController, RelativeSource={RelativeSource TemplatedParent}}">
+                                                <ContentControl.Style>
+                                                    <Style TargetType="ContentControl">
+                                                        <Setter Property="ContentTemplate">
+                                                            <Setter.Value>
+                                                                <DataTemplate>
+                                                                    <ItemsControl ItemsSource="{Binding SearchGroups}" VirtualizingPanel.IsVirtualizing="False">
+                                                                        <ItemsControl.ItemsPanel>
+                                                                            <ItemsPanelTemplate>
+                                                                                <StackPanel Orientation="Vertical" />
+                                                                            </ItemsPanelTemplate>
+                                                                        </ItemsControl.ItemsPanel>
+                                                                        <ItemsControl.ItemTemplate>
+                                                                            <DataTemplate DataType="{x:Type sdgCore:SearchTemplateGroup}">
+                                                                                <ContentPresenter Content="{Binding}" ContentTemplate="{StaticResource AdvancedFilterSearchGroupContentTemplate}" />
+                                                                            </DataTemplate>
+                                                                        </ItemsControl.ItemTemplate>
+                                                                    </ItemsControl>
+                                                                </DataTemplate>
+                                                            </Setter.Value>
+                                                        </Setter>
+                                                    </Style>
+                                                </ContentControl.Style>
+                                            </ContentControl>
+
+                                            <!--  Add Template Button  -->
+                                            <Button Style="{StaticResource Default_Button_Style}"
+                                                    Grid.Row="1"
+                                                    Command="{Binding AddSearchTemplateCommand, RelativeSource={RelativeSource TemplatedParent}}"
+                                                    Margin="0,8,0,0"
+                                                    Padding="8,4"
+                                                    HorizontalAlignment="Center"
+                                                    MinWidth="100">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <TextBlock Text="&#xE109;"
+                                                               Margin="0,0,4,0"
+                                                               VerticalAlignment="Center"
+                                                               FontFamily="Segoe MDL2 Assets"
+                                                               FontSize="12" />
+                                                    <TextBlock Text="Add Rule" VerticalAlignment="Center" />
+                                                </StackPanel>
+                                            </Button>
+                                        </Grid>
                                     </ScrollViewer>
                                 </TabItem>
 
@@ -348,40 +371,35 @@
                                 <TabItem x:Name="PART_FilterValuesTab"
                                          Header="Filter Values"
                                          IsSelected="True">
-                                    <!--  Values Content  -->
                                     <ContentControl x:Name="PART_FilterValuesContent"
                                                     Content="{Binding FilterValueViewModel, RelativeSource={RelativeSource TemplatedParent}}"
                                                     ContentTemplateSelector="{StaticResource FilterValueTemplateSelector}" />
                                 </TabItem>
                             </TabControl>
 
-                            <!--  Footer Buttons  -->
+                            <!--  Buttons Row  -->
                             <StackPanel Grid.Row="2"
                                         Orientation="Horizontal"
-                                        Margin="0,12,0,0"
-                                        HorizontalAlignment="Right">
-                                <Button x:Name="PART_ApplyButton"
-                                        Style="{StaticResource Default_Button_Style}"
+                                        HorizontalAlignment="Right"
+                                        VerticalAlignment="Center">
+
+                                <Button Style="{StaticResource Default_Button_Style}"
+                                        Grid.Column="1"
+                                        IsDefault="True"
                                         Command="{Binding ApplyFilterCommand, RelativeSource={RelativeSource TemplatedParent}}"
-                                        Margin="4,0"
-                                        Width="100"
-                                        Height="36"
+                                        Margin="0,0,5,0"
                                         Content="Apply" />
 
-                                <Button x:Name="PART_ClearButton"
-                                        Style="{StaticResource Default_Button_Style}"
+                                <Button Style="{StaticResource Default_Button_Style}"
+                                        Grid.Column="2"
                                         Command="{Binding ClearFilterCommand, RelativeSource={RelativeSource TemplatedParent}}"
-                                        Margin="4,0"
-                                        Width="100"
-                                        Height="36"
+                                        Margin="0,0,5,0"
                                         Content="Clear" />
 
-                                <Button x:Name="PART_CloseButton"
-                                        Style="{StaticResource Default_Button_Style}"
+                                <Button Style="{StaticResource Default_Button_Style}"
+                                        Grid.Column="3"
+                                        IsCancel="True"
                                         Command="{Binding CloseWindowCommand, RelativeSource={RelativeSource TemplatedParent}}"
-                                        Margin="4,0"
-                                        Width="100"
-                                        Height="36"
                                         Content="Close" />
                             </StackPanel>
                         </Grid>
@@ -389,10 +407,6 @@
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
-        <Setter Property="Background" Value="White" />
-        <Setter Property="BorderBrush" Value="#CCC" />
-        <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="SnapsToDevicePixels" Value="True" />
     </Style>
 
     <Style BasedOn="{StaticResource Default_ColumnFilterEditor_Style}" TargetType="{x:Type sdg:ColumnFilterEditor}" />

@@ -69,25 +69,6 @@ namespace WWSearchDataGrid.Modern.Core.Strategies
         }
 
         /// <summary>
-        /// Gets all registered evaluators
-        /// </summary>
-        /// <returns>Collection of all evaluators</returns>
-        public IEnumerable<ISearchEvaluator> GetAllEvaluators()
-        {
-            return _allEvaluators.AsReadOnly();
-        }
-
-        /// <summary>
-        /// Checks if an evaluator exists for the given search type
-        /// </summary>
-        /// <param name="searchType">Search type to check</param>
-        /// <returns>True if an evaluator exists</returns>
-        public bool HasEvaluator(SearchType searchType)
-        {
-            return GetEvaluator(searchType) != null;
-        }
-
-        /// <summary>
         /// Registers all default evaluators
         /// </summary>
         private void RegisterDefaultEvaluators()

@@ -875,11 +875,11 @@ namespace WWSearchDataGrid.Modern.Core
 
                     // Multi-value filters
                     case SearchType.IsAnyOf:
-                        return FormatMultiValueFilter("Is any of", template.SelectedValues);
+                        return FormatMultiValueFilter("In", template.SelectedValues);
                     case SearchType.IsNoneOf:
-                        return FormatMultiValueFilter("Is none of", template.SelectedValues);
+                        return FormatMultiValueFilter("Not in", template.SelectedValues);
                     case SearchType.IsOnAnyOfDates:
-                        return FormatDateListFilter("Is on any of", template.SelectedDates);
+                        return FormatDateListFilter("In", template.SelectedDates);
                     case SearchType.DateInterval:
                         return FormatDateIntervalFilter(template.DateIntervals);
 
@@ -1069,17 +1069,17 @@ namespace WWSearchDataGrid.Modern.Core
                         components.PrimaryValue = value;
                         break;
                     case SearchType.IsAnyOf:
-                        components.SearchTypeText = "Is any of";
+                        components.SearchTypeText = "In";
                         components.PrimaryValue = FormatMultiValueFilter("", template.SelectedValues);
                         PopulateValueItems(components, template.SelectedValues);
                         break;
                     case SearchType.IsNoneOf:
-                        components.SearchTypeText = "Is none of";
+                        components.SearchTypeText = "Not in";
                         components.PrimaryValue = FormatMultiValueFilter("", template.SelectedValues);
                         PopulateValueItems(components, template.SelectedValues);
                         break;
                     case SearchType.IsOnAnyOfDates:
-                        components.SearchTypeText = "Is on any of";
+                        components.SearchTypeText = "In";
                         components.PrimaryValue = FormatDateListFilter("", template.SelectedDates);
                         PopulateDateValueItems(components, template.SelectedDates);
                         break;

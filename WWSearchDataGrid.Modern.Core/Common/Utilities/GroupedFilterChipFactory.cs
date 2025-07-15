@@ -139,7 +139,7 @@ namespace WWSearchDataGrid.Modern.Core
                         // Multiple value condition - use "Is any of"
                         var valueChip = new FilterChipComponents
                         {
-                            SearchTypeText = "Is any of",
+                            SearchTypeText = "in",
                             PrimaryValue = $"[{string.Join(", ", groupCondition.IncludedValues.Select(v => $"'{v}'"))}]",
                             Operator = "And"
                         };

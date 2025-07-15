@@ -248,8 +248,6 @@ namespace WWSearchDataGrid.Modern.WPF
         /// </summary>
         public ICommand AddSearchTemplateCommand => new RelayCommand(p =>
         {
-            SearchTemplate template = p as SearchTemplate;
-
             // Get the default search type from the column (if any)
             SearchType? defaultSearchType = null;
             if (DataContext is ColumnSearchBox columnSearchBox && columnSearchBox.CurrentColumn != null)
@@ -257,10 +255,8 @@ namespace WWSearchDataGrid.Modern.WPF
                 defaultSearchType = GetDefaultSearchType(columnSearchBox.CurrentColumn);
             }
 
-            var group = SearchTemplateController.SearchGroups.First(g => g.SearchTemplates.Contains(template));
-            
-            // Use the new AddSearchTemplate overload with default search type
-            SearchTemplateController.AddSearchTemplate(true, template, group);
+            // Simply call AddSearchTemplate without specifying group - it will use the default group for the column
+            SearchTemplateController.AddSearchTemplate(true, null, null);
 
             UpdateOperatorVisibility();
         });
