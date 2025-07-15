@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -372,6 +373,18 @@ namespace WWSearchDataGrid.Modern.Core
             }
         }
 
+        private void EnsureOrderedForBetween()
+        {
+            if (SearchType == SearchType.Between
+             || SearchType == SearchType.NotBetween
+             || SearchType == SearchType.BetweenDates
+             && Comparer.Default.Compare(SelectedValue, SelectedSecondaryValue) > 0)
+            {
+                (SelectedValue, SelectedSecondaryValue) =
+                    (SelectedSecondaryValue, SelectedValue);
+            }
+        }
+
         public void LoadAvailableValues(HashSet<object> columnValues)
         {
             // Store the original column values for nullability analysis
@@ -467,6 +480,8 @@ namespace WWSearchDataGrid.Modern.Core
             if (SearchType == SearchType.IsNoneOf) return BuildIsNoneOfExpression();
             if (SearchType == SearchType.IsOnAnyOfDates) return BuildIsOnAnyOfDatesExpression();
             if (SearchType == SearchType.DateInterval) return BuildDateIntervalExpression();
+
+            EnsureOrderedForBetween();
 
             var searchCondition = new SearchCondition(targetType, SearchType, SelectedValue, SelectedSecondaryValue);
             return obj => SearchEngine.EvaluateCondition(obj, searchCondition);
