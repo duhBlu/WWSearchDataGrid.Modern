@@ -12,6 +12,7 @@ using System.Windows.Input;
 using System.IO;
 using WWSearchDataGrid.Modern.Core;
 using System.Linq.Expressions;
+using WWSearchDataGrid.Modern.Core.Performance;
 
 namespace WWSearchDataGrid.Modern.WPF
 {
@@ -690,6 +691,9 @@ namespace WWSearchDataGrid.Modern.WPF
             // Clear the filter
             Items.Filter = null;
             SearchFilter = null;
+
+            // Clear all cache layers for complete memory cleanup
+            ColumnValueCache.Instance.ClearAllCaches();
 
             // Force restoration of original data
             ForceRestoreOriginalData();

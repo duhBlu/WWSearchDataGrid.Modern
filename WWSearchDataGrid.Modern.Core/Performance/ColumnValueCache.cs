@@ -11,7 +11,7 @@ namespace WWSearchDataGrid.Modern.Core.Performance
     /// <summary>
     /// High-performance cache for column values - .NET Standard 2.0 compatible
     /// </summary>
-    public class ColumnValueCache
+    public class ColumnValueCache : IDisposable
     {
         #region Singleton
 
@@ -349,11 +349,24 @@ namespace WWSearchDataGrid.Modern.Core.Performance
         /// </summary>
         public void ClearAllCaches()
         {
-            // Clear high-performance provider
+            // Clear high-performance provider first (largest memory consumer)
             _highPerformanceProvider.Value.ClearAll();
             
-            _columnMetadata.Clear();
+            // Clear filter view models (dispose if they implement IDisposable)
+            var viewModelsToDispose = _filterViewModelCache.Values.ToList();
             _filterViewModelCache.Clear();
+            
+            foreach (var viewModel in viewModelsToDispose)
+            {
+                if (viewModel is IDisposable disposable)
+                {
+                    disposable.Dispose();
+                }
+            }
+            
+            // Clear column metadata
+            var metadataToDispose = _columnMetadata.Values.ToList();
+            _columnMetadata.Clear();
             
             // Dispose all bulk operation trackers
             foreach (var tracker in _bulkOperationTrackers.Values)
@@ -361,6 +374,13 @@ namespace WWSearchDataGrid.Modern.Core.Performance
                 tracker.BatchTimer?.Dispose();
             }
             _bulkOperationTrackers.Clear();
+            
+            // Force garbage collection for coordinated cleanup
+            if (viewModelsToDispose.Count > 5 || metadataToDispose.Count > 10)
+            {
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
+            }
         }
 
         #endregion
@@ -483,6 +503,26 @@ namespace WWSearchDataGrid.Modern.Core.Performance
             public DateTime LastOperationTime { get; set; }
             public int OperationCount { get; set; }
             public Timer BatchTimer { get; set; }
+        }
+
+        #endregion
+
+        #region IDisposable Implementation
+
+        private bool _disposed = false;
+
+        public void Dispose()
+        {
+            if (!_disposed)
+            {
+                ClearAllCaches();
+                _disposed = true;
+            }
+        }
+
+        ~ColumnValueCache()
+        {
+            Dispose();
         }
 
         #endregion

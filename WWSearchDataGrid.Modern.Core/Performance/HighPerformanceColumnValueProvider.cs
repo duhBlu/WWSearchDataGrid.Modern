@@ -16,8 +16,16 @@ namespace WWSearchDataGrid.Modern.Core.Performance
         
         private const int DefaultPageSize = 50;
         private const int MaxCacheSize = 100000;
-        private const int MaxMemoryMB = 50;
+        private const int MaxMemoryMB = 100;
         private const int BackgroundProcessingDelayMs = 100;
+        
+        // Memory management configuration
+        private const int IdleTimeoutMinutes = 5;
+        private const int CleanupIntervalMinutes = 2;
+        private const int MemoryWarningThreshold = 80; // Percentage
+        private const int CleanupBatchSize = 1000;
+        private const int CleanupMaxDurationMs = 100;
+        private const int ForceGCThreshold = 200; // MB
         
         #endregion
 
@@ -26,6 +34,8 @@ namespace WWSearchDataGrid.Modern.Core.Performance
         private readonly ConcurrentDictionary<string, ColumnValueStorage> _columnStorage;
         private readonly ConcurrentDictionary<string, SemaphoreSlim> _columnSemaphores;
         private readonly ConcurrentDictionary<string, CancellationTokenSource> _backgroundTasks;
+        private readonly System.Timers.Timer _cleanupTimer;
+        private readonly object _cleanupLock = new object();
 
         #endregion
 
@@ -36,6 +46,12 @@ namespace WWSearchDataGrid.Modern.Core.Performance
             _columnStorage = new ConcurrentDictionary<string, ColumnValueStorage>();
             _columnSemaphores = new ConcurrentDictionary<string, SemaphoreSlim>();
             _backgroundTasks = new ConcurrentDictionary<string, CancellationTokenSource>();
+            
+            // Initialize background cleanup timer
+            _cleanupTimer = new System.Timers.Timer(CleanupIntervalMinutes * 60 * 1000); // Convert to milliseconds
+            _cleanupTimer.Elapsed += OnCleanupTimerElapsed;
+            _cleanupTimer.AutoReset = true;
+            _cleanupTimer.Start();
         }
 
         #endregion
@@ -167,6 +183,7 @@ namespace WWSearchDataGrid.Modern.Core.Performance
             try
             {
                 await AddValueToStorageAsync(storage, value);
+                await CheckMemoryLimitsAsync();
             }
             finally
             {
@@ -190,6 +207,7 @@ namespace WWSearchDataGrid.Modern.Core.Performance
             try
             {
                 await RemoveValueFromStorageAsync(storage, value);
+                await CheckMemoryLimitsAsync();
             }
             finally
             {
@@ -213,29 +231,62 @@ namespace WWSearchDataGrid.Modern.Core.Performance
         }
 
         /// <summary>
-        /// Clears all cached data
+        /// Clears all cached data with enhanced memory cleanup
         /// </summary>
         public void ClearAll()
         {
-            // Cancel all background tasks
+            // Stop cleanup timer to prevent interference
+            _cleanupTimer?.Stop();
+            
+            // Cancel all background tasks with timeout
+            var cancellationTasks = new List<Task>();
             foreach (var kvp in _backgroundTasks)
             {
                 kvp.Value.Cancel();
-                kvp.Value.Dispose();
+                cancellationTasks.Add(Task.Run(() => kvp.Value.Dispose()));
             }
+            
+            // Wait for all cancellations to complete (with timeout)
+            try
+            {
+                Task.WaitAll(cancellationTasks.ToArray(), TimeSpan.FromSeconds(5));
+            }
+            catch (AggregateException)
+            {
+                // Ignore cancellation exceptions during cleanup
+            }
+            
             _backgroundTasks.Clear();
 
-            // Clear storage (memory automatically freed)
+            // Clear storage with explicit nullification for large collections
+            var storageToDispose = _columnStorage.Values.ToList();
             _columnStorage.Clear();
             
+            // Explicitly clear each storage to help GC
+            foreach (var storage in storageToDispose)
+            {
+                storage.Clear();
+            }
+
             // Dispose semaphores
-            foreach (var semaphore in _columnSemaphores.Values)
+            var semaphoresToDispose = _columnSemaphores.Values.ToList();
+            _columnSemaphores.Clear();
+            
+            foreach (var semaphore in semaphoresToDispose)
             {
                 semaphore.Dispose();
             }
-            _columnSemaphores.Clear();
 
-            // Memory usage is automatically reset when storage is cleared
+            // Force garbage collection for large memory cleanup
+            if (storageToDispose.Count > 10) // Only for significant cleanup
+            {
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
+                GC.Collect();
+            }
+            
+            // Restart cleanup timer
+            _cleanupTimer?.Start();
         }
 
         /// <summary>
@@ -271,6 +322,118 @@ namespace WWSearchDataGrid.Modern.Core.Performance
             var columns = _columnStorage.Count;
             
             return (totalMemory, uniqueValues, columns);
+        }
+
+        #endregion
+
+        #region Background Cleanup Methods
+
+        private void OnCleanupTimerElapsed(object sender, System.Timers.ElapsedEventArgs e)
+        {
+            if (!Monitor.TryEnter(_cleanupLock))
+                return; // Skip if cleanup is already running
+
+            try
+            {
+                _ = Task.Run(async () => await PerformBackgroundCleanupAsync());
+            }
+            finally
+            {
+                Monitor.Exit(_cleanupLock);
+            }
+        }
+
+        private async Task PerformBackgroundCleanupAsync()
+        {
+            try
+            {
+                // Check memory pressure and perform cleanup if needed
+                var memoryUsageMB = GetMemoryUsageMB();
+                var memoryPressure = (memoryUsageMB * 100) / MaxMemoryMB;
+
+                if (memoryPressure >= MemoryWarningThreshold)
+                {
+                    await CleanupIdleValuesAsync();
+                }
+
+                // Always check for completely idle columns
+                await CleanupIdleColumnsAsync();
+            }
+            catch (Exception ex)
+            {
+                // Log error but don't crash the application
+                System.Diagnostics.Debug.WriteLine($"Background cleanup error: {ex.Message}");
+            }
+        }
+
+        private async Task CleanupIdleValuesAsync()
+        {
+            var cutoffTime = DateTime.UtcNow.AddMinutes(-IdleTimeoutMinutes);
+            var itemsProcessed = 0;
+            var cleanupStartTime = DateTime.UtcNow;
+
+            var columnsToCleanup = _columnStorage.ToList();
+
+            foreach (var columnKvp in columnsToCleanup)
+            {
+                // Check if we've exceeded our cleanup time budget
+                if ((DateTime.UtcNow - cleanupStartTime).TotalMilliseconds > CleanupMaxDurationMs)
+                    break;
+
+                var storage = columnKvp.Value;
+                var semaphore = GetColumnSemaphore(columnKvp.Key);
+
+                if (await semaphore.WaitAsync(100)) // Short timeout to avoid blocking
+                {
+                    try
+                    {
+                        var oldValues = storage.Values.Values.Where(v => v.LastSeen < cutoffTime).ToList();
+                        
+                        foreach (var oldValue in oldValues.Take(CleanupBatchSize))
+                        {
+                            if (storage.Values.TryRemove(oldValue.HashCode, out _))
+                            {
+                                var memoryDelta = EstimateValueMemoryUsage(oldValue.Value) + 32;
+                                storage.UpdateMemoryUsage(-memoryDelta);
+                                itemsProcessed++;
+                            }
+                        }
+                    }
+                    finally
+                    {
+                        semaphore.Release();
+                    }
+                }
+            }
+
+            // Trigger GC if we cleaned up a significant amount
+            if (itemsProcessed > CleanupBatchSize)
+            {
+                GC.Collect();
+            }
+        }
+
+        private async Task CleanupIdleColumnsAsync()
+        {
+            var cutoffTime = DateTime.UtcNow.AddMinutes(-IdleTimeoutMinutes * 2); // Longer timeout for entire columns
+            var columnsToRemove = new List<string>();
+
+            foreach (var columnKvp in _columnStorage.ToList())
+            {
+                var storage = columnKvp.Value;
+                
+                // Check if entire column is idle
+                if (storage.Values.Values.All(v => v.LastSeen < cutoffTime))
+                {
+                    columnsToRemove.Add(columnKvp.Key);
+                }
+            }
+
+            // Remove idle columns
+            foreach (var columnKey in columnsToRemove)
+            {
+                InvalidateColumn(columnKey);
+            }
         }
 
         #endregion
@@ -519,20 +682,37 @@ namespace WWSearchDataGrid.Modern.Core.Performance
 
         private async Task CheckMemoryLimitsAsync()
         {
-            if (GetMemoryUsageMB() > MaxMemoryMB)
+            var memoryUsageMB = GetMemoryUsageMB();
+            
+            if (memoryUsageMB > MaxMemoryMB)
             {
-                await Task.Run(() =>
+                // First try idle cleanup
+                await CleanupIdleValuesAsync();
+                
+                // If still over limit, remove least recently used columns
+                if (GetMemoryUsageMB() > MaxMemoryMB)
                 {
-                    // Remove least recently used columns
-                    var sortedColumns = _columnStorage.Values
-                        .OrderBy(s => s.Values.Values.Min(v => v.LastSeen))
-                        .Take(_columnStorage.Count / 4); // Remove 25% of columns
-
-                    foreach (var storage in sortedColumns)
+                    await Task.Run(() =>
                     {
-                        InvalidateColumn(storage.ColumnKey);
-                    }
-                });
+                        // Remove least recently used columns
+                        var sortedColumns = _columnStorage.Values
+                            .OrderBy(s => s.Values.Values.Min(v => v.LastSeen))
+                            .Take(_columnStorage.Count / 4); // Remove 25% of columns
+
+                        foreach (var storage in sortedColumns)
+                        {
+                            InvalidateColumn(storage.ColumnKey);
+                        }
+                    });
+                }
+            }
+            
+            // Force GC if memory usage is very high
+            if (memoryUsageMB > ForceGCThreshold)
+            {
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
+                GC.Collect();
             }
         }
 
@@ -604,6 +784,8 @@ namespace WWSearchDataGrid.Modern.Core.Performance
         {
             if (!_disposed)
             {
+                _cleanupTimer?.Stop();
+                _cleanupTimer?.Dispose();
                 ClearAll();
                 _disposed = true;
             }
