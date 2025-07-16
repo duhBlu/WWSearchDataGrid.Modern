@@ -267,7 +267,7 @@ namespace WWSearchDataGrid.Modern.WPF
                         {
                             foreach (var template in group.SearchTemplates)
                             {
-                                if (template.AvailableValues?.Count == 0)
+                                if (template.AvailableValues?.Count() == 0)
                                 {
                                     Dispatcher.Invoke(() =>
                                     {
@@ -604,7 +604,7 @@ namespace WWSearchDataGrid.Modern.WPF
                 }
 
                 // Get all columns that are not currently filtered
-                var filteredBindingPaths = FilteredColumns.Select(fc => fc.BindingPath).ToHashSet();
+                var filteredBindingPaths = new HashSet<string>(FilteredColumns.Select(fc => fc.BindingPath));
                 var availableColumns = SourceDataGrid.Columns
                     .Where(c => !string.IsNullOrEmpty(c.SortMemberPath) && 
                     !filteredBindingPaths.Contains(c.SortMemberPath) &&

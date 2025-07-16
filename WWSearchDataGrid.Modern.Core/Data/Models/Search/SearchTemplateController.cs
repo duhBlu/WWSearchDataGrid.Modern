@@ -4,7 +4,10 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Text.Json.Serialization;
+using System.Threading;
+using System.Threading.Tasks;
 using WWSearchDataGrid.Modern.Core.Services;
+using WWSearchDataGrid.Modern.Core.Performance;
 
 namespace WWSearchDataGrid.Modern.Core
 {
@@ -27,10 +30,10 @@ namespace WWSearchDataGrid.Modern.Core
 
         private SearchType? defaultSearchType;
 
-        // Cache connection tracking
-        private string _connectedColumnKey;
-        private Performance.ColumnValueCache _connectedCache;
-        private bool _providersRegistered;
+        // High-performance value provider
+        private IColumnValueProvider _valueProvider;
+        private string _currentColumnKey;
+        private CancellationTokenSource _loadingCancellationTokenSource;
 
         #endregion
 
@@ -191,6 +194,15 @@ namespace WWSearchDataGrid.Modern.Core
             _validator = new SearchTemplateValidator();
             _columnValueLoader = new ColumnValueLoader();
         }
+
+        /// <summary>
+        /// Finalizer to ensure proper cleanup of resources
+        /// </summary>
+        ~SearchTemplateController()
+        {
+            _loadingCancellationTokenSource?.Cancel();
+            _loadingCancellationTokenSource?.Dispose();
+        }
         
         /// <summary>
         /// Initializes a new instance with custom service dependencies for testing
@@ -292,17 +304,9 @@ namespace WWSearchDataGrid.Modern.Core
             // Apply default search type if provided and compatible
             ApplyDefaultSearchType(newTemplate, defaultSearchType);
 
-            // Connect to cache if available
-            if (_connectedCache != null && !string.IsNullOrEmpty(_connectedColumnKey))
+            // Load values from current provider or fallback to ColumnValues
+            if (ColumnValues != null && ColumnValues.Any())
             {
-                newTemplate.ConnectToSharedSource(_connectedColumnKey, _connectedCache);
-                
-                // Note: Provider registration will be handled by the WPF layer
-                // We cannot register here because we don't have access to the WPF dispatcher
-            }
-            else if (ColumnValues != null && ColumnValues.Any())
-            {
-                // Fallback to traditional method if cache not connected
                 newTemplate.LoadAvailableValues(ColumnValues);
             }
 
@@ -1333,69 +1337,105 @@ namespace WWSearchDataGrid.Modern.Core
         }
 
         /// <summary>
-        /// Connects all SearchTemplates in this controller to use shared cache sources
+        /// Connects all SearchTemplates in this controller to use the high-performance value provider
         /// </summary>
-        public void ConnectToCache(string columnKey, Performance.ColumnValueCache cache)
+        public void ConnectToValueProvider(string columnKey, IColumnValueProvider valueProvider)
+        {
+            if (valueProvider == null || string.IsNullOrEmpty(columnKey))
+                return;
+
+            _valueProvider = valueProvider;
+            _currentColumnKey = columnKey;
+
+            // Load values using the high-performance provider
+            _ = LoadColumnValuesAsync(columnKey, CancellationToken.None);
+        }
+
+        /// <summary>
+        /// Connects all SearchTemplates in this controller to use shared cache sources (backward compatibility)
+        /// </summary>
+        [Obsolete("Use ConnectToValueProvider instead. This method is provided for backward compatibility.")]
+        public void ConnectToCache(string columnKey, ColumnValueCache cache)
         {
             if (cache == null || string.IsNullOrEmpty(columnKey))
                 return;
 
-            // Reset registration flag if connecting to a different cache or column
-            if (_connectedColumnKey != columnKey || _connectedCache != cache)
-            {
-                _providersRegistered = false;
-            }
+            // Use the high-performance provider from the cache
+            ConnectToValueProvider(columnKey, cache.HighPerformanceProvider);
+        }
 
-            // Store connection parameters for new templates
-            _connectedColumnKey = columnKey;
-            _connectedCache = cache;
+        /// <summary>
+        /// Loads column values asynchronously using the high-performance provider
+        /// </summary>
+        public async Task LoadColumnValuesAsync(string columnKey, CancellationToken cancellationToken = default)
+        {
+            if (_valueProvider == null || string.IsNullOrEmpty(columnKey))
+                return;
 
-            // Connect all existing templates to the shared source
-            foreach (var group in SearchGroups)
+            // Cancel any existing loading operation
+            _loadingCancellationTokenSource?.Cancel();
+            _loadingCancellationTokenSource = new CancellationTokenSource();
+            
+            using (var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, _loadingCancellationTokenSource.Token))
             {
-                foreach (var template in group.SearchTemplates.OfType<SearchTemplate>())
+                try
                 {
-                    template.ConnectToSharedSource(columnKey, cache);
+                    // Get total count first
+                    var totalCount = await _valueProvider.GetTotalCountAsync(columnKey);
+                    
+                    // Request all values with proper paging
+                    var request = new ColumnValueRequest
+                    {
+                        ColumnKey = columnKey,
+                        Skip = 0,
+                        Take = Math.Min(totalCount, 50000), // Limit to 50k values for performance
+                        IncludeNull = true,
+                        IncludeEmpty = true,
+                        SortAscending = true,
+                        GroupByFrequency = false
+                    };
+
+                    var response = await _valueProvider.GetValuesAsync(request);
+                    linkedCts.Token.ThrowIfCancellationRequested();
+
+                    // Update ColumnValues with new data
+                    var newValues = new HashSet<object>(response.Values.Select(v => v.Value));
+                    ColumnValues = newValues;
+
+                    // Update all existing templates with new values
+                    foreach (var group in SearchGroups)
+                    {
+                        foreach (var template in group.SearchTemplates.OfType<SearchTemplate>())
+                        {
+                            // Use the new high-performance method
+                            _ = template.LoadValuesFromProvider(_valueProvider, columnKey);
+                        }
+                    }
+                }
+                catch (OperationCanceledException)
+                {
+                    // Loading was cancelled, which is expected
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Error loading column values: {ex.Message}");
                 }
             }
         }
 
         /// <summary>
-        /// Registers providers for all SearchTemplates with proper WPF dispatcher handling
-        /// This method should be called from the WPF layer after ConnectToCache
+        /// Invalidates cached column values and reloads them
         /// </summary>
-        public void RegisterProvidersWithCache(string columnKey, Performance.ColumnValueCache cache, Func<System.Collections.ObjectModel.ObservableCollection<object>, Performance.ISharedItemsSourceProvider> providerFactory)
+        public async Task RefreshColumnValuesAsync(CancellationToken cancellationToken = default)
         {
-            if (cache == null || string.IsNullOrEmpty(columnKey) || providerFactory == null)
+            if (_valueProvider == null || string.IsNullOrEmpty(_currentColumnKey))
                 return;
 
-            // Avoid duplicate registrations
-            if (_providersRegistered && _connectedColumnKey == columnKey && _connectedCache == cache)
-                return;
+            // Invalidate cached values
+            _valueProvider.InvalidateColumn(_currentColumnKey);
 
-            foreach (var group in SearchGroups)
-            {
-                foreach (var template in group.SearchTemplates.OfType<SearchTemplate>())
-                {
-                    var provider = providerFactory(template.AvailableValues);
-                    cache.RegisterSharedItemsSourceProvider(columnKey, provider);
-                }
-            }
-
-            _providersRegistered = true;
-        }
-
-        /// <summary>
-        /// Registers a provider for a single SearchTemplate - used when new templates are added after initial connection
-        /// This method should be called from the WPF layer
-        /// </summary>
-        public void RegisterSingleTemplateProvider(SearchTemplate template, string columnKey, Performance.ColumnValueCache cache, Func<System.Collections.ObjectModel.ObservableCollection<object>, Performance.ISharedItemsSourceProvider> providerFactory)
-        {
-            if (template == null || cache == null || string.IsNullOrEmpty(columnKey) || providerFactory == null)
-                return;
-
-            var provider = providerFactory(template.AvailableValues);
-            cache.RegisterSharedItemsSourceProvider(columnKey, provider);
+            // Reload values
+            await LoadColumnValuesAsync(_currentColumnKey, cancellationToken);
         }
 
         #endregion

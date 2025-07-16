@@ -4,7 +4,9 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Threading.Tasks;
 using System.Windows.Input;
+using WWSearchDataGrid.Modern.Core.Performance;
 
 namespace WWSearchDataGrid.Modern.Core
 {
@@ -86,12 +88,23 @@ namespace WWSearchDataGrid.Modern.Core
             set { SetProperty(value, ref isOperatorVisible); }
         }
 
-        private ObservableCollection<object> availableValues = new ObservableCollection<object>();
-        public ObservableCollection<object> AvailableValues 
+        private IEnumerable<ValueAggregateMetadata> availableValues = new List<ValueAggregateMetadata>();
+        public IEnumerable<ValueAggregateMetadata> AvailableValues 
         { 
             get { return availableValues; }
-            private set { SetProperty(value, ref availableValues); }
+            private set 
+            { 
+                if (SetProperty(value, ref availableValues))
+                {
+                    OnPropertyChanged(nameof(AvailableValueCount));
+                }
+            }
         }
+
+        /// <summary>
+        /// Gets the count of available values for display purposes
+        /// </summary>
+        public int AvailableValueCount => availableValues?.Count() ?? 0;
 
         public object SelectedValue
         {
@@ -385,24 +398,103 @@ namespace WWSearchDataGrid.Modern.Core
             }
         }
 
+        /// <summary>
+        /// Loads values from the high-performance provider
+        /// </summary>
+        public async Task LoadValuesFromProvider(IColumnValueProvider provider, string columnKey)
+        {
+            if (provider == null || string.IsNullOrEmpty(columnKey))
+                return;
+
+            var request = new ColumnValueRequest
+            {
+                ColumnKey = columnKey,
+                Skip = 0,
+                Take = 10000, // Load first 10k values
+                IncludeNull = true,
+                IncludeEmpty = true,
+                SortAscending = true,
+                GroupByFrequency = false
+            };
+
+            var response = await provider.GetValuesAsync(request);
+            
+            // Convert to metadata list and sort
+            var metadataList = response.Values.ToList();
+            metadataList.Sort((x, y) => 
+            {
+                // Null values first
+                if (x.Value == null && y.Value == null) return 0;
+                if (x.Value == null) return -1;
+                if (y.Value == null) return 1;
+                
+                // Then sort by string representation
+                return string.Compare(x.Value.ToString(), y.Value.ToString(), StringComparison.Ordinal);
+            });
+
+            AvailableValues = metadataList;
+            
+            // Update column values for nullability analysis
+            var values = metadataList.Select(m => m.Value).ToList();
+            ColumnValues = new HashSet<object>(values);
+            
+            if (values.Any())
+            {
+                ColumnDataType = ReflectionHelper.DetermineColumnDataType(ColumnValues);
+            }
+        }
+
+        /// <summary>
+        /// Gets display text for a value with count information
+        /// </summary>
+        public string GetValueDisplayText(ValueAggregateMetadata metadata)
+        {
+            if (metadata == null)
+                return string.Empty;
+
+            var valueText = metadata.Value?.ToString() ?? "(null)";
+            var countText = metadata.Count > 1 ? $" ({metadata.Count})" : "";
+            
+            return $"{valueText}{countText}";
+        }
+
+        /// <summary>
+        /// Legacy method for backward compatibility
+        /// </summary>
+        [Obsolete("Use LoadValuesFromProvider instead. This method is provided for backward compatibility.")]
         public void LoadAvailableValues(HashSet<object> columnValues)
         {
             // Store the original column values for nullability analysis
             ColumnValues = columnValues;
 
-            AvailableValues.Clear();
-
+            // Convert to metadata format for consistency
+            var metadataList = new List<ValueAggregateMetadata>();
+            
             // Add null first if present
             if (columnValues.Any(v => v == null))
             {
-                AvailableValues.Add(null);
+                metadataList.Add(new ValueAggregateMetadata 
+                { 
+                    Value = null, 
+                    Count = columnValues.Count(v => v == null),
+                    LastSeen = DateTime.UtcNow,
+                    HashCode = 0
+                });
             }
 
             // Add non-null values in sorted order
             foreach (var v in columnValues.Where(v => v != null).OrderBy(v => v.ToStringEmptyIfNull()))
             {
-                AvailableValues.Add(v);
+                metadataList.Add(new ValueAggregateMetadata 
+                { 
+                    Value = v, 
+                    Count = 1, // Legacy doesn't track counts
+                    LastSeen = DateTime.UtcNow,
+                    HashCode = v.GetHashCode()
+                });
             }
+
+            AvailableValues = metadataList;
 
             if (columnValues.Any())
             {
@@ -434,40 +526,38 @@ namespace WWSearchDataGrid.Modern.Core
         private void SyncAvailableValues(IEnumerable<object> cacheValues)
         {
             var cacheValuesList = cacheValues?.ToList() ?? new List<object>();
-            var currentItems = AvailableValues.ToList();
-
-            // Remove items that are no longer in cache
-            for (int i = currentItems.Count - 1; i >= 0; i--)
+            
+            // Convert to metadata format
+            var metadataList = new List<ValueAggregateMetadata>();
+            
+            // Add null first if present
+            if (cacheValuesList.Any(v => v == null))
             {
-                if (!cacheValuesList.Contains(currentItems[i]))
-                {
-                    AvailableValues.RemoveAt(i);
-                }
+                metadataList.Add(new ValueAggregateMetadata 
+                { 
+                    Value = null, 
+                    Count = cacheValuesList.Count(v => v == null),
+                    LastSeen = DateTime.UtcNow,
+                    HashCode = 0
+                });
             }
 
-            // Add new items from cache that aren't already present
-            foreach (var cacheValue in cacheValuesList)
+            // Add non-null values in sorted order
+            foreach (var v in cacheValuesList.Where(v => v != null).OrderBy(v => v.ToStringEmptyIfNull()))
             {
-                if (!AvailableValues.Contains(cacheValue))
-                {
-                    // Insert in sorted order
-                    var valueStr = cacheValue?.ToString() ?? string.Empty;
-                    int insertIndex = 0;
-                    
-                    for (int i = 0; i < AvailableValues.Count; i++)
-                    {
-                        var existingStr = AvailableValues[i]?.ToString() ?? string.Empty;
-                        if (string.Compare(valueStr, existingStr, StringComparison.Ordinal) < 0)
-                        {
-                            insertIndex = i;
-                            break;
-                        }
-                        insertIndex = i + 1;
-                    }
-                    
-                    AvailableValues.Insert(insertIndex, cacheValue);
-                }
+                metadataList.Add(new ValueAggregateMetadata 
+                { 
+                    Value = v, 
+                    Count = 1, // Cache sync doesn't track counts
+                    LastSeen = DateTime.UtcNow,
+                    HashCode = v.GetHashCode()
+                });
             }
+
+            AvailableValues = metadataList;
+            
+            // Update column values for nullability analysis
+            ColumnValues = new HashSet<object>(cacheValuesList);
         }
 
         #endregion

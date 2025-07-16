@@ -32,24 +32,25 @@ namespace WWSearchDataGrid.Modern.Core.Performance
         private readonly ConcurrentDictionary<string, FilterValueViewModel> _filterViewModelCache =
             new ConcurrentDictionary<string, FilterValueViewModel>();
 
-        private readonly ConcurrentDictionary<string, List<ISharedItemsSourceProvider>> _sharedItemsSourceProviders =
-            new ConcurrentDictionary<string, List<ISharedItemsSourceProvider>>();
 
         private readonly ConcurrentDictionary<string, BulkOperationTracker> _bulkOperationTrackers =
             new ConcurrentDictionary<string, BulkOperationTracker>();
+
+        private readonly Lazy<HighPerformanceColumnValueProvider> _highPerformanceProvider =
+            new Lazy<HighPerformanceColumnValueProvider>(() => new HighPerformanceColumnValueProvider());
 
         #endregion
 
         #region Events
 
-        /// <summary>
-        /// Raised when a shared ItemsSource is updated
-        /// </summary>
-        public event EventHandler<SharedItemsSourceChangedEventArgs> SharedItemsSourceChanged;
-
         #endregion
 
         #region Public Methods
+
+        /// <summary>
+        /// Gets the high-performance column value provider
+        /// </summary>
+        public HighPerformanceColumnValueProvider HighPerformanceProvider => _highPerformanceProvider.Value;
 
         /// <summary>
         /// Gets or creates column metadata for efficient access
@@ -67,30 +68,6 @@ namespace WWSearchDataGrid.Modern.Core.Performance
             });
         }
 
-        /// <summary>
-        /// Registers a shared items source provider for a column
-        /// </summary>
-        public void RegisterSharedItemsSourceProvider(string columnKey, ISharedItemsSourceProvider provider)
-        {
-            if (provider == null || string.IsNullOrEmpty(columnKey))
-                return;
-
-            var providers = _sharedItemsSourceProviders.GetOrAdd(columnKey, _ => new List<ISharedItemsSourceProvider>());
-            
-            lock (providers)
-            {
-                providers.Add(provider);
-            }
-            
-            // If metadata already exists, populate the provider immediately
-            if (_columnMetadata.TryGetValue(columnKey, out var metadata))
-            {
-                lock (metadata.SyncRoot)
-                {
-                    provider.UpdateItems(metadata.SortedValues);
-                }
-            }
-        }
 
         /// <summary>
         /// Gets the current values for a column for immediate synchronization
@@ -112,6 +89,9 @@ namespace WWSearchDataGrid.Modern.Core.Performance
         /// </summary>
         public Task UpdateColumnValuesAsync(string columnKey, IEnumerable<object> items, string bindingPath)
         {
+            // Use high-performance provider for large datasets
+            _ = _highPerformanceProvider.Value.UpdateColumnValuesAsync(columnKey, items, bindingPath);
+            
             return Task.Run(() =>
             {
                 var metadata = GetOrCreateMetadata(columnKey, bindingPath);
@@ -149,9 +129,6 @@ namespace WWSearchDataGrid.Modern.Core.Performance
 
                 // Invalidate related view models
                 InvalidateFilterViewModels(columnKey);
-                
-                // Update shared ItemsSource
-                UpdateSharedItemsSourceProvider(columnKey, metadata);
             });
         }
 
@@ -237,9 +214,6 @@ namespace WWSearchDataGrid.Modern.Core.Performance
 
             // Notify any listening filter view models
             InvalidateFilterViewModels(columnKey);
-            
-            // Update shared ItemsSource incrementally
-            UpdateSharedItemsSourceProviderIncremental(columnKey, e, bindingPath);
         }
 
         /// <summary>
@@ -304,6 +278,9 @@ namespace WWSearchDataGrid.Modern.Core.Performance
         /// </summary>
         public void AddItemValue(string columnKey, object item, string bindingPath)
         {
+            // Update high-performance provider
+            _ = _highPerformanceProvider.Value.AddValueAsync(columnKey, item, bindingPath);
+            
             var metadata = GetOrCreateMetadata(columnKey, bindingPath);
             var value = ReflectionHelper.GetPropValue(item, bindingPath);
 
@@ -324,9 +301,6 @@ namespace WWSearchDataGrid.Modern.Core.Performance
 
             // Update view models incrementally
             UpdateFilterViewModelsIncremental(columnKey, value, true);
-            
-            // Update shared ItemsSource incrementally
-            UpdateSharedItemsSourceProviderWithValue(columnKey, value, true);
         }
 
         /// <summary>
@@ -334,6 +308,9 @@ namespace WWSearchDataGrid.Modern.Core.Performance
         /// </summary>
         public void RemoveItemValue(string columnKey, object item, string bindingPath)
         {
+            // Update high-performance provider
+            _ = _highPerformanceProvider.Value.RemoveValueAsync(columnKey, item, bindingPath);
+            
             var metadata = GetOrCreateMetadata(columnKey, bindingPath);
             var value = ReflectionHelper.GetPropValue(item, bindingPath);
 
@@ -355,9 +332,6 @@ namespace WWSearchDataGrid.Modern.Core.Performance
 
             // Update view models incrementally
             UpdateFilterViewModelsIncremental(columnKey, value, false);
-            
-            // Update shared ItemsSource incrementally
-            UpdateSharedItemsSourceProviderWithValue(columnKey, value, false);
         }
 
         /// <summary>
@@ -365,6 +339,9 @@ namespace WWSearchDataGrid.Modern.Core.Performance
         /// </summary>
         public void ClearColumnCache(string columnKey)
         {
+            // Clear high-performance provider
+            _highPerformanceProvider.Value.InvalidateColumn(columnKey);
+            
             _columnMetadata.TryRemove(columnKey, out _);
 
             // Remove related view models
@@ -373,9 +350,6 @@ namespace WWSearchDataGrid.Modern.Core.Performance
             {
                 _filterViewModelCache.TryRemove(key, out _);
             }
-            
-            // Remove shared ItemsSource provider
-            _sharedItemsSourceProviders.TryRemove(columnKey, out _);
             
             // Remove bulk operation tracker
             if (_bulkOperationTrackers.TryRemove(columnKey, out var tracker))
@@ -389,9 +363,11 @@ namespace WWSearchDataGrid.Modern.Core.Performance
         /// </summary>
         public void ClearAllCaches()
         {
+            // Clear high-performance provider
+            _highPerformanceProvider.Value.ClearAll();
+            
             _columnMetadata.Clear();
             _filterViewModelCache.Clear();
-            _sharedItemsSourceProviders.Clear();
             
             // Dispose all bulk operation trackers
             foreach (var tracker in _bulkOperationTrackers.Values)
@@ -470,98 +446,8 @@ namespace WWSearchDataGrid.Modern.Core.Performance
             }
         }
 
-        private void UpdateSharedItemsSourceProvider(string columnKey, ColumnValueMetadata metadata)
-        {
-            if (_sharedItemsSourceProviders.TryGetValue(columnKey, out var providers))
-            {
-                lock (metadata.SyncRoot)
-                {
-                    var values = metadata.SortedValues.ToList(); // Create a copy for thread safety
-                    
-                    lock (providers)
-                    {
-                        foreach (var provider in providers)
-                        {
-                            provider.UpdateItems(values);
-                        }
-                    }
-                }
-                
-                SharedItemsSourceChanged?.Invoke(this, new SharedItemsSourceChangedEventArgs(columnKey, SharedItemsSourceChangeType.FullUpdate));
-            }
-        }
 
-        private void UpdateSharedItemsSourceProviderIncremental(string columnKey, NotifyCollectionChangedEventArgs e, string bindingPath)
-        {
-            if (!_sharedItemsSourceProviders.TryGetValue(columnKey, out var providers))
-                return;
 
-            lock (providers)
-            {
-                foreach (var provider in providers)
-                {
-                    switch (e.Action)
-                    {
-                        case NotifyCollectionChangedAction.Add:
-                            if (e.NewItems != null)
-                            {
-                                foreach (var item in e.NewItems)
-                                {
-                                    var value = ReflectionHelper.GetPropValue(item, bindingPath);
-                                    provider.AddItem(value);
-                                }
-                            }
-                            break;
-
-                        case NotifyCollectionChangedAction.Remove:
-                            if (e.OldItems != null)
-                            {
-                                foreach (var item in e.OldItems)
-                                {
-                                    var value = ReflectionHelper.GetPropValue(item, bindingPath);
-                                    // Only remove if not in metadata (count went to 0)
-                                    if (_columnMetadata.TryGetValue(columnKey, out var metadata) && 
-                                        !metadata.Values.Contains(value))
-                                    {
-                                        provider.RemoveItem(value);
-                                    }
-                                }
-                            }
-                            break;
-                    }
-                }
-            }
-            
-            SharedItemsSourceChanged?.Invoke(this, new SharedItemsSourceChangedEventArgs(columnKey, SharedItemsSourceChangeType.IncrementalUpdate));
-        }
-
-        private void UpdateSharedItemsSourceProviderWithValue(string columnKey, object value, bool isAdd)
-        {
-            if (!_sharedItemsSourceProviders.TryGetValue(columnKey, out var providers))
-                return;
-
-            lock (providers)
-            {
-                foreach (var provider in providers)
-                {
-                    if (isAdd)
-                    {
-                        provider.AddItem(value);
-                    }
-                    else
-                    {
-                        // Only remove if not in metadata (count went to 0)
-                        if (_columnMetadata.TryGetValue(columnKey, out var metadata) && 
-                            !metadata.Values.Contains(value))
-                        {
-                            provider.RemoveItem(value);
-                        }
-                    }
-                }
-            }
-            
-            SharedItemsSourceChanged?.Invoke(this, new SharedItemsSourceChangedEventArgs(columnKey, SharedItemsSourceChangeType.IncrementalUpdate));
-        }
 
 
         private bool DetectBulkOperation(string columnKey, NotifyCollectionChangedEventArgs e)
@@ -596,11 +482,6 @@ namespace WWSearchDataGrid.Modern.Core.Performance
                 tracker.IsBulkOperation = false;
                 tracker.OperationCount = 0;
                 
-                // Trigger full reload of shared ItemsSource providers
-                if (_columnMetadata.TryGetValue(columnKey, out var metadata))
-                {
-                    UpdateSharedItemsSourceProvider(columnKey, metadata);
-                }
                 
                 // Invalidate filter view models
                 InvalidateFilterViewModels(columnKey);
@@ -623,51 +504,6 @@ namespace WWSearchDataGrid.Modern.Core.Performance
         }
 
         #endregion
-    }
-
-    /// <summary>
-    /// Interface for objects that can provide shared items source collections
-    /// </summary>
-    public interface ISharedItemsSourceProvider
-    {
-        /// <summary>
-        /// Updates the entire collection with new items
-        /// </summary>
-        void UpdateItems(IEnumerable<object> items);
-
-        /// <summary>
-        /// Adds a single item to the collection
-        /// </summary>
-        void AddItem(object item);
-
-        /// <summary>
-        /// Removes a single item from the collection
-        /// </summary>
-        void RemoveItem(object item);
-    }
-
-    /// <summary>
-    /// Event arguments for shared items source changes
-    /// </summary>
-    public class SharedItemsSourceChangedEventArgs : EventArgs
-    {
-        public string ColumnKey { get; }
-        public SharedItemsSourceChangeType ChangeType { get; }
-
-        public SharedItemsSourceChangedEventArgs(string columnKey, SharedItemsSourceChangeType changeType)
-        {
-            ColumnKey = columnKey;
-            ChangeType = changeType;
-        }
-    }
-
-    /// <summary>
-    /// Types of changes that can occur to a shared items source
-    /// </summary>
-    public enum SharedItemsSourceChangeType
-    {
-        FullUpdate,
-        IncrementalUpdate
     }
 
     /// <summary>

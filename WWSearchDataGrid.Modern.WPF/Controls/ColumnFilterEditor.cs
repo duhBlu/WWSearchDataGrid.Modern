@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -40,6 +41,7 @@ namespace WWSearchDataGrid.Modern.WPF
         private TabItem _pendingTab;
         private bool _isInitialized;
         private string _columnKey;
+        private CancellationTokenSource _loadingCancellationTokenSource;
         
         // Timer for debouncing operator visibility updates
         private DispatcherTimer _operatorVisibilityUpdateTimer;
@@ -492,101 +494,222 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
-        /// Loads column values asynchronously for better performance
+        /// Loads column values asynchronously using the high-performance provider
         /// </summary>
         private async Task LoadColumnValuesAsync()
         {
             if (SearchTemplateController == null || string.IsNullOrEmpty(_columnKey))
                 return;
 
-            // Check if we're in per-column or global mode
-            if (DataContext is ColumnSearchBox columnSearchBox)
+            // Cancel any existing loading operation
+            _loadingCancellationTokenSource?.Cancel();
+            _loadingCancellationTokenSource = new CancellationTokenSource();
+            var cancellationToken = _loadingCancellationTokenSource.Token;
+
+            try
             {
-                var bindingPath = columnSearchBox.BindingPath;
-                if (!string.IsNullOrEmpty(bindingPath) && columnSearchBox.SourceDataGrid?.OriginalItemsSource != null)
+                // Check if we're in per-column or global mode
+                if (DataContext is ColumnSearchBox columnSearchBox)
                 {
-                    // Use the original unfiltered items source to preserve all possible values
-                    var items = columnSearchBox.SourceDataGrid.OriginalItemsSource.Cast<object>().ToList();
-                    await _cache.UpdateColumnValuesAsync(_columnKey, items, bindingPath);
-
-                    // Update controller with cached values
-                    var metadata = _cache.GetOrCreateMetadata(_columnKey, bindingPath);
-                    SearchTemplateController.ColumnValues = new HashSet<object>(metadata.Values);
-                    SearchTemplateController.ColumnDataType = metadata.DataType;
-
-                    // Connect SearchTemplateController to unified cache system
-                    SearchTemplateController.ConnectToCache(_columnKey, _cache);
-                    
-                    // Register WPF-specific providers for thread-safe UI updates
-                    SearchTemplateController.RegisterProvidersWithCache(_columnKey, _cache, 
-                        collection => new Services.SearchTemplateItemsSourceProvider(collection));
-
-                    // Create and set up the FilterValueViewModel first
-                    await SetupFilterValueViewModel(columnSearchBox, items, metadata);
+                    await LoadColumnValuesForSingleColumnAsync(columnSearchBox, cancellationToken);
+                }
+                else if (DataContext is SearchDataGrid dataGrid)
+                {
+                    await LoadColumnValuesForGlobalModeAsync(dataGrid, cancellationToken);
                 }
             }
-            else if (DataContext is SearchDataGrid dataGrid)
+            catch (OperationCanceledException)
             {
-                // Global mode - aggregate all column values
-                var tasks = new List<Task>();
-
-                foreach (var column in dataGrid.DataColumns)
-                {
-                    if (!string.IsNullOrEmpty(column.BindingPath))
-                    {
-                        var columnKey = $"{column.CurrentColumn?.Header}_{column.BindingPath}";
-                        var bindingPath = column.BindingPath;
-                        var items = dataGrid.Items.Cast<object>().ToList();
-
-                        tasks.Add(_cache.UpdateColumnValuesAsync(columnKey, items, bindingPath));
-                    }
-                }
-
-                await Task.WhenAll(tasks);
+                // Loading was cancelled, which is expected
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error loading column values: {ex.Message}");
             }
         }
 
         /// <summary>
-        /// Sets up the FilterValueViewModel with proper data
+        /// Loads column values for a single column using high-performance provider
         /// </summary>
-        private async Task SetupFilterValueViewModel(ColumnSearchBox columnSearchBox, List<object> items, dynamic metadata)
+        private async Task LoadColumnValuesForSingleColumnAsync(ColumnSearchBox columnSearchBox, CancellationToken cancellationToken)
         {
-            // Check if GroupBy column is specified
-            var groupByColumn = GetGroupByColumn(columnSearchBox.CurrentColumn);
+            var bindingPath = columnSearchBox.BindingPath;
+            if (string.IsNullOrEmpty(bindingPath) || columnSearchBox.SourceDataGrid?.OriginalItemsSource == null)
+                return;
 
-            if (!string.IsNullOrEmpty(groupByColumn))
+            // Show progress indicator for large datasets
+            var itemsSource = columnSearchBox.SourceDataGrid.OriginalItemsSource;
+            var itemCount = itemsSource.Cast<object>().Count();
+            var showProgress = itemCount > 5000;
+
+            if (showProgress)
             {
-                // Create grouped tree view model
-                var groupedViewModel = new GroupedTreeViewFilterValueViewModel
-                {
-                    GroupByColumn = groupByColumn
-                };
-
-                // Load grouped data
-                LoadGroupedDataForViewModel(groupedViewModel, columnSearchBox, items, groupByColumn);
-
-                FilterValueViewModel = groupedViewModel;
-
-                // Load the data with counts
-                if (metadata.Values != null && metadata.Values.Count > 0)
-                {
-                    FilterValueViewModel.LoadValuesWithCounts(metadata.Values, metadata.ValueCounts);
-                }
+                await ShowProgressIndicatorAsync("Loading column values...", cancellationToken);
             }
-            else
+
+            // Use the original unfiltered items source to preserve all possible values
+            var items = itemsSource.Cast<object>().ToList();
+            
+            // Update cache with background processing
+            await _cache.UpdateColumnValuesAsync(_columnKey, items, bindingPath);
+            
+            // Update high-performance provider in the background
+            var highPerformanceProvider = _cache.HighPerformanceProvider;
+            await highPerformanceProvider.UpdateColumnValuesAsync(_columnKey, items, bindingPath);
+
+            cancellationToken.ThrowIfCancellationRequested();
+
+            // Update controller with cached values on UI thread
+            await Dispatcher.BeginInvoke(new Action(() =>
             {
-                // Use regular filter value view model from cache
-                FilterValueViewModel = _cache.GetOrCreateFilterViewModel(
-                    _columnKey,
-                    ColumnDataType,
-                    FilterValueConfiguration);
+                var metadata = _cache.GetOrCreateMetadata(_columnKey, bindingPath);
+                SearchTemplateController.ColumnValues = new HashSet<object>(metadata.Values);
+                SearchTemplateController.ColumnDataType = metadata.DataType;
 
-                // Load the data with counts
-                if (metadata.Values != null && metadata.Values.Count > 0)
-                {
-                    FilterValueViewModel.LoadValuesWithCounts(metadata.Values, metadata.ValueCounts);
-                }
+                // Connect SearchTemplateController to high-performance value provider
+                SearchTemplateController.ConnectToValueProvider(_columnKey, _cache.HighPerformanceProvider);
+            }));
+
+            cancellationToken.ThrowIfCancellationRequested();
+
+            // Create and set up the FilterValueViewModel
+            await SetupFilterValueViewModelAsync(columnSearchBox, items, cancellationToken);
+
+            if (showProgress)
+            {
+                await HideProgressIndicatorAsync(cancellationToken);
             }
+        }
+
+        /// <summary>
+        /// Loads column values for global mode using high-performance provider
+        /// </summary>
+        private async Task LoadColumnValuesForGlobalModeAsync(SearchDataGrid dataGrid, CancellationToken cancellationToken)
+        {
+            var columns = dataGrid.DataColumns.Where(c => !string.IsNullOrEmpty(c.BindingPath)).ToList();
+            
+            if (columns.Count == 0)
+                return;
+
+            // Show progress for global mode
+            await ShowProgressIndicatorAsync($"Loading values for {columns.Count} columns...", cancellationToken);
+
+            var highPerformanceProvider = _cache.HighPerformanceProvider;
+            var tasks = new List<Task>();
+
+            foreach (var column in columns)
+            {
+                var columnKey = $"{column.CurrentColumn?.Header}_{column.BindingPath}";
+                var bindingPath = column.BindingPath;
+                var items = dataGrid.Items.Cast<object>().ToList();
+
+                // Update both cache and high-performance provider
+                tasks.Add(_cache.UpdateColumnValuesAsync(columnKey, items, bindingPath));
+                tasks.Add(highPerformanceProvider.UpdateColumnValuesAsync(columnKey, items, bindingPath));
+            }
+
+            await Task.WhenAll(tasks);
+
+            cancellationToken.ThrowIfCancellationRequested();
+            
+            await HideProgressIndicatorAsync(cancellationToken);
+        }
+
+        /// <summary>
+        /// Shows progress indicator for large dataset loading
+        /// </summary>
+        private async Task ShowProgressIndicatorAsync(string message, CancellationToken cancellationToken)
+        {
+            await Dispatcher.BeginInvoke(new Action(() =>
+            {
+                if (valuesSummary != null)
+                {
+                    valuesSummary.Text = message;
+                    valuesSummary.Visibility = Visibility.Visible;
+                }
+            }));
+        }
+
+        /// <summary>
+        /// Hides progress indicator
+        /// </summary>
+        private async Task HideProgressIndicatorAsync(CancellationToken cancellationToken)
+        {
+            await Dispatcher.BeginInvoke(new Action(() =>
+            {
+                if (valuesSummary != null)
+                {
+                    valuesSummary.Visibility = Visibility.Collapsed;
+                }
+            }));
+        }
+
+        /// <summary>
+        /// Sets up the FilterValueViewModel with proper data using high-performance provider
+        /// </summary>
+        private async Task SetupFilterValueViewModelAsync(ColumnSearchBox columnSearchBox, List<object> items, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            // Get values from high-performance provider
+            var highPerformanceProvider = _cache.HighPerformanceProvider;
+            var request = new ColumnValueRequest
+            {
+                ColumnKey = _columnKey,
+                Skip = 0,
+                Take = 10000, // Load first 10k for UI
+                IncludeNull = true,
+                IncludeEmpty = true,
+                SortAscending = true,
+                GroupByFrequency = false
+            };
+
+            var response = await highPerformanceProvider.GetValuesAsync(request);
+            cancellationToken.ThrowIfCancellationRequested();
+
+            // Convert to required formats
+            var values = new HashSet<object>(response.Values.Select(v => v.Value));
+            var valueCounts = response.Values.ToDictionary(v => v.Value, v => v.Count);
+
+            await Dispatcher.BeginInvoke(new Action(() =>
+            {
+                // Check if GroupBy column is specified
+                var groupByColumn = GetGroupByColumn(columnSearchBox.CurrentColumn);
+
+                if (!string.IsNullOrEmpty(groupByColumn))
+                {
+                    // Create grouped tree view model
+                    var groupedViewModel = new GroupedTreeViewFilterValueViewModel
+                    {
+                        GroupByColumn = groupByColumn
+                    };
+
+                    // Load grouped data
+                    LoadGroupedDataForViewModel(groupedViewModel, columnSearchBox, items, groupByColumn);
+
+                    FilterValueViewModel = groupedViewModel;
+
+                    // Load the data with counts from high-performance provider
+                    if (values.Count > 0)
+                    {
+                        FilterValueViewModel.LoadValuesWithCounts(values, valueCounts);
+                    }
+                }
+                else
+                {
+                    // Use regular filter value view model from cache
+                    FilterValueViewModel = _cache.GetOrCreateFilterViewModel(
+                        _columnKey,
+                        ColumnDataType,
+                        FilterValueConfiguration);
+
+                    // Load the data with counts from high-performance provider
+                    if (values.Count > 0)
+                    {
+                        FilterValueViewModel.LoadValuesWithCounts(values, valueCounts);
+                    }
+                }
+            }));
         }
 
         /// <summary>
@@ -1069,6 +1192,10 @@ namespace WWSearchDataGrid.Modern.WPF
         /// </summary>
         protected void OnUnloaded(object sender, RoutedEventArgs e)
         {
+            // Cancel any ongoing loading operations
+            _loadingCancellationTokenSource?.Cancel();
+            _loadingCancellationTokenSource?.Dispose();
+            _loadingCancellationTokenSource = null;
 
             // Clean up timers
             if (_tabSwitchTimer != null)
