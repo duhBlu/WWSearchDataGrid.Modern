@@ -269,10 +269,8 @@ namespace WWSearchDataGrid.Modern.WPF
                             {
                                 if (template.AvailableValues?.Count() == 0)
                                 {
-                                    Dispatcher.Invoke(() =>
-                                    {
-                                        template.LoadAvailableValues(columnInfo.WorkingController.ColumnValues);
-                                    });
+                                    // Templates will be updated by the controller's provider
+                                    // No need to manually load values
                                 }
                             }
                         }
@@ -338,7 +336,7 @@ namespace WWSearchDataGrid.Modern.WPF
         /// </summary>
         private static SearchTemplate CloneSearchTemplate(SearchTemplate original, HashSet<object> columnValues, ColumnDataType dataType)
         {
-            var clone = new SearchTemplate(columnValues, dataType)
+            var clone = new SearchTemplate(dataType)
             {
                 SearchType = original.SearchType,
                 SelectedValue = original.SelectedValue,
@@ -387,8 +385,8 @@ namespace WWSearchDataGrid.Modern.WPF
                 }
             }
 
-            // Copy available values
-            clone.LoadAvailableValues(columnValues);
+            // Available values will be loaded by the provider when needed
+            // No need to manually load values during cloning
 
             return clone;
         }

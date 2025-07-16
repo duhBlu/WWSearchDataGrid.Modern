@@ -69,20 +69,6 @@ namespace WWSearchDataGrid.Modern.Core.Performance
         }
 
 
-        /// <summary>
-        /// Gets the current values for a column for immediate synchronization
-        /// </summary>
-        public List<object> GetCurrentValues(string columnKey)
-        {
-            if (_columnMetadata.TryGetValue(columnKey, out var metadata))
-            {
-                lock (metadata.SyncRoot)
-                {
-                    return metadata.SortedValues.ToList();
-                }
-            }
-            return new List<object>();
-        }
 
         /// <summary>
         /// Updates column values efficiently with incremental updates
@@ -445,10 +431,6 @@ namespace WWSearchDataGrid.Modern.Core.Performance
                 }
             }
         }
-
-
-
-
 
         private bool DetectBulkOperation(string columnKey, NotifyCollectionChangedEventArgs e)
         {

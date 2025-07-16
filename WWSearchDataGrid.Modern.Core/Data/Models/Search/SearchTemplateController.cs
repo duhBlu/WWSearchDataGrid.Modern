@@ -304,10 +304,10 @@ namespace WWSearchDataGrid.Modern.Core
             // Apply default search type if provided and compatible
             ApplyDefaultSearchType(newTemplate, defaultSearchType);
 
-            // Load values from current provider or fallback to ColumnValues
-            if (ColumnValues != null && ColumnValues.Any())
+            // Load values from current provider
+            if (_valueProvider != null && !string.IsNullOrEmpty(_currentColumnKey))
             {
-                newTemplate.LoadAvailableValues(ColumnValues);
+                _ = newTemplate.LoadValuesFromProvider(_valueProvider, _currentColumnKey);
             }
 
             // Add the template at the appropriate position
@@ -368,7 +368,17 @@ namespace WWSearchDataGrid.Modern.Core
             }
 
             AddSearchGroup(SearchGroups.Count == 0, false);
-            SearchGroups.ForEach(g => g.SearchTemplates.ForEach(t => t.LoadAvailableValues(ColumnValues)));
+            // Update all existing templates with new provider
+            if (_valueProvider != null && !string.IsNullOrEmpty(_currentColumnKey))
+            {
+                foreach (var group in SearchGroups)
+                {
+                    foreach (var template in group.SearchTemplates)
+                    {
+                        _ = template.LoadValuesFromProvider(_valueProvider, _currentColumnKey);
+                    }
+                }
+            }
             
             // Ensure operator visibility is properly set after loading
             UpdateOperatorVisibility();
@@ -541,6 +551,24 @@ namespace WWSearchDataGrid.Modern.Core
                 AddSearchTemplate(true, null, group);
                 UpdateFilterExpression();
             }
+        }
+
+        /// <summary>
+        /// Gets column values asynchronously using the provider
+        /// </summary>
+        /// <param name="columnKey">Column key to retrieve values for</param>
+        /// <returns>Enumerable of column values</returns>
+        public async Task<IEnumerable<object>> GetColumnValuesAsync(string columnKey)
+        {
+            if (_valueProvider == null || string.IsNullOrEmpty(columnKey))
+                return Enumerable.Empty<object>();
+
+            var response = await _valueProvider.GetValuesAsync(new ColumnValueRequest
+            {
+                ColumnKey = columnKey,
+                Take = int.MaxValue
+            });
+            return response.Values.Select(v => v.Value);
         }
 
         /// <summary>
@@ -1349,19 +1377,6 @@ namespace WWSearchDataGrid.Modern.Core
 
             // Load values using the high-performance provider
             _ = LoadColumnValuesAsync(columnKey, CancellationToken.None);
-        }
-
-        /// <summary>
-        /// Connects all SearchTemplates in this controller to use shared cache sources (backward compatibility)
-        /// </summary>
-        [Obsolete("Use ConnectToValueProvider instead. This method is provided for backward compatibility.")]
-        public void ConnectToCache(string columnKey, ColumnValueCache cache)
-        {
-            if (cache == null || string.IsNullOrEmpty(columnKey))
-                return;
-
-            // Use the high-performance provider from the cache
-            ConnectToValueProvider(columnKey, cache.HighPerformanceProvider);
         }
 
         /// <summary>

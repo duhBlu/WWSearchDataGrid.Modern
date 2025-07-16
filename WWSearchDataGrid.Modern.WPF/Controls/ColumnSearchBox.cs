@@ -291,13 +291,8 @@ namespace WWSearchDataGrid.Modern.WPF
                 // Check if SearchTemplateController is valid before updating
                 if (SearchTemplateController != null)
                 {
-                    foreach (var group in SearchTemplateController.SearchGroups)
-                    {
-                        foreach (var template in group.SearchTemplates)
-                        {
-                            template.LoadAvailableValues(SearchTemplateController.ColumnValues);
-                        }
-                    }
+                    // The SearchTemplateController will handle updating all templates with the provider
+                    // No need to update individual templates here
                 }
             }
 
@@ -587,7 +582,7 @@ namespace WWSearchDataGrid.Modern.WPF
                     .ToList();
 
                 // Create new confirmed Contains template
-                var newTemplate = new SearchTemplate(SearchTemplateController.ColumnValues, SearchTemplateController.ColumnDataType);
+                var newTemplate = new SearchTemplate(SearchTemplateController.ColumnDataType);
                 newTemplate.SearchType = SearchType.Contains;
                 newTemplate.SelectedValue = SearchText;
                 
@@ -739,7 +734,7 @@ namespace WWSearchDataGrid.Modern.WPF
                     else
                     {
                         // Create new temporary template
-                        _temporarySearchTemplate = new SearchTemplate(SearchTemplateController.ColumnValues, SearchTemplateController.ColumnDataType);
+                        _temporarySearchTemplate = new SearchTemplate(SearchTemplateController.ColumnDataType);
                         _temporarySearchTemplate.SearchType = SearchType.Contains;
                         _temporarySearchTemplate.SelectedValue = SearchText;
                         

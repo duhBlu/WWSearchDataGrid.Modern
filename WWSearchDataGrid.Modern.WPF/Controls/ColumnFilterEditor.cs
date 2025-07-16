@@ -568,6 +568,9 @@ namespace WWSearchDataGrid.Modern.WPF
 
                 // Connect SearchTemplateController to high-performance value provider
                 SearchTemplateController.ConnectToValueProvider(_columnKey, _cache.HighPerformanceProvider);
+                
+                // Initialize existing templates with provider (fire and forget)
+                _ = InitializeSearchTemplatesAsync();
             }));
 
             cancellationToken.ThrowIfCancellationRequested();
@@ -769,6 +772,33 @@ namespace WWSearchDataGrid.Modern.WPF
         /// </summary>
         private void InitializeSearchTemplateController()
         {
+            InitializeSearchTemplateControllerCore();
+        }
+        
+        /// <summary>
+        /// Initializes existing search templates with the provider
+        /// </summary>
+        private async Task InitializeSearchTemplatesAsync()
+        {
+            if (SearchTemplateController == null || string.IsNullOrEmpty(_columnKey))
+                return;
+
+            var provider = _cache.HighPerformanceProvider;
+            
+            foreach (var group in SearchTemplateController.SearchGroups)
+            {
+                foreach (var template in group.SearchTemplates)
+                {
+                    await template.LoadValuesFromProvider(provider, _columnKey);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Core initialization logic for search template controller
+        /// </summary>
+        private void InitializeSearchTemplateControllerCore()
+        {
             if (SearchTemplateController == null)
             {
                 // Get the mode from the source SearchDataGrid
@@ -820,17 +850,11 @@ namespace WWSearchDataGrid.Modern.WPF
                                 OperatorName = oldTemplate.OperatorName,
                                 IsOperatorVisible = oldTemplate.IsOperatorVisible
                             };
-                            // Connect to cache if available, otherwise use traditional method
-                            if (SearchTemplateController != null && SearchTemplateController.ColumnValues.Any())
+                            // Connect to provider
+                            if (!string.IsNullOrEmpty(_columnKey))
                             {
-                                // Connect to shared cache source
-                                newTemplate.ConnectToSharedSource(_columnKey, _cache);
-                            }
-                            else
-                            {
-                                // Fallback: Convert ObservableCollection to HashSet for LoadAvailableValues
-                                var availableValuesHashSet = new HashSet<object>(oldTemplate.AvailableValues);
-                                newTemplate.LoadAvailableValues(availableValuesHashSet);
+                                var provider = _cache.HighPerformanceProvider;
+                                _ = newTemplate.ConnectToProviderAsync(provider, _columnKey);
                             }
                             group.SearchTemplates[i] = newTemplate;
                         }

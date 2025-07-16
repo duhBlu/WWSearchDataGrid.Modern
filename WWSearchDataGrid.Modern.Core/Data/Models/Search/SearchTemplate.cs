@@ -185,7 +185,7 @@ namespace WWSearchDataGrid.Modern.Core
         /// <summary>
         /// Column values used for type analysis and nullability detection
         /// </summary>
-        public HashSet<object> ColumnValues
+        private HashSet<object> _columnValuesForNullabilityAnalysis
         {
             get { return columnValues; }
             set 
@@ -291,21 +291,24 @@ namespace WWSearchDataGrid.Modern.Core
             SelectedValues = new ObservableCollection<object>();
             SelectedDates = new ObservableCollection<DateTime>();
             DateIntervals = new ObservableCollection<DateIntervalItem>();
-            ColumnValues = new HashSet<object>();
+            _columnValuesForNullabilityAnalysis = new HashSet<object>();
 
             ColumnDataType = dataType;
             InitializeDateIntervals();
             UpdateInputTemplate();
         }
 
-        public SearchTemplate(HashSet<object> availableValues, ColumnDataType dataType)
+        public SearchTemplate(IColumnValueProvider provider, string columnKey, ColumnDataType dataType)
             : this(dataType)
         {
-            LoadAvailableValues(availableValues);
+            if (provider != null && !string.IsNullOrEmpty(columnKey))
+            {
+                _ = LoadValuesFromProvider(provider, columnKey);
+            }
         }
 
-        public SearchTemplate(HashSet<object> availableValues)
-            : this(availableValues, ColumnDataType.String) { }
+        public SearchTemplate(IColumnValueProvider provider, string columnKey)
+            : this(provider, columnKey, ColumnDataType.String) { }
 
         #endregion
 
@@ -331,9 +334,9 @@ namespace WWSearchDataGrid.Modern.Core
 
             // Determine if the column type is nullable
             bool isNullable = true; // Default to nullable for backward compatibility
-            if (ColumnValues != null && ColumnValues.Any())
+            if (_columnValuesForNullabilityAnalysis != null && _columnValuesForNullabilityAnalysis.Any())
             {
-                isNullable = ReflectionHelper.IsNullableFromValues(ColumnValues);
+                isNullable = ReflectionHelper.IsNullableFromValues(_columnValuesForNullabilityAnalysis);
             }
 
             var validTypes = SearchTypeRegistry.GetFiltersForDataType(ColumnDataType, isNullable);
@@ -436,11 +439,11 @@ namespace WWSearchDataGrid.Modern.Core
             
             // Update column values for nullability analysis
             var values = metadataList.Select(m => m.Value).ToList();
-            ColumnValues = new HashSet<object>(values);
+            _columnValuesForNullabilityAnalysis = new HashSet<object>(values);
             
             if (values.Any())
             {
-                ColumnDataType = ReflectionHelper.DetermineColumnDataType(ColumnValues);
+                ColumnDataType = ReflectionHelper.DetermineColumnDataType(_columnValuesForNullabilityAnalysis);
             }
         }
 
@@ -458,107 +461,18 @@ namespace WWSearchDataGrid.Modern.Core
             return $"{valueText}{countText}";
         }
 
-        /// <summary>
-        /// Legacy method for backward compatibility
-        /// </summary>
-        [Obsolete("Use LoadValuesFromProvider instead. This method is provided for backward compatibility.")]
-        public void LoadAvailableValues(HashSet<object> columnValues)
-        {
-            // Store the original column values for nullability analysis
-            ColumnValues = columnValues;
-
-            // Convert to metadata format for consistency
-            var metadataList = new List<ValueAggregateMetadata>();
-            
-            // Add null first if present
-            if (columnValues.Any(v => v == null))
-            {
-                metadataList.Add(new ValueAggregateMetadata 
-                { 
-                    Value = null, 
-                    Count = columnValues.Count(v => v == null),
-                    LastSeen = DateTime.UtcNow,
-                    HashCode = 0
-                });
-            }
-
-            // Add non-null values in sorted order
-            foreach (var v in columnValues.Where(v => v != null).OrderBy(v => v.ToStringEmptyIfNull()))
-            {
-                metadataList.Add(new ValueAggregateMetadata 
-                { 
-                    Value = v, 
-                    Count = 1, // Legacy doesn't track counts
-                    LastSeen = DateTime.UtcNow,
-                    HashCode = v.GetHashCode()
-                });
-            }
-
-            AvailableValues = metadataList;
-
-            if (columnValues.Any())
-            {
-                ColumnDataType = ReflectionHelper.DetermineColumnDataType(columnValues);
-            }
-        }
 
         /// <summary>
-        /// Connects this SearchTemplate to use a shared data source from the cache
-        /// This method will be called from the WPF layer to register the provider
+        /// Connects this SearchTemplate to use a shared data source from the provider
         /// </summary>
-        public void ConnectToSharedSource(string columnKey, Performance.ColumnValueCache cache)
+        public async Task ConnectToProviderAsync(IColumnValueProvider provider, string columnKey)
         {
-            if (cache == null || string.IsNullOrEmpty(columnKey))
+            if (provider == null || string.IsNullOrEmpty(columnKey))
                 return;
 
-            // Get current values from cache
-            var currentValues = cache.GetCurrentValues(columnKey);
-            
-            // Preserve existing items and sync with cache values without disrupting bindings
-            SyncAvailableValues(currentValues);
-            
-            // Note: The WPF layer will register the provider with proper dispatcher handling
+            await LoadValuesFromProvider(provider, columnKey);
         }
 
-        /// <summary>
-        /// Synchronizes AvailableValues with cache values while preserving existing items and their bindings
-        /// </summary>
-        private void SyncAvailableValues(IEnumerable<object> cacheValues)
-        {
-            var cacheValuesList = cacheValues?.ToList() ?? new List<object>();
-            
-            // Convert to metadata format
-            var metadataList = new List<ValueAggregateMetadata>();
-            
-            // Add null first if present
-            if (cacheValuesList.Any(v => v == null))
-            {
-                metadataList.Add(new ValueAggregateMetadata 
-                { 
-                    Value = null, 
-                    Count = cacheValuesList.Count(v => v == null),
-                    LastSeen = DateTime.UtcNow,
-                    HashCode = 0
-                });
-            }
-
-            // Add non-null values in sorted order
-            foreach (var v in cacheValuesList.Where(v => v != null).OrderBy(v => v.ToStringEmptyIfNull()))
-            {
-                metadataList.Add(new ValueAggregateMetadata 
-                { 
-                    Value = v, 
-                    Count = 1, // Cache sync doesn't track counts
-                    LastSeen = DateTime.UtcNow,
-                    HashCode = v.GetHashCode()
-                });
-            }
-
-            AvailableValues = metadataList;
-            
-            // Update column values for nullability analysis
-            ColumnValues = new HashSet<object>(cacheValuesList);
-        }
 
         #endregion
 

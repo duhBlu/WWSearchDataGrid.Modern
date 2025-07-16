@@ -26,8 +26,6 @@ namespace WWSearchDataGrid.Modern.Core.Performance
         private readonly ConcurrentDictionary<string, ColumnValueStorage> _columnStorage;
         private readonly ConcurrentDictionary<string, SemaphoreSlim> _columnSemaphores;
         private readonly ConcurrentDictionary<string, CancellationTokenSource> _backgroundTasks;
-        private readonly object _memoryLock = new object();
-        private long _currentMemoryUsage;
 
         #endregion
 
@@ -38,7 +36,6 @@ namespace WWSearchDataGrid.Modern.Core.Performance
             _columnStorage = new ConcurrentDictionary<string, ColumnValueStorage>();
             _columnSemaphores = new ConcurrentDictionary<string, SemaphoreSlim>();
             _backgroundTasks = new ConcurrentDictionary<string, CancellationTokenSource>();
-            _currentMemoryUsage = 0;
         }
 
         #endregion
@@ -105,11 +102,8 @@ namespace WWSearchDataGrid.Modern.Core.Performance
                 cancellationTokenSource.Dispose();
             }
 
-            // Remove storage
-            if (_columnStorage.TryRemove(columnKey, out var storage))
-            {
-                UpdateMemoryUsage(-storage.EstimatedMemoryUsage);
-            }
+            // Remove storage (memory is automatically freed since we calculate on-demand)
+            _columnStorage.TryRemove(columnKey, out _);
 
             // Remove semaphore
             if (_columnSemaphores.TryRemove(columnKey, out var semaphore))
@@ -204,11 +198,18 @@ namespace WWSearchDataGrid.Modern.Core.Performance
         }
 
         /// <summary>
-        /// Gets current memory usage in MB
+        /// Gets current memory usage in MB by aggregating from all storage
         /// </summary>
         public long GetMemoryUsageMB()
         {
-            return _currentMemoryUsage / (1024 * 1024);
+            long totalMemory = 0;
+            
+            foreach (var storage in _columnStorage.Values)
+            {
+                totalMemory += storage.EstimatedMemoryUsage;
+            }
+            
+            return totalMemory / (1024 * 1024);
         }
 
         /// <summary>
@@ -224,7 +225,7 @@ namespace WWSearchDataGrid.Modern.Core.Performance
             }
             _backgroundTasks.Clear();
 
-            // Clear storage
+            // Clear storage (memory automatically freed)
             _columnStorage.Clear();
             
             // Dispose semaphores
@@ -234,8 +235,42 @@ namespace WWSearchDataGrid.Modern.Core.Performance
             }
             _columnSemaphores.Clear();
 
-            // Reset memory usage
-            _currentMemoryUsage = 0;
+            // Memory usage is automatically reset when storage is cleared
+        }
+
+        /// <summary>
+        /// Gets detailed memory usage breakdown by column
+        /// </summary>
+        public Dictionary<string, long> GetMemoryUsageByColumn()
+        {
+            var breakdown = new Dictionary<string, long>();
+            
+            foreach (var kvp in _columnStorage)
+            {
+                breakdown[kvp.Key] = kvp.Value.EstimatedMemoryUsage;
+            }
+            
+            return breakdown;
+        }
+
+        /// <summary>
+        /// Gets total number of unique values across all columns
+        /// </summary>
+        public int GetTotalUniqueValueCount()
+        {
+            return _columnStorage.Values.Sum(storage => storage.Values.Count);
+        }
+
+        /// <summary>
+        /// Gets memory usage statistics
+        /// </summary>
+        public (long TotalMemoryBytes, int UniqueValues, int Columns) GetMemoryStatistics()
+        {
+            var totalMemory = _columnStorage.Values.Sum(s => s.EstimatedMemoryUsage);
+            var uniqueValues = _columnStorage.Values.Sum(s => s.Values.Count);
+            var columns = _columnStorage.Count;
+            
+            return (totalMemory, uniqueValues, columns);
         }
 
         #endregion
@@ -290,8 +325,8 @@ namespace WWSearchDataGrid.Modern.Core.Performance
                     await ProcessBatchAsync(storage, batch, bindingPath, cancellationToken);
                 }
 
-                // Update memory usage
-                UpdateMemoryUsage(storage.EstimatedMemoryUsage - oldMemoryUsage);
+                // Recalculate memory usage after batch processing
+                storage.RecalculateMemoryUsage();
                 
                 // Check memory limits and cleanup if needed
                 await CheckMemoryLimitsAsync();
@@ -306,12 +341,17 @@ namespace WWSearchDataGrid.Modern.Core.Performance
         {
             await Task.Run(() =>
             {
+                var uniqueValues = new HashSet<object>();
+                
                 foreach (var item in batch)
                 {
                     cancellationToken.ThrowIfCancellationRequested();
                     
                     var value = ReflectionHelper.GetPropValue(item, bindingPath);
                     var hashCode = value?.GetHashCode() ?? 0;
+                    
+                    // Track if this is a new unique value
+                    bool isNewValue = !storage.Values.ContainsKey(hashCode);
                     
                     storage.Values.AddOrUpdate(hashCode, 
                         new ValueAggregateMetadata
@@ -327,7 +367,21 @@ namespace WWSearchDataGrid.Modern.Core.Performance
                             existing.LastSeen = DateTime.UtcNow;
                             return existing;
                         });
+                    
+                    // Only add to unique values set if it's actually new
+                    if (isNewValue)
+                    {
+                        uniqueValues.Add(value);
+                    }
                 }
+                
+                // Update memory usage for all unique values in this batch
+                foreach (var value in uniqueValues)
+                {
+                    var memoryUsage = EstimateValueMemoryUsage(value) + 32;
+                    storage.UpdateMemoryUsage(memoryUsage);
+                }
+                
             }, cancellationToken);
         }
 
@@ -336,15 +390,21 @@ namespace WWSearchDataGrid.Modern.Core.Performance
             await Task.Run(() =>
             {
                 var hashCode = value?.GetHashCode() ?? 0;
+                bool isNewValue = false;
                 
                 storage.Values.AddOrUpdate(hashCode,
-                    new ValueAggregateMetadata
-                    {
-                        Value = value,
-                        Count = 1,
-                        LastSeen = DateTime.UtcNow,
-                        HashCode = hashCode
+                    // Add factory - new unique value
+                    key => {
+                        isNewValue = true;
+                        return new ValueAggregateMetadata
+                        {
+                            Value = value,
+                            Count = 1,
+                            LastSeen = DateTime.UtcNow,
+                            HashCode = hashCode
+                        };
                     },
+                    // Update factory - existing value, increment count
                     (key, existing) =>
                     {
                         existing.Count++;
@@ -352,7 +412,12 @@ namespace WWSearchDataGrid.Modern.Core.Performance
                         return existing;
                     });
 
-                UpdateMemoryUsage(EstimateValueMemoryUsage(value));
+                // Only update memory for new unique values
+                if (isNewValue)
+                {
+                    var memoryDelta = EstimateValueMemoryUsage(value) + 32; // Value + metadata overhead
+                    storage.UpdateMemoryUsage(memoryDelta);
+                }
             });
         }
 
@@ -365,14 +430,14 @@ namespace WWSearchDataGrid.Modern.Core.Performance
                 if (storage.Values.TryGetValue(hashCode, out var metadata))
                 {
                     metadata.Count--;
+                    metadata.LastSeen = DateTime.UtcNow;
+                    
                     if (metadata.Count <= 0)
                     {
                         storage.Values.TryRemove(hashCode, out _);
-                        UpdateMemoryUsage(-EstimateValueMemoryUsage(value));
-                    }
-                    else
-                    {
-                        metadata.LastSeen = DateTime.UtcNow;
+                        // Only subtract memory when unique value is actually removed
+                        var memoryDelta = EstimateValueMemoryUsage(value) + 32;
+                        storage.UpdateMemoryUsage(-memoryDelta);
                     }
                 }
             });
@@ -435,15 +500,8 @@ namespace WWSearchDataGrid.Modern.Core.Performance
             return values.Skip(skip).Take(take);
         }
 
-        private void UpdateMemoryUsage(long deltaBytes)
-        {
-            lock (_memoryLock)
-            {
-                _currentMemoryUsage += deltaBytes;
-            }
-        }
 
-        private long EstimateValueMemoryUsage(object value)
+        private static long EstimateValueMemoryUsage(object value)
         {
             if (value == null) return 8; // Reference size
             
@@ -498,11 +556,42 @@ namespace WWSearchDataGrid.Modern.Core.Performance
                 EstimatedMemoryUsage = 0;
             }
 
+            /// <summary>
+            /// Updates the estimated memory usage by the specified delta
+            /// </summary>
+            public void UpdateMemoryUsage(long deltaBytes)
+            {
+                EstimatedMemoryUsage += deltaBytes;
+            }
+
+            /// <summary>
+            /// Calculates the current memory usage based on stored values
+            /// </summary>
+            public long CalculateCurrentMemoryUsage()
+            {
+                long total = 0;
+                foreach (var metadata in Values.Values)
+                {
+                    total += HighPerformanceColumnValueProvider.EstimateValueMemoryUsage(metadata.Value);
+                    total += 32; // ValueAggregateMetadata overhead
+                }
+                return total;
+            }
+
+            /// <summary>
+            /// Recalculates and synchronizes the memory usage
+            /// </summary>
+            public void RecalculateMemoryUsage()
+            {
+                EstimatedMemoryUsage = CalculateCurrentMemoryUsage();
+            }
+
             public void Clear()
             {
                 Values.Clear();
                 EstimatedMemoryUsage = 0;
             }
+
         }
 
         #endregion
