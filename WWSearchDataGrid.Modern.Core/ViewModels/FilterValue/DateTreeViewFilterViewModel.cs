@@ -168,6 +168,23 @@ namespace WWSearchDataGrid.Modern.Core
             OnPropertyChanged(nameof(GroupedValues));
         }
 
+        /// <summary>
+        /// New method that loads values directly from ValueAggregateMetadata
+        /// </summary>
+        protected override void LoadValuesFromMetadata(IEnumerable<ValueAggregateMetadata> metadata)
+        {
+            // Convert metadata to the format expected by existing LoadValuesInternal
+            var values = metadata.Select(m => m.Value);
+            // Create NullSafeDictionary to handle null values properly (though dates are typically non-null)
+            var valueCounts = new NullSafeDictionary<object, int>();
+            foreach (var item in metadata)
+            {
+                valueCounts[item.Value] = item.Count;
+            }
+            
+            LoadValuesInternal(values, valueCounts);
+        }
+
         protected override void LoadValuesInternal(IEnumerable<object> values, Dictionary<object, int> valueCounts)
         {
             _allYearGroups.Clear();

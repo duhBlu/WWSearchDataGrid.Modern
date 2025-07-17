@@ -670,9 +670,8 @@ namespace WWSearchDataGrid.Modern.WPF
             var response = await columnValueProvider.GetValuesAsync(request);
             cancellationToken.ThrowIfCancellationRequested();
 
-            // Convert to required formats
-            var values = new HashSet<object>(response.Values.Select(v => v.Value));
-            var valueCounts = response.Values.ToDictionary(v => v.Value, v => v.Count);
+            // Use ValueAggregateMetadata directly from response
+            var metadataList = response.Values;
 
             await Dispatcher.BeginInvoke(new Action(() =>
             {
@@ -692,10 +691,10 @@ namespace WWSearchDataGrid.Modern.WPF
 
                     FilterValueViewModel = groupedViewModel;
 
-                    // Load the data with counts from column value provider
-                    if (values.Count > 0)
+                    // Load the data with metadata from column value provider
+                    if (metadataList.Any())
                     {
-                        FilterValueViewModel.LoadValuesWithCounts(values, valueCounts);
+                        FilterValueViewModel.LoadValuesWithMetadata(metadataList);
                     }
                 }
                 else
@@ -706,10 +705,10 @@ namespace WWSearchDataGrid.Modern.WPF
                         ColumnDataType,
                         FilterValueConfiguration);
 
-                    // Load the data with counts from column value provider
-                    if (values.Count > 0)
+                    // Load the data with metadata from column value provider
+                    if (metadataList.Any())
                     {
-                        FilterValueViewModel.LoadValuesWithCounts(values, valueCounts);
+                        FilterValueViewModel.LoadValuesWithMetadata(metadataList);
                     }
                 }
             }));
@@ -961,7 +960,14 @@ namespace WWSearchDataGrid.Modern.WPF
                     var metadata = _cache.GetOrCreateMetadata(_columnKey, string.Empty);
                     if (metadata.Values.Count > 0)
                     {
-                        FilterValueViewModel.LoadValuesWithCounts(metadata.Values, metadata.ValueCounts);
+                        // Create ValueAggregateMetadata from the ColumnValueMetadata
+                        var metadataList = metadata.Values.Select(value => new ValueAggregateMetadata
+                        {
+                            Value = value,
+                            Count = metadata.ValueCounts.ContainsKey(value) ? metadata.ValueCounts[value] : 1
+                        });
+                        
+                        FilterValueViewModel.LoadValuesWithMetadata(metadataList);
                     }
                 }
 
@@ -1014,8 +1020,15 @@ namespace WWSearchDataGrid.Modern.WPF
             {
                 var metadata = _cache.GetOrCreateMetadata(_columnKey, columnSearchBox.BindingPath);
 
+                // Create ValueAggregateMetadata from the ColumnValueMetadata
+                var metadataList = metadata.Values.Select(value => new ValueAggregateMetadata
+                {
+                    Value = value,
+                    Count = metadata.ValueCounts.ContainsKey(value) ? metadata.ValueCounts[value] : 1
+                });
+
                 // Reload the view model with updated values
-                FilterValueViewModel.LoadValuesWithCounts(metadata.Values, metadata.ValueCounts);
+                FilterValueViewModel.LoadValuesWithMetadata(metadataList);
 
                 // Update UI
                 UpdateValueSelectionSummary();

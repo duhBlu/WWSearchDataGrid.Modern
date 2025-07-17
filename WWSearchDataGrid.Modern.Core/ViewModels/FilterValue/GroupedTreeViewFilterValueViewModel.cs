@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using WWSearchDataGrid.Modern.Core.Performance;
 
 namespace WWSearchDataGrid.Modern.Core
 {
@@ -178,6 +179,23 @@ namespace WWSearchDataGrid.Modern.Core
             }
 
             OnPropertyChanged(nameof(SelectionSummary));
+        }
+
+        /// <summary>
+        /// New method that loads values directly from ValueAggregateMetadata
+        /// </summary>
+        protected override void LoadValuesFromMetadata(IEnumerable<ValueAggregateMetadata> metadata)
+        {
+            // Convert metadata to the format expected by existing LoadValuesInternal
+            var values = metadata.Select(m => m.Value);
+            // Create NullSafeDictionary to handle null values properly
+            var valueCounts = new NullSafeDictionary<object, int>();
+            foreach (var item in metadata)
+            {
+                valueCounts[item.Value] = item.Count;
+            }
+            
+            LoadValuesInternal(values, valueCounts);
         }
 
         protected override void LoadValuesInternal(IEnumerable<object> values, Dictionary<object, int> valueCounts)

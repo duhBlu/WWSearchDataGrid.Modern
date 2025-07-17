@@ -249,10 +249,17 @@ namespace WWSearchDataGrid.Modern.Core.Performance
                     }
                 }
 
-                // Load values from metadata
+                // Load values from metadata using the new method
                 if (_columnMetadata.TryGetValue(columnKey, out var metadata))
                 {
-                    viewModel.LoadValuesWithCounts(metadata.Values, metadata.ValueCounts);
+                    // Create ValueAggregateMetadata from the ColumnValueMetadata
+                    var metadataList = metadata.Values.Select(value => new ValueAggregateMetadata
+                    {
+                        Value = value,
+                        Count = metadata.ValueCounts.ContainsKey(value) ? metadata.ValueCounts[value] : 1
+                    });
+                    
+                    viewModel.LoadValuesWithMetadata(metadataList);
                 }
 
                 return viewModel;

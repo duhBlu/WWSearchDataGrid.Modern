@@ -15,6 +15,7 @@ namespace WWSearchDataGrid.Modern.Core
         protected bool isLoaded = false;
         protected IEnumerable<object> cachedValues;
         protected Dictionary<object, int> cachedValueCounts;
+        protected IEnumerable<ValueAggregateMetadata> cachedMetadata;
         private string _searchText = string.Empty;
 
         public bool IsLoaded => isLoaded;
@@ -52,7 +53,32 @@ namespace WWSearchDataGrid.Modern.Core
             isLoaded = true;
         }
 
+        /// <summary>
+        /// Loads values directly from ValueAggregateMetadata - preferred method
+        /// </summary>
+        public void LoadValuesWithMetadata(IEnumerable<ValueAggregateMetadata> metadata)
+        {
+            cachedMetadata = metadata;
+            
+            // For backward compatibility, also populate the legacy properties
+            cachedValues = metadata.Select(m => m.Value);
+            // Create NullSafeDictionary to handle null values properly
+            cachedValueCounts = new NullSafeDictionary<object, int>();
+            foreach (var item in metadata)
+            {
+                cachedValueCounts[item.Value] = item.Count;
+            }
+            
+            LoadValuesFromMetadata(metadata);
+            isLoaded = true;
+        }
+
         protected abstract void LoadValuesInternal(IEnumerable<object> values, Dictionary<object, int> valueCounts);
+        
+        /// <summary>
+        /// Abstract method for loading values from metadata - should be implemented by derived classes
+        /// </summary>
+        protected abstract void LoadValuesFromMetadata(IEnumerable<ValueAggregateMetadata> metadata);
 
         /// <summary>
         /// Virtual method to apply search filter - can be overridden by derived classes

@@ -123,6 +123,77 @@ namespace WWSearchDataGrid.Modern.Core
             }
         }
 
+        /// <summary>
+        /// New method that loads values directly from ValueAggregateMetadata
+        /// </summary>
+        protected override void LoadValuesFromMetadata(IEnumerable<ValueAggregateMetadata> metadata)
+        {
+            lock (_updateLock)
+            {
+                // Create a lookup of existing items to preserve their selection state
+                var existingItems = new Dictionary<string, FilterValueItem>();
+                foreach (var item in _allItems)
+                {
+                    var key = item.Value?.ToString() ?? "__NULL__";
+                    existingItems[key] = item;
+                }
+                
+                // Track which existing items we've seen in the new data
+                var seenKeys = new HashSet<string>();
+                
+                // Update existing items and add new ones directly from metadata
+                var newItems = metadata
+                    .Select(m => 
+                    {
+                        var key = m.Value?.ToString() ?? "__NULL__";
+                        seenKeys.Add(key);
+                        
+                        if (existingItems.TryGetValue(key, out var existingItem))
+                        {
+                            // Update existing item's count but preserve selection state
+                            existingItem.ItemCount = m.Count;
+                            return existingItem;
+                        }
+                        else
+                        {
+                            // Create new item with default selected state
+                            var newItem = new FilterValueItem
+                            {
+                                Value = m.Value,
+                                DisplayValue = m.Value?.ToString() ?? "(blank)",
+                                ItemCount = m.Count,
+                                IsSelected = true
+                            };
+                            newItem.PropertyChanged += OnItemPropertyChanged;
+                            return newItem;
+                        }
+                    })
+                    .ToList();
+                
+                // Add any existing items that weren't in the new data (preserve unselected filtered values)
+                foreach (var kvp in existingItems)
+                {
+                    if (!seenKeys.Contains(kvp.Key))
+                    {
+                        // Keep the item but set count to 0 to indicate it's not in current data
+                        kvp.Value.ItemCount = 0;
+                        newItems.Add(kvp.Value);
+                    }
+                }
+                
+                // Clear and rebuild the collection
+                _allItems.Clear();
+                
+                foreach (var item in newItems.OrderBy(i => i.DisplayValue))
+                {
+                    _allItems.Add(item);
+                }
+            }
+
+            ApplyFilter();
+            UpdateSelectAllState();
+        }
+
         protected override void LoadValuesInternal(IEnumerable<object> values, Dictionary<object, int> valueCounts)
         {
             lock (_updateLock)
