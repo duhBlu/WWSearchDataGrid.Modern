@@ -66,7 +66,7 @@ namespace WWSearchDataGrid.Modern.Core.Strategies
         /// </summary>
         protected string GetColumnString(object columnValue)
         {
-            return columnValue.ToStringEmptyIfNull().ToLower();
+            return (columnValue?.ToString() ?? string.Empty).ToLower();
         }
 
         /// <summary>

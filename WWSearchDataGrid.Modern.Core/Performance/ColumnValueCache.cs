@@ -9,7 +9,7 @@ using System.Timers;
 namespace WWSearchDataGrid.Modern.Core.Performance
 {
     /// <summary>
-    /// High-performance cache for column values - .NET Standard 2.0 compatible
+    /// Cache for column values
     /// </summary>
     public class ColumnValueCache : IDisposable
     {
@@ -36,8 +36,8 @@ namespace WWSearchDataGrid.Modern.Core.Performance
         private readonly ConcurrentDictionary<string, BulkOperationTracker> _bulkOperationTrackers =
             new ConcurrentDictionary<string, BulkOperationTracker>();
 
-        private readonly Lazy<HighPerformanceColumnValueProvider> _highPerformanceProvider =
-            new Lazy<HighPerformanceColumnValueProvider>(() => new HighPerformanceColumnValueProvider());
+        private readonly Lazy<ColumnValueProvider> _columnValueProvider =
+            new Lazy<ColumnValueProvider>(() => new ColumnValueProvider());
 
         #endregion
 
@@ -48,9 +48,9 @@ namespace WWSearchDataGrid.Modern.Core.Performance
         #region Public Methods
 
         /// <summary>
-        /// Gets the high-performance column value provider
+        /// Gets the column value provider
         /// </summary>
-        public HighPerformanceColumnValueProvider HighPerformanceProvider => _highPerformanceProvider.Value;
+        public ColumnValueProvider ColumnValueProvider => _columnValueProvider.Value;
 
         /// <summary>
         /// Gets or creates column metadata for efficient access
@@ -75,8 +75,8 @@ namespace WWSearchDataGrid.Modern.Core.Performance
         /// </summary>
         public Task UpdateColumnValuesAsync(string columnKey, IEnumerable<object> items, string bindingPath)
         {
-            // Use high-performance provider for large datasets
-            _ = _highPerformanceProvider.Value.UpdateColumnValuesAsync(columnKey, items, bindingPath);
+            // Use column value provider for large datasets
+            _ = _columnValueProvider.Value.UpdateColumnValuesAsync(columnKey, items, bindingPath);
             
             return Task.Run(() =>
             {
@@ -264,8 +264,8 @@ namespace WWSearchDataGrid.Modern.Core.Performance
         /// </summary>
         public void AddItemValue(string columnKey, object item, string bindingPath)
         {
-            // Update high-performance provider
-            _ = _highPerformanceProvider.Value.AddValueAsync(columnKey, item, bindingPath);
+            // Update column value provider
+            _ = _columnValueProvider.Value.AddValueAsync(columnKey, item, bindingPath);
             
             var metadata = GetOrCreateMetadata(columnKey, bindingPath);
             var value = ReflectionHelper.GetPropValue(item, bindingPath);
@@ -294,8 +294,8 @@ namespace WWSearchDataGrid.Modern.Core.Performance
         /// </summary>
         public void RemoveItemValue(string columnKey, object item, string bindingPath)
         {
-            // Update high-performance provider
-            _ = _highPerformanceProvider.Value.RemoveValueAsync(columnKey, item, bindingPath);
+            // Update column value provider
+            _ = _columnValueProvider.Value.RemoveValueAsync(columnKey, item, bindingPath);
             
             var metadata = GetOrCreateMetadata(columnKey, bindingPath);
             var value = ReflectionHelper.GetPropValue(item, bindingPath);
@@ -325,8 +325,8 @@ namespace WWSearchDataGrid.Modern.Core.Performance
         /// </summary>
         public void ClearColumnCache(string columnKey)
         {
-            // Clear high-performance provider
-            _highPerformanceProvider.Value.InvalidateColumn(columnKey);
+            // Clear column value provider
+            _columnValueProvider.Value.InvalidateColumn(columnKey);
             
             _columnMetadata.TryRemove(columnKey, out _);
 
@@ -349,8 +349,8 @@ namespace WWSearchDataGrid.Modern.Core.Performance
         /// </summary>
         public void ClearAllCaches()
         {
-            // Clear high-performance provider first (largest memory consumer)
-            _highPerformanceProvider.Value.ClearAll();
+            // Clear column value provider first (largest memory consumer)
+            _columnValueProvider.Value.ClearAll();
             
             // Clear filter view models (dispose if they implement IDisposable)
             var viewModelsToDispose = _filterViewModelCache.Values.ToList();

@@ -30,8 +30,8 @@ namespace WWSearchDataGrid.Modern.Core
 
         private SearchType? defaultSearchType;
 
-        // High-performance value provider
-        private IColumnValueProvider _valueProvider;
+        // column value value provider
+        private ColumnValueProvider _valueProvider;
         private string _currentColumnKey;
         private CancellationTokenSource _loadingCancellationTokenSource;
 
@@ -1365,9 +1365,9 @@ namespace WWSearchDataGrid.Modern.Core
         }
 
         /// <summary>
-        /// Connects all SearchTemplates in this controller to use the high-performance value provider
+        /// Connects all SearchTemplates in this controller to use the column value value provider
         /// </summary>
-        public void ConnectToValueProvider(string columnKey, IColumnValueProvider valueProvider)
+        public void ConnectToValueProvider(string columnKey, ColumnValueProvider valueProvider)
         {
             if (valueProvider == null || string.IsNullOrEmpty(columnKey))
                 return;
@@ -1375,12 +1375,12 @@ namespace WWSearchDataGrid.Modern.Core
             _valueProvider = valueProvider;
             _currentColumnKey = columnKey;
 
-            // Load values using the high-performance provider
+            // Load values using the column value provider
             _ = LoadColumnValuesAsync(columnKey, CancellationToken.None);
         }
 
         /// <summary>
-        /// Loads column values asynchronously using the high-performance provider
+        /// Loads column values asynchronously using the column value provider
         /// </summary>
         public async Task LoadColumnValuesAsync(string columnKey, CancellationToken cancellationToken = default)
         {
@@ -1422,7 +1422,6 @@ namespace WWSearchDataGrid.Modern.Core
                     {
                         foreach (var template in group.SearchTemplates.OfType<SearchTemplate>())
                         {
-                            // Use the new high-performance method
                             _ = template.LoadValuesFromProvider(_valueProvider, columnKey);
                         }
                     }

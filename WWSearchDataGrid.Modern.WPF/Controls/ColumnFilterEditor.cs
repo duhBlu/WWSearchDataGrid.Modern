@@ -494,7 +494,7 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
-        /// Loads column values asynchronously using the high-performance provider
+        /// Loads column values asynchronously using the column value provider
         /// </summary>
         private async Task LoadColumnValuesAsync()
         {
@@ -529,7 +529,7 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
-        /// Loads column values for a single column using high-performance provider
+        /// Loads column values for a single column using column value provider
         /// </summary>
         private async Task LoadColumnValuesForSingleColumnAsync(ColumnSearchBox columnSearchBox, CancellationToken cancellationToken)
         {
@@ -553,9 +553,9 @@ namespace WWSearchDataGrid.Modern.WPF
             // Update cache with background processing
             await _cache.UpdateColumnValuesAsync(_columnKey, items, bindingPath);
             
-            // Update high-performance provider in the background
-            var highPerformanceProvider = _cache.HighPerformanceProvider;
-            await highPerformanceProvider.UpdateColumnValuesAsync(_columnKey, items, bindingPath);
+            // Update column value provider in the background
+            var columnValueProvider = _cache.ColumnValueProvider;
+            await columnValueProvider.UpdateColumnValuesAsync(_columnKey, items, bindingPath);
 
             cancellationToken.ThrowIfCancellationRequested();
 
@@ -566,8 +566,8 @@ namespace WWSearchDataGrid.Modern.WPF
                 SearchTemplateController.ColumnValues = new HashSet<object>(metadata.Values);
                 SearchTemplateController.ColumnDataType = metadata.DataType;
 
-                // Connect SearchTemplateController to high-performance value provider
-                SearchTemplateController.ConnectToValueProvider(_columnKey, _cache.HighPerformanceProvider);
+                // Connect SearchTemplateController to column value value provider
+                SearchTemplateController.ConnectToValueProvider(_columnKey, _cache.ColumnValueProvider);
                 
                 // Initialize existing templates with provider (fire and forget)
                 _ = InitializeSearchTemplatesAsync();
@@ -585,7 +585,7 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
-        /// Loads column values for global mode using high-performance provider
+        /// Loads column values for global mode using column value provider
         /// </summary>
         private async Task LoadColumnValuesForGlobalModeAsync(SearchDataGrid dataGrid, CancellationToken cancellationToken)
         {
@@ -597,7 +597,7 @@ namespace WWSearchDataGrid.Modern.WPF
             // Show progress for global mode
             await ShowProgressIndicatorAsync($"Loading values for {columns.Count} columns...", cancellationToken);
 
-            var highPerformanceProvider = _cache.HighPerformanceProvider;
+            var columnValueProvider = _cache.ColumnValueProvider;
             var tasks = new List<Task>();
 
             foreach (var column in columns)
@@ -606,9 +606,9 @@ namespace WWSearchDataGrid.Modern.WPF
                 var bindingPath = column.BindingPath;
                 var items = dataGrid.Items.Cast<object>().ToList();
 
-                // Update both cache and high-performance provider
+                // Update both cache and column value provider
                 tasks.Add(_cache.UpdateColumnValuesAsync(columnKey, items, bindingPath));
-                tasks.Add(highPerformanceProvider.UpdateColumnValuesAsync(columnKey, items, bindingPath));
+                tasks.Add(columnValueProvider.UpdateColumnValuesAsync(columnKey, items, bindingPath));
             }
 
             await Task.WhenAll(tasks);
@@ -648,14 +648,14 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
-        /// Sets up the FilterValueViewModel with proper data using high-performance provider
+        /// Sets up the FilterValueViewModel with proper data using column value provider
         /// </summary>
         private async Task SetupFilterValueViewModelAsync(ColumnSearchBox columnSearchBox, List<object> items, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            // Get values from high-performance provider
-            var highPerformanceProvider = _cache.HighPerformanceProvider;
+            // Get values from column value provider
+            var columnValueProvider = _cache.ColumnValueProvider;
             var request = new ColumnValueRequest
             {
                 ColumnKey = _columnKey,
@@ -667,7 +667,7 @@ namespace WWSearchDataGrid.Modern.WPF
                 GroupByFrequency = false
             };
 
-            var response = await highPerformanceProvider.GetValuesAsync(request);
+            var response = await columnValueProvider.GetValuesAsync(request);
             cancellationToken.ThrowIfCancellationRequested();
 
             // Convert to required formats
@@ -692,7 +692,7 @@ namespace WWSearchDataGrid.Modern.WPF
 
                     FilterValueViewModel = groupedViewModel;
 
-                    // Load the data with counts from high-performance provider
+                    // Load the data with counts from column value provider
                     if (values.Count > 0)
                     {
                         FilterValueViewModel.LoadValuesWithCounts(values, valueCounts);
@@ -706,7 +706,7 @@ namespace WWSearchDataGrid.Modern.WPF
                         ColumnDataType,
                         FilterValueConfiguration);
 
-                    // Load the data with counts from high-performance provider
+                    // Load the data with counts from column value provider
                     if (values.Count > 0)
                     {
                         FilterValueViewModel.LoadValuesWithCounts(values, valueCounts);
@@ -783,7 +783,7 @@ namespace WWSearchDataGrid.Modern.WPF
             if (SearchTemplateController == null || string.IsNullOrEmpty(_columnKey))
                 return;
 
-            var provider = _cache.HighPerformanceProvider;
+            var provider = _cache.ColumnValueProvider;
             
             foreach (var group in SearchTemplateController.SearchGroups)
             {
@@ -853,7 +853,7 @@ namespace WWSearchDataGrid.Modern.WPF
                             // Connect to provider
                             if (!string.IsNullOrEmpty(_columnKey))
                             {
-                                var provider = _cache.HighPerformanceProvider;
+                                var provider = _cache.ColumnValueProvider;
                                 _ = newTemplate.ConnectToProviderAsync(provider, _columnKey);
                             }
                             group.SearchTemplates[i] = newTemplate;

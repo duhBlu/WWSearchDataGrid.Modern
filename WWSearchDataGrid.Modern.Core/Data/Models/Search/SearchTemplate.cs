@@ -298,7 +298,7 @@ namespace WWSearchDataGrid.Modern.Core
             UpdateInputTemplate();
         }
 
-        public SearchTemplate(IColumnValueProvider provider, string columnKey, ColumnDataType dataType)
+        public SearchTemplate(ColumnValueProvider provider, string columnKey, ColumnDataType dataType)
             : this(dataType)
         {
             if (provider != null && !string.IsNullOrEmpty(columnKey))
@@ -307,7 +307,7 @@ namespace WWSearchDataGrid.Modern.Core
             }
         }
 
-        public SearchTemplate(IColumnValueProvider provider, string columnKey)
+        public SearchTemplate(ColumnValueProvider provider, string columnKey)
             : this(provider, columnKey, ColumnDataType.String) { }
 
         #endregion
@@ -402,9 +402,9 @@ namespace WWSearchDataGrid.Modern.Core
         }
 
         /// <summary>
-        /// Loads values from the high-performance provider
+        /// Loads values from the column value provider
         /// </summary>
-        public async Task LoadValuesFromProvider(IColumnValueProvider provider, string columnKey)
+        public async Task LoadValuesFromProvider(ColumnValueProvider provider, string columnKey)
         {
             if (provider == null || string.IsNullOrEmpty(columnKey))
                 return;
@@ -465,7 +465,7 @@ namespace WWSearchDataGrid.Modern.Core
         /// <summary>
         /// Connects this SearchTemplate to use a shared data source from the provider
         /// </summary>
-        public async Task ConnectToProviderAsync(IColumnValueProvider provider, string columnKey)
+        public async Task ConnectToProviderAsync(ColumnValueProvider provider, string columnKey)
         {
             if (provider == null || string.IsNullOrEmpty(columnKey))
                 return;
@@ -567,5 +567,4 @@ namespace WWSearchDataGrid.Modern.Core
 
         #endregion
     }
-
 }

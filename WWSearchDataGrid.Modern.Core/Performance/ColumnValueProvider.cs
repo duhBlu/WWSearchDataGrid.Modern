@@ -8,16 +8,14 @@ using System.Threading.Tasks;
 namespace WWSearchDataGrid.Modern.Core.Performance
 {
     /// <summary>
-    /// High-performance column value provider with O(1) lookups and background processing
+    /// Column value provider with O(1) lookups and background processing
     /// </summary>
-    public class HighPerformanceColumnValueProvider : IColumnValueProvider
+    public class ColumnValueProvider
     {
         #region Constants
         
         private const int DefaultPageSize = 50;
-        private const int MaxCacheSize = 100000;
         private const int MaxMemoryMB = 100;
-        private const int BackgroundProcessingDelayMs = 100;
         
         // Memory management configuration
         private const int IdleTimeoutMinutes = 5;
@@ -41,7 +39,7 @@ namespace WWSearchDataGrid.Modern.Core.Performance
 
         #region Constructor
 
-        public HighPerformanceColumnValueProvider()
+        public ColumnValueProvider()
         {
             _columnStorage = new ConcurrentDictionary<string, ColumnValueStorage>();
             _columnSemaphores = new ConcurrentDictionary<string, SemaphoreSlim>();
@@ -721,7 +719,7 @@ namespace WWSearchDataGrid.Modern.Core.Performance
         #region Nested Classes
 
         /// <summary>
-        /// High-performance storage for column values using ConcurrentDictionary
+        /// Column value storage for column values using ConcurrentDictionary
         /// </summary>
         private class ColumnValueStorage
         {
@@ -752,7 +750,7 @@ namespace WWSearchDataGrid.Modern.Core.Performance
                 long total = 0;
                 foreach (var metadata in Values.Values)
                 {
-                    total += HighPerformanceColumnValueProvider.EstimateValueMemoryUsage(metadata.Value);
+                    total += ColumnValueProvider.EstimateValueMemoryUsage(metadata.Value);
                     total += 32; // ValueAggregateMetadata overhead
                 }
                 return total;

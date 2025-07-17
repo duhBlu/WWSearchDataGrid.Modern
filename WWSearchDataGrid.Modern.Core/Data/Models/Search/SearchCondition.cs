@@ -241,7 +241,7 @@ namespace WWSearchDataGrid.Modern.Core
             ClearConvertedValues();
             PrimaryValue = ConvertValueInternal(RawPrimaryValue);
             SecondaryValue = ConvertValueInternal(RawSecondaryValue);
-            StringValue = RawPrimaryValue.ToStringEmptyIfNull().ToLower();
+            StringValue = (RawPrimaryValue?.ToString() ?? string.Empty).ToLower();
 
             DetermineTypeFlags();
 
