@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using WWSearchDataGrid.Modern.Core.Performance;
+using static WWSearchDataGrid.Modern.Core.Performance.NullSafeDictionaryHelper;
 
 namespace WWSearchDataGrid.Modern.Core
 {
@@ -175,8 +176,8 @@ namespace WWSearchDataGrid.Modern.Core
         {
             // Convert metadata to the format expected by existing LoadValuesInternal
             var values = metadata.Select(m => m.Value);
-            // Create NullSafeDictionary to handle null values properly (though dates are typically non-null)
-            var valueCounts = new NullSafeDictionary<object, int>();
+            // Create dictionary to handle value counts (dates are typically non-null)
+            var valueCounts = CreateNullSafeDictionary();
             foreach (var item in metadata)
             {
                 valueCounts[item.Value] = item.Count;
@@ -307,8 +308,8 @@ namespace WWSearchDataGrid.Modern.Core
 
         public override void LoadValues(IEnumerable<object> values)
         {
-            // Create NullSafeDictionary for counting
-            var counts = new NullSafeDictionary<object, int>();
+            // Create dictionary for counting
+            var counts = CreateNullSafeDictionary();
             foreach (var value in values)
             {
                 if (counts.ContainsKey(value))

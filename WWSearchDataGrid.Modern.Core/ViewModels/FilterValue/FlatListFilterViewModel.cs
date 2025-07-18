@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading;
 using System.Windows.Input;
 using WWSearchDataGrid.Modern.Core.Performance;
+using static WWSearchDataGrid.Modern.Core.Performance.NullSafeDictionaryHelper;
 
 namespace WWSearchDataGrid.Modern.Core
 {
@@ -156,11 +157,11 @@ namespace WWSearchDataGrid.Modern.Core
                         }
                         else
                         {
-                            // Create new item with default selected state
+                            // Create new item with default selected state using proper display text
                             var newItem = new FilterValueItem
                             {
                                 Value = m.Value,
-                                DisplayValue = m.Value?.ToString() ?? "(blank)",
+                                DisplayValue = m.DisplayText ?? GetValueDisplayText(m.Value),
                                 ItemCount = m.Count,
                                 IsSelected = true
                             };
@@ -225,11 +226,11 @@ namespace WWSearchDataGrid.Modern.Core
                         }
                         else
                         {
-                            // Create new item with default selected state
+                            // Create new item with default selected state using proper display text
                             var newItem = new FilterValueItem
                             {
                                 Value = v,
-                                DisplayValue = v?.ToString() ?? "(blank)",
+                                DisplayValue = GetValueDisplayText(v),
                                 ItemCount = GetSafeValueCount(v, valueCounts),
                                 IsSelected = true
                             };
@@ -265,7 +266,7 @@ namespace WWSearchDataGrid.Modern.Core
 
         public override void LoadValues(IEnumerable<object> values)
         {
-            var counts = new NullSafeDictionary<object, int>();
+            var counts = CreateNullSafeDictionary();
             foreach (var value in values)
             {
                 if (counts.ContainsKey(value))
@@ -325,7 +326,7 @@ namespace WWSearchDataGrid.Modern.Core
                         var newItem = new FilterValueItem
                         {
                             Value = value,
-                            DisplayValue = value?.ToString() ?? "(blank)",
+                            DisplayValue = GetValueDisplayText(value),
                             ItemCount = 1,
                             IsSelected = selectAllState ?? false
                         };

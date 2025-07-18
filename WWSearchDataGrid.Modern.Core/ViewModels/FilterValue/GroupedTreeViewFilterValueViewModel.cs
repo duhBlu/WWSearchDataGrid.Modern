@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using WWSearchDataGrid.Modern.Core.Performance;
+using static WWSearchDataGrid.Modern.Core.Performance.NullSafeDictionaryHelper;
 
 namespace WWSearchDataGrid.Modern.Core
 {
@@ -188,8 +189,8 @@ namespace WWSearchDataGrid.Modern.Core
         {
             // Convert metadata to the format expected by existing LoadValuesInternal
             var values = metadata.Select(m => m.Value);
-            // Create NullSafeDictionary to handle null values properly
-            var valueCounts = new NullSafeDictionary<object, int>();
+            // Create dictionary to handle value counts using proper null handling
+            var valueCounts = CreateNullSafeDictionary();
             foreach (var item in metadata)
             {
                 valueCounts[item.Value] = item.Count;
@@ -317,11 +318,11 @@ namespace WWSearchDataGrid.Modern.Core
                         }
                         else
                         {
-                            // Create new child with default selection (true for new items)
+                            // Create new child with default selection using proper display text
                             childItem = new FilterValueItem
                             {
                                 Value = item.Value,
-                                DisplayValue = item.Display,
+                                DisplayValue = GetValueDisplayText(item.Value),
                                 ItemCount = item.Count,
                                 IsSelected = true, // New items default to selected
                                 Parent = groupItem
@@ -375,7 +376,7 @@ namespace WWSearchDataGrid.Modern.Core
                         var childItem = new FilterValueItem
                         {
                             Value = item.Value,
-                            DisplayValue = item.Display,
+                            DisplayValue = GetValueDisplayText(item.Value),
                             ItemCount = item.Count,
                             IsSelected = true,
                             Parent = groupItem
@@ -458,11 +459,11 @@ namespace WWSearchDataGrid.Modern.Core
                         }
                         else
                         {
-                            // Create new child with default selection (true for new items)
+                            // Create new child with default selection using proper display text
                             childItem = new FilterValueItem
                             {
                                 Value = value,
-                                DisplayValue = value?.ToString() ?? "(blank)",
+                                DisplayValue = GetValueDisplayText(value),
                                 ItemCount = count,
                                 IsSelected = true, // New items default to selected
                                 Parent = groupItem
@@ -504,7 +505,7 @@ namespace WWSearchDataGrid.Modern.Core
                         var childItem = new FilterValueItem
                         {
                             Value = value,
-                            DisplayValue = value?.ToString() ?? "(blank)",
+                            DisplayValue = GetValueDisplayText(value),
                             ItemCount = count,
                             IsSelected = true,
                             Parent = groupItem
@@ -539,20 +540,28 @@ namespace WWSearchDataGrid.Modern.Core
             {
                 return v =>
                 {
-                    if (v == null) return "(Null)";
-                    var str = v.ToString();
-                    if (string.IsNullOrEmpty(str)) return "(Empty)";
+                    var metadata = GetValueMetadata(v);
+                    switch (metadata.Category)
+                    {
+                        case ValueCategory.Null:
+                            return "(Null)";
+                        case ValueCategory.Empty:
+                            return "(Empty)";
+                        case ValueCategory.Whitespace:
+                            return "(Blank)";
+                        default:
+                            var str = v.ToString();
+                            // Group by first letter for large sets, or by category patterns
+                            if (values.Count() > 100)
+                                return char.ToUpper(str[0]).ToString();
 
-                    // Group by first letter for large sets, or by category patterns
-                    if (values.Count() > 100)
-                        return char.ToUpper(str[0]).ToString();
+                            // Look for common patterns (e.g., "Category: Item")
+                            var colonIndex = str.IndexOf(':');
+                            if (colonIndex > 0 && colonIndex < str.Length - 1)
+                                return str.Substring(0, colonIndex).Trim();
 
-                    // Look for common patterns (e.g., "Category: Item")
-                    var colonIndex = str.IndexOf(':');
-                    if (colonIndex > 0 && colonIndex < str.Length - 1)
-                        return str.Substring(0, colonIndex).Trim();
-
-                    return str.Length <= 20 ? str : str.Substring(0, 1).ToUpper();
+                            return str.Length <= 20 ? str : str.Substring(0, 1).ToUpper();
+                    }
                 };
             }
 
@@ -707,11 +716,11 @@ namespace WWSearchDataGrid.Modern.Core
                         }
                         else
                         {
-                            // Add new item
+                            // Add new item using proper display text
                             var newItem = new FilterValueItem
                             {
                                 Value = value,
-                                DisplayValue = value?.ToString() ?? "(blank)",
+                                DisplayValue = GetValueDisplayText(value),
                                 ItemCount = 1,
                                 IsSelected = group.IsSelected ?? false,
                                 Parent = group
@@ -759,7 +768,7 @@ namespace WWSearchDataGrid.Modern.Core
                     var newItem = new FilterValueItem
                     {
                         Value = value,
-                        DisplayValue = value?.ToString() ?? "(blank)",
+                        DisplayValue = GetValueDisplayText(value),
                         ItemCount = 1,
                         IsSelected = true,
                         Parent = newGroup

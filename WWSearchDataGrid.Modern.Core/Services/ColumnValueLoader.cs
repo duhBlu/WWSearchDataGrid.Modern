@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using WWSearchDataGrid.Modern.Core.Performance;
 
 namespace WWSearchDataGrid.Modern.Core.Services
 {
@@ -83,10 +84,11 @@ namespace WWSearchDataGrid.Modern.Core.Services
 
         /// <summary>
         /// Extracts unique values from a collection of items for a specific binding path
+        /// Now properly handles null values
         /// </summary>
         /// <param name="items">Collection of items to extract values from</param>
         /// <param name="bindingPath">Property path to extract values for</param>
-        /// <returns>Set of unique values found</returns>
+        /// <returns>Set of unique values found including null values</returns>
         public HashSet<object> ExtractColumnValues(IEnumerable<object> items, string bindingPath)
         {
             var values = new HashSet<object>();
@@ -99,10 +101,8 @@ namespace WWSearchDataGrid.Modern.Core.Services
                 try
                 {
                     var value = GetPropertyValue(item, bindingPath);
-                    if (value != null)
-                    {
-                        values.Add(value);
-                    }
+                    // Include null values in the result set
+                    values.Add(value);
                 }
                 catch (Exception ex)
                 {
@@ -115,10 +115,11 @@ namespace WWSearchDataGrid.Modern.Core.Services
 
         /// <summary>
         /// Extracts values with counts for statistical purposes
+        /// Now properly handles null values
         /// </summary>
         /// <param name="items">Collection of items to extract values from</param>
         /// <param name="bindingPath">Property path to extract values for</param>
-        /// <returns>Dictionary of values with their occurrence counts</returns>
+        /// <returns>Dictionary of values with their occurrence counts including null values</returns>
         public Dictionary<object, int> ExtractColumnValuesWithCounts(IEnumerable<object> items, string bindingPath)
         {
             var valueCounts = new Dictionary<object, int>();
@@ -131,16 +132,14 @@ namespace WWSearchDataGrid.Modern.Core.Services
                 try
                 {
                     var value = GetPropertyValue(item, bindingPath);
-                    if (value != null)
+                    // Include null values in the counts
+                    if (valueCounts.ContainsKey(value))
                     {
-                        if (valueCounts.ContainsKey(value))
-                        {
-                            valueCounts[value]++;
-                        }
-                        else
-                        {
-                            valueCounts[value] = 1;
-                        }
+                        valueCounts[value]++;
+                    }
+                    else
+                    {
+                        valueCounts[value] = 1;
                     }
                 }
                 catch (Exception ex)
@@ -150,6 +149,44 @@ namespace WWSearchDataGrid.Modern.Core.Services
             }
 
             return valueCounts;
+        }
+
+        /// <summary>
+        /// Extracts values with categorized metadata for proper null/empty/whitespace handling
+        /// </summary>
+        /// <param name="items">Collection of items to extract values from</param>
+        /// <param name="bindingPath">Property path to extract values for</param>
+        /// <returns>Dictionary of ValueMetadata with their occurrence counts</returns>
+        public Dictionary<ValueMetadata, int> ExtractColumnValuesWithMetadata(IEnumerable<object> items, string bindingPath)
+        {
+            var metadataCounts = new Dictionary<ValueMetadata, int>();
+
+            if (items == null || string.IsNullOrEmpty(bindingPath))
+                return metadataCounts;
+
+            foreach (var item in items)
+            {
+                try
+                {
+                    var value = GetPropertyValue(item, bindingPath);
+                    var metadata = ValueMetadata.Create(value);
+                    
+                    if (metadataCounts.ContainsKey(metadata))
+                    {
+                        metadataCounts[metadata]++;
+                    }
+                    else
+                    {
+                        metadataCounts[metadata] = 1;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Error extracting value from item: {ex.Message}");
+                }
+            }
+
+            return metadataCounts;
         }
 
         /// <summary>
@@ -214,7 +251,7 @@ namespace WWSearchDataGrid.Modern.Core.Services
                         groupedData[groupKey] = new List<object>();
                     }
 
-                    // Only add unique values to each group
+                    // Only add unique values to each group (including null values)
                     if (!groupedData[groupKey].Contains(value))
                     {
                         groupedData[groupKey].Add(value);

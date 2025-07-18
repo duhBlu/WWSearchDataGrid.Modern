@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Timers;
 using WWSearchDataGrid.Modern.Core.Performance;
+using WWSearchDataGrid.Modern.Core.Services;
 
 namespace WWSearchDataGrid.Modern.Core
 {
@@ -62,12 +63,23 @@ namespace WWSearchDataGrid.Modern.Core
             
             // For backward compatibility, also populate the legacy properties
             cachedValues = metadata.Select(m => m.Value);
-            // Create NullSafeDictionary to handle null values properly
-            cachedValueCounts = new NullSafeDictionary<object, int>();
+            // Create value counts dictionary that properly handles null keys
+            var regularDict = new Dictionary<object, int>();
+            int nullCount = 0;
+            
             foreach (var item in metadata)
             {
-                cachedValueCounts[item.Value] = item.Count;
+                if (item.Value == null)
+                {
+                    nullCount = item.Count;
+                }
+                else
+                {
+                    regularDict[item.Value] = item.Count;
+                }
             }
+            
+            cachedValueCounts = new NullHandlingDictionary(regularDict, nullCount);
             
             LoadValuesFromMetadata(metadata);
             isLoaded = true;
@@ -135,23 +147,50 @@ namespace WWSearchDataGrid.Modern.Core
         }
 
         /// <summary>
-        /// Helper method to safely get value count - properly handles null values
+        /// Helper method to get value metadata for proper categorization
         /// </summary>
+        protected ValueMetadata GetValueMetadata(object value)
+        {
+            return ValueMetadata.Create(value);
+        }
+
+        /// <summary>
+        /// Helper method to get value count from metadata dictionary
+        /// </summary>
+        protected int GetValueCount(ValueMetadata metadata, Dictionary<ValueMetadata, int> counts)
+        {
+            return counts?.ContainsKey(metadata) == true ? counts[metadata] : 1;
+        }
+
+        /// <summary>
+        /// Helper method to get display text for a value
+        /// </summary>
+        protected string GetValueDisplayText(object value)
+        {
+            return ValueMetadata.Create(value).GetDisplayText();
+        }
+
+        /// <summary>
+        /// Helper method to safely get value count - properly handles null values
+        /// Deprecated: Use GetValueCount with ValueMetadata instead
+        /// </summary>
+        [Obsolete("Use GetValueCount with ValueMetadata instead")]
         protected int GetSafeValueCount(object value, Dictionary<object, int> valueCounts)
         {
             if (valueCounts == null)
                 return 1;
 
-            // Special handling for NullSafeDictionary
-            if (valueCounts is NullSafeDictionary<object, int> nullSafeDict)
+            // Check if this is a NullHandlingDictionary (new implementation)
+            if (valueCounts is NullHandlingDictionary nullHandlingDict)
             {
-                return nullSafeDict.ContainsKey(value) ? nullSafeDict[value] : 1;
+                return nullHandlingDict.ContainsKey(value) ? nullHandlingDict[value] : 1;
             }
 
-            // For regular dictionary, we can't use null as key
+            // For regular dictionaries, handle null values specially
             if (value == null)
             {
-                // Look for a special marker or return default
+                // Since regular Dictionary<object, int> throws on null keys,
+                // we'll return 1 as a fallback for null values
                 return 1;
             }
 

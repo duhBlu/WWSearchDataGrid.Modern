@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
+using WWSearchDataGrid.Modern.Core.Performance;
 
 namespace WWSearchDataGrid.Modern.Core.Strategies
 {
@@ -14,7 +15,8 @@ namespace WWSearchDataGrid.Modern.Core.Strategies
 
         public override bool Evaluate(object columnValue, SearchCondition searchCondition)
         {
-            return IsNullOrEmpty(columnValue);
+            var metadata = ValueMetadata.Create(columnValue);
+            return metadata.Category == ValueCategory.Empty || metadata.Category == ValueCategory.Whitespace;
         }
     }
 
@@ -27,7 +29,8 @@ namespace WWSearchDataGrid.Modern.Core.Strategies
 
         public override bool Evaluate(object columnValue, SearchCondition searchCondition)
         {
-            return !IsNullOrEmpty(columnValue);
+            var metadata = ValueMetadata.Create(columnValue);
+            return metadata.Category != ValueCategory.Empty && metadata.Category != ValueCategory.Whitespace && metadata.Category != ValueCategory.Null;
         }
     }
 
@@ -40,7 +43,8 @@ namespace WWSearchDataGrid.Modern.Core.Strategies
 
         public override bool Evaluate(object columnValue, SearchCondition searchCondition)
         {
-            return columnValue == null;
+            var metadata = ValueMetadata.Create(columnValue);
+            return metadata.Category == ValueCategory.Null;
         }
     }
 
@@ -53,9 +57,11 @@ namespace WWSearchDataGrid.Modern.Core.Strategies
 
         public override bool Evaluate(object columnValue, SearchCondition searchCondition)
         {
-            return columnValue != null;
+            var metadata = ValueMetadata.Create(columnValue);
+            return metadata.Category != ValueCategory.Null;
         }
     }
+
 
     /// <summary>
     /// Evaluator for IsLike search type (SQL LIKE patterns)

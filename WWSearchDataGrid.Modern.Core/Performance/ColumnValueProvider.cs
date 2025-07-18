@@ -515,10 +515,8 @@ namespace WWSearchDataGrid.Modern.Core.Performance
                     bool isNewValue = !storage.Values.ContainsKey(hashCode);
                     
                     storage.Values.AddOrUpdate(hashCode, 
-                        new ValueAggregateMetadata
+                        new ValueAggregateMetadata(value, 1)
                         {
-                            Value = value,
-                            Count = 1,
                             LastSeen = DateTime.UtcNow,
                             HashCode = hashCode
                         },
@@ -557,10 +555,8 @@ namespace WWSearchDataGrid.Modern.Core.Performance
                     // Add factory - new unique value
                     key => {
                         isNewValue = true;
-                        return new ValueAggregateMetadata
+                        return new ValueAggregateMetadata(value, 1)
                         {
-                            Value = value,
-                            Count = 1,
                             LastSeen = DateTime.UtcNow,
                             HashCode = hashCode
                         };
@@ -614,18 +610,23 @@ namespace WWSearchDataGrid.Modern.Core.Performance
                 if (!string.IsNullOrEmpty(request.SearchText))
                 {
                     var searchText = request.SearchText.ToLowerInvariant();
-                    values = values.Where(v => v.Value?.ToString().ToLowerInvariant().Contains(searchText) ?? false);
+                    values = values.Where(v => 
+                    {
+                        // Use DisplayText for search, which handles null/empty properly
+                        var displayText = v.DisplayText ?? v.Value?.ToString() ?? "";
+                        return displayText.ToLowerInvariant().Contains(searchText);
+                    });
                 }
 
-                // Include/exclude null and empty values
+                // Include/exclude null and empty values using new categorization
                 if (!request.IncludeNull)
                 {
-                    values = values.Where(v => v.Value != null);
+                    values = values.Where(v => !v.IsNull);
                 }
 
                 if (!request.IncludeEmpty)
                 {
-                    values = values.Where(v => !string.IsNullOrEmpty(v.Value?.ToString()));
+                    values = values.Where(v => !v.IsBlank);
                 }
 
                 // Exclude specific values

@@ -63,7 +63,7 @@ namespace WWSearchDataGrid.Modern.Core.Performance
                 BindingPath = bindingPath,
                 Values = new HashSet<object>(),
                 SortedValues = new List<object>(),
-                ValueCounts = new NullSafeDictionary<object, int>(),
+                ValueCounts = new NullSafeValueCounts(),
                 LastUpdated = DateTime.MinValue
             });
         }
@@ -94,11 +94,8 @@ namespace WWSearchDataGrid.Modern.Core.Performance
                         var value = ReflectionHelper.GetPropValue(item, bindingPath);
                         metadata.Values.Add(value);
 
-                        // Track value counts - NullSafeDictionary handles null keys
-                        if (metadata.ValueCounts.ContainsKey(value))
-                            metadata.ValueCounts[value]++;
-                        else
-                            metadata.ValueCounts[value] = 1;
+                        // Track value counts - handle null keys with helper method
+                        IncrementValueCount(metadata.ValueCounts, value);
                     }
 
                     // Update sorted values
@@ -160,10 +157,7 @@ namespace WWSearchDataGrid.Modern.Core.Performance
                                     var value = ReflectionHelper.GetPropValue(item, bindingPath);
                                     metadata.Values.Add(value);
 
-                                    if (metadata.ValueCounts.ContainsKey(value))
-                                        metadata.ValueCounts[value]++;
-                                    else
-                                        metadata.ValueCounts[value] = 1;
+                                    IncrementValueCount(metadata.ValueCounts, value);
                                 }
                                 UpdateSortedValues(metadata);
                             }
@@ -175,13 +169,14 @@ namespace WWSearchDataGrid.Modern.Core.Performance
                                 foreach (var item in e.OldItems)
                                 {
                                     var value = ReflectionHelper.GetPropValue(item, bindingPath);
-                                    if (metadata.ValueCounts.ContainsKey(value))
+                                    var currentCount = GetValueCount(metadata.ValueCounts, value);
+                                    if (currentCount > 0)
                                     {
-                                        metadata.ValueCounts[value]--;
-                                        if (metadata.ValueCounts[value] <= 0)
+                                        var newCount = currentCount - 1;
+                                        SetValueCount(metadata.ValueCounts, value, newCount);
+                                        if (newCount <= 0)
                                         {
                                             metadata.Values.Remove(value);
-                                            metadata.ValueCounts.Remove(value);
                                         }
                                     }
                                 }
@@ -253,11 +248,7 @@ namespace WWSearchDataGrid.Modern.Core.Performance
                 if (_columnMetadata.TryGetValue(columnKey, out var metadata))
                 {
                     // Create ValueAggregateMetadata from the ColumnValueMetadata
-                    var metadataList = metadata.Values.Select(value => new ValueAggregateMetadata
-                    {
-                        Value = value,
-                        Count = metadata.ValueCounts.ContainsKey(value) ? metadata.ValueCounts[value] : 1
-                    });
+                    var metadataList = metadata.Values.Select(value => new ValueAggregateMetadata(value, GetValueCount(metadata.ValueCounts, value) > 0 ? GetValueCount(metadata.ValueCounts, value) : 1));
                     
                     viewModel.LoadValuesWithMetadata(metadataList);
                 }
@@ -281,11 +272,8 @@ namespace WWSearchDataGrid.Modern.Core.Performance
             {
                 metadata.Values.Add(value);
 
-                // NullSafeDictionary handles null keys
-                if (metadata.ValueCounts.ContainsKey(value))
-                    metadata.ValueCounts[value]++;
-                else
-                    metadata.ValueCounts[value] = 1;
+                // Dictionary now properly handles null keys
+                IncrementValueCount(metadata.ValueCounts, value);
 
                 // Efficiently update sorted values
                 InsertSortedValue(metadata, value);
@@ -309,13 +297,14 @@ namespace WWSearchDataGrid.Modern.Core.Performance
 
             lock (metadata.SyncRoot)
             {
-                if (metadata.ValueCounts.ContainsKey(value))
+                var currentCount = GetValueCount(metadata.ValueCounts, value);
+                if (currentCount > 0)
                 {
-                    metadata.ValueCounts[value]--;
-                    if (metadata.ValueCounts[value] <= 0)
+                    var newCount = currentCount - 1;
+                    SetValueCount(metadata.ValueCounts, value, newCount);
+                    if (newCount <= 0)
                     {
                         metadata.Values.Remove(value);
-                        metadata.ValueCounts.Remove(value);
                         metadata.SortedValues.Remove(value);
                     }
                 }
@@ -393,6 +382,42 @@ namespace WWSearchDataGrid.Modern.Core.Performance
         #endregion
 
         #region Private Methods
+
+        /// <summary>
+        /// Gets the count for a value from the NullSafeValueCounts
+        /// </summary>
+        private static int GetValueCount(NullSafeValueCounts valueCounts, object value)
+        {
+            return valueCounts[value];
+        }
+
+        /// <summary>
+        /// Sets the count for a value in the NullSafeValueCounts
+        /// </summary>
+        private static void SetValueCount(NullSafeValueCounts valueCounts, object value, int count)
+        {
+            valueCounts[value] = count;
+        }
+
+        /// <summary>
+        /// Increments the count for a value in the NullSafeValueCounts
+        /// </summary>
+        private static void IncrementValueCount(NullSafeValueCounts valueCounts, object value)
+        {
+            valueCounts[value] = valueCounts[value] + 1;
+        }
+
+        /// <summary>
+        /// Decrements the count for a value in the NullSafeValueCounts
+        /// </summary>
+        private static void DecrementValueCount(NullSafeValueCounts valueCounts, object value)
+        {
+            var currentCount = valueCounts[value];
+            if (currentCount > 0)
+            {
+                valueCounts[value] = currentCount - 1;
+            }
+        }
 
         private void UpdateSortedValues(ColumnValueMetadata metadata)
         {
@@ -557,9 +582,131 @@ namespace WWSearchDataGrid.Modern.Core.Performance
         public string BindingPath { get; set; }
         public HashSet<object> Values { get; set; }
         public List<object> SortedValues { get; set; }
-        public NullSafeDictionary<object, int> ValueCounts { get; set; }
+        public NullSafeValueCounts ValueCounts { get; set; }
         public ColumnDataType DataType { get; set; } = ColumnDataType.String;
         public DateTime LastUpdated { get; set; }
         public object SyncRoot { get; } = new object();
+    }
+
+    /// <summary>
+    /// A simple wrapper around Dictionary that handles null keys properly
+    /// </summary>
+    public class NullSafeValueCounts
+    {
+        private readonly Dictionary<object, int> _dictionary = new Dictionary<object, int>();
+        private int _nullCount = 0;
+
+        public int this[object key]
+        {
+            get
+            {
+                if (key == null)
+                    return _nullCount;
+                return _dictionary.ContainsKey(key) ? _dictionary[key] : 0;
+            }
+            set
+            {
+                if (key == null)
+                {
+                    _nullCount = value;
+                }
+                else
+                {
+                    if (value <= 0)
+                        _dictionary.Remove(key);
+                    else
+                        _dictionary[key] = value;
+                }
+            }
+        }
+
+        public bool ContainsKey(object key)
+        {
+            if (key == null)
+                return _nullCount > 0;
+            return _dictionary.ContainsKey(key);
+        }
+
+        public void Clear()
+        {
+            _dictionary.Clear();
+            _nullCount = 0;
+        }
+
+        public void Remove(object key)
+        {
+            if (key == null)
+                _nullCount = 0;
+            else
+                _dictionary.Remove(key);
+        }
+
+        public Dictionary<object, int> ToRegularDictionary()
+        {
+            // Return a custom dictionary that handles null keys
+            return new NullHandlingDictionary(_dictionary, _nullCount);
+        }
+    }
+
+    /// <summary>
+    /// A dictionary that extends Dictionary<object, int> to handle null keys
+    /// </summary>
+    public class NullHandlingDictionary : Dictionary<object, int>
+    {
+        private int _nullCount;
+
+        public NullHandlingDictionary(Dictionary<object, int> source, int nullCount) : base(source)
+        {
+            _nullCount = nullCount;
+        }
+
+        public new int this[object key]
+        {
+            get
+            {
+                if (key == null)
+                    return _nullCount;
+                return base.ContainsKey(key) ? base[key] : 0;
+            }
+            set
+            {
+                if (key == null)
+                    _nullCount = value;
+                else
+                    base[key] = value;
+            }
+        }
+
+        public new bool ContainsKey(object key)
+        {
+            if (key == null)
+                return _nullCount > 0;
+            return base.ContainsKey(key);
+        }
+
+        public new bool TryGetValue(object key, out int value)
+        {
+            if (key == null)
+            {
+                value = _nullCount;
+                return _nullCount > 0;
+            }
+            return base.TryGetValue(key, out value);
+        }
+    }
+
+    /// <summary>
+    /// Helper class to create dictionaries that can handle null keys
+    /// </summary>
+    public static class NullSafeDictionaryHelper
+    {
+        /// <summary>
+        /// Creates a dictionary that can handle null keys
+        /// </summary>
+        /// <returns>A dictionary that can handle null keys</returns>
+        public static Dictionary<object, int> CreateNullSafeDictionary()
+        {
+            return new NullHandlingDictionary(new Dictionary<object, int>(), 0);
+        }
     }
 }
