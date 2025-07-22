@@ -26,7 +26,6 @@ namespace WWSearchDataGrid.Modern.Core
         // Service dependencies
         private readonly IFilterExpressionBuilder _filterExpressionBuilder;
         private readonly SearchTemplateValidator _validator;
-        private readonly ColumnValueLoader _columnValueLoader;
 
         private SearchType? defaultSearchType;
 
@@ -192,7 +191,6 @@ namespace WWSearchDataGrid.Modern.Core
             // Initialize services
             _filterExpressionBuilder = new FilterExpressionBuilder();
             _validator = new SearchTemplateValidator();
-            _columnValueLoader = new ColumnValueLoader();
         }
 
         /// <summary>
@@ -212,13 +210,11 @@ namespace WWSearchDataGrid.Modern.Core
         /// <param name="columnValueLoader">Column value loader service</param>
         internal SearchTemplateController(
             IFilterExpressionBuilder filterExpressionBuilder,
-            SearchTemplateValidator validator,
-            ColumnValueLoader columnValueLoader)
+            SearchTemplateValidator validator)
         {
             SearchTemplateType = typeof(SearchTemplate);
             _filterExpressionBuilder = filterExpressionBuilder ?? throw new ArgumentNullException(nameof(filterExpressionBuilder));
             _validator = validator ?? throw new ArgumentNullException(nameof(validator));
-            _columnValueLoader = columnValueLoader ?? throw new ArgumentNullException(nameof(columnValueLoader));
         }
 
         #endregion
@@ -347,19 +343,19 @@ namespace WWSearchDataGrid.Modern.Core
             HashSet<Tuple<string, string>> displayValueMappings = null,
             string bindingPath = null)
         {
-            // Use the column value loader service
-            var loadResult = _columnValueLoader.LoadColumnData(header, values, displayValueMappings, bindingPath);
-            
-            if (!loadResult.IsSuccess)
+            this.displayValueMappings = displayValueMappings;
+            ColumnValues = new HashSet<object>(values ?? new HashSet<object>());
+            ColumnName = header;
+
+            // Auto-detect column data type - the only real logic from ColumnValueLoader
+            if (values?.Any() == true)
             {
-                System.Diagnostics.Debug.WriteLine($"Error loading column data: {loadResult.ErrorMessage}");
-                return;
+                ColumnDataType = ReflectionHelper.DetermineColumnDataType(values);
             }
-            
-            this.displayValueMappings = loadResult.DisplayValueMappings;
-            ColumnValues = loadResult.ColumnValues;
-            ColumnName = loadResult.ColumnName;
-            ColumnDataType = loadResult.ColumnDataType;
+            else
+            {
+                ColumnDataType = ColumnDataType.String;
+            }
 
             // Store column values by binding path for global filtering
             if (!string.IsNullOrEmpty(bindingPath))
@@ -368,6 +364,7 @@ namespace WWSearchDataGrid.Modern.Core
             }
 
             AddSearchGroup(SearchGroups.Count == 0, false);
+
             // Update all existing templates with new provider
             if (_valueProvider != null && !string.IsNullOrEmpty(_currentColumnKey))
             {
@@ -379,7 +376,7 @@ namespace WWSearchDataGrid.Modern.Core
                     }
                 }
             }
-            
+
             // Ensure operator visibility is properly set after loading
             UpdateOperatorVisibility();
         }

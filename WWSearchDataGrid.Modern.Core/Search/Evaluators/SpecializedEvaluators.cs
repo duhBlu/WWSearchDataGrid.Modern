@@ -132,7 +132,7 @@ namespace WWSearchDataGrid.Modern.Core.Strategies
 
         public override bool Evaluate(object columnValue, SearchCondition searchCondition)
         {
-            var dateValue = ConvertToDateTime(columnValue);
+            var dateValue = TypeTranslatorHelper.ConvertToDateTime(columnValue);
             return dateValue?.Date == DateTime.Today.AddDays(-1);
         }
     }
@@ -146,7 +146,7 @@ namespace WWSearchDataGrid.Modern.Core.Strategies
 
         public override bool Evaluate(object columnValue, SearchCondition searchCondition)
         {
-            var dateValue = ConvertToDateTime(columnValue);
+            var dateValue = TypeTranslatorHelper.ConvertToDateTime(columnValue);
             return dateValue?.Date == DateTime.Today;
         }
     }
@@ -221,7 +221,7 @@ namespace WWSearchDataGrid.Modern.Core.Strategies
 
         private bool EvaluateDateInterval(object columnValue, DateInterval dateInterval)
         {
-            var columnDate = ConvertToDateTime(columnValue);
+            var columnDate = TypeTranslatorHelper.ConvertToDateTime(columnValue);
             if (!columnDate.HasValue) return false;
 
             DateTime now = DateTime.Now;

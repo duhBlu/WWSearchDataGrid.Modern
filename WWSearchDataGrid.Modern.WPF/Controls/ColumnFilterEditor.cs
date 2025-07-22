@@ -13,7 +13,6 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
 using WWSearchDataGrid.Modern.Core;
-using WWSearchDataGrid.Modern.Core.Common.Utilities;
 using WWSearchDataGrid.Modern.Core.Performance;
 using WWSearchDataGrid.Modern.WPF.Services;
 
@@ -104,11 +103,6 @@ namespace WWSearchDataGrid.Modern.WPF
                 // Don't call UpdateFilterValueViewModelFromCache here as it's handled in LoadColumnValuesAsync
             }
         }
-
-        /// <summary>
-        /// Gets or sets the filter value configuration
-        /// </summary>
-        public FilterValueConfiguration FilterValueConfiguration { get; set; }
 
         /// <summary>
         /// Gets the filter value view model
@@ -702,8 +696,7 @@ namespace WWSearchDataGrid.Modern.WPF
                     // Use regular filter value view model from cache
                     FilterValueViewModel = _cache.GetOrCreateFilterViewModel(
                         _columnKey,
-                        ColumnDataType,
-                        FilterValueConfiguration);
+                        ColumnDataType);
 
                     // Load the data with metadata from column value provider
                     if (metadataList.Any())

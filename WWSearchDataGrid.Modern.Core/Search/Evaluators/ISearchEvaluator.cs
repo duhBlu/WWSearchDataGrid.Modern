@@ -76,25 +76,5 @@ namespace WWSearchDataGrid.Modern.Core.Strategies
         {
             return SearchEngine.CompareValues(columnValue, searchCondition, comparisonValue);
         }
-
-        /// <summary>
-        /// Helper method to safely convert to DateTime
-        /// </summary>
-        protected DateTime? ConvertToDateTime(object value)
-        {
-            if (value is DateTime dt)
-                return dt;
-            if (DateTime.TryParse(value?.ToString(), out DateTime parsed))
-                return parsed;
-            return null;
-        }
-
-        /// <summary>
-        /// Helper method to check if value is null or empty
-        /// </summary>
-        protected bool IsNullOrEmpty(object value)
-        {
-            return value == null || string.IsNullOrWhiteSpace(value.ToString());
-        }
     }
 }

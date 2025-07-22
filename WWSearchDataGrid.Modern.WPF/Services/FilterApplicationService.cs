@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using WWSearchDataGrid.Modern.Core;
-using WWSearchDataGrid.Modern.Core.Common.Utilities;
 
 namespace WWSearchDataGrid.Modern.WPF.Services
 {
@@ -274,10 +273,6 @@ namespace WWSearchDataGrid.Modern.WPF.Services
                 }
                 else if (selectedItems.Any())
                 {
-                    // Use optimizer to determine best filter strategy
-                    var optimizationResult = FilterSelectionOptimizer.OptimizeSelections(
-                        allValues, selectedItems, columnDataType);
-
                     var operatorName = searchTemplateController.SearchGroups.FirstOrDefault()?.OperatorName ?? "And";
 
                     // Clear and recreate more efficiently
@@ -285,23 +280,26 @@ namespace WWSearchDataGrid.Modern.WPF.Services
                     var group = new SearchTemplateGroup() { OperatorName = operatorName };
                     searchTemplateController.SearchGroups.Add(group);
 
+                    // Determine search type based on selection count
+                    var searchType = selectedItems.Count == 1 ? SearchType.Equals : SearchType.IsAnyOf;
+                    var filterValues = selectedItems.Select(item => item.Value).ToList();
+
                     var template = new SearchTemplate(columnDataType)
                     {
-                        SearchType = optimizationResult.RecommendedSearchType
+                        SearchType = searchType
                     };
 
-                    // Set values based on optimization result and search type
-                    if (optimizationResult.RecommendedSearchType == SearchType.Equals && 
-                        optimizationResult.FilterValues.Count == 1)
+                    // Set values based on search type
+                    if (searchType == SearchType.Equals && filterValues.Count == 1)
                     {
                         // For single value Equals, set SelectedValue (singular)
-                        template.SelectedValue = optimizationResult.FilterValues.First();
+                        template.SelectedValue = filterValues.First();
                     }
                     else
                     {
-                        // For multi-value search types (IsAnyOf, IsNoneOf, NotEquals), use SelectedValues (plural)
+                        // For multi-value search types (IsAnyOf), use SelectedValues (plural)
                         template.SelectedValues.Clear();
-                        foreach (var value in optimizationResult.FilterValues)
+                        foreach (var value in filterValues)
                         {
                             template.SelectedValues.Add(new FilterListValue { Value = value });
                         }

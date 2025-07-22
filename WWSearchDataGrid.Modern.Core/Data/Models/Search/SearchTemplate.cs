@@ -10,7 +10,7 @@ using WWSearchDataGrid.Modern.Core.Performance;
 
 namespace WWSearchDataGrid.Modern.Core
 {
-    public class SearchTemplate : ObservableObject, ILogicalOperatorProvider
+    public class SearchTemplate : ObservableObject
     {
         #region Fields
 

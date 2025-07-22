@@ -22,7 +22,7 @@ namespace WWSearchDataGrid.Modern.Core.Performance
         /// <summary>
         /// Quick check for blank values (null, empty, or whitespace)
         /// </summary>
-        public bool IsBlank => Category == ValueCategory.Null || Category == ValueCategory.Empty || Category == ValueCategory.Whitespace;
+        public bool IsBlank => Category == ValueCategory.Null || Category == ValueCategory.Empty;
         
         /// <summary>
         /// Display text for the value

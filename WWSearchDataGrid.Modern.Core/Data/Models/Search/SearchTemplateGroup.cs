@@ -9,13 +9,15 @@ namespace WWSearchDataGrid.Modern.Core
     /// <summary>
     /// Represents a group of search templates combined with a logical operator
     /// </summary>
-    public class SearchTemplateGroup : ObservableObject, ILogicalOperatorProvider
+    public class SearchTemplateGroup : ObservableObject
     {
         #region Fields
 
         private string operatorName = "And";
         private int groupNumber;
         private bool isOperatorVisible = true;
+
+        private Func<Expression, Expression, Expression> operatorFunction = Expression.And;
 
         #endregion
 
@@ -24,8 +26,11 @@ namespace WWSearchDataGrid.Modern.Core
         /// <summary>
         /// Gets or sets the logical operator function
         /// </summary>
-        public Func<Expression, Expression, Expression> OperatorFunction { get; set; } = Expression.And;
-
+        public Func<Expression, Expression, Expression> OperatorFunction
+        {
+            get { return operatorFunction; }
+            set { SetProperty(value, ref operatorFunction); }
+        }
         /// <summary>
         /// Gets or sets the logical operator name
         /// </summary>

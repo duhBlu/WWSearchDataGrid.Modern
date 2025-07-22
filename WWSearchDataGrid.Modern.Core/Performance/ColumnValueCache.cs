@@ -202,46 +202,23 @@ namespace WWSearchDataGrid.Modern.Core.Performance
         /// </summary>
         public FilterValueViewModel GetOrCreateFilterViewModel(
             string columnKey,
-            ColumnDataType dataType,
-            FilterValueConfiguration configuration = null)
+            ColumnDataType dataType)
         {
-            var displayMode = configuration?.DisplayMode ?? FilterValueDisplayMode.FlatList;
-            var cacheKey = $"{columnKey}_{dataType}_{displayMode}";
+            var cacheKey = $"{columnKey}_{dataType}";
 
             return _filterViewModelCache.GetOrAdd(cacheKey, key =>
             {
                 FilterValueViewModel viewModel;
 
-                if (configuration != null)
+                switch (dataType)
                 {
-                    switch (configuration.DisplayMode)
-                    {
-                        case FilterValueDisplayMode.GroupedByColumn:
-                            viewModel = new GroupedTreeViewFilterValueViewModel
-                            {
-                                GroupByColumn = configuration.GroupByColumn
-                            };
-                            break;
-                        case FilterValueDisplayMode.GroupedByYear:
-                        case FilterValueDisplayMode.GroupedByMonth:
-                            viewModel = new DateTreeViewFilterValueViewModel();
-                            break;
-                        default:
-                            viewModel = new FlatListFilterValueViewModel();
-                            break;
-                    }
-                }
-                else
-                {
-                    switch (dataType)
-                    {
-                        case ColumnDataType.DateTime:
-                            viewModel = new DateTreeViewFilterValueViewModel();
-                            break;
-                        default:
-                            viewModel = new FlatListFilterValueViewModel();
-                            break;
-                    }
+                    // grouped is handled separately
+                    case ColumnDataType.DateTime:
+                        viewModel = new DateTreeViewFilterValueViewModel();
+                        break;
+                    default:
+                        viewModel = new FlatListFilterValueViewModel();
+                        break;
                 }
 
                 // Load values from metadata using the new method
@@ -255,89 +232,6 @@ namespace WWSearchDataGrid.Modern.Core.Performance
 
                 return viewModel;
             });
-        }
-
-        /// <summary>
-        /// Incremental update for single item addition
-        /// </summary>
-        public void AddItemValue(string columnKey, object item, string bindingPath)
-        {
-            // Update column value provider
-            _ = _columnValueProvider.Value.AddValueAsync(columnKey, item, bindingPath);
-            
-            var metadata = GetOrCreateMetadata(columnKey, bindingPath);
-            var value = ReflectionHelper.GetPropValue(item, bindingPath);
-
-            lock (metadata.SyncRoot)
-            {
-                metadata.Values.Add(value);
-
-                // Dictionary now properly handles null keys
-                IncrementValueCount(metadata.ValueCounts, value);
-
-                // Efficiently update sorted values
-                InsertSortedValue(metadata, value);
-                metadata.LastUpdated = DateTime.Now;
-            }
-
-            // Update view models incrementally
-            UpdateFilterViewModelsIncremental(columnKey, value, true);
-        }
-
-        /// <summary>
-        /// Incremental update for single item removal
-        /// </summary>
-        public void RemoveItemValue(string columnKey, object item, string bindingPath)
-        {
-            // Update column value provider
-            _ = _columnValueProvider.Value.RemoveValueAsync(columnKey, item, bindingPath);
-            
-            var metadata = GetOrCreateMetadata(columnKey, bindingPath);
-            var value = ReflectionHelper.GetPropValue(item, bindingPath);
-
-            lock (metadata.SyncRoot)
-            {
-                var currentCount = GetValueCount(metadata.ValueCounts, value);
-                if (currentCount > 0)
-                {
-                    var newCount = currentCount - 1;
-                    SetValueCount(metadata.ValueCounts, value, newCount);
-                    if (newCount <= 0)
-                    {
-                        metadata.Values.Remove(value);
-                        metadata.SortedValues.Remove(value);
-                    }
-                }
-
-                metadata.LastUpdated = DateTime.Now;
-            }
-
-            // Update view models incrementally
-            UpdateFilterViewModelsIncremental(columnKey, value, false);
-        }
-
-        /// <summary>
-        /// Clears cache for a specific column
-        /// </summary>
-        public void ClearColumnCache(string columnKey)
-        {
-            // Clear column value provider
-            _columnValueProvider.Value.InvalidateColumn(columnKey);
-            
-            _columnMetadata.TryRemove(columnKey, out _);
-
-            // Remove related view models
-            var keysToRemove = _filterViewModelCache.Keys.Where(k => k.StartsWith(columnKey)).ToList();
-            foreach (var key in keysToRemove)
-            {
-                _filterViewModelCache.TryRemove(key, out _);
-            }
-            
-            // Remove bulk operation tracker
-            if (_bulkOperationTrackers.TryRemove(columnKey, out var tracker))
-            {
-                tracker.BatchTimer?.Dispose();
-            }
         }
 
         /// <summary>
