@@ -151,8 +151,20 @@ namespace WWSearchDataGrid.Modern.Core
                 var hasSelectedDates = SearchType == SearchType.IsOnAnyOfDates && SelectedDates.Any();
                 var hasSelectedDateIntervals = SearchType == SearchType.DateInterval && DateIntervals.Any(i => i.IsSelected);
                 
+                // Check for non-value search types that are inherently valid
+                var isNonValueSearchType = SearchType == SearchType.IsNull ||
+                                         SearchType == SearchType.IsNotNull ||
+                                         SearchType == SearchType.IsEmpty ||
+                                         SearchType == SearchType.IsNotEmpty ||
+                                         SearchType == SearchType.Yesterday ||
+                                         SearchType == SearchType.Today ||
+                                         SearchType == SearchType.AboveAverage ||
+                                         SearchType == SearchType.BelowAverage ||
+                                         SearchType == SearchType.Unique ||
+                                         SearchType == SearchType.Duplicate;
+                
                 var result = hasSelectedValue || hasSelectedSecondaryValue || isNonDefaultSearchType ||
-                           hasSelectedValues || hasSelectedDates || hasSelectedDateIntervals;
+                           hasSelectedValues || hasSelectedDates || hasSelectedDateIntervals || isNonValueSearchType;
                 
                 return result;
             }

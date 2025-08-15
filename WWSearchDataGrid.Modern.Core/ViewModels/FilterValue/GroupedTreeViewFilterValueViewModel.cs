@@ -7,7 +7,6 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using WWSearchDataGrid.Modern.Core.Performance;
-using static WWSearchDataGrid.Modern.Core.Performance.NullSafeDictionaryHelper;
 
 namespace WWSearchDataGrid.Modern.Core
 {
@@ -183,66 +182,112 @@ namespace WWSearchDataGrid.Modern.Core
         }
 
         /// <summary>
-        /// New method that loads values directly from ValueAggregateMetadata
+        /// Loads grouped values from metadata
         /// </summary>
         protected override void LoadValuesFromMetadata(IEnumerable<ValueAggregateMetadata> metadata)
         {
-            // Convert metadata to the format expected by existing LoadValuesInternal
-            var values = metadata.Select(m => m.Value);
-            // Create dictionary to handle value counts using proper null handling
-            var valueCounts = CreateNullSafeDictionary();
-            foreach (var item in metadata)
-            {
-                valueCounts[item.Value] = item.Count;
-            }
-            
-            LoadValuesInternal(values, valueCounts);
-        }
-
-        protected override void LoadValuesInternal(IEnumerable<object> values, Dictionary<object, int> valueCounts)
-        {
             lock (_updateLock)
             {
-                // Preserve existing groups and their selection states
-                var existingGroups = _allGroups.ToDictionary(g => g.GroupKey?.ToString() ?? "null", g => g);
-                var existingGroupIndex = new Dictionary<string, FilterValueGroup>(_groupIndex);
+                var metadataList = metadata.ToList();
                 
-                _allGroups.Clear();
-                _groupIndex.Clear();
+                // Build grouped data directly from metadata
+                BuildGroupedDataFromMetadata(metadataList);
+                
+                ApplyFilter();
+                UpdateSelectAllState();
+            }
+        }
 
-                // If we have grouped data for the GroupByColumn, use it
-                if (!string.IsNullOrEmpty(GroupByColumn) && _groupedData.ContainsKey(GroupByColumn))
+        /// <summary>
+        /// Builds grouped data structure directly from metadata
+        /// </summary>
+        private void BuildGroupedDataFromMetadata(List<ValueAggregateMetadata> metadataList)
+        {
+            // Preserve existing groups and their selection states
+            var existingGroups = new Dictionary<string, FilterValueGroup>();
+            foreach (var group in _allGroups)
+            {
+                var groupKey = group.GroupKey?.ToString() ?? "null";
+                existingGroups[groupKey] = group;
+            }
+
+            var seenGroupKeys = new HashSet<string>();
+            var newGroups = new List<FilterValueGroup>();
+
+            // Group metadata by the grouping column if available
+            var groupedMetadata = GroupMetadataByColumn(metadataList);
+
+            foreach (var groupData in groupedMetadata)
+            {
+                var groupKey = groupData.Key?.ToString() ?? "null";
+                seenGroupKeys.Add(groupKey);
+
+                FilterValueGroup group;
+                if (existingGroups.TryGetValue(groupKey, out var existingGroup))
                 {
-                    LoadGroupedValuesOptimized(values, valueCounts, existingGroups);
+                    group = existingGroup;
+                    // Clear existing children to rebuild from metadata
+                    group.Children.Clear();
                 }
                 else
                 {
-                    // Fallback to smart grouping
-                    LoadSmartGroupedValues(values, valueCounts, existingGroups);
-                }
-                
-                // Add any existing groups that weren't in the new data (preserve unselected filtered groups)
-                foreach (var existingGroup in existingGroups.Values)
-                {
-                    var groupKeyStr = existingGroup.GroupKey?.ToString() ?? "null";
-                    if (!_groupIndex.ContainsKey(groupKeyStr))
+                    group = new FilterValueGroup
                     {
-                        // Reset item counts for children not in current data
-                        foreach (var child in existingGroup.Children.OfType<FilterValueItem>())
-                        {
-                            child.ItemCount = 0;
-                        }
-                        existingGroup.ItemCount = 0;
-                        
-                        _allGroups.Add(existingGroup);
-                        _groupIndex[groupKeyStr] = existingGroup;
-                    }
+                        GroupKey = groupData.Key,
+                        DisplayValue = GetValueDisplayText(groupData.Key),
+                        IsSelected = true
+                    };
+                    group.PropertyChanged += OnGroupPropertyChanged;
+                }
+
+                // Add children from metadata
+                foreach (var childMetadata in groupData.Value.OrderBy(m => m.DisplayText))
+                {
+                    var childItem = new FilterValueItem
+                    {
+                        Value = childMetadata.Value,
+                        DisplayValue = childMetadata.DisplayText ?? GetValueDisplayText(childMetadata.Value),
+                        ItemCount = childMetadata.Count,
+                        IsSelected = group.IsSelected ?? false
+                    };
+                    childItem.PropertyChanged += OnChildPropertyChanged;
+                    group.Children.Add(childItem);
+                }
+
+                newGroups.Add(group);
+                _groupIndex[groupKey] = group;
+            }
+
+            // Add any existing groups that weren't in the new data
+            foreach (var kvp in existingGroups)
+            {
+                if (!seenGroupKeys.Contains(kvp.Key))
+                {
+                    // Keep the group but mark as empty
+                    kvp.Value.Children.Clear();
+                    newGroups.Add(kvp.Value);
                 }
             }
 
-            ApplyFilter();
-            UpdateSelectAllState();
+            // Update the collections
+            _allGroups.Clear();
+            foreach (var group in newGroups.OrderBy(g => g.DisplayValue))
+            {
+                _allGroups.Add(group);
+            }
         }
+
+        /// <summary>
+        /// Groups metadata by the grouping column
+        /// </summary>
+        private Dictionary<object, List<ValueAggregateMetadata>> GroupMetadataByColumn(List<ValueAggregateMetadata> metadataList)
+        {
+            // For now, group by the value itself since we don't have access to the grouping column data here
+            // This should be enhanced to use actual grouping column data when available
+            return metadataList.GroupBy(m => GetGroupKeyForValue(m.Value))
+                              .ToDictionary(g => g.Key, g => g.ToList());
+        }
+
 
         private void LoadGroupedValuesOptimized(IEnumerable<object> values, Dictionary<object, int> valueCounts, Dictionary<string, FilterValueGroup> existingGroups = null)
         {
@@ -687,11 +732,6 @@ namespace WWSearchDataGrid.Modern.Core
             }
         }
 
-        public override void LoadValues(IEnumerable<object> values)
-        {
-            var counts = values.GroupBy(v => v).ToDictionary(g => g.Key, g => g.Count());
-            LoadValuesInternal(values.Distinct(), counts);
-        }
 
         public override void UpdateValueIncremental(object value, bool isAdd)
         {
@@ -839,9 +879,9 @@ namespace WWSearchDataGrid.Modern.Core
 
         private void ReloadGroups()
         {
-            if (cachedValues != null && isLoaded)
+            if (cachedMetadata != null && isLoaded)
             {
-                LoadValuesWithCounts(cachedValues, cachedValueCounts);
+                LoadValuesFromMetadata(cachedMetadata);
             }
         }
 

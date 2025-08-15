@@ -14,8 +14,6 @@ namespace WWSearchDataGrid.Modern.Core
     public abstract class FilterValueViewModel : ObservableObject
     {
         protected bool isLoaded = false;
-        protected IEnumerable<object> cachedValues;
-        protected Dictionary<object, int> cachedValueCounts;
         protected IEnumerable<ValueAggregateMetadata> cachedMetadata;
         private string _searchText = string.Empty;
 
@@ -36,59 +34,25 @@ namespace WWSearchDataGrid.Modern.Core
             }
         }
 
-        public void EnsureLoaded(IEnumerable<object> values)
-        {
-            if (!isLoaded || cachedValues != values)
-            {
-                cachedValues = values;
-                LoadValues(values);
-                isLoaded = true;
-            }
-        }
-
-        public void LoadValuesWithCounts(IEnumerable<object> values, Dictionary<object, int> valueCounts)
-        {
-            cachedValues = values;
-            cachedValueCounts = valueCounts;
-            LoadValuesInternal(values, valueCounts);
-            isLoaded = true;
-        }
 
         /// <summary>
-        /// Loads values directly from ValueAggregateMetadata - preferred method
+        /// PRIMARY METHOD: Loads values directly from ValueAggregateMetadata
+        /// This is the preferred method for loading filter values as it:
+        /// - Provides accurate counts without redundant calculation
+        /// - Handles null values properly through NullHandlingDictionary
+        /// - Includes value categorization and display text
+        /// - Maintains optimal performance for large datasets
         /// </summary>
         public void LoadValuesWithMetadata(IEnumerable<ValueAggregateMetadata> metadata)
         {
             cachedMetadata = metadata;
-            
-            // For backward compatibility, also populate the legacy properties
-            cachedValues = metadata.Select(m => m.Value);
-            // Create value counts dictionary that properly handles null keys
-            var regularDict = new Dictionary<object, int>();
-            int nullCount = 0;
-            
-            foreach (var item in metadata)
-            {
-                if (item.Value == null)
-                {
-                    nullCount = item.Count;
-                }
-                else
-                {
-                    regularDict[item.Value] = item.Count;
-                }
-            }
-            
-            cachedValueCounts = new NullHandlingDictionary(regularDict, nullCount);
-            
             LoadValuesFromMetadata(metadata);
             isLoaded = true;
         }
 
-        protected abstract void LoadValuesInternal(IEnumerable<object> values, Dictionary<object, int> valueCounts);
-        
         /// <summary>
-        /// Abstract method for loading values from metadata - should be implemented by derived classes
+        /// Load values from metadata - should be implemented by derived classes
+        /// This provides accurate counts and proper null handling
         /// </summary>
         protected abstract void LoadValuesFromMetadata(IEnumerable<ValueAggregateMetadata> metadata);
 
@@ -115,7 +79,6 @@ namespace WWSearchDataGrid.Modern.Core
             return displayValue.IndexOf(searchText, StringComparison.OrdinalIgnoreCase) >= 0;
         }
 
-        public abstract void LoadValues(IEnumerable<object> values);
         public abstract IEnumerable<object> GetSelectedValues();
         public abstract void SelectAll();
         public abstract void ClearAll();
@@ -135,9 +98,20 @@ namespace WWSearchDataGrid.Modern.Core
 
         public virtual void ClearCache()
         {
-            cachedValues = null;
-            cachedValueCounts = null;
+            cachedMetadata = null;
             isLoaded = false;
+        }
+
+        /// <summary>
+        /// Ensures the view model is loaded with metadata. If not loaded or metadata has changed, reloads.
+        /// </summary>
+        /// <param name="metadata">The metadata to load</param>
+        public void EnsureLoadedWithMetadata(IEnumerable<ValueAggregateMetadata> metadata)
+        {
+            if (!isLoaded || cachedMetadata != metadata)
+            {
+                LoadValuesWithMetadata(metadata);
+            }
         }
 
         public virtual void UpdateValueIncremental(object value, bool isAdd)
@@ -170,32 +144,5 @@ namespace WWSearchDataGrid.Modern.Core
             return ValueMetadata.Create(value).GetDisplayText();
         }
 
-        /// <summary>
-        /// Helper method to safely get value count - properly handles null values
-        /// Deprecated: Use GetValueCount with ValueMetadata instead
-        /// </summary>
-        [Obsolete("Use GetValueCount with ValueMetadata instead")]
-        protected int GetSafeValueCount(object value, Dictionary<object, int> valueCounts)
-        {
-            if (valueCounts == null)
-                return 1;
-
-            // Check if this is a NullHandlingDictionary (new implementation)
-            if (valueCounts is NullHandlingDictionary nullHandlingDict)
-            {
-                return nullHandlingDict.ContainsKey(value) ? nullHandlingDict[value] : 1;
-            }
-
-            // For regular dictionaries, handle null values specially
-            if (value == null)
-            {
-                // Since regular Dictionary<object, int> throws on null keys,
-                // we'll return 1 as a fallback for null values
-                return 1;
-            }
-
-            // Safe to check non-null values in regular dictionary
-            return valueCounts.ContainsKey(value) ? valueCounts[value] : 1;
-        }
     }
 }

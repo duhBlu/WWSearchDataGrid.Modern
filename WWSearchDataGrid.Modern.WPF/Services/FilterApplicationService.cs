@@ -124,7 +124,7 @@ namespace WWSearchDataGrid.Modern.WPF.Services
             var selectedItems = allValues.Where(item => item.IsSelected).ToList();
 
             // If no values or all values selected, this is not meaningful filtering
-            if (!selectedItems.Any() || selectedItems.Count == allValues.Count)
+            if (selectedItems.Count == 0 || selectedItems.Count == allValues.Count)
             {
                 return false;
             }
@@ -271,7 +271,7 @@ namespace WWSearchDataGrid.Modern.WPF.Services
                         return ClearAllFilters(searchTemplateController);
                     }
                 }
-                else if (selectedItems.Any())
+                else if (selectedItems.Count != 0)
                 {
                     var operatorName = searchTemplateController.SearchGroups.FirstOrDefault()?.OperatorName ?? "And";
 
@@ -347,7 +347,7 @@ namespace WWSearchDataGrid.Modern.WPF.Services
 
                 var groupChildCombinations = groupedViewModel.GetSelectedGroupChildCombinations().ToList();
 
-                if (!groupChildCombinations.Any())
+                if (groupChildCombinations.Count == 0)
                 {
                     // No selections - clear filters
                     return ClearAllFilters(searchTemplateController);
@@ -360,7 +360,7 @@ namespace WWSearchDataGrid.Modern.WPF.Services
                 {
                     // Fallback to regular filtering if we can't determine the paths
                     var selectedValues = groupedViewModel.GetSelectedValues().ToList();
-                    if (selectedValues.Any())
+                    if (selectedValues.Count != 0)
                     {
                         // Use the controller's column data type since the view model doesn't have one
                         return ApplyFallbackMultiValueFilter(searchTemplateController, selectedValues, 
@@ -472,7 +472,7 @@ namespace WWSearchDataGrid.Modern.WPF.Services
             searchTemplateController.SearchGroups.Clear();
 
             // Create a custom filter function that checks both the group column and current column
-            Func<object, bool> groupedFilter = columnValue =>
+            bool groupedFilter(object columnValue)
             {
                 try
                 {
@@ -484,7 +484,7 @@ namespace WWSearchDataGrid.Modern.WPF.Services
                 {
                     return false;
                 }
-            };
+            }
 
             // Set grouped filtering information on the SearchTemplateController
             searchTemplateController.GroupedFilterCombinations = combinations;

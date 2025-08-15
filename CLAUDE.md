@@ -13,15 +13,6 @@ WWSearchDataGrid.Modern.sln
 └── Samples/                              (Solution folder)
 ```
 
-## Quick Build & Run Commands
-
-```bash
-# Build entire solution
-dotnet build WWSearchDataGrid.Modern.sln
-
-# Run sample application
-dotnet run --project WWSearchDataGrid.Modern.SampleApp/WWSearchDataGrid.Modern.SampleApp.csproj
-```
 
 ## Core Architecture (WWSearchDataGrid.Modern.Core)
 

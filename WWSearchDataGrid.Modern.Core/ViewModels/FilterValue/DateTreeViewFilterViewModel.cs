@@ -6,7 +6,6 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using WWSearchDataGrid.Modern.Core.Performance;
-using static WWSearchDataGrid.Modern.Core.Performance.NullSafeDictionaryHelper;
 
 namespace WWSearchDataGrid.Modern.Core
 {
@@ -170,102 +169,106 @@ namespace WWSearchDataGrid.Modern.Core
         }
 
         /// <summary>
-        /// New method that loads values directly from ValueAggregateMetadata
+        /// Loads date values from metadata and groups them by year/month/day hierarchy
         /// </summary>
         protected override void LoadValuesFromMetadata(IEnumerable<ValueAggregateMetadata> metadata)
         {
-            // Convert metadata to the format expected by existing LoadValuesInternal
-            var values = metadata.Select(m => m.Value);
-            // Create dictionary to handle value counts (dates are typically non-null)
-            var valueCounts = CreateNullSafeDictionary();
-            foreach (var item in metadata)
-            {
-                valueCounts[item.Value] = item.Count;
-            }
+            var metadataList = metadata.ToList();
             
-            LoadValuesInternal(values, valueCounts);
+            // Build date hierarchy directly from metadata
+            BuildDateHierarchyFromMetadata(metadataList);
+            
+            ApplyFilter();
+            UpdateSelectAllState();
         }
 
-        protected override void LoadValuesInternal(IEnumerable<object> values, Dictionary<object, int> valueCounts)
+        /// <summary>
+        /// Builds the date hierarchy structure directly from metadata
+        /// </summary>
+        private void BuildDateHierarchyFromMetadata(List<ValueAggregateMetadata> metadataList)
         {
             _allYearGroups.Clear();
             _yearIndex.Clear();
             _monthIndex.Clear();
 
             // Filter to only DateTime values first, avoiding null issues
-            var dateValues = values
-                .Where(v => v is DateTime)
-                .Cast<DateTime>()
-                .OrderBy(d => d)
+            var dateMetadata = metadataList
+                .Where(m => m.Value is DateTime)
+                .Select(m => new { Date = (DateTime)m.Value, Metadata = m })
                 .ToList();
 
-            if (!dateValues.Any())
+            if (!dateMetadata.Any())
                 return;
 
-            // Group by year
-            var yearGroups = dateValues.GroupBy(d => d.Year);
+            // Group by year, then month, then day
+            var yearGroups = dateMetadata
+                .GroupBy(dm => dm.Date.Year)
+                .OrderByDescending(g => g.Key);
 
             foreach (var yearGroup in yearGroups)
             {
                 var yearItem = new FilterValueGroup
                 {
-                    DisplayValue = yearGroup.Key.ToString(),
                     GroupKey = yearGroup.Key,
+                    DisplayValue = yearGroup.Key.ToString(),
                     IsSelected = true,
-                    ItemCount = 0 // Will calculate from children
+                    ItemCount = yearGroup.Sum(dm => dm.Metadata.Count)
                 };
+                yearItem.PropertyChanged += OnGroupPropertyChanged;
 
-                _yearIndex[yearGroup.Key] = yearItem;
-
-                // Group by month within year
-                var monthGroups = yearGroup.GroupBy(d => d.Month);
+                var monthGroups = yearGroup
+                    .GroupBy(dm => dm.Date.Month)
+                    .OrderByDescending(g => g.Key);
 
                 foreach (var monthGroup in monthGroups)
                 {
-                    var monthKey = $"{yearGroup.Key}_{monthGroup.Key}";
                     var monthItem = new FilterValueGroup
                     {
-                        DisplayValue = System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(monthGroup.Key),
                         GroupKey = monthGroup.Key,
-                        IsSelected = true,
-                        ItemCount = 0 // Will calculate from children
+                        DisplayValue = GetMonthName(monthGroup.Key),
+                        IsSelected = yearItem.IsSelected,
+                        ItemCount = monthGroup.Sum(dm => dm.Metadata.Count)
                     };
+                    monthItem.PropertyChanged += OnGroupPropertyChanged;
 
-                    _monthIndex[monthKey] = monthItem;
-
-                    // Add individual days
-                    var dayGroups = monthGroup.GroupBy(d => d.Date);
-
-                    foreach (var dayGroup in dayGroups)
-                    {
-                        var date = dayGroup.Key;
-                        var count = GetSafeValueCount(date, valueCounts);
-
-                        var dayItem = new FilterValueItem
+                    // Add individual dates as children
+                    var dayItems = monthGroup
+                        .OrderByDescending(dm => dm.Date.Day)
+                        .Select(dm => new FilterValueItem
                         {
-                            Value = date,
-                            DisplayValue = date.ToString("d MMM yyyy"),
-                            ItemCount = count,
-                            IsSelected = true,
-                            Parent = monthItem
-                        };
+                            Value = dm.Date,
+                            DisplayValue = dm.Date.Day.ToString(),
+                            ItemCount = dm.Metadata.Count,
+                            IsSelected = monthItem.IsSelected ?? false
+                        });
 
+                    foreach (var dayItem in dayItems)
+                    {
                         dayItem.PropertyChanged += OnChildPropertyChanged;
                         monthItem.Children.Add(dayItem);
-                        monthItem.ItemCount += count;
                     }
 
-                    monthItem.PropertyChanged += OnGroupPropertyChanged;
                     yearItem.Children.Add(monthItem);
-                    yearItem.ItemCount += monthItem.ItemCount;
+                    _monthIndex[$"{yearGroup.Key}-{monthGroup.Key}"] = monthItem;
                 }
 
-                yearItem.PropertyChanged += OnGroupPropertyChanged;
                 _allYearGroups.Add(yearItem);
+                _yearIndex[yearGroup.Key] = yearItem;
             }
+        }
 
-            ApplyFilter();
-            UpdateSelectAllState();
+        /// <summary>
+        /// Gets the display name for a month number
+        /// </summary>
+        private string GetMonthName(int monthNumber)
+        {
+            var monthNames = new[]
+            {
+                "January", "February", "March", "April", "May", "June",
+                "July", "August", "September", "October", "November", "December"
+            };
+            
+            return monthNumber >= 1 && monthNumber <= 12 ? monthNames[monthNumber - 1] : monthNumber.ToString();
         }
 
         private void OnGroupPropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -306,21 +309,6 @@ namespace WWSearchDataGrid.Modern.Core
             }
         }
 
-        public override void LoadValues(IEnumerable<object> values)
-        {
-            // Create dictionary for counting
-            var counts = CreateNullSafeDictionary();
-            foreach (var value in values)
-            {
-                if (counts.ContainsKey(value))
-                    counts[value]++;
-                else
-                    counts[value] = 1;
-            }
-
-            var dateValues = values.Where(v => v is DateTime).Distinct();
-            LoadValuesInternal(dateValues, counts);
-        }
 
         public override void UpdateValueIncremental(object value, bool isAdd)
         {
