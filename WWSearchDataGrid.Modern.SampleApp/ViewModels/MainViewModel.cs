@@ -131,15 +131,17 @@ namespace WWSearchDataGrid.Modern.SampleApp
         private void GenerateData(int count)
         {
             var baseDate = DateTime.Today.AddYears(-2);
-            var itemsArray = new DataItem[count];
+            var buffer = new DataItem[count];
 
             Parallel.For(0, count, i =>
             {
                 var rnd = new Random(Guid.NewGuid().GetHashCode());
-                itemsArray[i] = CreateComprehensiveDataItem(rnd, baseDate);
+                buffer[i] = CreateComprehensiveDataItem(rnd, baseDate);
             });
 
-            Items = new ObservableCollection<DataItem>(itemsArray);
+            var merged = new ObservableCollection<DataItem>(Items.Concat(buffer));
+            Items = merged; 
+            ItemCount = Items.Count;
         }
 
 

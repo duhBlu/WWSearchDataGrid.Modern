@@ -21,10 +21,12 @@ namespace WWSearchDataGrid.Modern.WPF
 
         private TextBox searchTextBox;
         private Button advancedFilterButton;
+        private CheckBox filterCheckBox;
         private Window advancedFilterWindow;
         private bool isAdvancedFilterOpen;
         private Timer _changeTimer;
         private SearchTemplate _temporarySearchTemplate; // Track temporary template for real-time updates
+        private bool _isManualClear = false; // Track if checkbox state is being cleared manually vs cycling
 
         #endregion
 
@@ -53,6 +55,22 @@ namespace WWSearchDataGrid.Modern.WPF
         public static readonly DependencyProperty AllowRuleValueFilteringProperty =
             DependencyProperty.RegisterAttached("AllowRuleValueFiltering", typeof(bool), typeof(ColumnSearchBox),
                 new FrameworkPropertyMetadata(true, FrameworkPropertyMetadataOptions.Inherits));
+
+        public static readonly DependencyProperty FilterCheckboxStateProperty =
+            DependencyProperty.Register("FilterCheckboxState", typeof(bool?), typeof(ColumnSearchBox),
+                new PropertyMetadata(null, OnFilterCheckboxStateChanged));
+
+        public static readonly DependencyProperty IsCheckboxColumnProperty =
+            DependencyProperty.Register("IsCheckboxColumn", typeof(bool), typeof(ColumnSearchBox),
+                new PropertyMetadata(false));
+
+        public static readonly DependencyProperty AllowsNullValuesProperty =
+            DependencyProperty.Register("AllowsNullValues", typeof(bool), typeof(ColumnSearchBox),
+                new PropertyMetadata(false));
+
+        public static readonly DependencyProperty HasActiveFilterProperty =
+            DependencyProperty.Register("HasActiveFilter", typeof(bool), typeof(ColumnSearchBox),
+                new PropertyMetadata(false));
 
         #endregion
         
@@ -123,6 +141,33 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
+        /// Gets or sets the checkbox filter state (null = indeterminate, true = checked, false = unchecked)
+        /// </summary>
+        public bool? FilterCheckboxState
+        {
+            get => (bool?)GetValue(FilterCheckboxStateProperty);
+            set => SetValue(FilterCheckboxStateProperty, value);
+        }
+
+        /// <summary>
+        /// Gets whether this column should show checkbox filtering instead of text search
+        /// </summary>
+        public bool IsCheckboxColumn
+        {
+            get => (bool)GetValue(IsCheckboxColumnProperty);
+            private set => SetValue(IsCheckboxColumnProperty, value);
+        }
+
+        /// <summary>
+        /// Gets whether the column allows null values (affects cycling behavior)
+        /// </summary>
+        public bool AllowsNullValues
+        {
+            get => (bool)GetValue(AllowsNullValuesProperty);
+            private set => SetValue(AllowsNullValuesProperty, value);
+        }
+
+        /// <summary>
         /// Gets the search template controller
         /// </summary>
         public SearchTemplateController SearchTemplateController { get; private set; }
@@ -137,18 +182,8 @@ namespace WWSearchDataGrid.Modern.WPF
         /// </summary>
         public bool HasActiveFilter
         {
-            get
-            {
-                if (SearchTemplateController == null)
-                    return false;
-
-                // Check if we have a simple text filter
-                if (!string.IsNullOrWhiteSpace(SearchText))
-                    return true;
-
-                // Check if we have an advanced filter
-                return SearchTemplateController.HasCustomExpression;
-            }
+            get => (bool)GetValue(HasActiveFilterProperty);
+            private set => SetValue(HasActiveFilterProperty, value);
         }
 
         #endregion
@@ -209,6 +244,7 @@ namespace WWSearchDataGrid.Modern.WPF
         public override void OnApplyTemplate()
         {
             base.OnApplyTemplate();
+            
             searchTextBox = GetTemplateChild("PART_SearchTextBox") as TextBox;
             if (searchTextBox != null)
             {
@@ -220,6 +256,14 @@ namespace WWSearchDataGrid.Modern.WPF
             if (advancedFilterButton != null)
             {
                 advancedFilterButton.Click += OnAdvancedFilterButtonClick;
+            }
+
+            filterCheckBox = GetTemplateChild("PART_FilterCheckBox") as CheckBox;
+            if (filterCheckBox != null)
+            {
+                filterCheckBox.Checked += OnCheckboxStateChanged;
+                filterCheckBox.Unchecked += OnCheckboxStateChanged;
+                filterCheckBox.Indeterminate += OnCheckboxStateChanged;
             }
         }
 
@@ -249,6 +293,14 @@ namespace WWSearchDataGrid.Modern.WPF
                 searchTextBox.TextChanged -= OnSearchTextBoxTextChanged;
                 searchTextBox.KeyDown -= OnSearchTextBoxKeyDown;
             }
+
+            // Clean up checkbox event handlers
+            if (filterCheckBox != null)
+            {
+                filterCheckBox.Checked -= OnCheckboxStateChanged;
+                filterCheckBox.Unchecked -= OnCheckboxStateChanged;
+                filterCheckBox.Indeterminate -= OnCheckboxStateChanged;
+            }
             
             // Clean up container event handlers
             LostFocus -= OnColumnSearchBoxLostFocus;
@@ -257,6 +309,7 @@ namespace WWSearchDataGrid.Modern.WPF
             if (SourceDataGrid != null)
             {
                 SourceDataGrid.CollectionChanged -= OnSourceDataGridCollectionChanged;
+                SourceDataGrid.ItemsSourceChanged -= OnSourceDataGridItemsSourceChanged;
             }
 
             // Close and clean up the filter window if it's open
@@ -274,9 +327,15 @@ namespace WWSearchDataGrid.Modern.WPF
             if (e.OldValue is SearchDataGrid oldGrid)
             {
                 oldGrid.CollectionChanged -= control.OnSourceDataGridCollectionChanged;
+                oldGrid.ItemsSourceChanged -= control.OnSourceDataGridItemsSourceChanged;
             }
 
             // Register events with new grid and initialize
+            if (control.SourceDataGrid != null)
+            {
+                control.SourceDataGrid.ItemsSourceChanged += control.OnSourceDataGridItemsSourceChanged;
+            }
+            
             control.InitializeSearchTemplateController();
         }
 
@@ -305,10 +364,18 @@ namespace WWSearchDataGrid.Modern.WPF
             {
                 if (e.Action == NotifyCollectionChangedAction.Add && e.NewItems != null)
                 {
+                    var wasEmpty = SearchTemplateController.ColumnValues.Count == 0;
+                    
                     foreach (var item in e.NewItems)
                     {
                         var value = ReflectionHelper.GetPropValue(item, BindingPath);
                         SearchTemplateController.ColumnValues.Add(value);
+                    }
+                    
+                    // If the collection was previously empty, recheck checkbox settings
+                    if (wasEmpty && SearchTemplateController.ColumnValues.Count > 0)
+                    {
+                        DetermineCheckboxColumnSettings();
                     }
                 }
                 else if (e.Action == NotifyCollectionChangedAction.Remove && e.OldItems != null)
@@ -323,6 +390,19 @@ namespace WWSearchDataGrid.Modern.WPF
                 {
                     // For Replace, Reset, or Move, re-evaluate all values
                     LoadColumnValues();
+                    
+                    // For Reset (which happens when ItemsSource changes), recheck checkbox settings
+                    if (e.Action == NotifyCollectionChangedAction.Reset)
+                    {
+                        // Delay the checkbox settings check to ensure data is loaded
+                        Dispatcher.BeginInvoke(new Action(() =>
+                        {
+                            if (SearchTemplateController != null && SearchTemplateController.ColumnValues.Count > 0)
+                            {
+                                DetermineCheckboxColumnSettings();
+                            }
+                        }), DispatcherPriority.Background);
+                    }
                 }
 
                 // Delay full UI update to batch frequent changes
@@ -353,6 +433,14 @@ namespace WWSearchDataGrid.Modern.WPF
                 control.BindingPath = column.SortMemberPath;
                 control.AllowRuleValueFiltering = GetAllowRuleValueFiltering(control.CurrentColumn);
                 control.InitializeSearchTemplateController();
+            }
+        }
+
+        private static void OnFilterCheckboxStateChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            if (d is ColumnSearchBox control)
+            {
+                control.OnCheckboxFilterChanged();
             }
         }
 
@@ -419,6 +507,26 @@ namespace WWSearchDataGrid.Modern.WPF
             }
         }
         
+        private void OnSourceDataGridItemsSourceChanged(object sender, EventArgs e)
+        {
+            // When the ItemsSource changes completely, we need to reload column values and recheck checkbox settings
+            try
+            {
+                if (SourceDataGrid != null && !string.IsNullOrEmpty(BindingPath) && SearchTemplateController != null)
+                {
+                    // Delay the update to ensure the data has been loaded into the grid
+                    Dispatcher.BeginInvoke(new Action(() =>
+                    {
+                        LoadColumnValues();
+                    }), DispatcherPriority.Background);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error in OnSourceDataGridItemsSourceChanged: {ex.Message}");
+            }
+        }
+
         private void OnColumnSearchBoxLostFocus(object sender, RoutedEventArgs e)
         {
             // Only confirm filter if focus is leaving the entire ColumnSearchBox container
@@ -480,7 +588,273 @@ namespace WWSearchDataGrid.Modern.WPF
 
         #endregion
 
+        #region Checkbox Event Handlers
+
+        private void OnCheckboxStateChanged(object sender, RoutedEventArgs e)
+        {
+            if (filterCheckBox != null)
+            {
+                FilterCheckboxState = filterCheckBox.IsChecked;
+            }
+        }
+
+        private void OnCheckboxFilterChanged()
+        {
+            try
+            {
+                if (!IsCheckboxColumn || SearchTemplateController == null || SourceDataGrid == null)
+                    return;
+
+                if (FilterCheckboxState.HasValue)
+                {
+                    // Apply checkbox filter for true/false values
+                    ApplyCheckboxFilter(FilterCheckboxState.Value);
+                }
+                else
+                {
+                    // Indeterminate state - check if this is manual clear or cycling
+                    if (_isManualClear)
+                    {
+                        // Manual clear - clear filter completely
+                        ClearCheckboxFilter();
+                        _isManualClear = false;
+                    }
+                    else if (AllowsNullValues)
+                    {
+                        // Cycling to indeterminate for nullable boolean - apply IsNull filter
+                        ApplyIsNullFilter();
+                    }
+                    else
+                    {
+                        // Non-nullable boolean shouldn't reach this state in normal cycling
+                        ClearCheckboxFilter();
+                    }
+                }
+
+                // Update filter panel
+                SourceDataGrid.UpdateFilterPanel();
+
+                // Update HasActiveFilter state
+                UpdateHasActiveFilterState();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error in OnCheckboxFilterChanged: {ex.Message}");
+            }
+        }
+
+        #endregion
+
         #region Private Methods
+
+        /// <summary>
+        /// Updates the HasActiveFilter property based on current filter state
+        /// </summary>
+        private void UpdateHasActiveFilterState()
+        {
+            bool hasFilter = false;
+
+            if (SearchTemplateController != null)
+            {
+                // Check if we have a checkbox filter (including IsEmpty filter for indeterminate state)
+                if (IsCheckboxColumn)
+                {
+                    if (FilterCheckboxState.HasValue)
+                    {
+                        hasFilter = true;
+                    }
+                    else if (!FilterCheckboxState.HasValue && SearchTemplateController.HasCustomExpression)
+                    {
+                        // Check if indeterminate state has an IsEmpty filter
+                        var firstGroup = SearchTemplateController.SearchGroups.FirstOrDefault();
+                        var firstTemplate = firstGroup?.SearchTemplates.FirstOrDefault();
+                        if (firstTemplate?.SearchType == SearchType.IsEmpty)
+                            hasFilter = true;
+                    }
+                }
+
+                // Check if we have a simple text filter
+                if (!hasFilter && !string.IsNullOrWhiteSpace(SearchText))
+                {
+                    hasFilter = true;
+                }
+
+                // Check if we have an advanced filter
+                if (!hasFilter)
+                {
+                    hasFilter = SearchTemplateController.HasCustomExpression;
+                }
+            }
+
+            HasActiveFilter = hasFilter;
+        }
+
+        /// <summary>
+        /// Determines if this column should use checkbox filtering and sets related properties
+        /// </summary>
+        private void DetermineCheckboxColumnSettings()
+        {
+            try
+            {
+                if (SearchTemplateController == null || SourceDataGrid == null)
+                {
+                    IsCheckboxColumn = false;
+                    AllowsNullValues = false;
+                    return;
+                }
+
+                var previousIsCheckboxColumn = IsCheckboxColumn;
+
+                // Check if column data type is Boolean
+                var isCheckboxType = SearchTemplateController.ColumnDataType == ColumnDataType.Boolean;
+
+                // If not explicitly Boolean, check if all non-null values are booleans
+                if (!isCheckboxType && SearchTemplateController.ColumnValues.Count > 0)
+                {
+                    var nonNullValues = SearchTemplateController.ColumnValues.Where(v => v != null).ToList();
+                    if (nonNullValues.Count > 0)
+                    {
+                        isCheckboxType = nonNullValues.All(v => v is bool);
+                    }
+                }
+
+                IsCheckboxColumn = isCheckboxType;
+
+                // Determine if null values are present
+                if (IsCheckboxColumn)
+                {
+                    AllowsNullValues = SearchTemplateController.ColumnValues.Contains(null);
+                }
+                else
+                {
+                    AllowsNullValues = false;
+                }
+
+                // If the column type changed, reset any existing filters
+                if (previousIsCheckboxColumn != IsCheckboxColumn)
+                {
+                    // Clear any existing filters since the UI mode is changing
+                    if (previousIsCheckboxColumn)
+                    {
+                        // Was checkbox, now text - clear checkbox state
+                        FilterCheckboxState = null;
+                        if (filterCheckBox != null)
+                            filterCheckBox.IsChecked = null;
+                    }
+                    else
+                    {
+                        // Was text, now checkbox - clear text search
+                        SearchText = string.Empty;
+                        if (searchTextBox != null)
+                            searchTextBox.Text = string.Empty;
+                    }
+                    
+                    // Clear any active filters
+                    ClearFilterInternal();
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error in DetermineCheckboxColumnSettings: {ex.Message}");
+                IsCheckboxColumn = false;
+                AllowsNullValues = false;
+            }
+        }
+
+        /// <summary>
+        /// Applies a checkbox filter with the specified boolean value
+        /// </summary>
+        private void ApplyCheckboxFilter(bool value)
+        {
+            try
+            {
+                // Manually clear search groups to avoid creating default templates
+                SearchTemplateController.SearchGroups.Clear();
+                
+                // Create a new search group
+                var group = new SearchTemplateGroup();
+                SearchTemplateController.SearchGroups.Add(group);
+
+                // Create Equals template for the checkbox value
+                var template = new SearchTemplate(ColumnDataType.Boolean);
+                template.SearchType = SearchType.Equals;
+                template.SelectedValue = value;
+
+                // Add only our specific template
+                group.SearchTemplates.Add(template);
+
+                // Clear any data transformations for this column
+                if (SourceDataGrid != null && !string.IsNullOrEmpty(BindingPath))
+                {
+                    SourceDataGrid.ClearDataTransformation(BindingPath);
+                }
+
+                // Update the filter expression
+                SearchTemplateController.UpdateFilterExpression();
+
+                // Apply the filter to the grid
+                SourceDataGrid.FilterItemsSource();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error in ApplyCheckboxFilter: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Applies an IsNull filter for nullable boolean columns in indeterminate state
+        /// </summary>
+        private void ApplyIsNullFilter()
+        {
+            try
+            {
+                // Manually clear search groups to avoid creating default templates
+                SearchTemplateController.SearchGroups.Clear();
+                
+                // Create a new search group
+                var group = new SearchTemplateGroup();
+                SearchTemplateController.SearchGroups.Add(group);
+
+                // Create IsEmpty template for null values
+                var template = new SearchTemplate(ColumnDataType.Boolean);
+                template.SearchType = SearchType.IsEmpty;
+                // IsEmpty doesn't need a SelectedValue
+
+                // Add only our specific template
+                group.SearchTemplates.Add(template);
+
+                // Clear any data transformations for this column
+                if (SourceDataGrid != null && !string.IsNullOrEmpty(BindingPath))
+                {
+                    SourceDataGrid.ClearDataTransformation(BindingPath);
+                }
+
+                // Update the filter expression
+                SearchTemplateController.UpdateFilterExpression();
+
+                // Apply the filter to the grid
+                SourceDataGrid.FilterItemsSource();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error in ApplyIsNullFilter: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Clears the checkbox filter
+        /// </summary>
+        private void ClearCheckboxFilter()
+        {
+            try
+            {
+                ClearFilterInternal();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error in ClearCheckboxFilter: {ex.Message}");
+            }
+        }
 
         /// <summary>
         /// Starts or resets the debounce timer for search changes
@@ -537,9 +911,18 @@ namespace WWSearchDataGrid.Modern.WPF
                 SourceDataGrid.CollectionChanged -= OnSourceDataGridCollectionChanged;
                 SourceDataGrid.CollectionChanged += OnSourceDataGridCollectionChanged;
 
+                // Hook into items source changed events for initial loading detection
+                SourceDataGrid.ItemsSourceChanged -= OnSourceDataGridItemsSourceChanged;
+                SourceDataGrid.ItemsSourceChanged += OnSourceDataGridItemsSourceChanged;
+
                 // Initial load if we have items
                 if (SourceDataGrid.Items != null && SourceDataGrid.Items.Count > 0)
+                {
                     LoadColumnValues();
+                    
+                    // Determine checkbox column settings after loading values
+                    DetermineCheckboxColumnSettings();
+                }
             }
             catch (Exception ex)
             {
@@ -599,6 +982,9 @@ namespace WWSearchDataGrid.Modern.WPF
 
                 // Apply the filter to the grid
                 SourceDataGrid.FilterItemsSource();
+
+                // Update HasActiveFilter state
+                UpdateHasActiveFilterState();
             }
             catch (Exception ex)
             {
@@ -618,6 +1004,9 @@ namespace WWSearchDataGrid.Modern.WPF
                     searchTextBox.Text = string.Empty;
 
                 HasAdvancedFilter = SearchTemplateController.HasCustomExpression;
+
+                // Update HasActiveFilter state
+                UpdateHasActiveFilterState();
             }
             catch (Exception ex)
             {
@@ -627,6 +1016,7 @@ namespace WWSearchDataGrid.Modern.WPF
 
         /// <summary>
         /// Clears the search text and removes only the temporary template (not confirmed filters)
+        /// For checkbox columns, this completely clears the filter
         /// This is used by the X button in the search box
         /// </summary>
         private void ClearSearchTextAndTemporaryFilter()
@@ -636,28 +1026,45 @@ namespace WWSearchDataGrid.Modern.WPF
                 // Stop the timer if it's running
                 _changeTimer?.Stop();
 
-                // Clear the search text
-                SearchText = string.Empty;
-                if (searchTextBox != null)
-                    searchTextBox.Text = string.Empty;
-
-                // Remove only the temporary template if it exists
-                if (_temporarySearchTemplate != null && SearchTemplateController?.SearchGroups?.Count > 0)
+                if (IsCheckboxColumn)
                 {
-                    var firstGroup = SearchTemplateController.SearchGroups[0];
-                    firstGroup.SearchTemplates.Remove(_temporarySearchTemplate);
-                    _temporarySearchTemplate = null;
+                    // For checkbox columns, clear the filter completely
+                    _isManualClear = true; // Set flag to indicate manual clear
+                    FilterCheckboxState = null;
+                    if (filterCheckBox != null)
+                        filterCheckBox.IsChecked = null;
                     
-                    // Update the filter expression and apply to grid
-                    SearchTemplateController.UpdateFilterExpression();
-                    SourceDataGrid?.FilterItemsSource();
+                    // Clear the filter internally (this will be handled by OnCheckboxFilterChanged)
+                    // ClearFilterInternal(); - Let the change handler deal with this
                 }
+                else
+                {
+                    // For text columns, clear the search text
+                    SearchText = string.Empty;
+                    if (searchTextBox != null)
+                        searchTextBox.Text = string.Empty;
 
-                // Update HasAdvancedFilter state
-                HasAdvancedFilter = SearchTemplateController?.HasCustomExpression ?? false;
+                    // Remove only the temporary template if it exists
+                    if (_temporarySearchTemplate != null && SearchTemplateController?.SearchGroups?.Count > 0)
+                    {
+                        var firstGroup = SearchTemplateController.SearchGroups[0];
+                        firstGroup.SearchTemplates.Remove(_temporarySearchTemplate);
+                        _temporarySearchTemplate = null;
+                        
+                        // Update the filter expression and apply to grid
+                        SearchTemplateController.UpdateFilterExpression();
+                        SourceDataGrid?.FilterItemsSource();
+                    }
+
+                    // Update HasAdvancedFilter state
+                    HasAdvancedFilter = SearchTemplateController?.HasCustomExpression ?? false;
+                }
                 
                 // Update filter panel
                 SourceDataGrid?.UpdateFilterPanel();
+
+                // Update HasActiveFilter state
+                UpdateHasActiveFilterState();
             }
             catch (Exception ex)
             {
@@ -692,6 +1099,9 @@ namespace WWSearchDataGrid.Modern.WPF
                     
                     // Update filter panel
                     SourceDataGrid?.UpdateFilterPanel();
+
+                    // Update HasActiveFilter state
+                    UpdateHasActiveFilterState();
                 }
             }
             catch (Exception ex)
@@ -757,6 +1167,9 @@ namespace WWSearchDataGrid.Modern.WPF
 
                     // Apply the filter to the grid
                     SourceDataGrid.FilterItemsSource();
+
+                    // Update HasActiveFilter state
+                    UpdateHasActiveFilterState();
                 }
                 else
                 {
@@ -772,6 +1185,9 @@ namespace WWSearchDataGrid.Modern.WPF
                         
                         // Apply the filter to the grid
                         SourceDataGrid.FilterItemsSource();
+
+                        // Update HasActiveFilter state
+                        UpdateHasActiveFilterState();
                     }
                 }
             }
@@ -832,6 +1248,9 @@ namespace WWSearchDataGrid.Modern.WPF
 
                 // Apply the updated (empty) filter to the grid
                 SourceDataGrid?.FilterItemsSource();
+
+                // Update HasActiveFilter state
+                UpdateHasActiveFilterState();
             }
             catch (Exception ex)
             {
@@ -975,6 +1394,9 @@ namespace WWSearchDataGrid.Modern.WPF
                         values.Add(val);
                     }
                     SearchTemplateController.LoadColumnData(CurrentColumn.Header, values);
+                    
+                    // Determine checkbox column settings after loading values
+                    DetermineCheckboxColumnSettings();
                 }
             }
             catch (Exception ex)
@@ -998,8 +1420,20 @@ namespace WWSearchDataGrid.Modern.WPF
                 if (searchTextBox != null)
                     searchTextBox.Text = string.Empty;
 
+                // Clear checkbox state if this is a checkbox column
+                if (IsCheckboxColumn)
+                {
+                    _isManualClear = true; // Set flag to indicate manual clear
+                    FilterCheckboxState = null;
+                    if (filterCheckBox != null)
+                        filterCheckBox.IsChecked = null;
+                }
+
                 // Clear the filter internally
                 ClearFilterInternal();
+
+                // Update HasActiveFilter state (ClearFilterInternal already does this, but just to be safe)
+                UpdateHasActiveFilterState();
             }
             catch (Exception ex)
             {
@@ -1015,6 +1449,25 @@ namespace WWSearchDataGrid.Modern.WPF
         {
             try
             {
+                // Check if we have a checkbox filter
+                if (IsCheckboxColumn)
+                {
+                    if (FilterCheckboxState.HasValue)
+                    {
+                        return $"Equals '{(FilterCheckboxState.Value ? "True" : "False")}'";
+                    }
+                    else if (SearchTemplateController?.HasCustomExpression == true)
+                    {
+                        // Check if this is an IsNull filter (indeterminate state with filter)
+                        var firstGroup = SearchTemplateController.SearchGroups.FirstOrDefault();
+                        var firstTemplate = firstGroup?.SearchTemplates.FirstOrDefault();
+                        if (firstTemplate?.SearchType == SearchType.IsEmpty)
+                        {
+                            return "Is Null";
+                        }
+                    }
+                }
+
                 // Check if we have a simple text filter
                 if (!string.IsNullOrWhiteSpace(SearchText))
                 {

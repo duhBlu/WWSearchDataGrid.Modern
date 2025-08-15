@@ -3,9 +3,14 @@
                     xmlns:sdg="clr-namespace:WWSearchDataGrid.Modern.WPF"
                     xmlns:converters="clr-namespace:WWSearchDataGrid.Modern.WPF.Converters">
 
-    <converters:IntToVisibilityConverter x:Key="IntToVisibilityConverter" />
-    <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF;component/Themes/Common/CommonStyles.xaml" />
+    </ResourceDictionary.MergedDictionaries>
     
+    <converters:IntToVisibilityConverter x:Key="IntToVisibilityConverter" />
+    <converters:HasValueToVisibilityConverter x:Key="HasValueToVisibilityConverter" />
+    <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+
     <!--  ColumnSearchBox Style  -->
     <Style x:Key="DefaultColumnSearchBoxStyle" TargetType="{x:Type sdg:ColumnSearchBox}">
         <Setter Property="Template">
@@ -23,31 +28,66 @@
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
 
+                            <!--  TextBox for non-checkbox columns  -->
                             <TextBox x:Name="PART_SearchTextBox"
-                                        Background="Transparent"
-                                        Grid.Column="0"
-                                        BorderThickness="0"
-                                        Text="{Binding SearchText, RelativeSource={RelativeSource TemplatedParent}, UpdateSourceTrigger=PropertyChanged}"
-                                        Padding="6,2"
-                                        VerticalAlignment="Center"
-                                        VerticalContentAlignment="Center"
-                                        TabIndex="0"
-                                        Height="28"
-                                        FontSize="12"
-                                        FontFamily="Segoe UI" />
+                                     Grid.Column="0"
+                                     Background="Transparent"
+                                     BorderThickness="0"
+                                     Text="{Binding SearchText, RelativeSource={RelativeSource TemplatedParent}, UpdateSourceTrigger=PropertyChanged}"
+                                     Padding="6,2"
+                                     VerticalAlignment="Center"
+                                     VerticalContentAlignment="Center"
+                                     Height="28"
+                                     TabIndex="0"
+                                     FontSize="12"
+                                     FontFamily="Segoe UI">
+                                <TextBox.Style>
+                                    <Style TargetType="TextBox">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsCheckboxColumn, RelativeSource={RelativeSource TemplatedParent}}" Value="True">
+                                                <Setter Property="Visibility" Value="Collapsed" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBox.Style>
+                            </TextBox>
+
+                            <!--  CheckBox for boolean columns  -->
+                            <CheckBox x:Name="PART_FilterCheckBox"
+                                      Grid.Column="0"
+                                      Grid.ColumnSpan="2"
+                                      Background="Transparent"
+                                      IsChecked="{Binding FilterCheckboxState, RelativeSource={RelativeSource TemplatedParent}}"
+                                      Margin="6,5"
+                                      HorizontalAlignment="Center"
+                                      VerticalAlignment="Center"
+                                      IsThreeState="True"
+                                      TabIndex="0"
+                                      ToolTip="Filter by checkbox state">
+                                <CheckBox.Style>
+                                    <Style BasedOn="{StaticResource Default_CheckBox_Style}" TargetType="CheckBox">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsCheckboxColumn, RelativeSource={RelativeSource TemplatedParent}}" Value="True">
+                                                <Setter Property="Visibility" Value="Visible" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </CheckBox.Style>
+                            </CheckBox>
 
 
-                            <Button Grid.Column="1"
-                                    x:Name="PART_ClearFilterButton"
-                                    Visibility="{Binding SearchText.Length, RelativeSource={RelativeSource AncestorType={x:Type sdg:ColumnSearchBox}}, Converter={StaticResource IntToVisibilityConverter}}"
+                            <Button x:Name="PART_ClearFilterButton"
+                                    Grid.Column="1"
+                                    Focusable="true"
                                     Cursor="Hand"
                                     Command="{Binding ClearSearchTextCommand, RelativeSource={RelativeSource AncestorType=sdg:ColumnSearchBox}}"
                                     Margin="2,1,5,1"
                                     Padding="4"
-                                    Focusable="true"
+                                    VerticalAlignment="Center"
                                     TabIndex="1"
                                     KeyboardNavigation.IsTabStop="True"
-                                    VerticalAlignment="Center"
                                     ToolTip="Clear filter"
                                     FontFamily="Segoe MDL2 Assets"
                                     FontSize="10"
@@ -59,6 +99,7 @@
                                         <Setter Property="BorderBrush" Value="Transparent" />
                                         <Setter Property="BorderThickness" Value="0" />
                                         <Setter Property="Cursor" Value="Hand" />
+                                        <Setter Property="Visibility" Value="Collapsed" />
                                         <Setter Property="Template">
                                             <Setter.Value>
                                                 <ControlTemplate TargetType="{x:Type Button}">
@@ -92,6 +133,18 @@
                                                 <Setter Property="Opacity" Value="0.5" />
                                                 <Setter Property="Cursor" Value="Arrow" />
                                             </Trigger>
+                                            <!--  Show clear button when SearchText has content  -->
+                                            <DataTrigger Binding="{Binding SearchText.Length, RelativeSource={RelativeSource AncestorType={x:Type sdg:ColumnSearchBox}}, Converter={StaticResource IntToVisibilityConverter}}" Value="{x:Static Visibility.Visible}">
+                                                <Setter Property="Visibility" Value="Visible" />
+                                            </DataTrigger>
+                                            <!--  Show clear button when checkbox has filter applied  -->
+                                            <MultiDataTrigger>
+                                                <MultiDataTrigger.Conditions>
+                                                    <Condition Binding="{Binding IsCheckboxColumn, RelativeSource={RelativeSource AncestorType={x:Type sdg:ColumnSearchBox}}}" Value="True" />
+                                                    <Condition Binding="{Binding HasActiveFilter, RelativeSource={RelativeSource AncestorType={x:Type sdg:ColumnSearchBox}}}" Value="True" />
+                                                </MultiDataTrigger.Conditions>
+                                                <Setter Property="Visibility" Value="Visible" />
+                                            </MultiDataTrigger>
                                         </Style.Triggers>
                                     </Style>
                                 </Button.Style>
@@ -101,10 +154,10 @@
                                     Grid.Column="2"
                                     Cursor="Hand"
                                     Margin="2,1,5,1"
-                                    TabIndex="2"
-                                    KeyboardNavigation.IsTabStop="True"
                                     Padding="4"
                                     VerticalAlignment="Center"
+                                    TabIndex="2"
+                                    KeyboardNavigation.IsTabStop="True"
                                     ToolTip="Advanced Filter"
                                     FontFamily="Segoe MDL2 Assets"
                                     FontSize="12"
@@ -150,6 +203,7 @@
                                                 <MultiDataTrigger.Conditions>
                                                     <Condition Binding="{Binding AllowRuleValueFiltering, RelativeSource={RelativeSource TemplatedParent}}" Value="True" />
                                                     <Condition Binding="{Binding SearchText, RelativeSource={RelativeSource AncestorType={x:Type sdg:ColumnSearchBox}}}" Value="" />
+                                                    <Condition Binding="{Binding IsCheckboxColumn, RelativeSource={RelativeSource AncestorType={x:Type sdg:ColumnSearchBox}}}" Value="False" />
                                                 </MultiDataTrigger.Conditions>
                                                 <Setter Property="Visibility" Value="Visible" />
                                             </MultiDataTrigger>
