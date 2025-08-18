@@ -1506,6 +1506,9 @@ namespace WWSearchDataGrid.Modern.WPF
 
                 isAdvancedFilterOpen = true;
                 advancedFilterWindow.ShowDialog();
+
+                UpdateHasActiveFilterState();
+                SourceDataGrid.UpdateFilterPanel();
             }
             catch (Exception ex)
             {

@@ -25,6 +25,11 @@ namespace WWSearchDataGrid.Modern.Core
         SearchType,
 
         /// <summary>
+        /// Unary Search type token (e.g., "is null", "above average")
+        /// </summary>
+        UnarySearchType,
+
+        /// <summary>
         /// Individual value token (e.g., "'Value1'")
         /// </summary>
         Value,

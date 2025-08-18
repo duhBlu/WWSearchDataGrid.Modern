@@ -60,6 +60,18 @@ namespace WWSearchDataGrid.Modern.Core
     }
 
     /// <summary>
+    /// Token representing a search type operation that does not require a value
+    /// </summary>
+    public class UnarySearchTypeToken : FilterTokenBase
+    {
+        public UnarySearchTypeToken(string searchTypeText, string filterId, int orderIndex, ColumnFilterInfo sourceFilter)
+            : base(searchTypeText, FilterTokenType.UnarySearchType, filterId, orderIndex, sourceFilter)
+        {
+        }
+    }
+
+
+    /// <summary>
     /// Token representing an individual value
     /// </summary>
     public class ValueToken : FilterTokenBase

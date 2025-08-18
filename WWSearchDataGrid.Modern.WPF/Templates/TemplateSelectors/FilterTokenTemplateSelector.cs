@@ -23,6 +23,11 @@ namespace WWSearchDataGrid.Modern.WPF.Templates
         /// Gets or sets the template for search type tokens
         /// </summary>
         public DataTemplate SearchTypeTemplate { get; set; }
+        
+        /// <summary>
+        /// Gets or sets the template for unary search type tokens
+        /// </summary>
+        public DataTemplate UnarySearchTypeTemplate { get; set; }
 
         /// <summary>
         /// Gets or sets the template for value tokens
@@ -69,6 +74,7 @@ namespace WWSearchDataGrid.Modern.WPF.Templates
                     FilterTokenType.OpenBracket => OpenBracketTemplate,
                     FilterTokenType.ColumnName => ColumnNameTemplate,
                     FilterTokenType.SearchType => SearchTypeTemplate,
+                    FilterTokenType.UnarySearchType => UnarySearchTypeTemplate,
                     FilterTokenType.Value => ValueTemplate,
                     FilterTokenType.Operator => OperatorTemplate,
                     FilterTokenType.CloseBracket => CloseBracketTemplate,

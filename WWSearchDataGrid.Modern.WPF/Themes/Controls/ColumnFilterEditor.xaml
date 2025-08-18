@@ -283,7 +283,7 @@
                     <Border Background="{TemplateBinding Background}"
                             BorderBrush="{TemplateBinding BorderBrush}"
                             BorderThickness="{TemplateBinding BorderThickness}">
-                        <Grid Margin="5,0,5,10">
+                        <Grid Margin="5,0,5,0">
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="*" />
@@ -381,6 +381,7 @@
                             <StackPanel Grid.Row="2"
                                         Orientation="Horizontal"
                                         HorizontalAlignment="Right"
+                                        Margin="5"
                                         VerticalAlignment="Center">
 
                                 <Button Style="{StaticResource Default_Button_Style}"

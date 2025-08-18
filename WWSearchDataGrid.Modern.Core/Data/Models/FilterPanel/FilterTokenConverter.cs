@@ -73,14 +73,21 @@ namespace WWSearchDataGrid.Modern.Core
             // Add search type token
             if (!string.IsNullOrEmpty(component.SearchTypeText))
             {
-                tokens.Add(new SearchTypeToken(component.SearchTypeText, filterId, orderIndex++, sourceFilter));
+                if (!component.HasNoInputValues)
+                {
+                    tokens.Add(new SearchTypeToken(component.SearchTypeText, filterId, orderIndex++, sourceFilter));
+                }
+                else
+                {
+                    tokens.Add(new UnarySearchTypeToken(component.SearchTypeText, filterId, orderIndex++, sourceFilter));
+                }
             }
 
             // Handle multiple values
             if (component.HasMultipleValues)
             {
                 component.ParsePrimaryValueAsMultipleValues(); // Ensure ValueItems is populated
-                
+
                 for (int i = 0; i < component.ValueItems.Count; i++)
                 {
                     var value = component.ValueItems[i];

@@ -73,6 +73,22 @@
         </templates:FilterTokenTemplateSelector.SearchTypeTemplate>
 
         <!--  Value Token Template  -->
+        <templates:FilterTokenTemplateSelector.UnarySearchTypeTemplate>
+            <DataTemplate>
+                <Border Background="#bbe2c5"
+                        Margin="1,1"
+                        Padding="6,3"
+                        Height="24"
+                        CornerRadius="6"
+                        behaviors:TokenHoverBehavior.IsEnabled="True"
+                        Tag="{Binding FilterId}">
+                    <TextBlock Foreground="Black"
+                               Text="{Binding DisplayText}"
+                               VerticalAlignment="Center" />
+                </Border>
+            </DataTemplate>
+        </templates:FilterTokenTemplateSelector.UnarySearchTypeTemplate>
+        
         <templates:FilterTokenTemplateSelector.ValueTemplate>
             <DataTemplate>
                 <Border Background="#bbe2c5"
