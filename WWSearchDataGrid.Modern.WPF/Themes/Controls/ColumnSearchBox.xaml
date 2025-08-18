@@ -62,7 +62,6 @@
                                       Margin="6,5"
                                       HorizontalAlignment="Center"
                                       VerticalAlignment="Center"
-                                      IsThreeState="True"
                                       TabIndex="0"
                                       ToolTip="Filter by checkbox state">
                                 <CheckBox.Style>
