@@ -208,6 +208,11 @@ namespace WWSearchDataGrid.Modern.WPF
             private set => SetValue(HasActiveFilterProperty, value);
         }
 
+        /// <summary>
+        /// Gets whether this control has a temporary template (for synchronization with FilterPanel)
+        /// </summary>
+        public bool HasTemporaryTemplate => _temporarySearchTemplate != null;
+
         #endregion
 
         #region Constructors
@@ -476,7 +481,10 @@ namespace WWSearchDataGrid.Modern.WPF
                 }
                 else
                 {
-                    // Otherwise use the timer for debouncing
+                    // FIXED: Create template immediately for state synchronization
+                    control.CreateTemporaryTemplateImmediate();
+                    
+                    // Still use timer for debounced filter application
                     control.StartOrResetChangeTimer();
                 }
             }
@@ -492,7 +500,7 @@ namespace WWSearchDataGrid.Modern.WPF
         {
             if (e.Key == Key.Escape)
                 ClearSearchTextAndTemporaryFilter();
-            else if (e.Key == Key.Enter && Keyboard.Modifiers.HasFlag(ModifierKeys.Control))
+            else if (e.Key == Key.Enter)
             {
                 // Ctrl+Enter creates permanent filter and refocuses textbox
                 CreatePermanentFilterAndRefocus();
@@ -705,16 +713,17 @@ namespace WWSearchDataGrid.Modern.WPF
                     }
                 }
 
-                // Check if we have a simple text filter
-                if (!hasFilter && !string.IsNullOrWhiteSpace(SearchText))
-                {
-                    hasFilter = true;
-                }
-
-                // Check if we have an advanced filter
+                // FIXED: Text filtering logic - check for actual templates, not just SearchText
                 if (!hasFilter)
                 {
+                    // First check if we have actual search templates (confirmed filters)
                     hasFilter = SearchTemplateController.HasCustomExpression;
+                    
+                    // Only consider SearchText if we have a temporary template that exists
+                    if (!hasFilter && _temporarySearchTemplate != null)
+                    {
+                        hasFilter = true;
+                    }
                 }
             }
 
@@ -1247,15 +1256,74 @@ namespace WWSearchDataGrid.Modern.WPF
                     HasAdvancedFilter = SearchTemplateController?.HasCustomExpression ?? false;
                 }
                 
-                // Update filter panel
-                SourceDataGrid?.UpdateFilterPanel();
-
                 // Update HasActiveFilter state
                 UpdateHasActiveFilterState();
+                
+                // Update filter panel
+                SourceDataGrid?.UpdateFilterPanel();
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Error in ClearSearchTextAndTemporaryFilter: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Creates a temporary template immediately for state synchronization
+        /// This ensures HasActiveFilter state is accurate without waiting for timer
+        /// </summary>
+        private void CreateTemporaryTemplateImmediate()
+        {
+            try
+            {
+                // Skip if controller is not available
+                if (SearchTemplateController == null || string.IsNullOrWhiteSpace(SearchText))
+                    return;
+
+                // Ensure we have a search group
+                if (SearchTemplateController.SearchGroups.Count == 0)
+                {
+                    SearchTemplateController.AddSearchGroup();
+                }
+
+                var firstGroup = SearchTemplateController.SearchGroups[0];
+                
+                // Remove any default empty templates before adding our Contains template
+                RemoveDefaultEmptyTemplates(firstGroup);
+                
+                // Update existing temporary template or create new one
+                if (_temporarySearchTemplate != null)
+                {
+                    // Update existing temporary template
+                    _temporarySearchTemplate.SelectedValue = SearchText;
+                }
+                else
+                {
+                    // Create new temporary template
+                    _temporarySearchTemplate = new SearchTemplate(SearchTemplateController.ColumnDataType);
+                    _temporarySearchTemplate.SearchType = SearchType.Contains;
+                    _temporarySearchTemplate.SelectedValue = SearchText;
+                    
+                    // Check if we have existing confirmed Contains templates
+                    var existingContainsTemplates = firstGroup.SearchTemplates
+                        .Where(t => t.SearchType == SearchType.Contains && t.HasCustomFilter)
+                        .ToList();
+                    
+                    // If this is not the first template, set OR operator
+                    if (existingContainsTemplates.Any())
+                    {
+                        _temporarySearchTemplate.OperatorName = "Or";
+                    }
+                    
+                    firstGroup.SearchTemplates.Add(_temporarySearchTemplate);
+                }
+
+                // Update HasActiveFilter state immediately
+                UpdateHasActiveFilterState();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error in CreateTemporaryTemplateImmediate: {ex.Message}");
             }
         }
 
@@ -1284,11 +1352,11 @@ namespace WWSearchDataGrid.Modern.WPF
                     // Update HasAdvancedFilter state
                     HasAdvancedFilter = SearchTemplateController?.HasCustomExpression ?? false;
                     
-                    // Update filter panel
-                    SourceDataGrid?.UpdateFilterPanel();
-
                     // Update HasActiveFilter state
                     UpdateHasActiveFilterState();
+
+                    // Update filter panel
+                    SourceDataGrid?.UpdateFilterPanel();
                 }
             }
             catch (Exception ex)
@@ -1298,8 +1366,8 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
-        /// Updates the filter with the simple text search (used for debounced/timer-based updates)
-        /// This method creates/updates a temporary template for real-time preview
+        /// Applies the filter to the grid (used for debounced/timer-based filter application)
+        /// Template creation is now immediate, this method only handles the actual filtering
         /// </summary>
         private void UpdateSimpleFilter()
         {
@@ -1309,45 +1377,11 @@ namespace WWSearchDataGrid.Modern.WPF
                 if (SearchTemplateController == null || SourceDataGrid == null)
                     return;
 
-                if (!string.IsNullOrWhiteSpace(SearchText))
+                if (!string.IsNullOrWhiteSpace(SearchText) && _temporarySearchTemplate != null)
                 {
-                    // Ensure we have a search group
-                    if (SearchTemplateController.SearchGroups.Count == 0)
-                    {
-                        SearchTemplateController.AddSearchGroup();
-                    }
-
-                    var firstGroup = SearchTemplateController.SearchGroups[0];
-                    
-                    // Remove any default empty templates before adding our Contains template
-                    RemoveDefaultEmptyTemplates(firstGroup);
-                    
-                    // Update existing temporary template or create new one
-                    if (_temporarySearchTemplate != null)
-                    {
-                        // Update existing temporary template
-                        _temporarySearchTemplate.SelectedValue = SearchText;
-                    }
-                    else
-                    {
-                        // Create new temporary template
-                        _temporarySearchTemplate = new SearchTemplate(SearchTemplateController.ColumnDataType);
-                        _temporarySearchTemplate.SearchType = SearchType.Contains;
-                        _temporarySearchTemplate.SelectedValue = SearchText;
-                        
-                        // Check if we have existing confirmed Contains templates
-                        var existingContainsTemplates = firstGroup.SearchTemplates
-                            .Where(t => t.SearchType == SearchType.Contains && t.HasCustomFilter)
-                            .ToList();
-                        
-                        // If this is not the first template, set OR operator
-                        if (existingContainsTemplates.Any())
-                        {
-                            _temporarySearchTemplate.OperatorName = "Or";
-                        }
-                        
-                        firstGroup.SearchTemplates.Add(_temporarySearchTemplate);
-                    }
+                    // Template should already exist from immediate creation
+                    // Just ensure it has the latest search text (in case of rapid typing)
+                    _temporarySearchTemplate.SelectedValue = SearchText;
 
                     // Update the filter expression
                     SearchTemplateController.UpdateFilterExpression();
@@ -1355,27 +1389,11 @@ namespace WWSearchDataGrid.Modern.WPF
                     // Apply the filter to the grid
                     SourceDataGrid.FilterItemsSource();
 
-                    // Update HasActiveFilter state
-                    UpdateHasActiveFilterState();
-                }
-                else
-                {
-                    // Clear temporary template when search text is empty
-                    if (_temporarySearchTemplate != null)
-                    {
-                        var firstGroup = SearchTemplateController.SearchGroups[0];
-                        firstGroup.SearchTemplates.Remove(_temporarySearchTemplate);
-                        _temporarySearchTemplate = null;
-                        
-                        // Update the filter expression
-                        SearchTemplateController.UpdateFilterExpression();
-                        
-                        // Apply the filter to the grid
-                        SourceDataGrid.FilterItemsSource();
-
-                        // Update HasActiveFilter state
-                        UpdateHasActiveFilterState();
-                    }
+                    // Update HasAdvancedFilter state
+                    HasAdvancedFilter = SearchTemplateController.HasCustomExpression;
+                    
+                    // Update filter panel
+                    SourceDataGrid.UpdateFilterPanel();
                 }
             }
             catch (Exception ex)

@@ -883,10 +883,10 @@ namespace WWSearchDataGrid.Modern.WPF
                         filterInfo.FilterComponents.Add(component);
                     }
                 }
-                else if (!string.IsNullOrWhiteSpace(column.SearchText))
+                else if (!string.IsNullOrWhiteSpace(column.SearchText) && column.HasTemporaryTemplate)
                 {
-                    // Fallback: Only use SearchText if no SearchTemplateController data exists
-                    // This handles the case where user is typing but hasn't confirmed any filters yet
+                    // FIXED: Only use SearchText fallback if we have an actual temporary template
+                    // This ensures synchronization between HasActiveFilter state and actual template existence
                     filterInfo.DisplayText = $"Contains '{column.SearchText}'";
                     
                     // Set component properties for simple filters
