@@ -492,20 +492,10 @@ namespace WWSearchDataGrid.Modern.WPF
         {
             if (e.Key == Key.Escape)
                 ClearSearchTextAndTemporaryFilter();
-            else if (e.Key == Key.Enter)
+            else if (e.Key == Key.Enter && Keyboard.Modifiers.HasFlag(ModifierKeys.Control))
             {
-                _changeTimer?.Stop();
-
-                if (string.IsNullOrWhiteSpace(SearchText))
-                {
-                    //ClearFilterInternal();
-                }
-                else
-                {
-                    // NEW: Add incremental filter and clear textbox
-                    AddIncrementalContainsFilter();
-                    ClearSearchTextOnly();
-                }
+                // Ctrl+Enter creates permanent filter and refocuses textbox
+                CreatePermanentFilterAndRefocus();
             }
             else if (e.Key == Key.Tab && (Keyboard.Modifiers & ModifierKeys.Shift) == ModifierKeys.Shift)
             {
@@ -550,7 +540,7 @@ namespace WWSearchDataGrid.Modern.WPF
 
         private void OnColumnSearchBoxLostFocus(object sender, RoutedEventArgs e)
         {
-            // Only confirm filter if focus is leaving the entire ColumnSearchBox container
+            // Only track focus changes for within-container checks
             // Use a small delay to allow focus to settle before checking
             Dispatcher.BeginInvoke(new Action(() =>
             {
@@ -561,18 +551,14 @@ namespace WWSearchDataGrid.Modern.WPF
                     var isWithinSearchBox = IsWithinSearchBox(focusedElement);
                     if (isWithinSearchBox)
                     {
-                        // Focus is still within this ColumnSearchBox, don't confirm filter
+                        // Focus is still within this ColumnSearchBox, no action needed
                         return;
                     }
                 }
                 
-                // Focus has left the ColumnSearchBox entirely, confirm any temporary filter
-                if (!string.IsNullOrWhiteSpace(SearchText))
-                {
-                    _changeTimer?.Stop();
-                    AddIncrementalContainsFilter();
-                    ClearSearchTextOnly();
-                }
+                // Focus has left the ColumnSearchBox entirely
+                // Note: We no longer automatically create permanent filters on focus loss
+                // Search text and temporary filters persist until user explicitly creates permanent filters with Ctrl+Enter
             }), System.Windows.Threading.DispatcherPriority.Background);
         }
         
@@ -1030,6 +1016,35 @@ namespace WWSearchDataGrid.Modern.WPF
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Error in ApplyCheckboxIsNullFilter: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Creates a permanent filter from current search text and refocuses the textbox
+        /// Used for Ctrl+Enter behavior
+        /// </summary>
+        private void CreatePermanentFilterAndRefocus()
+        {
+            try
+            {
+                // Stop the timer if it's running
+                _changeTimer?.Stop();
+
+                if (!string.IsNullOrWhiteSpace(SearchText))
+                {
+                    // Create permanent filter
+                    AddIncrementalContainsFilter();
+                    
+                    // Clear search text
+                    ClearSearchTextOnly();
+                    
+                    // Refocus the textbox for seamless workflow
+                    searchTextBox?.Focus();
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error in CreatePermanentFilterAndRefocus: {ex.Message}");
             }
         }
 
