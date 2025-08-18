@@ -668,7 +668,7 @@ namespace WWSearchDataGrid.Modern.WPF
                         // Check if indeterminate state has an IsEmpty filter
                         var firstGroup = SearchTemplateController.SearchGroups.FirstOrDefault();
                         var firstTemplate = firstGroup?.SearchTemplates.FirstOrDefault();
-                        if (firstTemplate?.SearchType == SearchType.IsEmpty)
+                        if (firstTemplate?.SearchType == SearchType.IsNull)
                             hasFilter = true;
                     }
                 }
@@ -817,9 +817,9 @@ namespace WWSearchDataGrid.Modern.WPF
 
                 // Create IsEmpty template for null values
                 var template = new SearchTemplate(ColumnDataType.Boolean);
-                template.SearchType = SearchType.IsEmpty;
+                template.SearchType = SearchType.IsNull;
                 // IsEmpty doesn't need a SelectedValue
-
+                
                 // Add only our specific template
                 group.SearchTemplates.Add(template);
 
@@ -1033,7 +1033,8 @@ namespace WWSearchDataGrid.Modern.WPF
                     FilterCheckboxState = null;
                     if (filterCheckBox != null)
                         filterCheckBox.IsChecked = null;
-                    
+
+                    OnCheckboxFilterChanged();
                     // Clear the filter internally (this will be handled by OnCheckboxFilterChanged)
                     // ClearFilterInternal(); - Let the change handler deal with this
                 }
