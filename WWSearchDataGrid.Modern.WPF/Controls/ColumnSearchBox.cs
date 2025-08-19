@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Timers;
 using System.Windows;
 using System.Windows.Controls;
@@ -731,79 +732,6 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
-        /// Determines if this column should use checkbox filtering and sets related properties
-        /// </summary>
-        private void DetermineCheckboxColumnSettings()
-        {
-            try
-            {
-                if (SearchTemplateController == null || SourceDataGrid == null)
-                {
-                    IsCheckboxColumn = false;
-                    AllowsNullValues = false;
-                    return;
-                }
-
-                var previousIsCheckboxColumn = IsCheckboxColumn;
-
-                // Check if column data type is Boolean
-                var isCheckboxType = SearchTemplateController.ColumnDataType == ColumnDataType.Boolean;
-
-                // If not explicitly Boolean, check if all non-null values are booleans
-                if (!isCheckboxType && SearchTemplateController.ColumnValues.Count > 0)
-                {
-                    var nonNullValues = SearchTemplateController.ColumnValues.Where(v => v != null).ToList();
-                    if (nonNullValues.Count > 0)
-                    {
-                        isCheckboxType = nonNullValues.All(v => v is bool);
-                    }
-                }
-
-                IsCheckboxColumn = isCheckboxType;
-
-                // Determine if null values are present
-                if (IsCheckboxColumn)
-                {
-                    AllowsNullValues = SearchTemplateController.ColumnValues.Contains(null);
-                    
-                }
-                else
-                {
-                    AllowsNullValues = false;
-                }
-
-                // If the column type changed, reset any existing filters
-                if (previousIsCheckboxColumn != IsCheckboxColumn)
-                {
-                    // Clear any existing filters since the UI mode is changing
-                    if (previousIsCheckboxColumn)
-                    {
-                        // Was checkbox, now text - clear checkbox state
-                        FilterCheckboxState = null;
-                        if (filterCheckBox != null)
-                            filterCheckBox.IsChecked = null;
-                    }
-                    else
-                    {
-                        // Was text, now checkbox - clear text search
-                        SearchText = string.Empty;
-                        if (searchTextBox != null)
-                            searchTextBox.Text = string.Empty;
-                    }
-                    
-                    // Clear any active filters
-                    ClearFilterInternal();
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Error in DetermineCheckboxColumnSettings: {ex.Message}");
-                IsCheckboxColumn = false;
-                AllowsNullValues = false;
-            }
-        }
-
-        /// <summary>
         /// Cycles the checkbox state forward based on current state and column properties
         /// </summary>
         private void CycleCheckboxStateForward()
@@ -1104,6 +1032,9 @@ namespace WWSearchDataGrid.Modern.WPF
                     SearchTemplateController.DefaultSearchType = defaultSearchType;
                 }
 
+                // This avoids any delay and provides instant UI feedback
+                DetermineCheckboxColumnTypeFromColumnDefinition();
+
                 // Add this control to the data grid's columns if not already there
                 if (!SourceDataGrid.DataColumns.Contains(this))
                     SourceDataGrid.DataColumns.Add(this);
@@ -1129,6 +1060,227 @@ namespace WWSearchDataGrid.Modern.WPF
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Error in InitializeSearchTemplateController: {ex.Message}");
+            }
+        }
+
+        private void DetermineCheckboxColumnTypeFromColumnDefinition()
+        {
+            try
+            {
+                if (CurrentColumn == null)
+                {
+                    SetCheckboxColumnState(false, false);
+                    return;
+                }
+
+                var isCheckboxType = false;
+
+                // Method 1: Check if it's explicitly a DataGridCheckBoxColumn
+                if (CurrentColumn is DataGridCheckBoxColumn)
+                {
+                    isCheckboxType = true;
+                }
+                // Method 2: Check binding property type for bound columns
+                else if (CurrentColumn is DataGridBoundColumn boundColumn && boundColumn.Binding is System.Windows.Data.Binding binding)
+                {
+                    var bindingPath = binding.Path?.Path;
+                    if (!string.IsNullOrEmpty(bindingPath))
+                    {
+                        isCheckboxType = DetermineIfBooleanPropertyFromDataContext(bindingPath);
+                    }
+                }
+                // Method 3: Check DependencyObjectType for template columns or custom scenarios
+                else if (CurrentColumn is DataGridTemplateColumn)
+                {
+                    var dependencyObjectType = CurrentColumn.DependencyObjectType;
+                    if (dependencyObjectType != null)
+                    {
+                        // Add logic based on dependencyObjectType.Name patterns you observe
+                        isCheckboxType = IsCheckboxColumnByDependencyObjectType(dependencyObjectType);
+                    }
+                }
+
+                // Set the UI state immediately
+                SetCheckboxColumnState(isCheckboxType, false); // We don't know about nulls yet, will determine later
+
+                // If this is a checkbox column, set the appropriate column data type
+                if (isCheckboxType && SearchTemplateController != null)
+                {
+                    SearchTemplateController.ColumnDataType = ColumnDataType.Boolean;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error determining column type from definition: {ex.Message}");
+                SetCheckboxColumnState(false, false);
+            }
+        }
+
+        /// <summary>
+        /// Determines if a binding path points to a boolean property by examining the data context
+        /// </summary>
+        private bool DetermineIfBooleanPropertyFromDataContext(string bindingPath)
+        {
+            try
+            {
+                // Method 1: If we have data available, check the first item's property type
+                if (SourceDataGrid?.Items?.Count > 0)
+                {
+                    var firstItem = SourceDataGrid.Items.Cast<object>().FirstOrDefault(item => item != null);
+                    if (firstItem != null)
+                    {
+                        var propertyType = ReflectionHelper.GetPropertyType(firstItem, bindingPath);
+                        return propertyType == typeof(bool) || propertyType == typeof(bool?);
+                    }
+                }
+
+                // Method 2: If no data available yet, check if we can infer from the ItemsSource type
+                if (SourceDataGrid?.OriginalItemsSource != null)
+                {
+                    var itemsSourceType = SourceDataGrid.OriginalItemsSource.GetType();
+                    if (itemsSourceType.IsGenericType)
+                    {
+                        var itemType = itemsSourceType.GetGenericArguments().FirstOrDefault();
+                        if (itemType != null)
+                        {
+                            return ReflectionHelper.IsBooleanProperty(itemType, bindingPath);
+                        }
+                    }
+                }
+
+                return false;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error determining boolean property from data context: {ex.Message}");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Determines if a column should be treated as checkbox based on DependencyObjectType
+        /// </summary>
+        private bool IsCheckboxColumnByDependencyObjectType(DependencyObjectType dependencyObjectType)
+        {
+            // Add your specific logic based on dependencyObjectType.Name patterns
+            var typeName = dependencyObjectType.Name;
+
+            // Common patterns that might indicate checkbox columns
+            if (typeName.Contains("CheckBox", StringComparison.OrdinalIgnoreCase) ||
+                typeName.Contains("Boolean", StringComparison.OrdinalIgnoreCase) ||
+                typeName.Contains("Toggle", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            // Add more patterns as you discover them in your application
+            // For example, if you have custom column types:
+            // if (typeName == "YourCustomCheckboxColumnType")
+            //     return true;
+
+            return false;
+        }
+
+        /// <summary>
+        /// Sets the checkbox column state and UI properties
+        /// </summary>
+        private void SetCheckboxColumnState(bool isCheckboxColumn, bool allowsNullValues)
+        {
+            var previousIsCheckboxColumn = IsCheckboxColumn;
+
+            IsCheckboxColumn = isCheckboxColumn;
+            AllowsNullValues = allowsNullValues;
+
+            // Handle UI state changes when column type changes
+            if (previousIsCheckboxColumn != isCheckboxColumn)
+            {
+                if (previousIsCheckboxColumn)
+                {
+                    // Was checkbox, now text - clear checkbox state
+                    FilterCheckboxState = null;
+                    if (filterCheckBox != null)
+                    {
+                        filterCheckBox.IsChecked = null;
+                    }
+                    _checkboxCycleState = CheckboxCycleState.Intermediate;
+                    _isInitialState = true;
+                }
+                else
+                {
+                    // Was text, now checkbox - clear text search
+                    SearchText = string.Empty;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Background analysis of null values for checkbox columns
+        /// This runs after the UI has already been set to checkbox mode
+        /// </summary>
+        private void AnalyzeNullValuesInBackground()
+        {
+            if (!IsCheckboxColumn || SearchTemplateController == null)
+                return;
+
+            // Run this in background to avoid blocking UI
+            Task.Run(() =>
+            {
+                try
+                {
+                    // Check if null values are present in the loaded data
+                    bool allowsNulls = SearchTemplateController.ColumnValues.Contains(null);
+
+                    // Update UI on main thread
+                    Dispatcher.BeginInvoke(new Action(() =>
+                    {
+                        AllowsNullValues = allowsNulls;
+                    }), DispatcherPriority.Background);
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Error analyzing null values: {ex.Message}");
+                }
+            });
+        }
+
+        /// <summary>
+        /// Updated method that now focuses on value loading and null analysis rather than column type detection
+        /// Column type should already be determined by DetermineCheckboxColumnTypeFromColumnDefinition()
+        /// </summary>
+        private void DetermineCheckboxColumnSettings()
+        {
+            try
+            {
+                if (SearchTemplateController == null || SourceDataGrid == null)
+                    return;
+
+                // If we already determined this is a checkbox column, just analyze for null values
+                if (IsCheckboxColumn)
+                {
+                    AnalyzeNullValuesInBackground();
+                    return;
+                }
+
+                // Fallback: If column type detection failed earlier, we can still check values as backup
+                // This should rarely be needed now that we determine type from column definition
+                if (SearchTemplateController.ColumnValues.Count > 0)
+                {
+                    var nonNullValues = SearchTemplateController.ColumnValues.Where(v => v != null).ToList();
+                    if (nonNullValues.Count > 0 && nonNullValues.All(v => v is bool))
+                    {
+                        // Update to checkbox column based on values
+                        SetCheckboxColumnState(true, SearchTemplateController.ColumnValues.Contains(null));
+
+                        if (SearchTemplateController != null)
+                        {
+                            SearchTemplateController.ColumnDataType = ColumnDataType.Boolean;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error in checkbox column settings analysis: {ex.Message}");
             }
         }
 

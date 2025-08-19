@@ -25,14 +25,10 @@ namespace WWSearchDataGrid.Modern.WPF
     {
         #region Fields
 
-        private readonly Button applyButton;
-        private readonly Button clearButton;
-        private readonly Button closeButton;
         private TabControl tabControl;
         private TextBox valueSearchBox;
         private TextBlock valuesSummary;
         private ColumnDataType columnDataType;
-        private ComboBox operatorComboBox;
 
         private readonly ColumnValueCache _cache = ColumnValueCache.Instance;
         private readonly IFilterApplicationService _filterApplicationService;
@@ -339,9 +335,6 @@ namespace WWSearchDataGrid.Modern.WPF
             // The ListBox is now conditionally created based on AllowMultipleGroups
             // We'll set it up when needed in SetupListBoxReference method
             SetupListBoxReference();
-
-            // Find operator combo box
-            operatorComboBox = GetTemplateChild("PART_OperatorComboBox") as ComboBox;
 
             // Find tab control
             tabControl = GetTemplateChild("PART_TabControl") as TabControl;
@@ -1156,10 +1149,8 @@ namespace WWSearchDataGrid.Modern.WPF
                 return;
             }
 
-            // Determine if we're in per-column or global mode
             if (DataContext is ColumnSearchBox columnSearchBox)
             {
-                // Per-column mode
                 if (columnSearchBox.SourceDataGrid != null)
                 {
                     columnSearchBox.HasAdvancedFilter = result.HasCustomExpression;
@@ -1174,12 +1165,6 @@ namespace WWSearchDataGrid.Modern.WPF
                     columnSearchBox.SourceDataGrid.FilterItemsSource();
                     CloseWindow();
                 }
-            }
-            else if (DataContext is SearchDataGrid dataGrid)
-            {
-                // Global mode
-                dataGrid.FilterItemsSource();
-                CloseWindow();
             }
         }
 

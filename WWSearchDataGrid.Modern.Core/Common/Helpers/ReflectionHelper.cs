@@ -38,6 +38,89 @@ namespace WWSearchDataGrid.Modern.Core
         }
 
         /// <summary>
+        /// Gets the property type for a given object and property path
+        /// </summary>
+        public static Type GetPropertyType(object obj, string propertyPath)
+        {
+            try
+            {
+                if (obj == null || string.IsNullOrEmpty(propertyPath))
+                    return null;
+
+                var properties = propertyPath.Split('.');
+                var currentType = obj.GetType();
+
+                foreach (var propertyName in properties)
+                {
+                    var propertyInfo = currentType.GetProperty(propertyName);
+                    if (propertyInfo == null)
+                        return null;
+
+                    currentType = propertyInfo.PropertyType;
+                }
+
+                return currentType;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error getting property type: {ex.Message}");
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Gets property info from a type using a property path (for type inspection without instances)
+        /// </summary>
+        public static System.Reflection.PropertyInfo GetPropertyInfoFromType(Type type, string propertyPath)
+        {
+            try
+            {
+                if (type == null || string.IsNullOrEmpty(propertyPath))
+                    return null;
+
+                var properties = propertyPath.Split('.');
+                var currentType = type;
+
+                foreach (var propertyName in properties)
+                {
+                    var propertyInfo = currentType.GetProperty(propertyName);
+                    if (propertyInfo == null)
+                        return null;
+
+                    if (propertyName == properties.Last())
+                        return propertyInfo; // Return the final property
+
+                    currentType = propertyInfo.PropertyType;
+                }
+
+                return null;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error getting property info from type: {ex.Message}");
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Gets the property type from a Type using a property path (without needing an instance)
+        /// </summary>
+        public static Type GetPropertyTypeFromType(Type type, string propertyPath)
+        {
+            var propertyInfo = GetPropertyInfoFromType(type, propertyPath);
+            return propertyInfo?.PropertyType;
+        }
+
+        /// <summary>
+        /// Determines if a property path points to a boolean property by examining a Type
+        /// </summary>
+        public static bool IsBooleanProperty(Type type, string propertyPath)
+        {
+            var propertyType = GetPropertyTypeFromType(type, propertyPath);
+            return propertyType == typeof(bool) || propertyType == typeof(bool?);
+        }
+
+        /// <summary>
         /// Determines the data type of a column based on its values
         /// </summary>
         public static ColumnDataType DetermineColumnDataType(IEnumerable<object> values)
