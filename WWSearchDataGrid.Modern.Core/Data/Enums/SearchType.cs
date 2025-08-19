@@ -59,5 +59,4 @@ namespace WWSearchDataGrid.Modern.Core
         GroupedExclusion,    // For negative value conditions (Status != 'Delivered')
         GroupedCombination   // For complex group-value combinations
     }
-
 }

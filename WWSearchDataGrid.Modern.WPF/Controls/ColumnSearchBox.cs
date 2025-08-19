@@ -1260,23 +1260,6 @@ namespace WWSearchDataGrid.Modern.WPF
                     AnalyzeNullValuesInBackground();
                     return;
                 }
-
-                // Fallback: If column type detection failed earlier, we can still check values as backup
-                // This should rarely be needed now that we determine type from column definition
-                if (SearchTemplateController.ColumnValues.Count > 0)
-                {
-                    var nonNullValues = SearchTemplateController.ColumnValues.Where(v => v != null).ToList();
-                    if (nonNullValues.Count > 0 && nonNullValues.All(v => v is bool))
-                    {
-                        // Update to checkbox column based on values
-                        SetCheckboxColumnState(true, SearchTemplateController.ColumnValues.Contains(null));
-
-                        if (SearchTemplateController != null)
-                        {
-                            SearchTemplateController.ColumnDataType = ColumnDataType.Boolean;
-                        }
-                    }
-                }
             }
             catch (Exception ex)
             {
@@ -1638,7 +1621,7 @@ namespace WWSearchDataGrid.Modern.WPF
                 {
                     advancedFilterWindow = new Window
                     {
-                        Title = $"Advanced Filter: {CurrentColumn.Header}",
+                        Title = $"Column Filter Editor: {CurrentColumn.Header}",
                         MinWidth = 400,
                         MinHeight = 600,
                         SizeToContent = SizeToContent.Width,
