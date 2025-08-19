@@ -16,8 +16,19 @@ namespace WWSearchDataGrid.Modern.Core
         protected bool isLoaded = false;
         protected IEnumerable<ValueAggregateMetadata> cachedMetadata;
         private string _searchText = string.Empty;
+        private bool _isSynchronizing = false;
 
         public bool IsLoaded => isLoaded;
+
+        /// <summary>
+        /// Gets whether the view model is currently synchronizing with rules to prevent loops
+        /// </summary>
+        public bool IsSynchronizing => _isSynchronizing;
+
+        /// <summary>
+        /// Event raised when filter value selections change
+        /// </summary>
+        public event EventHandler SelectionChanged;
 
         /// <summary>
         /// Gets or sets the search text for filtering values
@@ -144,5 +155,42 @@ namespace WWSearchDataGrid.Modern.Core
             return ValueMetadata.Create(value).GetDisplayText();
         }
 
+        /// <summary>
+        /// Updates selections based on rule evaluation without triggering sync events
+        /// </summary>
+        /// <param name="selectedValues">Values that should be selected</param>
+        public virtual void UpdateSelectionsFromRules(IEnumerable<object> selectedValues)
+        {
+            _isSynchronizing = true;
+            try
+            {
+                var selectedSet = new HashSet<object>(selectedValues);
+                var allValues = GetAllValues();
+                
+                foreach (var item in allValues)
+                {
+                    var shouldBeSelected = selectedSet.Contains(item.Value);
+                    if (item.IsSelected != shouldBeSelected)
+                    {
+                        item.SetIsSelected(shouldBeSelected);
+                    }
+                }
+            }
+            finally
+            {
+                _isSynchronizing = false;
+            }
+        }
+
+        /// <summary>
+        /// Raises the SelectionChanged event if not currently synchronizing
+        /// </summary>
+        protected virtual void OnSelectionChanged()
+        {
+            if (!_isSynchronizing)
+            {
+                SelectionChanged?.Invoke(this, EventArgs.Empty);
+            }
+        }
     }
 }

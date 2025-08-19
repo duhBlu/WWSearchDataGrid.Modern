@@ -206,6 +206,9 @@ namespace WWSearchDataGrid.Modern.Core
                     UpdateSelectAllState();
                 }
                 OnPropertyChanged(nameof(SelectedItemsCount));
+                
+                // Trigger selection changed event for synchronization
+                OnSelectionChanged();
             }
         }
 

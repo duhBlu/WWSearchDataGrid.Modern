@@ -32,6 +32,7 @@ namespace WWSearchDataGrid.Modern.WPF
 
         private readonly ColumnValueCache _cache = ColumnValueCache.Instance;
         private readonly IFilterApplicationService _filterApplicationService;
+        private readonly IRuleToValueSynchronizationService _ruleToValueSyncService;
         private DispatcherTimer _tabSwitchTimer;
         private TabItem _pendingTab;
         private bool _isInitialized;
@@ -40,6 +41,11 @@ namespace WWSearchDataGrid.Modern.WPF
         
         // Timer for debouncing operator visibility updates
         private DispatcherTimer _operatorVisibilityUpdateTimer;
+        
+        // Synchronization and live filtering
+        private bool _isSynchronizing = false;
+        private DispatcherTimer _liveFilterTimer;
+        private bool _enableLiveFiltering = true;
 
         #endregion
 
@@ -121,6 +127,15 @@ namespace WWSearchDataGrid.Modern.WPF
         {
             get => (bool)GetValue(IsOperatorVisibleProperty);
             set => SetValue(IsOperatorVisibleProperty, value);
+        }
+
+        /// <summary>
+        /// Gets or sets whether live filtering is enabled (filters apply immediately)
+        /// </summary>
+        public bool EnableLiveFiltering
+        {
+            get => _enableLiveFiltering;
+            set => _enableLiveFiltering = value;
         }
 
         /// <summary>
@@ -306,6 +321,7 @@ namespace WWSearchDataGrid.Modern.WPF
         public ColumnFilterEditor()
         {
             _filterApplicationService = new FilterApplicationService();
+            _ruleToValueSyncService = new RuleToValueSynchronizationService();
             Loaded += OnControlLoaded;
             Unloaded += OnUnloaded;
         }
@@ -317,6 +333,7 @@ namespace WWSearchDataGrid.Modern.WPF
         internal ColumnFilterEditor(IFilterApplicationService filterApplicationService)
         {
             _filterApplicationService = filterApplicationService ?? throw new ArgumentNullException(nameof(filterApplicationService));
+            _ruleToValueSyncService = new RuleToValueSynchronizationService();
             Loaded += OnControlLoaded;
             Unloaded += OnUnloaded;
         }
@@ -410,6 +427,9 @@ namespace WWSearchDataGrid.Modern.WPF
             
             // Ensure template operators are visible after everything is loaded
             UpdateTemplateOperatorVisibility();
+            
+            // Set up synchronization and live filtering
+            SetupSynchronization();
         }
 
         /// <summary>
@@ -697,6 +717,15 @@ namespace WWSearchDataGrid.Modern.WPF
                         FilterValueViewModel.LoadValuesWithMetadata(metadataList);
                     }
                 }
+
+                // Subscribe to selection changed events for synchronization
+                if (FilterValueViewModel != null)
+                {
+                    FilterValueViewModel.SelectionChanged += OnFilterValueSelectionChanged;
+                }
+
+                // Ensure synchronization is setup for reopened dialogs
+                SetupSynchronization();
             }));
         }
 
@@ -957,7 +986,18 @@ namespace WWSearchDataGrid.Modern.WPF
                     }
                 }
 
+                // Synchronize rules to values when switching to values tab
+                SynchronizeRulesToValues();
                 UpdateValueSelectionSummary();
+            }
+            else if (_pendingTab?.Header?.ToString() == "Filter Rules" && SearchTemplateController != null)
+            {
+                // When switching to Rules tab, sync values to rules only if no meaningful rules exist
+                // This preserves user-created rules while allowing value-based rule generation when appropriate
+                if (!HasAnyMeaningfulRules())
+                {
+                    SynchronizeValuesToRules();
+                }
             }
 
             _pendingTab = null;
@@ -1121,6 +1161,316 @@ namespace WWSearchDataGrid.Modern.WPF
             }
         }
 
+        #endregion
+
+        #region Synchronization and Live Filtering
+
+        /// <summary>
+        /// Sets up the synchronization between rules and values
+        /// </summary>
+        private void SetupSynchronization()
+        {
+            // Clean up existing timers first
+            CleanupSynchronizationTimers();
+
+            // Initialize live filtering timer for debouncing (only for live filtering, not sync)
+            _liveFilterTimer = new DispatcherTimer
+            {
+                Interval = TimeSpan.FromMilliseconds(250),
+                IsEnabled = false
+            };
+            _liveFilterTimer.Tick += OnLiveFilterTimerTick;
+
+            // Subscribe to FilterValueViewModel selection changes (remove first to avoid duplicates)
+            if (FilterValueViewModel != null)
+            {
+                FilterValueViewModel.SelectionChanged -= OnFilterValueSelectionChanged;
+                FilterValueViewModel.SelectionChanged += OnFilterValueSelectionChanged;
+            }
+
+            // Subscribe to SearchTemplateController changes (remove first to avoid duplicates)
+            if (SearchTemplateController != null)
+            {
+                SearchTemplateController.PropertyChanged -= OnSearchTemplateControllerChanged;
+                SearchTemplateController.PropertyChanged += OnSearchTemplateControllerChanged;
+            }
+        }
+
+        /// <summary>
+        /// Cleans up synchronization timers
+        /// </summary>
+        private void CleanupSynchronizationTimers()
+        {
+            if (_liveFilterTimer != null)
+            {
+                _liveFilterTimer.Stop();
+                _liveFilterTimer.Tick -= OnLiveFilterTimerTick;
+                _liveFilterTimer = null;
+            }
+        }
+
+        /// <summary>
+        /// Ensures live filtering timer is initialized (safety check for reopened dialogs)
+        /// </summary>
+        private void EnsureLiveFilterTimerInitialized()
+        {
+            if (_liveFilterTimer == null)
+            {
+                _liveFilterTimer = new DispatcherTimer
+                {
+                    Interval = TimeSpan.FromMilliseconds(250),
+                    IsEnabled = false
+                };
+                _liveFilterTimer.Tick += OnLiveFilterTimerTick;
+            }
+        }
+
+        /// <summary>
+        /// Handles changes in filter value selections (Values tab)
+        /// </summary>
+        private void OnFilterValueSelectionChanged(object sender, EventArgs e)
+        {
+            if (_isSynchronizing || FilterValueViewModel?.IsSynchronizing == true)
+                return;
+
+            // Synchronize immediately when values change
+            SynchronizeValuesToRules();
+
+            // Also trigger live filtering if enabled
+            if (_enableLiveFiltering)
+            {
+                EnsureLiveFilterTimerInitialized();
+                _liveFilterTimer.Stop();
+                _liveFilterTimer.Start();
+            }
+        }
+
+        /// <summary>
+        /// Handles changes in search template controller (Rules tab)
+        /// </summary>
+        private void OnSearchTemplateControllerChanged(object sender, PropertyChangedEventArgs e)
+        {
+            if (_isSynchronizing)
+                return;
+
+            // Look for property changes that indicate rule modifications
+            if (e.PropertyName == nameof(SearchTemplateController.HasCustomExpression) ||
+                e.PropertyName == "FilterExpression" ||
+                e.PropertyName == "SearchGroups" ||
+                string.IsNullOrEmpty(e.PropertyName)) // Bulk changes
+            {
+                // Synchronize immediately when rules change (only if rules have meaningful content)
+                SynchronizeRulesToValues();
+
+                // Also trigger live filtering if enabled
+                if (_enableLiveFiltering)
+                {
+                    EnsureLiveFilterTimerInitialized();
+                    _liveFilterTimer.Stop();
+                    _liveFilterTimer.Start();
+                }
+            }
+        }
+
+
+        /// <summary>
+        /// Handles debounced live filtering
+        /// </summary>
+        private void OnLiveFilterTimerTick(object sender, EventArgs e)
+        {
+            _liveFilterTimer.Stop();
+            ApplyLiveFilter();
+        }
+
+        /// <summary>
+        /// Synchronizes rules tab changes to values tab
+        /// </summary>
+        private void SynchronizeRulesToValues()
+        {
+            if (_isSynchronizing || SearchTemplateController == null || FilterValueViewModel == null)
+                return;
+
+            // Only sync if we have meaningful rules to evaluate
+            if (!HasAnyMeaningfulRules())
+                return;
+
+            try
+            {
+                _isSynchronizing = true;
+
+                // Get all available values
+                var allValues = FilterValueViewModel.GetAllValues().Select(v => v.Value);
+                
+                // Evaluate which values should be selected based on current rules
+                var selectedValues = _ruleToValueSyncService.EvaluateRulesAgainstValues(SearchTemplateController, allValues);
+                
+                // Update the FilterValueViewModel selections
+                FilterValueViewModel.UpdateSelectionsFromRules(selectedValues);
+                
+                // Update the summary display
+                UpdateValueSelectionSummary();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error synchronizing rules to values: {ex.Message}");
+            }
+            finally
+            {
+                _isSynchronizing = false;
+            }
+        }
+
+        /// <summary>
+        /// Synchronizes values tab changes to rules tab (preserves meaningful user rules)
+        /// </summary>
+        private void SynchronizeValuesToRules()
+        {
+            if (_isSynchronizing || FilterValueViewModel == null || SearchTemplateController == null)
+                return;
+
+            try
+            {
+                _isSynchronizing = true;
+                
+                // Only sync if we don't have meaningful configured rules
+                // This preserves user-created rules while allowing value-based rule generation
+                if (HasAnyMeaningfulRules())
+                    return;
+                
+                // Use existing FilterApplicationService logic to convert values to rules
+                var result = _filterApplicationService.ApplyValueBasedFilter(
+                    FilterValueViewModel, SearchTemplateController, ColumnDataType);
+                
+                if (!result.IsSuccess)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Error synchronizing values to rules: {result.ErrorMessage}");
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error synchronizing values to rules: {ex.Message}");
+            }
+            finally
+            {
+                _isSynchronizing = false;
+            }
+        }
+
+        /// <summary>
+        /// Checks if there are any meaningful rules configured
+        /// </summary>
+        private bool HasAnyMeaningfulRules()
+        {
+            if (SearchTemplateController?.SearchGroups == null)
+                return false;
+
+            return SearchTemplateController.SearchGroups
+                .SelectMany(g => g.SearchTemplates ?? Enumerable.Empty<SearchTemplate>())
+                .Any(t => HasMeaningfulSearchCriteria(t));
+        }
+
+        /// <summary>
+        /// Checks if a search template has meaningful criteria (helper method)
+        /// </summary>
+        private bool HasMeaningfulSearchCriteria(SearchTemplate template)
+        {
+            if (template == null)
+                return false;
+
+            // Check if template has a non-default search type with values
+            switch (template.SearchType)
+            {
+                case SearchType.Contains:
+                case SearchType.DoesNotContain:
+                case SearchType.StartsWith:
+                case SearchType.EndsWith:
+                case SearchType.Equals:
+                case SearchType.NotEquals:
+                case SearchType.LessThan:
+                case SearchType.LessThanOrEqualTo:
+                case SearchType.GreaterThan:
+                case SearchType.GreaterThanOrEqualTo:
+                case SearchType.IsLike:
+                case SearchType.IsNotLike:
+                    return !string.IsNullOrEmpty(template.SelectedValue?.ToString());
+
+                case SearchType.Between:
+                case SearchType.NotBetween:
+                case SearchType.BetweenDates:
+                    return template.SelectedValue != null && template.SelectedSecondaryValue != null;
+
+                case SearchType.IsAnyOf:
+                case SearchType.IsNoneOf:
+                case SearchType.IsOnAnyOfDates:
+                    return template.SelectedValues?.Any() == true;
+
+                case SearchType.IsNull:
+                case SearchType.IsNotNull:
+                case SearchType.IsEmpty:
+                case SearchType.IsNotEmpty:
+                case SearchType.Yesterday:
+                case SearchType.Today:
+                case SearchType.AboveAverage:
+                case SearchType.BelowAverage:
+                case SearchType.Unique:
+                case SearchType.Duplicate:
+                    return true; // These don't need values
+
+                case SearchType.DateInterval:
+                    return template.SelectedValue != null; // Should have interval type
+
+                case SearchType.TopN:
+                case SearchType.BottomN:
+                    return template.SelectedValue != null && int.TryParse(template.SelectedValue.ToString(), out var n) && n > 0;
+
+                default:
+                    return false;
+            }
+        }
+
+        /// <summary>
+        /// Applies filters immediately to the DataGrid (live filtering)
+        /// </summary>
+        private void ApplyLiveFilter()
+        {
+            if (!_enableLiveFiltering || SearchTemplateController == null)
+                return;
+
+            try
+            {
+                if (DataContext is ColumnSearchBox columnSearchBox && columnSearchBox.SourceDataGrid != null)
+                {
+                    // Apply intelligent filtering without closing the dialog
+                    var selectedTabIndex = tabControl?.SelectedIndex ?? -1;
+                    var result = _filterApplicationService.ApplyIntelligentFilter(
+                        FilterValueViewModel, SearchTemplateController, ColumnDataType, selectedTabIndex);
+
+                    if (result.IsSuccess)
+                    {
+                        // Update the column search box state
+                        columnSearchBox.HasAdvancedFilter = result.HasCustomExpression;
+                        
+                        // Handle grouped filtering if needed
+                        if (result.FilterType == FilterApplicationType.GroupedValueBased)
+                        {
+                            columnSearchBox.GroupedFilterCombinations = SearchTemplateController.GroupedFilterCombinations;
+                            columnSearchBox.GroupByColumnPath = SearchTemplateController.GroupByColumnPath;
+                        }
+
+                        // Apply the filter to the DataGrid
+                        columnSearchBox.SourceDataGrid.FilterItemsSource();
+                        
+                        // Update filter panel
+                        columnSearchBox.SourceDataGrid.UpdateFilterPanel();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error applying live filter: {ex.Message}");
+            }
+        }
+
         /// <summary>
         /// Apply the filter and close the window using intelligent filter selection
         /// </summary>
@@ -1247,6 +1597,21 @@ namespace WWSearchDataGrid.Modern.WPF
                 _operatorVisibilityUpdateTimer.Stop();
                 _operatorVisibilityUpdateTimer.Tick -= null;
                 _operatorVisibilityUpdateTimer = null;
+            }
+
+            // Clean up synchronization and live filtering timers
+            CleanupSynchronizationTimers();
+
+            // Unsubscribe from FilterValueViewModel events
+            if (FilterValueViewModel != null)
+            {
+                FilterValueViewModel.SelectionChanged -= OnFilterValueSelectionChanged;
+            }
+
+            // Unsubscribe from additional SearchTemplateController events
+            if (SearchTemplateController != null)
+            {
+                SearchTemplateController.PropertyChanged -= OnSearchTemplateControllerChanged;
             }
 
             _isInitialized = false;

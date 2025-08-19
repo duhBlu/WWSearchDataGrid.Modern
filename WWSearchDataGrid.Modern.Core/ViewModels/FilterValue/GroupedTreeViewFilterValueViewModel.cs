@@ -709,6 +709,9 @@ namespace WWSearchDataGrid.Modern.Core
                     UpdateSelectAllState();
                 }
                 OnPropertyChanged(nameof(SelectionSummary));
+                
+                // Trigger selection changed event for synchronization
+                OnSelectionChanged();
             }
         }
 
@@ -729,6 +732,9 @@ namespace WWSearchDataGrid.Modern.Core
                     UpdateSelectAllState();
                 }
                 OnPropertyChanged(nameof(SelectionSummary));
+                
+                // Trigger selection changed event for synchronization
+                OnSelectionChanged();
             }
         }
 
