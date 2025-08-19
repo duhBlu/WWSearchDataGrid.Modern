@@ -125,14 +125,15 @@
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
             <!--  Search Box  -->
             <sdg:SearchTextBox x:Name="PART_FlatSearchBox"
-                                    Watermark="Search values..."
-                                    Text="{Binding SearchText,UpdateSourceTrigger=PropertyChanged}"
-                                    Grid.Row="0"
-                                    Margin="0,0,0,8" />
+                               Grid.Row="0"
+                               Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                               Margin="0,0,0,8"
+                               Watermark="Search values..." />
 
             <!--  Select All Checkbox  -->
             <CheckBox Style="{StaticResource Default_CheckBox_Style}"
@@ -195,6 +196,17 @@
                     </DataTemplate>
                 </ListBox.ItemTemplate>
             </ListBox>
+            <Border Grid.Row="4"
+                    Background="#F5F5F5"
+                    BorderBrush="#DDDDDD"
+                    BorderThickness="0,1,0,0"
+                    Margin="0,8,0,0"
+                    Padding="8,4">
+                <TextBlock FontStyle="Italic"
+                           Foreground="#666"
+                           VerticalAlignment="Center"
+                           Text="{Binding SelectionSummary}" />
+            </Border>
         </Grid>
     </DataTemplate>
 
@@ -236,11 +248,11 @@
 
             <!--  Search Box  -->
             <sdg:SearchTextBox x:Name="PART_GroupSearchBox"
-                        Watermark="Search groups and values..."
-                        Text="{Binding SearchText,UpdateSourceTrigger=PropertyChanged}"
-                        Grid.Row="0"
-                        Margin="0,0,0,8" />
-            
+                               Grid.Row="0"
+                               Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                               Margin="0,0,0,8"
+                               Watermark="Search groups and values..." />
+
             <!--  Select All Checkbox  -->
             <CheckBox Style="{StaticResource Default_CheckBox_Style}"
                       Grid.Row="2"
@@ -392,10 +404,10 @@
 
             <!--  Search Box  -->
             <sdg:SearchTextBox x:Name="PART_DateSearchBox"
-                        Watermark="Search dates (e.g., 2023, January, 15)..."
-                        Text="{Binding SearchText,UpdateSourceTrigger=PropertyChanged}"
-                        Grid.Row="0"
-                        Margin="0,0,0,8" />
+                               Grid.Row="0"
+                               Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                               Margin="0,0,0,8"
+                               Watermark="Search dates (e.g., 2023, January, 15)..." />
 
             <!--  Select All Checkbox  -->
             <CheckBox Style="{StaticResource Default_CheckBox_Style}"

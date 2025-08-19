@@ -71,11 +71,11 @@ namespace WWSearchDataGrid.Modern.Core
                 // Always update the state and notify (don't rely on SetProperty)
                 selectAllState = targetState;
                 OnPropertyChanged(nameof(SelectAllState));
-                OnPropertyChanged(nameof(SelectedItemsCount));
+                OnPropertyChanged(nameof(SelectionSummary));
             }
         }
 
-        public string SelectedItemsCount
+        public string SelectionSummary
         {
             get
             {
@@ -205,7 +205,7 @@ namespace WWSearchDataGrid.Modern.Core
                 {
                     UpdateSelectAllState();
                 }
-                OnPropertyChanged(nameof(SelectedItemsCount));
+                OnPropertyChanged(nameof(SelectionSummary));
                 
                 // Trigger selection changed event for synchronization
                 OnSelectionChanged();
@@ -308,7 +308,7 @@ namespace WWSearchDataGrid.Modern.Core
 
         public override string GetSelectionSummary()
         {
-            return SelectedItemsCount;
+            return SelectionSummary;
         }
 
         public override List<FilterValueItem> GetAllValues()

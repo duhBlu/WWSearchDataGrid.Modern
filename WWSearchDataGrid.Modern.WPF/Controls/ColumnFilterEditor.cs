@@ -45,9 +45,15 @@ namespace WWSearchDataGrid.Modern.WPF
         // Synchronization and live filtering
         private bool _isSynchronizing = false;
         private DispatcherTimer _liveFilterTimer;
-        private DispatcherTimer _valueToRuleSyncTimer;
-        private DispatcherTimer _ruleToValueSyncTimer;
         private bool _enableLiveFiltering = true;
+        
+        // Bulk operation detection
+        private bool _isBulkSelectionOperation = false;
+        private DispatcherTimer _bulkOperationTimer;
+        private DateTime _lastSelectionChangeTime;
+        
+        // Circular sync prevention
+        private DateTime _lastValueToRuleSyncTime;
 
         #endregion
 
@@ -1210,18 +1216,11 @@ namespace WWSearchDataGrid.Modern.WPF
                 _liveFilterTimer = null;
             }
             
-            if (_valueToRuleSyncTimer != null)
+            if (_bulkOperationTimer != null)
             {
-                _valueToRuleSyncTimer.Stop();
-                _valueToRuleSyncTimer.Tick -= OnValueToRuleSyncTimerTick;
-                _valueToRuleSyncTimer = null;
-            }
-            
-            if (_ruleToValueSyncTimer != null)
-            {
-                _ruleToValueSyncTimer.Stop();
-                _ruleToValueSyncTimer.Tick -= OnRuleToValueSyncTimerTick;
-                _ruleToValueSyncTimer = null;
+                _bulkOperationTimer.Stop();
+                _bulkOperationTimer.Tick -= OnBulkOperationComplete;
+                _bulkOperationTimer = null;
             }
         }
 
@@ -1243,33 +1242,273 @@ namespace WWSearchDataGrid.Modern.WPF
 
         /// <summary>
         /// Handles changes in filter value selections (Values tab)
-        /// Only syncs to rules after a pause in user activity, not immediately
+        /// Event-driven synchronization with bulk operation detection
         /// </summary>
         private void OnFilterValueSelectionChanged(object sender, EventArgs e)
         {
             if (_isSynchronizing || FilterValueViewModel?.IsSynchronizing == true)
                 return;
 
-            // Only sync values to rules if user is on Values tab (not if they're working on Rules tab)
             var currentTab = tabControl?.SelectedIndex ?? -1;
-            if (currentTab == 1) // User is actively on Values tab
+            
+            // Only sync values to rules if user is on Values tab
+            if (currentTab == 1)
             {
-                // Use debounced synchronization - only sync after user stops making changes
-                StartDebouncedValueToRuleSync();
+                // Detect and handle bulk operations (Select All/Deselect All)
+                if (DetectBulkOperation())
+                {
+                    // Start bulk operation mode - defer sync until complete
+                    StartBulkOperationMode();
+                    return;
+                }
+
+                // If we're in bulk operation mode, ignore individual changes
+                if (_isBulkSelectionOperation)
+                {
+                    return;
+                }
+
+                // Handle individual selection changes
+                ProcessIndividualSelectionChange();
             }
 
-            // Always trigger live filtering when values change
-            if (_enableLiveFiltering)
+            // Always trigger live filtering when values change (unless bulk operation)
+            if (_enableLiveFiltering && !_isBulkSelectionOperation)
             {
-                EnsureLiveFilterTimerInitialized();
-                _liveFilterTimer.Stop();
-                _liveFilterTimer.Start();
+                TriggerLiveFiltering();
+            }
+            UpdateValueSelectionSummary();
+        }
+
+        /// <summary>
+        /// Detects if current change is part of a bulk operation (Select All/Deselect All)
+        /// </summary>
+        private bool DetectBulkOperation()
+        {
+            var now = DateTime.Now;
+            var timeSinceLastChange = (now - _lastSelectionChangeTime).TotalMilliseconds;
+            _lastSelectionChangeTime = now;
+
+            // If changes are happening rapidly (< 50ms apart), it's likely a bulk operation
+            return timeSinceLastChange < 50;
+        }
+
+        /// <summary>
+        /// Starts bulk operation mode and sets up completion detection
+        /// </summary>
+        private void StartBulkOperationMode()
+        {
+            _isBulkSelectionOperation = true;
+
+            // Initialize bulk operation timer if needed
+            if (_bulkOperationTimer == null)
+            {
+                _bulkOperationTimer = new DispatcherTimer
+                {
+                    Interval = TimeSpan.FromMilliseconds(150), // Wait for bulk operation to complete
+                    IsEnabled = false
+                };
+                _bulkOperationTimer.Tick += OnBulkOperationComplete;
+            }
+
+            // Reset the timer - will fire when bulk operation is complete
+            _bulkOperationTimer.Stop();
+            _bulkOperationTimer.Start();
+        }
+
+        /// <summary>
+        /// Handles completion of bulk operation
+        /// </summary>
+        private void OnBulkOperationComplete(object sender, EventArgs e)
+        {
+            _bulkOperationTimer.Stop();
+            _isBulkSelectionOperation = false;
+
+            // Now process the final state after bulk operation
+            ProcessBulkOperationComplete();
+        }
+
+        /// <summary>
+        /// Processes the final state after bulk operation completion
+        /// </summary>
+        private void ProcessBulkOperationComplete()
+        {
+            try
+            {
+                // Check if this resulted in a Select All operation that should clear filters
+                if (IsSelectAllOperation())
+                {
+                    // Only clear if not preserving default rules
+                    if (!HasOnlyDefaultRules())
+                    {
+                        HandleSelectAllOperation();
+                    }
+                }
+                else if (HasMeaningfulValueSelections())
+                {
+                    // Don't override default rules - let user edit them
+                    if (!HasOnlyDefaultRules())
+                    {
+                        // Synchronize after bulk operation
+                        SynchronizeValuesToRules();
+                    }
+                }
+                else
+                {
+                    // Only clear filter if not preserving default rules
+                    if (!HasOnlyDefaultRules())
+                    {
+                        // If no meaningful selections, clear the filter
+                        ClearColumnFilter();
+                    }
+                }
+
+                // Trigger live filtering after bulk operation
+                if (_enableLiveFiltering)
+                {
+                    TriggerLiveFiltering();
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error processing bulk operation completion: {ex.Message}");
             }
         }
 
         /// <summary>
+        /// Processes individual (non-bulk) selection changes
+        /// </summary>
+        private void ProcessIndividualSelectionChange()
+        {
+            if (HasMeaningfulValueSelections())
+            {
+                // Don't override default rules - let user edit them
+                if (!HasOnlyDefaultRules())
+                {
+                    // Immediate event-driven synchronization for meaningful selections
+                    SynchronizeValuesToRules();
+                }
+            }
+            else if (IsEmptySelection())
+            {
+                // Only clear filter if not preserving default rules
+                if (!HasOnlyDefaultRules())
+                {
+                    // If no selections, clear the filter
+                    ClearColumnFilter();
+                }
+            }
+            // Note: Don't clear filter for Select All - that's handled in bulk operations
+        }
+
+        /// <summary>
+        /// Checks if selection is completely empty (different from Select All)
+        /// </summary>
+        private bool IsEmptySelection()
+        {
+            if (FilterValueViewModel == null) return true;
+            var allValues = FilterValueViewModel.GetAllValues();
+            var selectedValues = allValues.Where(item => item.IsSelected).ToList();
+            return selectedValues.Count == 0;
+        }
+
+        /// <summary>
+        /// Detects if the current selection change is a Select All/Deselect All operation
+        /// </summary>
+        private bool IsSelectAllOperation()
+        {
+            if (FilterValueViewModel == null) return false;
+
+            var allValues = FilterValueViewModel.GetAllValues();
+            var selectedValues = allValues.Where(item => item.IsSelected).ToList();
+
+            // Select All: All items are selected
+            // Deselect All: No items are selected
+            return selectedValues.Count == 0 || selectedValues.Count == allValues.Count;
+        }
+
+        /// <summary>
+        /// Handles Select All/Deselect All operations by clearing the column filter
+        /// </summary>
+        private void HandleSelectAllOperation()
+        {
+            if (SearchTemplateController == null) return;
+
+            try
+            {
+                _isSynchronizing = true;
+                
+                // Clear all filter rules for Select All/Deselect All operations
+                var result = _filterApplicationService.ClearAllFilters(SearchTemplateController);
+                
+                if (result.IsSuccess)
+                {
+                    // Add a proper default group and template with column's default SearchType
+                    CreateDefaultRuleTemplate();
+                    
+                    // Update filter panel and column state
+                    UpdateFilterPanelAndColumnState(result);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error handling Select All operation: {ex.Message}");
+            }
+            finally
+            {
+                _isSynchronizing = false;
+            }
+        }
+
+        /// <summary>
+        /// Clears the column filter completely
+        /// </summary>
+        private void ClearColumnFilter()
+        {
+            if (SearchTemplateController == null) return;
+
+            try
+            {
+                _isSynchronizing = true;
+                
+                var result = _filterApplicationService.ClearAllFilters(SearchTemplateController);
+                
+                if (result.IsSuccess)
+                {
+                    // Add a proper default group and template with column's default SearchType
+                    CreateDefaultRuleTemplate();
+                    
+                    // Update filter panel and column state
+                    UpdateFilterPanelAndColumnState(result);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error clearing column filter: {ex.Message}");
+            }
+            finally
+            {
+                _isSynchronizing = false;
+            }
+        }
+
+        /// <summary>
+        /// Determines if current value selections represent meaningful filtering intent
+        /// </summary>
+        private bool HasMeaningfulValueSelections()
+        {
+            if (FilterValueViewModel == null) return false;
+
+            var allValues = FilterValueViewModel.GetAllValues();
+            var selectedItems = allValues.Where(item => item.IsSelected).ToList();
+
+            // Meaningful if: some but not all values are selected
+            return selectedItems.Count > 0 && selectedItems.Count < allValues.Count;
+        }
+
+        /// <summary>
         /// Handles changes in search template controller (Rules tab)
-        /// Provides immediate sync for meaningful rule changes, debounced for intermediate changes
+        /// Event-driven synchronization based on meaningful rule completion
         /// </summary>
         private void OnSearchTemplateControllerChanged(object sender, PropertyChangedEventArgs e)
         {
@@ -1279,46 +1518,92 @@ namespace WWSearchDataGrid.Modern.WPF
             var currentTab = tabControl?.SelectedIndex ?? -1;
             var hasMeaningfulRules = HasAnyMeaningfulRules();
 
-            // Handle different types of property changes
-            switch (e.PropertyName)
+            // Only sync when on Rules tab and rules are meaningful
+            if (currentTab != 0 || !hasMeaningfulRules)
             {
-                case nameof(SearchTemplateController.HasCustomExpression):
-                case "FilterExpression":
-                    // Expression changes indicate completed rule changes - sync immediately
-                    if (hasMeaningfulRules && currentTab == 0)
-                    {
-                        SynchronizeRulesToValues(); // Immediate sync
-                    }
-                    break;
+                // Trigger live filtering even if not syncing to values
+                if (_enableLiveFiltering && hasMeaningfulRules)
+                {
+                    TriggerLiveFiltering();
+                }
+                return;
+            }
 
-                case "SearchGroups":
-                case null: // Bulk changes
-                case "":
-                    // For bulk changes, use immediate sync if rules are meaningful
-                    if (hasMeaningfulRules && currentTab == 0)
-                    {
-                        SynchronizeRulesToValues(); // Immediate sync
-                    }
-                    break;
+            // CRITICAL: Don't sync if this rule change was triggered by values→rules sync
+            // This prevents circular synchronization loops
+            if (IsRecentValueToRuleSync())
+            {
+                // Just trigger live filtering without syncing back to values
+                if (_enableLiveFiltering)
+                {
+                    TriggerLiveFiltering();
+                }
+                return;
+            }
 
-                default:
-                    // For other property changes (like individual template properties),
-                    // check if the rule is now meaningful and sync immediately
-                    if (hasMeaningfulRules && currentTab == 0)
-                    {
-                        // Use very short debounce for template property changes to allow for rapid updates
-                        StartDebouncedRuleToValueSync(100); // Much shorter delay
-                    }
-                    break;
+            // Determine if this change represents rule completion/validation
+            bool shouldSyncToValues = ShouldSyncRulesToValues(e.PropertyName);
+            
+            if (shouldSyncToValues)
+            {
+                System.Diagnostics.Debug.WriteLine($"RULES→VALUES sync triggered by property: {e.PropertyName}");
+                // Immediate event-driven synchronization
+                SynchronizeRulesToValues();
             }
 
             // Trigger live filtering for any meaningful rule changes
-            if (_enableLiveFiltering && hasMeaningfulRules)
+            if (_enableLiveFiltering)
             {
-                EnsureLiveFilterTimerInitialized();
-                _liveFilterTimer.Stop();
-                _liveFilterTimer.Start();
+                TriggerLiveFiltering();
             }
+        }
+
+        /// <summary>
+        /// Checks if a recent values→rules sync occurred to prevent circular sync
+        /// </summary>
+        private bool IsRecentValueToRuleSync()
+        {
+            var timeSinceLastSync = (DateTime.Now - _lastValueToRuleSyncTime).TotalMilliseconds;
+            var isRecent = timeSinceLastSync < 1000; // Within 1 second of a value→rule sync
+            
+            if (isRecent)
+            {
+                System.Diagnostics.Debug.WriteLine($"Preventing circular sync - {timeSinceLastSync}ms since last value→rule sync");
+            }
+            
+            return isRecent;
+        }
+
+        /// <summary>
+        /// Determines if a property change should trigger rules→values synchronization
+        /// </summary>
+        private bool ShouldSyncRulesToValues(string propertyName)
+        {
+            // Sync for completed rule changes and validation events
+            return propertyName switch
+            {
+                // Expression updates indicate rules are complete and validated
+                nameof(SearchTemplateController.HasCustomExpression) => true,
+                "FilterExpression" => true,
+                
+                // Group-level changes indicate structural completion
+                "SearchGroups" => true,
+                null or "" => true, // Bulk changes
+                
+                // Template property changes - sync immediately for responsiveness
+                // These represent user completing individual field edits
+                _ => true // Default to sync for immediate feedback
+            };
+        }
+
+        /// <summary>
+        /// Triggers live filtering with proper timer management
+        /// </summary>
+        private void TriggerLiveFiltering()
+        {
+            EnsureLiveFilterTimerInitialized();
+            _liveFilterTimer.Stop();
+            _liveFilterTimer.Start();
         }
 
 
@@ -1331,71 +1616,10 @@ namespace WWSearchDataGrid.Modern.WPF
             ApplyLiveFilter();
         }
 
-        /// <summary>
-        /// Starts debounced synchronization from values to rules
-        /// This waits for user to stop making changes before syncing
-        /// </summary>
-        private void StartDebouncedValueToRuleSync()
-        {
-            if (_valueToRuleSyncTimer == null)
-            {
-                _valueToRuleSyncTimer = new DispatcherTimer
-                {
-                    Interval = TimeSpan.FromMilliseconds(500), // Wait 500ms for user to finish
-                    IsEnabled = false
-                };
-                _valueToRuleSyncTimer.Tick += OnValueToRuleSyncTimerTick;
-            }
-
-            _valueToRuleSyncTimer.Stop();
-            _valueToRuleSyncTimer.Start();
-        }
-
-        /// <summary>
-        /// Starts debounced synchronization from rules to values
-        /// This waits for rule changes to stabilize before syncing
-        /// </summary>
-        private void StartDebouncedRuleToValueSync(int delayMs = 300)
-        {
-            if (_ruleToValueSyncTimer == null)
-            {
-                _ruleToValueSyncTimer = new DispatcherTimer
-                {
-                    Interval = TimeSpan.FromMilliseconds(delayMs),
-                    IsEnabled = false
-                };
-                _ruleToValueSyncTimer.Tick += OnRuleToValueSyncTimerTick;
-            }
-            else
-            {
-                // Update interval if different
-                _ruleToValueSyncTimer.Interval = TimeSpan.FromMilliseconds(delayMs);
-            }
-
-            _ruleToValueSyncTimer.Stop();
-            _ruleToValueSyncTimer.Start();
-        }
-
-        /// <summary>
-        /// Handles debounced values-to-rules synchronization
-        /// </summary>
-        private void OnValueToRuleSyncTimerTick(object sender, EventArgs e)
-        {
-            _valueToRuleSyncTimer.Stop();
-            SynchronizeValuesToRules();
-        }
-
-        /// <summary>
-        /// Handles debounced rules-to-values synchronization
-        /// </summary>
-        private void OnRuleToValueSyncTimerTick(object sender, EventArgs e)
-        {
-            _ruleToValueSyncTimer.Stop();
-            SynchronizeRulesToValues();
-        }
 
         /// <summary>
         /// Synchronizes rules tab changes to values tab
+        /// Event-driven with immediate filter panel updates
         /// </summary>
         private void SynchronizeRulesToValues()
         {
@@ -1421,6 +1645,9 @@ namespace WWSearchDataGrid.Modern.WPF
                 
                 // Update the summary display
                 UpdateValueSelectionSummary();
+                
+                // Update filter panel state immediately
+                UpdateFilterPanelState();
             }
             catch (Exception ex)
             {
@@ -1433,8 +1660,8 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
-        /// Synchronizes values tab changes to rules tab (respects user context)
-        /// Only syncs when user is actively on Values tab and has completed their selections
+        /// Synchronizes values tab changes to rules tab (respects user context and default rules)
+        /// Only syncs when user is actively on Values tab and doesn't override default rules
         /// </summary>
         private void SynchronizeValuesToRules()
         {
@@ -1454,9 +1681,19 @@ namespace WWSearchDataGrid.Modern.WPF
                 return; // Preserve user's rules when they're actively working on Rules tab
             }
 
+            // CRITICAL: Don't override default rules - preserve them for user editing
+            if (HasOnlyDefaultRules())
+            {
+                return; // Don't sync when only default rules exist (user may be about to edit them)
+            }
+
             try
             {
                 _isSynchronizing = true;
+                
+                // Record the time of this values→rules sync to prevent circular sync
+                _lastValueToRuleSyncTime = DateTime.Now;
+                System.Diagnostics.Debug.WriteLine("VALUES→RULES sync starting");
                 
                 // Convert values to optimized rules only when user is done with value selections
                 var result = _filterApplicationService.ApplyValueBasedFilter(
@@ -1480,6 +1717,103 @@ namespace WWSearchDataGrid.Modern.WPF
             {
                 _isSynchronizing = false;
             }
+        }
+
+        /// <summary>
+        /// Determines if the SearchTemplateController contains only default (empty) rules
+        /// These are rules created when user deletes the last meaningful rule
+        /// </summary>
+        private bool HasOnlyDefaultRules()
+        {
+            if (SearchTemplateController?.SearchGroups == null || SearchTemplateController.SearchGroups.Count == 0)
+                return false;
+
+            // Check if all groups contain only default/empty templates
+            foreach (var group in SearchTemplateController.SearchGroups)
+            {
+                if (group.SearchTemplates == null || group.SearchTemplates.Count == 0)
+                    continue;
+
+                foreach (var template in group.SearchTemplates)
+                {
+                    // If any template is meaningful (not default), then we don't have only default rules
+                    if (HasMeaningfulSearchCriteria(template))
+                    {
+                        return false;
+                    }
+                }
+            }
+
+            // All templates are default/empty - preserve them
+            return true;
+        }
+
+        /// <summary>
+        /// Creates a default rule template with the column's default SearchType
+        /// </summary>
+        private void CreateDefaultRuleTemplate()
+        {
+            if (SearchTemplateController == null) return;
+
+            // Ensure we have at least one group
+            if (SearchTemplateController.SearchGroups.Count == 0)
+            {
+                SearchTemplateController.AddSearchGroup();
+            }
+
+            var group = SearchTemplateController.SearchGroups.First();
+            
+            // Clear existing templates
+            group.SearchTemplates.Clear();
+
+            // Get the default search type for this column
+            var defaultSearchType = GetColumnDefaultSearchType();
+
+            // Create a proper default template with the column's default SearchType
+            var template = new SearchTemplate(ColumnDataType)
+            {
+                SearchType = defaultSearchType,
+                // Leave values empty - user will fill them in
+                SelectedValue = null,
+                SelectedSecondaryValue = null
+            };
+            
+            // Clear any existing values
+            template.SelectedValues.Clear();
+            template.SelectedDates.Clear();
+
+            // Add the template to the group
+            group.SearchTemplates.Add(template);
+
+            // Update the template's operator visibility
+            template.IsOperatorVisible = false; // First template doesn't need operator
+        }
+
+        /// <summary>
+        /// Gets the default SearchType for the current column
+        /// </summary>
+        private SearchType GetColumnDefaultSearchType()
+        {
+            // Try to get default search type from column's attached property
+            if (DataContext is ColumnSearchBox columnSearchBox && columnSearchBox.CurrentColumn != null)
+            {
+                var defaultSearchType = GetDefaultSearchType(columnSearchBox.CurrentColumn);
+                if (defaultSearchType != SearchType.Contains) // Contains is the fallback default
+                {
+                    return defaultSearchType;
+                }
+            }
+
+            // Fall back to column data type appropriate defaults
+            return ColumnDataType switch
+            {
+                ColumnDataType.String => SearchType.Contains,
+                ColumnDataType.Number => SearchType.Equals,
+                ColumnDataType.DateTime => SearchType.Equals,
+                ColumnDataType.Boolean => SearchType.Equals,
+                ColumnDataType.Enum => SearchType.Equals,
+                _ => SearchType.Contains
+            };
         }
 
         /// <summary>
@@ -1620,6 +1954,21 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
+        /// Updates the filter panel state based on current rules
+        /// </summary>
+        private void UpdateFilterPanelState()
+        {
+            if (DataContext is ColumnSearchBox columnSearchBox && columnSearchBox.SourceDataGrid != null)
+            {
+                // Update HasAdvancedFilter based on current meaningful rules
+                columnSearchBox.HasAdvancedFilter = HasAnyMeaningfulRules();
+                
+                // Update filter panel immediately
+                columnSearchBox.SourceDataGrid.UpdateFilterPanel();
+            }
+        }
+
+        /// <summary>
         /// Apply the filter and close the window using intelligent filter selection
         /// </summary>
         private void ApplyFilter()
@@ -1681,8 +2030,8 @@ namespace WWSearchDataGrid.Modern.WPF
                 return;
             }
             
-            // Add a default group back
-            SearchTemplateController.AddSearchGroup();
+            // Add a proper default group and template with column's default SearchType
+            CreateDefaultRuleTemplate();
 
             // Determine if we're in per-column or global mode
             if (DataContext is ColumnSearchBox columnSearchBox)

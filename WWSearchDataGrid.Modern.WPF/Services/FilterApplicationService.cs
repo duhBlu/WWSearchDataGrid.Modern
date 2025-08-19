@@ -365,8 +365,11 @@ namespace WWSearchDataGrid.Modern.WPF.Services
                 // If no existing meaningful rules, use standard optimization
                 if (!HasCustomFilterRules(searchTemplateController))
                 {
+                    System.Diagnostics.Debug.WriteLine("No custom filter rules found - using standard optimization");
                     return ApplyOptimizedValueBasedFilter(filterValueViewModel, searchTemplateController, columnDataType);
                 }
+                
+                System.Diagnostics.Debug.WriteLine("Custom filter rules detected - using rule preservation logic");
 
                 // Analyze existing rules to see which selected values they cover
                 var ruleAnalysis = AnalyzeRuleValueCoverage(searchTemplateController, selectedValues, allValues);
