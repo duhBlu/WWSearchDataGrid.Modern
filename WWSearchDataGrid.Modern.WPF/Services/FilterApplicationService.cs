@@ -10,6 +10,8 @@ namespace WWSearchDataGrid.Modern.WPF.Services
     /// </summary>
     public class FilterApplicationService : IFilterApplicationService
     {
+        private readonly FilterRuleOptimizer _ruleOptimizer = new FilterRuleOptimizer();
+
         #region Filter Context Detection
 
         /// <summary>
@@ -170,53 +172,27 @@ namespace WWSearchDataGrid.Modern.WPF.Services
             ColumnDataType columnDataType,
             int selectedTabIndex = -1)
         {
-            try
+            // Check if user is on Rules tab with meaningful rules - if so, use rules
+            if (selectedTabIndex == 0 && HasMeaningfulSearchCriteria(searchTemplateController))
             {
-                if (searchTemplateController == null)
-                {
-                    return FilterApplicationResult.Failure("Search template controller is null");
-                }
-
-                var hasCustomRules = HasCustomFilterRules(searchTemplateController);
-                var hasMeaningfulValues = HasMeaningfulValueSelections(filterValueViewModel);
-                var isValuesTabSelected = selectedTabIndex == 1;
-
-
-                // Decision matrix for intelligent filtering
-                if (hasCustomRules && !hasMeaningfulValues)
-                {
-                    // Custom rules exist but no meaningful value selections - use rules
-                    return ApplyRuleBasedFilter(searchTemplateController);
-                }
-                else if (hasCustomRules && hasMeaningfulValues)
-                {
-                    // Both custom rules and meaningful values exist
-                    if (isValuesTabSelected)
-                    {
-                        // User is on values tab - but still preserve rules if they exist
-                        return ApplyRuleBasedFilter(searchTemplateController);
-                    }
-                    else
-                    {
-                        // User is on rules tab - use rules
-                        return ApplyRuleBasedFilter(searchTemplateController);
-                    }
-                }
-                else if (!hasCustomRules && hasMeaningfulValues)
-                {
-                    // No custom rules but meaningful value selections - use values
-                    return ApplyValueBasedFilter(filterValueViewModel, searchTemplateController, columnDataType);
-                }
-                else
-                {
-                    // No custom rules and no meaningful values - clear filter
-                    return ClearAllFilters(searchTemplateController);
-                }
+                return ApplyRuleBasedFilter(searchTemplateController);
             }
-            catch (Exception ex)
-            {
-                return FilterApplicationResult.Failure($"Error applying intelligent filter: {ex.Message}");
-            }
+            
+            // Otherwise, use value-based filtering (which includes optimization)
+            return ApplyValueBasedFilter(filterValueViewModel, searchTemplateController, columnDataType);
+        }
+
+        /// <summary>
+        /// Checks if the SearchTemplateController has meaningful search criteria
+        /// </summary>
+        private bool HasMeaningfulSearchCriteria(SearchTemplateController controller)
+        {
+            if (controller?.SearchGroups == null)
+                return false;
+
+            return controller.SearchGroups
+                .SelectMany(g => g.SearchTemplates ?? Enumerable.Empty<SearchTemplate>())
+                .Any(t => HasMeaningfulSearchCriteria(t));
         }
 
         #endregion
@@ -241,12 +217,6 @@ namespace WWSearchDataGrid.Modern.WPF.Services
                     return FilterApplicationResult.Failure("Search template controller is null");
                 }
 
-                // INTELLIGENT DECISION LOGIC: Check if we should prefer rule-based filtering instead
-                if (ShouldPreferRuleBasedFiltering(searchTemplateController, filterValueViewModel))
-                {
-                    return ApplyRuleBasedFilter(searchTemplateController);
-                }
-
                 // Check if this is grouped filtering
                 if (filterValueViewModel is GroupedTreeViewFilterValueViewModel groupedViewModel && 
                     groupedViewModel.IsGroupedFiltering)
@@ -254,80 +224,403 @@ namespace WWSearchDataGrid.Modern.WPF.Services
                     return ApplyGroupedValueBasedFilter(groupedViewModel, searchTemplateController, null, null);
                 }
 
-                // Standard flat filtering with optimization
+                // Standard flat filtering with intelligent rule preservation
                 var allValues = filterValueViewModel.GetAllValues();
                 var selectedItems = allValues.Where(item => item.IsSelected).ToList();
 
-                // Only clear if no custom rules exist AND all items are selected
+                // Clear if all items are selected (no filtering needed)
                 if (selectedItems.Count == allValues.Count && allValues.Count > 0)
                 {
-                    // Check one more time for custom rules before clearing
-                    if (HasCustomFilterRules(searchTemplateController))
-                    {
-                        return ApplyRuleBasedFilter(searchTemplateController);
-                    }
-                    else
-                    {
-                        return ClearAllFilters(searchTemplateController);
-                    }
+                    return ClearAllFilters(searchTemplateController);
                 }
                 else if (selectedItems.Count != 0)
                 {
-                    var operatorName = searchTemplateController.SearchGroups.FirstOrDefault()?.OperatorName ?? "And";
-
-                    // Clear and recreate more efficiently
-                    searchTemplateController.SearchGroups.Clear();
-                    var group = new SearchTemplateGroup() { OperatorName = operatorName };
-                    searchTemplateController.SearchGroups.Add(group);
-
-                    // Determine search type based on selection count
-
-                    var searchType = selectedItems.Count == 1 ? SearchType.Equals : SearchType.IsAnyOf;
-                    var filterValues = selectedItems.Select(item => item.Value).ToList();
-
-                    var template = new SearchTemplate(columnDataType)
-                    {
-                        SearchType = searchType
-                    };
-
-                    // Set values based on search type
-                    if (searchType == SearchType.Equals && filterValues.Count == 1)
-                    {
-                        // For single value Equals, set SelectedValue (singular)
-                        template.SelectedValue = filterValues.First();
-                    }
-                    else
-                    {
-                        // For multi-value search types (IsAnyOf), use SelectedValues (plural)
-                        template.SelectedValues.Clear();
-                        foreach (var value in filterValues)
-                        {
-                            template.SelectedValues.Add(new FilterListValue { Value = value });
-                        }
-                    }
-
-                    group.SearchTemplates.Add(template);
-                    searchTemplateController.UpdateFilterExpression();
-
-                    return FilterApplicationResult.Success(FilterApplicationType.ValueBased);
+                    // Use intelligent rule preservation instead of full replacement
+                    return ApplyValueBasedFilterWithRulePreservation(filterValueViewModel, searchTemplateController, columnDataType);
                 }
                 else
                 {
-                    // No items selected - check for custom rules before clearing
-                    if (HasCustomFilterRules(searchTemplateController))
-                    {
-                        return ApplyRuleBasedFilter(searchTemplateController);
-                    }
-                    else
-                    {
-                        return ClearAllFilters(searchTemplateController);
-                    }
+                    // No items selected - clear all filters
+                    return ClearAllFilters(searchTemplateController);
                 }
             }
             catch (Exception ex)
             {
                 return FilterApplicationResult.Failure($"Error applying value-based filter: {ex.Message}");
             }
+        }
+
+        /// <summary>
+        /// Applies optimized value-based filtering using intelligent rule generation
+        /// </summary>
+        private FilterApplicationResult ApplyOptimizedValueBasedFilter(
+            FilterValueViewModel filterValueViewModel,
+            SearchTemplateController searchTemplateController,
+            ColumnDataType columnDataType)
+        {
+            try
+            {
+                var allValues = filterValueViewModel.GetAllValues().Select(v => v.Value);
+                var selectedValues = filterValueViewModel.GetSelectedValues();
+
+                // Analyze selection pattern
+                var analysis = _ruleOptimizer.AnalyzeSelection(allValues, selectedValues, columnDataType);
+
+                // Generate optimized rules
+                var optimizedRules = _ruleOptimizer.GenerateOptimizedRules(analysis, allValues, selectedValues);
+
+                if (!optimizedRules.Any())
+                {
+                    // Clear all filters if no rules generated
+                    return ClearAllFilters(searchTemplateController);
+                }
+
+                // Preserve existing operator preference
+                var operatorName = searchTemplateController.SearchGroups.FirstOrDefault()?.OperatorName ?? "Or";
+
+                // Clear and rebuild with optimized rules
+                searchTemplateController.SearchGroups.Clear();
+
+                // For multiple rules, we need to decide on the group operator
+                // Positive rules (Equals, Between, IsAnyOf) use OR
+                // Negative rules (NotEquals, NotBetween, IsNoneOf) use AND
+                var hasNegativeRules = optimizedRules.Any(r => IsNegativeSearchType(r.SearchType));
+                var groupOperator = hasNegativeRules ? "And" : operatorName;
+
+                var group = new SearchTemplateGroup() { OperatorName = groupOperator };
+                searchTemplateController.SearchGroups.Add(group);
+
+                // Create templates for each optimized rule
+                foreach (var rule in optimizedRules)
+                {
+                    var template = new SearchTemplate(columnDataType)
+                    {
+                        SearchType = rule.SearchType
+                    };
+
+                    // Set values based on search type
+                    switch (rule.SearchType)
+                    {
+                        case SearchType.Equals:
+                        case SearchType.NotEquals:
+                        case SearchType.GreaterThan:
+                        case SearchType.LessThan:
+                        case SearchType.GreaterThanOrEqualTo:
+                        case SearchType.LessThanOrEqualTo:
+                            template.SelectedValue = rule.PrimaryValue;
+                            break;
+
+                        case SearchType.Between:
+                        case SearchType.NotBetween:
+                        case SearchType.BetweenDates:
+                            template.SelectedValue = rule.PrimaryValue;
+                            template.SelectedSecondaryValue = rule.SecondaryValue;
+                            break;
+
+                        case SearchType.IsAnyOf:
+                        case SearchType.IsNoneOf:
+                            template.SelectedValues.Clear();
+                            foreach (var value in rule.Values)
+                            {
+                                template.SelectedValues.Add(new FilterListValue { Value = value });
+                            }
+                            break;
+
+                        case SearchType.IsNull:
+                        case SearchType.IsNotNull:
+                        case SearchType.IsEmpty:
+                        case SearchType.IsNotEmpty:
+                            // These don't need values - they are self-contained rules
+                            break;
+                    }
+
+                    group.SearchTemplates.Add(template);
+                }
+
+                // Update filter expression
+                searchTemplateController.UpdateFilterExpression();
+
+                return FilterApplicationResult.Success(FilterApplicationType.ValueBased);
+            }
+            catch (Exception ex)
+            {
+                return FilterApplicationResult.Failure($"Error applying optimized filter: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Applies value-based filtering with intelligent preservation of existing rules
+        /// Analyzes existing rules, preserves those that are still relevant, and adds supplementary rules
+        /// </summary>
+        private FilterApplicationResult ApplyValueBasedFilterWithRulePreservation(
+            FilterValueViewModel filterValueViewModel,
+            SearchTemplateController searchTemplateController,
+            ColumnDataType columnDataType)
+        {
+            try
+            {
+                var selectedValues = filterValueViewModel.GetSelectedValues().ToList();
+                var allValues = filterValueViewModel.GetAllValues().Select(v => v.Value).ToList();
+
+                // If no existing meaningful rules, use standard optimization
+                if (!HasCustomFilterRules(searchTemplateController))
+                {
+                    return ApplyOptimizedValueBasedFilter(filterValueViewModel, searchTemplateController, columnDataType);
+                }
+
+                // Analyze existing rules to see which selected values they cover
+                var ruleAnalysis = AnalyzeRuleValueCoverage(searchTemplateController, selectedValues, allValues);
+                
+                // Preserve rules that still cover meaningful portions of selected values
+                var rulesToPreserve = ruleAnalysis.RulesToPreserve;
+                var valuesCoveredByRules = ruleAnalysis.ValuesCoveredByPreservedRules;
+                var uncoveredValues = selectedValues.Except(valuesCoveredByRules).ToList();
+
+                // Start building the new rule structure
+                var preservedGroup = searchTemplateController.SearchGroups.FirstOrDefault();
+                if (preservedGroup == null)
+                {
+                    preservedGroup = new SearchTemplateGroup { OperatorName = "Or" };
+                    searchTemplateController.SearchGroups.Add(preservedGroup);
+                }
+
+                // Clear existing templates and add preserved ones back
+                preservedGroup.SearchTemplates.Clear();
+                foreach (var template in rulesToPreserve)
+                {
+                    preservedGroup.SearchTemplates.Add(template);
+                }
+
+                // Add supplementary rules for uncovered values
+                if (uncoveredValues.Any())
+                {
+                    var supplementaryRules = GenerateSupplementaryRules(uncoveredValues, allValues, columnDataType);
+                    foreach (var rule in supplementaryRules)
+                    {
+                        var template = CreateTemplateFromOptimizedRule(rule, columnDataType);
+                        preservedGroup.SearchTemplates.Add(template);
+                    }
+                }
+
+                // Set appropriate group operator based on rule combination
+                preservedGroup.OperatorName = DetermineOptimalGroupOperator(preservedGroup.SearchTemplates.ToList());
+
+                // Update filter expression
+                searchTemplateController.UpdateFilterExpression();
+
+                return FilterApplicationResult.Success(FilterApplicationType.ValueBased);
+            }
+            catch (Exception ex)
+            {
+                return FilterApplicationResult.Failure($"Error applying rule-preserving filter: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Analyzes existing rules to determine which should be preserved and what values they cover
+        /// </summary>
+        private RulePreservationAnalysis AnalyzeRuleValueCoverage(
+            SearchTemplateController searchTemplateController, 
+            List<object> selectedValues, 
+            List<object> allValues)
+        {
+            var analysis = new RulePreservationAnalysis();
+            var allTemplates = searchTemplateController.SearchGroups
+                .SelectMany(g => g.SearchTemplates ?? Enumerable.Empty<SearchTemplate>())
+                .Where(t => HasMeaningfulSearchCriteria(t))
+                .ToList();
+
+            foreach (var template in allTemplates)
+            {
+                var coveredValues = EvaluateTemplateCoverage(template, selectedValues, allValues);
+                
+                // Preserve rule if it covers a significant portion of selected values
+                // or if it's a complex rule type that's valuable to keep
+                if (ShouldPreserveRule(template, coveredValues, selectedValues))
+                {
+                    analysis.RulesToPreserve.Add(template);
+                    analysis.ValuesCoveredByPreservedRules.UnionWith(coveredValues);
+                }
+            }
+
+            return analysis;
+        }
+
+        /// <summary>
+        /// Evaluates which values from the selected set are covered by a specific template
+        /// </summary>
+        private HashSet<object> EvaluateTemplateCoverage(SearchTemplate template, List<object> selectedValues, List<object> allValues)
+        {
+            var coveredValues = new HashSet<object>();
+            
+            foreach (var value in selectedValues)
+            {
+                try
+                {
+                    if (EvaluateSearchTemplate(value, template))
+                    {
+                        coveredValues.Add(value);
+                    }
+                }
+                catch
+                {
+                    // If evaluation fails, assume not covered
+                }
+            }
+
+            return coveredValues;
+        }
+
+        /// <summary>
+        /// Determines if a rule should be preserved based on its coverage and complexity
+        /// </summary>
+        private bool ShouldPreserveRule(SearchTemplate template, HashSet<object> coveredValues, List<object> selectedValues)
+        {
+            if (!coveredValues.Any())
+                return false;
+
+            // Always preserve complex rules that are hard to recreate
+            if (IsComplexRule(template.SearchType))
+                return true;
+
+            // Preserve if rule covers a significant portion (>= 30%) of selected values
+            var coverageRatio = (double)coveredValues.Count / selectedValues.Count;
+            if (coverageRatio >= 0.3)
+                return true;
+
+            // Preserve if rule covers multiple values (shows user intent)
+            if (coveredValues.Count >= 2)
+                return true;
+
+            return false;
+        }
+
+        /// <summary>
+        /// Determines if a search type represents a complex rule worth preserving
+        /// </summary>
+        private bool IsComplexRule(SearchType searchType)
+        {
+            return searchType switch
+            {
+                SearchType.Contains or SearchType.DoesNotContain or
+                SearchType.StartsWith or SearchType.EndsWith or
+                SearchType.IsLike or SearchType.IsNotLike or
+                SearchType.Between or SearchType.NotBetween or
+                SearchType.BetweenDates or SearchType.DateInterval or
+                SearchType.LessThan or SearchType.GreaterThan or
+                SearchType.LessThanOrEqualTo or SearchType.GreaterThanOrEqualTo or
+                SearchType.TopN or SearchType.BottomN or
+                SearchType.AboveAverage or SearchType.BelowAverage => true,
+                _ => false
+            };
+        }
+
+        /// <summary>
+        /// Generates supplementary rules for values not covered by preserved rules
+        /// </summary>
+        private List<FilterRuleOptimizer.OptimizedRule> GenerateSupplementaryRules(
+            List<object> uncoveredValues, 
+            List<object> allValues, 
+            ColumnDataType columnDataType)
+        {
+            // Use existing optimizer to generate rules for uncovered values
+            var analysis = _ruleOptimizer.AnalyzeSelection(allValues, uncoveredValues, columnDataType);
+            return _ruleOptimizer.GenerateOptimizedRules(analysis, allValues, uncoveredValues);
+        }
+
+        /// <summary>
+        /// Creates a SearchTemplate from an OptimizedRule
+        /// </summary>
+        private SearchTemplate CreateTemplateFromOptimizedRule(FilterRuleOptimizer.OptimizedRule rule, ColumnDataType columnDataType)
+        {
+            var template = new SearchTemplate(columnDataType)
+            {
+                SearchType = rule.SearchType
+            };
+
+            // Set values based on search type
+            switch (rule.SearchType)
+            {
+                case SearchType.Equals:
+                case SearchType.NotEquals:
+                case SearchType.GreaterThan:
+                case SearchType.LessThan:
+                case SearchType.GreaterThanOrEqualTo:
+                case SearchType.LessThanOrEqualTo:
+                    template.SelectedValue = rule.PrimaryValue;
+                    break;
+
+                case SearchType.Between:
+                case SearchType.NotBetween:
+                case SearchType.BetweenDates:
+                    template.SelectedValue = rule.PrimaryValue;
+                    template.SelectedSecondaryValue = rule.SecondaryValue;
+                    break;
+
+                case SearchType.IsAnyOf:
+                case SearchType.IsNoneOf:
+                    template.SelectedValues.Clear();
+                    foreach (var value in rule.Values)
+                    {
+                        template.SelectedValues.Add(new FilterListValue { Value = value });
+                    }
+                    break;
+
+                case SearchType.IsNull:
+                case SearchType.IsNotNull:
+                case SearchType.IsEmpty:
+                case SearchType.IsNotEmpty:
+                    // These don't need values - they are self-contained rules
+                    break;
+            }
+
+            return template;
+        }
+
+        /// <summary>
+        /// Determines the optimal group operator based on the types of templates
+        /// </summary>
+        private string DetermineOptimalGroupOperator(List<SearchTemplate> templates)
+        {
+            var hasNegativeRules = templates.Any(t => IsNegativeSearchType(t.SearchType));
+            var hasPositiveRules = templates.Any(t => !IsNegativeSearchType(t.SearchType));
+
+            // If we have both positive and negative rules, use AND for safety
+            if (hasNegativeRules && hasPositiveRules)
+                return "And";
+
+            // If all negative rules, use AND
+            if (hasNegativeRules && !hasPositiveRules)
+                return "And";
+
+            // If all positive rules, use OR (typical filtering behavior)
+            return "Or";
+        }
+
+        /// <summary>
+        /// Analysis result for rule preservation
+        /// </summary>
+        private class RulePreservationAnalysis
+        {
+            public List<SearchTemplate> RulesToPreserve { get; set; } = new List<SearchTemplate>();
+            public HashSet<object> ValuesCoveredByPreservedRules { get; set; } = new HashSet<object>();
+        }
+
+        /// <summary>
+        /// Determines if a search type represents a negative/exclusion rule
+        /// </summary>
+        private bool IsNegativeSearchType(SearchType searchType)
+        {
+            return searchType switch
+            {
+                SearchType.NotEquals => true,
+                SearchType.DoesNotContain => true,
+                SearchType.NotBetween => true,
+                SearchType.IsNoneOf => true,
+                SearchType.IsNotNull => true,
+                SearchType.IsNotEmpty => true,
+                _ => false
+            };
         }
 
         /// <summary>

@@ -45,6 +45,8 @@ namespace WWSearchDataGrid.Modern.WPF
         // Synchronization and live filtering
         private bool _isSynchronizing = false;
         private DispatcherTimer _liveFilterTimer;
+        private DispatcherTimer _valueToRuleSyncTimer;
+        private DispatcherTimer _ruleToValueSyncTimer;
         private bool _enableLiveFiltering = true;
 
         #endregion
@@ -986,18 +988,18 @@ namespace WWSearchDataGrid.Modern.WPF
                     }
                 }
 
-                // Synchronize rules to values when switching to values tab
-                SynchronizeRulesToValues();
+                // Only sync rules to values if we have meaningful rules to evaluate
+                if (HasAnyMeaningfulRules())
+                {
+                    SynchronizeRulesToValues();
+                }
                 UpdateValueSelectionSummary();
             }
             else if (_pendingTab?.Header?.ToString() == "Filter Rules" && SearchTemplateController != null)
             {
-                // When switching to Rules tab, sync values to rules only if no meaningful rules exist
-                // This preserves user-created rules while allowing value-based rule generation when appropriate
-                if (!HasAnyMeaningfulRules())
-                {
-                    SynchronizeValuesToRules();
-                }
+                // When switching to Rules tab, DO NOT automatically sync values to rules
+                // Let the user work on rules without interference
+                // Synchronization will happen when they complete their changes
             }
 
             _pendingTab = null;
@@ -1207,6 +1209,20 @@ namespace WWSearchDataGrid.Modern.WPF
                 _liveFilterTimer.Tick -= OnLiveFilterTimerTick;
                 _liveFilterTimer = null;
             }
+            
+            if (_valueToRuleSyncTimer != null)
+            {
+                _valueToRuleSyncTimer.Stop();
+                _valueToRuleSyncTimer.Tick -= OnValueToRuleSyncTimerTick;
+                _valueToRuleSyncTimer = null;
+            }
+            
+            if (_ruleToValueSyncTimer != null)
+            {
+                _ruleToValueSyncTimer.Stop();
+                _ruleToValueSyncTimer.Tick -= OnRuleToValueSyncTimerTick;
+                _ruleToValueSyncTimer = null;
+            }
         }
 
         /// <summary>
@@ -1227,16 +1243,22 @@ namespace WWSearchDataGrid.Modern.WPF
 
         /// <summary>
         /// Handles changes in filter value selections (Values tab)
+        /// Only syncs to rules after a pause in user activity, not immediately
         /// </summary>
         private void OnFilterValueSelectionChanged(object sender, EventArgs e)
         {
             if (_isSynchronizing || FilterValueViewModel?.IsSynchronizing == true)
                 return;
 
-            // Synchronize immediately when values change
-            SynchronizeValuesToRules();
+            // Only sync values to rules if user is on Values tab (not if they're working on Rules tab)
+            var currentTab = tabControl?.SelectedIndex ?? -1;
+            if (currentTab == 1) // User is actively on Values tab
+            {
+                // Use debounced synchronization - only sync after user stops making changes
+                StartDebouncedValueToRuleSync();
+            }
 
-            // Also trigger live filtering if enabled
+            // Always trigger live filtering when values change
             if (_enableLiveFiltering)
             {
                 EnsureLiveFilterTimerInitialized();
@@ -1247,28 +1269,55 @@ namespace WWSearchDataGrid.Modern.WPF
 
         /// <summary>
         /// Handles changes in search template controller (Rules tab)
+        /// Provides immediate sync for meaningful rule changes, debounced for intermediate changes
         /// </summary>
         private void OnSearchTemplateControllerChanged(object sender, PropertyChangedEventArgs e)
         {
             if (_isSynchronizing)
                 return;
 
-            // Look for property changes that indicate rule modifications
-            if (e.PropertyName == nameof(SearchTemplateController.HasCustomExpression) ||
-                e.PropertyName == "FilterExpression" ||
-                e.PropertyName == "SearchGroups" ||
-                string.IsNullOrEmpty(e.PropertyName)) // Bulk changes
-            {
-                // Synchronize immediately when rules change (only if rules have meaningful content)
-                SynchronizeRulesToValues();
+            var currentTab = tabControl?.SelectedIndex ?? -1;
+            var hasMeaningfulRules = HasAnyMeaningfulRules();
 
-                // Also trigger live filtering if enabled
-                if (_enableLiveFiltering)
-                {
-                    EnsureLiveFilterTimerInitialized();
-                    _liveFilterTimer.Stop();
-                    _liveFilterTimer.Start();
-                }
+            // Handle different types of property changes
+            switch (e.PropertyName)
+            {
+                case nameof(SearchTemplateController.HasCustomExpression):
+                case "FilterExpression":
+                    // Expression changes indicate completed rule changes - sync immediately
+                    if (hasMeaningfulRules && currentTab == 0)
+                    {
+                        SynchronizeRulesToValues(); // Immediate sync
+                    }
+                    break;
+
+                case "SearchGroups":
+                case null: // Bulk changes
+                case "":
+                    // For bulk changes, use immediate sync if rules are meaningful
+                    if (hasMeaningfulRules && currentTab == 0)
+                    {
+                        SynchronizeRulesToValues(); // Immediate sync
+                    }
+                    break;
+
+                default:
+                    // For other property changes (like individual template properties),
+                    // check if the rule is now meaningful and sync immediately
+                    if (hasMeaningfulRules && currentTab == 0)
+                    {
+                        // Use very short debounce for template property changes to allow for rapid updates
+                        StartDebouncedRuleToValueSync(100); // Much shorter delay
+                    }
+                    break;
+            }
+
+            // Trigger live filtering for any meaningful rule changes
+            if (_enableLiveFiltering && hasMeaningfulRules)
+            {
+                EnsureLiveFilterTimerInitialized();
+                _liveFilterTimer.Stop();
+                _liveFilterTimer.Start();
             }
         }
 
@@ -1280,6 +1329,69 @@ namespace WWSearchDataGrid.Modern.WPF
         {
             _liveFilterTimer.Stop();
             ApplyLiveFilter();
+        }
+
+        /// <summary>
+        /// Starts debounced synchronization from values to rules
+        /// This waits for user to stop making changes before syncing
+        /// </summary>
+        private void StartDebouncedValueToRuleSync()
+        {
+            if (_valueToRuleSyncTimer == null)
+            {
+                _valueToRuleSyncTimer = new DispatcherTimer
+                {
+                    Interval = TimeSpan.FromMilliseconds(500), // Wait 500ms for user to finish
+                    IsEnabled = false
+                };
+                _valueToRuleSyncTimer.Tick += OnValueToRuleSyncTimerTick;
+            }
+
+            _valueToRuleSyncTimer.Stop();
+            _valueToRuleSyncTimer.Start();
+        }
+
+        /// <summary>
+        /// Starts debounced synchronization from rules to values
+        /// This waits for rule changes to stabilize before syncing
+        /// </summary>
+        private void StartDebouncedRuleToValueSync(int delayMs = 300)
+        {
+            if (_ruleToValueSyncTimer == null)
+            {
+                _ruleToValueSyncTimer = new DispatcherTimer
+                {
+                    Interval = TimeSpan.FromMilliseconds(delayMs),
+                    IsEnabled = false
+                };
+                _ruleToValueSyncTimer.Tick += OnRuleToValueSyncTimerTick;
+            }
+            else
+            {
+                // Update interval if different
+                _ruleToValueSyncTimer.Interval = TimeSpan.FromMilliseconds(delayMs);
+            }
+
+            _ruleToValueSyncTimer.Stop();
+            _ruleToValueSyncTimer.Start();
+        }
+
+        /// <summary>
+        /// Handles debounced values-to-rules synchronization
+        /// </summary>
+        private void OnValueToRuleSyncTimerTick(object sender, EventArgs e)
+        {
+            _valueToRuleSyncTimer.Stop();
+            SynchronizeValuesToRules();
+        }
+
+        /// <summary>
+        /// Handles debounced rules-to-values synchronization
+        /// </summary>
+        private void OnRuleToValueSyncTimerTick(object sender, EventArgs e)
+        {
+            _ruleToValueSyncTimer.Stop();
+            SynchronizeRulesToValues();
         }
 
         /// <summary>
@@ -1321,29 +1433,43 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
-        /// Synchronizes values tab changes to rules tab (preserves meaningful user rules)
+        /// Synchronizes values tab changes to rules tab (respects user context)
+        /// Only syncs when user is actively on Values tab and has completed their selections
         /// </summary>
         private void SynchronizeValuesToRules()
         {
             if (_isSynchronizing || FilterValueViewModel == null || SearchTemplateController == null)
                 return;
 
+            // Only sync if user is currently on Values tab - never override rules when user is on Rules tab
+            var currentTab = tabControl?.SelectedIndex ?? -1;
+            if (currentTab != 1) // Not on Values tab
+            {
+                return;
+            }
+
+            // Don't sync if user has meaningful rules and they might be editing them
+            if (currentTab == 0 && HasAnyMeaningfulRules())
+            {
+                return; // Preserve user's rules when they're actively working on Rules tab
+            }
+
             try
             {
                 _isSynchronizing = true;
                 
-                // Only sync if we don't have meaningful configured rules
-                // This preserves user-created rules while allowing value-based rule generation
-                if (HasAnyMeaningfulRules())
-                    return;
-                
-                // Use existing FilterApplicationService logic to convert values to rules
+                // Convert values to optimized rules only when user is done with value selections
                 var result = _filterApplicationService.ApplyValueBasedFilter(
                     FilterValueViewModel, SearchTemplateController, ColumnDataType);
                 
                 if (!result.IsSuccess)
                 {
                     System.Diagnostics.Debug.WriteLine($"Error synchronizing values to rules: {result.ErrorMessage}");
+                }
+                else
+                {
+                    // Update filter panel and column state
+                    UpdateFilterPanelAndColumnState(result);
                 }
             }
             catch (Exception ex)
@@ -1472,6 +1598,28 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
+        /// Updates the filter panel and column state after synchronization
+        /// </summary>
+        private void UpdateFilterPanelAndColumnState(FilterApplicationResult result)
+        {
+            if (DataContext is ColumnSearchBox columnSearchBox && columnSearchBox.SourceDataGrid != null)
+            {
+                // Update the column search box state
+                columnSearchBox.HasAdvancedFilter = result.HasCustomExpression;
+                
+                // Handle grouped filtering if needed
+                if (result.FilterType == FilterApplicationType.GroupedValueBased)
+                {
+                    columnSearchBox.GroupedFilterCombinations = SearchTemplateController.GroupedFilterCombinations;
+                    columnSearchBox.GroupByColumnPath = SearchTemplateController.GroupByColumnPath;
+                }
+
+                // Update filter panel immediately (don't wait for dialog close)
+                columnSearchBox.SourceDataGrid.UpdateFilterPanel();
+            }
+        }
+
+        /// <summary>
         /// Apply the filter and close the window using intelligent filter selection
         /// </summary>
         private void ApplyFilter()
@@ -1511,8 +1659,8 @@ namespace WWSearchDataGrid.Modern.WPF
                         columnSearchBox.GroupedFilterCombinations = SearchTemplateController.GroupedFilterCombinations;
                         columnSearchBox.GroupByColumnPath = SearchTemplateController.GroupByColumnPath;
                     }
-
                     columnSearchBox.SourceDataGrid.FilterItemsSource();
+                    columnSearchBox.SourceDataGrid.UpdateFilterPanel();
                     CloseWindow();
                 }
             }
@@ -1544,6 +1692,7 @@ namespace WWSearchDataGrid.Modern.WPF
                 columnSearchBox.HasAdvancedFilter = false;
 
                 columnSearchBox.SourceDataGrid?.FilterItemsSource();
+                columnSearchBox.SourceDataGrid?.UpdateFilterPanel();
             }
             else if (DataContext is SearchDataGrid dataGrid)
             {
