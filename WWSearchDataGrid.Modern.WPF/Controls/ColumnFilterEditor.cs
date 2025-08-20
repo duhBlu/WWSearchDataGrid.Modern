@@ -33,6 +33,7 @@ namespace WWSearchDataGrid.Modern.WPF
         private readonly ColumnValueCache _cache = ColumnValueCache.Instance;
         private readonly IFilterApplicationService _filterApplicationService;
         private readonly IRuleToValueSynchronizationService _ruleToValueSyncService;
+        private readonly IFilterSynchronizationService _filterSyncService;
         private DispatcherTimer _tabSwitchTimer;
         private TabItem _pendingTab;
         private bool _isInitialized;
@@ -44,7 +45,6 @@ namespace WWSearchDataGrid.Modern.WPF
         
         // Synchronization and live filtering
         private bool _isSynchronizing = false;
-        private DispatcherTimer _liveFilterTimer;
         private bool _enableLiveFiltering = true;
         
         // Bulk operation detection
@@ -52,8 +52,9 @@ namespace WWSearchDataGrid.Modern.WPF
         private DispatcherTimer _bulkOperationTimer;
         private DateTime _lastSelectionChangeTime;
         
-        // Circular sync prevention
-        private DateTime _lastValueToRuleSyncTime;
+        // Change tracking for intelligent synchronization
+        private DateTime _lastChangeTime;
+        private FilterChangeSource _lastChangeSource;
 
         #endregion
 
@@ -330,6 +331,7 @@ namespace WWSearchDataGrid.Modern.WPF
         {
             _filterApplicationService = new FilterApplicationService();
             _ruleToValueSyncService = new RuleToValueSynchronizationService();
+            _filterSyncService = new FilterSynchronizationService();
             Loaded += OnControlLoaded;
             Unloaded += OnUnloaded;
         }
@@ -342,8 +344,77 @@ namespace WWSearchDataGrid.Modern.WPF
         {
             _filterApplicationService = filterApplicationService ?? throw new ArgumentNullException(nameof(filterApplicationService));
             _ruleToValueSyncService = new RuleToValueSynchronizationService();
+            _filterSyncService = new FilterSynchronizationService();
             Loaded += OnControlLoaded;
             Unloaded += OnUnloaded;
+        }
+
+        /// <summary>
+        /// Processes filter changes using the unified synchronization service
+        /// </summary>
+        private void ProcessFilterChange(FilterChangeContext context)
+        {
+            if (_isSynchronizing || SearchTemplateController == null || FilterValueViewModel == null)
+                return;
+
+            // Skip processing if change is too recent from opposite source (prevents circular sync)
+            if (IsCircularChange(context))
+            {
+                System.Diagnostics.Debug.WriteLine($"Skipping circular change - {context.Source} within {context.TimeSinceLastChange.TotalMilliseconds}ms of {_lastChangeSource}");
+                return;
+            }
+
+            try
+            {
+                _isSynchronizing = true;
+                
+                // Use unified filter synchronization service
+                var result = _filterSyncService.MergeFilters(
+                    SearchTemplateController, 
+                    FilterValueViewModel, 
+                    ColumnDataType, 
+                    context);
+
+                if (result.IsSuccess)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Filter merge successful - Strategy: {result.StrategyUsed}, Preserved: {result.RulesPreserved}, Synced: {result.ValuesSynchronized}");
+                    
+                    // Update filter panel state immediately
+                    UpdateFilterPanelState();
+                    
+                    // Update value selection summary if values were affected
+                    if (result.ValuesSynchronized)
+                    {
+                        UpdateValueSelectionSummary();
+                    }
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine($"Filter merge failed: {result.ErrorMessage}");
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error processing filter change: {ex.Message}");
+            }
+            finally
+            {
+                _isSynchronizing = false;
+            }
+        }
+
+        /// <summary>
+        /// Determines if a change is circular (too soon after opposite source change)
+        /// </summary>
+        private bool IsCircularChange(FilterChangeContext context)
+        {
+            // Prevent circular sync by checking if this change is too soon after opposite source
+            if (_lastChangeSource != context.Source && context.TimeSinceLastChange.TotalMilliseconds < 500)
+            {
+                return true;
+            }
+
+            return false;
         }
 
         #endregion
@@ -1179,15 +1250,7 @@ namespace WWSearchDataGrid.Modern.WPF
         private void SetupSynchronization()
         {
             // Clean up existing timers first
-            CleanupSynchronizationTimers();
-
-            // Initialize live filtering timer for debouncing (only for live filtering, not sync)
-            _liveFilterTimer = new DispatcherTimer
-            {
-                Interval = TimeSpan.FromMilliseconds(250),
-                IsEnabled = false
-            };
-            _liveFilterTimer.Tick += OnLiveFilterTimerTick;
+            CleanupTimers();
 
             // Subscribe to FilterValueViewModel selection changes (remove first to avoid duplicates)
             if (FilterValueViewModel != null)
@@ -1205,17 +1268,18 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
-        /// Cleans up synchronization timers
+        /// Cleans up timers
         /// </summary>
-        private void CleanupSynchronizationTimers()
+        private void CleanupTimers()
         {
-            if (_liveFilterTimer != null)
+            // Clean up operator visibility update timer
+            if (_operatorVisibilityUpdateTimer != null)
             {
-                _liveFilterTimer.Stop();
-                _liveFilterTimer.Tick -= OnLiveFilterTimerTick;
-                _liveFilterTimer = null;
+                _operatorVisibilityUpdateTimer.Stop();
+                _operatorVisibilityUpdateTimer.Tick -= null;
+                _operatorVisibilityUpdateTimer = null;
             }
-            
+
             if (_bulkOperationTimer != null)
             {
                 _bulkOperationTimer.Stop();
@@ -1224,25 +1288,10 @@ namespace WWSearchDataGrid.Modern.WPF
             }
         }
 
-        /// <summary>
-        /// Ensures live filtering timer is initialized (safety check for reopened dialogs)
-        /// </summary>
-        private void EnsureLiveFilterTimerInitialized()
-        {
-            if (_liveFilterTimer == null)
-            {
-                _liveFilterTimer = new DispatcherTimer
-                {
-                    Interval = TimeSpan.FromMilliseconds(250),
-                    IsEnabled = false
-                };
-                _liveFilterTimer.Tick += OnLiveFilterTimerTick;
-            }
-        }
 
         /// <summary>
         /// Handles changes in filter value selections (Values tab)
-        /// Event-driven synchronization with bulk operation detection
+        /// Event-driven synchronization with intelligent merging
         /// </summary>
         private void OnFilterValueSelectionChanged(object sender, EventArgs e)
         {
@@ -1251,31 +1300,19 @@ namespace WWSearchDataGrid.Modern.WPF
 
             var currentTab = tabControl?.SelectedIndex ?? -1;
             
-            // Only sync values to rules if user is on Values tab
-            if (currentTab == 1)
-            {
-                // Detect and handle bulk operations (Select All/Deselect All)
-                if (DetectBulkOperation())
-                {
-                    // Start bulk operation mode - defer sync until complete
-                    StartBulkOperationMode();
-                    return;
-                }
+            // Create change context for intelligent decision making
+            var context = CreateFilterChangeContext(
+                FilterChangeSource.Values, 
+                currentTab,
+                DetectBulkOperation() ? ChangeIntensity.Complete : ChangeIntensity.Minor);
 
-                // If we're in bulk operation mode, ignore individual changes
-                if (_isBulkSelectionOperation)
-                {
-                    return;
-                }
-
-                // Handle individual selection changes
-                ProcessIndividualSelectionChange();
-            }
+            // Use unified synchronization service
+            ProcessFilterChange(context);
 
             // Always trigger live filtering when values change (unless bulk operation)
-            if (_enableLiveFiltering && !_isBulkSelectionOperation)
+            if (_enableLiveFiltering && !context.IsBulkOperation)
             {
-                TriggerLiveFiltering();
+                ApplyLiveFilter();
             }
             UpdateValueSelectionSummary();
         }
@@ -1335,38 +1372,18 @@ namespace WWSearchDataGrid.Modern.WPF
         {
             try
             {
-                // Check if this resulted in a Select All operation that should clear filters
-                if (IsSelectAllOperation())
-                {
-                    // Only clear if not preserving default rules
-                    if (!HasOnlyDefaultRules())
-                    {
-                        HandleSelectAllOperation();
-                    }
-                }
-                else if (HasMeaningfulValueSelections())
-                {
-                    // Don't override default rules - let user edit them
-                    if (!HasOnlyDefaultRules())
-                    {
-                        // Synchronize after bulk operation
-                        SynchronizeValuesToRules();
-                    }
-                }
-                else
-                {
-                    // Only clear filter if not preserving default rules
-                    if (!HasOnlyDefaultRules())
-                    {
-                        // If no meaningful selections, clear the filter
-                        ClearColumnFilter();
-                    }
-                }
+                // Use unified synchronization for bulk operations
+                var bulkContext = CreateFilterChangeContext(
+                    FilterChangeSource.Values, 
+                    tabControl?.SelectedIndex ?? -1,
+                    ChangeIntensity.Complete);
+
+                ProcessFilterChange(bulkContext);
 
                 // Trigger live filtering after bulk operation
                 if (_enableLiveFiltering)
                 {
-                    TriggerLiveFiltering();
+                    ApplyLiveFilter();
                 }
             }
             catch (Exception ex)
@@ -1375,31 +1392,6 @@ namespace WWSearchDataGrid.Modern.WPF
             }
         }
 
-        /// <summary>
-        /// Processes individual (non-bulk) selection changes
-        /// </summary>
-        private void ProcessIndividualSelectionChange()
-        {
-            if (HasMeaningfulValueSelections())
-            {
-                // Don't override default rules - let user edit them
-                if (!HasOnlyDefaultRules())
-                {
-                    // Immediate event-driven synchronization for meaningful selections
-                    SynchronizeValuesToRules();
-                }
-            }
-            else if (IsEmptySelection())
-            {
-                // Only clear filter if not preserving default rules
-                if (!HasOnlyDefaultRules())
-                {
-                    // If no selections, clear the filter
-                    ClearColumnFilter();
-                }
-            }
-            // Note: Don't clear filter for Select All - that's handled in bulk operations
-        }
 
         /// <summary>
         /// Checks if selection is completely empty (different from Select All)
@@ -1508,7 +1500,7 @@ namespace WWSearchDataGrid.Modern.WPF
 
         /// <summary>
         /// Handles changes in search template controller (Rules tab)
-        /// Event-driven synchronization based on meaningful rule completion
+        /// Event-driven synchronization with intelligent merging
         /// </summary>
         private void OnSearchTemplateControllerChanged(object sender, PropertyChangedEventArgs e)
         {
@@ -1518,103 +1510,76 @@ namespace WWSearchDataGrid.Modern.WPF
             var currentTab = tabControl?.SelectedIndex ?? -1;
             var hasMeaningfulRules = HasAnyMeaningfulRules();
 
-            // Only sync when on Rules tab and rules are meaningful
-            if (currentTab != 0 || !hasMeaningfulRules)
-            {
-                // Trigger live filtering even if not syncing to values
-                if (_enableLiveFiltering && hasMeaningfulRules)
-                {
-                    TriggerLiveFiltering();
-                }
-                return;
-            }
+            // Create change context for intelligent decision making
+            var changeIntensity = DetermineChangeIntensity(e.PropertyName);
+            var context = CreateFilterChangeContext(
+                FilterChangeSource.Rules, 
+                currentTab,
+                changeIntensity,
+                e.PropertyName);
 
-            // CRITICAL: Don't sync if this rule change was triggered by values→rules sync
-            // This prevents circular synchronization loops
-            if (IsRecentValueToRuleSync())
+            // Only process meaningful rule changes or when user is on Rules tab
+            if (currentTab == 0 && hasMeaningfulRules)
             {
-                // Just trigger live filtering without syncing back to values
-                if (_enableLiveFiltering)
-                {
-                    TriggerLiveFiltering();
-                }
-                return;
-            }
-
-            // Determine if this change represents rule completion/validation
-            bool shouldSyncToValues = ShouldSyncRulesToValues(e.PropertyName);
-            
-            if (shouldSyncToValues)
-            {
-                System.Diagnostics.Debug.WriteLine($"RULES→VALUES sync triggered by property: {e.PropertyName}");
-                // Immediate event-driven synchronization
-                SynchronizeRulesToValues();
+                System.Diagnostics.Debug.WriteLine($"RULES change detected - property: {e.PropertyName}");
+                // Use unified synchronization service
+                ProcessFilterChange(context);
             }
 
             // Trigger live filtering for any meaningful rule changes
-            if (_enableLiveFiltering)
+            if (_enableLiveFiltering && hasMeaningfulRules)
             {
-                TriggerLiveFiltering();
+                ApplyLiveFilter();
             }
         }
 
         /// <summary>
-        /// Checks if a recent values→rules sync occurred to prevent circular sync
+        /// Creates a FilterChangeContext for the current change
         /// </summary>
-        private bool IsRecentValueToRuleSync()
+        private FilterChangeContext CreateFilterChangeContext(
+            FilterChangeSource source, 
+            int activeTabIndex, 
+            ChangeIntensity intensity, 
+            string propertyName = null)
         {
-            var timeSinceLastSync = (DateTime.Now - _lastValueToRuleSyncTime).TotalMilliseconds;
-            var isRecent = timeSinceLastSync < 1000; // Within 1 second of a value→rule sync
+            var now = DateTime.Now;
+            var timeSinceLastChange = now - _lastChangeTime;
             
-            if (isRecent)
+            var context = new FilterChangeContext
             {
-                System.Diagnostics.Debug.WriteLine($"Preventing circular sync - {timeSinceLastSync}ms since last value→rule sync");
-            }
-            
-            return isRecent;
+                Source = source,
+                PropertyName = propertyName,
+                Intensity = intensity,
+                TimeSinceLastChange = timeSinceLastChange,
+                ActiveTabIndex = activeTabIndex,
+                IsBulkOperation = DetectBulkOperation()
+            };
+
+            // Update tracking
+            _lastChangeTime = now;
+            _lastChangeSource = source;
+
+            return context;
         }
 
         /// <summary>
-        /// Determines if a property change should trigger rules→values synchronization
+        /// Determines the intensity of a property change
         /// </summary>
-        private bool ShouldSyncRulesToValues(string propertyName)
+        private ChangeIntensity DetermineChangeIntensity(string propertyName)
         {
-            // Sync for completed rule changes and validation events
             return propertyName switch
             {
-                // Expression updates indicate rules are complete and validated
-                nameof(SearchTemplateController.HasCustomExpression) => true,
-                "FilterExpression" => true,
+                // Major structural changes
+                nameof(SearchTemplateController.HasCustomExpression) => ChangeIntensity.Major,
+                "FilterExpression" => ChangeIntensity.Major,
+                "SearchGroups" => ChangeIntensity.Major,
+                null or "" => ChangeIntensity.Complete, // Bulk changes
                 
-                // Group-level changes indicate structural completion
-                "SearchGroups" => true,
-                null or "" => true, // Bulk changes
-                
-                // Template property changes - sync immediately for responsiveness
-                // These represent user completing individual field edits
-                _ => true // Default to sync for immediate feedback
+                // Individual field changes are minor
+                _ => ChangeIntensity.Minor
             };
         }
 
-        /// <summary>
-        /// Triggers live filtering with proper timer management
-        /// </summary>
-        private void TriggerLiveFiltering()
-        {
-            EnsureLiveFilterTimerInitialized();
-            _liveFilterTimer.Stop();
-            _liveFilterTimer.Start();
-        }
-
-
-        /// <summary>
-        /// Handles debounced live filtering
-        /// </summary>
-        private void OnLiveFilterTimerTick(object sender, EventArgs e)
-        {
-            _liveFilterTimer.Stop();
-            ApplyLiveFilter();
-        }
 
 
         /// <summary>
@@ -1691,8 +1656,6 @@ namespace WWSearchDataGrid.Modern.WPF
             {
                 _isSynchronizing = true;
                 
-                // Record the time of this values→rules sync to prevent circular sync
-                _lastValueToRuleSyncTime = DateTime.Now;
                 System.Diagnostics.Debug.WriteLine("VALUES→RULES sync starting");
                 
                 // Convert values to optimized rules only when user is done with value selections
@@ -2089,16 +2052,10 @@ namespace WWSearchDataGrid.Modern.WPF
                 SearchTemplateController.PropertyChanged -= OnSearchTemplateControllerPropertyChanged;
             }
 
-            // Clean up operator visibility update timer
-            if (_operatorVisibilityUpdateTimer != null)
-            {
-                _operatorVisibilityUpdateTimer.Stop();
-                _operatorVisibilityUpdateTimer.Tick -= null;
-                _operatorVisibilityUpdateTimer = null;
-            }
+            
 
             // Clean up synchronization and live filtering timers
-            CleanupSynchronizationTimers();
+            CleanupTimers();
 
             // Unsubscribe from FilterValueViewModel events
             if (FilterValueViewModel != null)
