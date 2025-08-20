@@ -611,23 +611,9 @@ namespace WWSearchDataGrid.Modern.WPF
         {
             try
             {
-                // Check if this is grouped filtering
-                if (filter.GroupedFilterCombinations != null && !string.IsNullOrEmpty(filter.GroupByColumnPath))
-                {
-                    // Grouped filtering: check both the group column and the current column
-                    var groupValue = ReflectionHelper.GetPropValue(item, filter.GroupByColumnPath);
-                    var currentValue = ReflectionHelper.GetPropValue(item, filter.BindingPath);
-                    
-                    // Check if this item matches any of the selected group-child combinations
-                    return filter.GroupedFilterCombinations.Any(c => 
-                        Equals(c.GroupKey, groupValue) && Equals(c.ChildValue, currentValue));
-                }
-                else
-                {
-                    // Standard filtering: get the property value and evaluate
-                    object propertyValue = ReflectionHelper.GetPropValue(item, filter.BindingPath);
-                    return filter.SearchTemplateController.FilterExpression(propertyValue);
-                }
+                // Standard filtering: get the property value and evaluate
+                object propertyValue = ReflectionHelper.GetPropValue(item, filter.BindingPath);
+                return filter.SearchTemplateController.FilterExpression(propertyValue);
             }
             catch
             {
@@ -867,7 +853,7 @@ namespace WWSearchDataGrid.Modern.WPF
                     filterInfo.DisplayText = column.SearchTemplateController.GetFilterDisplayText();
                     
                     // Get structured components from SearchTemplateController
-                    var components = column.SearchTemplateController.GetFilterComponents();
+                    var components = column.SearchTemplateController.GetTokenizedFilter();
                     filterInfo.SearchTypeText = components.SearchTypeText;
                     filterInfo.PrimaryValue = components.PrimaryValue;
                     filterInfo.SecondaryValue = components.SecondaryValue;

@@ -29,12 +29,10 @@ namespace WWSearchDataGrid.Modern.Core.Performance
         private readonly ConcurrentDictionary<string, ColumnValueMetadata> _columnMetadata =
             new ConcurrentDictionary<string, ColumnValueMetadata>();
 
-        private readonly ConcurrentDictionary<string, FilterValueViewModel> _filterViewModelCache =
-            new ConcurrentDictionary<string, FilterValueViewModel>();
+        // Removed FilterValueViewModel cache - rules-only interface
 
 
-        private readonly ConcurrentDictionary<string, BulkOperationTracker> _bulkOperationTrackers =
-            new ConcurrentDictionary<string, BulkOperationTracker>();
+        // Removed bulk operation trackers - no longer needed without FilterValueViewModels
 
         private readonly Lazy<ColumnValueProvider> _columnValueProvider =
             new Lazy<ColumnValueProvider>(() => new ColumnValueProvider());
@@ -109,9 +107,6 @@ namespace WWSearchDataGrid.Modern.Core.Performance
 
                     metadata.LastUpdated = DateTime.Now;
                 }
-
-                // Invalidate related view models
-                InvalidateFilterViewModels(columnKey);
             });
         }
 
@@ -122,26 +117,7 @@ namespace WWSearchDataGrid.Modern.Core.Performance
         {
             var metadata = GetOrCreateMetadata(columnKey, bindingPath);
 
-            // Check for bulk operations
-            if (DetectBulkOperation(columnKey, e))
-            {
-                var tracker = _bulkOperationTrackers.GetOrAdd(columnKey, _ => new BulkOperationTracker());
-                tracker.IsBulkOperation = true;
-                
-                // Start or reset the batch timer
-                if (tracker.BatchTimer == null)
-                {
-                    tracker.BatchTimer = new Timer(200); // 200ms delay
-                    tracker.BatchTimer.Elapsed += (s, args) => HandleBulkOperationEnd(columnKey);
-                    tracker.BatchTimer.AutoReset = false;
-                }
-                
-                tracker.BatchTimer.Stop();
-                tracker.BatchTimer.Start();
-                
-                // Don't process individual updates during bulk operations
-                return;
-            }
+            // Removed bulk operation detection - no longer needed without FilterValueViewModels
 
             await Task.Run(() =>
             {
@@ -192,47 +168,9 @@ namespace WWSearchDataGrid.Modern.Core.Performance
                     metadata.LastUpdated = DateTime.Now;
                 }
             });
-
-            // Notify any listening filter view models
-            InvalidateFilterViewModels(columnKey);
         }
 
-        /// <summary>
-        /// Gets or creates a cached filter value view model
-        /// </summary>
-        public FilterValueViewModel GetOrCreateFilterViewModel(
-            string columnKey,
-            ColumnDataType dataType)
-        {
-            var cacheKey = $"{columnKey}_{dataType}";
-
-            return _filterViewModelCache.GetOrAdd(cacheKey, key =>
-            {
-                FilterValueViewModel viewModel;
-
-                switch (dataType)
-                {
-                    // grouped is handled separately
-                    case ColumnDataType.DateTime:
-                        viewModel = new DateTreeViewFilterValueViewModel();
-                        break;
-                    default:
-                        viewModel = new FlatListFilterValueViewModel();
-                        break;
-                }
-
-                // Load values from metadata using the new method
-                if (_columnMetadata.TryGetValue(columnKey, out var metadata))
-                {
-                    // Create ValueAggregateMetadata from the ColumnValueMetadata
-                    var metadataList = metadata.Values.Select(value => new ValueAggregateMetadata(value, GetValueCount(metadata.ValueCounts, value) > 0 ? GetValueCount(metadata.ValueCounts, value) : 1));
-                    
-                    viewModel.LoadValuesWithMetadata(metadataList);
-                }
-
-                return viewModel;
-            });
-        }
+        // Removed GetOrCreateFilterViewModel method - rules-only interface
 
         /// <summary>
         /// Clears all caches
@@ -242,31 +180,14 @@ namespace WWSearchDataGrid.Modern.Core.Performance
             // Clear column value provider first (largest memory consumer)
             _columnValueProvider.Value.ClearAll();
             
-            // Clear filter view models (dispose if they implement IDisposable)
-            var viewModelsToDispose = _filterViewModelCache.Values.ToList();
-            _filterViewModelCache.Clear();
-            
-            foreach (var viewModel in viewModelsToDispose)
-            {
-                if (viewModel is IDisposable disposable)
-                {
-                    disposable.Dispose();
-                }
-            }
-            
             // Clear column metadata
             var metadataToDispose = _columnMetadata.Values.ToList();
             _columnMetadata.Clear();
             
-            // Dispose all bulk operation trackers
-            foreach (var tracker in _bulkOperationTrackers.Values)
-            {
-                tracker.BatchTimer?.Dispose();
-            }
-            _bulkOperationTrackers.Clear();
+            // Removed bulk operation tracker cleanup - no longer needed
             
             // Force garbage collection for coordinated cleanup
-            if (viewModelsToDispose.Count > 5 || metadataToDispose.Count > 10)
+            if (metadataToDispose.Count > 10)
             {
                 GC.Collect();
                 GC.WaitForPendingFinalizers();
@@ -354,82 +275,11 @@ namespace WWSearchDataGrid.Modern.Core.Performance
             return ~low;
         }
 
-        private void InvalidateFilterViewModels(string columnKey)
-        {
-            var relatedKeys = _filterViewModelCache.Keys.Where(k => k.StartsWith(columnKey)).ToList();
-            foreach (var key in relatedKeys)
-            {
-                if (_filterViewModelCache.TryGetValue(key, out var viewModel))
-                {
-                    viewModel.ClearCache();
-                }
-            }
-        }
-
-        private void UpdateFilterViewModelsIncremental(string columnKey, object value, bool isAdd)
-        {
-            var relatedKeys = _filterViewModelCache.Keys.Where(k => k.StartsWith(columnKey)).ToList();
-            foreach (var key in relatedKeys)
-            {
-                if (_filterViewModelCache.TryGetValue(key, out var viewModel))
-                {
-                    viewModel.UpdateValueIncremental(value, isAdd);
-                }
-            }
-        }
-
-        private bool DetectBulkOperation(string columnKey, NotifyCollectionChangedEventArgs e)
-        {
-            var tracker = _bulkOperationTrackers.GetOrAdd(columnKey, _ => new BulkOperationTracker());
-            
-            // Consider bulk if multiple items being added at once
-            if (e.Action == NotifyCollectionChangedAction.Add && e.NewItems?.Count > 1)
-                return true;
-            
-            // Or if rapid successive operations (within 50ms)
-            var now = DateTime.Now;
-            if ((now - tracker.LastOperationTime).TotalMilliseconds < 50)
-            {
-                tracker.OperationCount++;
-                if (tracker.OperationCount > 5) // Threshold for bulk detection
-                    return true;
-            }
-            else
-            {
-                tracker.OperationCount = 1;
-            }
-            
-            tracker.LastOperationTime = now;
-            return false;
-        }
-
-        private void HandleBulkOperationEnd(string columnKey)
-        {
-            if (_bulkOperationTrackers.TryGetValue(columnKey, out var tracker))
-            {
-                tracker.IsBulkOperation = false;
-                tracker.OperationCount = 0;
-                
-                
-                // Invalidate filter view models
-                InvalidateFilterViewModels(columnKey);
-            }
-        }
 
         #endregion
 
         #region Helper Classes
 
-        /// <summary>
-        /// Tracks bulk operations for performance optimization
-        /// </summary>
-        public class BulkOperationTracker
-        {
-            public bool IsBulkOperation { get; set; }
-            public DateTime LastOperationTime { get; set; }
-            public int OperationCount { get; set; }
-            public Timer BatchTimer { get; set; }
-        }
 
         #endregion
 

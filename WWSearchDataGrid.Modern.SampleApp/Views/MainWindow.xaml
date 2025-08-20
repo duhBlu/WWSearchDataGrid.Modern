@@ -188,7 +188,6 @@
                 <sdg:SearchDataGrid.Columns>
                     <!--  Essential Business Context  -->
                     <DataGridTextColumn Width="120"
-                                        sdg:ColumnFilterEditor.GroupByColumn="Region"
                                         Header="Customer Name"
                                         Binding="{Binding CustomerName}" />
 
@@ -209,7 +208,6 @@
                     <DataGridCheckBoxColumn Width="100"
                                             Header="Nullable Bool"
                                             sdg:ColumnFilterEditor.DefaultSearchType="IsNotNull"
-                                            sdg:ColumnFilterEditor.GroupByColumn="Region"
                                             Binding="{Binding NullableBoolValue}" />
 
                     <!--  Integer Types  -->

@@ -130,15 +130,6 @@ namespace WWSearchDataGrid.Modern.Core
                 case SearchType.Yesterday:
                     components.SearchTypeText = "Is yesterday";
                     break;
-                case SearchType.GroupedInclusion:
-                    ExtractSingleValueFilter(displayText, "=", components);
-                    break;
-                case SearchType.GroupedExclusion:
-                    ExtractSingleValueFilter(displayText, "≠", components);
-                    break;
-                case SearchType.GroupedCombination:
-                    ExtractMultiValueFilter(displayText, components);
-                    break;
                 default:
                     // Fallback - use the entire display text as search type
                     components.SearchTypeText = displayText;

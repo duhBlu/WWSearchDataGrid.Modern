@@ -207,7 +207,6 @@ SearchText    Manages State     Builds Expressions    Evaluates Items   Compiles
 - Drag-drop filter reordering
 - Async value loading and caching
 - Expression tree compilation for performance
-- Grouped filtering support
 - Date interval filtering
 - Custom search templates
 - MVVM pattern throughout

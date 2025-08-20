@@ -15,16 +15,6 @@ namespace WWSearchDataGrid.Modern.Core
         None,
 
         /// <summary>
-        /// Value-based filter from selected values
-        /// </summary>
-        ValueBased,
-
-        /// <summary>
-        /// Grouped value-based filter with parent-child relationships
-        /// </summary>
-        GroupedValueBased,
-
-        /// <summary>
         /// Rule-based filter from search templates
         /// </summary>
         RuleBased,
