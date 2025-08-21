@@ -186,20 +186,9 @@
                                 CanUserAddRows="False">
 
                 <sdg:SearchDataGrid.Columns>
-                    <!--  Essential Business Context  -->
                     <DataGridTextColumn Width="120"
                                         Header="Customer Name"
                                         Binding="{Binding CustomerName}" />
-
-                    <DataGridTextColumn Width="140"
-                                        Header="Product Category"
-                                        sdg:ColumnSearchBox.AllowRuleValueFiltering="False"
-                                        Binding="{Binding ProductCategory}" />
-
-                    <DataGridTextColumn Width="120"
-                                        Header="Region"
-                                        sdg:ColumnFilterEditor.DefaultSearchType="StartsWith"
-                                        Binding="{Binding Region}" />
 
                     <!--  Boolean Types  -->
                     <DataGridCheckBoxColumn Width="80"
@@ -292,38 +281,12 @@
                                         Binding="{Binding NullableGuidValue}" />
 
                     <!--  Enum Types  -->
-                    <DataGridTextColumn Width="100"
-                                        Header="Status Enum"
-                                        Binding="{Binding StatusValue}" />
-                    <DataGridTextColumn Width="120"
-                                        Header="Nullable Status"
-                                        Binding="{Binding NullableStatusValue}" />
                     <DataGridTextColumn Width="80"
-                                        Header="Priority"
+                                        Header="Priority Enum"
                                         Binding="{Binding PriorityValue}" />
                     <DataGridTextColumn Width="100"
-                                        Header="Nullable Priority"
+                                        Header="Nullable Priority Enum"
                                         Binding="{Binding NullablePriorityValue}" />
-
-                    <!--  Business DateTime Fields with Time Precision  -->
-                    <DataGridTextColumn Width="150"
-                                        Header="Order DateTime"
-                                        Binding="{Binding OrderDateTime, StringFormat=g}" />
-                    <DataGridTextColumn Width="150"
-                                        Header="Shipped DateTime"
-                                        Binding="{Binding ShippedDateTime, StringFormat=g}" />
-                    <DataGridTextColumn Width="150"
-                                        Header="Due DateTime"
-                                        Binding="{Binding DueDateTime, StringFormat=g}" />
-                    <DataGridTextColumn Width="160"
-                                        Header="Completed DateTime"
-                                        Binding="{Binding CompletedDateTime, StringFormat=g}" />
-                    <DataGridTextColumn Width="120"
-                                        Header="Processing Time"
-                                        Binding="{Binding ProcessingTime}" />
-                    <DataGridTextColumn Width="110"
-                                        Header="Delivery Time"
-                                        Binding="{Binding DeliveryTime}" />
                 </sdg:SearchDataGrid.Columns>
             </sdg:SearchDataGrid>
         </Grid>

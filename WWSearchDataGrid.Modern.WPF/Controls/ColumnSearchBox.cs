@@ -44,7 +44,7 @@ namespace WWSearchDataGrid.Modern.WPF
         private TextBox searchTextBox;
         private Button advancedFilterButton;
         private CheckBox filterCheckBox;
-        private Window advancedFilterWindow;
+        private Window columnFilterWindow;
         private bool isAdvancedFilterOpen;
         private Timer _changeTimer;
         private SearchTemplate _temporarySearchTemplate; // Track temporary template for real-time updates
@@ -326,9 +326,9 @@ namespace WWSearchDataGrid.Modern.WPF
             }
 
             // Close and clean up the filter window if it's open
-            if (advancedFilterWindow != null)
+            if (columnFilterWindow != null)
             {
-                CloseAdvancedFilterWindow(false);
+                ClosecolumnFilterWindow(false);
             }
         }
 
@@ -1603,9 +1603,9 @@ namespace WWSearchDataGrid.Modern.WPF
                     return;
 
                 // Create window if none exists
-                if (advancedFilterWindow == null)
+                if (columnFilterWindow == null)
                 {
-                    advancedFilterWindow = new Window
+                    columnFilterWindow = new Window
                     {
                         Title = $"Column Filter Editor: {CurrentColumn.Header}",
                         MinWidth = 400,
@@ -1621,12 +1621,12 @@ namespace WWSearchDataGrid.Modern.WPF
                         DataContext = this
                     };
 
-                    advancedFilterWindow.Content = filterControl;
-                    advancedFilterWindow.Closed += (_, _) => OnAdvancedFilterWindowClosed();
+                    columnFilterWindow.Content = filterControl;
+                    columnFilterWindow.Closed += (_, _) => OncolumnFilterWindowClosed();
                 }
 
                 isAdvancedFilterOpen = true;
-                advancedFilterWindow.ShowDialog();
+                columnFilterWindow.ShowDialog();
 
                 UpdateHasActiveFilterState();
                 SourceDataGrid.UpdateFilterPanel();
@@ -1634,14 +1634,14 @@ namespace WWSearchDataGrid.Modern.WPF
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Error in AllowRuleValueFilteringWindow: {ex.Message}");
-                CloseAdvancedFilterWindow(false);
+                ClosecolumnFilterWindow(false);
             }
         }
 
         /// <summary>
         /// Handles the advanced filter window being closed
         /// </summary>
-        private void OnAdvancedFilterWindowClosed()
+        private void OncolumnFilterWindowClosed()
         {
             try
             {
@@ -1656,25 +1656,25 @@ namespace WWSearchDataGrid.Modern.WPF
                     SourceDataGrid?.ProcessTransformationFilter(this);
                 }
 
-                advancedFilterWindow = null;
+                columnFilterWindow = null;
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error in OnAdvancedFilterWindowClosed: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"Error in OncolumnFilterWindowClosed: {ex.Message}");
             }
         }
 
         /// <summary>
         /// Closes the advanced filter window
         /// </summary>
-        private void CloseAdvancedFilterWindow(bool updateFilters)
+        private void ClosecolumnFilterWindow(bool updateFilters)
         {
             try
             {
-                if (advancedFilterWindow != null)
+                if (columnFilterWindow != null)
                 {
                     // Remove the closed event handler to prevent actions during close
-                    if (advancedFilterWindow is Window window)
+                    if (columnFilterWindow is Window window)
                     {
                         foreach (var handler in window.GetClosedEventHandlers())
                         {
@@ -1691,14 +1691,14 @@ namespace WWSearchDataGrid.Modern.WPF
                     }
 
                     // Close the window
-                    advancedFilterWindow.Close();
-                    advancedFilterWindow = null;
+                    columnFilterWindow.Close();
+                    columnFilterWindow = null;
                 }
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error in CloseAdvancedFilterWindow: {ex.Message}");
-                advancedFilterWindow = null;
+                System.Diagnostics.Debug.WriteLine($"Error in ClosecolumnFilterWindow: {ex.Message}");
+                columnFilterWindow = null;
                 isAdvancedFilterOpen = false;
             }
         }

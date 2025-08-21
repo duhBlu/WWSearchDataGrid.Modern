@@ -763,15 +763,7 @@ namespace WWSearchDataGrid.Modern.Core
                         if (template.SelectedValues?.Any() == true)
                         {
                             var firstValue = template.SelectedValues.First();
-                            string excludedValue;
-                            if (firstValue is FilterListValue filterValue)
-                            {
-                                excludedValue = filterValue.Value?.ToString() ?? "null";
-                            }
-                            else
-                            {
-                                excludedValue = firstValue?.ToString() ?? "null";
-                            }
+                            var excludedValue = firstValue?.ToString() ?? "null";
                             return $"≠ '{excludedValue}'";
                         }
                         else
@@ -863,14 +855,7 @@ namespace WWSearchDataGrid.Modern.Core
             var values = new List<string>();
             foreach (var item in selectedValues)
             {
-                if (item is FilterListValue filterValue)
-                {
-                    values.Add(filterValue.Value?.ToString() ?? "(null)");
-                }
-                else
-                {
-                    values.Add(item?.ToString() ?? "(null)");
-                }
+                values.Add(item?.ToString() ?? "(null)");
             }
 
             if (values.Count == 0)
@@ -948,14 +933,7 @@ namespace WWSearchDataGrid.Modern.Core
                         if (template.SelectedValues?.Any() == true)
                         {
                             var firstValue = template.SelectedValues.First();
-                            if (firstValue is FilterListValue filterValue)
-                            {
-                                components.PrimaryValue = filterValue.Value?.ToString();
-                            }
-                            else
-                            {
-                                components.PrimaryValue = firstValue?.ToString();
-                            }
+                            components.PrimaryValue = firstValue?.ToString();
                         }
                         else
                         {
@@ -1144,14 +1122,7 @@ namespace WWSearchDataGrid.Modern.Core
             components.ValueItems.Clear();
             foreach (var item in selectedValues)
             {
-                if (item is FilterListValue filterValue)
-                {
-                    if (!string.IsNullOrEmpty(filterValue.Value?.ToString()))
-                    {
-                        components.ValueItems.Add(filterValue.Value.ToString());
-                    }
-                }
-                else if (item != null)
+                if (item != null && !string.IsNullOrEmpty(item.ToString()))
                 {
                     components.ValueItems.Add(item.ToString());
                 }

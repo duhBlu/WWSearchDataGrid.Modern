@@ -101,9 +101,6 @@ TopN, BottomN, AboveAverage, BelowAverage, Unique, Duplicate
 - Standard WPF convention for custom control libraries
 - Merges all control-specific theme files
 
-#### `/Templates/` - Reusable Components
-- **`FilterValueTemplates.xaml`** - Input templates for different data types
-- **`FilterValueTemplateSelector.cs`** - Logic for template selection
 
 #### `/Converters/` - Value Converters
 - IValueConverter implementations for data binding
@@ -151,7 +148,6 @@ SearchText    Manages State     Builds Expressions    Evaluates Items   Compiles
 
 ### UI Customization
 - **Control appearance**: Modify XAML in `/Themes/Controls/`
-- **Templates**: Update `/Templates/FilterValueTemplates.xaml`
 - **Styling**: Override styles in consuming applications
 
 ## 🎯 **Key Design Patterns**
@@ -190,7 +186,6 @@ SearchText    Manages State     Builds Expressions    Evaluates Items   Compiles
 ### Styling Problems
 - **Default styles**: `WWSearchDataGrid.Modern.WPF/Themes/Generic.xaml`
 - **Individual controls**: `WWSearchDataGrid.Modern.WPF/Themes/Controls/*.xaml`
-- **Templates**: `WWSearchDataGrid.Modern.WPF/Templates/FilterValueTemplates.xaml`
 
 ### Performance Issues
 - **Expression compilation**: `SearchTemplateController.UpdateFilterExpression()`

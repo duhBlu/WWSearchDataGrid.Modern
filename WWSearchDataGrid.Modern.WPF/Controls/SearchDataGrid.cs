@@ -99,11 +99,6 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
-        /// Gets the dictionary of column property info
-        /// </summary>
-        internal Dictionary<string, System.Reflection.PropertyInfo> ColumnPropertyInfo { get; } = new Dictionary<string, System.Reflection.PropertyInfo>();
-        
-        /// <summary>
         /// Gets the original unfiltered items source
         /// </summary>
         public System.Collections.IEnumerable OriginalItemsSource => originalItemsSource;
@@ -527,18 +522,19 @@ namespace WWSearchDataGrid.Modern.WPF
                 // Commit any edits
                 CommitEdit(DataGridEditingUnit.Row, true);
 
-                // Step 1: Apply data transformations first
+                // Step 1: Apply data transformations to build transformed data reference
                 ApplyDataTransformations();
 
-                // Step 2: Apply traditional filters to transformed data
+                // Step 2: Create enhanced filter that combines transformations and regular filters
                 // Check if filters are enabled before applying - respects FilterPanel checkbox
                 if (FilterPanel?.FiltersEnabled == true)
                 {
-                    var activeFilters = DataColumns.Where(d => d.SearchTemplateController?.HasCustomExpression == true && !IsTransformationFilter(d)).ToList();
+                    var activeRegularFilters = DataColumns.Where(d => d.SearchTemplateController?.HasCustomExpression == true && !IsTransformationFilter(d)).ToList();
+                    bool hasTransformations = HasActiveTransformations();
                     
-                    if (activeFilters.Count > 0)
+                    if (hasTransformations || activeRegularFilters.Count > 0)
                     {
-                        Items.Filter = item => EvaluateMultiColumnFilter(item, activeFilters);
+                        Items.Filter = item => EvaluateEnhancedFilter(item, activeRegularFilters, hasTransformations);
                     }
                     else
                     {
@@ -566,6 +562,34 @@ namespace WWSearchDataGrid.Modern.WPF
             {
                 MessageBox.Show($"Error filtering items: {ex.Message}");
             }
+        }
+
+        /// <summary>
+        /// Enhanced filter evaluation that combines transformation filtering and regular column filtering
+        /// </summary>
+        /// <param name="item">The item to evaluate</param>
+        /// <param name="activeRegularFilters">List of active regular column filters</param>
+        /// <param name="hasTransformations">Whether transformation filtering should be applied</param>
+        /// <returns>True if the item passes all filters</returns>
+        private bool EvaluateEnhancedFilter(object item, List<ColumnSearchBox> activeRegularFilters, bool hasTransformations)
+        {
+            // Step 1: Check transformation filtering first (most restrictive)
+            if (hasTransformations && transformedItemsSource != originalItemsSource)
+            {
+                // Item must exist in the transformed data set to pass transformation filtering
+                bool passesTransformationFilter = transformedItemsSource.Cast<object>().Contains(item);
+                if (!passesTransformationFilter)
+                    return false;
+            }
+
+            // Step 2: Apply regular column filters
+            if (activeRegularFilters.Count > 0)
+            {
+                return EvaluateMultiColumnFilter(item, activeRegularFilters);
+            }
+
+            // No regular filters or passed all filters
+            return true;
         }
 
         /// <summary>
@@ -695,18 +719,13 @@ namespace WWSearchDataGrid.Modern.WPF
         {
             if (originalItemsSource != null)
             {
+                // Update reference - ItemsSource remains unchanged to preserve event connectivity
                 transformedItemsSource = originalItemsSource;
                 
-                var currentFilter = Items.Filter;
+                // Clear the filter to show all items from original source
                 Items.Filter = null;
                 
-                _isApplyingTransformation = true;
-                ItemsSource = originalItemsSource;
-                _isApplyingTransformation = false;
-                
-                Items.Filter = currentFilter;
-                
-                System.Diagnostics.Debug.WriteLine($"After restore: ItemsSource count = {Items.Count}");
+                System.Diagnostics.Debug.WriteLine($"ForceRestoreOriginalData: ItemsSource count = {Items.Count} (event connectivity preserved)");
             }
         }
 
@@ -1142,7 +1161,8 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
-        /// Applies all active data transformations to create the transformed ItemsSource
+        /// Applies all active data transformations by updating the transformedItemsSource reference
+        /// but keeping ItemsSource unchanged to preserve event connectivity
         /// </summary>
         private void ApplyDataTransformations()
         {
@@ -1153,21 +1173,8 @@ namespace WWSearchDataGrid.Modern.WPF
             {
                 if (_columnTransformationResults.Count == 0)
                 {
-                    // No transformations - restore original data
-                    if (transformedItemsSource != originalItemsSource)
-                    {
-                        transformedItemsSource = originalItemsSource;
-                        
-                        // Restore the original ItemsSource
-                        var savedFilter = Items.Filter;
-                        Items.Filter = null;
-                        
-                        _isApplyingTransformation = true;
-                        ItemsSource = originalItemsSource;
-                        _isApplyingTransformation = false;
-                        
-                        Items.Filter = savedFilter;
-                    }
+                    // No transformations - reference original data
+                    transformedItemsSource = originalItemsSource;
                     return;
                 }
 
@@ -1189,34 +1196,26 @@ namespace WWSearchDataGrid.Modern.WPF
                     }
                 }
 
-                // Convert to editable collection to support DataGrid editing
+                // Store transformed data reference without changing ItemsSource
+                // The filtering will be handled by the enhanced filter predicate system
                 if (finalResult is System.Collections.IList editableResult)
                 {
                     transformedItemsSource = editableResult;
                 }
                 else
                 {
-                    // Only convert if necessary, use List instead of ObservableCollection for better performance
                     transformedItemsSource = finalResult.ToList();
                 }
 
-                // Update the ItemsSource to use transformed data
-                var currentFilter = Items.Filter;
-                Items.Filter = null;
-                
-                _isApplyingTransformation = true;
-                ItemsSource = transformedItemsSource;
-                _isApplyingTransformation = false;
-                
-                Items.Filter = currentFilter;
+                System.Diagnostics.Debug.WriteLine($"ApplyDataTransformations: Prepared {transformedItemsSource.Cast<object>().Count()} transformed items (ItemsSource unchanged)");
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Error applying data transformations: {ex.Message}");
                 MessageBox.Show($"Error applying data transformations: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 
-                // Fall back to original data
-                RestoreOriginalData();
+                // Fall back to original data reference
+                transformedItemsSource = originalItemsSource;
             }
         }
 
@@ -1227,16 +1226,9 @@ namespace WWSearchDataGrid.Modern.WPF
         {
             try
             {
+                // Simply update the transformed reference - ItemsSource stays unchanged
                 transformedItemsSource = originalItemsSource;
-                
-                var currentFilter = Items.Filter;
-                Items.Filter = null;
-                
-                _isApplyingTransformation = true;
-                ItemsSource = originalItemsSource;
-                _isApplyingTransformation = false;
-                
-                Items.Filter = currentFilter;
+                System.Diagnostics.Debug.WriteLine("RestoreOriginalData: Restored original data reference (ItemsSource unchanged)");
             }
             catch (Exception ex)
             {
@@ -1256,17 +1248,10 @@ namespace WWSearchDataGrid.Modern.WPF
                 // DON'T clear transformation results - just temporarily bypass them
                 // This preserves transformation definitions for when filters are re-enabled
                 
-                // Direct assignment - no conversions
+                // Direct reference assignment - ItemsSource stays unchanged
                 transformedItemsSource = originalItemsSource;
                 
-                var currentFilter = Items.Filter;
-                Items.Filter = null;
-                
-                _isApplyingTransformation = true;
-                ItemsSource = originalItemsSource;  // Direct reference
-                _isApplyingTransformation = false;
-                
-                Items.Filter = currentFilter;
+                System.Diagnostics.Debug.WriteLine("RestoreOriginalDataQuick: Quick restore completed (ItemsSource unchanged)");
             }
             catch (Exception ex)
             {

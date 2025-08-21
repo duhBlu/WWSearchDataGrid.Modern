@@ -350,12 +350,9 @@ namespace WWSearchDataGrid.Modern.WPF
             if (original.SelectedValues?.Any() == true)
             {
                 clone.SelectedValues.Clear();
-                foreach (FilterListValue value in original.SelectedValues)
+                foreach (var value in original.SelectedValues)
                 {
-                    clone.SelectedValues.Add(new FilterListValue
-                    {
-                        Value = value.Value
-                    });
+                    clone.SelectedValues.Add(value);
                 }
             }
 

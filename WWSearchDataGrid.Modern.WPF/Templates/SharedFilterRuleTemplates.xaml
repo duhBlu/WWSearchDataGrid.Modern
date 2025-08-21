@@ -154,7 +154,7 @@
                                 </Grid.ColumnDefinitions>
                                 <ComboBox Style="{StaticResource Editable_ComboBox_Style}"
                                           Grid.Column="0"
-                                          Text="{Binding Value}"
+                                          Text="{Binding}"
                                           DisplayMemberPath="Value"
                                           Tag="Type or select..."
                                           ItemsSource="{Binding DataContext.AvailableValues, RelativeSource={RelativeSource AncestorType=ListBox}}" />

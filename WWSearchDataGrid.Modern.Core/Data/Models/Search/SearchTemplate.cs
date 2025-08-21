@@ -237,7 +237,7 @@ namespace WWSearchDataGrid.Modern.Core
             {
                 if (addValueCommand == null)
                 {
-                    addValueCommand = new RelayCommand(_ => SelectedValues.Add(new FilterListValue { Value = null }));
+                    addValueCommand = new RelayCommand(_ => SelectedValues.Add(null));
                 }
                 return addValueCommand;
             }
@@ -251,10 +251,7 @@ namespace WWSearchDataGrid.Modern.Core
                 {
                     removeValueCommand = new RelayCommand(value =>
                     {
-                        if (value is FilterListValue listValue)
-                        {
-                            SelectedValues.Remove(listValue);
-                        }
+                        SelectedValues.Remove(value);
                     });
                 }
                 return removeValueCommand;
@@ -505,13 +502,13 @@ namespace WWSearchDataGrid.Modern.Core
 
         private Expression<Func<object, bool>> BuildIsAnyOfExpression()
         {
-            var values = SelectedValues.Select(v => (v as FilterListValue)?.Value ?? v).ToList();
+            var values = SelectedValues.ToList();
             return obj => values.Contains(obj);
         }
 
         private Expression<Func<object, bool>> BuildIsNoneOfExpression()
         {
-            var values = SelectedValues.Select(v => (v as FilterListValue)?.Value ?? v).ToList();
+            var values = SelectedValues.ToList();
             return obj => !values.Contains(obj);
         }
 

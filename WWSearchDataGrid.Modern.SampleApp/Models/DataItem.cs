@@ -7,11 +7,8 @@ namespace WWSearchDataGrid.Modern.SampleApp
 {
     public class DataItem : ObservableObject
     {
-        // Essential business context (minimal)
         public string CustomerName { get; set; }
-        public string ProductCategory { get; set; }
-        public string Region { get; set; }
-
+        
         // Complete .NET data type matrix - Boolean types
         public bool BoolValue { get; set; }
         public bool? NullableBoolValue { get; set; }
@@ -50,17 +47,7 @@ namespace WWSearchDataGrid.Modern.SampleApp
         public Guid? NullableGuidValue { get; set; }
 
         // Enum types
-        public OrderStatus StatusValue { get; set; }
-        public OrderStatus? NullableStatusValue { get; set; }
         public Priority PriorityValue { get; set; }
         public Priority? NullablePriorityValue { get; set; }
-
-        // Business datetimes with time precision
-        public DateTime OrderDateTime { get; set; }
-        public DateTime? ShippedDateTime { get; set; }
-        public DateTime DueDateTime { get; set; }
-        public DateTime? CompletedDateTime { get; set; }
-        public TimeSpan ProcessingTime { get; set; }
-        public TimeSpan? DeliveryTime { get; set; }
     }
 }

@@ -29,11 +29,6 @@ namespace WWSearchDataGrid.Modern.Core.Performance
         private readonly ConcurrentDictionary<string, ColumnValueMetadata> _columnMetadata =
             new ConcurrentDictionary<string, ColumnValueMetadata>();
 
-        // Removed FilterValueViewModel cache - rules-only interface
-
-
-        // Removed bulk operation trackers - no longer needed without FilterValueViewModels
-
         private readonly Lazy<ColumnValueProvider> _columnValueProvider =
             new Lazy<ColumnValueProvider>(() => new ColumnValueProvider());
 
@@ -117,8 +112,6 @@ namespace WWSearchDataGrid.Modern.Core.Performance
         {
             var metadata = GetOrCreateMetadata(columnKey, bindingPath);
 
-            // Removed bulk operation detection - no longer needed without FilterValueViewModels
-
             await Task.Run(() =>
             {
                 lock (metadata.SyncRoot)
@@ -170,8 +163,6 @@ namespace WWSearchDataGrid.Modern.Core.Performance
             });
         }
 
-        // Removed GetOrCreateFilterViewModel method - rules-only interface
-
         /// <summary>
         /// Clears all caches
         /// </summary>
@@ -183,8 +174,6 @@ namespace WWSearchDataGrid.Modern.Core.Performance
             // Clear column metadata
             var metadataToDispose = _columnMetadata.Values.ToList();
             _columnMetadata.Clear();
-            
-            // Removed bulk operation tracker cleanup - no longer needed
             
             // Force garbage collection for coordinated cleanup
             if (metadataToDispose.Count > 10)

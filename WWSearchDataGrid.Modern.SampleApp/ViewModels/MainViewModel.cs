@@ -19,7 +19,7 @@ namespace WWSearchDataGrid.Modern.SampleApp
         #region Observable Properties
 
         [ObservableProperty]
-        private ObservableCollection<DataItem> _items = new();
+        private ObservableCollection<DataItem>? _items = new();
 
         [ObservableProperty]
         private ObservableCollection<ComboBoxItem> _comboBoxItems = new();
@@ -56,18 +56,6 @@ namespace WWSearchDataGrid.Modern.SampleApp
             "Underwood", "Valdez", "Wilson", "Young", "Zhang", "Adams", "Baker", "Cooper", "Dixon", "Edwards",
             "Ford", "Green", "Hall", "Irving", "Jones", "Kelly", "Lewis", "Moore", "Nixon", "Owen",
             "Powell", "Reed", "Stone", "Thomas", "White", "Allen", "Bell", "Carter", "Foster", "Gray"
-        };
-        private static readonly string[] Categories =
-        {
-            "Electronics", "Computers", "Mobile Devices", "Audio Equipment", "Gaming",
-            "Home Appliances", "Kitchen & Dining", "Office Supplies", "Furniture", "Sports & Outdoors",
-            "Health & Beauty", "Automotive", "Books & Media", "Clothing", "Jewelry",
-            "Tools & Hardware", "Garden & Patio", "Pet Supplies", "Baby & Kids", "Travel Accessories"
-        };
-        private static readonly string[] Regions =
-        {
-            "North America", "South America", "Europe", "Asia Pacific",
-            "Middle East", "Africa", "Central Asia", "Oceania"
         };
         private static readonly string[] StringTypes =
         {
@@ -140,6 +128,7 @@ namespace WWSearchDataGrid.Modern.SampleApp
             });
 
             var merged = new ObservableCollection<DataItem>(Items.Concat(buffer));
+            Items = null;
             Items = merged; 
             ItemCount = Items.Count;
         }
@@ -158,8 +147,6 @@ namespace WWSearchDataGrid.Modern.SampleApp
             return new DataItem
             {
                 CustomerName = $"{FirstNames[rnd.Next(FirstNames.Length)]} {LastNames[rnd.Next(LastNames.Length)]}",
-                ProductCategory = Categories[rnd.Next(Categories.Length)],
-                Region = Regions[rnd.Next(Regions.Length)],
                 BoolValue = rnd.NextDouble() < 0.7,
                 NullableBoolValue = rnd.NextDouble() < 0.1 ? null : (bool?)(rnd.NextDouble() < 0.6),
                 IntValue = rnd.Next(1, 100000),
@@ -185,16 +172,8 @@ namespace WWSearchDataGrid.Modern.SampleApp
                 NullableTimeSpanValue = rnd.NextDouble() < 0.19 ? null : (TimeSpan?)TimeSpan.FromHours(rnd.NextDouble() * 24),
                 GuidValue = Guid.NewGuid(),
                 NullableGuidValue = rnd.NextDouble() < 0.22 ? null : (Guid?)Guid.NewGuid(),
-                StatusValue = statusValue,
-                NullableStatusValue = rnd.NextDouble() < 0.21 ? null : (OrderStatus?)statusValue,
                 PriorityValue = priorityValue,
                 NullablePriorityValue = rnd.NextDouble() < 0.23 ? null : (Priority?)priorityValue,
-                OrderDateTime = orderDateTime,
-                ShippedDateTime = statusValue >= OrderStatus.Shipped ? (DateTime?)orderDateTime.AddDays(rnd.Next(1, 7)) : null,
-                DueDateTime = orderDateTime.AddDays(rnd.Next(7, 30)).AddHours(rnd.Next(8, 18)),
-                CompletedDateTime = statusValue == OrderStatus.Completed ? (DateTime?)orderDateTime.AddDays(rnd.Next(3, 14)) : null,
-                ProcessingTime = TimeSpan.FromMinutes(rnd.Next(15, 300)),
-                DeliveryTime = statusValue >= OrderStatus.Delivered ? (TimeSpan?)TimeSpan.FromDays(rnd.Next(1, 10)) : null,
             };
         }
 
