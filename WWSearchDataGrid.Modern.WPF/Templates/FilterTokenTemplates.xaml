@@ -167,7 +167,7 @@
         <templates:FilterTokenTemplateSelector.TemplateLogicalConnectorTemplate>
             <DataTemplate>
                 <Border Background="#cee8fb"
-                        Margin="6,2,2,0"
+                        Margin="2,2,2,0"
                         Padding="5,1"
                         Height="22"
                         CornerRadius="6"
