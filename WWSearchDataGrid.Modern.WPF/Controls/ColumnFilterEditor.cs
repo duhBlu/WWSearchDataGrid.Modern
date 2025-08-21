@@ -257,9 +257,6 @@ namespace WWSearchDataGrid.Modern.WPF
             {
                 // Delegate to SearchTemplateController - it handles all the logic
                 SearchTemplateController.AddSearchTemplate(markAsChanged: true);
-                
-                // Update UI state
-                UpdateOperatorVisibility();
             }
             catch (Exception ex)
             {

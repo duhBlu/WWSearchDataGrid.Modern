@@ -112,8 +112,13 @@ namespace WWSearchDataGrid.Modern.Core.Strategies
             RegisterEvaluator(new IsNoneOfEvaluator());
             RegisterEvaluator(new IsOnAnyOfDatesEvaluator());
 
-            // Collection context evaluators (these return false as they need special handling)
-            RegisterEvaluator(new CollectionContextEvaluator());
+            // Collection context evaluators
+            RegisterEvaluator(new TopNEvaluator());
+            RegisterEvaluator(new BottomNEvaluator());
+            RegisterEvaluator(new AboveAverageEvaluator());
+            RegisterEvaluator(new BelowAverageEvaluator());
+            RegisterEvaluator(new UniqueEvaluator());
+            RegisterEvaluator(new DuplicateEvaluator());
         }
     }
 }

@@ -88,6 +88,37 @@ namespace WWSearchDataGrid.Modern.Core
             set { SetProperty(value, ref isOperatorVisible); }
         }
 
+        /// <summary>
+        /// Gets the current search condition for this template
+        /// </summary>
+        public SearchCondition SearchCondition
+        {
+            get
+            {
+                // Create the same SearchCondition that would be used in BuildExpression
+                var targetType = GetTargetType();
+                return new SearchCondition(targetType, SearchType, SelectedValue, SelectedSecondaryValue);
+            }
+        }
+
+        /// <summary>
+        /// Gets the target type for the search condition
+        /// </summary>
+        private Type GetTargetType()
+        {
+            switch (ColumnDataType)
+            {
+                case ColumnDataType.DateTime:
+                    return typeof(DateTime);
+                case ColumnDataType.Number:
+                    return typeof(decimal);
+                case ColumnDataType.Boolean:
+                    return typeof(bool);
+                default:
+                    return typeof(string);
+            }
+        }
+
         private IEnumerable<ValueAggregateMetadata> availableValues = new List<ValueAggregateMetadata>();
         public IEnumerable<ValueAggregateMetadata> AvailableValues 
         { 

@@ -1,7 +1,43 @@
 using System;
+using System.Collections.Generic;
 
 namespace WWSearchDataGrid.Modern.Core.Strategies
 {
+    /// <summary>
+    /// Interface providing collection context for statistical and ranking operations
+    /// </summary>
+    public interface ICollectionContext
+    {
+        /// <summary>
+        /// Gets the full collection being filtered
+        /// </summary>
+        IEnumerable<object> Items { get; }
+
+        /// <summary>
+        /// Gets the column path for context-sensitive operations
+        /// </summary>
+        string ColumnPath { get; }
+
+        /// <summary>
+        /// Gets the average value for the column (lazy loaded)
+        /// </summary>
+        double? GetAverage();
+
+        /// <summary>
+        /// Gets items sorted by column value in descending order (lazy loaded)
+        /// </summary>
+        IEnumerable<object> GetSortedDescending();
+
+        /// <summary>
+        /// Gets items sorted by column value in ascending order (lazy loaded)
+        /// </summary>
+        IEnumerable<object> GetSortedAscending();
+
+        /// <summary>
+        /// Gets value frequency map for uniqueness operations (lazy loaded)
+        /// </summary>
+        Dictionary<object, List<object>> GetValueGroups();
+    }
     /// <summary>
     /// Interface for search condition evaluators
     /// </summary>
@@ -21,6 +57,15 @@ namespace WWSearchDataGrid.Modern.Core.Strategies
         bool Evaluate(object columnValue, SearchCondition searchCondition);
 
         /// <summary>
+        /// Evaluates whether a column value matches the search condition with collection context
+        /// </summary>
+        /// <param name="columnValue">Value from the column being filtered</param>
+        /// <param name="searchCondition">Search condition to evaluate</param>
+        /// <param name="collectionContext">Collection context for statistical and ranking operations</param>
+        /// <returns>True if the value matches the condition, false otherwise</returns>
+        bool Evaluate(object columnValue, SearchCondition searchCondition, ICollectionContext collectionContext);
+
+        /// <summary>
         /// Gets the priority of this evaluator (higher values processed first)
         /// </summary>
         int Priority { get; }
@@ -31,6 +76,11 @@ namespace WWSearchDataGrid.Modern.Core.Strategies
         /// <param name="searchType">Search type to check</param>
         /// <returns>True if this evaluator can handle the search type</returns>
         bool CanHandle(SearchType searchType);
+
+        /// <summary>
+        /// Whether this evaluator requires collection context to function properly
+        /// </summary>
+        bool RequiresCollectionContext { get; }
     }
 
     /// <summary>
@@ -49,9 +99,23 @@ namespace WWSearchDataGrid.Modern.Core.Strategies
         public virtual int Priority => 100;
 
         /// <summary>
+        /// Whether this evaluator requires collection context (default: false)
+        /// </summary>
+        public virtual bool RequiresCollectionContext => false;
+
+        /// <summary>
         /// Evaluates whether a column value matches the search condition
         /// </summary>
         public abstract bool Evaluate(object columnValue, SearchCondition searchCondition);
+
+        /// <summary>
+        /// Evaluates whether a column value matches the search condition with collection context
+        /// Default implementation delegates to the parameterless version
+        /// </summary>
+        public virtual bool Evaluate(object columnValue, SearchCondition searchCondition, ICollectionContext collectionContext)
+        {
+            return Evaluate(columnValue, searchCondition);
+        }
 
         /// <summary>
         /// Default implementation checks if search type matches

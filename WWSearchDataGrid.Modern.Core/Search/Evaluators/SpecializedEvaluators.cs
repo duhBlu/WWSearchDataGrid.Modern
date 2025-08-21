@@ -280,29 +280,4 @@ namespace WWSearchDataGrid.Modern.Core.Strategies
         }
     }
 
-    /// <summary>
-    /// Evaluator for collection-context filters that need special handling
-    /// </summary>
-    public class CollectionContextEvaluator : SearchEvaluatorBase
-    {
-        public override SearchType SearchType => SearchType.TopN; // Default, but handles multiple
-
-        public override int Priority => 50; // Lower priority
-
-        public override bool CanHandle(SearchType searchType)
-        {
-            return searchType == SearchType.TopN ||
-                   searchType == SearchType.BottomN ||
-                   searchType == SearchType.AboveAverage ||
-                   searchType == SearchType.BelowAverage ||
-                   searchType == SearchType.Unique ||
-                   searchType == SearchType.Duplicate;
-        }
-
-        public override bool Evaluate(object columnValue, SearchCondition searchCondition)
-        {
-            // These require collection context and are handled at SearchTemplateController level
-            return false;
-        }
-    }
 }

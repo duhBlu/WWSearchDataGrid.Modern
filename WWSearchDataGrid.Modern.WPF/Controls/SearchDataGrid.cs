@@ -27,12 +27,8 @@ namespace WWSearchDataGrid.Modern.WPF
         private readonly TokenSource tokenSource = new TokenSource();
         private readonly ObservableCollection<ColumnSearchBox> dataColumns = new ObservableCollection<ColumnSearchBox>();
         private System.Collections.IEnumerable originalItemsSource;
-        private System.Collections.IEnumerable transformedItemsSource;
         private bool initialUpdateLayoutCompleted;
         private SearchTemplateController globalFilterController;
-        private readonly Dictionary<string, IEnumerable<object>> _columnTransformationResults = new Dictionary<string, IEnumerable<object>>();
-        private bool _isApplyingTransformation = false;
-        private bool _isEditingTransformedData = false;
 
         #endregion
 
@@ -103,28 +99,7 @@ namespace WWSearchDataGrid.Modern.WPF
         /// </summary>
         public System.Collections.IEnumerable OriginalItemsSource => originalItemsSource;
 
-        /// <summary>
-        /// Gets the transformed items source (after data transformations but before traditional filtering)
-        /// </summary>
-        public System.Collections.IEnumerable TransformedItemsSource => transformedItemsSource ?? originalItemsSource;
 
-        /// <summary>
-        /// Gets the active data transformations by column path
-        /// </summary>
-        public Dictionary<string, DataTransformation> ActiveTransformations
-        {
-            get
-            {
-                // Create a dictionary showing which columns have active transformations
-                var result = new Dictionary<string, DataTransformation>();
-                foreach (var columnPath in _columnTransformationResults.Keys)
-                {
-                    // Create a dummy transformation to indicate this column has active transformations
-                    result[columnPath] = new DataTransformation(DataTransformationType.None, columnPath, null, ColumnDataType.String, "Active Transformation");
-                }
-                return result;
-            }
-        }
 
         /// <summary>
         /// Gets the filter panel control
@@ -229,13 +204,13 @@ namespace WWSearchDataGrid.Modern.WPF
         #region Editing Event Handlers
 
         /// <summary>
-        /// Handles the beginning of edit operations to track if we're editing transformed data
+        /// Handles the beginning of edit operations
         /// </summary>
         private void OnBeginningEdit(object sender, DataGridBeginningEditEventArgs e)
         {
             try
             {
-                _isEditingTransformedData = HasActiveTransformations();
+                // Edit handling is simplified - no special transformation tracking needed
             }
             catch (Exception ex)
             {
@@ -244,18 +219,13 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
-        /// Handles row edit ending to sync changes back to original data if needed
+        /// Handles row edit ending
         /// </summary>
         private void OnRowEditEnding(object sender, DataGridRowEditEndingEventArgs e)
         {
             try
             {
-                if (_isEditingTransformedData && e.EditAction == DataGridEditAction.Commit)
-                {
-                    // The change will be automatically reflected in the original data
-                    // since both collections contain references to the same objects
-                    // No additional synchronization needed for reference types
-                }
+                // Standard row editing - no special handling needed
             }
             catch (Exception ex)
             {
@@ -264,18 +234,13 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
-        /// Handles cell edit ending to sync changes back to original data if needed
+        /// Handles cell edit ending
         /// </summary>
         private void OnCellEditEnding(object sender, DataGridCellEditEndingEventArgs e)
         {
             try
             {
-                if (_isEditingTransformedData && e.EditAction == DataGridEditAction.Commit)
-                {
-                    // For reference types, changes are automatically synchronized
-                    // For value types or complex scenarios, additional synchronization might be needed
-                    // This can be extended based on specific data model requirements
-                }
+                // Standard cell editing - no special handling needed
             }
             catch (Exception ex)
             {
@@ -398,18 +363,7 @@ namespace WWSearchDataGrid.Modern.WPF
         {
             base.OnItemsSourceChanged(oldValue, newValue);
 
-            // Only store the original items source if we're not currently applying a transformation
-            // This prevents overwriting the original data when we set ItemsSource to transformed data
-            if (!_isApplyingTransformation)
-            {
-                originalItemsSource = newValue;
-                
-                // Clear any existing transformations when new data is loaded
-                if (_columnTransformationResults.Count > 0)
-                {
-                    _columnTransformationResults.Clear();
-                }
-            }
+            originalItemsSource = newValue;
 
             // Register for collection changed events if the source supports it
             UnregisterCollectionChangedEvent(oldValue);
@@ -522,19 +476,15 @@ namespace WWSearchDataGrid.Modern.WPF
                 // Commit any edits
                 CommitEdit(DataGridEditingUnit.Row, true);
 
-                // Step 1: Apply data transformations to build transformed data reference
-                ApplyDataTransformations();
-
-                // Step 2: Create enhanced filter that combines transformations and regular filters
+                // Create unified filter that handles both regular and collection-context filters together
                 // Check if filters are enabled before applying - respects FilterPanel checkbox
                 if (FilterPanel?.FiltersEnabled == true)
                 {
-                    var activeRegularFilters = DataColumns.Where(d => d.SearchTemplateController?.HasCustomExpression == true && !IsTransformationFilter(d)).ToList();
-                    bool hasTransformations = HasActiveTransformations();
+                    var activeFilters = DataColumns.Where(d => d.SearchTemplateController?.HasCustomExpression == true).ToList();
                     
-                    if (hasTransformations || activeRegularFilters.Count > 0)
+                    if (activeFilters.Count > 0)
                     {
-                        Items.Filter = item => EvaluateEnhancedFilter(item, activeRegularFilters, hasTransformations);
+                        Items.Filter = item => EvaluateUnifiedFilter(item, activeFilters);
                     }
                     else
                     {
@@ -565,31 +515,120 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
-        /// Enhanced filter evaluation that combines transformation filtering and regular column filtering
+        /// Unified filter evaluation that handles both regular and collection-context filters with proper AND/OR logic
         /// </summary>
         /// <param name="item">The item to evaluate</param>
-        /// <param name="activeRegularFilters">List of active regular column filters</param>
-        /// <param name="hasTransformations">Whether transformation filtering should be applied</param>
-        /// <returns>True if the item passes all filters</returns>
-        private bool EvaluateEnhancedFilter(object item, List<ColumnSearchBox> activeRegularFilters, bool hasTransformations)
+        /// <param name="activeFilters">List of all active column filters</param>
+        /// <returns>True if the item passes all filters according to their logical operators</returns>
+        private bool EvaluateUnifiedFilter(object item, List<ColumnSearchBox> activeFilters)
         {
-            // Step 1: Check transformation filtering first (most restrictive)
-            if (hasTransformations && transformedItemsSource != originalItemsSource)
-            {
-                // Item must exist in the transformed data set to pass transformation filtering
-                bool passesTransformationFilter = transformedItemsSource.Cast<object>().Contains(item);
-                if (!passesTransformationFilter)
-                    return false;
-            }
+            if (activeFilters.Count == 0)
+                return true;
 
-            // Step 2: Apply regular column filters
-            if (activeRegularFilters.Count > 0)
-            {
-                return EvaluateMultiColumnFilter(item, activeRegularFilters);
-            }
+            // Create collection contexts for filters that need them (lazy evaluation)
+            var collectionContexts = new Dictionary<string, WWSearchDataGrid.Modern.Core.Strategies.ICollectionContext>();
 
-            // No regular filters or passed all filters
-            return true;
+            try
+            {
+                // First filter is always included (no preceding operator)
+                bool result = EvaluateFilterWithContext(item, activeFilters[0], collectionContexts);
+
+                // Process remaining filters with their logical operators
+                for (int i = 1; i < activeFilters.Count; i++)
+                {
+                    var filter = activeFilters[i];
+                    bool filterResult = EvaluateFilterWithContext(item, filter, collectionContexts);
+
+                    // Apply the logical operator from this filter
+                    // Get the operator from the first search group
+                    string operatorName = "And"; // Default
+                    if (filter.SearchTemplateController?.SearchGroups?.Count > 0)
+                    {
+                        operatorName = filter.SearchTemplateController.SearchGroups[0].OperatorName ?? "And";
+                    }
+
+                    if (operatorName == "Or")
+                    {
+                        result = result || filterResult;
+                    }
+                    else // AND is default
+                    {
+                        result = result && filterResult;
+                    }
+
+                    // Short-circuit optimization: if result is false and next operator is AND, we can stop
+                    string nextOperator = "And";
+                    if (i + 1 < activeFilters.Count && 
+                        activeFilters[i + 1].SearchTemplateController?.SearchGroups?.Count > 0)
+                    {
+                        nextOperator = activeFilters[i + 1].SearchTemplateController.SearchGroups[0].OperatorName ?? "And";
+                    }
+                    if (!result && nextOperator != "Or")
+                    {
+                        break;
+                    }
+                }
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error in unified filter evaluation: {ex.Message}");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Evaluates a single filter against an item, creating collection context if needed
+        /// </summary>
+        private bool EvaluateFilterWithContext(object item, ColumnSearchBox filter, Dictionary<string, WWSearchDataGrid.Modern.Core.Strategies.ICollectionContext> collectionContexts)
+        {
+            try
+            {
+                // Get the property value for this filter
+                object propertyValue = ReflectionHelper.GetPropValue(item, filter.BindingPath);
+
+                // Check if this filter requires collection context
+                bool needsCollectionContext = DoesFilterRequireCollectionContext(filter);
+
+                if (needsCollectionContext)
+                {
+                    // Get or create collection context for this column
+                    if (!collectionContexts.TryGetValue(filter.BindingPath, out var collectionContext))
+                    {
+                        var sourceItems = originalItemsSource?.Cast<object>() ?? Enumerable.Empty<object>();
+                        collectionContext = new WWSearchDataGrid.Modern.Core.CollectionContext(sourceItems, filter.BindingPath);
+                        collectionContexts[filter.BindingPath] = collectionContext;
+                    }
+
+                    // Use the SearchTemplateController with collection context
+                    return filter.SearchTemplateController.EvaluateWithCollectionContext(propertyValue, collectionContext);
+                }
+                else
+                {
+                    // Standard evaluation without collection context
+                    return filter.SearchTemplateController.FilterExpression(propertyValue);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error evaluating filter for column {filter.BindingPath}: {ex.Message}");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Determines if a filter requires collection context for evaluation
+        /// </summary>
+        private bool DoesFilterRequireCollectionContext(ColumnSearchBox filter)
+        {
+            if (filter?.SearchTemplateController?.SearchGroups == null)
+                return false;
+
+            // Check if any search template in any group requires collection context
+            return filter.SearchTemplateController.SearchGroups
+                .SelectMany(g => g.SearchTemplates)
+                .Any(t => SearchEngine.RequiresCollectionContext(t.SearchType));
         }
 
         /// <summary>
@@ -719,8 +758,7 @@ namespace WWSearchDataGrid.Modern.WPF
         {
             if (originalItemsSource != null)
             {
-                // Update reference - ItemsSource remains unchanged to preserve event connectivity
-                transformedItemsSource = originalItemsSource;
+                // No longer needed - using unified filtering approach
                 
                 // Clear the filter to show all items from original source
                 Items.Filter = null;
@@ -1051,229 +1089,64 @@ namespace WWSearchDataGrid.Modern.WPF
 
         #endregion
 
-        #region Data Transformation Methods
-
         /// <summary>
-        /// Sets a data transformation for a specific column
-        /// </summary>
-        /// <param name="columnPath">The column property path</param>
-        /// <param name="transformation">The transformation to apply</param>
-        public void SetDataTransformation(string columnPath, DataTransformation transformation)
-        {
-            if (string.IsNullOrEmpty(columnPath))
-                return;
-
-            if (transformation == null || transformation.Type == DataTransformationType.None)
-            {
-                ClearDataTransformation(columnPath);
-                return;
-            }
-
-            // Validate the transformation
-            if (!transformation.IsValid())
-            {
-                MessageBox.Show($"Invalid transformation: {transformation.GetDescription()}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                return;
-            }
-
-            // Set the column path if not already set
-            if (string.IsNullOrEmpty(transformation.ColumnPath))
-                transformation.ColumnPath = columnPath;
-
-            // Apply the transformation directly
-            var objectData = originalItemsSource.Cast<object>();
-            var result = DataTransformationEngine.ApplyTransformation(objectData, transformation);
-            _columnTransformationResults[columnPath] = result;
-
-            // Apply the transformations and filtering
-            FilterItemsSource();
-        }
-
-        /// <summary>
-        /// Clears the data transformation for a specific column
+        /// Legacy method - transformations now handled by unified SearchEngine
         /// </summary>
         /// <param name="columnPath">The column property path</param>
         public void ClearDataTransformation(string columnPath)
         {
-            if (string.IsNullOrEmpty(columnPath))
-                return;
-
-            if (_columnTransformationResults.ContainsKey(columnPath))
-            {
-                System.Diagnostics.Debug.WriteLine($"ClearDataTransformation: Clearing transformation for column {columnPath}");
-                _columnTransformationResults.Remove(columnPath);
-                
-                // If no transformations remain, restore original data
-                if (_columnTransformationResults.Count == 0)
-                {
-                    System.Diagnostics.Debug.WriteLine("No transformations remain - restoring original data");
-                    RestoreOriginalData();
-                }
-                else
-                {
-                    // Re-apply remaining transformations
-                    FilterItemsSource();
-                }
-            }
+            // No longer needed - transformations handled by unified SearchEngine
+            // Just re-apply filters in case this is called during cleanup
+            FilterItemsSource();
         }
 
         /// <summary>
-        /// Clears all data transformations
+        /// Legacy method - transformations now handled by unified SearchEngine
         /// </summary>
         public void ClearAllDataTransformations()
         {
-            if (_columnTransformationResults.Count > 0)
-            {
-                System.Diagnostics.Debug.WriteLine($"ClearAllDataTransformations: Clearing {_columnTransformationResults.Count} transformations");
-                _columnTransformationResults.Clear();
-                
-                // Immediately restore original data
-                RestoreOriginalData();
-            }
+            // No longer needed - transformations handled by unified SearchEngine
+            // Just re-apply filters in case this is called during cleanup
+            FilterItemsSource();
         }
 
         /// <summary>
-        /// Gets the active data transformation for a column
+        /// Legacy method - transformations now handled by unified SearchEngine
         /// </summary>
         /// <param name="columnPath">The column property path</param>
-        /// <returns>The active transformation or null if none</returns>
+        /// <returns>Always null - transformations handled by unified SearchEngine</returns>
         public DataTransformation GetDataTransformation(string columnPath)
         {
-            if (string.IsNullOrEmpty(columnPath))
-                return null;
-
-            // Return a dummy transformation if this column has active transformations
-            if (_columnTransformationResults.ContainsKey(columnPath))
-            {
-                return new DataTransformation(DataTransformationType.None, columnPath, null, ColumnDataType.String, "Active Transformation");
-            }
-
+            // No longer needed - transformations handled by unified SearchEngine
             return null;
         }
 
         /// <summary>
-        /// Determines if there are any active data transformations
+        /// Legacy method - transformations now handled by unified SearchEngine
         /// </summary>
-        /// <returns>True if any transformations are active</returns>
+        /// <returns>Always false - transformations handled by unified SearchEngine</returns>
         public bool HasActiveTransformations()
         {
-            return _columnTransformationResults.Count > 0;
+            // No longer needed - transformations handled by unified SearchEngine
+            return false;
         }
 
         /// <summary>
-        /// Applies all active data transformations by updating the transformedItemsSource reference
-        /// but keeping ItemsSource unchanged to preserve event connectivity
-        /// </summary>
-        private void ApplyDataTransformations()
-        {
-            if (originalItemsSource == null)
-                return;
-
-            try
-            {
-                if (_columnTransformationResults.Count == 0)
-                {
-                    // No transformations - reference original data
-                    transformedItemsSource = originalItemsSource;
-                    return;
-                }
-
-                // Combine all transformation results across columns
-                IEnumerable<object> finalResult = null;
-                
-                if (_columnTransformationResults.Count == 1)
-                {
-                    // Single column transformation
-                    finalResult = _columnTransformationResults.Values.First();
-                }
-                else
-                {
-                    // Multiple column transformations - intersect them (AND logic between columns)
-                    finalResult = _columnTransformationResults.Values.First();
-                    foreach (var result in _columnTransformationResults.Values.Skip(1))
-                    {
-                        finalResult = finalResult.Intersect(result);
-                    }
-                }
-
-                // Store transformed data reference without changing ItemsSource
-                // The filtering will be handled by the enhanced filter predicate system
-                if (finalResult is System.Collections.IList editableResult)
-                {
-                    transformedItemsSource = editableResult;
-                }
-                else
-                {
-                    transformedItemsSource = finalResult.ToList();
-                }
-
-                System.Diagnostics.Debug.WriteLine($"ApplyDataTransformations: Prepared {transformedItemsSource.Cast<object>().Count()} transformed items (ItemsSource unchanged)");
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Error applying data transformations: {ex.Message}");
-                MessageBox.Show($"Error applying data transformations: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                
-                // Fall back to original data reference
-                transformedItemsSource = originalItemsSource;
-            }
-        }
-
-        /// <summary>
-        /// Restores the original data when transformations are cleared or error occurs
+        /// Legacy method - no longer needed with unified SearchEngine
         /// </summary>
         private void RestoreOriginalData()
         {
-            try
-            {
-                // Simply update the transformed reference - ItemsSource stays unchanged
-                transformedItemsSource = originalItemsSource;
-                System.Diagnostics.Debug.WriteLine("RestoreOriginalData: Restored original data reference (ItemsSource unchanged)");
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Error restoring original data: {ex.Message}");
-            }
+            // No longer needed - transformations handled by unified SearchEngine
         }
 
         /// <summary>
-        /// Fast restore without expensive conversions - temporarily bypasses transformations without clearing them
+        /// Legacy method - no longer needed with unified SearchEngine
         /// </summary>
         private void RestoreOriginalDataQuick()
         {
-            try
-            {
-                if (originalItemsSource == null) return;
-                
-                // DON'T clear transformation results - just temporarily bypass them
-                // This preserves transformation definitions for when filters are re-enabled
-                
-                // Direct reference assignment - ItemsSource stays unchanged
-                transformedItemsSource = originalItemsSource;
-                
-                System.Diagnostics.Debug.WriteLine("RestoreOriginalDataQuick: Quick restore completed (ItemsSource unchanged)");
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Error in fast restore: {ex.Message}");
-            }
+            // No longer needed - transformations handled by unified SearchEngine
         }
 
-        /// <summary>
-        /// Determines if a ColumnSearchBox represents a transformation filter
-        /// </summary>
-        /// <param name="ColumnSearchBox">The search control to check</param>
-        /// <returns>True if it's a transformation filter</returns>
-        private static bool IsTransformationFilter(ColumnSearchBox columnSearchBox)
-        {
-            if (columnSearchBox?.SearchTemplateController?.SearchGroups == null)
-                return false;
-
-            // Check if any search template in any group is a transformation type
-            return columnSearchBox.SearchTemplateController.SearchGroups
-                .SelectMany(g => g.SearchTemplates)
-                .Any(t => DataTransformationEngine.IsTransformationType(t.SearchType));
-        }
 
         /// <summary>
         /// Processes a ColumnSearchBox to extract and apply any data transformations
@@ -1411,19 +1284,15 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
-        /// Sets the transformation result for a specific column
+        /// Legacy method - no longer needed with unified SearchEngine
         /// </summary>
         private void SetColumnTransformationResult(string columnPath, IEnumerable<object> transformedData)
         {
-            // Store the actual transformed data
-            _columnTransformationResults[columnPath] = transformedData;
-
-            // Trigger the filtering update
+            // No longer needed - transformations handled by unified SearchEngine
             FilterItemsSource();
         }
 
         #endregion
 
-        #endregion
     }
 }

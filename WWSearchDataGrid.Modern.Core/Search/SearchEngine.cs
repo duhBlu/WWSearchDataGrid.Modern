@@ -73,6 +73,18 @@ namespace WWSearchDataGrid.Modern.Core
         /// <returns>True if the value matches the condition, false otherwise</returns>
         public static bool EvaluateCondition(object columnValue, SearchCondition searchCondition)
         {
+            return EvaluateCondition(columnValue, searchCondition, null);
+        }
+
+        /// <summary>
+        /// Evaluates whether a column value matches a search condition using Strategy pattern with collection context
+        /// </summary>
+        /// <param name="columnValue">Value from the column being filtered</param>
+        /// <param name="searchCondition">Search condition to evaluate</param>
+        /// <param name="collectionContext">Collection context for statistical and ranking operations</param>
+        /// <returns>True if the value matches the condition, false otherwise</returns>
+        public static bool EvaluateCondition(object columnValue, SearchCondition searchCondition, Strategies.ICollectionContext collectionContext)
+        {
             try
             {
                 // Get the appropriate evaluator for the search type
@@ -80,7 +92,15 @@ namespace WWSearchDataGrid.Modern.Core
                 
                 if (evaluator != null)
                 {
-                    return evaluator.Evaluate(columnValue, searchCondition);
+                    // Use collection context version if available and context is provided
+                    if (collectionContext != null && evaluator.RequiresCollectionContext)
+                    {
+                        return evaluator.Evaluate(columnValue, searchCondition, collectionContext);
+                    }
+                    else
+                    {
+                        return evaluator.Evaluate(columnValue, searchCondition);
+                    }
                 }
                 
                 // Fallback to original logic for unknown search types
@@ -92,6 +112,17 @@ namespace WWSearchDataGrid.Modern.Core
                 System.Diagnostics.Debug.WriteLine($"Error evaluating search condition: {ex.Message}");
                 return false;
             }
+        }
+
+        /// <summary>
+        /// Determines if a search type requires collection context for proper evaluation
+        /// </summary>
+        /// <param name="searchType">The search type to check</param>
+        /// <returns>True if the search type requires collection context</returns>
+        public static bool RequiresCollectionContext(SearchType searchType)
+        {
+            var evaluator = SearchEvaluatorFactory.Instance.GetEvaluator(searchType);
+            return evaluator?.RequiresCollectionContext ?? false;
         }
     }
 }

@@ -393,6 +393,110 @@ namespace WWSearchDataGrid.Modern.Core
         }
 
         /// <summary>
+        /// Evaluates a value against the search templates with collection context support
+        /// </summary>
+        /// <param name="value">The value to evaluate</param>
+        /// <param name="collectionContext">Collection context for statistical operations</param>
+        /// <returns>True if the value matches the search criteria</returns>
+        public bool EvaluateWithCollectionContext(object value, Strategies.ICollectionContext collectionContext)
+        {
+            if (!HasCustomExpression || SearchGroups == null || SearchGroups.Count == 0)
+                return true;
+
+            try
+            {
+                // Evaluate each search group
+                bool overallResult = false;
+
+                for (int groupIndex = 0; groupIndex < SearchGroups.Count; groupIndex++)
+                {
+                    var group = SearchGroups[groupIndex];
+                    bool groupResult = EvaluateSearchGroupWithContext(value, group, collectionContext);
+
+                    if (groupIndex == 0)
+                    {
+                        overallResult = groupResult;
+                    }
+                    else
+                    {
+                        // Apply the logical operator from this group
+                        if (group.OperatorName == "Or")
+                        {
+                            overallResult = overallResult || groupResult;
+                        }
+                        else // AND is default
+                        {
+                            overallResult = overallResult && groupResult;
+                        }
+                    }
+                }
+
+                return overallResult;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error in EvaluateWithCollectionContext: {ex.Message}");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Evaluates a search group with collection context support
+        /// </summary>
+        private bool EvaluateSearchGroupWithContext(object value, SearchTemplateGroup group, Strategies.ICollectionContext collectionContext)
+        {
+            if (group.SearchTemplates == null || group.SearchTemplates.Count == 0)
+                return true;
+
+            bool groupResult = false;
+
+            for (int templateIndex = 0; templateIndex < group.SearchTemplates.Count; templateIndex++)
+            {
+                var template = group.SearchTemplates[templateIndex];
+                bool templateResult = EvaluateSearchTemplateWithContext(value, template, collectionContext);
+
+                if (templateIndex == 0)
+                {
+                    groupResult = templateResult;
+                }
+                else
+                {
+                    // Apply the logical operator from this template
+                    if (template.OperatorName == "Or")
+                    {
+                        groupResult = groupResult || templateResult;
+                    }
+                    else // AND is default
+                    {
+                        groupResult = groupResult && templateResult;
+                    }
+                }
+            }
+
+            return groupResult;
+        }
+
+        /// <summary>
+        /// Evaluates a single search template with collection context support
+        /// </summary>
+        private bool EvaluateSearchTemplateWithContext(object value, SearchTemplate template, Strategies.ICollectionContext collectionContext)
+        {
+            if (template == null || template.SearchCondition == null)
+                return true;
+
+            try
+            {
+                // Use the SearchEngine with collection context
+                return SearchEngine.EvaluateCondition(value, template.SearchCondition, collectionContext);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error evaluating template with context: {ex.Message}");
+                return false;
+            }
+        }
+
+        /// <summary>
         /// Moves a search template from one group to another
         /// </summary>
         /// <param name="sourceGroup">Source group</param>
