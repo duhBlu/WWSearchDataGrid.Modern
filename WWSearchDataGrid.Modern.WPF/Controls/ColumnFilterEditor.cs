@@ -169,19 +169,33 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
-        /// Updates operator visibility based on search groups
+        /// Updates operator visibility based on whether there are active filters in preceding columns
         /// </summary>
         private void UpdateOperatorVisibility()
         {
-            if (SearchTemplateController?.SearchGroups?.Count > 0)
+            IsOperatorVisible = false;
+
+            // Check if we have access to the data grid through the column search box
+            if (DataContext is ColumnSearchBox currentColumnSearchBox && 
+                currentColumnSearchBox.SourceDataGrid != null)
             {
-                var firstGroup = SearchTemplateController.SearchGroups[0];
-                var activeTemplateCount = firstGroup.SearchTemplates.Count(t => t.HasCustomFilter);
-                IsOperatorVisible = activeTemplateCount > 1;
-            }
-            else
-            {
-                IsOperatorVisible = false;
+                var dataGrid = currentColumnSearchBox.SourceDataGrid;
+                var currentColumn = currentColumnSearchBox;
+                
+                // Check if any preceding columns have active filters
+                foreach (var column in dataGrid.DataColumns)
+                {
+                    // Stop when we reach the current column
+                    if (column == currentColumn)
+                        break;
+                        
+                    // If this preceding column has an active filter, show the operator
+                    if (column.HasActiveFilter)
+                    {
+                        IsOperatorVisible = true;
+                        break;
+                    }
+                }
             }
         }
 

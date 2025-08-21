@@ -328,7 +328,7 @@ namespace WWSearchDataGrid.Modern.WPF
             // Close and clean up the filter window if it's open
             if (columnFilterWindow != null)
             {
-                ClosecolumnFilterWindow(false);
+                CloseColumnFilterWindow(false);
             }
         }
 
@@ -889,12 +889,6 @@ namespace WWSearchDataGrid.Modern.WPF
                 // Add the template
                 group.SearchTemplates.Add(template);
 
-                // Clear any data transformations for this column
-                if (SourceDataGrid != null && !string.IsNullOrEmpty(BindingPath))
-                {
-                    SourceDataGrid.ClearDataTransformation(BindingPath);
-                }
-
                 // Update the filter expression
                 SearchTemplateController.UpdateFilterExpression();
             }
@@ -926,12 +920,6 @@ namespace WWSearchDataGrid.Modern.WPF
                 
                 // Add the template
                 group.SearchTemplates.Add(template);
-
-                // Clear any data transformations for this column
-                if (SourceDataGrid != null && !string.IsNullOrEmpty(BindingPath))
-                {
-                    SourceDataGrid.ClearDataTransformation(BindingPath);
-                }
 
                 // Update the filter expression
                 SearchTemplateController.UpdateFilterExpression();
@@ -1566,12 +1554,6 @@ namespace WWSearchDataGrid.Modern.WPF
 
                 HasAdvancedFilter = false;
 
-                // Clear any data transformations for this column
-                if (SourceDataGrid != null && !string.IsNullOrEmpty(BindingPath))
-                {
-                    SourceDataGrid.ClearDataTransformation(BindingPath);
-                }
-
                 // Apply the updated (empty) filter to the grid
                 SourceDataGrid?.FilterItemsSource();
 
@@ -1622,7 +1604,7 @@ namespace WWSearchDataGrid.Modern.WPF
                     };
 
                     columnFilterWindow.Content = filterControl;
-                    columnFilterWindow.Closed += (_, _) => OncolumnFilterWindowClosed();
+                    columnFilterWindow.Closed += (_, _) => OnColumnFilterWindowClosed();
                 }
 
                 isAdvancedFilterOpen = true;
@@ -1634,14 +1616,14 @@ namespace WWSearchDataGrid.Modern.WPF
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Error in AllowRuleValueFilteringWindow: {ex.Message}");
-                ClosecolumnFilterWindow(false);
+                CloseColumnFilterWindow(false);
             }
         }
 
         /// <summary>
         /// Handles the advanced filter window being closed
         /// </summary>
-        private void OncolumnFilterWindowClosed()
+        private void OnColumnFilterWindowClosed()
         {
             try
             {
@@ -1651,23 +1633,20 @@ namespace WWSearchDataGrid.Modern.WPF
                 if (SearchTemplateController != null)
                 {
                     HasAdvancedFilter = SearchTemplateController.HasCustomExpression;
-
-                    // Process any data transformation filters
-                    SourceDataGrid?.ProcessTransformationFilter(this);
                 }
 
                 columnFilterWindow = null;
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error in OncolumnFilterWindowClosed: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"Error in OnColumnFilterWindowClosed: {ex.Message}");
             }
         }
 
         /// <summary>
         /// Closes the advanced filter window
         /// </summary>
-        private void ClosecolumnFilterWindow(bool updateFilters)
+        private void CloseColumnFilterWindow(bool updateFilters)
         {
             try
             {
@@ -1697,7 +1676,7 @@ namespace WWSearchDataGrid.Modern.WPF
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error in ClosecolumnFilterWindow: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"Error in CloseColumnFilterWindow: {ex.Message}");
                 columnFilterWindow = null;
                 isAdvancedFilterOpen = false;
             }

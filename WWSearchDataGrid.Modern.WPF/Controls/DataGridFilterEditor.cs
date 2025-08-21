@@ -505,8 +505,6 @@ namespace WWSearchDataGrid.Modern.WPF
 
                 // Update the filter expression - this will recalculate HasCustomExpression properly
                 target.UpdateFilterExpression();
-                
-                System.Diagnostics.Debug.WriteLine($"CopyControllerChanges: After UpdateFilterExpression, HasCustomExpression={target.HasCustomExpression}");
             }
             catch (Exception ex)
             {

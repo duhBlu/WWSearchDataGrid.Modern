@@ -612,15 +612,15 @@ namespace WWSearchDataGrid.Modern.Core
             if (group.SearchTemplates.Count > 1)
             {
                 group.SearchTemplates.Remove(template);
-                UpdateFilterExpression();
             }
             else
             {
                 // If this is the last template, add a new empty one after removing
                 group.SearchTemplates.Remove(template);
                 AddSearchTemplate(true, null, group);
-                UpdateFilterExpression();
             }
+            UpdateFilterExpression();
+            UpdateOperatorVisibility();
         }
 
         /// <summary>
