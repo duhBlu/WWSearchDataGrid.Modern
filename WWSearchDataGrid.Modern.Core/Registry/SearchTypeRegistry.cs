@@ -82,10 +82,10 @@ namespace WWSearchDataGrid.Modern.Core
                     FilterInputTemplate.NoInput, ColumnDataType.Number)
                 { RequiresCollection = true },
 
-                [SearchType.IsEmpty] = new SearchTypeMetadata(SearchType.IsEmpty, "Is blank",
+                [SearchType.IsBlank] = new SearchTypeMetadata(SearchType.IsBlank, "Is blank",
                     FilterInputTemplate.NoInput, ColumnDataType.String),
 
-                [SearchType.IsNotEmpty] = new SearchTypeMetadata(SearchType.IsNotEmpty, "Is not blank",
+                [SearchType.IsNotBlank] = new SearchTypeMetadata(SearchType.IsNotBlank, "Is not blank",
                     FilterInputTemplate.NoInput, ColumnDataType.String),
 
                 [SearchType.IsNull] = new SearchTypeMetadata(SearchType.IsNull, "Is null",
@@ -153,7 +153,7 @@ namespace WWSearchDataGrid.Modern.Core
                     m.SearchType != SearchType.IsNotNull &&
                     // For non-nullable non-string types, also exclude IsEmpty/IsNotEmpty
                     (dataType == ColumnDataType.String || 
-                     (m.SearchType != SearchType.IsEmpty && m.SearchType != SearchType.IsNotEmpty)));
+                     (m.SearchType != SearchType.IsBlank && m.SearchType != SearchType.IsNotBlank)));
             }
 
             return baseFilters;

@@ -61,8 +61,8 @@ namespace WWSearchDataGrid.Modern.WPF.Converters
                 SearchType.BelowAverage => "Below_AverageDrawingImage",
                 SearchType.IsNull => "Is_null_or_blankDrawingImage",
                 SearchType.IsNotNull => "Is_not_null_or_blankDrawingImage",
-                SearchType.IsEmpty => "Is_null_or_blankDrawingImage", // Reuse null icon for empty
-                SearchType.IsNotEmpty => "Is_not_null_or_blankDrawingImage", // Reuse not null icon for not empty
+                SearchType.IsBlank => "Is_null_or_blankDrawingImage", // Reuse null icon for empty
+                SearchType.IsNotBlank => "Is_not_null_or_blankDrawingImage", // Reuse not null icon for not empty
                 SearchType.Unique => "UniqueDrawingImage",
                 SearchType.Duplicate => "DuplicateDrawingImage",
                 SearchType.Today => "Is_TodayDrawingImage",

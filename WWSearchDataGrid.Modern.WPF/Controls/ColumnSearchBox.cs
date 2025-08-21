@@ -1766,7 +1766,7 @@ namespace WWSearchDataGrid.Modern.WPF
                         // Check if this is an IsNull filter (indeterminate state with filter)
                         var firstGroup = SearchTemplateController.SearchGroups.FirstOrDefault();
                         var firstTemplate = firstGroup?.SearchTemplates.FirstOrDefault();
-                        if (firstTemplate?.SearchType == SearchType.IsEmpty)
+                        if (firstTemplate?.SearchType == SearchType.IsBlank)
                         {
                             return "Is Null";
                         }

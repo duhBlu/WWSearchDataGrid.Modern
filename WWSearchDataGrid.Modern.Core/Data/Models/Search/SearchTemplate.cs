@@ -119,8 +119,8 @@ namespace WWSearchDataGrid.Modern.Core
             }
         }
 
-        private IEnumerable<ValueAggregateMetadata> availableValues = new List<ValueAggregateMetadata>();
-        public IEnumerable<ValueAggregateMetadata> AvailableValues 
+        private IEnumerable<object> availableValues = new List<object>();
+        public IEnumerable<object> AvailableValues 
         { 
             get { return availableValues; }
             private set 
@@ -185,8 +185,8 @@ namespace WWSearchDataGrid.Modern.Core
                 // Check for non-value search types that are inherently valid
                 var isNonValueSearchType = SearchType == SearchType.IsNull ||
                                          SearchType == SearchType.IsNotNull ||
-                                         SearchType == SearchType.IsEmpty ||
-                                         SearchType == SearchType.IsNotEmpty ||
+                                         SearchType == SearchType.IsBlank ||
+                                         SearchType == SearchType.IsNotBlank ||
                                          SearchType == SearchType.Yesterday ||
                                          SearchType == SearchType.Today ||
                                          SearchType == SearchType.AboveAverage ||
@@ -462,43 +462,54 @@ namespace WWSearchDataGrid.Modern.Core
 
             var response = await provider.GetValuesAsync(request);
             
-            // Convert to metadata list and sort
-            var metadataList = response.Values.ToList();
-            metadataList.Sort((x, y) => 
+            // Process values with null/empty/whitespace unification
+            var processedValues = response.Values.Select(value => {
+                return IsBlankValue(value) ? null : value; // Unify all blank values as null
+            }).Distinct().ToList();
+            
+            // Sort with null values first
+            processedValues.Sort((x, y) => 
             {
                 // Null values first
-                if (x.Value == null && y.Value == null) return 0;
-                if (x.Value == null) return -1;
-                if (y.Value == null) return 1;
+                if (x == null && y == null) return 0;
+                if (x == null) return -1;
+                if (y == null) return 1;
                 
                 // Then sort by string representation
-                return string.Compare(x.Value.ToString(), y.Value.ToString(), StringComparison.Ordinal);
+                return string.Compare(x.ToString(), y.ToString(), StringComparison.Ordinal);
             });
 
-            AvailableValues = metadataList;
+            AvailableValues = processedValues;
             
             // Update column values for nullability analysis
-            var values = metadataList.Select(m => m.Value).ToList();
-            _columnValuesForNullabilityAnalysis = new HashSet<object>(values);
+            _columnValuesForNullabilityAnalysis = new HashSet<object>(processedValues);
             
-            if (values.Any())
+            if (processedValues.Any())
             {
                 ColumnDataType = ReflectionHelper.DetermineColumnDataType(_columnValuesForNullabilityAnalysis);
             }
         }
 
         /// <summary>
-        /// Gets display text for a value with count information
+        /// Gets display text for a value (simplified version without count information)
         /// </summary>
-        public string GetValueDisplayText(ValueAggregateMetadata metadata)
+        public string GetValueDisplayText(object value)
         {
-            if (metadata == null)
-                return string.Empty;
+            // All null, empty, and whitespace values display as "(null)"
+            return value?.ToString() ?? "(null)";
+        }
 
-            var valueText = metadata.Value?.ToString() ?? "(null)";
-            var countText = metadata.Count > 1 ? $" ({metadata.Count})" : "";
-            
-            return $"{valueText}{countText}";
+        /// <summary>
+        /// Determines if a value should be considered "blank" (null, empty, or whitespace-only)
+        /// </summary>
+        private static bool IsBlankValue(object value)
+        {
+            if (value == null) return true;
+            if (value is string stringValue)
+            {
+                return string.IsNullOrWhiteSpace(stringValue);
+            }
+            return false;
         }
 
 

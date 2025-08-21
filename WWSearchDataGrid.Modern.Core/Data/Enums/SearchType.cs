@@ -35,8 +35,8 @@ namespace WWSearchDataGrid.Modern.Core
         // Null/empty checks
         IsNull,
         IsNotNull,
-        IsEmpty,
-        IsNotEmpty,
+        IsBlank,
+        IsNotBlank,
 
         // Date-specific
         Today,

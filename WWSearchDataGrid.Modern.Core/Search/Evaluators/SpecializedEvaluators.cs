@@ -11,12 +11,12 @@ namespace WWSearchDataGrid.Modern.Core.Strategies
     /// </summary>
     public class IsEmptyEvaluator : SearchEvaluatorBase
     {
-        public override SearchType SearchType => SearchType.IsEmpty;
+        public override SearchType SearchType => SearchType.IsBlank;
 
         public override bool Evaluate(object columnValue, SearchCondition searchCondition)
         {
-            var metadata = ValueMetadata.Create(columnValue);
-            return metadata.Category == ValueCategory.Empty || metadata.Category == ValueCategory.Whitespace;
+            // Treat null, empty, and whitespace-only strings as empty
+            return columnValue is null || (columnValue is string s && string.IsNullOrWhiteSpace(s));
         }
     }
 
@@ -25,12 +25,12 @@ namespace WWSearchDataGrid.Modern.Core.Strategies
     /// </summary>
     public class IsNotEmptyEvaluator : SearchEvaluatorBase
     {
-        public override SearchType SearchType => SearchType.IsNotEmpty;
+        public override SearchType SearchType => SearchType.IsNotBlank;
 
         public override bool Evaluate(object columnValue, SearchCondition searchCondition)
         {
-            var metadata = ValueMetadata.Create(columnValue);
-            return metadata.Category != ValueCategory.Empty && metadata.Category != ValueCategory.Whitespace && metadata.Category != ValueCategory.Null;
+            // Not null and not empty/whitespace-only string
+            return !(columnValue is null || (columnValue is string s && string.IsNullOrWhiteSpace(s)));
         }
     }
 
@@ -43,8 +43,8 @@ namespace WWSearchDataGrid.Modern.Core.Strategies
 
         public override bool Evaluate(object columnValue, SearchCondition searchCondition)
         {
-            var metadata = ValueMetadata.Create(columnValue);
-            return metadata.Category == ValueCategory.Null;
+            // Null, empty, or whitespace-only string counts as null
+            return columnValue is null || (columnValue is string s && string.IsNullOrWhiteSpace(s));
         }
     }
 
@@ -57,8 +57,8 @@ namespace WWSearchDataGrid.Modern.Core.Strategies
 
         public override bool Evaluate(object columnValue, SearchCondition searchCondition)
         {
-            var metadata = ValueMetadata.Create(columnValue);
-            return metadata.Category != ValueCategory.Null;
+            // Anything with a non-blank value counts as not null
+            return !(columnValue is null || (columnValue is string s && string.IsNullOrWhiteSpace(s)));
         }
     }
 

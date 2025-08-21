@@ -215,8 +215,8 @@ namespace WWSearchDataGrid.Modern.Core.Services
                     }
                     break;
 
-                case SearchType.IsEmpty:
-                case SearchType.IsNotEmpty:
+                case SearchType.IsBlank:
+                case SearchType.IsNotBlank:
                 case SearchType.IsNull:
                 case SearchType.IsNotNull:
                 case SearchType.AboveAverage:

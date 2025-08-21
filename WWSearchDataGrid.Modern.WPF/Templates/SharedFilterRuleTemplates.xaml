@@ -23,7 +23,6 @@
         <ComboBox Style="{StaticResource Editable_ComboBox_Style}"
                   Text="{Binding SelectedValue}"
                   Tag="Type or select..."
-                  DisplayMemberPath="Value"
                   ItemsSource="{Binding AvailableValues}" />
     </DataTemplate>
 
@@ -41,7 +40,6 @@
             <ComboBox Style="{StaticResource Editable_ComboBox_Style}"
                       Text="{Binding SelectedValue, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
                       MinWidth="120"
-                      DisplayMemberPath="Value"
                       Tag="Type or select..."
                       ItemsSource="{Binding AvailableValues}" />
             <TextBlock Text="To:"
@@ -50,7 +48,6 @@
             <ComboBox Style="{StaticResource Editable_ComboBox_Style}"
                       Text="{Binding SelectedSecondaryValue, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
                       MinWidth="120"
-                      DisplayMemberPath="Value"
                       Tag="Type or select..."
                       ItemsSource="{Binding AvailableValues}" />
         </StackPanel>
@@ -155,7 +152,6 @@
                                 <ComboBox Style="{StaticResource Editable_ComboBox_Style}"
                                           Grid.Column="0"
                                           Text="{Binding}"
-                                          DisplayMemberPath="Value"
                                           Tag="Type or select..."
                                           ItemsSource="{Binding DataContext.AvailableValues, RelativeSource={RelativeSource AncestorType=ListBox}}" />
                                 <Button Style="{StaticResource TransparentFontIcon_Button_Style}"

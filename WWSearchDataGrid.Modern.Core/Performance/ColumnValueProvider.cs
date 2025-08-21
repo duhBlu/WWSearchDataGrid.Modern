@@ -385,17 +385,9 @@ namespace WWSearchDataGrid.Modern.Core.Performance
                 {
                     try
                     {
-                        var oldValues = storage.Values.Values.Where(v => v.LastSeen < cutoffTime).ToList();
-                        
-                        foreach (var oldValue in oldValues.Take(CleanupBatchSize))
-                        {
-                            if (storage.Values.TryRemove(oldValue.HashCode, out _))
-                            {
-                                var memoryDelta = EstimateValueMemoryUsage(oldValue.Value) + 32;
-                                storage.UpdateMemoryUsage(-memoryDelta);
-                                itemsProcessed++;
-                            }
-                        }
+                        // Since we no longer track LastSeen, skip idle value cleanup
+                        // Only cleanup entire columns if needed
+                        itemsProcessed = 0;
                     }
                     finally
                     {
@@ -420,11 +412,9 @@ namespace WWSearchDataGrid.Modern.Core.Performance
             {
                 var storage = columnKvp.Value;
                 
-                // Check if entire column is idle
-                if (storage.Values.Values.All(v => v.LastSeen < cutoffTime))
-                {
-                    columnsToRemove.Add(columnKvp.Key);
-                }
+                // Since we no longer track LastSeen, skip time-based column cleanup
+                // Could implement size-based cleanup or remove this entirely
+                // For now, we rely on memory pressure cleanup
             }
 
             // Remove idle columns
@@ -509,35 +499,26 @@ namespace WWSearchDataGrid.Modern.Core.Performance
                     cancellationToken.ThrowIfCancellationRequested();
                     
                     var value = ReflectionHelper.GetPropValue(item, bindingPath);
-                    var hashCode = value?.GetHashCode() ?? 0;
+                    
+                    // Apply null/empty/whitespace unification - treat all blank values as null
+                    var normalizedValue = IsBlankValue(value) ? null : value;
+                    var hashCode = normalizedValue?.GetHashCode() ?? 0;
                     
                     // Track if this is a new unique value
                     bool isNewValue = !storage.Values.ContainsKey(hashCode);
                     
-                    storage.Values.AddOrUpdate(hashCode, 
-                        new ValueAggregateMetadata(value, 1)
-                        {
-                            LastSeen = DateTime.UtcNow,
-                            HashCode = hashCode
-                        },
-                        (key, existing) =>
-                        {
-                            existing.Count++;
-                            existing.LastSeen = DateTime.UtcNow;
-                            return existing;
-                        });
-                    
-                    // Only add to unique values set if it's actually new
+                    // Store only unique values (no counting since we're simplifying)
                     if (isNewValue)
                     {
-                        uniqueValues.Add(value);
+                        storage.Values.TryAdd(hashCode, normalizedValue);
+                        uniqueValues.Add(normalizedValue);
                     }
                 }
                 
                 // Update memory usage for all unique values in this batch
                 foreach (var value in uniqueValues)
                 {
-                    var memoryUsage = EstimateValueMemoryUsage(value) + 32;
+                    var memoryUsage = EstimateValueMemoryUsage(value) + 8; // Reduced overhead
                     storage.UpdateMemoryUsage(memoryUsage);
                 }
                 
@@ -548,31 +529,14 @@ namespace WWSearchDataGrid.Modern.Core.Performance
         {
             await Task.Run(() =>
             {
-                var hashCode = value?.GetHashCode() ?? 0;
-                bool isNewValue = false;
+                // Apply null/empty/whitespace unification - treat all blank values as null
+                var normalizedValue = IsBlankValue(value) ? null : value;
+                var hashCode = normalizedValue?.GetHashCode() ?? 0;
                 
-                storage.Values.AddOrUpdate(hashCode,
-                    // Add factory - new unique value
-                    key => {
-                        isNewValue = true;
-                        return new ValueAggregateMetadata(value, 1)
-                        {
-                            LastSeen = DateTime.UtcNow,
-                            HashCode = hashCode
-                        };
-                    },
-                    // Update factory - existing value, increment count
-                    (key, existing) =>
-                    {
-                        existing.Count++;
-                        existing.LastSeen = DateTime.UtcNow;
-                        return existing;
-                    });
-
-                // Only update memory for new unique values
-                if (isNewValue)
+                // Only add if this is a new unique value
+                if (storage.Values.TryAdd(hashCode, normalizedValue))
                 {
-                    var memoryDelta = EstimateValueMemoryUsage(value) + 32; // Value + metadata overhead
+                    var memoryDelta = EstimateValueMemoryUsage(normalizedValue) + 8; // Reduced overhead
                     storage.UpdateMemoryUsage(memoryDelta);
                 }
             });
@@ -582,25 +546,19 @@ namespace WWSearchDataGrid.Modern.Core.Performance
         {
             await Task.Run(() =>
             {
-                var hashCode = value?.GetHashCode() ?? 0;
+                // Apply null/empty/whitespace unification - treat all blank values as null
+                var normalizedValue = IsBlankValue(value) ? null : value;
+                var hashCode = normalizedValue?.GetHashCode() ?? 0;
                 
-                if (storage.Values.TryGetValue(hashCode, out var metadata))
+                if (storage.Values.TryRemove(hashCode, out var removedValue))
                 {
-                    metadata.Count--;
-                    metadata.LastSeen = DateTime.UtcNow;
-                    
-                    if (metadata.Count <= 0)
-                    {
-                        storage.Values.TryRemove(hashCode, out _);
-                        // Only subtract memory when unique value is actually removed
-                        var memoryDelta = EstimateValueMemoryUsage(value) + 32;
-                        storage.UpdateMemoryUsage(-memoryDelta);
-                    }
+                    var memoryDelta = EstimateValueMemoryUsage(removedValue) + 8; // Reduced overhead
+                    storage.UpdateMemoryUsage(-memoryDelta);
                 }
             });
         }
 
-        private async Task<IEnumerable<ValueAggregateMetadata>> FilterValuesAsync(ColumnValueStorage storage, ColumnValueRequest request)
+        private async Task<IEnumerable<object>> FilterValuesAsync(ColumnValueStorage storage, ColumnValueRequest request)
         {
             return await Task.Run(() =>
             {
@@ -612,49 +570,41 @@ namespace WWSearchDataGrid.Modern.Core.Performance
                     var searchText = request.SearchText.ToLowerInvariant();
                     values = values.Where(v => 
                     {
-                        // Use DisplayText for search, which handles null/empty properly
-                        var displayText = v.DisplayText ?? v.Value?.ToString() ?? "";
+                        // Generate display text for search - null/empty/whitespace all become "(null)"
+                        var displayText = v?.ToString() ?? "(null)";
                         return displayText.ToLowerInvariant().Contains(searchText);
                     });
                 }
 
-                // Include/exclude null and empty values using new categorization
+                // Include/exclude null and empty values using simplified logic
                 if (!request.IncludeNull)
                 {
-                    values = values.Where(v => !v.IsNull);
+                    values = values.Where(v => v != null);
                 }
 
                 if (!request.IncludeEmpty)
                 {
-                    values = values.Where(v => !v.IsBlank);
+                    // Since we normalize empty/whitespace to null, this is the same as IncludeNull
+                    values = values.Where(v => v != null);
                 }
 
                 // Exclude specific values
                 if (request.ExcludeValues != null)
                 {
                     var excludeSet = new HashSet<int>(request.ExcludeValues.Select(v => v?.GetHashCode() ?? 0));
-                    values = values.Where(v => !excludeSet.Contains(v.HashCode));
+                    values = values.Where(v => !excludeSet.Contains(v?.GetHashCode() ?? 0));
                 }
 
-                // Apply sorting
-                if (request.GroupByFrequency)
-                {
-                    values = request.SortAscending
-                        ? values.OrderBy(v => v.Count).ThenBy(v => v.Value?.ToString())
-                        : values.OrderByDescending(v => v.Count).ThenBy(v => v.Value?.ToString());
-                }
-                else
-                {
-                    values = request.SortAscending
-                        ? values.OrderBy(v => v.Value?.ToString())
-                        : values.OrderByDescending(v => v.Value?.ToString());
-                }
+                // Apply sorting (simplified - no frequency sorting since we removed count tracking)
+                values = request.SortAscending
+                    ? values.OrderBy(v => v?.ToString())
+                    : values.OrderByDescending(v => v?.ToString());
 
                 return values;
             });
         }
 
-        private IEnumerable<ValueAggregateMetadata> ApplyPaging(IEnumerable<ValueAggregateMetadata> values, ColumnValueRequest request)
+        private IEnumerable<object> ApplyPaging(IEnumerable<object> values, ColumnValueRequest request)
         {
             var skip = Math.Max(0, request.Skip);
             var take = request.Take > 0 ? request.Take : DefaultPageSize;
@@ -679,6 +629,19 @@ namespace WWSearchDataGrid.Modern.Core.Performance
             return 24; // Default object overhead
         }
 
+        /// <summary>
+        /// Determines if a value should be considered "blank" (null, empty, or whitespace-only)
+        /// </summary>
+        private static bool IsBlankValue(object value)
+        {
+            if (value == null) return true;
+            if (value is string stringValue)
+            {
+                return string.IsNullOrWhiteSpace(stringValue);
+            }
+            return false;
+        }
+
         private async Task CheckMemoryLimitsAsync()
         {
             var memoryUsageMB = GetMemoryUsageMB();
@@ -693,9 +656,9 @@ namespace WWSearchDataGrid.Modern.Core.Performance
                 {
                     await Task.Run(() =>
                     {
-                        // Remove least recently used columns
+                        // Remove columns with the most values (simplified cleanup strategy)
                         var sortedColumns = _columnStorage.Values
-                            .OrderBy(s => s.Values.Values.Min(v => v.LastSeen))
+                            .OrderByDescending(s => s.Values.Count)
                             .Take(_columnStorage.Count / 4); // Remove 25% of columns
 
                         foreach (var storage in sortedColumns)
@@ -725,13 +688,13 @@ namespace WWSearchDataGrid.Modern.Core.Performance
         private class ColumnValueStorage
         {
             public string ColumnKey { get; }
-            public ConcurrentDictionary<int, ValueAggregateMetadata> Values { get; }
+            public ConcurrentDictionary<int, object> Values { get; }
             public long EstimatedMemoryUsage { get; private set; }
 
             public ColumnValueStorage(string columnKey)
             {
                 ColumnKey = columnKey;
-                Values = new ConcurrentDictionary<int, ValueAggregateMetadata>();
+                Values = new ConcurrentDictionary<int, object>();
                 EstimatedMemoryUsage = 0;
             }
 
@@ -749,10 +712,10 @@ namespace WWSearchDataGrid.Modern.Core.Performance
             public long CalculateCurrentMemoryUsage()
             {
                 long total = 0;
-                foreach (var metadata in Values.Values)
+                foreach (var value in Values.Values)
                 {
-                    total += ColumnValueProvider.EstimateValueMemoryUsage(metadata.Value);
-                    total += 32; // ValueAggregateMetadata overhead
+                    total += ColumnValueProvider.EstimateValueMemoryUsage(value);
+                    total += 8; // Reference overhead (no metadata wrapper)
                 }
                 return total;
             }
