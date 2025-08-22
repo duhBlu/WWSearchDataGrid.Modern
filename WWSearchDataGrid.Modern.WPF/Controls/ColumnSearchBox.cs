@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Timers;
@@ -50,6 +51,9 @@ namespace WWSearchDataGrid.Modern.WPF
         private SearchTemplate _temporarySearchTemplate; // Track temporary template for real-time updates
         private CheckboxCycleState _checkboxCycleState = CheckboxCycleState.Intermediate; // Current logical cycling state
         private bool _isInitialState = true; // Tracks if we're in the initial uncycled state
+        private bool _isLoadingColumnValues = false; // Prevents infinite loop in LoadColumnValues
+        private DateTime _lastLoadColumnValuesTime = DateTime.MinValue; // For debouncing LoadColumnValues
+        private const int LOAD_COLUMN_VALUES_DEBOUNCE_MS = 100; // Minimum time between LoadColumnValues calls
 
         #endregion
 
@@ -300,6 +304,10 @@ namespace WWSearchDataGrid.Modern.WPF
 
             // Clean up temporary template reference
             _temporarySearchTemplate = null;
+            
+            // Reset loading state flags
+            _isLoadingColumnValues = false;
+            _lastLoadColumnValuesTime = DateTime.MinValue;
 
             // Clean up textbox event handlers
             if (searchTextBox != null)
@@ -356,86 +364,110 @@ namespace WWSearchDataGrid.Modern.WPF
 
         private void OnSourceDataGridCollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
         {
-            void ApplyAvailableValuesUpdate(object sender, EventArgs e)
-            {
-                _availableValuesUpdateTimer?.Stop();
-
-                // Check if SearchTemplateController is valid before updating
-                if (SearchTemplateController != null)
-                {
-                    // The SearchTemplateController will handle updating all templates with the provider
-                    // No need to update individual templates here
-                }
-            }
-
             // Check if we have valid data to process
             if (string.IsNullOrEmpty(BindingPath) || SearchTemplateController == null)
                 return;
 
-            // Handle different collection changes
             try
             {
-                if (e.Action == NotifyCollectionChangedAction.Add && e.NewItems != null)
+                // Handle different collection change types with efficient incremental updates
+                switch (e.Action)
                 {
-                    var wasEmpty = SearchTemplateController.ColumnValues.Count == 0;
-                    
-                    foreach (var item in e.NewItems)
-                    {
-                        var value = ReflectionHelper.GetPropValue(item, BindingPath);
-                        SearchTemplateController.ColumnValues.Add(value);
-                    }
-                    
-                    // If the collection was previously empty, recheck checkbox settings
-                    if (wasEmpty && SearchTemplateController.ColumnValues.Count > 0)
-                    {
-                        DetermineCheckboxColumnSettings();
-                    }
-                }
-                else if (e.Action == NotifyCollectionChangedAction.Remove && e.OldItems != null)
-                {
-                    foreach (var item in e.OldItems)
-                    {
-                        var value = ReflectionHelper.GetPropValue(item, BindingPath);
-                        SearchTemplateController.ColumnValues.Remove(value);
-                    }
-                }
-                else
-                {
-                    // For Replace, Reset, or Move, re-evaluate all values
-                    LoadColumnValues();
-                    
-                    // For Reset (which happens when ItemsSource changes), recheck checkbox settings
-                    if (e.Action == NotifyCollectionChangedAction.Reset)
-                    {
-                        // Delay the checkbox settings check to ensure data is loaded
+                    case NotifyCollectionChangedAction.Add:
+                        HandleItemsAdded(e.NewItems);
+                        break;
+                        
+                    case NotifyCollectionChangedAction.Remove:
+                        HandleItemsRemoved(e.OldItems);
+                        break;
+                        
+                    case NotifyCollectionChangedAction.Replace:
+                        HandleItemsReplaced(e.OldItems, e.NewItems);
+                        break;
+                        
+                    case NotifyCollectionChangedAction.Reset:
+                        // Full reset - refresh column values completely but lazily
+                        SearchTemplateController.RefreshColumnValues();
+                        
+                        // Delay the checkbox settings check to ensure data type can be determined
                         Dispatcher.BeginInvoke(new Action(() =>
                         {
-                            if (SearchTemplateController != null && SearchTemplateController.ColumnValues.Count > 0)
-                            {
-                                DetermineCheckboxColumnSettings();
-                            }
+                            DetermineCheckboxColumnSettings();
                         }), DispatcherPriority.Background);
-                    }
+                        break;
+                        
+                    case NotifyCollectionChangedAction.Move:
+                        // Move doesn't affect column values
+                        break;
                 }
-
-                // Delay full UI update to batch frequent changes
-                if (_availableValuesUpdateTimer == null)
-                {
-                    _availableValuesUpdateTimer = new DispatcherTimer
-                    {
-                        Interval = TimeSpan.FromMilliseconds(150),
-                        IsEnabled = false
-                    };
-                }
-
-                _availableValuesUpdateTimer.Tick -= ApplyAvailableValuesUpdate;
-                _availableValuesUpdateTimer.Tick += ApplyAvailableValuesUpdate;
-                _availableValuesUpdateTimer.Stop();
-                _availableValuesUpdateTimer.Start();
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Error in OnSourceDataGridCollectionChanged: {ex.Message}");
+                // Fallback to full refresh if incremental update fails
+                SearchTemplateController?.RefreshColumnValues();
+            }
+        }
+        
+        /// <summary>
+        /// Handles items being added to the collection with incremental updates
+        /// </summary>
+        private void HandleItemsAdded(System.Collections.IList newItems)
+        {
+            if (newItems == null || newItems.Count == 0) return;
+            
+            foreach (var item in newItems)
+            {
+                var value = ReflectionHelper.GetPropValue(item, BindingPath);
+                SearchTemplateController.AddOrUpdateColumnValue(value);
+            }
+        }
+        
+        /// <summary>
+        /// Handles items being removed from the collection with incremental updates
+        /// </summary>
+        private void HandleItemsRemoved(System.Collections.IList oldItems)
+        {
+            if (oldItems == null || oldItems.Count == 0) return;
+            
+            // For removes, we need to check if the value still exists in other items
+            // If not, remove it from column values
+            foreach (var item in oldItems)
+            {
+                var value = ReflectionHelper.GetPropValue(item, BindingPath);
+                
+                // Check if this value still exists in the remaining items
+                bool valueStillExists = false;
+                foreach (var remainingItem in SourceDataGrid.Items)
+                {
+                    var remainingValue = ReflectionHelper.GetPropValue(remainingItem, BindingPath);
+                    if (Equals(value, remainingValue))
+                    {
+                        valueStillExists = true;
+                        break;
+                    }
+                }
+                
+                if (!valueStillExists)
+                {
+                    SearchTemplateController.RemoveColumnValue(value);
+                }
+            }
+        }
+        
+        /// <summary>
+        /// Handles items being replaced in the collection with incremental updates
+        /// </summary>
+        private void HandleItemsReplaced(System.Collections.IList oldItems, System.Collections.IList newItems)
+        {
+            if (oldItems != null)
+            {
+                HandleItemsRemoved(oldItems);
+            }
+            
+            if (newItems != null)
+            {
+                HandleItemsAdded(newItems);
             }
         }
 
@@ -515,16 +547,19 @@ namespace WWSearchDataGrid.Modern.WPF
         
         private void OnSourceDataGridItemsSourceChanged(object sender, EventArgs e)
         {
-            // When the ItemsSource changes completely, we need to reload column values and recheck checkbox settings
+            // When the ItemsSource changes completely, we just need to reset the lazy loading
+            // Values will be loaded only when actually needed (e.g., opening filter dialogs)
             try
             {
                 if (SourceDataGrid != null && !string.IsNullOrEmpty(BindingPath) && SearchTemplateController != null)
                 {
-                    // Delay the update to ensure the data has been loaded into the grid
-                    Dispatcher.BeginInvoke(new Action(() =>
-                    {
-                        LoadColumnValues();
-                    }), DispatcherPriority.Background);
+                    System.Diagnostics.Debug.WriteLine($"ColumnSearchBox: ItemsSource changed for {BindingPath} - refreshing lazy loading");
+                    
+                    // Simply refresh the lazy loading provider - no eager loading
+                    SearchTemplateController.RefreshColumnValues();
+                    
+                    // Only re-determine column type based on definition, not data
+                    DetermineCheckboxColumnTypeFromColumnDefinition();
                 }
             }
             catch (Exception ex)
@@ -550,10 +585,6 @@ namespace WWSearchDataGrid.Modern.WPF
                         return;
                     }
                 }
-                
-                // Focus has left the ColumnSearchBox entirely
-                // Note: We no longer automatically create permanent filters on focus loss
-                // Search text and temporary filters persist until user explicitly creates permanent filters with Ctrl+Enter
             }), System.Windows.Threading.DispatcherPriority.Background);
         }
         
@@ -885,6 +916,7 @@ namespace WWSearchDataGrid.Modern.WPF
                 var template = new SearchTemplate(ColumnDataType.Boolean);
                 template.SearchType = SearchType.Equals;
                 template.SelectedValue = value;
+                template.SearchTemplateController = SearchTemplateController; // Ensure template has controller reference
 
                 // Add the template
                 group.SearchTemplates.Add(template);
@@ -917,6 +949,7 @@ namespace WWSearchDataGrid.Modern.WPF
                 // Create IsNull template for null values
                 var template = new SearchTemplate(ColumnDataType.Boolean);
                 template.SearchType = SearchType.IsNull;
+                template.SearchTemplateController = SearchTemplateController; // Ensure template has controller reference
                 
                 // Add the template
                 group.SearchTemplates.Add(template);
@@ -991,8 +1024,7 @@ namespace WWSearchDataGrid.Modern.WPF
                 // Create a controller if none exists
                 if (SearchTemplateController == null)
                 {
-                    var type = GetCustomSearchTemplate(CurrentColumn) ?? typeof(SearchTemplate);
-                    SearchTemplateController = new SearchTemplateController(type);
+                    SearchTemplateController = new SearchTemplateController();
                 }
 
                 // Set column properties
@@ -1021,14 +1053,41 @@ namespace WWSearchDataGrid.Modern.WPF
                 SourceDataGrid.ItemsSourceChanged -= OnSourceDataGridItemsSourceChanged;
                 SourceDataGrid.ItemsSourceChanged += OnSourceDataGridItemsSourceChanged;
 
-                // Initial load if we have items
+                // Set up lazy loading - no initial eager loading
                 if (SourceDataGrid.Items != null && SourceDataGrid.Items.Count > 0)
                 {
-                    LoadColumnValues();
+                    System.Diagnostics.Debug.WriteLine($"ColumnSearchBox: Initial setup for column {CurrentColumn.Header} with {SourceDataGrid.Items.Count} items");
                     
-                    // Determine checkbox column settings after loading values
+                    // Set up the lazy loading provider
+                    SearchTemplateController.SetupColumnDataLazy(CurrentColumn.Header, GetColumnValuesFromDataGrid, BindingPath);
+                    
+                    // Determine column data type from a small sample for immediate UI setup
+                    var sampleSize = Math.Min(10, SourceDataGrid.Items.Count);
+                    if (sampleSize > 0)
+                    {
+                        var sampleValues = new HashSet<object>();
+                        var itemsArray = SourceDataGrid.Items.Cast<object>().Take(sampleSize);
+                        
+                        foreach (var item in itemsArray)
+                        {
+                            var value = ReflectionHelper.GetPropValue(item, BindingPath);
+                            sampleValues.Add(value);
+                            if (sampleValues.Count >= 5) break; // Small sample for type detection
+                        }
+                        
+                        if (sampleValues.Any())
+                        {
+                            SearchTemplateController.ColumnDataType = ReflectionHelper.DetermineColumnDataType(sampleValues);
+                        }
+                    }
+                    
+                    // Determine checkbox column settings (doesn't require full data loading)
                     DetermineCheckboxColumnSettings();
-                    
+                }
+                else
+                {
+                    // No items yet - just set up basic structure
+                    SearchTemplateController.SetupColumnDataLazy(CurrentColumn.Header, GetColumnValuesFromDataGrid, BindingPath);
                 }
             }
             catch (Exception ex)
@@ -1279,6 +1338,7 @@ namespace WWSearchDataGrid.Modern.WPF
                 var newTemplate = new SearchTemplate(SearchTemplateController.ColumnDataType);
                 newTemplate.SearchType = SearchType.Contains;
                 newTemplate.SelectedValue = SearchText;
+                newTemplate.SearchTemplateController = SearchTemplateController; // Ensure template has controller reference
                 
                 // If this is not the first template, set OR operator
                 if (existingContainsTemplates.Any())
@@ -1412,6 +1472,7 @@ namespace WWSearchDataGrid.Modern.WPF
                     _temporarySearchTemplate = new SearchTemplate(SearchTemplateController.ColumnDataType);
                     _temporarySearchTemplate.SearchType = SearchType.Contains;
                     _temporarySearchTemplate.SelectedValue = SearchText;
+                    _temporarySearchTemplate.SearchTemplateController = SearchTemplateController; // Ensure template has controller reference
                     
                     // Check if we have existing confirmed Contains templates
                     var existingContainsTemplates = firstGroup.SearchTemplates
@@ -1687,7 +1748,63 @@ namespace WWSearchDataGrid.Modern.WPF
         #region Public Methods
 
         /// <summary>
-        /// Loads column values for filtering
+        /// Gets column values for the current column (lazy loading approach)
+        /// </summary>
+        private IEnumerable<object> GetColumnValuesFromDataGrid()
+        {
+            if (SourceDataGrid?.Items == null || string.IsNullOrEmpty(BindingPath))
+                return Enumerable.Empty<object>();
+                
+            System.Diagnostics.Debug.WriteLine($"ColumnSearchBox: Loading {SourceDataGrid.Items.Count} values for column {BindingPath}");
+            
+            var values = new List<object>();
+            foreach (var item in SourceDataGrid.Items)
+            {
+                var value = ReflectionHelper.GetPropValue(item, BindingPath);
+                values.Add(value);
+            }
+            return values;
+        }
+        
+        /// <summary>
+        /// Loads column values with safeguards to prevent infinite loops and excessive calls
+        /// </summary>
+        private void LoadColumnValuesWithSafeguards()
+        {
+            try
+            {
+                // Check if we're already loading or if it's too soon since last load
+                if (_isLoadingColumnValues)
+                {
+                    System.Diagnostics.Debug.WriteLine($"ColumnSearchBox: LoadColumnValues already in progress for {BindingPath}");
+                    return;
+                }
+                
+                var timeSinceLastLoad = DateTime.Now - _lastLoadColumnValuesTime;
+                if (timeSinceLastLoad.TotalMilliseconds < LOAD_COLUMN_VALUES_DEBOUNCE_MS)
+                {
+                    System.Diagnostics.Debug.WriteLine($"ColumnSearchBox: Debouncing LoadColumnValues for {BindingPath} - {timeSinceLastLoad.TotalMilliseconds}ms since last call");
+                    return;
+                }
+                
+                _isLoadingColumnValues = true;
+                _lastLoadColumnValuesTime = DateTime.Now;
+                
+                System.Diagnostics.Debug.WriteLine($"ColumnSearchBox: Loading column values for {BindingPath}");
+                LoadColumnValues();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error in LoadColumnValuesWithSafeguards: {ex.Message}");
+            }
+            finally
+            {
+                _isLoadingColumnValues = false;
+            }
+        }
+        
+        /// <summary>
+        /// Loads column values for filtering using the new direct binding approach
         /// </summary>
         public void LoadColumnValues()
         {
@@ -1695,13 +1812,41 @@ namespace WWSearchDataGrid.Modern.WPF
             {
                 if (SourceDataGrid != null && !string.IsNullOrEmpty(BindingPath) && SearchTemplateController != null)
                 {
-                    var values = new HashSet<object>();
-                    foreach (var item in SourceDataGrid.Items)
+                    // Use new lazy loading approach: controller will load values when needed
+                    System.Diagnostics.Debug.WriteLine($"ColumnSearchBox: Setting up lazy loading for column {CurrentColumn.Header}");
+                    SearchTemplateController.SetupColumnDataLazy(CurrentColumn.Header, GetColumnValuesFromDataGrid, BindingPath);
+                    
+                    // For data type detection, sample a few values without loading everything
+                    var sampleSize = Math.Min(100, SourceDataGrid.Items.Count); // Sample first 100 items
+                    if (sampleSize > 0)
                     {
-                        var val = ReflectionHelper.GetPropValue(item, BindingPath);
-                        values.Add(val);
+                        var sampleValues = new HashSet<object>();
+                        var itemsArray = SourceDataGrid.Items.Cast<object>().Take(sampleSize);
+                        
+                        foreach (var item in itemsArray)
+                        {
+                            var value = ReflectionHelper.GetPropValue(item, BindingPath);
+                            sampleValues.Add(value);
+                            
+                            // Stop early if we have enough variety for type detection
+                            if (sampleValues.Count >= 10) break;
+                        }
+                        
+                        if (sampleValues.Any())
+                        {
+                            SearchTemplateController.ColumnDataType = ReflectionHelper.DetermineColumnDataType(sampleValues);
+                        }
                     }
-                    SearchTemplateController.LoadColumnData(CurrentColumn.Header, values);
+                    else
+                    {
+                        SearchTemplateController.ColumnDataType = ColumnDataType.String;
+                    }
+                    
+                    // Ensure we have at least one search group
+                    if (SearchTemplateController.SearchGroups.Count == 0)
+                    {
+                        SearchTemplateController.AddSearchGroup(true, false);
+                    }
                     
                     // Determine checkbox column settings after loading values
                     DetermineCheckboxColumnSettings();

@@ -290,17 +290,19 @@ namespace WWSearchDataGrid.Modern.WPF
         {
             try
             {
-                var clone = new SearchTemplateController(original.SearchTemplateType)
+                var clone = new SearchTemplateController()
                 {
                     ColumnName = original.ColumnName,
                     ColumnDataType = original.ColumnDataType,
                     HasCustomExpression = original.HasCustomExpression,
                     AllowMultipleGroups = true,  // Enable multiple groups for DataGridFilterEditor
-                    ColumnValues = original.ColumnValues,
                     ColumnValuesByPath = original.ColumnValuesByPath,
                     PropertyValues = original.PropertyValues,
                     DefaultSearchType = original.DefaultSearchType,
                 };
+                
+                // Set column values using the new approach
+                clone.SetColumnValues(original.ColumnValues);
 
                 // Clone search groups
                 foreach (var originalGroup in original.SearchGroups)
@@ -315,7 +317,7 @@ namespace WWSearchDataGrid.Modern.WPF
                     // Clone search templates within the group
                     foreach (var originalTemplate in originalGroup.SearchTemplates)
                     {
-                        var clonedTemplate = CloneSearchTemplate(originalTemplate, clone.ColumnValues, clone.ColumnDataType);
+                        var clonedTemplate = CloneSearchTemplate(originalTemplate, clone, clone.ColumnDataType);
                         clonedGroup.SearchTemplates.Add(clonedTemplate);
                     }
 
@@ -327,14 +329,14 @@ namespace WWSearchDataGrid.Modern.WPF
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Error cloning SearchTemplateController: {ex.Message}");
-                return new SearchTemplateController(original.SearchTemplateType);
+                return new SearchTemplateController();
             }
         }
 
         /// <summary>
         /// Clones a search template
         /// </summary>
-        private static SearchTemplate CloneSearchTemplate(SearchTemplate original, HashSet<object> columnValues, ColumnDataType dataType)
+        private static SearchTemplate CloneSearchTemplate(SearchTemplate original, SearchTemplateController targetController, ColumnDataType dataType)
         {
             var clone = new SearchTemplate(dataType)
             {
@@ -343,7 +345,8 @@ namespace WWSearchDataGrid.Modern.WPF
                 SelectedSecondaryValue = original.SelectedSecondaryValue,
                 OperatorName = original.OperatorName,
                 IsOperatorVisible = original.IsOperatorVisible,
-                HasChanges = original.HasChanges
+                HasChanges = original.HasChanges,
+                SearchTemplateController = targetController  // Ensure template has controller reference
             };
 
             // Copy selected values if any
@@ -496,7 +499,7 @@ namespace WWSearchDataGrid.Modern.WPF
 
                     foreach (var sourceTemplate in sourceGroup.SearchTemplates)
                     {
-                        var targetTemplate = CloneSearchTemplate(sourceTemplate, target.ColumnValues, target.ColumnDataType);
+                        var targetTemplate = CloneSearchTemplate(sourceTemplate, target, target.ColumnDataType);
                         targetGroup.SearchTemplates.Add(targetTemplate);
                     }
 

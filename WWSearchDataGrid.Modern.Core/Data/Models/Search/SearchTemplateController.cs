@@ -19,7 +19,6 @@ namespace WWSearchDataGrid.Modern.Core
         #region Fields
 
         private bool hasCustomExpression;
-        private HashSet<Tuple<string, string>> displayValueMappings;
         private Type targetColumnType;
         private ColumnDataType columnDataType = ColumnDataType.String;
         
@@ -27,11 +26,11 @@ namespace WWSearchDataGrid.Modern.Core
         private readonly IFilterExpressionBuilder _filterExpressionBuilder;
 
         private SearchType? defaultSearchType;
-
-        // column value value provider
-        private ColumnValueProvider _valueProvider;
-        private string _currentColumnKey;
-        private CancellationTokenSource _loadingCancellationTokenSource;
+        
+        // Lazy loading fields
+        private bool _columnValuesLoaded = false;
+        private Func<IEnumerable<object>> _columnValuesProvider;
+        private readonly ObservableCollection<object> _columnValues = new ObservableCollection<object>();
 
         #endregion
 
@@ -43,9 +42,18 @@ namespace WWSearchDataGrid.Modern.Core
         public object ColumnName { get; set; }
 
         /// <summary>
-        /// Gets or sets the set of column values
+        /// Gets the bindable collection of column values for direct UI binding
+        /// This replaces the HashSet approach with an observable collection
+        /// Values are loaded lazily when first accessed
         /// </summary>
-        public HashSet<object> ColumnValues { get; set; } = new HashSet<object>();
+        public ObservableCollection<object> ColumnValues 
+        { 
+            get 
+            {
+                EnsureColumnValuesLoaded();
+                return _columnValues;
+            } 
+        }
 
         /// <summary>
         /// Gets or sets the column data type
@@ -115,11 +123,6 @@ namespace WWSearchDataGrid.Modern.Core
         public ObservableCollection<SearchTemplateGroup> SearchGroups { get; } = new ObservableCollection<SearchTemplateGroup>();
 
         /// <summary>
-        /// Gets or sets the type of search template to create (always SearchTemplate now)
-        /// </summary>
-        public Type SearchTemplateType { get; set; }
-
-        /// <summary>
         /// Gets or sets the dictionary of column values by binding path
         /// </summary>
         public Dictionary<string, HashSet<object>> ColumnValuesByPath { get; set; } = new Dictionary<string, HashSet<object>>();
@@ -143,43 +146,10 @@ namespace WWSearchDataGrid.Modern.Core
         /// <summary>
         /// Initializes a new instance of the SearchTemplateController class
         /// </summary>
-        public SearchTemplateController() : this(typeof(SearchTemplate))
+        public SearchTemplateController()
         {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the SearchTemplateController class
-        /// </summary>
-        /// <param name="searchTemplateType">Type of search template to create (legacy parameter, always uses SearchTemplate)</param>
-        public SearchTemplateController(Type searchTemplateType)
-        {
-            // Always use SearchTemplate regardless of what's passed
-            SearchTemplateType = typeof(SearchTemplate);
-            
             // Initialize services
             _filterExpressionBuilder = new FilterExpressionBuilder();
-        }
-
-        /// <summary>
-        /// Finalizer to ensure proper cleanup of resources
-        /// </summary>
-        ~SearchTemplateController()
-        {
-            _loadingCancellationTokenSource?.Cancel();
-            _loadingCancellationTokenSource?.Dispose();
-        }
-        
-        /// <summary>
-        /// Initializes a new instance with custom service dependencies for testing
-        /// </summary>
-        /// <param name="filterExpressionBuilder">Filter expression builder service</param>
-        /// <param name="validator">Template validator service</param>
-        /// <param name="columnValueLoader">Column value loader service</param>
-        internal SearchTemplateController(
-            IFilterExpressionBuilder filterExpressionBuilder)
-        {
-            SearchTemplateType = typeof(SearchTemplate);
-            _filterExpressionBuilder = filterExpressionBuilder ?? throw new ArgumentNullException(nameof(filterExpressionBuilder));
         }
 
         #endregion
@@ -243,17 +213,12 @@ namespace WWSearchDataGrid.Modern.Core
             // Create new SearchTemplate with column data type
             var newTemplate = new SearchTemplate(ColumnDataType)
             {
-                HasChanges = markAsChanged
+                HasChanges = markAsChanged,
+                SearchTemplateController = this // Ensure template has reference to controller
             };
 
             // Apply default search type if provided and compatible
             ApplyDefaultSearchType(newTemplate, defaultSearchType);
-
-            // Load values from current provider
-            if (_valueProvider != null && !string.IsNullOrEmpty(_currentColumnKey))
-            {
-                _ = newTemplate.LoadValuesFromProvider(_valueProvider, _currentColumnKey);
-            }
 
             // Add the template at the appropriate position
             if (referenceTemplate == null)
@@ -280,7 +245,230 @@ namespace WWSearchDataGrid.Modern.Core
         }
 
         /// <summary>
-        /// Loads column data into the search templates
+        /// Sets a provider function for lazy loading column values
+        /// This avoids loading values until they're actually needed
+        /// </summary>
+        /// <param name="valuesProvider">Function that provides column values when called</param>
+        public void SetColumnValuesProvider(Func<IEnumerable<object>> valuesProvider)
+        {
+            _columnValuesProvider = valuesProvider;
+            _columnValuesLoaded = false;
+            _columnValues.Clear();
+        }
+        
+        /// <summary>
+        /// Forces a reload of column values from the provider
+        /// Used when data changes and values need to be refreshed
+        /// </summary>
+        public void RefreshColumnValues()
+        {
+            if (_columnValuesProvider != null)
+            {
+                _columnValuesLoaded = false;
+                _columnValues.Clear();
+                // Values will be reloaded on next access
+            }
+        }
+        
+        /// <summary>
+        /// Sets the column values for direct UI binding (legacy approach for backward compatibility)
+        /// Consider using SetColumnValuesProvider for better performance
+        /// </summary>
+        /// <param name="values">Column values to set</param>
+        public void SetColumnValues(IEnumerable<object> values)
+        {
+            // Clear provider when setting values directly
+            _columnValuesProvider = null;
+            _columnValuesLoaded = true;
+            LoadValuesIntoCollection(values);
+        }
+        
+        /// <summary>
+        /// Ensures column values are loaded into the collection
+        /// </summary>
+        private void EnsureColumnValuesLoaded()
+        {
+            if (!_columnValuesLoaded && _columnValuesProvider != null)
+            {
+                try
+                {
+                    var values = _columnValuesProvider();
+                    LoadValuesIntoCollection(values);
+                    _columnValuesLoaded = true;
+                    DetermineColumnDataTypeFromValues();
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Error loading column values: {ex.Message}");
+                    _columnValuesLoaded = true; // Mark as loaded to prevent repeated failures
+                }
+            }
+        }
+        
+        /// <summary>
+        /// Loads values into the ObservableCollection with performance optimizations
+        /// </summary>
+        /// <param name="values">Values to load</param>
+        private void LoadValuesIntoCollection(IEnumerable<object> values)
+        {
+            _columnValues.Clear();
+            
+            if (values == null) return;
+
+            // Performance optimization: use HashSet for O(1) duplicate detection instead of LINQ Distinct()
+            var uniqueValues = new HashSet<object>();
+            var normalizedValues = new List<object>();
+
+            // Single pass to normalize and deduplicate
+            foreach (var value in values)
+            {
+                var normalizedValue = NormalizeValue(value);
+                if (uniqueValues.Add(normalizedValue))
+                {
+                    normalizedValues.Add(normalizedValue);
+                }
+            }
+
+            // Only sort if we have a reasonable number of values (avoid expensive sort on huge datasets)
+            if (normalizedValues.Count <= 10000)
+            {
+                // Use Array.Sort which is faster than LINQ OrderBy for in-memory collections
+                normalizedValues.Sort((x, y) => 
+                {
+                    var xStr = x?.ToString() ?? string.Empty;
+                    var yStr = y?.ToString() ?? string.Empty;
+                    return string.Compare(xStr, yStr, StringComparison.OrdinalIgnoreCase);
+                });
+            }
+            // For very large datasets, don't sort to avoid performance issues
+
+            // Add values to ObservableCollection
+            foreach (var value in normalizedValues)
+            {
+                _columnValues.Add(value);
+            }
+        }
+
+        /// <summary>
+        /// Determines column data type from loaded values (called when values are first accessed)
+        /// </summary>
+        private void DetermineColumnDataTypeFromValues()
+        {
+            try
+            {
+                // Only determine data type if values are loaded and we haven't set a specific type
+                if (_columnValuesLoaded && _columnValues.Any())
+                {
+                    var detectedType = ReflectionHelper.DetermineColumnDataType(new HashSet<object>(_columnValues));
+                    if (ColumnDataType == ColumnDataType.String) // Only update if still default
+                    {
+                        ColumnDataType = detectedType;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error determining column data type: {ex.Message}");
+            }
+        }
+        
+        /// <summary>
+        /// Normalizes a value (null/empty/whitespace → null)
+        /// </summary>
+        /// <param name="value">Value to normalize</param>
+        /// <returns>Normalized value</returns>
+        private object NormalizeValue(object value)
+        {
+            if (value == null) return null;
+            if (value is string stringValue && string.IsNullOrWhiteSpace(stringValue))
+                return null;
+            return value;
+        }
+        
+        /// <summary>
+        /// Adds or updates a single value in the column values (for incremental updates)
+        /// </summary>
+        /// <param name="value">Value to add or update</param>
+        public void AddOrUpdateColumnValue(object value)
+        {
+            if (!_columnValuesLoaded)
+            {
+                // If values aren't loaded yet, just mark them as needing refresh
+                return;
+            }
+            
+            var normalizedValue = NormalizeValue(value);
+            if (!_columnValues.Contains(normalizedValue))
+            {
+                // Insert in sorted order if collection is small enough
+                if (_columnValues.Count <= 10000)
+                {
+                    var insertIndex = 0;
+                    var valueStr = normalizedValue?.ToString() ?? string.Empty;
+                    
+                    for (int i = 0; i < _columnValues.Count; i++)
+                    {
+                        var existingStr = _columnValues[i]?.ToString() ?? string.Empty;
+                        if (string.Compare(valueStr, existingStr, StringComparison.OrdinalIgnoreCase) < 0)
+                        {
+                            insertIndex = i;
+                            break;
+                        }
+                        insertIndex = i + 1;
+                    }
+                    
+                    _columnValues.Insert(insertIndex, normalizedValue);
+                }
+                else
+                {
+                    // For large collections, just append (sorting is disabled anyway)
+                    _columnValues.Add(normalizedValue);
+                }
+            }
+        }
+        
+        /// <summary>
+        /// Removes a value from the column values (for incremental updates)
+        /// </summary>
+        /// <param name="value">Value to remove</param>
+        public void RemoveColumnValue(object value)
+        {
+            if (!_columnValuesLoaded)
+            {
+                // If values aren't loaded yet, just mark them as needing refresh
+                return;
+            }
+            
+            var normalizedValue = NormalizeValue(value);
+            _columnValues.Remove(normalizedValue);
+        }
+
+        /// <summary>
+        /// Sets up lazy loading for column data (new efficient approach)
+        /// </summary>
+        /// <param name="header">Column header</param>
+        /// <param name="valuesProvider">Function that provides column values when needed</param>
+        /// <param name="bindingPath">The binding path for the column</param>
+        public void SetupColumnDataLazy(
+            object header,
+            Func<IEnumerable<object>> valuesProvider,
+            string bindingPath = null)
+        {
+            ColumnName = header;
+            SetColumnValuesProvider(valuesProvider);
+            
+            // We'll determine column data type when values are first loaded
+            // For now, start with string as default
+            ColumnDataType = ColumnDataType.String;
+
+            AddSearchGroup(SearchGroups.Count == 0, false);
+
+            // Ensure operator visibility is properly set
+            UpdateOperatorVisibility();
+        }
+        
+        /// <summary>
+        /// Loads column data into the search templates (legacy approach for backward compatibility)
         /// </summary>
         /// <param name="header">Column header</param>
         /// <param name="values">Column values</param>
@@ -289,42 +477,21 @@ namespace WWSearchDataGrid.Modern.Core
         public void LoadColumnData(
             object header,
             HashSet<object> values,
-            HashSet<Tuple<string, string>> displayValueMappings = null,
             string bindingPath = null)
         {
-            this.displayValueMappings = displayValueMappings;
-            ColumnValues = new HashSet<object>(values ?? new HashSet<object>());
+            SetColumnValues(values); // Use legacy approach
             ColumnName = header;
 
-            // Auto-detect column data type - the only real logic from ColumnValueLoader
-            if (values?.Any() == true)
-            {
-                ColumnDataType = ReflectionHelper.DetermineColumnDataType(values);
-            }
-            else
-            {
-                ColumnDataType = ColumnDataType.String;
-            }
+            // Auto-detect column data type when values are accessed
+            DetermineColumnDataTypeFromValues();
 
             // Store column values by binding path for global filtering
             if (!string.IsNullOrEmpty(bindingPath))
             {
-                ColumnValuesByPath[bindingPath] = new HashSet<object>(values);
+                ColumnValuesByPath[bindingPath] = new HashSet<object>(ColumnValues);
             }
 
             AddSearchGroup(SearchGroups.Count == 0, false);
-
-            // Update all existing templates with new provider
-            if (_valueProvider != null && !string.IsNullOrEmpty(_currentColumnKey))
-            {
-                foreach (var group in SearchGroups)
-                {
-                    foreach (var template in group.SearchTemplates)
-                    {
-                        _ = template.LoadValuesFromProvider(_valueProvider, _currentColumnKey);
-                    }
-                }
-            }
 
             // Ensure operator visibility is properly set after loading
             UpdateOperatorVisibility();
@@ -345,7 +512,7 @@ namespace WWSearchDataGrid.Modern.Core
                 }
                 else
                 {
-                    targetColumnType = _filterExpressionBuilder.DetermineTargetColumnType(ColumnDataType, ColumnValues);
+                    targetColumnType = _filterExpressionBuilder.DetermineTargetColumnType(ColumnDataType, new HashSet<object>(ColumnValues));
                 }
 
                 // Use the filter expression builder service
@@ -575,40 +742,6 @@ namespace WWSearchDataGrid.Modern.Core
             }
             UpdateFilterExpression();
             UpdateOperatorVisibility();
-        }
-
-        /// <summary>
-        /// Gets column values asynchronously using the provider
-        /// </summary>
-        /// <param name="columnKey">Column key to retrieve values for</param>
-        /// <returns>Enumerable of column values</returns>
-        public async Task<IEnumerable<object>> GetColumnValuesAsync(string columnKey)
-        {
-            if (_valueProvider == null || string.IsNullOrEmpty(columnKey))
-                return Enumerable.Empty<object>();
-
-            var response = await _valueProvider.GetValuesAsync(new ColumnValueRequest
-            {
-                ColumnKey = columnKey,
-                Take = int.MaxValue
-            });
-            return response.Values;
-        }
-
-        /// <summary>
-        /// Gets column values for a specific binding path (for global filtering)
-        /// </summary>
-        /// <param name="bindingPath">Binding path to retrieve values for</param>
-        /// <returns>HashSet of values for the specified binding path</returns>
-        public HashSet<object> GetColumnValuesForPath(string bindingPath)
-        {
-            if (string.IsNullOrEmpty(bindingPath))
-                return new HashSet<object>();
-
-            if (ColumnValuesByPath.TryGetValue(bindingPath, out var values))
-                return values;
-
-            return new HashSet<object>();
         }
 
         /// <summary>
@@ -1311,94 +1444,6 @@ namespace WWSearchDataGrid.Modern.Core
                     template.SearchType = searchTypeToApply.Value;
                 }
             }
-        }
-
-        /// <summary>
-        /// Connects all SearchTemplates in this controller to use the column value value provider
-        /// </summary>
-        public void ConnectToValueProvider(string columnKey, ColumnValueProvider valueProvider)
-        {
-            if (valueProvider == null || string.IsNullOrEmpty(columnKey))
-                return;
-
-            _valueProvider = valueProvider;
-            _currentColumnKey = columnKey;
-
-            // Load values using the column value provider
-            _ = LoadColumnValuesAsync(columnKey, CancellationToken.None);
-        }
-
-        /// <summary>
-        /// Loads column values asynchronously using the column value provider
-        /// </summary>
-        public async Task LoadColumnValuesAsync(string columnKey, CancellationToken cancellationToken = default)
-        {
-            if (_valueProvider == null || string.IsNullOrEmpty(columnKey))
-                return;
-
-            // Cancel any existing loading operation
-            _loadingCancellationTokenSource?.Cancel();
-            _loadingCancellationTokenSource = new CancellationTokenSource();
-            
-            using (var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, _loadingCancellationTokenSource.Token))
-            {
-                try
-                {
-                    // Get total count first
-                    var totalCount = await _valueProvider.GetTotalCountAsync(columnKey);
-                    
-                    // Request all values with proper paging
-                    var request = new ColumnValueRequest
-                    {
-                        ColumnKey = columnKey,
-                        Skip = 0,
-                        Take = Math.Min(totalCount, 50000), // Limit to 50k values for performance
-                        IncludeNull = true,
-                        IncludeEmpty = true,
-                        SortAscending = true,
-                        GroupByFrequency = false
-                    };
-
-                    var response = await _valueProvider.GetValuesAsync(request);
-                    linkedCts.Token.ThrowIfCancellationRequested();
-
-                    // Update ColumnValues with new data
-                    var newValues = new HashSet<object>(response.Values);
-                    ColumnValues = newValues;
-
-                    // Update all existing templates with new values
-                    foreach (var group in SearchGroups)
-                    {
-                        foreach (var template in group.SearchTemplates.OfType<SearchTemplate>())
-                        {
-                            _ = template.LoadValuesFromProvider(_valueProvider, columnKey);
-                        }
-                    }
-                }
-                catch (OperationCanceledException)
-                {
-                    // Loading was cancelled, which is expected
-                }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($"Error loading column values: {ex.Message}");
-                }
-            }
-        }
-
-        /// <summary>
-        /// Invalidates cached column values and reloads them
-        /// </summary>
-        public async Task RefreshColumnValuesAsync(CancellationToken cancellationToken = default)
-        {
-            if (_valueProvider == null || string.IsNullOrEmpty(_currentColumnKey))
-                return;
-
-            // Invalidate cached values
-            _valueProvider.InvalidateColumn(_currentColumnKey);
-
-            // Reload values
-            await LoadColumnValuesAsync(_currentColumnKey, cancellationToken);
         }
 
         #endregion

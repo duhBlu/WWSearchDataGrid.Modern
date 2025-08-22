@@ -119,23 +119,16 @@ namespace WWSearchDataGrid.Modern.Core
             }
         }
 
-        private IEnumerable<object> availableValues = new List<object>();
-        public IEnumerable<object> AvailableValues 
-        { 
-            get { return availableValues; }
-            private set 
-            { 
-                if (SetProperty(value, ref availableValues))
-                {
-                    OnPropertyChanged(nameof(AvailableValueCount));
-                }
-            }
-        }
+        /// <summary>
+        /// Gets available values from the parent controller (direct binding)
+        /// Templates no longer store values - they reference the controller's values
+        /// </summary>
+        public IEnumerable<object> AvailableValues => SearchTemplateController?.ColumnValues ?? Enumerable.Empty<object>();
 
         /// <summary>
         /// Gets the count of available values for display purposes
         /// </summary>
-        public int AvailableValueCount => availableValues?.Count() ?? 0;
+        public int AvailableValueCount => AvailableValues?.Count() ?? 0;
 
         public object SelectedValue
         {
@@ -338,18 +331,6 @@ namespace WWSearchDataGrid.Modern.Core
             UpdateInputTemplate();
         }
 
-        public SearchTemplate(ColumnValueProvider provider, string columnKey, ColumnDataType dataType)
-            : this(dataType)
-        {
-            if (provider != null && !string.IsNullOrEmpty(columnKey))
-            {
-                _ = LoadValuesFromProvider(provider, columnKey);
-            }
-        }
-
-        public SearchTemplate(ColumnValueProvider provider, string columnKey)
-            : this(provider, columnKey, ColumnDataType.String) { }
-
         #endregion
 
         #region Core Logic
@@ -442,55 +423,6 @@ namespace WWSearchDataGrid.Modern.Core
         }
 
         /// <summary>
-        /// Loads values from the column value provider
-        /// </summary>
-        public async Task LoadValuesFromProvider(ColumnValueProvider provider, string columnKey)
-        {
-            if (provider == null || string.IsNullOrEmpty(columnKey))
-                return;
-
-            var request = new ColumnValueRequest
-            {
-                ColumnKey = columnKey,
-                Skip = 0,
-                Take = 10000, // Load first 10k values
-                IncludeNull = true,
-                IncludeEmpty = true,
-                SortAscending = true,
-                GroupByFrequency = false
-            };
-
-            var response = await provider.GetValuesAsync(request);
-            
-            // Process values with null/empty/whitespace unification
-            var processedValues = response.Values.Select(value => {
-                return IsBlankValue(value) ? null : value; // Unify all blank values as null
-            }).Distinct().ToList();
-            
-            // Sort with null values first
-            processedValues.Sort((x, y) => 
-            {
-                // Null values first
-                if (x == null && y == null) return 0;
-                if (x == null) return -1;
-                if (y == null) return 1;
-                
-                // Then sort by string representation
-                return string.Compare(x.ToString(), y.ToString(), StringComparison.Ordinal);
-            });
-
-            AvailableValues = processedValues;
-            
-            // Update column values for nullability analysis
-            _columnValuesForNullabilityAnalysis = new HashSet<object>(processedValues);
-            
-            if (processedValues.Any())
-            {
-                ColumnDataType = ReflectionHelper.DetermineColumnDataType(_columnValuesForNullabilityAnalysis);
-            }
-        }
-
-        /// <summary>
         /// Gets display text for a value (simplified version without count information)
         /// </summary>
         public string GetValueDisplayText(object value)
@@ -498,32 +430,6 @@ namespace WWSearchDataGrid.Modern.Core
             // All null, empty, and whitespace values display as "(null)"
             return value?.ToString() ?? "(null)";
         }
-
-        /// <summary>
-        /// Determines if a value should be considered "blank" (null, empty, or whitespace-only)
-        /// </summary>
-        private static bool IsBlankValue(object value)
-        {
-            if (value == null) return true;
-            if (value is string stringValue)
-            {
-                return string.IsNullOrWhiteSpace(stringValue);
-            }
-            return false;
-        }
-
-
-        /// <summary>
-        /// Connects this SearchTemplate to use a shared data source from the provider
-        /// </summary>
-        public async Task ConnectToProviderAsync(ColumnValueProvider provider, string columnKey)
-        {
-            if (provider == null || string.IsNullOrEmpty(columnKey))
-                return;
-
-            await LoadValuesFromProvider(provider, columnKey);
-        }
-
 
         #endregion
 

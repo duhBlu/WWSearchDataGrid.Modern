@@ -23,7 +23,7 @@
         <ComboBox Style="{StaticResource Editable_ComboBox_Style}"
                   Text="{Binding SelectedValue}"
                   Tag="Type or select..."
-                  ItemsSource="{Binding AvailableValues}" />
+                  ItemsSource="{Binding SearchTemplateController.ColumnValues}" />
     </DataTemplate>
 
     <!--  Single TextBox Template  -->
@@ -41,7 +41,7 @@
                       Text="{Binding SelectedValue, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
                       MinWidth="120"
                       Tag="Type or select..."
-                      ItemsSource="{Binding AvailableValues}" />
+                      ItemsSource="{Binding SearchTemplateController.ColumnValues}" />
             <TextBlock Text="To:"
                        Margin="10,0,5,0"
                        VerticalAlignment="Center" />
@@ -49,7 +49,7 @@
                       Text="{Binding SelectedSecondaryValue, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
                       MinWidth="120"
                       Tag="Type or select..."
-                      ItemsSource="{Binding AvailableValues}" />
+                      ItemsSource="{Binding SearchTemplateController.ColumnValues}" />
         </StackPanel>
     </DataTemplate>
 
@@ -153,7 +153,7 @@
                                           Grid.Column="0"
                                           Text="{Binding}"
                                           Tag="Type or select..."
-                                          ItemsSource="{Binding DataContext.AvailableValues, RelativeSource={RelativeSource AncestorType=ListBox}}" />
+                                          ItemsSource="{Binding DataContext.SearchTemplateController.ColumnValues, RelativeSource={RelativeSource AncestorType=ListBox}}" />
                                 <Button Style="{StaticResource TransparentFontIcon_Button_Style}"
                                         Grid.Column="1"
                                         Command="{Binding DataContext.RemoveValueCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"

@@ -29,6 +29,10 @@ namespace WWSearchDataGrid.Modern.WPF
         private System.Collections.IEnumerable originalItemsSource;
         private bool initialUpdateLayoutCompleted;
         private SearchTemplateController globalFilterController;
+        private bool _isProcessingItemsSourceChange = false; // Prevents recursive ItemsSourceChanged events
+        private int _itemsSourceChangeCount = 0;
+        private DateTime _lastItemsSourceChangeTime = DateTime.MinValue;
+        private const int MAX_ITEMS_SOURCE_CHANGES_PER_SECOND = 10; // Limit rapid changes
 
         #endregion
 
@@ -81,7 +85,7 @@ namespace WWSearchDataGrid.Modern.WPF
             {
                 if (globalFilterController == null)
                 {
-                    globalFilterController = new SearchTemplateController(typeof(SearchTemplate));
+                    globalFilterController = new SearchTemplateController();
 
                     // Initialize with first column if available
                     var firstColumn = DataColumns.FirstOrDefault();
@@ -283,7 +287,6 @@ namespace WWSearchDataGrid.Modern.WPF
                     controller.LoadColumnData(
                         column.CurrentColumn.Header,
                         columnValues,
-                        null,
                         column.BindingPath);
                 }
             }
@@ -357,37 +360,75 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
-        /// When items source changes, notify controls
+        /// When items source changes, notify controls with safeguards against recursive calls
         /// </summary>
         protected override void OnItemsSourceChanged(System.Collections.IEnumerable oldValue, System.Collections.IEnumerable newValue)
         {
-            base.OnItemsSourceChanged(oldValue, newValue);
-
-            originalItemsSource = newValue;
-
-            // Register for collection changed events if the source supports it
-            UnregisterCollectionChangedEvent(oldValue);
-            RegisterCollectionChangedEvent(newValue);
-
-            if (newValue != null)
+            try
             {
-                // Update ActualHasItems property
-                UpdateHasItemsProperty();
-
-                // Notify controls that items source has changed
-                ItemsSourceChanged?.Invoke(this, EventArgs.Empty);
-
-                // Apply any existing filters
-                if (Items.Filter != null)
+                // Prevent recursive ItemsSourceChanged events
+                if (_isProcessingItemsSourceChange)
                 {
-                    FilterItemsSource();
+                    System.Diagnostics.Debug.WriteLine($"SearchDataGrid: Preventing recursive OnItemsSourceChanged call");
+                    return;
                 }
-                UpdateLayout();
+                
+                // Detect rapid successive changes that might indicate a loop
+                var now = DateTime.Now;
+                if (now - _lastItemsSourceChangeTime < TimeSpan.FromSeconds(1))
+                {
+                    _itemsSourceChangeCount++;
+                    if (_itemsSourceChangeCount > MAX_ITEMS_SOURCE_CHANGES_PER_SECOND)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"SearchDataGrid: Too many ItemsSource changes ({_itemsSourceChangeCount}) in one second - possible infinite loop. Skipping.");
+                        return;
+                    }
+                }
+                else
+                {
+                    // Reset counter after one second
+                    _itemsSourceChangeCount = 1;
+                }
+                _lastItemsSourceChangeTime = now;
+                
+                _isProcessingItemsSourceChange = true;
+                
+                base.OnItemsSourceChanged(oldValue, newValue);
+
+                originalItemsSource = newValue;
+
+                // Register for collection changed events if the source supports it
+                UnregisterCollectionChangedEvent(oldValue);
+                RegisterCollectionChangedEvent(newValue);
+
+                if (newValue != null)
+                {
+                    // Update ActualHasItems property
+                    UpdateHasItemsProperty();
+
+                    // Notify controls that items source has changed
+                    ItemsSourceChanged?.Invoke(this, EventArgs.Empty);
+
+                    // Apply any existing filters
+                    if (Items.Filter != null)
+                    {
+                        FilterItemsSource();
+                    }
+                    UpdateLayout();
+                }
+                else
+                {
+                    // If items source is null, set ActualHasItems to false
+                    ActualHasItems = false;
+                }
             }
-            else
+            catch (Exception ex)
             {
-                // If items source is null, set ActualHasItems to false
-                ActualHasItems = false;
+                System.Diagnostics.Debug.WriteLine($"Error in OnItemsSourceChanged: {ex.Message}");
+            }
+            finally
+            {
+                _isProcessingItemsSourceChange = false;
             }
         }
 
@@ -721,6 +762,17 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
+        /// Resets loop protection counters (useful for debugging or after major data changes)
+        /// </summary>
+        public void ResetLoopProtection()
+        {
+            _isProcessingItemsSourceChange = false;
+            _itemsSourceChangeCount = 0;
+            _lastItemsSourceChangeTime = DateTime.MinValue;
+            System.Diagnostics.Debug.WriteLine($"SearchDataGrid: Loop protection counters reset");
+        }
+        
+        /// <summary>
         /// Clear all filters
         /// </summary>
         public void ClearAllFilters()
@@ -737,9 +789,6 @@ namespace WWSearchDataGrid.Modern.WPF
             // Clear the filter
             Items.Filter = null;
             SearchFilter = null;
-
-            // Clear all cache layers for complete memory cleanup
-            ColumnValueCache.Instance.ClearAllCaches();
 
             // Force restoration of original data
             ForceRestoreOriginalData();
