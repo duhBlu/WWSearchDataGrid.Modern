@@ -25,7 +25,6 @@ namespace WWSearchDataGrid.Modern.Core
         
         // Service dependencies
         private readonly IFilterExpressionBuilder _filterExpressionBuilder;
-        private readonly SearchTemplateValidator _validator;
 
         private SearchType? defaultSearchType;
 
@@ -159,7 +158,6 @@ namespace WWSearchDataGrid.Modern.Core
             
             // Initialize services
             _filterExpressionBuilder = new FilterExpressionBuilder();
-            _validator = new SearchTemplateValidator();
         }
 
         /// <summary>
@@ -178,12 +176,10 @@ namespace WWSearchDataGrid.Modern.Core
         /// <param name="validator">Template validator service</param>
         /// <param name="columnValueLoader">Column value loader service</param>
         internal SearchTemplateController(
-            IFilterExpressionBuilder filterExpressionBuilder,
-            SearchTemplateValidator validator)
+            IFilterExpressionBuilder filterExpressionBuilder)
         {
             SearchTemplateType = typeof(SearchTemplate);
             _filterExpressionBuilder = filterExpressionBuilder ?? throw new ArgumentNullException(nameof(filterExpressionBuilder));
-            _validator = validator ?? throw new ArgumentNullException(nameof(validator));
         }
 
         #endregion
@@ -211,14 +207,6 @@ namespace WWSearchDataGrid.Modern.Core
         {
             if (!canAddGroup) return;
             
-            // Validate the operation
-            var validationResult = _validator.ValidateAddSearchGroup(SearchGroups, AllowMultipleGroups);
-            if (!validationResult.IsValid)
-            {
-                System.Diagnostics.Debug.WriteLine($"Cannot add search group: {validationResult.ErrorMessage}");
-                return;
-            }
-
             var newGroup = new SearchTemplateGroup();
             
             if (referenceGroup != null && SearchGroups.Contains(referenceGroup))
@@ -252,14 +240,6 @@ namespace WWSearchDataGrid.Modern.Core
         {
             SearchTemplateGroup targetGroup = DetermineTargetGroup(group, referenceTemplate);
             
-            // Validate the operation
-            var validationResult = _validator.ValidateAddSearchTemplate(targetGroup, SearchGroups);
-            if (!validationResult.IsValid)
-            {
-                System.Diagnostics.Debug.WriteLine($"Cannot add search template: {validationResult.ErrorMessage}");
-                return;
-            }
-
             // Create new SearchTemplate with column data type
             var newTemplate = new SearchTemplate(ColumnDataType)
             {
@@ -509,16 +489,6 @@ namespace WWSearchDataGrid.Modern.Core
             SearchTemplate template,
             int targetIndex)
         {
-            // Validate the move operation
-            var validationResult = _validator.ValidateTemplateMoveOperation(
-                sourceGroup, targetGroup, template, targetIndex, SearchGroups);
-                
-            if (!validationResult.IsValid)
-            {
-                System.Diagnostics.Debug.WriteLine($"Cannot move template: {validationResult.ErrorMessage}");
-                return;
-            }
-
             sourceGroup.SearchTemplates.Remove(template);
             targetGroup.SearchTemplates.Insert(targetIndex, template);
 
@@ -540,14 +510,6 @@ namespace WWSearchDataGrid.Modern.Core
         /// <param name="group">Group to remove</param>
         public void RemoveSearchGroup(SearchTemplateGroup group)
         {
-            // Validate the removal operation
-            var validationResult = _validator.ValidateRemoveSearchGroup(group, SearchGroups, AllowMultipleGroups);
-            if (!validationResult.IsValid)
-            {
-                System.Diagnostics.Debug.WriteLine($"Cannot remove search group: {validationResult.ErrorMessage}");
-                return;
-            }
-            
             if (!SearchGroups.Contains(group)) return;
 
             // If multiple groups are allowed, or this isn't the last group, remove it normally
@@ -601,14 +563,6 @@ namespace WWSearchDataGrid.Modern.Core
             var group = SearchGroups.FirstOrDefault(g => g.SearchTemplates.Contains(template));
             if (group == null) return;
             
-            // Validate the removal operation
-            var validationResult = _validator.ValidateRemoveSearchTemplate(template, group);
-            if (!validationResult.IsValid)
-            {
-                System.Diagnostics.Debug.WriteLine($"Cannot remove search template: {validationResult.ErrorMessage}");
-                return;
-            }
-
             if (group.SearchTemplates.Count > 1)
             {
                 group.SearchTemplates.Remove(template);
