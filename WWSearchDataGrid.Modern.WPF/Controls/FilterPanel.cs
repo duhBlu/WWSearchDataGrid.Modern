@@ -447,14 +447,12 @@ namespace WWSearchDataGrid.Modern.WPF
             
             if (tokenizedControl != null && tokenizedControl.ActualWidth > 0)
             {
-                // Force a layout update to get accurate measurements
                 tokenizedControl.UpdateLayout();
                 
                 // Check if content width exceeds available space
                 var availableWidth = ActualWidth - 200; // Account for buttons and margins
                 HasOverflow = tokenizedControl.DesiredSize.Width > availableWidth;
 
-                // Collapse the panel if we no longer have overflow content
                 if (!HasOverflow && IsExpanded)
                 {
                     IsExpanded = false;

@@ -30,6 +30,16 @@ namespace WWSearchDataGrid.Modern.WPF
             DependencyProperty.RegisterAttached("DefaultSearchType", typeof(SearchType), typeof(ColumnFilterEditor),
                 new FrameworkPropertyMetadata(SearchType.Contains, FrameworkPropertyMetadataOptions.Inherits));
 
+        public static SearchType GetDefaultSearchType(DependencyObject obj)
+        {
+            return (SearchType)obj.GetValue(DefaultSearchTypeProperty);
+        }
+
+        public static void SetDefaultSearchType(DependencyObject obj, SearchType value)
+        {
+            obj.SetValue(DefaultSearchTypeProperty, value);
+        }
+
         /// <summary>
         /// Dependency property for controlling operator ComboBox visibility
         /// </summary>
@@ -45,15 +55,6 @@ namespace WWSearchDataGrid.Modern.WPF
         /// Gets or sets the search controller for this control
         /// </summary>
         public SearchTemplateController SearchTemplateController { get; set; }
-
-        /// <summary>
-        /// Gets or sets the column data type
-        /// </summary>
-        public ColumnDataType ColumnDataType
-        {
-            get => columnDataType;
-            set => SetProperty(value, ref columnDataType);
-        }
 
         /// <summary>
         /// Gets or sets whether the operator ComboBox is visible
@@ -128,16 +129,12 @@ namespace WWSearchDataGrid.Modern.WPF
 
         #region Event Handlers
 
-        /// <summary>
-        /// Handle control loaded event
-        /// </summary>
         private void OnControlLoaded(object sender, RoutedEventArgs e)
         {
             if (_isInitialized) return;
 
             try
             {
-                // Initialize the rules interface
                 InitializeRulesInterface();
                 _isInitialized = true;
             }
@@ -147,9 +144,6 @@ namespace WWSearchDataGrid.Modern.WPF
             }
         }
 
-        /// <summary>
-        /// Handle control unloaded event
-        /// </summary>
         private void OnUnloaded(object sender, RoutedEventArgs e)
         {
             _isInitialized = false;
@@ -164,8 +158,27 @@ namespace WWSearchDataGrid.Modern.WPF
         /// </summary>
         private void InitializeRulesInterface()
         {
-            // Set up operator visibility based on search groups
+            TriggerColumnValueLoading();
             UpdateOperatorVisibility();
+        }
+        
+        /// <summary>
+        /// Triggers loading of column values when filter editor opens
+        /// </summary>
+        private void TriggerColumnValueLoading()
+        {
+            try
+            {
+                if (DataContext is ColumnSearchBox columnSearchBox && 
+                    columnSearchBox.SearchTemplateController != null)
+                {
+                    columnSearchBox.SearchTemplateController.EnsureColumnValuesLoadedForFiltering();
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error triggering column value loading: {ex.Message}");
+            }
         }
 
         /// <summary>
@@ -175,21 +188,17 @@ namespace WWSearchDataGrid.Modern.WPF
         {
             IsOperatorVisible = false;
 
-            // Check if we have access to the data grid through the column search box
             if (DataContext is ColumnSearchBox currentColumnSearchBox && 
                 currentColumnSearchBox.SourceDataGrid != null)
             {
                 var dataGrid = currentColumnSearchBox.SourceDataGrid;
                 var currentColumn = currentColumnSearchBox;
                 
-                // Check if any preceding columns have active filters
                 foreach (var column in dataGrid.DataColumns)
                 {
-                    // Stop when we reach the current column
                     if (column == currentColumn)
                         break;
                         
-                    // If this preceding column has an active filter, show the operator
                     if (column.HasActiveFilter)
                     {
                         IsOperatorVisible = true;
@@ -208,7 +217,6 @@ namespace WWSearchDataGrid.Modern.WPF
             
             try
             {
-                // Apply filter directly through SearchTemplateController - no service layer needed
                 SearchTemplateController.UpdateFilterExpression();
                 
                 // Update the UI state after successful filter application
@@ -252,24 +260,12 @@ namespace WWSearchDataGrid.Modern.WPF
             }
         }
 
-        /// <summary>
-        /// Close the window
-        /// </summary>
-        private void CloseWindow()
-        {
-            Window.GetWindow(this)?.Close();
-        }
-
-        /// <summary>
-        /// Add a new search template rule
-        /// </summary>
         private void AddSearchTemplate()
         {
             if (SearchTemplateController == null) return;
 
             try
             {
-                // Delegate to SearchTemplateController - it handles all the logic
                 SearchTemplateController.AddSearchTemplate(markAsChanged: true);
             }
             catch (Exception ex)
@@ -278,9 +274,6 @@ namespace WWSearchDataGrid.Modern.WPF
             }
         }
 
-        /// <summary>
-        /// Remove a search template rule
-        /// </summary>
         private void RemoveSearchTemplate(object template)
         {
             if (SearchTemplateController == null || template is not SearchTemplate searchTemplate) return;
@@ -300,48 +293,25 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
 
-        /// <summary>
-        /// Get attached DefaultSearchType property
-        /// </summary>
-        public static SearchType GetDefaultSearchType(DependencyObject obj)
-        {
-            return (SearchType)obj.GetValue(DefaultSearchTypeProperty);
-        }
+        
 
         /// <summary>
-        /// Set attached DefaultSearchType property
+        /// Close the window
         /// </summary>
-        public static void SetDefaultSearchType(DependencyObject obj, SearchType value)
+        private void CloseWindow()
         {
-            obj.SetValue(DefaultSearchTypeProperty, value);
+            Window.GetWindow(this)?.Close();
         }
 
         #endregion
 
         #region INotifyPropertyChanged Implementation
 
-        /// <summary>
-        /// Property changed event
-        /// </summary>
         public event PropertyChangedEventHandler PropertyChanged;
 
-        /// <summary>
-        /// Raises property changed event
-        /// </summary>
         protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        }
-
-        /// <summary>
-        /// Sets property value and raises property changed event if changed
-        /// </summary>
-        protected bool SetProperty<T>(T value, ref T field, [CallerMemberName] string propertyName = null)
-        {
-            if (Equals(field, value)) return false;
-            field = value;
-            OnPropertyChanged(propertyName);
-            return true;
         }
 
         #endregion

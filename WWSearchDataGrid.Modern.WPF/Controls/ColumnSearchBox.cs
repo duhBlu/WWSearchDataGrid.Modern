@@ -208,16 +208,10 @@ namespace WWSearchDataGrid.Modern.WPF
 
         #region Constructors
 
-        /// <summary>
-        /// Initializes a new instance of the ColumnSearchBox class
-        /// </summary>
         public ColumnSearchBox()
         {
             Loaded += OnControlLoaded;
             Unloaded += OnControlUnloaded;
-            
-            // Make the control non-focusable so focus goes directly to child elements
-            //Focusable = false;
             
             // Handle container-level focus events
             LostFocus += OnColumnSearchBoxLostFocus;
@@ -241,13 +235,13 @@ namespace WWSearchDataGrid.Modern.WPF
             obj.SetValue(CustomSearchTemplateProperty, value);
 
         /// <summary>
-        /// Sets whether to show the advanced filter
+        /// Sets whether to show the column editor filter button
         /// </summary>
         public static void SetAllowRuleValueFiltering(DependencyObject element, bool value) =>
             element.SetValue(AllowRuleValueFilteringProperty, value);
 
         /// <summary>
-        /// Gets whether to show the advanced filter
+        /// Gets whether to show the column editor filter button
         /// </summary>
         public static bool GetAllowRuleValueFiltering(DependencyObject element) =>
             (bool)element.GetValue(AllowRuleValueFilteringProperty);
@@ -256,9 +250,6 @@ namespace WWSearchDataGrid.Modern.WPF
 
         #region Control Template Methods
 
-        /// <summary>
-        /// When the template is applied
-        /// </summary>
         public override void OnApplyTemplate()
         {
             base.OnApplyTemplate();
@@ -333,7 +324,6 @@ namespace WWSearchDataGrid.Modern.WPF
                 SourceDataGrid.ItemsSourceChanged -= OnSourceDataGridItemsSourceChanged;
             }
 
-            // Close and clean up the filter window if it's open
             if (columnFilterWindow != null)
             {
                 CloseColumnFilterWindow(false);
@@ -360,7 +350,6 @@ namespace WWSearchDataGrid.Modern.WPF
             control.InitializeSearchTemplateController();
         }
 
-        private DispatcherTimer _availableValuesUpdateTimer;
 
         private void OnSourceDataGridCollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
         {
@@ -370,7 +359,6 @@ namespace WWSearchDataGrid.Modern.WPF
 
             try
             {
-                // Handle different collection change types with efficient incremental updates
                 switch (e.Action)
                 {
                     case NotifyCollectionChangedAction.Add:
@@ -386,10 +374,8 @@ namespace WWSearchDataGrid.Modern.WPF
                         break;
                         
                     case NotifyCollectionChangedAction.Reset:
-                        // Full reset - refresh column values completely but lazily
                         SearchTemplateController.RefreshColumnValues();
                         
-                        // Delay the checkbox settings check to ensure data type can be determined
                         Dispatcher.BeginInvoke(new Action(() =>
                         {
                             DetermineCheckboxColumnSettings();
@@ -397,7 +383,6 @@ namespace WWSearchDataGrid.Modern.WPF
                         break;
                         
                     case NotifyCollectionChangedAction.Move:
-                        // Move doesn't affect column values
                         break;
                 }
             }
@@ -553,8 +538,6 @@ namespace WWSearchDataGrid.Modern.WPF
             {
                 if (SourceDataGrid != null && !string.IsNullOrEmpty(BindingPath) && SearchTemplateController != null)
                 {
-                    System.Diagnostics.Debug.WriteLine($"ColumnSearchBox: ItemsSource changed for {BindingPath} - refreshing lazy loading");
-                    
                     // Simply refresh the lazy loading provider - no eager loading
                     SearchTemplateController.RefreshColumnValues();
                     
@@ -1665,7 +1648,6 @@ namespace WWSearchDataGrid.Modern.WPF
                     };
 
                     columnFilterWindow.Content = filterControl;
-                    columnFilterWindow.Closed += (_, _) => OnColumnFilterWindowClosed();
                 }
 
                 isAdvancedFilterOpen = true;
@@ -1713,15 +1695,6 @@ namespace WWSearchDataGrid.Modern.WPF
             {
                 if (columnFilterWindow != null)
                 {
-                    // Remove the closed event handler to prevent actions during close
-                    if (columnFilterWindow is Window window)
-                    {
-                        foreach (var handler in window.GetClosedEventHandlers())
-                        {
-                            window.Closed -= handler;
-                        }
-                    }
-
                     // Update state before closing
                     isAdvancedFilterOpen = false;
 
@@ -1737,7 +1710,6 @@ namespace WWSearchDataGrid.Modern.WPF
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error in CloseColumnFilterWindow: {ex.Message}");
                 columnFilterWindow = null;
                 isAdvancedFilterOpen = false;
             }
@@ -1755,8 +1727,6 @@ namespace WWSearchDataGrid.Modern.WPF
             if (SourceDataGrid?.Items == null || string.IsNullOrEmpty(BindingPath))
                 return Enumerable.Empty<object>();
                 
-            System.Diagnostics.Debug.WriteLine($"ColumnSearchBox: Loading {SourceDataGrid.Items.Count} values for column {BindingPath}");
-            
             var values = new List<object>();
             foreach (var item in SourceDataGrid.Items)
             {
@@ -1764,98 +1734,6 @@ namespace WWSearchDataGrid.Modern.WPF
                 values.Add(value);
             }
             return values;
-        }
-        
-        /// <summary>
-        /// Loads column values with safeguards to prevent infinite loops and excessive calls
-        /// </summary>
-        private void LoadColumnValuesWithSafeguards()
-        {
-            try
-            {
-                // Check if we're already loading or if it's too soon since last load
-                if (_isLoadingColumnValues)
-                {
-                    System.Diagnostics.Debug.WriteLine($"ColumnSearchBox: LoadColumnValues already in progress for {BindingPath}");
-                    return;
-                }
-                
-                var timeSinceLastLoad = DateTime.Now - _lastLoadColumnValuesTime;
-                if (timeSinceLastLoad.TotalMilliseconds < LOAD_COLUMN_VALUES_DEBOUNCE_MS)
-                {
-                    System.Diagnostics.Debug.WriteLine($"ColumnSearchBox: Debouncing LoadColumnValues for {BindingPath} - {timeSinceLastLoad.TotalMilliseconds}ms since last call");
-                    return;
-                }
-                
-                _isLoadingColumnValues = true;
-                _lastLoadColumnValuesTime = DateTime.Now;
-                
-                System.Diagnostics.Debug.WriteLine($"ColumnSearchBox: Loading column values for {BindingPath}");
-                LoadColumnValues();
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Error in LoadColumnValuesWithSafeguards: {ex.Message}");
-            }
-            finally
-            {
-                _isLoadingColumnValues = false;
-            }
-        }
-        
-        /// <summary>
-        /// Loads column values for filtering using the new direct binding approach
-        /// </summary>
-        public void LoadColumnValues()
-        {
-            try
-            {
-                if (SourceDataGrid != null && !string.IsNullOrEmpty(BindingPath) && SearchTemplateController != null)
-                {
-                    // Use new lazy loading approach: controller will load values when needed
-                    System.Diagnostics.Debug.WriteLine($"ColumnSearchBox: Setting up lazy loading for column {CurrentColumn.Header}");
-                    SearchTemplateController.SetupColumnDataLazy(CurrentColumn.Header, GetColumnValuesFromDataGrid, BindingPath);
-                    
-                    // For data type detection, sample a few values without loading everything
-                    var sampleSize = Math.Min(100, SourceDataGrid.Items.Count); // Sample first 100 items
-                    if (sampleSize > 0)
-                    {
-                        var sampleValues = new HashSet<object>();
-                        var itemsArray = SourceDataGrid.Items.Cast<object>().Take(sampleSize);
-                        
-                        foreach (var item in itemsArray)
-                        {
-                            var value = ReflectionHelper.GetPropValue(item, BindingPath);
-                            sampleValues.Add(value);
-                            
-                            // Stop early if we have enough variety for type detection
-                            if (sampleValues.Count >= 10) break;
-                        }
-                        
-                        if (sampleValues.Any())
-                        {
-                            SearchTemplateController.ColumnDataType = ReflectionHelper.DetermineColumnDataType(sampleValues);
-                        }
-                    }
-                    else
-                    {
-                        SearchTemplateController.ColumnDataType = ColumnDataType.String;
-                    }
-                    
-                    // Ensure we have at least one search group
-                    if (SearchTemplateController.SearchGroups.Count == 0)
-                    {
-                        SearchTemplateController.AddSearchGroup(true, false);
-                    }
-                    
-                    // Determine checkbox column settings after loading values
-                    DetermineCheckboxColumnSettings();
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Error in LoadColumnValues: {ex.Message}");
-            }
         }
 
         /// <summary>
@@ -1941,30 +1819,5 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         #endregion
-    }
-
-    /// <summary>
-    /// Extension methods for window event handlers
-    /// </summary>
-    public static class WindowExtensions
-    {
-        /// <summary>
-        /// Gets the Closed event handlers for a window
-        /// </summary>
-        public static IEnumerable<EventHandler> GetClosedEventHandlers(this Window window)
-        {
-            // Using reflection to get event handlers is generally not recommended,
-            // but we need it for cleanup to prevent issues when closing windows
-            var eventField = typeof(Window).GetField("Closed", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic);
-
-            if (eventField == null)
-                return Array.Empty<EventHandler>();
-
-
-            if (eventField.GetValue(window) is not Delegate eventDelegate)
-                return Array.Empty<EventHandler>();
-
-            return eventDelegate.GetInvocationList().Cast<EventHandler>();
-        }
     }
 }

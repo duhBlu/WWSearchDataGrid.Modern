@@ -57,25 +57,6 @@ namespace WWSearchDataGrid.Modern.Core
             }
         }
 
-        /// <summary>
-        /// Cancels all token sources
-        /// </summary>
-        public void CancelAll()
-        {
-            lock (_lock)
-            {
-                foreach (var tokenSource in _tokenSources)
-                {
-                    if (!tokenSource.IsCancellationRequested)
-                    {
-                        tokenSource.Cancel();
-                    }
-                }
-
-                _tokenSources.Clear();
-            }
-        }
-
         #endregion
     }
 }

@@ -12,7 +12,6 @@ using System.Windows.Input;
 using System.IO;
 using WWSearchDataGrid.Modern.Core;
 using System.Linq.Expressions;
-using WWSearchDataGrid.Modern.Core.Performance;
 
 namespace WWSearchDataGrid.Modern.WPF
 {
@@ -499,7 +498,6 @@ namespace WWSearchDataGrid.Modern.WPF
         {
             try
             {
-                // Create token source for cancellation
                 var cts = tokenSource.GetNewCancellationTokenSource();
 
                 // Wait for delay if requested

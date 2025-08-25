@@ -200,6 +200,9 @@ namespace WWSearchDataGrid.Modern.WPF
                 FilteredColumns.Clear();
                 AllFilterGroups.Clear();
 
+                // Trigger column value loading for all columns that will be displayed
+                TriggerColumnValueLoadingForAllColumns();
+
                 // Get all columns that have active filters
                 var filteredColumns = SourceDataGrid.DataColumns
                     .Where(c => c.HasActiveFilter)
@@ -446,6 +449,31 @@ namespace WWSearchDataGrid.Modern.WPF
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Error applying changes: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Triggers column value loading for all filtered columns
+        /// </summary>
+        private void TriggerColumnValueLoadingForAllColumns()
+        {
+            try
+            {
+                if (SourceDataGrid?.DataColumns == null) return;
+                
+                System.Diagnostics.Debug.WriteLine($"DataGridFilterEditor: Triggering column value loading for {SourceDataGrid.DataColumns.Count()} columns");
+                
+                foreach (var column in SourceDataGrid.DataColumns)
+                {
+                    if (column.SearchTemplateController != null)
+                    {
+                        column.SearchTemplateController.EnsureColumnValuesLoadedForFiltering();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error triggering column value loading for all columns: {ex.Message}");
             }
         }
 

@@ -73,7 +73,7 @@ namespace WWSearchDataGrid.Modern.Core
                 var numericValues = Items
                     .Select(item => ReflectionHelper.GetPropValue(item, ColumnPath))
                     .Where(value => value != null && ReflectionHelper.IsNumericValue(value))
-                    .Select(ConvertToDouble)
+                    .Select(value => TypeTranslatorHelper.ConvertToDouble(value))
                     .Where(value => !double.IsNaN(value))
                     .ToList();
 
@@ -143,24 +143,6 @@ namespace WWSearchDataGrid.Modern.Core
             {
                 System.Diagnostics.Debug.WriteLine($"Error computing value groups for column {ColumnPath}: {ex.Message}");
                 return new Dictionary<object, List<object>>();
-            }
-        }
-
-        /// <summary>
-        /// Converts a value to double for averaging calculations
-        /// </summary>
-        private static double ConvertToDouble(object value)
-        {
-            if (value == null)
-                return double.NaN;
-
-            try
-            {
-                return Convert.ToDouble(value);
-            }
-            catch
-            {
-                return double.NaN;
             }
         }
     }

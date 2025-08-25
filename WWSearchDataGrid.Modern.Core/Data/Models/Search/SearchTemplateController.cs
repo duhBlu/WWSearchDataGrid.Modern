@@ -7,7 +7,6 @@ using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 using WWSearchDataGrid.Modern.Core.Services;
-using WWSearchDataGrid.Modern.Core.Performance;
 
 namespace WWSearchDataGrid.Modern.Core
 {
@@ -65,13 +64,36 @@ namespace WWSearchDataGrid.Modern.Core
             {
                 if (SetProperty(value, ref columnDataType))
                 {
-                    // Update all templates with the new data type
-                    foreach (var group in SearchGroups)
+                    // Update all templates with the new data type, but preserve existing SearchTypes if still valid
+                    UpdateTemplateDataTypes(value);
+                }
+            }
+        }
+        
+        /// <summary>
+        /// Updates template data types while preserving valid SearchTypes
+        /// </summary>
+        private void UpdateTemplateDataTypes(ColumnDataType newDataType)
+        {
+            foreach (var group in SearchGroups)
+            {
+                foreach (var template in group.SearchTemplates.OfType<SearchTemplate>())
+                {
+                    // Store the current search type to preserve it if still valid
+                    var currentSearchType = template.SearchType;
+                    
+                    // Update the data type (this will trigger UpdateValidSearchTypes)
+                    template.ColumnDataType = newDataType;
+                    
+                    // If the original search type is still valid, restore it
+                    if (template.ValidSearchTypes.Contains(currentSearchType))
                     {
-                        foreach (var template in group.SearchTemplates.OfType<SearchTemplate>())
-                        {
-                            template.ColumnDataType = value;
-                        }
+                        template.SearchType = currentSearchType;
+                        System.Diagnostics.Debug.WriteLine($"SearchTemplateController: Preserved SearchType {currentSearchType} for template after data type change to {newDataType}");
+                    }
+                    else
+                    {
+                        System.Diagnostics.Debug.WriteLine($"SearchTemplateController: SearchType {currentSearchType} not valid for {newDataType}, using {template.SearchType}");
                     }
                 }
             }
@@ -271,6 +293,19 @@ namespace WWSearchDataGrid.Modern.Core
         }
         
         /// <summary>
+        /// Forces immediate loading of column values (for filter editors)
+        /// This ensures values are available and data type is correctly detected
+        /// </summary>
+        public void EnsureColumnValuesLoadedForFiltering()
+        {
+            // Force values to load immediately if not already loaded
+            if (!_columnValuesLoaded && _columnValuesProvider != null)
+            {
+                EnsureColumnValuesLoaded(); // This will load values and determine data type
+            }
+        }
+        
+        /// <summary>
         /// Sets the column values for direct UI binding (legacy approach for backward compatibility)
         /// Consider using SetColumnValuesProvider for better performance
         /// </summary>
@@ -293,9 +328,8 @@ namespace WWSearchDataGrid.Modern.Core
                 try
                 {
                     var values = _columnValuesProvider();
-                    LoadValuesIntoCollection(values);
+                    LoadValuesIntoCollection(values); // This now handles data type detection internally
                     _columnValuesLoaded = true;
-                    DetermineColumnDataTypeFromValues();
                 }
                 catch (Exception ex)
                 {
@@ -329,20 +363,19 @@ namespace WWSearchDataGrid.Modern.Core
                 }
             }
 
-            // Only sort if we have a reasonable number of values (avoid expensive sort on huge datasets)
-            if (normalizedValues.Count <= 10000)
+            // Detect data type before sorting using the actual values
+            if (normalizedValues.Any())
             {
-                // Use Array.Sort which is faster than LINQ OrderBy for in-memory collections
-                normalizedValues.Sort((x, y) => 
-                {
-                    var xStr = x?.ToString() ?? string.Empty;
-                    var yStr = y?.ToString() ?? string.Empty;
-                    return string.Compare(xStr, yStr, StringComparison.OrdinalIgnoreCase);
-                });
+                var detectedType = ReflectionHelper.DetermineColumnDataType(new HashSet<object>(normalizedValues));
+                ColumnDataType = detectedType;
             }
-            // For very large datasets, don't sort to avoid performance issues
 
-            // Add values to ObservableCollection
+            // Only sort if we have a reasonable number of values (avoid expensive sort on huge datasets)
+            if (normalizedValues.Count <= 100000)
+            {
+                normalizedValues.Sort(CreateTypeAwareComparer(ColumnDataType));
+            }
+
             foreach (var value in normalizedValues)
             {
                 _columnValues.Add(value);
@@ -356,14 +389,15 @@ namespace WWSearchDataGrid.Modern.Core
         {
             try
             {
-                // Only determine data type if values are loaded and we haven't set a specific type
+                // Only determine data type if values are loaded
                 if (_columnValuesLoaded && _columnValues.Any())
                 {
                     var detectedType = ReflectionHelper.DetermineColumnDataType(new HashSet<object>(_columnValues));
-                    if (ColumnDataType == ColumnDataType.String) // Only update if still default
-                    {
-                        ColumnDataType = detectedType;
-                    }
+                    System.Diagnostics.Debug.WriteLine($"SearchTemplateController: Detected column data type {detectedType} from {_columnValues.Count} values (was {ColumnDataType})");
+                    
+                    // Always update with the detected type from the full dataset
+                    // This overrides any previous sampling-based detection
+                    ColumnDataType = detectedType;
                 }
             }
             catch (Exception ex)
@@ -373,16 +407,230 @@ namespace WWSearchDataGrid.Modern.Core
         }
         
         /// <summary>
-        /// Normalizes a value (null/empty/whitespace → null)
+        /// Normalizes a value (null/empty/whitespace → NullDisplayValue for UI display)
         /// </summary>
         /// <param name="value">Value to normalize</param>
         /// <returns>Normalized value</returns>
         private object NormalizeValue(object value)
         {
-            if (value == null) return null;
+            if (value == null) return NullDisplayValue.Instance;
             if (value is string stringValue && string.IsNullOrWhiteSpace(stringValue))
-                return null;
+                return NullDisplayValue.Instance;
             return value;
+        }
+        
+        /// <summary>
+        /// Special class to represent null values with proper display text
+        /// </summary>
+        public class NullDisplayValue
+        {
+            public static readonly NullDisplayValue Instance = new NullDisplayValue();
+            
+            private NullDisplayValue() { }
+            
+            public override string ToString() => "(null)";
+            
+            public override bool Equals(object obj) => obj is NullDisplayValue;
+            
+            public override int GetHashCode() => 0; // All null display values are equal
+        }
+        
+        /// <summary>
+        /// Creates a type-aware comparer for sorting column values based on data type
+        /// </summary>
+        /// <param name="dataType">The column data type to create comparer for</param>
+        /// <returns>Comparison function for sorting</returns>
+        private Comparison<object> CreateTypeAwareComparer(ColumnDataType dataType)
+        {
+            switch (dataType)
+            {
+                case ColumnDataType.Number:
+                    return CompareNumericValues;
+                case ColumnDataType.DateTime:
+                    return CompareDateTimeValues;
+                case ColumnDataType.Boolean:
+                case ColumnDataType.Enum:
+                case ColumnDataType.String:
+                default:
+                    return CompareStringValues; // Default to string comparison
+            }
+        }
+        
+        /// <summary>
+        /// Compares numeric values with proper numeric ordering
+        /// </summary>
+        private int CompareNumericValues(object x, object y)
+        {
+            try
+            {
+                // Handle null display values - nulls come first
+                if (x is NullDisplayValue && y is NullDisplayValue) return 0;
+                if (x is NullDisplayValue) return -1;
+                if (y is NullDisplayValue) return 1;
+                
+                // Handle actual null values - nulls come first
+                if (x == null && y == null) return 0;
+                if (x == null) return -1;
+                if (y == null) return 1;
+                
+                // Convert to decimal using TypeTranslatorHelper
+                var xDecimal = TypeTranslatorHelper.ConvertToDecimal(x);
+                var yDecimal = TypeTranslatorHelper.ConvertToDecimal(y);
+                
+                // Handle conversion failures - treat as null and sort to beginning
+                if (!xDecimal.HasValue && !yDecimal.HasValue) return 0;
+                if (!xDecimal.HasValue) return -1;
+                if (!yDecimal.HasValue) return 1;
+                
+                return xDecimal.Value.CompareTo(yDecimal.Value);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error in CompareNumericValues: {ex.Message}");
+                // Fallback to string comparison
+                return CompareStringValues(x, y);
+            }
+        }
+        
+        /// <summary>
+        /// Compares DateTime values with chronological ordering
+        /// </summary>
+        private int CompareDateTimeValues(object x, object y)
+        {
+            try
+            {
+                // Handle null display values - nulls come first
+                if (x is NullDisplayValue && y is NullDisplayValue) return 0;
+                if (x is NullDisplayValue) return -1;
+                if (y is NullDisplayValue) return 1;
+                
+                // Handle actual null values - nulls come first
+                if (x == null && y == null) return 0;
+                if (x == null) return -1;
+                if (y == null) return 1;
+                
+                // Convert to DateTime using TypeTranslatorHelper
+                var xDateTime = TypeTranslatorHelper.ConvertToDateTime(x);
+                var yDateTime = TypeTranslatorHelper.ConvertToDateTime(y);
+                
+                // Handle conversion failures - treat as null and sort to beginning
+                if (!xDateTime.HasValue && !yDateTime.HasValue) return 0;
+                if (!xDateTime.HasValue) return -1;
+                if (!yDateTime.HasValue) return 1;
+                
+                return xDateTime.Value.CompareTo(yDateTime.Value);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error in CompareDateTimeValues: {ex.Message}");
+                // Fallback to string comparison
+                return CompareStringValues(x, y);
+            }
+        }
+        
+        /// <summary>
+        /// Compares Boolean values with logical ordering (null, false, true)
+        /// </summary>
+        private int CompareBooleanValues(object x, object y)
+        {
+            // Handle null display values - nulls come first
+            if (x is NullDisplayValue && y is NullDisplayValue) return 0;
+            if (x is NullDisplayValue) return -1;
+            if (y is NullDisplayValue) return 1;
+            
+            // Handle actual null values - nulls come first
+            if (x == null && y == null) return 0;
+            if (x == null) return -1;
+            if (y == null) return 1;
+            
+            // Convert to boolean
+            var xBool = ConvertToBoolean(x);
+            var yBool = ConvertToBoolean(y);
+            
+            // Handle conversion failures - treat as null and sort to beginning
+            if (!xBool.HasValue && !yBool.HasValue) return 0;
+            if (!xBool.HasValue) return -1;
+            if (!yBool.HasValue) return 1;
+            
+            // Sort: false before true
+            return xBool.Value.CompareTo(yBool.Value);
+        }
+        
+        /// <summary>
+        /// Compares enum values by their numeric value, falls back to string comparison
+        /// </summary>
+        private int CompareEnumValues(object x, object y)
+        {
+            try
+            {
+                // Handle null display values - nulls come first
+                if (x is NullDisplayValue && y is NullDisplayValue) return 0;
+                if (x is NullDisplayValue) return -1;
+                if (y is NullDisplayValue) return 1;
+                
+                // Handle actual null values - nulls come first
+                if (x == null && y == null) return 0;
+                if (x == null) return -1;
+                if (y == null) return 1;
+                
+                // If both are the same enum type, compare by numeric value
+                if (x.GetType().IsEnum && y.GetType().IsEnum && x.GetType() == y.GetType())
+                {
+                    var xValue = Convert.ToInt32(x);
+                    var yValue = Convert.ToInt32(y);
+                    return xValue.CompareTo(yValue);
+                }
+                
+                // Fallback to string comparison for mixed types or non-enum values
+                return CompareStringValues(x, y);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error in CompareEnumValues: {ex.Message}");
+                // Fallback to string comparison
+                return CompareStringValues(x, y);
+            }
+        }
+        
+        /// <summary>
+        /// Compares string values with case-insensitive ordering (current behavior)
+        /// </summary>
+        private int CompareStringValues(object x, object y)
+        {
+            var xStr = x?.ToString() ?? string.Empty;
+            var yStr = y?.ToString() ?? string.Empty;
+            return string.Compare(xStr, yStr, StringComparison.OrdinalIgnoreCase);
+        }
+        
+        /// <summary>
+        /// Converts a value to boolean, handling various formats
+        /// </summary>
+        private bool? ConvertToBoolean(object value)
+        {
+            if (value is bool boolValue)
+                return boolValue;
+                
+            if (value == null || value is NullDisplayValue)
+                return null;
+                
+            var stringValue = value.ToString()?.ToLowerInvariant();
+            switch (stringValue)
+            {
+                case "true":
+                case "1":
+                case "yes":
+                case "on":
+                    return true;
+                case "false":
+                case "0":
+                case "no":
+                case "off":
+                    return false;
+                default:
+                    if (bool.TryParse(stringValue, out bool parsed))
+                        return parsed;
+                    return null;
+            }
         }
         
         /// <summary>
@@ -404,12 +652,11 @@ namespace WWSearchDataGrid.Modern.Core
                 if (_columnValues.Count <= 10000)
                 {
                     var insertIndex = 0;
-                    var valueStr = normalizedValue?.ToString() ?? string.Empty;
+                    var comparer = CreateTypeAwareComparer(ColumnDataType);
                     
                     for (int i = 0; i < _columnValues.Count; i++)
                     {
-                        var existingStr = _columnValues[i]?.ToString() ?? string.Empty;
-                        if (string.Compare(valueStr, existingStr, StringComparison.OrdinalIgnoreCase) < 0)
+                        if (comparer(normalizedValue, _columnValues[i]) < 0)
                         {
                             insertIndex = i;
                             break;

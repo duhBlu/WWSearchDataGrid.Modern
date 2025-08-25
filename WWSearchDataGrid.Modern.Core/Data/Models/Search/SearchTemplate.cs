@@ -6,7 +6,6 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
 using System.Windows.Input;
-using WWSearchDataGrid.Modern.Core.Performance;
 
 namespace WWSearchDataGrid.Modern.Core
 {
@@ -121,7 +120,6 @@ namespace WWSearchDataGrid.Modern.Core
 
         /// <summary>
         /// Gets available values from the parent controller (direct binding)
-        /// Templates no longer store values - they reference the controller's values
         /// </summary>
         public IEnumerable<object> AvailableValues => SearchTemplateController?.ColumnValues ?? Enumerable.Empty<object>();
 
