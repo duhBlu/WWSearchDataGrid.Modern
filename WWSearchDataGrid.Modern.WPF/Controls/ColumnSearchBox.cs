@@ -45,8 +45,8 @@ namespace WWSearchDataGrid.Modern.WPF
         private TextBox searchTextBox;
         private Button advancedFilterButton;
         private CheckBox filterCheckBox;
-        private Window columnFilterWindow;
-        private bool isAdvancedFilterOpen;
+        private FilterPopup filterPopup;
+        private ColumnFilterEditor filterEditor;
         private Timer _changeTimer;
         private SearchTemplate _temporarySearchTemplate; // Track temporary template for real-time updates
         private CheckboxCycleState _checkboxCycleState = CheckboxCycleState.Intermediate; // Current logical cycling state
@@ -324,9 +324,17 @@ namespace WWSearchDataGrid.Modern.WPF
                 SourceDataGrid.ItemsSourceChanged -= OnSourceDataGridItemsSourceChanged;
             }
 
-            if (columnFilterWindow != null)
+            if (filterPopup != null)
             {
-                CloseColumnFilterWindow(false);
+                filterPopup.IsOpen = false;
+                filterPopup.Opened -= OnFilterPopupOpened;
+                filterPopup.Closed -= OnFilterPopupClosed;
+                filterPopup = null;
+            }
+            
+            if (filterEditor != null)
+            {
+                filterEditor = null;
             }
         }
 
@@ -476,7 +484,7 @@ namespace WWSearchDataGrid.Modern.WPF
 
         private static void OnSearchTextChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
-            if (d is ColumnSearchBox control && !control.isAdvancedFilterOpen)
+            if (d is ColumnSearchBox control && (control.filterPopup?.IsOpen != true))
             {
                 // If text is empty, clear only the temporary template
                 if (string.IsNullOrWhiteSpace((string)e.NewValue))
@@ -496,7 +504,7 @@ namespace WWSearchDataGrid.Modern.WPF
 
         private void OnSearchTextBoxTextChanged(object sender, TextChangedEventArgs e)
         {
-            if (!isAdvancedFilterOpen)
+            if (filterPopup?.IsOpen != true)
                 SearchText = searchTextBox.Text;
         }
 
@@ -518,7 +526,7 @@ namespace WWSearchDataGrid.Modern.WPF
             }
         }
 
-        private void OnAdvancedFilterButtonClick(object sender, RoutedEventArgs e) => AllowRuleValueFilteringWindow();
+        private void OnAdvancedFilterButtonClick(object sender, RoutedEventArgs e) => ShowFilterPopup();
 
         private void OnColumnSearchBoxGotFocus(object sender, RoutedEventArgs e)
         {
@@ -543,6 +551,10 @@ namespace WWSearchDataGrid.Modern.WPF
                     
                     // Only re-determine column type based on definition, not data
                     DetermineCheckboxColumnTypeFromColumnDefinition();
+                }
+                else if (SearchTemplateController == null)
+                {
+                    InitializeSearchTemplateController();
                 }
             }
             catch (Exception ex)
@@ -594,7 +606,7 @@ namespace WWSearchDataGrid.Modern.WPF
             // Execute on UI thread
             Application.Current.Dispatcher.Invoke(() =>
             {
-                if (!isAdvancedFilterOpen)
+                if (filterPopup?.IsOpen != true)
                 {
                     if (!string.IsNullOrWhiteSpace(SearchText))
                         UpdateSimpleFilter();
@@ -1015,11 +1027,7 @@ namespace WWSearchDataGrid.Modern.WPF
                 BindingPath = CurrentColumn.SortMemberPath;
                 
                 // Set default search type from column's attached property
-                var defaultSearchType = ColumnFilterEditor.GetDefaultSearchType(CurrentColumn);
-                if (defaultSearchType != SearchType.Contains) // Only set if different from default
-                {
-                    SearchTemplateController.DefaultSearchType = defaultSearchType;
-                }
+                SearchTemplateController.DefaultSearchType = ColumnFilterEditor.GetDefaultSearchType(CurrentColumn); 
 
                 // This avoids any delay and provides instant UI feedback
                 DetermineCheckboxColumnTypeFromColumnDefinition();
@@ -1611,13 +1619,13 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
-        /// Shows the advanced filter window
+        /// Shows the advanced filter popup
         /// </summary>
-        private void AllowRuleValueFilteringWindow()
+        private void ShowFilterPopup()
         {
             try
             {
-                // Skip if source data grid is not available or we're in global mode
+                // Skip if source data grid is not available
                 if (SourceDataGrid == null)
                     return;
 
@@ -1628,91 +1636,101 @@ namespace WWSearchDataGrid.Modern.WPF
                 if (SearchTemplateController == null)
                     return;
 
-                // Create window if none exists
-                if (columnFilterWindow == null)
+                // Create popup if none exists
+                if (filterPopup == null)
                 {
-                    columnFilterWindow = new Window
+                    filterPopup = new FilterPopup
                     {
-                        Title = $"Column Filter Editor: {CurrentColumn.Header}",
-                        MinWidth = 400,
-                        MinHeight = 600,
-                        SizeToContent = SizeToContent.Width,
-                        Owner = Window.GetWindow(this),
-                        WindowStartupLocation = WindowStartupLocation.CenterOwner
+                        Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom,
+                        PlacementTarget = this,
+                        MaxWidth = 500,
+                        MaxHeight = 600
                     };
 
-                    var filterControl = new ColumnFilterEditor
+                    filterPopup.Opened += OnFilterPopupOpened;
+                    filterPopup.Closed += OnFilterPopupClosed;
+                }
+
+                // Create or update filter editor
+                if (filterEditor == null)
+                {
+                    filterEditor = new ColumnFilterEditor
                     {
                         SearchTemplateController = SearchTemplateController,
                         DataContext = this
                     };
 
-                    columnFilterWindow.Content = filterControl;
+                    // Subscribe to auto-apply events
+                    filterEditor.FiltersApplied += OnFiltersApplied;
+                    filterEditor.FiltersCleared += OnFiltersCleared;
                 }
 
-                isAdvancedFilterOpen = true;
-                columnFilterWindow.ShowDialog();
-
-                UpdateHasActiveFilterState();
-                SourceDataGrid.UpdateFilterPanel();
+                filterPopup.Content = filterEditor;
+                filterPopup.IsOpen = true;
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error in AllowRuleValueFilteringWindow: {ex.Message}");
-                CloseColumnFilterWindow(false);
+                System.Diagnostics.Debug.WriteLine($"Error in ShowFilterPopup: {ex.Message}");
+                if (filterPopup != null)
+                {
+                    filterPopup.IsOpen = false;
+                }
             }
         }
 
         /// <summary>
-        /// Handles the advanced filter window being closed
+        /// Handles the filter popup being opened
         /// </summary>
-        private void OnColumnFilterWindowClosed()
+        private void OnFilterPopupOpened(object sender, EventArgs e)
         {
             try
             {
-                isAdvancedFilterOpen = false;
+                // Popup is now open - no need to track separate flag
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error in OnFilterPopupOpened: {ex.Message}");
+            }
+        }
 
-                // Check if the controller is still valid
+        /// <summary>
+        /// Handles the filter popup being closed
+        /// </summary>
+        private void OnFilterPopupClosed(object sender, EventArgs e)
+        {
+            try
+            {
+                // Check if the controller is still valid and update state
                 if (SearchTemplateController != null)
                 {
                     HasAdvancedFilter = SearchTemplateController.HasCustomExpression;
                 }
 
-                columnFilterWindow = null;
+                UpdateHasActiveFilterState();
+                SourceDataGrid?.UpdateFilterPanel();
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error in OnColumnFilterWindowClosed: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"Error in OnFilterPopupClosed: {ex.Message}");
             }
         }
 
         /// <summary>
-        /// Closes the advanced filter window
+        /// Handles filter editor filters applied event
         /// </summary>
-        private void CloseColumnFilterWindow(bool updateFilters)
+        private void OnFiltersApplied(object sender, EventArgs e)
         {
-            try
-            {
-                if (columnFilterWindow != null)
-                {
-                    // Update state before closing
-                    isAdvancedFilterOpen = false;
+            UpdateHasActiveFilterState();
+            SourceDataGrid?.UpdateFilterPanel();
+        }
 
-                    if (updateFilters && SearchTemplateController != null)
-                    {
-                        HasAdvancedFilter = SearchTemplateController.HasCustomExpression;
-                    }
-
-                    // Close the window
-                    columnFilterWindow.Close();
-                    columnFilterWindow = null;
-                }
-            }
-            catch (Exception ex)
-            {
-                columnFilterWindow = null;
-                isAdvancedFilterOpen = false;
-            }
+        /// <summary>
+        /// Handles filter editor filters cleared event
+        /// </summary>
+        private void OnFiltersCleared(object sender, EventArgs e)
+        {
+            UpdateHasActiveFilterState();
+            SourceDataGrid?.UpdateFilterPanel();
         }
 
         #endregion
@@ -1820,4 +1838,5 @@ namespace WWSearchDataGrid.Modern.WPF
 
         #endregion
     }
+
 }

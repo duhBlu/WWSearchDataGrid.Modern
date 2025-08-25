@@ -11,6 +11,7 @@ namespace WWSearchDataGrid.Modern.Core
 {
     public class SearchTemplate : ObservableObject
     {
+        
         #region Fields
 
         private string operatorName = "Or";
@@ -74,7 +75,7 @@ namespace WWSearchDataGrid.Modern.Core
                 if (SetProperty(value, ref searchType))
                 {
                     HasChanges = true;
-                    OnSearchTypeChanged();
+                    UpdateInputTemplate();
                 }
             }
         }
@@ -189,6 +190,72 @@ namespace WWSearchDataGrid.Modern.Core
                            hasSelectedValues || hasSelectedDates || hasSelectedDateIntervals || isNonValueSearchType;
                 
                 return result;
+            }
+        }
+
+        /// <summary>
+        /// Gets whether this search template represents a complete and valid filter that can be applied
+        /// </summary>
+        public bool IsValidFilter
+        {
+            get
+            {
+                // Non-value search types that don't require input values
+                var isNonValueSearchType = SearchType == SearchType.IsNull ||
+                                         SearchType == SearchType.IsNotNull ||
+                                         SearchType == SearchType.IsBlank ||
+                                         SearchType == SearchType.IsNotBlank ||
+                                         SearchType == SearchType.Yesterday ||
+                                         SearchType == SearchType.Today ||
+                                         SearchType == SearchType.AboveAverage ||
+                                         SearchType == SearchType.BelowAverage ||
+                                         SearchType == SearchType.Unique ||
+                                         SearchType == SearchType.Duplicate;
+
+                if (isNonValueSearchType)
+                {
+                    return true; // These are always valid
+                }
+
+                // Search types that require a single value
+                var singleValueSearchTypes = new[]
+                {
+                    SearchType.Contains, SearchType.DoesNotContain, SearchType.StartsWith, SearchType.EndsWith,
+                    SearchType.Equals, SearchType.NotEquals, SearchType.LessThan, SearchType.LessThanOrEqualTo,
+                    SearchType.GreaterThan, SearchType.GreaterThanOrEqualTo, SearchType.TopN, SearchType.BottomN
+                };
+
+                if (singleValueSearchTypes.Contains(SearchType))
+                {
+                    return SelectedValue != null && !string.IsNullOrWhiteSpace(SelectedValue?.ToString());
+                }
+
+                // Search types that require two values (Between, NotBetween, BetweenDates)
+                if (SearchType == SearchType.Between || SearchType == SearchType.NotBetween || SearchType == SearchType.BetweenDates)
+                {
+                    return SelectedValue != null && SelectedSecondaryValue != null &&
+                           !string.IsNullOrWhiteSpace(SelectedValue?.ToString()) &&
+                           !string.IsNullOrWhiteSpace(SelectedSecondaryValue?.ToString());
+                }
+
+                // Search types that require collection values
+                if (SearchType == SearchType.IsAnyOf || SearchType == SearchType.IsNoneOf)
+                {
+                    return SelectedValues != null && SelectedValues.Any();
+                }
+
+                if (SearchType == SearchType.IsOnAnyOfDates)
+                {
+                    return SelectedDates != null && SelectedDates.Any();
+                }
+
+                if (SearchType == SearchType.DateInterval)
+                {
+                    return DateIntervals != null && DateIntervals.Any(i => i.IsSelected);
+                }
+
+                // Default: single value search types
+                return SelectedValue != null && !string.IsNullOrWhiteSpace(SelectedValue?.ToString());
             }
         }
 
@@ -332,11 +399,7 @@ namespace WWSearchDataGrid.Modern.Core
         #endregion
 
         #region Core Logic
-
-        protected virtual void OnSearchTypeChanged()
-        {
-            UpdateInputTemplate();
-        }
+        
 
         private void UpdateInputTemplate()
         {

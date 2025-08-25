@@ -173,7 +173,6 @@
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="*" />
-                                <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
 
                             <!--  Operator ComboBox  -->
@@ -227,52 +226,42 @@
                                         </ContentControl.Style>
                                     </ContentControl>
 
-                                    <!--  Add Rule Button  -->
-                                    <Button Style="{StaticResource Default_Button_Style}"
-                                            Grid.Row="1"
-                                            Command="{Binding AddSearchTemplateCommand, RelativeSource={RelativeSource TemplatedParent}}"
-                                            Margin="0,8,0,0"
-                                            Padding="8,4"
-                                            HorizontalAlignment="Center"
-                                            MinWidth="100">
-                                        <StackPanel Orientation="Horizontal">
-                                            <TextBlock Text="&#xE109;"
-                                                       Margin="0,0,4,0"
-                                                       VerticalAlignment="Center"
-                                                       FontFamily="Segoe MDL2 Assets"
-                                                       FontSize="12" />
-                                            <TextBlock Text="Add Rule" VerticalAlignment="Center" />
-                                        </StackPanel>
-                                    </Button>
+                                    <!--  Action Buttons  -->
+                                    <StackPanel Grid.Row="1" 
+                                                Orientation="Horizontal" 
+                                                HorizontalAlignment="Center"
+                                                Margin="0,8,0,0">
+                                        <Button Style="{StaticResource Default_Button_Style}"
+                                                Command="{Binding AddSearchTemplateCommand, RelativeSource={RelativeSource TemplatedParent}}"
+                                                Padding="8,4"
+                                                MinWidth="100"
+                                                Margin="0,0,8,0">
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="&#xE109;"
+                                                           Margin="0,0,4,0"
+                                                           VerticalAlignment="Center"
+                                                           FontFamily="Segoe MDL2 Assets"
+                                                           FontSize="12" />
+                                                <TextBlock Text="Add Rule" VerticalAlignment="Center" />
+                                            </StackPanel>
+                                        </Button>
+                                        
+                                        <Button Style="{StaticResource Default_Button_Style}"
+                                                Command="{Binding ClearFilterCommand, RelativeSource={RelativeSource TemplatedParent}}"
+                                                Padding="8,4"
+                                                MinWidth="80">
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="&#xE10A;"
+                                                           Margin="0,0,4,0"
+                                                           VerticalAlignment="Center"
+                                                           FontFamily="Segoe MDL2 Assets"
+                                                           FontSize="12" />
+                                                <TextBlock Text="Clear All" VerticalAlignment="Center" />
+                                            </StackPanel>
+                                        </Button>
+                                    </StackPanel>
                                 </Grid>
                             </ScrollViewer>
-
-                            <!--  Buttons Row  -->
-                            <StackPanel Grid.Row="2"
-                                        Orientation="Horizontal"
-                                        HorizontalAlignment="Right"
-                                        Margin="5"
-                                        VerticalAlignment="Center">
-
-                                <Button Style="{StaticResource Default_Button_Style}"
-                                        Grid.Column="1"
-                                        IsDefault="True"
-                                        Command="{Binding ApplyFilterCommand, RelativeSource={RelativeSource TemplatedParent}}"
-                                        Margin="0,0,5,0"
-                                        Content="Apply" />
-
-                                <Button Style="{StaticResource Default_Button_Style}"
-                                        Grid.Column="2"
-                                        Command="{Binding ClearFilterCommand, RelativeSource={RelativeSource TemplatedParent}}"
-                                        Margin="0,0,5,0"
-                                        Content="Clear" />
-
-                                <Button Style="{StaticResource Default_Button_Style}"
-                                        Grid.Column="3"
-                                        IsCancel="True"
-                                        Command="{Binding CloseWindowCommand, RelativeSource={RelativeSource TemplatedParent}}"
-                                        Content="Close" />
-                            </StackPanel>
                         </Grid>
                     </Border>
                 </ControlTemplate>

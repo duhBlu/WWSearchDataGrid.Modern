@@ -15,6 +15,15 @@ namespace WWSearchDataGrid.Modern.Core
     /// </summary>
     public class SearchTemplateController : ObservableObject
     {
+        #region Events
+        
+        /// <summary>
+        /// Occurs when filters should be applied due to valid changes in templates or structure
+        /// </summary>
+        public event EventHandler FilterShouldApply;
+        
+        #endregion
+        
         #region Fields
 
         private bool hasCustomExpression;
@@ -89,11 +98,6 @@ namespace WWSearchDataGrid.Modern.Core
                     if (template.ValidSearchTypes.Contains(currentSearchType))
                     {
                         template.SearchType = currentSearchType;
-                        System.Diagnostics.Debug.WriteLine($"SearchTemplateController: Preserved SearchType {currentSearchType} for template after data type change to {newDataType}");
-                    }
-                    else
-                    {
-                        System.Diagnostics.Debug.WriteLine($"SearchTemplateController: SearchType {currentSearchType} not valid for {newDataType}, using {template.SearchType}");
                     }
                 }
             }
@@ -128,11 +132,6 @@ namespace WWSearchDataGrid.Modern.Core
             get => defaultSearchType;
             set => SetProperty(value, ref defaultSearchType);
         }
-
-        /// <summary>
-        /// Gets whether any search templates have unsaved changes
-        /// </summary>
-        public bool HasUnsavedChanges => SearchGroups.Any(g => g.SearchTemplates.Any(t => t.HasChanges));
 
         /// <summary>
         /// Gets or sets the dictionary of property values
@@ -184,9 +183,14 @@ namespace WWSearchDataGrid.Modern.Core
         /// </summary>
         public void ClearAndReset()
         {
+            // Unsubscribe from all existing templates before clearing
+            UnsubscribeFromAllTemplates();
+            
             SearchGroups.Clear();
             AddSearchGroup(true, false); // Add default group without marking as changed
             HasCustomExpression = false;
+            
+            // No need to trigger filter apply for clear - the clear operation handles it
         }
 
         /// <summary>
@@ -239,6 +243,9 @@ namespace WWSearchDataGrid.Modern.Core
                 SearchTemplateController = this // Ensure template has reference to controller
             };
 
+            // Subscribe to property changes for auto-apply monitoring
+            newTemplate.PropertyChanged += OnSearchTemplatePropertyChanged;
+
             // Apply default search type if provided and compatible
             ApplyDefaultSearchType(newTemplate, defaultSearchType);
 
@@ -264,6 +271,7 @@ namespace WWSearchDataGrid.Modern.Core
             }
 
             UpdateOperatorVisibility();
+            OnFilterShouldApply();
         }
 
         /// <summary>
@@ -977,6 +985,9 @@ namespace WWSearchDataGrid.Modern.Core
             var group = SearchGroups.FirstOrDefault(g => g.SearchTemplates.Contains(template));
             if (group == null) return;
             
+            // Unsubscribe from the template being removed
+            template.PropertyChanged -= OnSearchTemplatePropertyChanged;
+            
             if (group.SearchTemplates.Count > 1)
             {
                 group.SearchTemplates.Remove(template);
@@ -989,6 +1000,7 @@ namespace WWSearchDataGrid.Modern.Core
             }
             UpdateFilterExpression();
             UpdateOperatorVisibility();
+            OnFilterShouldApply();
         }
 
         /// <summary>
@@ -1689,6 +1701,75 @@ namespace WWSearchDataGrid.Modern.Core
                 if (SearchTypeRegistry.IsValidForDataType(searchTypeToApply.Value, ColumnDataType))
                 {
                     template.SearchType = searchTypeToApply.Value;
+                }
+            }
+        }
+        
+        /// <summary>
+        /// Gets whether all search templates in this controller represent valid, complete filters
+        /// </summary>
+        public bool HasValidFilters
+        {
+            get
+            {
+                if (SearchGroups == null || !SearchGroups.Any())
+                    return false;
+
+                return SearchGroups.All(group => 
+                    group.SearchTemplates?.All(template => template.IsValidFilter) == true);
+            }
+        }
+
+        /// <summary>
+        /// Raises the FilterShouldApply event when there are valid filters that should be applied
+        /// </summary>
+        protected virtual void OnFilterShouldApply()
+        {
+            // Only fire if we have at least one valid filter to apply
+            if (HasValidFilters)
+            {
+                FilterShouldApply?.Invoke(this, EventArgs.Empty);
+            }
+        }
+        
+        /// <summary>
+        /// Handle property changes from SearchTemplates to determine when to auto-apply
+        /// </summary>
+        private void OnSearchTemplatePropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+        {
+            // Only trigger auto-apply for filter-relevant properties
+            var filterRelevantProperties = new[] 
+            {
+                nameof(SearchTemplate.SearchType),
+                nameof(SearchTemplate.SelectedValue),
+                nameof(SearchTemplate.SelectedSecondaryValue),
+                nameof(SearchTemplate.OperatorName),
+                nameof(SearchTemplate.SelectedValues),
+                nameof(SearchTemplate.SelectedDates),
+                nameof(SearchTemplate.DateIntervals)
+            };
+
+            if (filterRelevantProperties.Contains(e.PropertyName))
+            {
+                OnFilterShouldApply();
+            }
+        }
+        
+        /// <summary>
+        /// Unsubscribe from all existing search template property changes
+        /// </summary>
+        private void UnsubscribeFromAllTemplates()
+        {
+            if (SearchGroups == null) return;
+            
+            foreach (var group in SearchGroups)
+            {
+                if (group.SearchTemplates != null)
+                {
+                    foreach (var template in group.SearchTemplates)
+                    {
+                        template.PropertyChanged -= OnSearchTemplatePropertyChanged;
+                    }
                 }
             }
         }
