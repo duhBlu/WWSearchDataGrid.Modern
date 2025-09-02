@@ -27,7 +27,6 @@ namespace WWSearchDataGrid.Modern.Core
         private ObservableCollection<object> selectedValues;
         private ObservableCollection<DateTime> selectedDates;
         private ObservableCollection<DateIntervalItem> dateIntervals;
-        private HashSet<object> columnValues;
 
         private ICommand addValueCommand;
         private ICommand removeValueCommand;
@@ -283,20 +282,6 @@ namespace WWSearchDataGrid.Modern.Core
 
         public ObservableCollection<SearchType> ValidSearchTypes { get; private set; }
 
-        /// <summary>
-        /// Column values used for type analysis and nullability detection
-        /// </summary>
-        private HashSet<object> _columnValuesForNullabilityAnalysis
-        {
-            get { return columnValues; }
-            set 
-            { 
-                if (SetProperty(value, ref columnValues))
-                {
-                    UpdateValidSearchTypes();
-                }
-            }
-        }
 
         public ObservableCollection<object> SelectedValues
         {
@@ -389,7 +374,6 @@ namespace WWSearchDataGrid.Modern.Core
             SelectedValues = new ObservableCollection<object>();
             SelectedDates = new ObservableCollection<DateTime>();
             DateIntervals = new ObservableCollection<DateIntervalItem>();
-            _columnValuesForNullabilityAnalysis = new HashSet<object>();
 
             ColumnDataType = dataType;
             InitializeDateIntervals();
@@ -414,12 +398,8 @@ namespace WWSearchDataGrid.Modern.Core
         {
             ValidSearchTypes.Clear();
 
-            // Determine if the column type is nullable
-            bool isNullable = true; // Default to nullable for backward compatibility
-            if (_columnValuesForNullabilityAnalysis != null && _columnValuesForNullabilityAnalysis.Any())
-            {
-                isNullable = ReflectionHelper.IsNullableFromValues(_columnValuesForNullabilityAnalysis);
-            }
+            // Use the controller's nullability detection instead of local analysis
+            bool isNullable = SearchTemplateController?.ContainsNullValues ?? true; // Default to nullable for backward compatibility
 
             var validTypes = SearchTypeRegistry.GetFiltersForDataType(ColumnDataType, isNullable);
             foreach (var filterType in validTypes)

@@ -92,9 +92,6 @@ namespace WWSearchDataGrid.Modern.WPF
             DependencyProperty.Register("IsCheckboxColumn", typeof(bool), typeof(ColumnSearchBox),
                 new PropertyMetadata(false));
 
-        public static readonly DependencyProperty AllowsNullValuesProperty =
-            DependencyProperty.Register("AllowsNullValues", typeof(bool), typeof(ColumnSearchBox),
-                new PropertyMetadata(false));
 
         public static readonly DependencyProperty HasActiveFilterProperty =
             DependencyProperty.Register("HasActiveFilter", typeof(bool), typeof(ColumnSearchBox),
@@ -172,14 +169,6 @@ namespace WWSearchDataGrid.Modern.WPF
             private set => SetValue(IsCheckboxColumnProperty, value);
         }
 
-        /// <summary>
-        /// Gets whether the column allows null values (affects cycling behavior)
-        /// </summary>
-        public bool AllowsNullValues
-        {
-            get => (bool)GetValue(AllowsNullValuesProperty);
-            private set => SetValue(AllowsNullValuesProperty, value);
-        }
 
         /// <summary>
         /// Gets the search template controller
@@ -761,7 +750,8 @@ namespace WWSearchDataGrid.Modern.WPF
             try
             {
                 _isInitialState = false; // We're now cycling, not in initial state
-                var nextState = GetNextCycleState(_checkboxCycleState, AllowsNullValues);
+                var allowsNullValues = SearchTemplateController?.ContainsNullValues ?? false;
+                var nextState = GetNextCycleState(_checkboxCycleState, allowsNullValues);
                 SetCheckboxCycleState(nextState);
             }
             catch (Exception ex)
@@ -867,10 +857,11 @@ namespace WWSearchDataGrid.Modern.WPF
         /// <param name="state">The state to apply filter for</param>
         private void ApplyCheckboxCycleFilter(CheckboxCycleState state)
         {
+            var allowsNullValues = SearchTemplateController?.ContainsNullValues ?? false;
             switch (state)
             {
                 case CheckboxCycleState.Intermediate:
-                    if (_isInitialState || !AllowsNullValues)
+                    if (_isInitialState || !allowsNullValues)
                     {
                         // Initial state or non-nullable columns: clear all filters
                         ClearFilterInternal();
@@ -1099,7 +1090,7 @@ namespace WWSearchDataGrid.Modern.WPF
             {
                 if (CurrentColumn == null)
                 {
-                    SetCheckboxColumnState(false, false);
+                    SetCheckboxColumnState(false);
                     return;
                 }
 
@@ -1131,7 +1122,7 @@ namespace WWSearchDataGrid.Modern.WPF
                 }
 
                 // Set the UI state immediately
-                SetCheckboxColumnState(isCheckboxType, false); // We don't know about nulls yet, will determine later
+                SetCheckboxColumnState(isCheckboxType);
 
                 // If this is a checkbox column, set the appropriate column data type
                 if (isCheckboxType && SearchTemplateController != null)
@@ -1142,7 +1133,7 @@ namespace WWSearchDataGrid.Modern.WPF
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Error determining column type from definition: {ex.Message}");
-                SetCheckboxColumnState(false, false);
+                SetCheckboxColumnState(false);
             }
         }
 
@@ -1211,12 +1202,11 @@ namespace WWSearchDataGrid.Modern.WPF
         /// <summary>
         /// Sets the checkbox column state and UI properties
         /// </summary>
-        private void SetCheckboxColumnState(bool isCheckboxColumn, bool allowsNullValues)
+        private void SetCheckboxColumnState(bool isCheckboxColumn)
         {
             var previousIsCheckboxColumn = IsCheckboxColumn;
 
             IsCheckboxColumn = isCheckboxColumn;
-            AllowsNullValues = allowsNullValues;
 
             // Handle UI state changes when column type changes
             if (previousIsCheckboxColumn != isCheckboxColumn)
@@ -1240,35 +1230,6 @@ namespace WWSearchDataGrid.Modern.WPF
             }
         }
 
-        /// <summary>
-        /// Background analysis of null values for checkbox columns
-        /// This runs after the UI has already been set to checkbox mode
-        /// </summary>
-        private void AnalyzeNullValuesInBackground()
-        {
-            if (!IsCheckboxColumn || SearchTemplateController == null)
-                return;
-
-            // Run this in background to avoid blocking UI
-            Task.Run(() =>
-            {
-                try
-                {
-                    // Check if null values are present in the loaded data
-                    bool allowsNulls = SearchTemplateController.ColumnValues.Contains(null);
-
-                    // Update UI on main thread
-                    Dispatcher.BeginInvoke(new Action(() =>
-                    {
-                        AllowsNullValues = allowsNulls;
-                    }), DispatcherPriority.Background);
-                }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($"Error analyzing null values: {ex.Message}");
-                }
-            });
-        }
 
         /// <summary>
         /// Updated method that now focuses on value loading and null analysis rather than column type detection
@@ -1281,12 +1242,8 @@ namespace WWSearchDataGrid.Modern.WPF
                 if (SearchTemplateController == null || SourceDataGrid == null)
                     return;
 
-                // If we already determined this is a checkbox column, just analyze for null values
-                if (IsCheckboxColumn)
-                {
-                    AnalyzeNullValuesInBackground();
-                    return;
-                }
+                // Checkbox column settings are now handled automatically by the SearchTemplateController
+                // when column values are loaded, so no additional processing is needed here
             }
             catch (Exception ex)
             {

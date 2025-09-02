@@ -39,6 +39,7 @@ namespace WWSearchDataGrid.Modern.Core
         private bool _columnValuesLoaded = false;
         private Func<IEnumerable<object>> _columnValuesProvider;
         private readonly ObservableCollection<object> _columnValues = new ObservableCollection<object>();
+        private bool _containsNullValues = false;
 
         #endregion
 
@@ -61,6 +62,19 @@ namespace WWSearchDataGrid.Modern.Core
                 EnsureColumnValuesLoaded();
                 return _columnValues;
             } 
+        }
+
+        /// <summary>
+        /// Gets whether the column data contains any null values
+        /// This is determined when column values are loaded
+        /// </summary>
+        public bool ContainsNullValues
+        {
+            get
+            {
+                EnsureColumnValuesLoaded();
+                return _containsNullValues;
+            }
         }
 
         /// <summary>
@@ -287,6 +301,7 @@ namespace WWSearchDataGrid.Modern.Core
         {
             _columnValuesProvider = valuesProvider;
             _columnValuesLoaded = false;
+            _containsNullValues = false; // Reset nullability flag
             _columnValues.Clear();
         }
         
@@ -299,6 +314,7 @@ namespace WWSearchDataGrid.Modern.Core
             if (_columnValuesProvider != null)
             {
                 _columnValuesLoaded = false;
+                _containsNullValues = false; // Reset nullability flag
                 _columnValues.Clear();
                 // Values will be reloaded on next access
             }
@@ -353,11 +369,13 @@ namespace WWSearchDataGrid.Modern.Core
         
         /// <summary>
         /// Loads values into the ObservableCollection with performance optimizations
+        /// Also analyzes the data for null values during loading
         /// </summary>
         /// <param name="values">Values to load</param>
         private void LoadValuesIntoCollection(IEnumerable<object> values)
         {
             _columnValues.Clear();
+            _containsNullValues = false; // Reset nullability flag
             
             if (values == null) return;
 
@@ -365,9 +383,15 @@ namespace WWSearchDataGrid.Modern.Core
             var uniqueValues = new HashSet<object>();
             var normalizedValues = new List<object>();
 
-            // Single pass to normalize and deduplicate
+            // Single pass to normalize, deduplicate, and analyze for null values
             foreach (var value in values)
             {
+                // Check for null values before normalization
+                if (value == null || (value is string stringValue && string.IsNullOrWhiteSpace(stringValue)))
+                {
+                    _containsNullValues = true;
+                }
+                
                 var normalizedValue = NormalizeValue(value);
                 if (uniqueValues.Add(normalizedValue))
                 {
@@ -391,6 +415,25 @@ namespace WWSearchDataGrid.Modern.Core
             foreach (var value in normalizedValues)
             {
                 _columnValues.Add(value);
+            }
+
+            // Notify templates that nullability analysis has been updated
+            UpdateTemplatesAfterNullabilityAnalysis();
+        }
+
+        /// <summary>
+        /// Updates all templates after nullability analysis is complete
+        /// This ensures templates get the correct set of valid search types based on nullability
+        /// </summary>
+        private void UpdateTemplatesAfterNullabilityAnalysis()
+        {
+            foreach (var group in SearchGroups)
+            {
+                foreach (var template in group.SearchTemplates.OfType<SearchTemplate>())
+                {
+                    // Trigger update of valid search types now that nullability is known
+                    template.ColumnDataType = template.ColumnDataType; // This will call UpdateValidSearchTypes
+                }
             }
         }
 
