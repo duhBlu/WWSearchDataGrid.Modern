@@ -336,7 +336,7 @@ namespace WWSearchDataGrid.Modern.Core
                 try
                 {
                     var values = _columnValuesProvider();
-                    LoadValuesIntoCollection(values); // This now handles data type detection internally
+                    LoadValuesIntoCollection(values); 
                     _columnValuesLoaded = true;
                 }
                 catch (Exception ex)

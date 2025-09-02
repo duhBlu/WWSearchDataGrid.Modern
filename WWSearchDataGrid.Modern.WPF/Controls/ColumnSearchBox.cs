@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using System.Timers;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
@@ -45,8 +46,8 @@ namespace WWSearchDataGrid.Modern.WPF
         private TextBox searchTextBox;
         private Button advancedFilterButton;
         private CheckBox filterCheckBox;
-        private FilterPopup filterPopup;
-        private ColumnFilterEditor filterEditor;
+        private Popup _filterPopup;
+        private ColumnFilterEditor _filterContent;
         private Timer _changeTimer;
         private SearchTemplate _temporarySearchTemplate; // Track temporary template for real-time updates
         private CheckboxCycleState _checkboxCycleState = CheckboxCycleState.Intermediate; // Current logical cycling state
@@ -324,17 +325,20 @@ namespace WWSearchDataGrid.Modern.WPF
                 SourceDataGrid.ItemsSourceChanged -= OnSourceDataGridItemsSourceChanged;
             }
 
-            if (filterPopup != null)
+            // Clean up popup and filter content
+            if (_filterPopup != null)
             {
-                filterPopup.IsOpen = false;
-                filterPopup.Opened -= OnFilterPopupOpened;
-                filterPopup.Closed -= OnFilterPopupClosed;
-                filterPopup = null;
+                _filterPopup.IsOpen = false;
+                _filterPopup.KeyDown -= OnPopupKeyDown;
+                _filterPopup.Closed -= OnPopupClosed;
+                _filterPopup = null;
             }
             
-            if (filterEditor != null)
+            if (_filterContent != null)
             {
-                filterEditor = null;
+                _filterContent.FiltersApplied -= OnFiltersApplied;
+                _filterContent.FiltersCleared -= OnFiltersCleared;
+                _filterContent = null;
             }
         }
 
@@ -484,7 +488,7 @@ namespace WWSearchDataGrid.Modern.WPF
 
         private static void OnSearchTextChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
-            if (d is ColumnSearchBox control && (control.filterPopup?.IsOpen != true))
+            if (d is ColumnSearchBox control && (control._filterPopup?.IsOpen != true))
             {
                 // If text is empty, clear only the temporary template
                 if (string.IsNullOrWhiteSpace((string)e.NewValue))
@@ -504,7 +508,7 @@ namespace WWSearchDataGrid.Modern.WPF
 
         private void OnSearchTextBoxTextChanged(object sender, TextChangedEventArgs e)
         {
-            if (filterPopup?.IsOpen != true)
+            if (_filterPopup?.IsOpen != true)
                 SearchText = searchTextBox.Text;
         }
 
@@ -546,7 +550,7 @@ namespace WWSearchDataGrid.Modern.WPF
             {
                 if (SourceDataGrid != null && !string.IsNullOrEmpty(BindingPath) && SearchTemplateController != null)
                 {
-                    // Simply refresh the lazy loading provider - no eager loading
+                    // Refresh the lazy loading provider - no eager loading
                     SearchTemplateController.RefreshColumnValues();
                     
                     // Only re-determine column type based on definition, not data
@@ -606,7 +610,7 @@ namespace WWSearchDataGrid.Modern.WPF
             // Execute on UI thread
             Application.Current.Dispatcher.Invoke(() =>
             {
-                if (filterPopup?.IsOpen != true)
+                if (_filterPopup?.IsOpen != true)
                 {
                     if (!string.IsNullOrWhiteSpace(SearchText))
                         UpdateSimpleFilter();
@@ -1022,7 +1026,6 @@ namespace WWSearchDataGrid.Modern.WPF
                     SearchTemplateController = new SearchTemplateController();
                 }
 
-                // Set column properties
                 SearchTemplateController.ColumnName = CurrentColumn.Header;
                 BindingPath = CurrentColumn.SortMemberPath;
                 
@@ -1047,8 +1050,6 @@ namespace WWSearchDataGrid.Modern.WPF
                 // Set up lazy loading - no initial eager loading
                 if (SourceDataGrid.Items != null && SourceDataGrid.Items.Count > 0)
                 {
-                    System.Diagnostics.Debug.WriteLine($"ColumnSearchBox: Initial setup for column {CurrentColumn.Header} with {SourceDataGrid.Items.Count} items");
-                    
                     // Set up the lazy loading provider
                     SearchTemplateController.SetupColumnDataLazy(CurrentColumn.Header, GetColumnValuesFromDataGrid, BindingPath);
                     
@@ -1099,12 +1100,12 @@ namespace WWSearchDataGrid.Modern.WPF
 
                 var isCheckboxType = false;
 
-                // Method 1: Check if it's explicitly a DataGridCheckBoxColumn
+                // Check if it's explicitly a DataGridCheckBoxColumn
                 if (CurrentColumn is DataGridCheckBoxColumn)
                 {
                     isCheckboxType = true;
                 }
-                // Method 2: Check binding property type for bound columns
+                // Check binding property type for bound columns
                 else if (CurrentColumn is DataGridBoundColumn boundColumn && boundColumn.Binding is System.Windows.Data.Binding binding)
                 {
                     var bindingPath = binding.Path?.Path;
@@ -1113,7 +1114,7 @@ namespace WWSearchDataGrid.Modern.WPF
                         isCheckboxType = DetermineIfBooleanPropertyFromDataContext(bindingPath);
                     }
                 }
-                // Method 3: Check DependencyObjectType for template columns or custom scenarios
+                // Check DependencyObjectType for template columns or custom scenarios
                 else if (CurrentColumn is DataGridTemplateColumn)
                 {
                     var dependencyObjectType = CurrentColumn.DependencyObjectType;
@@ -1147,7 +1148,7 @@ namespace WWSearchDataGrid.Modern.WPF
         {
             try
             {
-                // Method 1: If we have data available, check the first item's property type
+                // If we have data available, check the first item's property type
                 if (SourceDataGrid?.Items?.Count > 0)
                 {
                     var firstItem = SourceDataGrid.Items.Cast<object>().FirstOrDefault(item => item != null);
@@ -1158,7 +1159,7 @@ namespace WWSearchDataGrid.Modern.WPF
                     }
                 }
 
-                // Method 2: If no data available yet, check if we can infer from the ItemsSource type
+                // If no data available yet, check if we can infer from the ItemsSource type
                 if (SourceDataGrid?.OriginalItemsSource != null)
                 {
                     var itemsSourceType = SourceDataGrid.OriginalItemsSource.GetType();
@@ -1186,10 +1187,8 @@ namespace WWSearchDataGrid.Modern.WPF
         /// </summary>
         private bool IsCheckboxColumnByDependencyObjectType(DependencyObjectType dependencyObjectType)
         {
-            // Add your specific logic based on dependencyObjectType.Name patterns
             var typeName = dependencyObjectType.Name;
 
-            // Common patterns that might indicate checkbox columns
             if (typeName.Contains("CheckBox", StringComparison.OrdinalIgnoreCase) ||
                 typeName.Contains("Boolean", StringComparison.OrdinalIgnoreCase) ||
                 typeName.Contains("Toggle", StringComparison.OrdinalIgnoreCase))
@@ -1197,8 +1196,7 @@ namespace WWSearchDataGrid.Modern.WPF
                 return true;
             }
 
-            // Add more patterns as you discover them in your application
-            // For example, if you have custom column types:
+            // Add more patterns for custom if necessary
             // if (typeName == "YourCustomCheckboxColumnType")
             //     return true;
 
@@ -1636,83 +1634,76 @@ namespace WWSearchDataGrid.Modern.WPF
                 if (SearchTemplateController == null)
                     return;
 
-                // Create popup if none exists
-                if (filterPopup == null)
+                // Create filter content if none exists
+                if (_filterContent == null)
                 {
-                    filterPopup = new FilterPopup
-                    {
-                        Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom,
-                        PlacementTarget = this,
-                        MaxWidth = 500,
-                        MaxHeight = 600
-                    };
-
-                    filterPopup.Opened += OnFilterPopupOpened;
-                    filterPopup.Closed += OnFilterPopupClosed;
-                }
-
-                // Create or update filter editor
-                if (filterEditor == null)
-                {
-                    filterEditor = new ColumnFilterEditor
+                    _filterContent = new ColumnFilterEditor
                     {
                         SearchTemplateController = SearchTemplateController,
                         DataContext = this
                     };
 
-                    // Subscribe to auto-apply events
-                    filterEditor.FiltersApplied += OnFiltersApplied;
-                    filterEditor.FiltersCleared += OnFiltersCleared;
+                    // Subscribe to filter events
+                    _filterContent.FiltersApplied += OnFiltersApplied;
+                    _filterContent.FiltersCleared += OnFiltersCleared;
                 }
 
-                filterPopup.Content = filterEditor;
-                filterPopup.IsOpen = true;
+                // Create popup if none exists
+                if (_filterPopup == null)
+                {
+                    _filterPopup = new Popup
+                    {
+                        Child = _filterContent,
+                        PlacementTarget = this,
+                        Placement = PlacementMode.Bottom,
+                        AllowsTransparency = true,
+                        PopupAnimation = PopupAnimation.Fade,
+                        StaysOpen = false,
+                        MaxWidth = 500,
+                        MaxHeight = 600
+                    };
+
+                    // Subscribe to popup events
+                    _filterPopup.KeyDown += OnPopupKeyDown;
+                    _filterPopup.Closed += OnPopupClosed;
+                }
+                else
+                {
+                    // Update placement target in case it changed
+                    _filterPopup.PlacementTarget = this;
+                }
+
+                // Open the popup
+                _filterPopup.IsOpen = true;
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Error in ShowFilterPopup: {ex.Message}");
-                if (filterPopup != null)
+                if (_filterPopup != null)
                 {
-                    filterPopup.IsOpen = false;
+                    _filterPopup.IsOpen = false;
                 }
             }
         }
 
         /// <summary>
-        /// Handles the filter popup being opened
+        /// Handle popup key down events (Escape to close)
         /// </summary>
-        private void OnFilterPopupOpened(object sender, EventArgs e)
+        private void OnPopupKeyDown(object sender, KeyEventArgs e)
         {
-            try
+            if (e.Key == Key.Escape)
             {
-                // Popup is now open - no need to track separate flag
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Error in OnFilterPopupOpened: {ex.Message}");
+                _filterPopup.IsOpen = false;
+                e.Handled = true;
             }
         }
 
         /// <summary>
-        /// Handles the filter popup being closed
+        /// Handle popup closed event for cleanup
         /// </summary>
-        private void OnFilterPopupClosed(object sender, EventArgs e)
+        private void OnPopupClosed(object sender, EventArgs e)
         {
-            try
-            {
-                // Check if the controller is still valid and update state
-                if (SearchTemplateController != null)
-                {
-                    HasAdvancedFilter = SearchTemplateController.HasCustomExpression;
-                }
-
-                UpdateHasActiveFilterState();
-                SourceDataGrid?.UpdateFilterPanel();
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Error in OnFilterPopupClosed: {ex.Message}");
-            }
+            // Additional cleanup if needed when popup closes
         }
 
         /// <summary>

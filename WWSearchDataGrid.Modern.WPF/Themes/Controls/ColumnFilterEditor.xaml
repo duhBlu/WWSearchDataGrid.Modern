@@ -163,13 +163,21 @@
 
     <!--  ColumnFilterEditor Style  -->
     <Style x:Key="Default_ColumnFilterEditor_Style" TargetType="{x:Type sdg:ColumnFilterEditor}">
+        <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.WindowBrushKey}}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" />
+        <Setter Property="Margin" Value="10" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type sdg:ColumnFilterEditor}">
                     <Border Background="{TemplateBinding Background}"
                             BorderBrush="{TemplateBinding BorderBrush}"
-                            BorderThickness="{TemplateBinding BorderThickness}">
-                        <Grid Margin="5,0,5,0">
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="4"
+                            Margin="{TemplateBinding Margin}">
+                        <Border.Effect>
+                            <DropShadowEffect Color="Black" Opacity="0.6" BlurRadius="8" ShadowDepth="2" />
+                        </Border.Effect>
+                        <Grid Margin="8">
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="*" />
@@ -245,7 +253,7 @@
                                                 <TextBlock Text="Add Rule" VerticalAlignment="Center" />
                                             </StackPanel>
                                         </Button>
-                                        
+
                                         <Button Style="{StaticResource Default_Button_Style}"
                                                 Command="{Binding ClearFilterCommand, RelativeSource={RelativeSource TemplatedParent}}"
                                                 Padding="8,4"

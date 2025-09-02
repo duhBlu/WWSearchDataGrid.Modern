@@ -5,7 +5,9 @@ using System.Runtime.CompilerServices;
 using System.Timers;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Input;
+using System.Windows.Threading;
 using WWSearchDataGrid.Modern.Core;
 
 namespace WWSearchDataGrid.Modern.WPF
@@ -47,6 +49,7 @@ namespace WWSearchDataGrid.Modern.WPF
             DependencyProperty.Register(nameof(IsOperatorVisible), typeof(bool), typeof(ColumnFilterEditor),
                 new PropertyMetadata(false));
 
+
         #endregion
 
         #region Properties
@@ -64,6 +67,7 @@ namespace WWSearchDataGrid.Modern.WPF
             get => (bool)GetValue(IsOperatorVisibleProperty);
             set => SetValue(IsOperatorVisibleProperty, value);
         }
+
 
         /// <summary>
         /// Gets the group operator name from the first search group
@@ -127,10 +131,14 @@ namespace WWSearchDataGrid.Modern.WPF
         {
             Loaded += OnControlLoaded;
             Unloaded += OnUnloaded;
-            
+            DefaultStyleKey = typeof(ColumnFilterEditor);
         }
 
+
+
         #endregion
+
+        
 
         #region Event Handlers
 
@@ -178,7 +186,6 @@ namespace WWSearchDataGrid.Modern.WPF
             TriggerColumnValueLoading();
             UpdateOperatorVisibility();
             SetupAutoApplyMonitoring();
-
         }
 
         /// <summary>
@@ -226,35 +233,7 @@ namespace WWSearchDataGrid.Modern.WPF
                 }
             }
         }
-
-        /// <summary>
-        /// Apply filter automatically (triggered by debounced changes)
-        /// </summary>
-        private void ApplyFilterAutomatically()
-        {
-            if (SearchTemplateController == null) return;
-            
-            try
-            {
-                SearchTemplateController.UpdateFilterExpression();
-                
-                // Update the UI state after successful filter application
-                if (DataContext is ColumnSearchBox columnSearchBox && columnSearchBox.SourceDataGrid != null)
-                {
-                    columnSearchBox.HasAdvancedFilter = SearchTemplateController.HasCustomExpression;
-                    columnSearchBox.SourceDataGrid.FilterItemsSource();
-                    columnSearchBox.SourceDataGrid.UpdateFilterPanel();
-                }
-
-                // Notify that filters were applied
-                FiltersApplied?.Invoke(this, EventArgs.Empty);
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Auto filter application failed: {ex.Message}");
-            }
-        }
-
+        
         /// <summary>
         /// Clear all filters
         /// </summary>
@@ -341,6 +320,35 @@ namespace WWSearchDataGrid.Modern.WPF
                 ApplyFilterAutomatically();
             });
         }
+
+        /// <summary>
+        /// Apply filter automatically (triggered by debounced changes)
+        /// </summary>
+        private void ApplyFilterAutomatically()
+        {
+            if (SearchTemplateController == null) return;
+
+            try
+            {
+                SearchTemplateController.UpdateFilterExpression();
+
+                // Update the UI state after successful filter application
+                if (DataContext is ColumnSearchBox columnSearchBox && columnSearchBox.SourceDataGrid != null)
+                {
+                    columnSearchBox.HasAdvancedFilter = SearchTemplateController.HasCustomExpression;
+                    columnSearchBox.SourceDataGrid.FilterItemsSource();
+                    columnSearchBox.SourceDataGrid.UpdateFilterPanel();
+                }
+
+                // Notify that filters were applied
+                FiltersApplied?.Invoke(this, EventArgs.Empty);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Auto filter application failed: {ex.Message}");
+            }
+        }
+
 
         #endregion
 

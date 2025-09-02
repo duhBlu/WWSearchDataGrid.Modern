@@ -145,6 +145,5 @@ namespace WWSearchDataGrid.Modern.Core
             }
             set => SetProperty(value, ref filterComponents);
         }
-
     }
 }
