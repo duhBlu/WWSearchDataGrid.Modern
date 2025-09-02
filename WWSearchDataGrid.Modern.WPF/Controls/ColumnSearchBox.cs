@@ -553,6 +553,12 @@ namespace WWSearchDataGrid.Modern.WPF
                     // Refresh the lazy loading provider - no eager loading
                     SearchTemplateController.RefreshColumnValues();
                     
+                    if(SearchTemplateController.ColumnValues.Count > 0)
+                    {
+                        var dt = ReflectionHelper.DetermineColumnDataType(SearchTemplateController.ColumnValues);
+                        SearchTemplateController.ColumnDataType = dt;
+                    }
+
                     // Only re-determine column type based on definition, not data
                     DetermineCheckboxColumnTypeFromColumnDefinition();
                 }
@@ -1025,7 +1031,6 @@ namespace WWSearchDataGrid.Modern.WPF
                 {
                     SearchTemplateController = new SearchTemplateController();
                 }
-
                 SearchTemplateController.ColumnName = CurrentColumn.Header;
                 BindingPath = CurrentColumn.SortMemberPath;
                 

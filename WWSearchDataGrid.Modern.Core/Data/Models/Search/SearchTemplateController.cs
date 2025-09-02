@@ -95,7 +95,11 @@ namespace WWSearchDataGrid.Modern.Core
                     template.ColumnDataType = newDataType;
                     
                     // If the original search type is still valid, restore it
-                    if (template.ValidSearchTypes.Contains(currentSearchType))
+                    if (DefaultSearchType is SearchType dst && template.ValidSearchTypes.Contains(dst))
+                    {
+                        template.SearchType = dst;
+                    }
+                    else
                     {
                         template.SearchType = currentSearchType;
                     }

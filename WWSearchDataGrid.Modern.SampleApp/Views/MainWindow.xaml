@@ -196,21 +196,24 @@
                                             Binding="{Binding BoolValue}" />
                     <DataGridCheckBoxColumn Width="100"
                                             Header="Nullable Bool"
-                                            sdg:ColumnFilterEditor.DefaultSearchType="IsNotNull"
                                             Binding="{Binding NullableBoolValue}" />
 
                     <!--  Integer Types  -->
                     <DataGridTextColumn Width="80"
                                         Header="Int"
+                                        sdg:ColumnFilterEditor.DefaultSearchType="EndsWith"
                                         Binding="{Binding IntValue}" />
                     <DataGridTextColumn Width="90"
                                         Header="Nullable Int"
+                                        sdg:ColumnFilterEditor.DefaultSearchType="Between"
                                         Binding="{Binding NullableIntValue}" />
                     <DataGridTextColumn Width="90"
                                         Header="Long"
+                                        sdg:ColumnFilterEditor.DefaultSearchType="StartsWith"
                                         Binding="{Binding LongValue}" />
                     <DataGridTextColumn Width="100"
                                         Header="Nullable Long"
+                                        sdg:ColumnFilterEditor.DefaultSearchType="IsNotNull"
                                         Binding="{Binding NullableLongValue}" />
                     <DataGridTextColumn Width="70"
                                         Header="Short"
