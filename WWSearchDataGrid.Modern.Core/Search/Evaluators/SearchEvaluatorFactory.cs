@@ -92,9 +92,7 @@ namespace WWSearchDataGrid.Modern.Core.Strategies
             RegisterEvaluator(new NotBetweenEvaluator());
             RegisterEvaluator(new BetweenDatesEvaluator());
 
-            // Null/Empty evaluators
-            RegisterEvaluator(new IsEmptyEvaluator());
-            RegisterEvaluator(new IsNotEmptyEvaluator());
+            // Null evaluators
             RegisterEvaluator(new IsNullEvaluator());
             RegisterEvaluator(new IsNotNullEvaluator());
 

@@ -1739,57 +1739,6 @@ namespace WWSearchDataGrid.Modern.WPF
                 System.Diagnostics.Debug.WriteLine($"Error in ClearFilter: {ex.Message}");
             }
         }
-
-        /// <summary>
-        /// Gets a display text for the current filter state
-        /// </summary>
-        /// <returns>Human-readable description of the current filter</returns>
-        public string GetFilterDisplayText()
-        {
-            try
-            {
-                // Check if we have a checkbox filter
-                if (IsCheckboxColumn)
-                {
-                    if (FilterCheckboxState.HasValue)
-                    {
-                        return $"Equals '{(FilterCheckboxState.Value ? "True" : "False")}'";
-                    }
-                    else if (SearchTemplateController?.HasCustomExpression == true)
-                    {
-                        // Check if this is an IsNull filter (indeterminate state with filter)
-                        var firstGroup = SearchTemplateController.SearchGroups.FirstOrDefault();
-                        var firstTemplate = firstGroup?.SearchTemplates.FirstOrDefault();
-                        if (firstTemplate?.SearchType == SearchType.IsBlank)
-                        {
-                            return "Is Null";
-                        }
-                    }
-                }
-
-                // Check if we have a simple text filter
-                if (!string.IsNullOrWhiteSpace(SearchText))
-                {
-                    return $"Contains '{SearchText}'";
-                }
-
-                // Check if we have an advanced filter
-                if (SearchTemplateController?.HasCustomExpression == true)
-                {
-                    // Get summary from SearchTemplateController
-                    return SearchTemplateController.GetFilterDisplayText();
-                }
-
-                return "No filter";
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Error in GetFilterDisplayText: {ex.Message}");
-                return "Filter error";
-            }
-        }
-
         #endregion
     }
-
 }

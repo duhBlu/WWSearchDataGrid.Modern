@@ -6,34 +6,6 @@ using System.Text.RegularExpressions;
 namespace WWSearchDataGrid.Modern.Core.Strategies
 {
     /// <summary>
-    /// Evaluator for IsEmpty search type
-    /// </summary>
-    public class IsEmptyEvaluator : SearchEvaluatorBase
-    {
-        public override SearchType SearchType => SearchType.IsBlank;
-
-        public override bool Evaluate(object columnValue, SearchCondition searchCondition)
-        {
-            // Treat null, empty, and whitespace-only strings as empty
-            return columnValue is null || (columnValue is string s && string.IsNullOrWhiteSpace(s));
-        }
-    }
-
-    /// <summary>
-    /// Evaluator for IsNotEmpty search type
-    /// </summary>
-    public class IsNotEmptyEvaluator : SearchEvaluatorBase
-    {
-        public override SearchType SearchType => SearchType.IsNotBlank;
-
-        public override bool Evaluate(object columnValue, SearchCondition searchCondition)
-        {
-            // Not null and not empty/whitespace-only string
-            return !(columnValue is null || (columnValue is string s && string.IsNullOrWhiteSpace(s)));
-        }
-    }
-
-    /// <summary>
     /// Evaluator for IsNull search type
     /// </summary>
     public class IsNullEvaluator : SearchEvaluatorBase

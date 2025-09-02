@@ -106,12 +106,6 @@ namespace WWSearchDataGrid.Modern.Core
                 case SearchType.IsNotNull:
                     components.SearchTypeText = "Is not null";
                     break;
-                case SearchType.IsBlank:
-                    components.SearchTypeText = "Is blank";
-                    break;
-                case SearchType.IsNotBlank:
-                    components.SearchTypeText = "Is not blank";
-                    break;
                 case SearchType.AboveAverage:
                     components.SearchTypeText = "Above average";
                     break;
@@ -228,8 +222,6 @@ namespace WWSearchDataGrid.Modern.Core
         {
             return searchType == SearchType.IsNull ||
                    searchType == SearchType.IsNotNull ||
-                   searchType == SearchType.IsBlank ||
-                   searchType == SearchType.IsNotBlank ||
                    searchType == SearchType.AboveAverage ||
                    searchType == SearchType.BelowAverage ||
                    searchType == SearchType.Unique ||

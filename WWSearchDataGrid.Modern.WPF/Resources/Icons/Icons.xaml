@@ -556,7 +556,7 @@
 
     <!--#endregion Below Average-->
 
-    <!--#region Is null/Is blank-->
+    <!--#region Is null-->
 
     <Geometry x:Key="Is_null_or_blankGeometry">F1 M15,15z M0,0z M-396.31726,15442.173A6.9825096,6.9821421,9.6904791,0,1,-389.81371,15449.605A6.9825096,6.9821421,9.6904791,0,1,-397.24518,15456.108A6.9825096,6.9821421,9.6904791,0,1,-403.74634,15448.677A6.9825096,6.9821421,9.6904791,0,1,-396.31664,15442.175z</Geometry>
     <SolidColorBrush x:Key="Is_null_or_blankBrush1" Color="#FF42A358" Opacity="1" />
@@ -583,9 +583,9 @@
     </DrawingGroup>
     <DrawingImage x:Key="Is_null_or_blankDrawingImage" Drawing="{StaticResource Is_null_or_blankDrawingGroup}" />
 
-    <!--#endregion Is null/Is blank-->
+    <!--#endregion Is null-->
 
-    <!--#region Is not null/Is not blank-->
+    <!--#region Is not null-->
 
     <Geometry x:Key="Is_not_null_or_blankGeometry">F1 M15,15z M0,0z M-389.32354,15449.142A7.4564584,7.4564579,0,0,1,-396.78,15456.598A7.4564584,7.4564579,0,0,1,-404.23646,15449.142A7.4564584,7.4564579,0,0,1,-396.78,15441.686A7.4564584,7.4564579,0,0,1,-389.32354,15449.142z</Geometry>
     <SolidColorBrush x:Key="Is_not_null_or_blankBrush1" Color="#FF42A358" Opacity="1" />
@@ -599,7 +599,7 @@
     </DrawingGroup>
     <DrawingImage x:Key="Is_not_null_or_blankDrawingImage" Drawing="{StaticResource Is_not_null_or_blankDrawingGroup}" />
 
-    <!--#endregion Is not null/Is not blank-->
+    <!--#endregion Is not null-->
 
     <!--#region Unique-->
 

@@ -176,8 +176,6 @@ namespace WWSearchDataGrid.Modern.Core
                 // Check for non-value search types that are inherently valid
                 var isNonValueSearchType = SearchType == SearchType.IsNull ||
                                          SearchType == SearchType.IsNotNull ||
-                                         SearchType == SearchType.IsBlank ||
-                                         SearchType == SearchType.IsNotBlank ||
                                          SearchType == SearchType.Yesterday ||
                                          SearchType == SearchType.Today ||
                                          SearchType == SearchType.AboveAverage ||
@@ -202,8 +200,6 @@ namespace WWSearchDataGrid.Modern.Core
                 // Non-value search types that don't require input values
                 var isNonValueSearchType = SearchType == SearchType.IsNull ||
                                          SearchType == SearchType.IsNotNull ||
-                                         SearchType == SearchType.IsBlank ||
-                                         SearchType == SearchType.IsNotBlank ||
                                          SearchType == SearchType.Yesterday ||
                                          SearchType == SearchType.Today ||
                                          SearchType == SearchType.AboveAverage ||
