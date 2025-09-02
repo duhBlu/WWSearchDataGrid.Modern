@@ -8,6 +8,7 @@ namespace WWSearchDataGrid.Modern.Core
     /// <summary>
     /// Implementation of collection context for statistical and ranking operations
     /// Provides lazy-loaded cached access to computed collection statistics
+    /// Optimized for performance with large datasets
     /// </summary>
     public class CollectionContext : ICollectionContext
     {
@@ -15,6 +16,7 @@ namespace WWSearchDataGrid.Modern.Core
         private readonly Lazy<IEnumerable<object>> _sortedDescending;
         private readonly Lazy<IEnumerable<object>> _sortedAscending;
         private readonly Lazy<Dictionary<object, List<object>>> _valueGroups;
+        private readonly Lazy<List<(object item, object value)>> _extractedValues;
 
         /// <summary>
         /// Gets the full collection being filtered
@@ -33,10 +35,11 @@ namespace WWSearchDataGrid.Modern.Core
         /// <param name="columnPath">Column path for value extraction</param>
         public CollectionContext(IEnumerable<object> items, string columnPath)
         {
-            Items = items?.ToList() ?? throw new ArgumentNullException(nameof(items));
+            Items = items ?? throw new ArgumentNullException(nameof(items));
             ColumnPath = columnPath ?? throw new ArgumentNullException(nameof(columnPath));
 
-            // Initialize lazy computations
+            // Initialize lazy computations - extractedValues is shared across all operations
+            _extractedValues = new Lazy<List<(object item, object value)>>(ExtractAllValues);
             _average = new Lazy<double?>(ComputeAverage);
             _sortedDescending = new Lazy<IEnumerable<object>>(ComputeSortedDescending);
             _sortedAscending = new Lazy<IEnumerable<object>>(ComputeSortedAscending);
@@ -64,16 +67,35 @@ namespace WWSearchDataGrid.Modern.Core
         public Dictionary<object, List<object>> GetValueGroups() => _valueGroups.Value;
 
         /// <summary>
-        /// Computes the average of numeric values in the column
+        /// Extracts all item-value pairs once to share across multiple operations
+        /// This eliminates redundant reflection calls across different statistical operations
+        /// </summary>
+        private List<(object item, object value)> ExtractAllValues()
+        {
+            try
+            {
+                return Items
+                    .Select(item => (item, value: ReflectionHelper.GetPropValue(item, ColumnPath)))
+                    .ToList();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error extracting values for column {ColumnPath}: {ex.Message}");
+                return new List<(object item, object value)>();
+            }
+        }
+
+        /// <summary>
+        /// Computes the average of numeric values in the column using pre-extracted values
         /// </summary>
         private double? ComputeAverage()
         {
             try
             {
-                var numericValues = Items
-                    .Select(item => ReflectionHelper.GetPropValue(item, ColumnPath))
-                    .Where(value => value != null && ReflectionHelper.IsNumericValue(value))
-                    .Select(value => TypeTranslatorHelper.ConvertToDouble(value))
+                var extractedValues = _extractedValues.Value;
+                var numericValues = extractedValues
+                    .Where(x => x.value != null && ReflectionHelper.IsNumericValue(x.value))
+                    .Select(x => TypeTranslatorHelper.ConvertToDouble(x.value))
                     .Where(value => !double.IsNaN(value))
                     .ToList();
 
@@ -87,17 +109,17 @@ namespace WWSearchDataGrid.Modern.Core
         }
 
         /// <summary>
-        /// Computes items sorted by column value in descending order
+        /// Computes items sorted by column value in descending order using pre-extracted values
         /// </summary>
         private IEnumerable<object> ComputeSortedDescending()
         {
             try
             {
-                return Items
-                    .Select(item => new { Item = item, Value = ReflectionHelper.GetPropValue(item, ColumnPath) })
-                    .Where(x => x.Value != null && ReflectionHelper.IsComparableValue(x.Value))
-                    .OrderByDescending(x => x.Value)
-                    .Select(x => x.Item)
+                var extractedValues = _extractedValues.Value;
+                return extractedValues
+                    .Where(x => x.value != null && ReflectionHelper.IsComparableValue(x.value))
+                    .OrderByDescending(x => x.value)
+                    .Select(x => x.item)
                     .ToList(); // Materialize to avoid re-evaluation
             }
             catch (Exception ex)
@@ -108,17 +130,17 @@ namespace WWSearchDataGrid.Modern.Core
         }
 
         /// <summary>
-        /// Computes items sorted by column value in ascending order
+        /// Computes items sorted by column value in ascending order using pre-extracted values
         /// </summary>
         private IEnumerable<object> ComputeSortedAscending()
         {
             try
             {
-                return Items
-                    .Select(item => new { Item = item, Value = ReflectionHelper.GetPropValue(item, ColumnPath) })
-                    .Where(x => x.Value != null && ReflectionHelper.IsComparableValue(x.Value))
-                    .OrderBy(x => x.Value)
-                    .Select(x => x.Item)
+                var extractedValues = _extractedValues.Value;
+                return extractedValues
+                    .Where(x => x.value != null && ReflectionHelper.IsComparableValue(x.value))
+                    .OrderBy(x => x.value)
+                    .Select(x => x.item)
                     .ToList(); // Materialize to avoid re-evaluation
             }
             catch (Exception ex)
@@ -129,15 +151,16 @@ namespace WWSearchDataGrid.Modern.Core
         }
 
         /// <summary>
-        /// Computes value frequency groups for uniqueness operations
+        /// Computes value frequency groups for uniqueness operations using pre-extracted values
         /// </summary>
         private Dictionary<object, List<object>> ComputeValueGroups()
         {
             try
             {
-                return Items
-                    .GroupBy(item => ReflectionHelper.GetPropValue(item, ColumnPath)?.ToString() ?? string.Empty)
-                    .ToDictionary(g => (object)g.Key, g => g.ToList());
+                var extractedValues = _extractedValues.Value;
+                return extractedValues
+                    .GroupBy(x => x.value?.ToString() ?? string.Empty)
+                    .ToDictionary(g => (object)g.Key, g => g.Select(x => x.item).ToList());
             }
             catch (Exception ex)
             {

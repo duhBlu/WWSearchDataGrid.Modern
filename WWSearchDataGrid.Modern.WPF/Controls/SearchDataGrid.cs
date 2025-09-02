@@ -32,6 +32,15 @@ namespace WWSearchDataGrid.Modern.WPF
         private int _itemsSourceChangeCount = 0;
         private DateTime _lastItemsSourceChangeTime = DateTime.MinValue;
         private const int MAX_ITEMS_SOURCE_CHANGES_PER_SECOND = 10; // Limit rapid changes
+        
+        // Collection context caching for performance optimization
+        private readonly Dictionary<string, WWSearchDataGrid.Modern.Core.Strategies.ICollectionContext> _collectionContextCache = 
+            new Dictionary<string, WWSearchDataGrid.Modern.Core.Strategies.ICollectionContext>();
+        private List<object> _materializedDataSource;
+        private readonly object _contextCacheLock = new object();
+        
+        // Asynchronous filtering support
+        private System.Threading.CancellationTokenSource _filterCancellationTokenSource;
 
         #endregion
 
@@ -44,6 +53,14 @@ namespace WWSearchDataGrid.Modern.WPF
         public static readonly DependencyProperty ActualHasItemsProperty =
             DependencyProperty.Register("ActualHasItems", typeof(bool), typeof(SearchDataGrid),
                 new PropertyMetadata(false, OnActualHasItemsChanged));
+
+        public static readonly DependencyProperty IsFilteringProperty =
+            DependencyProperty.Register("IsFiltering", typeof(bool), typeof(SearchDataGrid),
+                new PropertyMetadata(false));
+
+        public static readonly DependencyProperty FilterProgressProperty =
+            DependencyProperty.Register("FilterProgress", typeof(double), typeof(SearchDataGrid),
+                new PropertyMetadata(0.0));
 
         #endregion
 
@@ -73,6 +90,24 @@ namespace WWSearchDataGrid.Modern.WPF
         {
             get { return (bool)GetValue(ActualHasItemsProperty); }
             private set { SetValue(ActualHasItemsProperty, value); }
+        }
+
+        /// <summary>
+        /// Gets whether a filtering operation is currently in progress
+        /// </summary>
+        public bool IsFiltering
+        {
+            get { return (bool)GetValue(IsFilteringProperty); }
+            private set { SetValue(IsFilteringProperty, value); }
+        }
+
+        /// <summary>
+        /// Gets the current filtering progress (0-100)
+        /// </summary>
+        public double FilterProgress
+        {
+            get { return (double)GetValue(FilterProgressProperty); }
+            private set { SetValue(FilterProgressProperty, value); }
         }
 
         /// <summary>
@@ -395,6 +430,9 @@ namespace WWSearchDataGrid.Modern.WPF
                 base.OnItemsSourceChanged(oldValue, newValue);
 
                 originalItemsSource = newValue;
+                
+                // Invalidate collection context cache when data source changes
+                InvalidateCollectionContextCache();
 
                 // Register for collection changed events if the source supports it
                 UnregisterCollectionChangedEvent(oldValue);
@@ -451,6 +489,17 @@ namespace WWSearchDataGrid.Modern.WPF
         {
             // Update ActualHasItems property when collection changes
             UpdateHasItemsProperty();
+            
+            // Invalidate collection context cache when items are added/removed
+            // This ensures statistical calculations reflect the current data
+            if (e.Action == NotifyCollectionChangedAction.Add ||
+                e.Action == NotifyCollectionChangedAction.Remove ||
+                e.Action == NotifyCollectionChangedAction.Replace ||
+                e.Action == NotifyCollectionChangedAction.Reset)
+            {
+                InvalidateCollectionContextCache();
+            }
+            
             CollectionChanged?.Invoke(this, e);
         }
 
@@ -491,23 +540,27 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
-        /// Apply filters to the items source
+        /// Apply filters to the items source with performance optimization for large datasets
         /// </summary>
         /// <param name="delay">Optional delay before filtering</param>
         public async void FilterItemsSource(int delay = 0)
         {
             try
             {
-                var cts = tokenSource.GetNewCancellationTokenSource();
+                // Cancel any existing filtering operation
+                _filterCancellationTokenSource?.Cancel();
+                _filterCancellationTokenSource = new System.Threading.CancellationTokenSource();
+                
+                var cancellationToken = _filterCancellationTokenSource.Token;
 
                 // Wait for delay if requested
                 if (delay > 0)
                 {
-                    await System.Threading.Tasks.Task.Delay(delay);
+                    await System.Threading.Tasks.Task.Delay(delay, cancellationToken);
                 }
 
                 // If cancelled, return
-                if (cts.IsCancellationRequested)
+                if (cancellationToken.IsCancellationRequested)
                 {
                     return;
                 }
@@ -515,7 +568,6 @@ namespace WWSearchDataGrid.Modern.WPF
                 // Commit any edits
                 CommitEdit(DataGridEditingUnit.Row, true);
 
-                // Create unified filter that handles both regular and collection-context filters together
                 // Check if filters are enabled before applying - respects FilterPanel checkbox
                 if (FilterPanel?.FiltersEnabled == true)
                 {
@@ -523,13 +575,25 @@ namespace WWSearchDataGrid.Modern.WPF
                     
                     if (activeFilters.Count > 0)
                     {
-                        Items.Filter = item => EvaluateUnifiedFilter(item, activeFilters);
+                        // Determine if async filtering is needed based on dataset size and filter complexity
+                        var shouldUseAsyncFiltering = ShouldUseAsyncFiltering(activeFilters);
+                        
+                        if (shouldUseAsyncFiltering)
+                        {
+                            await ApplyFiltersAsync(activeFilters, cancellationToken);
+                        }
+                        else
+                        {
+                            // Use synchronous filtering for small datasets
+                            Items.Filter = item => EvaluateUnifiedFilter(item, activeFilters);
+                            SearchFilter = Items.Filter;
+                        }
                     }
                     else
                     {
                         Items.Filter = null;
+                        SearchFilter = null;
                     }
-                    SearchFilter = Items.Filter;
                 }
                 else
                 {
@@ -543,18 +607,26 @@ namespace WWSearchDataGrid.Modern.WPF
 
                 // Update filter panel
                 UpdateFilterPanel();
-
-                // Remove token source
-                tokenSource.RemoveCancellationTokenSource(cts);
+            }
+            catch (OperationCanceledException)
+            {
+                // Filter operation was cancelled - this is expected
+                System.Diagnostics.Debug.WriteLine("Filter operation was cancelled");
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Error filtering items: {ex.Message}");
             }
+            finally
+            {
+                IsFiltering = false;
+                FilterProgress = 0;
+            }
         }
 
         /// <summary>
         /// Unified filter evaluation that handles both regular and collection-context filters with proper AND/OR logic
+        /// Performance optimized with cached collection contexts
         /// </summary>
         /// <param name="item">The item to evaluate</param>
         /// <param name="activeFilters">List of all active column filters</param>
@@ -564,19 +636,16 @@ namespace WWSearchDataGrid.Modern.WPF
             if (activeFilters.Count == 0)
                 return true;
 
-            // Create collection contexts for filters that need them (lazy evaluation)
-            var collectionContexts = new Dictionary<string, WWSearchDataGrid.Modern.Core.Strategies.ICollectionContext>();
-
             try
             {
                 // First filter is always included (no preceding operator)
-                bool result = EvaluateFilterWithContext(item, activeFilters[0], collectionContexts);
+                bool result = EvaluateFilterWithContext(item, activeFilters[0]);
 
                 // Process remaining filters with their logical operators
                 for (int i = 1; i < activeFilters.Count; i++)
                 {
                     var filter = activeFilters[i];
-                    bool filterResult = EvaluateFilterWithContext(item, filter, collectionContexts);
+                    bool filterResult = EvaluateFilterWithContext(item, filter);
 
                     // Apply the logical operator from this filter
                     // Get the operator from the first search group
@@ -618,9 +687,9 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
-        /// Evaluates a single filter against an item, creating collection context if needed
+        /// Evaluates a single filter against an item using cached collection contexts for optimal performance
         /// </summary>
-        private bool EvaluateFilterWithContext(object item, ColumnSearchBox filter, Dictionary<string, WWSearchDataGrid.Modern.Core.Strategies.ICollectionContext> collectionContexts)
+        private bool EvaluateFilterWithContext(object item, ColumnSearchBox filter)
         {
             try
             {
@@ -632,16 +701,17 @@ namespace WWSearchDataGrid.Modern.WPF
 
                 if (needsCollectionContext)
                 {
-                    // Get or create collection context for this column
-                    if (!collectionContexts.TryGetValue(filter.BindingPath, out var collectionContext))
+                    // Use cached collection context for this column
+                    var collectionContext = GetOrCreateCollectionContext(filter.BindingPath);
+                    if (collectionContext != null)
                     {
-                        var sourceItems = originalItemsSource?.Cast<object>() ?? Enumerable.Empty<object>();
-                        collectionContext = new WWSearchDataGrid.Modern.Core.CollectionContext(sourceItems, filter.BindingPath);
-                        collectionContexts[filter.BindingPath] = collectionContext;
+                        return filter.SearchTemplateController.EvaluateWithCollectionContext(propertyValue, collectionContext);
                     }
-
-                    // Use the SearchTemplateController with collection context
-                    return filter.SearchTemplateController.EvaluateWithCollectionContext(propertyValue, collectionContext);
+                    else
+                    {
+                        // Fallback to standard evaluation if context creation failed
+                        return filter.SearchTemplateController.FilterExpression(propertyValue);
+                    }
                 }
                 else
                 {
@@ -668,6 +738,122 @@ namespace WWSearchDataGrid.Modern.WPF
             return filter.SearchTemplateController.SearchGroups
                 .SelectMany(g => g.SearchTemplates)
                 .Any(t => SearchEngine.RequiresCollectionContext(t.SearchType));
+        }
+
+        /// <summary>
+        /// Gets or creates a materialized data source for collection context operations
+        /// </summary>
+        private List<object> GetMaterializedDataSource()
+        {
+            if (_materializedDataSource == null && originalItemsSource != null)
+            {
+                _materializedDataSource = originalItemsSource.Cast<object>().ToList();
+            }
+            return _materializedDataSource;
+        }
+
+        /// <summary>
+        /// Gets or creates a cached collection context for the specified column
+        /// </summary>
+        private WWSearchDataGrid.Modern.Core.Strategies.ICollectionContext GetOrCreateCollectionContext(string bindingPath)
+        {
+            lock (_contextCacheLock)
+            {
+                if (!_collectionContextCache.TryGetValue(bindingPath, out var context))
+                {
+                    var materializedData = GetMaterializedDataSource();
+                    if (materializedData != null && materializedData.Count > 0)
+                    {
+                        context = new WWSearchDataGrid.Modern.Core.CollectionContext(materializedData, bindingPath);
+                        _collectionContextCache[bindingPath] = context;
+                    }
+                }
+                return context;
+            }
+        }
+
+        /// <summary>
+        /// Clears the collection context cache when the data source changes
+        /// </summary>
+        private void InvalidateCollectionContextCache()
+        {
+            lock (_contextCacheLock)
+            {
+                _collectionContextCache.Clear();
+                _materializedDataSource = null;
+            }
+        }
+
+        /// <summary>
+        /// Determines if asynchronous filtering should be used based on dataset size and filter complexity
+        /// </summary>
+        private bool ShouldUseAsyncFiltering(List<ColumnSearchBox> activeFilters)
+        {
+            try
+            {
+                var itemCount = OriginalItemsCount;
+                
+                // Use async for large datasets (>10k items)
+                if (itemCount > 10000)
+                    return true;
+                
+                // Use async for medium datasets with collection context filters
+                if (itemCount > 5000 && activeFilters.Any(f => DoesFilterRequireCollectionContext(f)))
+                    return true;
+                    
+                return false;
+            }
+            catch
+            {
+                // Default to synchronous filtering if we can't determine
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Applies filters asynchronously with progress reporting and cancellation support
+        /// </summary>
+        private async System.Threading.Tasks.Task ApplyFiltersAsync(
+            List<ColumnSearchBox> activeFilters, 
+            System.Threading.CancellationToken cancellationToken)
+        {
+            IsFiltering = true;
+            FilterProgress = 0;
+
+            try
+            {
+                // Pre-build collection contexts on background thread if needed
+                await System.Threading.Tasks.Task.Run(() =>
+                {
+                    // Update progress on UI thread
+                    Dispatcher.BeginInvoke(new Action(() => FilterProgress = 10));
+                    
+                    // Pre-create collection contexts for filters that need them
+                    foreach (var filter in activeFilters.Where(f => DoesFilterRequireCollectionContext(f)))
+                    {
+                        cancellationToken.ThrowIfCancellationRequested();
+                        GetOrCreateCollectionContext(filter.BindingPath);
+                    }
+                    
+                    // Update progress on UI thread
+                    Dispatcher.BeginInvoke(new Action(() => FilterProgress = 50));
+                }, cancellationToken);
+
+                // Apply the filter on UI thread (required for WPF data binding)
+                FilterProgress = 75;
+                Items.Filter = item => EvaluateUnifiedFilter(item, activeFilters);
+                SearchFilter = Items.Filter;
+                FilterProgress = 100;
+            }
+            catch (OperationCanceledException)
+            {
+                throw; // Re-throw cancellation
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error in ApplyFiltersAsync: {ex.Message}");
+                throw;
+            }
         }
 
         /// <summary>
