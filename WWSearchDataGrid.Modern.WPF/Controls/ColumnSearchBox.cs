@@ -533,27 +533,54 @@ namespace WWSearchDataGrid.Modern.WPF
         
         private void OnSourceDataGridItemsSourceChanged(object sender, EventArgs e)
         {
-            // When the ItemsSource changes completely, we just need to reset the lazy loading
-            // Values will be loaded only when actually needed (e.g., opening filter dialogs)
+            // When the ItemsSource changes completely, we need to re-setup the column data provider
+            // This ensures column values are available after data source changes or cleanup
             try
             {
-                if (SourceDataGrid != null && !string.IsNullOrEmpty(BindingPath) && SearchTemplateController != null)
+                if (SearchTemplateController == null)
                 {
-                    // Refresh the lazy loading provider - no eager loading
-                    SearchTemplateController.RefreshColumnValues();
-                    
-                    if(SearchTemplateController.ColumnValues.Count > 0)
+                    InitializeSearchTemplateController();
+                }
+                else if (SourceDataGrid != null && !string.IsNullOrEmpty(BindingPath))
+                {
+                    // Re-initialize the column data provider in case it was cleared during cleanup
+                    // This ensures column values are available after data source changes
+                    if (SourceDataGrid.Items != null && SourceDataGrid.Items.Count > 0)
                     {
-                        //var dt = ReflectionHelper.DetermineColumnDataType(SearchTemplateController.ColumnValues);
-                        //SearchTemplateController.ColumnDataType = dt;
+                        // Re-setup the lazy loading provider
+                        SearchTemplateController.SetupColumnDataLazy(CurrentColumn.Header, GetColumnValuesFromDataGrid, BindingPath);
+                        
+                        // Determine column data type from a small sample for immediate UI setup
+                        var sampleSize = Math.Min(10, SourceDataGrid.Items.Count);
+                        if (sampleSize > 0)
+                        {
+                            var sampleValues = new HashSet<object>();
+                            var itemsArray = SourceDataGrid.Items.Cast<object>().Take(sampleSize);
+                            
+                            foreach (var item in itemsArray)
+                            {
+                                var value = ReflectionHelper.GetPropValue(item, BindingPath);
+                                sampleValues.Add(value);
+                            }
+                            
+                            if (sampleValues.Count > 0)
+                            {
+                                var detectedType = ReflectionHelper.DetermineColumnDataType(sampleValues);
+                                SearchTemplateController.ColumnDataType = detectedType;
+                            }
+                        }
+                        
+                        // Re-determine checkbox column settings
+                        DetermineCheckboxColumnSettings();
+                    }
+                    else
+                    {
+                        // No items yet - just set up basic structure
+                        SearchTemplateController.SetupColumnDataLazy(CurrentColumn.Header, GetColumnValuesFromDataGrid, BindingPath);
                     }
 
                     // Only re-determine column type based on definition, not data
                     DetermineCheckboxColumnTypeFromColumnDefinition();
-                }
-                else if (SearchTemplateController == null)
-                {
-                    InitializeSearchTemplateController();
                 }
             }
             catch (Exception ex)

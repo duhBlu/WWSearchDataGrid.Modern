@@ -203,10 +203,47 @@ namespace WWSearchDataGrid.Modern.Core
         {
             // Unsubscribe from all existing templates before clearing
             UnsubscribeFromAllTemplates();
-            
+
             SearchGroups.Clear();
             AddSearchGroup(true, false); // Add default group without marking as changed
             HasCustomExpression = false;
+        }
+           
+        
+        /// <summary>
+        /// Clears all data references that could prevent garbage collection
+        /// This method should be called when data is cleared to prevent memory leaks
+        /// </summary>
+        public void ClearDataReferences()
+        {
+            // Clear PropertyValues dictionary while preserving the dictionary structure
+            if (PropertyValues != null)
+            {
+                foreach (var key in PropertyValues.Keys.ToList())
+                {
+                    PropertyValues[key]?.Clear();
+                }
+                PropertyValues.Clear();
+            }
+            
+            // Clear ColumnValuesByPath dictionary while preserving the dictionary structure
+            if (ColumnValuesByPath != null)
+            {
+                foreach (var key in ColumnValuesByPath.Keys.ToList())
+                {
+                    ColumnValuesByPath[key]?.Clear();
+                }
+                ColumnValuesByPath.Clear();
+            }
+            
+            // Clear cached column values but preserve the provider so values can be reloaded
+            _columnValues.Clear();
+            _columnValuesLoaded = false;
+            _containsNullValues = false;
+            
+            // Only clear the provider if we're explicitly clearing data references
+            // The provider will be restored when new data is loaded
+            _columnValuesProvider = null;
         }
 
         /// <summary>

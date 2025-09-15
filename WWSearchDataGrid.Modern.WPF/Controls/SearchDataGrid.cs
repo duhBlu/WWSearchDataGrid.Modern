@@ -373,6 +373,12 @@ namespace WWSearchDataGrid.Modern.WPF
             {
                 base.OnItemsSourceChanged(oldValue, newValue);
 
+                // Clear cached data from the old data source to prevent memory leaks
+                if (oldValue != null && newValue != oldValue)
+                {
+                    ClearAllCachedData();
+                }
+
                 originalItemsSource = newValue;
                 
                 // Invalidate collection context cache when data source changes
@@ -399,8 +405,9 @@ namespace WWSearchDataGrid.Modern.WPF
                 }
                 else
                 {
-                    // If items source is null, set ActualHasItems to false
+                    // If items source is null, set ActualHasItems to false and clear cached data
                     ActualHasItems = false;
+                    ClearAllCachedData();
                 }
             }
             catch (Exception ex)
@@ -434,12 +441,15 @@ namespace WWSearchDataGrid.Modern.WPF
             // This ensures statistical calculations reflect the current data
             if (e.Action == NotifyCollectionChangedAction.Add ||
                 e.Action == NotifyCollectionChangedAction.Remove ||
-                e.Action == NotifyCollectionChangedAction.Replace ||
-                e.Action == NotifyCollectionChangedAction.Reset)
+                e.Action == NotifyCollectionChangedAction.Replace)
             {
                 InvalidateCollectionContextCache();
             }
-            
+            if (e.Action == NotifyCollectionChangedAction.Reset)
+            {
+                ClearAllCachedData();
+            }
+
             CollectionChanged?.Invoke(this, e);
         }
 
@@ -713,6 +723,22 @@ namespace WWSearchDataGrid.Modern.WPF
         {
             lock (_contextCacheLock)
             {
+                // Dispose of existing collection contexts to release their cached references
+                foreach (var context in _collectionContextCache.Values)
+                {
+                    if (context is IDisposable disposableContext)
+                    {
+                        try
+                        {
+                            disposableContext.Dispose();
+                        }
+                        catch (Exception ex)
+                        {
+                            Debug.WriteLine($"Error disposing collection context: {ex.Message}");
+                        }
+                    }
+                }
+                
                 _collectionContextCache.Clear();
                 _materializedDataSource = null;
             }
@@ -886,6 +912,31 @@ namespace WWSearchDataGrid.Modern.WPF
 
             // Notify that items have been filtered
             ItemsSourceFiltered?.Invoke(this, EventArgs.Empty);
+        }
+        
+        /// <summary>
+        /// Clears all cached data references to prevent memory leaks when data is cleared
+        /// This method should be called when the data source is cleared or replaced
+        /// </summary>
+        public void ClearAllCachedData()
+        {
+            // Clear collection context cache and materialized data
+            InvalidateCollectionContextCache();
+            
+            // Clear data references in all column controllers
+            foreach (var control in DataColumns)
+            {
+                control.SearchTemplateController?.ClearDataReferences();
+            }
+            
+            // Clear global filter controller data references
+            globalFilterController?.ClearDataReferences();
+            
+            // Clear filters to release any remaining references
+            Items.Filter = null;
+            SearchFilter = null;
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
         }
 
         /// <summary>

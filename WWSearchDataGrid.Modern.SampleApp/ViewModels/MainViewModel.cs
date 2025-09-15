@@ -36,6 +36,9 @@ namespace WWSearchDataGrid.Modern.SampleApp
         [ObservableProperty]
         private int _itemsToGenerate = 5000;
 
+        // Reference to the SearchDataGrid for memory cleanup operations
+        private SearchDataGrid _searchDataGrid;
+
         #endregion
 
         #region Static Data (Preallocated)
@@ -107,8 +110,25 @@ namespace WWSearchDataGrid.Modern.SampleApp
         {
             Items.Clear();
             ItemCount = 0;
+            
+            // Clear cached data in the SearchDataGrid to prevent memory leaks
+            _searchDataGrid?.ClearAllCachedData();
         }
 
+        #endregion
+        
+        #region Public Methods
+        
+        /// <summary>
+        /// Sets the SearchDataGrid reference for memory cleanup operations
+        /// This should be called from the code-behind after the grid is initialized
+        /// </summary>
+        /// <param name="searchDataGrid">The SearchDataGrid instance</param>
+        public void SetSearchDataGrid(SearchDataGrid searchDataGrid)
+        {
+            _searchDataGrid = searchDataGrid;
+        }
+        
         #endregion
 
         #region Private Methods
@@ -121,11 +141,11 @@ namespace WWSearchDataGrid.Modern.SampleApp
             var baseDate = DateTime.Today.AddYears(-2);
             var buffer = new DataItem[count];
 
-            Parallel.For(0, count, i =>
-            {
-                var rnd = new Random(Guid.NewGuid().GetHashCode());
-                buffer[i] = CreateComprehensiveDataItem(rnd, baseDate);
-            });
+                Parallel.For(0, count, i =>
+                {
+                    var rnd = new Random(Guid.NewGuid().GetHashCode());
+                    buffer[i] = CreateComprehensiveDataItem(rnd, baseDate);
+                });
 
             var merged = new ObservableCollection<DataItem>(Items.Concat(buffer));
             Items = null;
