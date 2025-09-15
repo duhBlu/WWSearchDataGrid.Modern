@@ -52,13 +52,10 @@ namespace WWSearchDataGrid.Modern.Core.Services
 
                         try
                         {
-                            // All templates now implement BuildExpression
                             currentExpression = template.BuildExpression(targetColumnType);
                         }
                         catch (Exception ex)
                         {
-                            System.Diagnostics.Debug.WriteLine($"Error building expression for template: {ex.Message}");
-
                             // Fallback to basic expression
                             var searchCondition = new SearchCondition(
                                 targetColumnType,

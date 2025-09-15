@@ -544,8 +544,8 @@ namespace WWSearchDataGrid.Modern.WPF
                     
                     if(SearchTemplateController.ColumnValues.Count > 0)
                     {
-                        var dt = ReflectionHelper.DetermineColumnDataType(SearchTemplateController.ColumnValues);
-                        SearchTemplateController.ColumnDataType = dt;
+                        //var dt = ReflectionHelper.DetermineColumnDataType(SearchTemplateController.ColumnValues);
+                        //SearchTemplateController.ColumnDataType = dt;
                     }
 
                     // Only re-determine column type based on definition, not data

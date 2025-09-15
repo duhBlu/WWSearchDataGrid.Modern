@@ -77,5 +77,4 @@ namespace WWSearchDataGrid.Modern.Core
             CommandManager.InvalidateRequerySuggested();
         }
     }
-
 }

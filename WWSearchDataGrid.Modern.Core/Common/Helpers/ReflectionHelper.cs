@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 
 namespace WWSearchDataGrid.Modern.Core
@@ -63,7 +65,7 @@ namespace WWSearchDataGrid.Modern.Core
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error getting property type: {ex.Message}");
+                Debug.WriteLine($"Error getting property type: {ex.Message}");
                 return null;
             }
         }
@@ -71,7 +73,7 @@ namespace WWSearchDataGrid.Modern.Core
         /// <summary>
         /// Gets property info from a type using a property path (for type inspection without instances)
         /// </summary>
-        public static System.Reflection.PropertyInfo GetPropertyInfoFromType(Type type, string propertyPath)
+        public static PropertyInfo GetPropertyInfoFromType(Type type, string propertyPath)
         {
             try
             {
@@ -97,7 +99,7 @@ namespace WWSearchDataGrid.Modern.Core
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error getting property info from type: {ex.Message}");
+                Debug.WriteLine($"Error getting property info from type: {ex.Message}");
                 return null;
             }
         }
@@ -125,7 +127,7 @@ namespace WWSearchDataGrid.Modern.Core
         /// </summary>
         public static ColumnDataType DetermineColumnDataType(IEnumerable<object> values)
         {
-            var nonNullValues = values.Where(v => v != null).Skip(1).Take(100).ToList();
+            var nonNullValues = values.Where(v => v != null).Skip(1).Take(100).ToList(); // skip 1 incase of the null value display string at the front
 
             if (!nonNullValues.Any())
                 return ColumnDataType.String;

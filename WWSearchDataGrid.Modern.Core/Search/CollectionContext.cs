@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using WWSearchDataGrid.Modern.Core.Strategies;
 
@@ -95,7 +96,9 @@ namespace WWSearchDataGrid.Modern.Core
                 var extractedValues = _extractedValues.Value;
                 var numericValues = extractedValues
                     .Where(x => x.value != null && ReflectionHelper.IsNumericValue(x.value))
-                    .Select(x => TypeTranslatorHelper.ConvertToDouble(x.value))
+                    .Select(x => ((object)x is null) 
+                                    ? double.NaN
+                                    : Convert.ToDouble(x, CultureInfo.InvariantCulture))
                     .Where(value => !double.IsNaN(value))
                     .ToList();
 

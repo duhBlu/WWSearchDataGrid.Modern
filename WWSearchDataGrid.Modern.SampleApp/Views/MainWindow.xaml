@@ -178,6 +178,117 @@
             <Grid.RowDefinitions>
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
+            <!--<DataGrid x:Name="DataGrid"
+          Grid.Row="0"
+          IsReadOnly="False"
+          Margin="10"
+          ItemsSource="{Binding Items}"
+          CanUserAddRows="False"
+          AutoGenerateColumns="False">
+
+                <DataGrid.Columns>
+                    <DataGridTextColumn Width="120"
+                            Header="Customer Name"
+                            Binding="{Binding CustomerName}" />
+
+                    --><!--  Boolean Types  --><!--
+                    <DataGridCheckBoxColumn Width="80"
+                                Header="Bool Value"
+                                Binding="{Binding BoolValue}" />
+                    <DataGridCheckBoxColumn Width="100"
+                                Header="Nullable Bool"
+                                Binding="{Binding NullableBoolValue}" />
+
+                    --><!--  Integer Types  --><!--
+                    <DataGridTextColumn Width="80"
+                            Header="Int"
+                            Binding="{Binding IntValue}" />
+                    <DataGridTextColumn Width="90"
+                            Header="Nullable Int"
+                            Binding="{Binding NullableIntValue}" />
+                    <DataGridTextColumn Width="90"
+                            Header="Long"
+                            Binding="{Binding LongValue}" />
+                    <DataGridTextColumn Width="100"
+                            Header="Nullable Long"
+                            Binding="{Binding NullableLongValue}" />
+                    <DataGridTextColumn Width="70"
+                            Header="Short"
+                            Binding="{Binding ShortValue}" />
+                    <DataGridTextColumn Width="90"
+                            Header="Nullable Short"
+                            Binding="{Binding NullableShortValue}" />
+                    <DataGridTextColumn Width="60"
+                            Header="Byte"
+                            Binding="{Binding ByteValue}" />
+                    <DataGridTextColumn Width="80"
+                            Header="Nullable Byte"
+                            Binding="{Binding NullableByteValue}" />
+
+                    --><!--  Floating-point and Decimal Types  --><!--
+                    <DataGridTextColumn Width="80"
+                            Header="Float"
+                            Binding="{Binding FloatValue, StringFormat=N2}" />
+                    <DataGridTextColumn Width="100"
+                            Header="Nullable Float"
+                            Binding="{Binding NullableFloatValue, StringFormat=N2}" />
+                    <DataGridTextColumn Width="90"
+                            Header="Double"
+                            Binding="{Binding DoubleValue, StringFormat=N2}" />
+                    <DataGridTextColumn Width="110"
+                            Header="Nullable Double"
+                            Binding="{Binding NullableDoubleValue, StringFormat=N2}" />
+                    <DataGridTextColumn Width="90"
+                            Header="Decimal"
+                            Binding="{Binding DecimalValue, StringFormat=N2}" />
+                    <DataGridTextColumn Width="110"
+                            Header="Nullable Decimal"
+                            Binding="{Binding NullableDecimalValue, StringFormat=N2}" />
+
+                    --><!--  Text Types  --><!--
+                    <DataGridTextColumn Width="100"
+                            Header="String Value"
+                            Binding="{Binding StringValue}" />
+                    <DataGridTextColumn Width="60"
+                            Header="Char"
+                            Binding="{Binding CharValue}" />
+                    <DataGridTextColumn Width="80"
+                            Header="Nullable Char"
+                            Binding="{Binding NullableCharValue}" />
+
+                    --><!--  Date and Time Types with Precision  --><!--
+                    <DataGridTextColumn Width="140"
+                            Header="DateTime"
+                            Binding="{Binding DateTimeValue, StringFormat=g}" />
+                    <DataGridTextColumn Width="150"
+                            Header="Nullable DateTime"
+                            Binding="{Binding NullableDateTimeValue, StringFormat=g}" />
+                    <DataGridTextColumn Width="100"
+                            Header="TimeSpan"
+                            Binding="{Binding TimeSpanValue}" />
+                    <DataGridTextColumn Width="120"
+                            Header="Nullable TimeSpan"
+                            Binding="{Binding NullableTimeSpanValue}" />
+
+                    --><!--  GUID Types  --><!--
+                    <DataGridTextColumn Width="120"
+                            Header="GUID"
+                            Binding="{Binding GuidValue}" />
+                    <DataGridTextColumn Width="130"
+                            Header="Nullable GUID"
+                            Binding="{Binding NullableGuidValue}" />
+
+                    --><!--  Enum Types  --><!--
+                    <DataGridTextColumn Width="80"
+                            Header="Priority Enum"
+                            Binding="{Binding PriorityValue}" />
+                    <DataGridTextColumn Width="100"
+                            Header="Nullable Priority Enum"
+                            Binding="{Binding NullablePriorityValue}" />
+                </DataGrid.Columns>
+            </DataGrid>-->
+
+
             <sdg:SearchDataGrid x:Name="DataGrid"
                                 Grid.Row="0"
                                 IsReadOnly="False"
@@ -190,7 +301,7 @@
                                         Header="Customer Name"
                                         Binding="{Binding CustomerName}" />
 
-                    <!--  Boolean Types  -->
+                      <!--Boolean Types-->  
                     <DataGridCheckBoxColumn Width="80"
                                             Header="Bool Value"
                                             Binding="{Binding BoolValue}" />
@@ -198,7 +309,7 @@
                                             Header="Nullable Bool"
                                             Binding="{Binding NullableBoolValue}" />
 
-                    <!--  Integer Types  -->
+                      <!--Integer Types-->  
                     <DataGridTextColumn Width="80"
                                         Header="Int"
                                         sdg:ColumnFilterEditor.DefaultSearchType="EndsWith"
@@ -228,7 +339,7 @@
                                         Header="Nullable Byte"
                                         Binding="{Binding NullableByteValue}" />
 
-                    <!--  Floating-point and Decimal Types  -->
+                      <!--Floating-point and Decimal Types-->  
                     <DataGridTextColumn Width="80"
                                         Header="Float"
                                         Binding="{Binding FloatValue, StringFormat=N2}" />
@@ -248,7 +359,7 @@
                                         Header="Nullable Decimal"
                                         Binding="{Binding NullableDecimalValue, StringFormat=N2}" />
 
-                    <!--  Text Types  -->
+                      <!--Text Types-->  
                     <DataGridTextColumn Width="100"
                                         Header="String Value"
                                         sdg:ColumnFilterEditor.DefaultSearchType="EndsWith"
@@ -260,7 +371,7 @@
                                         Header="Nullable Char"
                                         Binding="{Binding NullableCharValue}" />
 
-                    <!--  Date and Time Types with Precision  -->
+                      <!--Date and Time Types with Precision-->  
                     <DataGridTextColumn Width="140"
                                         Header="DateTime"
                                         sdg:ColumnFilterEditor.DefaultSearchType="Today"
@@ -275,7 +386,7 @@
                                         Header="Nullable TimeSpan"
                                         Binding="{Binding NullableTimeSpanValue}" />
 
-                    <!--  GUID Types  -->
+                      <!--GUID Types-->  
                     <DataGridTextColumn Width="120"
                                         Header="GUID"
                                         Binding="{Binding GuidValue}" />
@@ -283,7 +394,7 @@
                                         Header="Nullable GUID"
                                         Binding="{Binding NullableGuidValue}" />
 
-                    <!--  Enum Types  -->
+                      <!--Enum Types-->  
                     <DataGridTextColumn Width="80"
                                         Header="Priority Enum"
                                         Binding="{Binding PriorityValue}" />

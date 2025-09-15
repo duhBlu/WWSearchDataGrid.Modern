@@ -1,17 +1,19 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Linq;
 using System.Windows.Controls;
 using System.Windows;
-using System.Windows.Data;
 using System.Windows.Media;
 using System.Windows.Input;
-using System.IO;
 using WWSearchDataGrid.Modern.Core;
-using System.Linq.Expressions;
+using WWSearchDataGrid.Modern.Core.Strategies;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Diagnostics;
+using System.Collections;
+using System.Collections.Specialized;
+using System.Collections.ObjectModel;
+using System.Collections.Generic;
 
 namespace WWSearchDataGrid.Modern.WPF
 {
@@ -23,24 +25,19 @@ namespace WWSearchDataGrid.Modern.WPF
     {
         #region Fields
 
-        private readonly TokenSource tokenSource = new TokenSource();
         private readonly ObservableCollection<ColumnSearchBox> dataColumns = new ObservableCollection<ColumnSearchBox>();
-        private System.Collections.IEnumerable originalItemsSource;
+        private IEnumerable originalItemsSource;
         private bool initialUpdateLayoutCompleted;
         private SearchTemplateController globalFilterController;
-        private bool _isProcessingItemsSourceChange = false; // Prevents recursive ItemsSourceChanged events
-        private int _itemsSourceChangeCount = 0;
-        private DateTime _lastItemsSourceChangeTime = DateTime.MinValue;
-        private const int MAX_ITEMS_SOURCE_CHANGES_PER_SECOND = 10; // Limit rapid changes
         
         // Collection context caching for performance optimization
-        private readonly Dictionary<string, WWSearchDataGrid.Modern.Core.Strategies.ICollectionContext> _collectionContextCache = 
-            new Dictionary<string, WWSearchDataGrid.Modern.Core.Strategies.ICollectionContext>();
+        private readonly Dictionary<string, ICollectionContext> _collectionContextCache = 
+            new Dictionary<string, ICollectionContext>();
         private List<object> _materializedDataSource;
         private readonly object _contextCacheLock = new object();
         
         // Asynchronous filtering support
-        private System.Threading.CancellationTokenSource _filterCancellationTokenSource;
+        private CancellationTokenSource _filterCancellationTokenSource;
 
         #endregion
 
@@ -53,14 +50,6 @@ namespace WWSearchDataGrid.Modern.WPF
         public static readonly DependencyProperty ActualHasItemsProperty =
             DependencyProperty.Register("ActualHasItems", typeof(bool), typeof(SearchDataGrid),
                 new PropertyMetadata(false, OnActualHasItemsChanged));
-
-        public static readonly DependencyProperty IsFilteringProperty =
-            DependencyProperty.Register("IsFiltering", typeof(bool), typeof(SearchDataGrid),
-                new PropertyMetadata(false));
-
-        public static readonly DependencyProperty FilterProgressProperty =
-            DependencyProperty.Register("FilterProgress", typeof(double), typeof(SearchDataGrid),
-                new PropertyMetadata(0.0));
 
         #endregion
 
@@ -93,24 +82,6 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
-        /// Gets whether a filtering operation is currently in progress
-        /// </summary>
-        public bool IsFiltering
-        {
-            get { return (bool)GetValue(IsFilteringProperty); }
-            private set { SetValue(IsFilteringProperty, value); }
-        }
-
-        /// <summary>
-        /// Gets the current filtering progress (0-100)
-        /// </summary>
-        public double FilterProgress
-        {
-            get { return (double)GetValue(FilterProgressProperty); }
-            private set { SetValue(FilterProgressProperty, value); }
-        }
-
-        /// <summary>
         /// Gets the global filter controller
         /// </summary>
         public SearchTemplateController GlobalFilterController
@@ -135,7 +106,7 @@ namespace WWSearchDataGrid.Modern.WPF
         /// <summary>
         /// Gets the original unfiltered items source
         /// </summary>
-        public System.Collections.IEnumerable OriginalItemsSource => originalItemsSource;
+        public IEnumerable OriginalItemsSource => originalItemsSource;
 
 
 
@@ -152,7 +123,7 @@ namespace WWSearchDataGrid.Modern.WPF
             get 
             { 
                 if (originalItemsSource == null) return 0;
-                if (originalItemsSource is System.Collections.ICollection collection) return collection.Count;
+                if (originalItemsSource is ICollection collection) return collection.Count;
                 return originalItemsSource.Cast<object>().Count();
             } 
         }
@@ -252,7 +223,7 @@ namespace WWSearchDataGrid.Modern.WPF
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error in OnBeginningEdit: {ex.Message}");
+                Debug.WriteLine($"Error in OnBeginningEdit: {ex.Message}");
             }
         }
 
@@ -267,7 +238,7 @@ namespace WWSearchDataGrid.Modern.WPF
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error in OnRowEditEnding: {ex.Message}");
+                Debug.WriteLine($"Error in OnRowEditEnding: {ex.Message}");
             }
         }
 
@@ -282,7 +253,7 @@ namespace WWSearchDataGrid.Modern.WPF
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error in OnCellEditEnding: {ex.Message}");
+                Debug.WriteLine($"Error in OnCellEditEnding: {ex.Message}");
             }
         }
 
@@ -396,37 +367,10 @@ namespace WWSearchDataGrid.Modern.WPF
         /// <summary>
         /// When items source changes, notify controls with safeguards against recursive calls
         /// </summary>
-        protected override void OnItemsSourceChanged(System.Collections.IEnumerable oldValue, System.Collections.IEnumerable newValue)
+        protected override void OnItemsSourceChanged(IEnumerable oldValue, IEnumerable newValue)
         {
             try
             {
-                // Prevent recursive ItemsSourceChanged events
-                if (_isProcessingItemsSourceChange)
-                {
-                    System.Diagnostics.Debug.WriteLine($"SearchDataGrid: Preventing recursive OnItemsSourceChanged call");
-                    return;
-                }
-                
-                // Detect rapid successive changes that might indicate a loop
-                var now = DateTime.Now;
-                if (now - _lastItemsSourceChangeTime < TimeSpan.FromSeconds(1))
-                {
-                    _itemsSourceChangeCount++;
-                    if (_itemsSourceChangeCount > MAX_ITEMS_SOURCE_CHANGES_PER_SECOND)
-                    {
-                        System.Diagnostics.Debug.WriteLine($"SearchDataGrid: Too many ItemsSource changes ({_itemsSourceChangeCount}) in one second - possible infinite loop. Skipping.");
-                        return;
-                    }
-                }
-                else
-                {
-                    // Reset counter after one second
-                    _itemsSourceChangeCount = 1;
-                }
-                _lastItemsSourceChangeTime = now;
-                
-                _isProcessingItemsSourceChange = true;
-                
                 base.OnItemsSourceChanged(oldValue, newValue);
 
                 originalItemsSource = newValue;
@@ -461,15 +405,11 @@ namespace WWSearchDataGrid.Modern.WPF
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error in OnItemsSourceChanged: {ex.Message}");
-            }
-            finally
-            {
-                _isProcessingItemsSourceChange = false;
+                Debug.WriteLine($"Error in OnItemsSourceChanged: {ex.Message}");
             }
         }
 
-        private void RegisterCollectionChangedEvent(System.Collections.IEnumerable collection)
+        private void RegisterCollectionChangedEvent(IEnumerable collection)
         {
             if (collection is INotifyCollectionChanged notifyCollection)
             {
@@ -477,7 +417,7 @@ namespace WWSearchDataGrid.Modern.WPF
             }
         }
 
-        private void UnregisterCollectionChangedEvent(System.Collections.IEnumerable collection)
+        private void UnregisterCollectionChangedEvent(IEnumerable collection)
         {
             if (collection is INotifyCollectionChanged notifyCollection)
             {
@@ -514,7 +454,7 @@ namespace WWSearchDataGrid.Modern.WPF
             if (originalItemsSource != null)
             {
                 // Different ways to check if collection has items
-                if (originalItemsSource is System.Collections.ICollection collection)
+                if (originalItemsSource is ICollection collection)
                 {
                     hasAnyItems = collection.Count > 0;
                 }
@@ -549,14 +489,14 @@ namespace WWSearchDataGrid.Modern.WPF
             {
                 // Cancel any existing filtering operation
                 _filterCancellationTokenSource?.Cancel();
-                _filterCancellationTokenSource = new System.Threading.CancellationTokenSource();
+                _filterCancellationTokenSource = new CancellationTokenSource();
                 
                 var cancellationToken = _filterCancellationTokenSource.Token;
 
                 // Wait for delay if requested
                 if (delay > 0)
                 {
-                    await System.Threading.Tasks.Task.Delay(delay, cancellationToken);
+                    await Task.Delay(delay, cancellationToken);
                 }
 
                 // If cancelled, return
@@ -610,17 +550,11 @@ namespace WWSearchDataGrid.Modern.WPF
             }
             catch (OperationCanceledException)
             {
-                // Filter operation was cancelled - this is expected
-                System.Diagnostics.Debug.WriteLine("Filter operation was cancelled");
+                Debug.WriteLine("Filter operation was cancelled");
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Error filtering items: {ex.Message}");
-            }
-            finally
-            {
-                IsFiltering = false;
-                FilterProgress = 0;
             }
         }
 
@@ -681,7 +615,7 @@ namespace WWSearchDataGrid.Modern.WPF
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error in unified filter evaluation: {ex.Message}");
+                Debug.WriteLine($"Error in unified filter evaluation: {ex.Message}");
                 return false;
             }
         }
@@ -721,7 +655,7 @@ namespace WWSearchDataGrid.Modern.WPF
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error evaluating filter for column {filter.BindingPath}: {ex.Message}");
+                Debug.WriteLine($"Error evaluating filter for column {filter.BindingPath}: {ex.Message}");
                 return false;
             }
         }
@@ -755,7 +689,7 @@ namespace WWSearchDataGrid.Modern.WPF
         /// <summary>
         /// Gets or creates a cached collection context for the specified column
         /// </summary>
-        private WWSearchDataGrid.Modern.Core.Strategies.ICollectionContext GetOrCreateCollectionContext(string bindingPath)
+        private ICollectionContext GetOrCreateCollectionContext(string bindingPath)
         {
             lock (_contextCacheLock)
             {
@@ -764,7 +698,7 @@ namespace WWSearchDataGrid.Modern.WPF
                     var materializedData = GetMaterializedDataSource();
                     if (materializedData != null && materializedData.Count > 0)
                     {
-                        context = new WWSearchDataGrid.Modern.Core.CollectionContext(materializedData, bindingPath);
+                        context = new CollectionContext(materializedData, bindingPath);
                         _collectionContextCache[bindingPath] = context;
                     }
                 }
@@ -813,45 +747,33 @@ namespace WWSearchDataGrid.Modern.WPF
         /// <summary>
         /// Applies filters asynchronously with progress reporting and cancellation support
         /// </summary>
-        private async System.Threading.Tasks.Task ApplyFiltersAsync(
+        private async Task ApplyFiltersAsync(
             List<ColumnSearchBox> activeFilters, 
-            System.Threading.CancellationToken cancellationToken)
+            CancellationToken cancellationToken)
         {
-            IsFiltering = true;
-            FilterProgress = 0;
-
             try
             {
                 // Pre-build collection contexts on background thread if needed
-                await System.Threading.Tasks.Task.Run(() =>
+                await Task.Run(() =>
                 {
-                    // Update progress on UI thread
-                    Dispatcher.BeginInvoke(new Action(() => FilterProgress = 10));
-                    
                     // Pre-create collection contexts for filters that need them
                     foreach (var filter in activeFilters.Where(f => DoesFilterRequireCollectionContext(f)))
                     {
                         cancellationToken.ThrowIfCancellationRequested();
                         GetOrCreateCollectionContext(filter.BindingPath);
                     }
-                    
-                    // Update progress on UI thread
-                    Dispatcher.BeginInvoke(new Action(() => FilterProgress = 50));
                 }, cancellationToken);
 
-                // Apply the filter on UI thread (required for WPF data binding)
-                FilterProgress = 75;
                 Items.Filter = item => EvaluateUnifiedFilter(item, activeFilters);
                 SearchFilter = Items.Filter;
-                FilterProgress = 100;
             }
             catch (OperationCanceledException)
             {
-                throw; // Re-throw cancellation
+                throw;
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error in ApplyFiltersAsync: {ex.Message}");
+                Debug.WriteLine($"Error in ApplyFiltersAsync: {ex.Message}");
                 throw;
             }
         }
@@ -909,7 +831,7 @@ namespace WWSearchDataGrid.Modern.WPF
             }
         }
 
-        private static bool EvaluateMultiColumnFilter(object item, System.Collections.Generic.List<ColumnSearchBox> activeFilters)
+        private static bool EvaluateMultiColumnFilter(object item, List<ColumnSearchBox> activeFilters)
         {
             if (!(activeFilters.Count > 0))
                 return true;
@@ -946,35 +868,20 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
-        /// Resets loop protection counters (useful for debugging or after major data changes)
-        /// </summary>
-        public void ResetLoopProtection()
-        {
-            _isProcessingItemsSourceChange = false;
-            _itemsSourceChangeCount = 0;
-            _lastItemsSourceChangeTime = DateTime.MinValue;
-            System.Diagnostics.Debug.WriteLine($"SearchDataGrid: Loop protection counters reset");
-        }
-        
-        /// <summary>
         /// Clear all filters
         /// </summary>
         public void ClearAllFilters()
         {
-            // Clear per-column filters
             foreach (var control in DataColumns)
             {
                 control.ClearFilter();
             }
 
-            // Clear global filter if applicable
             globalFilterController?.ClearAndReset();
 
-            // Clear the filter
             Items.Filter = null;
             SearchFilter = null;
 
-            // Force restoration of original data
             ForceRestoreOriginalData();
 
             // Notify that items have been filtered
@@ -993,7 +900,7 @@ namespace WWSearchDataGrid.Modern.WPF
                 // Clear the filter to show all items from original source
                 Items.Filter = null;
                 
-                System.Diagnostics.Debug.WriteLine($"ForceRestoreOriginalData: ItemsSource count = {Items.Count} (event connectivity preserved)");
+                Debug.WriteLine($"ForceRestoreOriginalData: ItemsSource count = {Items.Count} (event connectivity preserved)");
             }
         }
 
@@ -1222,7 +1129,7 @@ namespace WWSearchDataGrid.Modern.WPF
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error in OnFiltersEnabledChanged: {ex.Message}");
+                Debug.WriteLine($"Error in OnFiltersEnabledChanged: {ex.Message}");
             }
         }
 
@@ -1242,7 +1149,7 @@ namespace WWSearchDataGrid.Modern.WPF
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error in OnFilterRemoved: {ex.Message}");
+                Debug.WriteLine($"Error in OnFilterRemoved: {ex.Message}");
             }
         }
 
@@ -1290,8 +1197,7 @@ namespace WWSearchDataGrid.Modern.WPF
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error in OnEditFiltersRequested: {ex.Message}");
-                MessageBox.Show("Error opening filter editor.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                Debug.WriteLine($"Error in OnEditFiltersRequested: {ex.Message}");
             }
         }
 
@@ -1307,7 +1213,7 @@ namespace WWSearchDataGrid.Modern.WPF
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error in OnClearAllFiltersRequested: {ex.Message}");
+                Debug.WriteLine($"Error in OnClearAllFiltersRequested: {ex.Message}");
             }
         }
 

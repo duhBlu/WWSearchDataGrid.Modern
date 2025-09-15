@@ -18,7 +18,6 @@ namespace WWSearchDataGrid.Modern.Core
         /// <param name="searchCondition">The search condition being evaluated</param>
         /// <param name="comparisonValue">The value to compare against</param>
         /// <returns>Comparison result (-1, 0, or 1)</returns>
-        /// <exception cref="InvalidSearchException">Thrown when comparison fails due to type mismatch</exception>
         public static int CompareValues(object columnValue, SearchCondition searchCondition, object comparisonValue)
         {
             try
@@ -61,7 +60,7 @@ namespace WWSearchDataGrid.Modern.Core
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Error in CompareValues: {ex.Message}");
-                throw new InvalidSearchException($"Unable to compare values: {ex.Message}", ex);
+                throw;
             }
         }
 

@@ -207,8 +207,6 @@ namespace WWSearchDataGrid.Modern.Core
             SearchGroups.Clear();
             AddSearchGroup(true, false); // Add default group without marking as changed
             HasCustomExpression = false;
-            
-            // No need to trigger filter apply for clear - the clear operation handles it
         }
 
         /// <summary>

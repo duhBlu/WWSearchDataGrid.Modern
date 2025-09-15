@@ -29,23 +29,5 @@ namespace WWSearchDataGrid.Modern.Core
                 return parsed;
             return null;
         }
-
-        /// <summary>
-        /// Converts a value to double for averaging calculations
-        /// </summary>
-        public static double ConvertToDouble(object value)
-        {
-            if (value == null)
-                return double.NaN;
-
-            try
-            {
-                return Convert.ToDouble(value);
-            }
-            catch
-            {
-                return double.NaN;
-            }
-        }
     }
 }
