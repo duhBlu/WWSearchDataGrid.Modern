@@ -5,7 +5,7 @@ namespace WWSearchDataGrid.Modern.Core.Strategies
     /// <summary>
     /// Evaluator for Contains search type
     /// </summary>
-    public class ContainsEvaluator : SearchEvaluatorBase
+    internal class ContainsEvaluator : SearchEvaluatorBase
     {
         public override SearchType SearchType => SearchType.Contains;
 
@@ -19,7 +19,7 @@ namespace WWSearchDataGrid.Modern.Core.Strategies
     /// <summary>
     /// Evaluator for DoesNotContain search type
     /// </summary>
-    public class DoesNotContainEvaluator : SearchEvaluatorBase
+    internal class DoesNotContainEvaluator : SearchEvaluatorBase
     {
         public override SearchType SearchType => SearchType.DoesNotContain;
 
@@ -33,7 +33,7 @@ namespace WWSearchDataGrid.Modern.Core.Strategies
     /// <summary>
     /// Evaluator for StartsWith search type
     /// </summary>
-    public class StartsWithEvaluator : SearchEvaluatorBase
+    internal class StartsWithEvaluator : SearchEvaluatorBase
     {
         public override SearchType SearchType => SearchType.StartsWith;
 
@@ -48,7 +48,7 @@ namespace WWSearchDataGrid.Modern.Core.Strategies
     /// <summary>
     /// Evaluator for EndsWith search type
     /// </summary>
-    public class EndsWithEvaluator : SearchEvaluatorBase
+    internal class EndsWithEvaluator : SearchEvaluatorBase
     {
         public override SearchType SearchType => SearchType.EndsWith;
 
@@ -63,7 +63,7 @@ namespace WWSearchDataGrid.Modern.Core.Strategies
     /// <summary>
     /// Evaluator for Equals search type
     /// </summary>
-    public class EqualsEvaluator : SearchEvaluatorBase
+    internal class EqualsEvaluator : SearchEvaluatorBase
     {
         public override SearchType SearchType => SearchType.Equals;
 
@@ -76,7 +76,7 @@ namespace WWSearchDataGrid.Modern.Core.Strategies
     /// <summary>
     /// Evaluator for NotEquals search type
     /// </summary>
-    public class NotEqualsEvaluator : SearchEvaluatorBase
+    internal class NotEqualsEvaluator : SearchEvaluatorBase
     {
         public override SearchType SearchType => SearchType.NotEquals;
 

@@ -7,7 +7,7 @@ namespace WWSearchDataGrid.Modern.Core.Strategies
     /// <summary>
     /// Factory for creating and managing search evaluators
     /// </summary>
-    public class SearchEvaluatorFactory
+    internal class SearchEvaluatorFactory
     {
         private static readonly Lazy<SearchEvaluatorFactory> _instance = 
             new Lazy<SearchEvaluatorFactory>(() => new SearchEvaluatorFactory());

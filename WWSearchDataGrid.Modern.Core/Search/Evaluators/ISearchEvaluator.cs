@@ -6,7 +6,7 @@ namespace WWSearchDataGrid.Modern.Core.Strategies
     /// <summary>
     /// Interface providing collection context for statistical and ranking operations
     /// </summary>
-    public interface ICollectionContext
+    internal interface ICollectionContext
     {
         /// <summary>
         /// Gets the full collection being filtered
@@ -41,7 +41,7 @@ namespace WWSearchDataGrid.Modern.Core.Strategies
     /// <summary>
     /// Interface for search condition evaluators
     /// </summary>
-    public interface ISearchEvaluator
+    internal interface ISearchEvaluator
     {
         /// <summary>
         /// The search type this evaluator handles
@@ -86,7 +86,7 @@ namespace WWSearchDataGrid.Modern.Core.Strategies
     /// <summary>
     /// Base class for search evaluators providing common functionality
     /// </summary>
-    public abstract class SearchEvaluatorBase : ISearchEvaluator
+    internal abstract class SearchEvaluatorBase : ISearchEvaluator
     {
         /// <summary>
         /// The search type this evaluator handles

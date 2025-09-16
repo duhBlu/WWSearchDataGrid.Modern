@@ -5,7 +5,7 @@ namespace WWSearchDataGrid.Modern.Core.Strategies
     /// <summary>
     /// Evaluator for LessThan search type
     /// </summary>
-    public class LessThanEvaluator : SearchEvaluatorBase
+    internal class LessThanEvaluator : SearchEvaluatorBase
     {
         public override SearchType SearchType => SearchType.LessThan;
 
@@ -18,7 +18,7 @@ namespace WWSearchDataGrid.Modern.Core.Strategies
     /// <summary>
     /// Evaluator for LessThanOrEqualTo search type
     /// </summary>
-    public class LessThanOrEqualToEvaluator : SearchEvaluatorBase
+    internal class LessThanOrEqualToEvaluator : SearchEvaluatorBase
     {
         public override SearchType SearchType => SearchType.LessThanOrEqualTo;
 
@@ -31,7 +31,7 @@ namespace WWSearchDataGrid.Modern.Core.Strategies
     /// <summary>
     /// Evaluator for GreaterThan search type
     /// </summary>
-    public class GreaterThanEvaluator : SearchEvaluatorBase
+    internal class GreaterThanEvaluator : SearchEvaluatorBase
     {
         public override SearchType SearchType => SearchType.GreaterThan;
 
@@ -44,7 +44,7 @@ namespace WWSearchDataGrid.Modern.Core.Strategies
     /// <summary>
     /// Evaluator for GreaterThanOrEqualTo search type
     /// </summary>
-    public class GreaterThanOrEqualToEvaluator : SearchEvaluatorBase
+    internal class GreaterThanOrEqualToEvaluator : SearchEvaluatorBase
     {
         public override SearchType SearchType => SearchType.GreaterThanOrEqualTo;
 
@@ -57,7 +57,7 @@ namespace WWSearchDataGrid.Modern.Core.Strategies
     /// <summary>
     /// Evaluator for Between search type
     /// </summary>
-    public class BetweenEvaluator : SearchEvaluatorBase
+    internal class BetweenEvaluator : SearchEvaluatorBase
     {
         public override SearchType SearchType => SearchType.Between;
 
@@ -72,7 +72,7 @@ namespace WWSearchDataGrid.Modern.Core.Strategies
     /// <summary>
     /// Evaluator for NotBetween search type
     /// </summary>
-    public class NotBetweenEvaluator : SearchEvaluatorBase
+    internal class NotBetweenEvaluator : SearchEvaluatorBase
     {
         public override SearchType SearchType => SearchType.NotBetween;
 

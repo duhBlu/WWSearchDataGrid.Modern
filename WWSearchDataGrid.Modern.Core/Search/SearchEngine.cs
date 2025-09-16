@@ -82,7 +82,7 @@ namespace WWSearchDataGrid.Modern.Core
         /// <param name="searchCondition">Search condition to evaluate</param>
         /// <param name="collectionContext">Collection context for statistical and ranking operations</param>
         /// <returns>True if the value matches the condition, false otherwise</returns>
-        public static bool EvaluateCondition(object columnValue, SearchCondition searchCondition, Strategies.ICollectionContext collectionContext)
+        internal static bool EvaluateCondition(object columnValue, SearchCondition searchCondition, Strategies.ICollectionContext collectionContext)
         {
             try
             {

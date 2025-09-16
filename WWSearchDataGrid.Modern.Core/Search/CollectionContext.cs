@@ -12,7 +12,7 @@ namespace WWSearchDataGrid.Modern.Core
     /// Provides lazy-loaded cached access to computed collection statistics
     /// Optimized for performance with large datasets
     /// </summary>
-    public class CollectionContext : ICollectionContext, IDisposable
+    internal class CollectionContext : ICollectionContext, IDisposable
     {
         private readonly ClearableLazy<double?> _average;
         private readonly ClearableLazy<IEnumerable<object>> _sortedDescending;

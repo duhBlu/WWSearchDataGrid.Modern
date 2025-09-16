@@ -8,7 +8,7 @@ namespace WWSearchDataGrid.Modern.Core.Strategies
     /// <summary>
     /// Evaluator for TopN search type - returns the top N items by value
     /// </summary>
-    public class TopNEvaluator : SearchEvaluatorBase
+    internal class TopNEvaluator : SearchEvaluatorBase
     {
         public override SearchType SearchType => SearchType.TopN;
         public override bool RequiresCollectionContext => true;
@@ -60,7 +60,7 @@ namespace WWSearchDataGrid.Modern.Core.Strategies
     /// <summary>
     /// Evaluator for BottomN search type - returns the bottom N items by value
     /// </summary>
-    public class BottomNEvaluator : SearchEvaluatorBase
+    internal class BottomNEvaluator : SearchEvaluatorBase
     {
         public override SearchType SearchType => SearchType.BottomN;
         public override bool RequiresCollectionContext => true;
@@ -112,7 +112,7 @@ namespace WWSearchDataGrid.Modern.Core.Strategies
     /// <summary>
     /// Evaluator for AboveAverage search type - returns items with values above the column average
     /// </summary>
-    public class AboveAverageEvaluator : SearchEvaluatorBase
+    internal class AboveAverageEvaluator : SearchEvaluatorBase
     {
         public override SearchType SearchType => SearchType.AboveAverage;
         public override bool RequiresCollectionContext => true;
@@ -162,7 +162,7 @@ namespace WWSearchDataGrid.Modern.Core.Strategies
     /// <summary>
     /// Evaluator for BelowAverage search type - returns items with values below the column average
     /// </summary>
-    public class BelowAverageEvaluator : SearchEvaluatorBase
+    internal class BelowAverageEvaluator : SearchEvaluatorBase
     {
         public override SearchType SearchType => SearchType.BelowAverage;
         public override bool RequiresCollectionContext => true;
@@ -212,7 +212,7 @@ namespace WWSearchDataGrid.Modern.Core.Strategies
     /// <summary>
     /// Evaluator for Unique search type - returns items where the column value appears only once
     /// </summary>
-    public class UniqueEvaluator : SearchEvaluatorBase
+    internal class UniqueEvaluator : SearchEvaluatorBase
     {
         public override SearchType SearchType => SearchType.Unique;
         public override bool RequiresCollectionContext => true;
@@ -245,7 +245,7 @@ namespace WWSearchDataGrid.Modern.Core.Strategies
     /// <summary>
     /// Evaluator for Duplicate search type - returns items where the column value appears multiple times
     /// </summary>
-    public class DuplicateEvaluator : SearchEvaluatorBase
+    internal class DuplicateEvaluator : SearchEvaluatorBase
     {
         public override SearchType SearchType => SearchType.Duplicate;
         public override bool RequiresCollectionContext => true;

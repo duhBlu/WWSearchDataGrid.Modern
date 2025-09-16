@@ -37,7 +37,7 @@ namespace WWSearchDataGrid.Modern.Core
         /// <summary>
         /// Helper class for rebinding parameters in expressions
         /// </summary>
-        public class ParameterRebinder : ExpressionVisitor
+        internal class ParameterRebinder : ExpressionVisitor
         {
             private readonly Dictionary<ParameterExpression, ParameterExpression> map;
 

@@ -10,7 +10,7 @@ namespace WWSearchDataGrid.Modern.Core.Caching
     /// Centralized cache manager for column values using WeakReference-based storage
     /// Eliminates data duplication and enables proper memory cleanup for large datasets
     /// </summary>
-    public class ColumnValueCacheManager
+    internal class ColumnValueCacheManager
     {
         private static readonly Lazy<ColumnValueCacheManager> _instance = 
             new Lazy<ColumnValueCacheManager>(() => new ColumnValueCacheManager());
@@ -189,7 +189,7 @@ namespace WWSearchDataGrid.Modern.Core.Caching
     /// Read-only wrapper for cached column values
     /// Prevents modification of cached data while providing necessary interfaces
     /// </summary>
-    public class ReadOnlyColumnValues : IReadOnlyList<object>
+    internal class ReadOnlyColumnValues : IReadOnlyList<object>
     {
         private readonly ColumnValueCache _cache;
         
@@ -223,7 +223,7 @@ namespace WWSearchDataGrid.Modern.Core.Caching
     /// <summary>
     /// Special class to represent null values with proper display text
     /// </summary>
-    public class NullDisplayValue
+    internal class NullDisplayValue
     {
         public static readonly NullDisplayValue Instance = new NullDisplayValue();
         
@@ -239,7 +239,7 @@ namespace WWSearchDataGrid.Modern.Core.Caching
     /// <summary>
     /// Cache statistics for monitoring
     /// </summary>
-    public class CacheStatistics
+    internal class CacheStatistics
     {
         public int TotalEntries { get; set; }
         public int AliveEntries { get; set; }

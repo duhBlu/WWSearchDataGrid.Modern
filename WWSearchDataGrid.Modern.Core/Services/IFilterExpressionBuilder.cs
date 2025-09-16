@@ -7,7 +7,7 @@ namespace WWSearchDataGrid.Modern.Core.Services
     /// <summary>
     /// Service interface for building filter expressions from search templates
     /// </summary>
-    public interface IFilterExpressionBuilder
+    internal interface IFilterExpressionBuilder
     {
         /// <summary>
         /// Builds a compiled filter expression from search groups
@@ -33,7 +33,7 @@ namespace WWSearchDataGrid.Modern.Core.Services
     /// <summary>
     /// Result of filter expression building operation
     /// </summary>
-    public class FilterExpressionResult
+    internal class FilterExpressionResult
     {
         /// <summary>
         /// The compiled filter expression function

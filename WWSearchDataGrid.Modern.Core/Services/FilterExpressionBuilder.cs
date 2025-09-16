@@ -9,7 +9,7 @@ namespace WWSearchDataGrid.Modern.Core.Services
     /// <summary>
     /// Service for building filter expressions from search templates
     /// </summary>
-    public class FilterExpressionBuilder : IFilterExpressionBuilder
+    internal class FilterExpressionBuilder : IFilterExpressionBuilder
     {
         /// <summary>
         /// Builds a compiled filter expression from search groups

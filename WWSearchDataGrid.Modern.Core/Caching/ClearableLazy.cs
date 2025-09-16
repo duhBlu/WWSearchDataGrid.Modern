@@ -8,7 +8,7 @@ namespace WWSearchDataGrid.Modern.Core.Caching
     /// Solves memory leak issues with standard Lazy&lt;T&gt; where cached values cannot be released
     /// </summary>
     /// <typeparam name="T">The type of value to lazily initialize</typeparam>
-    public class ClearableLazy<T>
+    internal class ClearableLazy<T>
     {
         private readonly Func<T> _valueFactory;
         private readonly object _lock = new object();
@@ -118,7 +118,7 @@ namespace WWSearchDataGrid.Modern.Core.Caching
     /// <summary>
     /// Static factory methods for creating ClearableLazy instances
     /// </summary>
-    public static class ClearableLazy
+    internal static class ClearableLazy
     {
         /// <summary>
         /// Creates a new ClearableLazy&lt;T&gt; instance with the specified value factory

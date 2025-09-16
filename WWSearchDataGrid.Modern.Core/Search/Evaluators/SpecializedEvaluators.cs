@@ -8,7 +8,7 @@ namespace WWSearchDataGrid.Modern.Core.Strategies
     /// <summary>
     /// Evaluator for IsNull search type
     /// </summary>
-    public class IsNullEvaluator : SearchEvaluatorBase
+    internal class IsNullEvaluator : SearchEvaluatorBase
     {
         public override SearchType SearchType => SearchType.IsNull;
 
@@ -22,7 +22,7 @@ namespace WWSearchDataGrid.Modern.Core.Strategies
     /// <summary>
     /// Evaluator for IsNotNull search type
     /// </summary>
-    public class IsNotNullEvaluator : SearchEvaluatorBase
+    internal class IsNotNullEvaluator : SearchEvaluatorBase
     {
         public override SearchType SearchType => SearchType.IsNotNull;
 
@@ -37,7 +37,7 @@ namespace WWSearchDataGrid.Modern.Core.Strategies
     /// <summary>
     /// Evaluator for IsLike search type (SQL LIKE patterns)
     /// </summary>
-    public class IsLikeEvaluator : SearchEvaluatorBase
+    internal class IsLikeEvaluator : SearchEvaluatorBase
     {
         public override SearchType SearchType => SearchType.IsLike;
 
@@ -65,7 +65,7 @@ namespace WWSearchDataGrid.Modern.Core.Strategies
     /// <summary>
     /// Evaluator for IsNotLike search type
     /// </summary>
-    public class IsNotLikeEvaluator : IsLikeEvaluator
+    internal class IsNotLikeEvaluator : IsLikeEvaluator
     {
         public override SearchType SearchType => SearchType.IsNotLike;
 
@@ -78,7 +78,7 @@ namespace WWSearchDataGrid.Modern.Core.Strategies
     /// <summary>
     /// Evaluator for BetweenDates search type
     /// </summary>
-    public class BetweenDatesEvaluator : SearchEvaluatorBase
+    internal class BetweenDatesEvaluator : SearchEvaluatorBase
     {
         public override SearchType SearchType => SearchType.BetweenDates;
 
@@ -97,7 +97,7 @@ namespace WWSearchDataGrid.Modern.Core.Strategies
     /// <summary>
     /// Evaluator for Yesterday search type
     /// </summary>
-    public class YesterdayEvaluator : SearchEvaluatorBase
+    internal class YesterdayEvaluator : SearchEvaluatorBase
     {
         public override SearchType SearchType => SearchType.Yesterday;
 
@@ -111,7 +111,7 @@ namespace WWSearchDataGrid.Modern.Core.Strategies
     /// <summary>
     /// Evaluator for Today search type
     /// </summary>
-    public class TodayEvaluator : SearchEvaluatorBase
+    internal class TodayEvaluator : SearchEvaluatorBase
     {
         public override SearchType SearchType => SearchType.Today;
 
@@ -125,7 +125,7 @@ namespace WWSearchDataGrid.Modern.Core.Strategies
     /// <summary>
     /// Evaluator for IsAnyOf search type
     /// </summary>
-    public class IsAnyOfEvaluator : SearchEvaluatorBase
+    internal class IsAnyOfEvaluator : SearchEvaluatorBase
     {
         public override SearchType SearchType => SearchType.IsAnyOf;
 
@@ -142,7 +142,7 @@ namespace WWSearchDataGrid.Modern.Core.Strategies
     /// <summary>
     /// Evaluator for IsNoneOf search type
     /// </summary>
-    public class IsNoneOfEvaluator : SearchEvaluatorBase
+    internal class IsNoneOfEvaluator : SearchEvaluatorBase
     {
         public override SearchType SearchType => SearchType.IsNoneOf;
 
@@ -159,7 +159,7 @@ namespace WWSearchDataGrid.Modern.Core.Strategies
     /// <summary>
     /// Evaluator for IsOnAnyOfDates search type
     /// </summary>
-    public class IsOnAnyOfDatesEvaluator : SearchEvaluatorBase
+    internal class IsOnAnyOfDatesEvaluator : SearchEvaluatorBase
     {
         public override SearchType SearchType => SearchType.IsOnAnyOfDates;
 
@@ -177,7 +177,7 @@ namespace WWSearchDataGrid.Modern.Core.Strategies
     /// <summary>
     /// Evaluator for DateInterval search type
     /// </summary>
-    public class DateIntervalEvaluator : SearchEvaluatorBase
+    internal class DateIntervalEvaluator : SearchEvaluatorBase
     {
         public override SearchType SearchType => SearchType.DateInterval;
 

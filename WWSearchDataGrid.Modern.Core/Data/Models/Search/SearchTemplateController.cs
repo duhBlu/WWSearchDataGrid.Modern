@@ -619,7 +619,7 @@ namespace WWSearchDataGrid.Modern.Core
         /// <param name="value">The value to evaluate</param>
         /// <param name="collectionContext">Collection context for statistical operations</param>
         /// <returns>True if the value matches the search criteria</returns>
-        public bool EvaluateWithCollectionContext(object value, Strategies.ICollectionContext collectionContext)
+        internal bool EvaluateWithCollectionContext(object value, Strategies.ICollectionContext collectionContext)
         {
             if (!HasCustomExpression || SearchGroups == null || SearchGroups.Count == 0)
                 return true;

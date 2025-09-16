@@ -7,7 +7,7 @@ namespace WWSearchDataGrid.Modern.Core
     /// <summary>
     /// Utility class for parsing display text into filter chip components
     /// </summary>
-    public static class FilterDisplayTextParser
+    internal static class FilterDisplayTextParser
     {
         /// <summary>
         /// Parses display text into individual filter chip components
