@@ -923,18 +923,44 @@ namespace WWSearchDataGrid.Modern.WPF
             // Clear collection context cache and materialized data
             InvalidateCollectionContextCache();
             
-            // Clear data references in all column controllers
+            // Dispose of all column controllers to release their cached data
             foreach (var control in DataColumns)
             {
-                control.SearchTemplateController?.ClearDataReferences();
+                if (control.SearchTemplateController is IDisposable disposableController)
+                {
+                    try
+                    {
+                        disposableController.Dispose();
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine($"Error disposing SearchTemplateController: {ex.Message}");
+                    }
+                }
             }
             
-            // Clear global filter controller data references
-            globalFilterController?.ClearDataReferences();
+            // Dispose of global filter controller
+            if (globalFilterController is IDisposable disposableGlobalController)
+            {
+                try
+                {
+                    disposableGlobalController.Dispose();
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"Error disposing global filter controller: {ex.Message}");
+                }
+            }
+            globalFilterController = null; // Clear reference after disposal
             
             // Clear filters to release any remaining references
             Items.Filter = null;
             SearchFilter = null;
+            
+            // Trigger cache manager cleanup
+            WWSearchDataGrid.Modern.Core.Caching.ColumnValueCacheManager.Instance.Cleanup(clearAll: false);
+            
+            // Force garbage collection to reclaim memory immediately
             GC.Collect();
             GC.WaitForPendingFinalizers();
         }

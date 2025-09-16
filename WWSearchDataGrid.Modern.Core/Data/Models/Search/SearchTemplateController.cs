@@ -7,13 +7,14 @@ using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 using WWSearchDataGrid.Modern.Core.Services;
+using WWSearchDataGrid.Modern.Core.Caching;
 
 namespace WWSearchDataGrid.Modern.Core
 {
     /// <summary>
     /// Core controller for managing search templates and groups
     /// </summary>
-    public class SearchTemplateController : ObservableObject
+    public class SearchTemplateController : ObservableObject, IDisposable
     {
         #region Events
         
@@ -35,11 +36,10 @@ namespace WWSearchDataGrid.Modern.Core
 
         private SearchType? defaultSearchType;
         
-        // Lazy loading fields
-        private bool _columnValuesLoaded = false;
+        // Cache-based column values (replaces ObservableCollection approach)
+        private string _cacheKey;
         private Func<IEnumerable<object>> _columnValuesProvider;
-        private readonly ObservableCollection<object> _columnValues = new ObservableCollection<object>();
-        private bool _containsNullValues = false;
+        private ReadOnlyColumnValues _cachedColumnValues;
 
         #endregion
 
@@ -51,16 +51,16 @@ namespace WWSearchDataGrid.Modern.Core
         public object ColumnName { get; set; }
 
         /// <summary>
-        /// Gets the bindable collection of column values for direct UI binding
-        /// This replaces the HashSet approach with an observable collection
+        /// Gets the read-only collection of column values for UI binding
+        /// Uses shared cache manager to eliminate data duplication
         /// Values are loaded lazily when first accessed
         /// </summary>
-        public ObservableCollection<object> ColumnValues 
+        public IReadOnlyList<object> ColumnValues 
         { 
             get 
             {
                 EnsureColumnValuesLoaded();
-                return _columnValues;
+                return _cachedColumnValues ?? (IReadOnlyList<object>)new List<object>();
             } 
         }
 
@@ -73,7 +73,7 @@ namespace WWSearchDataGrid.Modern.Core
             get
             {
                 EnsureColumnValuesLoaded();
-                return _containsNullValues;
+                return _cachedColumnValues?.ContainsNullValues ?? false;
             }
         }
 
@@ -236,14 +236,16 @@ namespace WWSearchDataGrid.Modern.Core
                 ColumnValuesByPath.Clear();
             }
             
-            // Clear cached column values but preserve the provider so values can be reloaded
-            _columnValues.Clear();
-            _columnValuesLoaded = false;
-            _containsNullValues = false;
+            // Clear cached column values reference
+            _cachedColumnValues = null;
+            _cacheKey = null;
             
             // Only clear the provider if we're explicitly clearing data references
             // The provider will be restored when new data is loaded
             _columnValuesProvider = null;
+            
+            // Trigger cache cleanup to remove dead references
+            ColumnValueCacheManager.Instance.Cleanup(clearAll: false);
         }
 
         /// <summary>
@@ -335,9 +337,11 @@ namespace WWSearchDataGrid.Modern.Core
         public void SetColumnValuesProvider(Func<IEnumerable<object>> valuesProvider)
         {
             _columnValuesProvider = valuesProvider;
-            _columnValuesLoaded = false;
-            _containsNullValues = false; // Reset nullability flag
-            _columnValues.Clear();
+            _cachedColumnValues = null;
+            
+            // Generate a cache key based on the provider hashcode and column name
+            // This ensures different columns get different cache entries
+            _cacheKey = $"{ColumnName?.GetHashCode() ?? 0}_{valuesProvider?.GetHashCode() ?? 0}";
         }
         
         /// <summary>
@@ -348,9 +352,9 @@ namespace WWSearchDataGrid.Modern.Core
         {
             if (_columnValuesProvider != null)
             {
-                _columnValuesLoaded = false;
-                _containsNullValues = false; // Reset nullability flag
-                _columnValues.Clear();
+                _cachedColumnValues = null;
+                // Update cache key to force new cache entry
+                _cacheKey = $"{ColumnName?.GetHashCode() ?? 0}_{_columnValuesProvider?.GetHashCode() ?? 0}_{DateTime.UtcNow.Ticks}";
                 // Values will be reloaded on next access
             }
         }
@@ -362,7 +366,7 @@ namespace WWSearchDataGrid.Modern.Core
         public void EnsureColumnValuesLoadedForFiltering()
         {
             // Force values to load immediately if not already loaded
-            if (!_columnValuesLoaded && _columnValuesProvider != null)
+            if (_cachedColumnValues == null && _columnValuesProvider != null)
             {
                 EnsureColumnValuesLoaded(); // This will load values and determine data type
             }
@@ -375,115 +379,59 @@ namespace WWSearchDataGrid.Modern.Core
         /// <param name="values">Column values to set</param>
         public void SetColumnValues(IEnumerable<object> values)
         {
+            // Create a cache key for direct values
+            _cacheKey = $"direct_{ColumnName?.GetHashCode() ?? 0}_{DateTime.UtcNow.Ticks}";
+            
+            // Create cache entry directly
+            _cachedColumnValues = ColumnValueCacheManager.Instance.GetOrCreateColumnValues(
+                _cacheKey, 
+                () => values ?? Enumerable.Empty<object>());
+            
             // Clear provider when setting values directly
             _columnValuesProvider = null;
-            _columnValuesLoaded = true;
-            LoadValuesIntoCollection(values);
+            
+            // Determine column data type from the cached values
+            DetermineColumnDataTypeFromValues();
         }
         
         /// <summary>
-        /// Ensures column values are loaded into the collection
+        /// Ensures column values are loaded from cache
         /// </summary>
         private void EnsureColumnValuesLoaded()
         {
-            if (!_columnValuesLoaded && _columnValuesProvider != null)
+            if (_cachedColumnValues == null && _columnValuesProvider != null && !string.IsNullOrEmpty(_cacheKey))
             {
                 try
                 {
-                    var values = _columnValuesProvider();
-                    LoadValuesIntoCollection(values); 
-                    _columnValuesLoaded = true;
+                    _cachedColumnValues = ColumnValueCacheManager.Instance.GetOrCreateColumnValues(
+                        _cacheKey, 
+                        _columnValuesProvider);
+                    
+                    // Determine column data type from the cached values
+                    DetermineColumnDataTypeFromValues();
                 }
                 catch (Exception ex)
                 {
                     System.Diagnostics.Debug.WriteLine($"Error loading column values: {ex.Message}");
-                    _columnValuesLoaded = true; // Mark as loaded to prevent repeated failures
+                    // Create empty cache entry to prevent repeated failures
+                    _cachedColumnValues = ColumnValueCacheManager.Instance.GetOrCreateColumnValues(
+                        _cacheKey, 
+                        () => Enumerable.Empty<object>());
                 }
             }
         }
         
         /// <summary>
-        /// Loads values into the ObservableCollection with performance optimizations
-        /// Also analyzes the data for null values during loading
-        /// </summary>
-        /// <param name="values">Values to load</param>
-        private void LoadValuesIntoCollection(IEnumerable<object> values)
-        {
-            _columnValues.Clear();
-            _containsNullValues = false; // Reset nullability flag
-            
-            if (values == null) return;
-
-            // Performance optimization: use HashSet for O(1) duplicate detection instead of LINQ Distinct()
-            var uniqueValues = new HashSet<object>();
-            var normalizedValues = new List<object>();
-
-            // Single pass to normalize, deduplicate, and analyze for null values
-            foreach (var value in values)
-            {
-                // Check for null values before normalization
-                if (value == null || (value is string stringValue && string.IsNullOrWhiteSpace(stringValue)))
-                {
-                    _containsNullValues = true;
-                }
-                
-                var normalizedValue = NormalizeValue(value);
-                if (uniqueValues.Add(normalizedValue))
-                {
-                    normalizedValues.Add(normalizedValue);
-                }
-            }
-
-            // Detect data type before sorting using the actual values
-            if (normalizedValues.Any())
-            {
-                var detectedType = ReflectionHelper.DetermineColumnDataType(new HashSet<object>(normalizedValues));
-                ColumnDataType = detectedType;
-            }
-
-            // Only sort if we have a reasonable number of values (avoid expensive sort on huge datasets)
-            if (normalizedValues.Count <= 100000)
-            {
-                normalizedValues.Sort(CreateTypeAwareComparer(ColumnDataType));
-            }
-
-            foreach (var value in normalizedValues)
-            {
-                _columnValues.Add(value);
-            }
-
-            // Notify templates that nullability analysis has been updated
-            UpdateTemplatesAfterNullabilityAnalysis();
-        }
-
-        /// <summary>
-        /// Updates all templates after nullability analysis is complete
-        /// This ensures templates get the correct set of valid search types based on nullability
-        /// </summary>
-        private void UpdateTemplatesAfterNullabilityAnalysis()
-        {
-            foreach (var group in SearchGroups)
-            {
-                foreach (var template in group.SearchTemplates.OfType<SearchTemplate>())
-                {
-                    // Trigger update of valid search types now that nullability is known
-                    template.ColumnDataType = template.ColumnDataType; // This will call UpdateValidSearchTypes
-                }
-            }
-        }
-
-        /// <summary>
-        /// Determines column data type from loaded values (called when values are first accessed)
+        /// Determines column data type from cached values (called when values are first accessed)
         /// </summary>
         private void DetermineColumnDataTypeFromValues()
         {
             try
             {
                 // Only determine data type if values are loaded
-                if (_columnValuesLoaded && _columnValues.Any())
+                if (_cachedColumnValues != null && _cachedColumnValues.Count > 0)
                 {
-                    var detectedType = ReflectionHelper.DetermineColumnDataType(new HashSet<object>(_columnValues));
-                    System.Diagnostics.Debug.WriteLine($"SearchTemplateController: Detected column data type {detectedType} from {_columnValues.Count} values (was {ColumnDataType})");
+                    var detectedType = ReflectionHelper.DetermineColumnDataType(new HashSet<object>(_cachedColumnValues.UniqueValues));
                     
                     // Always update with the detected type from the full dataset
                     // This overrides any previous sampling-based detection
@@ -526,258 +474,47 @@ namespace WWSearchDataGrid.Modern.Core
         }
         
         /// <summary>
-        /// Creates a type-aware comparer for sorting column values based on data type
-        /// </summary>
-        /// <param name="dataType">The column data type to create comparer for</param>
-        /// <returns>Comparison function for sorting</returns>
-        private Comparison<object> CreateTypeAwareComparer(ColumnDataType dataType)
-        {
-            switch (dataType)
-            {
-                case ColumnDataType.Number:
-                    return CompareNumericValues;
-                case ColumnDataType.DateTime:
-                    return CompareDateTimeValues;
-                case ColumnDataType.Boolean:
-                case ColumnDataType.Enum:
-                case ColumnDataType.String:
-                default:
-                    return CompareStringValues; // Default to string comparison
-            }
-        }
-        
-        /// <summary>
-        /// Compares numeric values with proper numeric ordering
-        /// </summary>
-        private int CompareNumericValues(object x, object y)
-        {
-            try
-            {
-                // Handle null display values - nulls come first
-                if (x is NullDisplayValue && y is NullDisplayValue) return 0;
-                if (x is NullDisplayValue) return -1;
-                if (y is NullDisplayValue) return 1;
-                
-                // Handle actual null values - nulls come first
-                if (x == null && y == null) return 0;
-                if (x == null) return -1;
-                if (y == null) return 1;
-                
-                // Convert to decimal using TypeTranslatorHelper
-                var xDecimal = TypeTranslatorHelper.ConvertToDecimal(x);
-                var yDecimal = TypeTranslatorHelper.ConvertToDecimal(y);
-                
-                // Handle conversion failures - treat as null and sort to beginning
-                if (!xDecimal.HasValue && !yDecimal.HasValue) return 0;
-                if (!xDecimal.HasValue) return -1;
-                if (!yDecimal.HasValue) return 1;
-                
-                return xDecimal.Value.CompareTo(yDecimal.Value);
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Error in CompareNumericValues: {ex.Message}");
-                // Fallback to string comparison
-                return CompareStringValues(x, y);
-            }
-        }
-        
-        /// <summary>
-        /// Compares DateTime values with chronological ordering
-        /// </summary>
-        private int CompareDateTimeValues(object x, object y)
-        {
-            try
-            {
-                // Handle null display values - nulls come first
-                if (x is NullDisplayValue && y is NullDisplayValue) return 0;
-                if (x is NullDisplayValue) return -1;
-                if (y is NullDisplayValue) return 1;
-                
-                // Handle actual null values - nulls come first
-                if (x == null && y == null) return 0;
-                if (x == null) return -1;
-                if (y == null) return 1;
-                
-                // Convert to DateTime using TypeTranslatorHelper
-                var xDateTime = TypeTranslatorHelper.ConvertToDateTime(x);
-                var yDateTime = TypeTranslatorHelper.ConvertToDateTime(y);
-                
-                // Handle conversion failures - treat as null and sort to beginning
-                if (!xDateTime.HasValue && !yDateTime.HasValue) return 0;
-                if (!xDateTime.HasValue) return -1;
-                if (!yDateTime.HasValue) return 1;
-                
-                return xDateTime.Value.CompareTo(yDateTime.Value);
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Error in CompareDateTimeValues: {ex.Message}");
-                // Fallback to string comparison
-                return CompareStringValues(x, y);
-            }
-        }
-        
-        /// <summary>
-        /// Compares Boolean values with logical ordering (null, false, true)
-        /// </summary>
-        private int CompareBooleanValues(object x, object y)
-        {
-            // Handle null display values - nulls come first
-            if (x is NullDisplayValue && y is NullDisplayValue) return 0;
-            if (x is NullDisplayValue) return -1;
-            if (y is NullDisplayValue) return 1;
-            
-            // Handle actual null values - nulls come first
-            if (x == null && y == null) return 0;
-            if (x == null) return -1;
-            if (y == null) return 1;
-            
-            // Convert to boolean
-            var xBool = ConvertToBoolean(x);
-            var yBool = ConvertToBoolean(y);
-            
-            // Handle conversion failures - treat as null and sort to beginning
-            if (!xBool.HasValue && !yBool.HasValue) return 0;
-            if (!xBool.HasValue) return -1;
-            if (!yBool.HasValue) return 1;
-            
-            // Sort: false before true
-            return xBool.Value.CompareTo(yBool.Value);
-        }
-        
-        /// <summary>
-        /// Compares enum values by their numeric value, falls back to string comparison
-        /// </summary>
-        private int CompareEnumValues(object x, object y)
-        {
-            try
-            {
-                // Handle null display values - nulls come first
-                if (x is NullDisplayValue && y is NullDisplayValue) return 0;
-                if (x is NullDisplayValue) return -1;
-                if (y is NullDisplayValue) return 1;
-                
-                // Handle actual null values - nulls come first
-                if (x == null && y == null) return 0;
-                if (x == null) return -1;
-                if (y == null) return 1;
-                
-                // If both are the same enum type, compare by numeric value
-                if (x.GetType().IsEnum && y.GetType().IsEnum && x.GetType() == y.GetType())
-                {
-                    var xValue = Convert.ToInt32(x);
-                    var yValue = Convert.ToInt32(y);
-                    return xValue.CompareTo(yValue);
-                }
-                
-                // Fallback to string comparison for mixed types or non-enum values
-                return CompareStringValues(x, y);
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Error in CompareEnumValues: {ex.Message}");
-                // Fallback to string comparison
-                return CompareStringValues(x, y);
-            }
-        }
-        
-        /// <summary>
-        /// Compares string values with case-insensitive ordering (current behavior)
-        /// </summary>
-        private int CompareStringValues(object x, object y)
-        {
-            var xStr = x?.ToString() ?? string.Empty;
-            var yStr = y?.ToString() ?? string.Empty;
-            return string.Compare(xStr, yStr, StringComparison.OrdinalIgnoreCase);
-        }
-        
-        /// <summary>
-        /// Converts a value to boolean, handling various formats
-        /// </summary>
-        private bool? ConvertToBoolean(object value)
-        {
-            if (value is bool boolValue)
-                return boolValue;
-                
-            if (value == null || value is NullDisplayValue)
-                return null;
-                
-            var stringValue = value.ToString()?.ToLowerInvariant();
-            switch (stringValue)
-            {
-                case "true":
-                case "1":
-                case "yes":
-                case "on":
-                    return true;
-                case "false":
-                case "0":
-                case "no":
-                case "off":
-                    return false;
-                default:
-                    if (bool.TryParse(stringValue, out bool parsed))
-                        return parsed;
-                    return null;
-            }
-        }
-        
-        /// <summary>
         /// Adds or updates a single value in the column values (for incremental updates)
+        /// Note: With cache-based approach, incremental updates require refreshing the entire cache
         /// </summary>
         /// <param name="value">Value to add or update</param>
         public void AddOrUpdateColumnValue(object value)
         {
-            if (!_columnValuesLoaded)
+            if (_cachedColumnValues == null)
             {
                 // If values aren't loaded yet, just mark them as needing refresh
                 return;
             }
             
             var normalizedValue = NormalizeValue(value);
-            if (!_columnValues.Contains(normalizedValue))
+            if (!_cachedColumnValues.Contains(normalizedValue))
             {
-                // Insert in sorted order if collection is small enough
-                if (_columnValues.Count <= 10000)
-                {
-                    var insertIndex = 0;
-                    var comparer = CreateTypeAwareComparer(ColumnDataType);
-                    
-                    for (int i = 0; i < _columnValues.Count; i++)
-                    {
-                        if (comparer(normalizedValue, _columnValues[i]) < 0)
-                        {
-                            insertIndex = i;
-                            break;
-                        }
-                        insertIndex = i + 1;
-                    }
-                    
-                    _columnValues.Insert(insertIndex, normalizedValue);
-                }
-                else
-                {
-                    // For large collections, just append (sorting is disabled anyway)
-                    _columnValues.Add(normalizedValue);
-                }
+                // For cache-based approach, we need to refresh the entire cache
+                // This is less efficient for single updates but necessary for data consistency
+                RefreshColumnValues();
             }
         }
         
         /// <summary>
         /// Removes a value from the column values (for incremental updates)
+        /// Note: With cache-based approach, incremental updates require refreshing the entire cache
         /// </summary>
         /// <param name="value">Value to remove</param>
         public void RemoveColumnValue(object value)
         {
-            if (!_columnValuesLoaded)
+            if (_cachedColumnValues == null)
             {
                 // If values aren't loaded yet, just mark them as needing refresh
                 return;
             }
             
             var normalizedValue = NormalizeValue(value);
-            _columnValues.Remove(normalizedValue);
+            if (_cachedColumnValues.Contains(normalizedValue))
+            {
+                // For cache-based approach, we need to refresh the entire cache
+                // This is less efficient for single updates but necessary for data consistency
+                RefreshColumnValues();
+            }
         }
 
         /// <summary>
@@ -849,7 +586,7 @@ namespace WWSearchDataGrid.Modern.Core
                 }
                 else
                 {
-                    targetColumnType = _filterExpressionBuilder.DetermineTargetColumnType(ColumnDataType, new HashSet<object>(ColumnValues));
+                    targetColumnType = _filterExpressionBuilder.DetermineTargetColumnType(ColumnDataType, new HashSet<object>(_cachedColumnValues?.UniqueValues ?? new HashSet<object>()));
                 }
 
                 // Use the filter expression builder service
@@ -978,84 +715,6 @@ namespace WWSearchDataGrid.Modern.Core
                 System.Diagnostics.Debug.WriteLine($"Error evaluating template with context: {ex.Message}");
                 return false;
             }
-        }
-
-        /// <summary>
-        /// Moves a search template from one group to another
-        /// </summary>
-        /// <param name="sourceGroup">Source group</param>
-        /// <param name="targetGroup">Target group</param>
-        /// <param name="template">Template to move</param>
-        /// <param name="targetIndex">Target index in the target group</param>
-        public void MoveSearchTemplate(
-            SearchTemplateGroup sourceGroup,
-            SearchTemplateGroup targetGroup,
-            SearchTemplate template,
-            int targetIndex)
-        {
-            sourceGroup.SearchTemplates.Remove(template);
-            targetGroup.SearchTemplates.Insert(targetIndex, template);
-
-            if (sourceGroup.SearchTemplates.Count == 0)
-            {
-                SearchGroups.Remove(sourceGroup);
-            }
-
-            if (SearchGroups.Count > 0)
-            {
-                UpdateOperatorVisibility();
-                UpdateGroupNumbers();
-            }
-        }
-
-        /// <summary>
-        /// Removes a search group
-        /// </summary>
-        /// <param name="group">Group to remove</param>
-        public void RemoveSearchGroup(SearchTemplateGroup group)
-        {
-            if (!SearchGroups.Contains(group)) return;
-
-            // If multiple groups are allowed, or this isn't the last group, remove it normally
-            if (AllowMultipleGroups && SearchGroups.Count > 1)
-            {
-                group.SearchTemplates.Clear();
-                SearchGroups.Remove(group);
-                UpdateFilterExpression();
-                UpdateGroupNumbers();
-                
-                // Update operator visibility on the first remaining group
-                if (SearchGroups.Count > 0)
-                {
-                    UpdateOperatorVisibility();
-                }
-            }
-            else if (SearchGroups.Count == 1)
-            {
-                // For the last remaining group, clear and reset instead of removing
-                group.SearchTemplates.Clear();
-                AddSearchTemplate(false, null, group);
-                UpdateFilterExpression();
-            }
-            else
-            {
-                // Multiple groups exist but AllowMultipleGroups is false - shouldn't happen normally
-                group.SearchTemplates.Clear();
-                SearchGroups.Remove(group);
-                UpdateFilterExpression();
-                if (SearchGroups.Count == 0)
-                {
-                    AddSearchGroup(true, false);
-                }
-                else
-                {
-                    // Update operator visibility on the first remaining group
-                    UpdateOperatorVisibility();
-                }
-                UpdateGroupNumbers();
-            }
-            
-            OnPropertyChanged(nameof(SearchGroups));
         }
 
         /// <summary>
@@ -1844,6 +1503,68 @@ namespace WWSearchDataGrid.Modern.Core
             }
         }
 
+        #endregion
+        
+        #region IDisposable Implementation
+        
+        private bool _disposed = false;
+        
+        /// <summary>
+        /// Disposes the SearchTemplateController and releases all cached data references
+        /// </summary>
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+        
+        /// <summary>
+        /// Protected disposal method
+        /// </summary>
+        /// <param name="disposing">True if disposing from Dispose(), false if from finalizer</param>
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!_disposed)
+            {
+                if (disposing)
+                {
+                    // Unsubscribe from all template events
+                    UnsubscribeFromAllTemplates();
+                    
+                    // Clear all data references
+                    ClearDataReferences();
+                    
+                    // Clear search groups
+                    SearchGroups?.Clear();
+                    
+                    // Clear filter expression
+                    FilterExpression = null;
+                    HasCustomExpression = false;
+                }
+                
+                _disposed = true;
+            }
+        }
+        
+        /// <summary>
+        /// Finalizer to ensure cleanup if Dispose is not called explicitly
+        /// </summary>
+        ~SearchTemplateController()
+        {
+            Dispose(false);
+        }
+        
+        /// <summary>
+        /// Throws ObjectDisposedException if the controller has been disposed
+        /// </summary>
+        private void ThrowIfDisposed()
+        {
+            if (_disposed)
+            {
+                throw new ObjectDisposedException(nameof(SearchTemplateController));
+            }
+        }
+        
         #endregion
     }
 }

@@ -81,15 +81,13 @@ namespace WWSearchDataGrid.Modern.Core
 
         public bool HasChanges { get; set; }
 
+        // oparator 
         public bool IsOperatorVisible
         {
             get { return isOperatorVisible; }
             set { SetProperty(value, ref isOperatorVisible); }
         }
 
-        /// <summary>
-        /// Gets the current search condition for this template
-        /// </summary>
         public SearchCondition SearchCondition
         {
             get

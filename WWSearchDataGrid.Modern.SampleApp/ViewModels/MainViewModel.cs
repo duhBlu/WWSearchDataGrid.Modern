@@ -110,9 +110,10 @@ namespace WWSearchDataGrid.Modern.SampleApp
         {
             Items.Clear();
             ItemCount = 0;
-            
+
             // Clear cached data in the SearchDataGrid to prevent memory leaks
-            _searchDataGrid?.ClearAllCachedData();
+            GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced, blocking: true, compacting: true);
+            GC.WaitForPendingFinalizers();
         }
 
         #endregion

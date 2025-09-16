@@ -69,7 +69,8 @@ namespace WWSearchDataGrid.Modern.Core
         }
 
         /// <summary>
-        /// Gets or sets whether the logical operator is visible
+        /// Operator that joins other search template groups
+        /// Visible when no other search template groups preceding this 
         /// </summary>
         public bool IsOperatorVisible
         {

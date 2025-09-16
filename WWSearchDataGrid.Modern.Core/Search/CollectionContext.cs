@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using WWSearchDataGrid.Modern.Core.Strategies;
+using WWSearchDataGrid.Modern.Core.Caching;
 
 namespace WWSearchDataGrid.Modern.Core
 {
@@ -13,11 +14,11 @@ namespace WWSearchDataGrid.Modern.Core
     /// </summary>
     public class CollectionContext : ICollectionContext, IDisposable
     {
-        private readonly Lazy<double?> _average;
-        private readonly Lazy<IEnumerable<object>> _sortedDescending;
-        private readonly Lazy<IEnumerable<object>> _sortedAscending;
-        private readonly Lazy<Dictionary<object, List<object>>> _valueGroups;
-        private readonly Lazy<List<(object item, object value)>> _extractedValues;
+        private readonly ClearableLazy<double?> _average;
+        private readonly ClearableLazy<IEnumerable<object>> _sortedDescending;
+        private readonly ClearableLazy<IEnumerable<object>> _sortedAscending;
+        private readonly ClearableLazy<Dictionary<object, List<object>>> _valueGroups;
+        private readonly ClearableLazy<List<(object item, object value)>> _extractedValues;
 
         /// <summary>
         /// Gets the full collection being filtered
@@ -40,11 +41,11 @@ namespace WWSearchDataGrid.Modern.Core
             ColumnPath = columnPath ?? throw new ArgumentNullException(nameof(columnPath));
 
             // Initialize lazy computations - extractedValues is shared across all operations
-            _extractedValues = new Lazy<List<(object item, object value)>>(ExtractAllValues);
-            _average = new Lazy<double?>(ComputeAverage);
-            _sortedDescending = new Lazy<IEnumerable<object>>(ComputeSortedDescending);
-            _sortedAscending = new Lazy<IEnumerable<object>>(ComputeSortedAscending);
-            _valueGroups = new Lazy<Dictionary<object, List<object>>>(ComputeValueGroups);
+            _extractedValues = new ClearableLazy<List<(object item, object value)>>(ExtractAllValues);
+            _average = new ClearableLazy<double?>(ComputeAverage);
+            _sortedDescending = new ClearableLazy<IEnumerable<object>>(ComputeSortedDescending);
+            _sortedAscending = new ClearableLazy<IEnumerable<object>>(ComputeSortedAscending);
+            _valueGroups = new ClearableLazy<Dictionary<object, List<object>>>(ComputeValueGroups);
         }
 
         /// <summary>
@@ -186,16 +187,16 @@ namespace WWSearchDataGrid.Modern.Core
         {
             if (disposing)
             {
-                // The lazy objects hold references to computed data that may reference original items
-                // Unfortunately, Lazy<T> doesn't provide a way to clear its cached value
-                // But when this CollectionContext is disposed and goes out of scope,
-                // the lazy objects will be eligible for garbage collection along with their cached values
+                // Clear all cached values to release memory references immediately
+                // This allows the large data structures to be garbage collected
+                _extractedValues.Clear();
+                _average.Clear();
+                _sortedDescending.Clear();
+                _sortedAscending.Clear();
+                _valueGroups.Clear();
                 
                 // Clear any direct references we might have
                 // (Currently we don't hold any direct references to items beyond the constructor parameter)
-                
-                // The best we can do is ensure this object becomes eligible for GC
-                // which will allow the lazy-loaded caches to be collected as well
             }
         }
         

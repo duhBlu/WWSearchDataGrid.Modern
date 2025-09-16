@@ -13,9 +13,9 @@ namespace WWSearchDataGrid.Modern.Core
         #region Properties
 
         /// <summary>
-        /// Gets or sets the type of the column being searched
+        /// Get/Set the Type of the column being searched
         /// </summary>
-        public Type TargetType { get; set; }
+        public Type ColumnDataType { get; set; }
 
         /// <summary>
         /// Gets or sets the string representation of the search value
@@ -95,9 +95,9 @@ namespace WWSearchDataGrid.Modern.Core
         /// <param name="searchType">Type of search operation</param>
         /// <param name="primaryValue">Primary search value</param>
         /// <param name="secondaryValue">Secondary search value (optional)</param>
-        public SearchCondition(Type targetType, SearchType searchType, object primaryValue, object secondaryValue = null, int? countValue = null, DateInterval? dateIntervalValue = null)
+        public SearchCondition(Type columnDataType, SearchType searchType, object primaryValue, object secondaryValue = null, int? countValue = null, DateInterval? dateIntervalValue = null)
         {
-            TargetType = targetType;
+            ColumnDataType = columnDataType;
             SearchType = searchType;
             RawPrimaryValue = primaryValue;
             RawSecondaryValue = secondaryValue;
@@ -148,9 +148,9 @@ namespace WWSearchDataGrid.Modern.Core
 
             string stringValue = value.ToString();
 
-            if (TargetType != null)
+            if (ColumnDataType != null)
             {
-                var underlyingType = Nullable.GetUnderlyingType(TargetType) ?? TargetType;
+                var underlyingType = Nullable.GetUnderlyingType(ColumnDataType) ?? ColumnDataType;
 
                 if (underlyingType == typeof(DateTime))
                 {
@@ -252,9 +252,9 @@ namespace WWSearchDataGrid.Modern.Core
         {
             ResetTypeFlags();
 
-            if (TargetType != null)
+            if (ColumnDataType != null)
             {
-                var underlyingType = Nullable.GetUnderlyingType(TargetType) ?? TargetType;
+                var underlyingType = Nullable.GetUnderlyingType(ColumnDataType) ?? ColumnDataType;
 
                 if (underlyingType == typeof(DateTime))
                 {
@@ -275,14 +275,12 @@ namespace WWSearchDataGrid.Modern.Core
             }
             else
             {
-                // Fallback: try to determine type from actual values
                 DetermineTypeFlagsFromValues();
             }
         }
 
         private void DetermineTypeFlagsFromValues()
         {
-            // Try to determine type from the actual values
             var valueToCheck = RawPrimaryValue ?? RawSecondaryValue;
 
             if (valueToCheck != null)
@@ -306,7 +304,7 @@ namespace WWSearchDataGrid.Modern.Core
             }
             else
             {
-                // Ultimate fallback
+                // fall back to string
                 IsString = true;
             }
         }
