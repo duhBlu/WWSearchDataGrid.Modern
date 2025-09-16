@@ -299,6 +299,7 @@
                 <sdg:SearchDataGrid.Columns>
                     <DataGridTextColumn Width="120"
                                         Header="Customer Name"
+                                        sdg:ColumnSearchBox.AllowRuleValueFiltering="True"
                                         Binding="{Binding CustomerName}" />
 
                       <!--Boolean Types-->  

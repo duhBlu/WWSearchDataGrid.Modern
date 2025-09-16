@@ -13,6 +13,7 @@ using System.Collections;
 using System.Collections.Specialized;
 using System.Collections.ObjectModel;
 using System.Collections.Generic;
+using WWSearchDataGrid.Modern.WPF.Commands;
 
 namespace WWSearchDataGrid.Modern.WPF
 {
@@ -165,12 +166,15 @@ namespace WWSearchDataGrid.Modern.WPF
 
             // Initialize FilterPanel
             FilterPanel = new FilterPanel();
-            
+
             // Subscribe to FilterPanel events
             FilterPanel.FiltersEnabledChanged += OnFiltersEnabledChanged;
             FilterPanel.FilterRemoved += OnFilterRemoved;
             FilterPanel.EditFiltersRequested += OnEditFiltersRequested;
             FilterPanel.ClearAllFiltersRequested += OnClearAllFiltersRequested;
+
+            // Initialize context menu functionality
+            this.InitializeContextMenu();
         }
 
         #endregion
