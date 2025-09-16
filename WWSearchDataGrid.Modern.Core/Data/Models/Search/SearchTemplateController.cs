@@ -6,7 +6,6 @@ using System.Linq.Expressions;
 using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
-using WWSearchDataGrid.Modern.Core.Services;
 using WWSearchDataGrid.Modern.Core.Caching;
 
 namespace WWSearchDataGrid.Modern.Core
@@ -32,7 +31,7 @@ namespace WWSearchDataGrid.Modern.Core
         private ColumnDataType columnDataType = ColumnDataType.String;
         
         // Service dependencies
-        private readonly IFilterExpressionBuilder _filterExpressionBuilder;
+        private readonly FilterExpressionBuilder _filterExpressionBuilder;
 
         private SearchType? defaultSearchType;
         
@@ -457,21 +456,6 @@ namespace WWSearchDataGrid.Modern.Core
             return value;
         }
         
-        /// <summary>
-        /// Special class to represent null values with proper display text
-        /// </summary>
-        public class NullDisplayValue
-        {
-            public static readonly NullDisplayValue Instance = new NullDisplayValue();
-            
-            private NullDisplayValue() { }
-            
-            public override string ToString() => "(null)";
-            
-            public override bool Equals(object obj) => obj is NullDisplayValue;
-            
-            public override int GetHashCode() => 0; // All null display values are equal
-        }
         
         /// <summary>
         /// Adds or updates a single value in the column values (for incremental updates)
@@ -619,7 +603,7 @@ namespace WWSearchDataGrid.Modern.Core
         /// <param name="value">The value to evaluate</param>
         /// <param name="collectionContext">Collection context for statistical operations</param>
         /// <returns>True if the value matches the search criteria</returns>
-        internal bool EvaluateWithCollectionContext(object value, Strategies.ICollectionContext collectionContext)
+        internal bool EvaluateWithCollectionContext(object value, CollectionContext collectionContext)
         {
             if (!HasCustomExpression || SearchGroups == null || SearchGroups.Count == 0)
                 return true;
@@ -664,7 +648,7 @@ namespace WWSearchDataGrid.Modern.Core
         /// <summary>
         /// Evaluates a search group with collection context support
         /// </summary>
-        private bool EvaluateSearchGroupWithContext(object value, SearchTemplateGroup group, Strategies.ICollectionContext collectionContext)
+        private bool EvaluateSearchGroupWithContext(object value, SearchTemplateGroup group, CollectionContext collectionContext)
         {
             if (group.SearchTemplates == null || group.SearchTemplates.Count == 0)
                 return true;
@@ -700,7 +684,7 @@ namespace WWSearchDataGrid.Modern.Core
         /// <summary>
         /// Evaluates a single search template with collection context support
         /// </summary>
-        private bool EvaluateSearchTemplateWithContext(object value, SearchTemplate template, Strategies.ICollectionContext collectionContext)
+        private bool EvaluateSearchTemplateWithContext(object value, SearchTemplate template, CollectionContext collectionContext)
         {
             if (template == null || template.SearchCondition == null)
                 return true;

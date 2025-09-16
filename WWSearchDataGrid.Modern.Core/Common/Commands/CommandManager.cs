@@ -7,7 +7,7 @@ namespace WWSearchDataGrid.Modern.Core
     /// <summary>
     /// Command manager for WPF commands
     /// </summary>
-    public static class CommandManager
+    internal static class CommandManager
     {
         public static event EventHandler RequerySuggested;
 

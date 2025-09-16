@@ -1,6 +1,6 @@
 using System;
 
-namespace WWSearchDataGrid.Modern.Core.Strategies
+namespace WWSearchDataGrid.Modern.Core
 {
     /// <summary>
     /// Evaluator for LessThan search type

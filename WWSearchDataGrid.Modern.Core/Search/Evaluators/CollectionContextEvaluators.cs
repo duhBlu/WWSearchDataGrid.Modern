@@ -1,9 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using WWSearchDataGrid.Modern.Core.Strategies;
 
-namespace WWSearchDataGrid.Modern.Core.Strategies
+namespace WWSearchDataGrid.Modern.Core
 {
     /// <summary>
     /// Evaluator for TopN search type - returns the top N items by value
@@ -15,10 +14,10 @@ namespace WWSearchDataGrid.Modern.Core.Strategies
 
         public override bool Evaluate(object columnValue, SearchCondition searchCondition)
         {
-            throw new InvalidOperationException("TopN evaluator requires collection context. Use the overload with ICollectionContext.");
+            throw new InvalidOperationException("TopN evaluator requires collection context. Use the overload with CollectionContext.");
         }
 
-        public override bool Evaluate(object columnValue, SearchCondition searchCondition, ICollectionContext collectionContext)
+        public override bool Evaluate(object columnValue, SearchCondition searchCondition, CollectionContext collectionContext)
         {
             if (collectionContext == null)
                 return false;
@@ -46,7 +45,7 @@ namespace WWSearchDataGrid.Modern.Core.Strategies
             return 0;
         }
 
-        private object GetItemContainingValue(object columnValue, ICollectionContext collectionContext)
+        private object GetItemContainingValue(object columnValue, CollectionContext collectionContext)
         {
             return collectionContext.Items
                 .FirstOrDefault(item => 
@@ -67,10 +66,10 @@ namespace WWSearchDataGrid.Modern.Core.Strategies
 
         public override bool Evaluate(object columnValue, SearchCondition searchCondition)
         {
-            throw new InvalidOperationException("BottomN evaluator requires collection context. Use the overload with ICollectionContext.");
+            throw new InvalidOperationException("BottomN evaluator requires collection context. Use the overload with CollectionContext.");
         }
 
-        public override bool Evaluate(object columnValue, SearchCondition searchCondition, ICollectionContext collectionContext)
+        public override bool Evaluate(object columnValue, SearchCondition searchCondition, CollectionContext collectionContext)
         {
             if (collectionContext == null)
                 return false;
@@ -98,7 +97,7 @@ namespace WWSearchDataGrid.Modern.Core.Strategies
             return 0;
         }
 
-        private object GetItemContainingValue(object columnValue, ICollectionContext collectionContext)
+        private object GetItemContainingValue(object columnValue, CollectionContext collectionContext)
         {
             return collectionContext.Items
                 .FirstOrDefault(item => 
@@ -119,10 +118,10 @@ namespace WWSearchDataGrid.Modern.Core.Strategies
 
         public override bool Evaluate(object columnValue, SearchCondition searchCondition)
         {
-            throw new InvalidOperationException("AboveAverage evaluator requires collection context. Use the overload with ICollectionContext.");
+            throw new InvalidOperationException("AboveAverage evaluator requires collection context. Use the overload with CollectionContext.");
         }
 
-        public override bool Evaluate(object columnValue, SearchCondition searchCondition, ICollectionContext collectionContext)
+        public override bool Evaluate(object columnValue, SearchCondition searchCondition, CollectionContext collectionContext)
         {
             if (collectionContext == null || columnValue == null)
                 return false;
@@ -169,10 +168,10 @@ namespace WWSearchDataGrid.Modern.Core.Strategies
 
         public override bool Evaluate(object columnValue, SearchCondition searchCondition)
         {
-            throw new InvalidOperationException("BelowAverage evaluator requires collection context. Use the overload with ICollectionContext.");
+            throw new InvalidOperationException("BelowAverage evaluator requires collection context. Use the overload with CollectionContext.");
         }
 
-        public override bool Evaluate(object columnValue, SearchCondition searchCondition, ICollectionContext collectionContext)
+        public override bool Evaluate(object columnValue, SearchCondition searchCondition, CollectionContext collectionContext)
         {
             if (collectionContext == null || columnValue == null)
                 return false;
@@ -219,10 +218,10 @@ namespace WWSearchDataGrid.Modern.Core.Strategies
 
         public override bool Evaluate(object columnValue, SearchCondition searchCondition)
         {
-            throw new InvalidOperationException("Unique evaluator requires collection context. Use the overload with ICollectionContext.");
+            throw new InvalidOperationException("Unique evaluator requires collection context. Use the overload with CollectionContext.");
         }
 
-        public override bool Evaluate(object columnValue, SearchCondition searchCondition, ICollectionContext collectionContext)
+        public override bool Evaluate(object columnValue, SearchCondition searchCondition, CollectionContext collectionContext)
         {
             if (collectionContext == null)
                 return false;
@@ -252,10 +251,10 @@ namespace WWSearchDataGrid.Modern.Core.Strategies
 
         public override bool Evaluate(object columnValue, SearchCondition searchCondition)
         {
-            throw new InvalidOperationException("Duplicate evaluator requires collection context. Use the overload with ICollectionContext.");
+            throw new InvalidOperationException("Duplicate evaluator requires collection context. Use the overload with CollectionContext.");
         }
 
-        public override bool Evaluate(object columnValue, SearchCondition searchCondition, ICollectionContext collectionContext)
+        public override bool Evaluate(object columnValue, SearchCondition searchCondition, CollectionContext collectionContext)
         {
             if (collectionContext == null)
                 return false;

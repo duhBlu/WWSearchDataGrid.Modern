@@ -6,7 +6,6 @@ using System.Windows;
 using System.Windows.Media;
 using System.Windows.Input;
 using WWSearchDataGrid.Modern.Core;
-using WWSearchDataGrid.Modern.Core.Strategies;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Diagnostics;
@@ -31,8 +30,8 @@ namespace WWSearchDataGrid.Modern.WPF
         private SearchTemplateController globalFilterController;
         
         // Collection context caching for performance optimization
-        private readonly Dictionary<string, ICollectionContext> _collectionContextCache = 
-            new Dictionary<string, ICollectionContext>();
+        private readonly Dictionary<string, CollectionContext> _collectionContextCache = 
+            new Dictionary<string, CollectionContext>();
         private List<object> _materializedDataSource;
         private readonly object _contextCacheLock = new object();
         
@@ -699,7 +698,7 @@ namespace WWSearchDataGrid.Modern.WPF
         /// <summary>
         /// Gets or creates a cached collection context for the specified column
         /// </summary>
-        private ICollectionContext GetOrCreateCollectionContext(string bindingPath)
+        private CollectionContext GetOrCreateCollectionContext(string bindingPath)
         {
             lock (_contextCacheLock)
             {

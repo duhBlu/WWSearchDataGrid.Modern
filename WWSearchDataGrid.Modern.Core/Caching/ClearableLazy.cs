@@ -5,7 +5,6 @@ namespace WWSearchDataGrid.Modern.Core.Caching
 {
     /// <summary>
     /// A thread-safe lazy initialization wrapper that allows clearing cached values
-    /// Solves memory leak issues with standard Lazy&lt;T&gt; where cached values cannot be released
     /// </summary>
     /// <typeparam name="T">The type of value to lazily initialize</typeparam>
     internal class ClearableLazy<T>

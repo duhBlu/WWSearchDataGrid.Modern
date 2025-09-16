@@ -34,33 +34,5 @@ namespace WWSearchDataGrid.Modern.Core
             return Expression.Lambda<Func<T, bool>>(merge(first.Body, secondBody), first.Parameters);
         }
 
-        /// <summary>
-        /// Helper class for rebinding parameters in expressions
-        /// </summary>
-        internal class ParameterRebinder : ExpressionVisitor
-        {
-            private readonly Dictionary<ParameterExpression, ParameterExpression> map;
-
-            public ParameterRebinder(Dictionary<ParameterExpression, ParameterExpression> map)
-            {
-                this.map = map ?? new Dictionary<ParameterExpression, ParameterExpression>();
-            }
-
-            public static Expression ReplaceParameters(
-                Dictionary<ParameterExpression, ParameterExpression> map,
-                Expression exp)
-            {
-                return new ParameterRebinder(map).Visit(exp);
-            }
-
-            protected override Expression VisitParameter(ParameterExpression p)
-            {
-                if (map.TryGetValue(p, out ParameterExpression replacement))
-                {
-                    return replacement;
-                }
-                return base.VisitParameter(p);
-            }
-        }
     }
 }

@@ -1,5 +1,3 @@
-using System;
-
 namespace WWSearchDataGrid.Modern.Core
 {
     /// <summary>
@@ -41,5 +39,5 @@ namespace WWSearchDataGrid.Modern.Core
         /// Gets the original filter data for remove operations
         /// </summary>
         ColumnFilterInfo SourceFilter { get; }
-    }    
+    }
 }

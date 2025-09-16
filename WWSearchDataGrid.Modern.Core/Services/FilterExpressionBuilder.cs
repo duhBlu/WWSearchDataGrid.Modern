@@ -4,12 +4,12 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Linq.Expressions;
 
-namespace WWSearchDataGrid.Modern.Core.Services
+namespace WWSearchDataGrid.Modern.Core
 {
     /// <summary>
     /// Service for building filter expressions from search templates
     /// </summary>
-    internal class FilterExpressionBuilder : IFilterExpressionBuilder
+    internal class FilterExpressionBuilder
     {
         /// <summary>
         /// Builds a compiled filter expression from search groups

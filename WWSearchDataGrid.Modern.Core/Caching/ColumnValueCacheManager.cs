@@ -220,21 +220,6 @@ namespace WWSearchDataGrid.Modern.Core.Caching
         }
     }
     
-    /// <summary>
-    /// Special class to represent null values with proper display text
-    /// </summary>
-    internal class NullDisplayValue
-    {
-        public static readonly NullDisplayValue Instance = new NullDisplayValue();
-        
-        private NullDisplayValue() { }
-        
-        public override string ToString() => "(null)";
-        
-        public override bool Equals(object obj) => obj is NullDisplayValue;
-        
-        public override int GetHashCode() => 0; // All null display values are equal
-    }
     
     /// <summary>
     /// Cache statistics for monitoring

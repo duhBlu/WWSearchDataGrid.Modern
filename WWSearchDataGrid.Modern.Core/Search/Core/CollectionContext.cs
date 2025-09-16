@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using WWSearchDataGrid.Modern.Core.Strategies;
 using WWSearchDataGrid.Modern.Core.Caching;
 
 namespace WWSearchDataGrid.Modern.Core
@@ -12,7 +11,7 @@ namespace WWSearchDataGrid.Modern.Core
     /// Provides lazy-loaded cached access to computed collection statistics
     /// Optimized for performance with large datasets
     /// </summary>
-    internal class CollectionContext : ICollectionContext, IDisposable
+    internal class CollectionContext : IDisposable
     {
         private readonly ClearableLazy<double?> _average;
         private readonly ClearableLazy<IEnumerable<object>> _sortedDescending;

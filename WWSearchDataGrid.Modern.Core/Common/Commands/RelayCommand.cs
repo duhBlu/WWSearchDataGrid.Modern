@@ -8,7 +8,7 @@ namespace WWSearchDataGrid.Modern.Core
     /// <summary>
     /// Relay command implementation
     /// </summary>
-    public class RelayCommand : ICommand
+    internal class RelayCommand : ICommand
     {
         private readonly Action<object> execute;
         private readonly Predicate<object> canExecute;

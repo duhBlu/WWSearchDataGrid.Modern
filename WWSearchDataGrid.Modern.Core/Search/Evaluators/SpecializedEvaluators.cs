@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 
-namespace WWSearchDataGrid.Modern.Core.Strategies
+namespace WWSearchDataGrid.Modern.Core
 {
     /// <summary>
     /// Evaluator for IsNull search type

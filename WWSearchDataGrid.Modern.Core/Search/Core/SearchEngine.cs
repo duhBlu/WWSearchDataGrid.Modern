@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
-using WWSearchDataGrid.Modern.Core.Strategies;
 
 namespace WWSearchDataGrid.Modern.Core
 {
@@ -82,7 +81,7 @@ namespace WWSearchDataGrid.Modern.Core
         /// <param name="searchCondition">Search condition to evaluate</param>
         /// <param name="collectionContext">Collection context for statistical and ranking operations</param>
         /// <returns>True if the value matches the condition, false otherwise</returns>
-        internal static bool EvaluateCondition(object columnValue, SearchCondition searchCondition, Strategies.ICollectionContext collectionContext)
+        internal static bool EvaluateCondition(object columnValue, SearchCondition searchCondition, CollectionContext collectionContext)
         {
             try
             {

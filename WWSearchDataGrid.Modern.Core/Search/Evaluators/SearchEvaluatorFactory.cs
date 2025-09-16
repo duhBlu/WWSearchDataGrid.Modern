@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace WWSearchDataGrid.Modern.Core.Strategies
+namespace WWSearchDataGrid.Modern.Core
 {
     /// <summary>
     /// Factory for creating and managing search evaluators
