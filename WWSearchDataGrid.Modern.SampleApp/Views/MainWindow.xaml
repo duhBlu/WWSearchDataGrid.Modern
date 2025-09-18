@@ -293,6 +293,8 @@
                                 Grid.Row="0"
                                 IsReadOnly="False"
                                 Margin="10"
+                                SelectionMode="Single"
+                                SelectionUnit="CellOrRowHeader"
                                 ItemsSource="{Binding Items}"
                                 CanUserAddRows="False">
 

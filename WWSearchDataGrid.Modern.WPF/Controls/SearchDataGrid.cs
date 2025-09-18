@@ -175,6 +175,10 @@ namespace WWSearchDataGrid.Modern.WPF
 
             // Initialize context menu functionality
             this.InitializeContextMenu();
+
+            // Add keyboard shortcuts for copy operations
+            this.InputBindings.Add(new KeyBinding(new RelayCommand(_ => ContextMenuCommands.CopySelectedCellValuesCommand.Execute(this)), Key.C, ModifierKeys.Control));
+            this.InputBindings.Add(new KeyBinding(new RelayCommand(_ => ContextMenuCommands.CopySelectedCellValuesWithHeadersCommand.Execute(this)), Key.C, ModifierKeys.Control | ModifierKeys.Shift));
         }
 
         #endregion

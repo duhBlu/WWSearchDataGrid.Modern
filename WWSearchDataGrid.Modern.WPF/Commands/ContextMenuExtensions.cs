@@ -65,10 +65,11 @@ namespace WWSearchDataGrid.Modern.WPF
             if (target == null || grid == null)
                 return null;
 
+            Core.CommandManager.InvalidateRequerySuggested();
+
             // Find the context type by walking up the visual tree
             var contextInfo = DetermineContextInfo(grid, target);
-
-            return contextInfo.ContextType switch
+            ContextMenu cmu = contextInfo.ContextType switch
             {
                 ContextMenuType.ColumnHeader => BuildColumnHeaderContextMenu(contextInfo),
                 ContextMenuType.Cell => BuildCellContextMenu(contextInfo),
@@ -76,6 +77,7 @@ namespace WWSearchDataGrid.Modern.WPF
                 ContextMenuType.GridBody => BuildGridBodyContextMenu(contextInfo),
                 _ => null
             };
+            return cmu;
         }
 
         /// <summary>
@@ -211,6 +213,28 @@ namespace WWSearchDataGrid.Modern.WPF
             var menu = new ContextMenu();
             AutomationProperties.SetAutomationId(menu, "cmuColumnHeader");
 
+            var columnInfo = new ColumnInfo
+            {
+                Column = contextInfo.Column,
+                ColumnSearchBox = contextInfo.ColumnSearchBox,
+                Grid = contextInfo.Grid
+            };
+
+            // Column-specific Copy Operations (Primary focus for column headers)
+            menu.Items.Add(new MenuItem
+            {
+                Header = "Copy",
+                Command = ContextMenuCommands.CopySelectedColumnValuesCommand,
+                CommandParameter = columnInfo,
+            });
+            
+            menu.Items.Add(new MenuItem
+            {
+                Header = "Copy With Headers",
+                Command = ContextMenuCommands.CopySelectedColumnValuesWithHeadersCommand,
+                CommandParameter = columnInfo,
+            });
+            menu.Items.Add(new Separator());
 
             // Sorting
             menu.Items.Add(new MenuItem
@@ -310,48 +334,6 @@ namespace WWSearchDataGrid.Modern.WPF
                 CommandParameter = contextInfo.Column
             });
 
-            menu.Items.Add(new MenuItem
-            {
-                Header = "Show Column Editor",
-                Command = ContextMenuCommands.ShowColumnEditorCommand,
-                CommandParameter = contextInfo.Grid
-            });
-            menu.Items.Add(new Separator());
-
-            // Summaries submenu
-            var summaryMenu = new MenuItem { Header = "Show Summary" };
-            summaryMenu.Items.Add(new MenuItem
-            {
-                Header = "Count",
-                Command = ContextMenuCommands.ShowCountSummaryCommand,
-                CommandParameter = contextInfo.Column
-            });
-            summaryMenu.Items.Add(new MenuItem
-            {
-                Header = "Sum",
-                Command = ContextMenuCommands.ShowSumSummaryCommand,
-                CommandParameter = contextInfo.Column
-            });
-            summaryMenu.Items.Add(new MenuItem
-            {
-                Header = "Average",
-                Command = ContextMenuCommands.ShowAverageSummaryCommand,
-                CommandParameter = contextInfo.Column
-            });
-            summaryMenu.Items.Add(new MenuItem
-            {
-                Header = "Min",
-                Command = ContextMenuCommands.ShowMinSummaryCommand,
-                CommandParameter = contextInfo.Column
-            });
-            summaryMenu.Items.Add(new MenuItem
-            {
-                Header = "Max",
-                Command = ContextMenuCommands.ShowMaxSummaryCommand,
-                CommandParameter = contextInfo.Column
-            });
-            menu.Items.Add(summaryMenu);
-
             return menu;
         }
 
@@ -361,6 +343,7 @@ namespace WWSearchDataGrid.Modern.WPF
         private static ContextMenu BuildCellContextMenu(ContextInfo contextInfo)
         {
             var menu = new ContextMenu();
+            AutomationProperties.SetAutomationId(menu, "cmuCell");
 
             var cellInfo = new CellInfo
             {
@@ -370,28 +353,16 @@ namespace WWSearchDataGrid.Modern.WPF
                 Grid = contextInfo.Grid
             };
 
-            // Data operations
+            // Cell-specific Copy Operations (Primary focus for cells)
             menu.Items.Add(new MenuItem
             {
-                Header = "Copy Cell Value",
-                Command = ContextMenuCommands.CopyCellValueCommand,
-                CommandParameter = cellInfo
+                Header = "Copy",
+                Command = ContextMenuCommands.CopySelectedCellValuesCommand,
+                CommandParameter = cellInfo,
+                InputGestureText = "Ctrl + C",
             });
 
-            var columnInfo = new ColumnInfo
-            {
-                Column = contextInfo.Column,
-                ColumnSearchBox = contextInfo.ColumnSearchBox,
-                Grid = contextInfo.Grid
-            };
-
-            menu.Items.Add(new MenuItem
-            {
-                Header = "Copy Column Values",
-                Command = ContextMenuCommands.CopyColumnValuesCommand,
-                CommandParameter = columnInfo
-            });
-
+            // Secondary copy operations
             var rowInfo = new RowInfo
             {
                 Data = contextInfo.RowData,
@@ -401,26 +372,22 @@ namespace WWSearchDataGrid.Modern.WPF
 
             menu.Items.Add(new MenuItem
             {
-                Header = "Copy Row",
-                Command = ContextMenuCommands.CopyRowValuesCommand,
-                CommandParameter = rowInfo
-            });
-            menu.Items.Add(new MenuItem
-            {
-                Header = "Copy Row With Headers",
-                Command = ContextMenuCommands.CopyRowWithHeadersCommand,
-                CommandParameter = rowInfo
+                Header = "Copy with Headers",
+                Command = ContextMenuCommands.CopySelectedCellValuesWithHeadersCommand,
+                CommandParameter = rowInfo,
+                InputGestureText = "Shift + Ctrl + C"
             });
 
             return menu;
         }
 
         /// <summary>
-        /// Builds context menu for rows
+        /// Builds context menu for rows (including row headers)
         /// </summary>
         private static ContextMenu BuildRowContextMenu(ContextInfo contextInfo)
         {
             var menu = new ContextMenu();
+            AutomationProperties.SetAutomationId(menu, "cmuRowHeader");
 
             var rowInfo = new RowInfo
             {
@@ -429,18 +396,18 @@ namespace WWSearchDataGrid.Modern.WPF
                 RowIndex = contextInfo.RowIndex
             };
 
-            // Row operations
+            // Row-specific Copy Operations (Primary focus for row headers)
             menu.Items.Add(new MenuItem
             {
-                Header = "Copy Row",
-                Command = ContextMenuCommands.CopyRowValuesCommand,
-                CommandParameter = rowInfo
+                Header = "Copy",
+                Command = ContextMenuCommands.CopySelectedRowValuesCommand,
+                CommandParameter = rowInfo,
             });
             menu.Items.Add(new MenuItem
             {
-                Header = "Copy Row With Headers",
-                Command = ContextMenuCommands.CopyRowWithHeadersCommand,
-                CommandParameter = rowInfo
+                Header = "Copy With Headers",
+                Command = ContextMenuCommands.CopySelectedRowValuesWithHeadersCommand,
+                CommandParameter = rowInfo,
             });
 
             return menu;

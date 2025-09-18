@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Text;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using WWSearchDataGrid.Modern.Core;
@@ -271,40 +273,287 @@ namespace WWSearchDataGrid.Modern.WPF.Commands
         #region Data & Export Commands
 
         /// <summary>
-        /// Copies a single cell value to clipboard
+        /// Copies values of all selected cells to clipboard
         /// </summary>
-        public static ICommand CopyCellValueCommand => new RelayCommand<CellInfo>(cellInfo =>
+        public static ICommand CopySelectedCellValuesCommand => new RelayCommand<SearchDataGrid>(grid =>
         {
-            Debug.WriteLine($"[PLACEHOLDER] Copy Cell Value: '{cellInfo?.Value}' from Column '{cellInfo?.Column?.Header}' - Not implemented");
-            // TODO: Copy cell value to clipboard
-        }, cellInfo => cellInfo?.Value != null);
+            try
+            {
+                if (grid?.SelectedCells != null && grid.SelectedCells.Count > 0)
+                {
+                    var results = new List<string>();
+
+                    foreach (var selectedCell in grid.SelectedCells)
+                    {
+                        var bindingPath = GetBindingPath(selectedCell.Column);
+                        if (!string.IsNullOrEmpty(bindingPath) && selectedCell.Item != null)
+                        {
+                            var value = ReflectionHelper.GetPropValue(selectedCell.Item, bindingPath);
+                            results.Add(value?.ToString() ?? "");
+                        }
+                    }
+
+                    var result = string.Join("\t", results);
+                    Clipboard.SetText(result);
+                    Debug.WriteLine($"Copied {results.Count} selected cell values to clipboard");
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error copying selected cell values: {ex.Message}");
+            }
+        }, grid => 
+        { 
+            return grid?.SelectedCells?.Count > 0; 
+        });
 
         /// <summary>
-        /// Copies all values in a column to clipboard
+        /// Copies values of all selected cells with headers to clipboard
         /// </summary>
-        public static ICommand CopyColumnValuesCommand => new RelayCommand<ColumnInfo>(columnInfo =>
+        public static ICommand CopySelectedCellValuesWithHeadersCommand => new RelayCommand<SearchDataGrid>(grid =>
         {
-            Debug.WriteLine($"[PLACEHOLDER] Copy Column Values: Column '{columnInfo?.Column?.Header}' - Not implemented");
-            // TODO: Copy all column values to clipboard
-        }, columnInfo => columnInfo?.Column != null && columnInfo?.Grid != null);
+            try
+            {
+                if (grid?.SelectedCells != null && grid.SelectedCells.Count > 0)
+                {
+                    // Group selected cells by column to get headers
+                    var cellsByColumn = grid.SelectedCells.GroupBy(c => c.Column).OrderBy(g => g.Key.DisplayIndex);
+                    var headers = new List<string>();
+                    var values = new List<string>();
+
+                    foreach (var columnGroup in cellsByColumn)
+                    {
+                        headers.Add(columnGroup.Key.Header?.ToString() ?? "");
+
+                        // For each column, take the first selected cell's value
+                        var firstCell = columnGroup.First();
+                        var bindingPath = GetBindingPath(firstCell.Column);
+                        if (!string.IsNullOrEmpty(bindingPath) && firstCell.Item != null)
+                        {
+                            var value = ReflectionHelper.GetPropValue(firstCell.Item, bindingPath);
+                            values.Add(value?.ToString() ?? "");
+                        }
+                        else
+                        {
+                            values.Add("");
+                        }
+                    }
+
+                    var result = string.Join("\t", headers) + Environment.NewLine + string.Join("\t", values);
+                    Clipboard.SetText(result);
+                    Debug.WriteLine($"Copied selected cell values with headers ({headers.Count} columns) to clipboard");
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error copying selected cell values with headers: {ex.Message}");
+            }
+        }, grid => grid?.SelectedCells?.Count > 0);
 
         /// <summary>
-        /// Copies row data to clipboard
+        /// Copies cell values of all selected rows to clipboard
         /// </summary>
-        public static ICommand CopyRowValuesCommand => new RelayCommand<RowInfo>(rowInfo =>
+        public static ICommand CopySelectedRowValuesCommand => new RelayCommand<SearchDataGrid>(grid =>
         {
-            Debug.WriteLine($"[PLACEHOLDER] Copy Row Values: Row with {rowInfo?.Data} - Not implemented");
-            // TODO: Copy row data to clipboard
-        }, rowInfo => rowInfo?.Data != null);
+            try
+            {
+                if (grid?.SelectedItems != null && grid.SelectedItems.Count > 0)
+                {
+                    var results = new List<string>();
+
+                    foreach (var selectedItem in grid.SelectedItems)
+                    {
+                        var rowValues = new List<string>();
+
+                        // Get all visible columns
+                        foreach (var column in grid.Columns.Where(c => c.Visibility == Visibility.Visible))
+                        {
+                            var bindingPath = GetBindingPath(column);
+                            if (!string.IsNullOrEmpty(bindingPath))
+                            {
+                                var value = ReflectionHelper.GetPropValue(selectedItem, bindingPath);
+                                rowValues.Add(value?.ToString() ?? "");
+                            }
+                            else
+                            {
+                                rowValues.Add("");
+                            }
+                        }
+
+                        results.Add(string.Join("\t", rowValues));
+                    }
+
+                    var result = string.Join(Environment.NewLine, results);
+                    Clipboard.SetText(result);
+                    Debug.WriteLine($"Copied {grid.SelectedItems.Count} selected rows to clipboard");
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error copying selected row values: {ex.Message}");
+            }
+        }, grid => grid?.SelectedItems?.Count > 0);
 
         /// <summary>
-        /// Copies row data with column headers to clipboard
+        /// Copies cell values of all selected rows with headers to clipboard
         /// </summary>
-        public static ICommand CopyRowWithHeadersCommand => new RelayCommand<RowInfo>(rowInfo =>
+        public static ICommand CopySelectedRowValuesWithHeadersCommand => new RelayCommand<SearchDataGrid>(grid =>
         {
-            Debug.WriteLine($"[PLACEHOLDER] Copy Row With Headers: Row with {rowInfo?.Data} - Not implemented");
-            // TODO: Copy row data with headers to clipboard
-        }, rowInfo => rowInfo?.Data != null);
+            try
+            {
+                if (grid?.SelectedItems != null && grid.SelectedItems.Count > 0)
+                {
+                    var results = new List<string>();
+                    var headers = new List<string>();
+
+                    // Get headers from visible columns
+                    foreach (var column in grid.Columns.Where(c => c.Visibility == Visibility.Visible))
+                    {
+                        headers.Add(column.Header?.ToString() ?? "");
+                    }
+
+                    // Add header row
+                    results.Add(string.Join("\t", headers));
+
+                    // Add data rows
+                    foreach (var selectedItem in grid.SelectedItems)
+                    {
+                        var rowValues = new List<string>();
+
+                        foreach (var column in grid.Columns.Where(c => c.Visibility == Visibility.Visible))
+                        {
+                            var bindingPath = GetBindingPath(column);
+                            if (!string.IsNullOrEmpty(bindingPath))
+                            {
+                                var value = ReflectionHelper.GetPropValue(selectedItem, bindingPath);
+                                rowValues.Add(value?.ToString() ?? "");
+                            }
+                            else
+                            {
+                                rowValues.Add("");
+                            }
+                        }
+
+                        results.Add(string.Join("\t", rowValues));
+                    }
+
+                    var result = string.Join(Environment.NewLine, results);
+                    Clipboard.SetText(result);
+                    Debug.WriteLine($"Copied {grid.SelectedItems.Count} selected rows with headers to clipboard");
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error copying selected row values with headers: {ex.Message}");
+            }
+        }, grid => grid?.SelectedItems?.Count > 0);
+
+        /// <summary>
+        /// Copies columns where there are selected cells
+        /// </summary>
+        public static ICommand CopySelectedColumnValuesCommand => new RelayCommand<SearchDataGrid>(grid =>
+        {
+            try
+            {
+                if (grid?.SelectedCells != null && grid.SelectedCells.Count > 0)
+                {
+                    // Get unique columns that have selected cells
+                    var selectedColumns = grid.SelectedCells.Select(c => c.Column).Distinct().OrderBy(c => c.DisplayIndex);
+                    var results = new List<List<string>>();
+
+                    foreach (var column in selectedColumns)
+                    {
+                        var columnValues = new List<string>();
+                        var bindingPath = GetBindingPath(column);
+
+                        if (!string.IsNullOrEmpty(bindingPath))
+                        {
+                            // Add all values from the filtered items for this column
+                            foreach (var item in grid.Items)
+                            {
+                                var value = ReflectionHelper.GetPropValue(item, bindingPath);
+                                columnValues.Add(value?.ToString() ?? "");
+                            }
+                        }
+
+                        results.Add(columnValues);
+                    }
+
+                    // Transpose the results to create tab-separated columns
+                    var maxRows = results.Max(r => r.Count);
+                    var finalResults = new List<string>();
+
+                    for (int row = 0; row < maxRows; row++)
+                    {
+                        var rowData = results.Select(col => row < col.Count ? col[row] : "").ToList();
+                        finalResults.Add(string.Join("\t", rowData));
+                    }
+
+                    var result = string.Join(Environment.NewLine, finalResults);
+                    Clipboard.SetText(result);
+                    Debug.WriteLine($"Copied {selectedColumns.Count()} selected columns to clipboard");
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error copying selected column values: {ex.Message}");
+            }
+        }, grid => grid?.SelectedCells?.Count > 0);
+
+        /// <summary>
+        /// Copies columns where there are selected cells with headers
+        /// </summary>
+        public static ICommand CopySelectedColumnValuesWithHeadersCommand => new RelayCommand<SearchDataGrid>(grid =>
+        {
+            try
+            {
+                if (grid?.SelectedCells != null && grid.SelectedCells.Count > 0)
+                {
+                    // Get unique columns that have selected cells
+                    var selectedColumns = grid.SelectedCells.Select(c => c.Column).Distinct().OrderBy(c => c.DisplayIndex);
+                    var results = new List<List<string>>();
+
+                    foreach (var column in selectedColumns)
+                    {
+                        var columnValues = new List<string>();
+                        var bindingPath = GetBindingPath(column);
+
+                        // Add header
+                        columnValues.Add(column.Header?.ToString() ?? "");
+
+                        if (!string.IsNullOrEmpty(bindingPath))
+                        {
+                            // Add all values from the filtered items for this column
+                            foreach (var item in grid.Items)
+                            {
+                                var value = ReflectionHelper.GetPropValue(item, bindingPath);
+                                columnValues.Add(value?.ToString() ?? "");
+                            }
+                        }
+
+                        results.Add(columnValues);
+                    }
+
+                    // Transpose the results to create tab-separated columns
+                    var maxRows = results.Max(r => r.Count);
+                    var finalResults = new List<string>();
+
+                    for (int row = 0; row < maxRows; row++)
+                    {
+                        var rowData = results.Select(col => row < col.Count ? col[row] : "").ToList();
+                        finalResults.Add(string.Join("\t", rowData));
+                    }
+
+                    var result = string.Join(Environment.NewLine, finalResults);
+                    Clipboard.SetText(result);
+                    Debug.WriteLine($"Copied {selectedColumns.Count()} selected columns with headers to clipboard");
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error copying selected column values with headers: {ex.Message}");
+            }
+        }, grid => grid?.SelectedCells?.Count > 0);
 
         /// <summary>
         /// Exports the grid data to CSV format
@@ -381,6 +630,27 @@ namespace WWSearchDataGrid.Modern.WPF.Commands
             Debug.WriteLine($"[PLACEHOLDER] Toggle Totals Row - Not implemented");
             // TODO: Toggle summary row visibility
         }, grid => grid != null);
+
+        #endregion
+
+        #region Helper Methods
+
+        /// <summary>
+        /// Extracts the binding path from a DataGridColumn
+        /// </summary>
+        private static string GetBindingPath(DataGridColumn column)
+        {
+            switch (column)
+            {
+                case DataGridBoundColumn boundColumn:
+                    return (boundColumn.Binding as System.Windows.Data.Binding)?.Path?.Path;
+                case DataGridTemplateColumn templateColumn:
+                    // For template columns, we'd need more complex logic to extract the binding
+                    return null;
+                default:
+                    return null;
+            }
+        }
 
         #endregion
     }
