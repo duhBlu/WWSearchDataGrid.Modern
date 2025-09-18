@@ -219,14 +219,14 @@ namespace WWSearchDataGrid.Modern.WPF
             menu.Items.Add(new MenuItem
             {
                 Header = "Copy",
-                Command = ContextMenuCommands.CopySelectedColumnValuesCommand,
+                Command = ContextMenuCommands.CopySelectedCellValuesCommand,
                 CommandParameter = contextInfo.Grid,
             });
 
             menu.Items.Add(new MenuItem
             {
                 Header = "Copy With Headers",
-                Command = ContextMenuCommands.CopySelectedColumnValuesWithHeadersCommand,
+                Command = ContextMenuCommands.CopySelectedCellValuesWithHeadersCommand,
                 CommandParameter = contextInfo.Grid
             });
             menu.Items.Add(new Separator());
@@ -346,7 +346,6 @@ namespace WWSearchDataGrid.Modern.WPF
                 Command = ContextMenuCommands.CopySelectedCellValuesCommand,
                 CommandParameter = contextInfo.Grid,
                 InputGestureText = "Ctrl + C",
-                FontWeight = FontWeights.Bold
             });
 
             menu.Items.Add(new MenuItem
@@ -372,14 +371,14 @@ namespace WWSearchDataGrid.Modern.WPF
             menu.Items.Add(new MenuItem
             {
                 Header = "Copy",
-                Command = ContextMenuCommands.CopySelectedRowValuesCommand,
+                Command = ContextMenuCommands.CopySelectedCellValuesCommand,
                 CommandParameter = contextInfo.Grid,
                 FontWeight = FontWeights.Bold
             });
             menu.Items.Add(new MenuItem
             {
                 Header = "Copy With Headers",
-                Command = ContextMenuCommands.CopySelectedRowValuesWithHeadersCommand,
+                Command = ContextMenuCommands.CopySelectedCellValuesWithHeadersCommand,
                 CommandParameter = contextInfo.Grid,
                 InputGestureText = "Shift + Ctrl + C"
             });
