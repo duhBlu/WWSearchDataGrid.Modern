@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.Linq;
 using System.Windows;
 using System.Windows.Automation;
@@ -6,6 +7,7 @@ using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Shapes;
 using WWSearchDataGrid.Modern.Core;
 using WWSearchDataGrid.Modern.WPF.Commands;
 
@@ -213,29 +215,21 @@ namespace WWSearchDataGrid.Modern.WPF
             var menu = new ContextMenu();
             AutomationProperties.SetAutomationId(menu, "cmuColumnHeader");
 
-            var columnInfo = new ColumnInfo
-            {
-                Column = contextInfo.Column,
-                ColumnSearchBox = contextInfo.ColumnSearchBox,
-                Grid = contextInfo.Grid
-            };
-
             // Column-specific Copy Operations (Primary focus for column headers)
             menu.Items.Add(new MenuItem
             {
                 Header = "Copy",
                 Command = ContextMenuCommands.CopySelectedColumnValuesCommand,
-                CommandParameter = columnInfo,
+                CommandParameter = contextInfo.Grid,
             });
-            
+
             menu.Items.Add(new MenuItem
             {
                 Header = "Copy With Headers",
                 Command = ContextMenuCommands.CopySelectedColumnValuesWithHeadersCommand,
-                CommandParameter = columnInfo,
+                CommandParameter = contextInfo.Grid
             });
             menu.Items.Add(new Separator());
-
             // Sorting
             menu.Items.Add(new MenuItem
             {
@@ -345,36 +339,21 @@ namespace WWSearchDataGrid.Modern.WPF
             var menu = new ContextMenu();
             AutomationProperties.SetAutomationId(menu, "cmuCell");
 
-            var cellInfo = new CellInfo
-            {
-                Value = contextInfo.CellValue,
-                Column = contextInfo.Column,
-                RowData = contextInfo.RowData,
-                Grid = contextInfo.Grid
-            };
-
             // Cell-specific Copy Operations (Primary focus for cells)
             menu.Items.Add(new MenuItem
             {
                 Header = "Copy",
                 Command = ContextMenuCommands.CopySelectedCellValuesCommand,
-                CommandParameter = cellInfo,
+                CommandParameter = contextInfo.Grid,
                 InputGestureText = "Ctrl + C",
+                FontWeight = FontWeights.Bold
             });
-
-            // Secondary copy operations
-            var rowInfo = new RowInfo
-            {
-                Data = contextInfo.RowData,
-                Grid = contextInfo.Grid,
-                RowIndex = contextInfo.RowIndex
-            };
 
             menu.Items.Add(new MenuItem
             {
-                Header = "Copy with Headers",
+                Header = "Copy With Headers",
                 Command = ContextMenuCommands.CopySelectedCellValuesWithHeadersCommand,
-                CommandParameter = rowInfo,
+                CommandParameter = contextInfo.Grid,
                 InputGestureText = "Shift + Ctrl + C"
             });
 
@@ -389,25 +368,20 @@ namespace WWSearchDataGrid.Modern.WPF
             var menu = new ContextMenu();
             AutomationProperties.SetAutomationId(menu, "cmuRowHeader");
 
-            var rowInfo = new RowInfo
-            {
-                Data = contextInfo.RowData,
-                Grid = contextInfo.Grid,
-                RowIndex = contextInfo.RowIndex
-            };
-
             // Row-specific Copy Operations (Primary focus for row headers)
             menu.Items.Add(new MenuItem
             {
                 Header = "Copy",
                 Command = ContextMenuCommands.CopySelectedRowValuesCommand,
-                CommandParameter = rowInfo,
+                CommandParameter = contextInfo.Grid,
+                FontWeight = FontWeights.Bold
             });
             menu.Items.Add(new MenuItem
             {
                 Header = "Copy With Headers",
                 Command = ContextMenuCommands.CopySelectedRowValuesWithHeadersCommand,
-                CommandParameter = rowInfo,
+                CommandParameter = contextInfo.Grid,
+                InputGestureText = "Shift + Ctrl + C"
             });
 
             return menu;
