@@ -41,7 +41,7 @@ namespace WWSearchDataGrid.Modern.Core
         }
     }
 
-    public class RelayCommand<T> : ICommand
+    internal class RelayCommand<T> : ICommand
     {
         private readonly Action<T> execute;
         private readonly Predicate<T> canExecute;
@@ -60,11 +60,10 @@ namespace WWSearchDataGrid.Modern.Core
 
         public bool CanExecute(object parameter)
         {
-            if (parameter == null && default(T) == null)
-                return canExecute?.Invoke(default) ?? true;
-
-            return parameter is T t && (canExecute?.Invoke(t) ?? true);
+            if (parameter is T t) return canExecute?.Invoke(t) ?? true;
+            return false;
         }
+
 
         public void Execute(object parameter)
         {

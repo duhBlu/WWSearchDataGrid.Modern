@@ -70,13 +70,13 @@ namespace WWSearchDataGrid.Modern.WPF
             Core.CommandManager.InvalidateRequerySuggested();
 
             // Find the context type by walking up the visual tree
-            var contextInfo = DetermineContextInfo(grid, target);
-            ContextMenu cmu = contextInfo.ContextType switch
+            var contextMenuContext = DeterminecontextMenuContext(grid, target);
+            ContextMenu cmu = contextMenuContext.ContextType switch
             {
-                ContextMenuType.ColumnHeader => BuildColumnHeaderContextMenu(contextInfo),
-                ContextMenuType.Cell => BuildCellContextMenu(contextInfo),
-                ContextMenuType.Row => BuildRowContextMenu(contextInfo),
-                ContextMenuType.GridBody => BuildGridBodyContextMenu(contextInfo),
+                ContextMenuType.ColumnHeader => BuildColumnHeaderContextMenu(contextMenuContext),
+                ContextMenuType.Cell => BuildCellContextMenu(contextMenuContext),
+                ContextMenuType.Row => BuildRowContextMenu(contextMenuContext),
+                ContextMenuType.GridBody => BuildGridBodyContextMenu(contextMenuContext),
                 _ => null
             };
             return cmu;
@@ -85,9 +85,9 @@ namespace WWSearchDataGrid.Modern.WPF
         /// <summary>
         /// Determines the context information for the clicked element
         /// </summary>
-        private static ContextInfo DetermineContextInfo(SearchDataGrid grid, FrameworkElement target)
+        private static ContextMenuContext DeterminecontextMenuContext(SearchDataGrid grid, FrameworkElement target)
         {
-            var contextInfo = new ContextInfo { Grid = grid, ContextType = ContextMenuType.GridBody };
+            var contextMenuContext = new ContextMenuContext { Grid = grid };
 
             // Walk up the visual tree to determine context
             var element = target;
@@ -96,38 +96,38 @@ namespace WWSearchDataGrid.Modern.WPF
                 switch (element)
                 {
                     case DataGridColumnHeader header:
-                        contextInfo.ContextType = ContextMenuType.ColumnHeader;
-                        contextInfo.Column = header.Column;
-                        contextInfo.ColumnSearchBox = FindColumnSearchBox(grid, header.Column);
-                        return contextInfo;
+                        contextMenuContext.ContextType = ContextMenuType.ColumnHeader;
+                        contextMenuContext.Column = header.Column;
+                        contextMenuContext.ColumnSearchBox = FindColumnSearchBox(grid, header.Column);
+                        return contextMenuContext;
 
                     case DataGridCell cell:
-                        contextInfo.ContextType = ContextMenuType.Cell;
-                        contextInfo.Column = cell.Column;
-                        contextInfo.ColumnSearchBox = FindColumnSearchBox(grid, cell.Column);
-                        contextInfo.RowData = cell.DataContext;
-                        contextInfo.CellValue = GetCellValue(cell);
-                        return contextInfo;
+                        contextMenuContext.ContextType = ContextMenuType.Cell;
+                        contextMenuContext.Column = cell.Column;
+                        contextMenuContext.ColumnSearchBox = FindColumnSearchBox(grid, cell.Column);
+                        contextMenuContext.RowData = cell.DataContext;
+                        contextMenuContext.CellValue = GetCellValue(cell);
+                        return contextMenuContext;
 
                     case DataGridRow row:
-                        contextInfo.ContextType = ContextMenuType.Row;
-                        contextInfo.RowData = row.DataContext;
-                        contextInfo.RowIndex = row.GetIndex();
-                        return contextInfo;
+                        contextMenuContext.ContextType = ContextMenuType.Row;
+                        contextMenuContext.RowData = row.DataContext;
+                        contextMenuContext.RowIndex = row.GetIndex();
+                        return contextMenuContext;
 
                     case DataGridRowHeader rowHeader:
-                        contextInfo.ContextType = ContextMenuType.Row;
+                        contextMenuContext.ContextType = ContextMenuType.Row;
                         if (rowHeader.DataContext != null)
                         {
-                            contextInfo.RowData = rowHeader.DataContext;
+                            contextMenuContext.RowData = rowHeader.DataContext;
                         }
-                        return contextInfo;
+                        return contextMenuContext;
                 }
 
                 element = VisualTreeHelper.GetParent(element) as FrameworkElement;
             }
 
-            return contextInfo;
+            return contextMenuContext;
         }
 
         /// <summary>
@@ -210,7 +210,7 @@ namespace WWSearchDataGrid.Modern.WPF
         /// <summary>
         /// Builds context menu for column headers
         /// </summary>
-        private static ContextMenu BuildColumnHeaderContextMenu(ContextInfo contextInfo)
+        private static ContextMenu BuildColumnHeaderContextMenu(ContextMenuContext contextMenuContext)
         {
             var menu = new ContextMenu();
             AutomationProperties.SetAutomationId(menu, "cmuColumnHeader");
@@ -220,14 +220,14 @@ namespace WWSearchDataGrid.Modern.WPF
             {
                 Header = "Copy",
                 Command = ContextMenuCommands.CopySelectedCellValuesCommand,
-                CommandParameter = contextInfo.Grid,
+                CommandParameter = contextMenuContext.Grid,
             });
 
             menu.Items.Add(new MenuItem
             {
                 Header = "Copy With Headers",
                 Command = ContextMenuCommands.CopySelectedCellValuesWithHeadersCommand,
-                CommandParameter = contextInfo.Grid
+                CommandParameter = contextMenuContext.Grid
             });
             menu.Items.Add(new Separator());
             // Sorting
@@ -236,30 +236,30 @@ namespace WWSearchDataGrid.Modern.WPF
                 Name = "miSortAscending",
                 Header = "Sort Ascending",
                 Command = ContextMenuCommands.SortAscendingCommand,
-                CommandParameter = contextInfo.Column
+                CommandParameter = contextMenuContext
             });
             menu.Items.Add(new MenuItem
             {
                 Header = "Sort Descending",
                 Command = ContextMenuCommands.SortDescendingCommand,
-                CommandParameter = contextInfo.Column
+                CommandParameter = contextMenuContext
             });
             menu.Items.Add(new Separator());
 
             // Filtering
-            if (contextInfo.ColumnSearchBox != null)
+            if (contextMenuContext.ColumnSearchBox != null)
             {
                 menu.Items.Add(new MenuItem
                 {
                     Header = "Show Filter Editor",
                     Command = ContextMenuCommands.ShowFilterEditorCommand,
-                    CommandParameter = contextInfo.ColumnSearchBox
+                    CommandParameter = contextMenuContext.ColumnSearchBox
                 });
                 menu.Items.Add(new MenuItem
                 {
                     Header = "Clear Column Filter",
                     Command = ContextMenuCommands.ClearColumnFilterCommand,
-                    CommandParameter = contextInfo.ColumnSearchBox
+                    CommandParameter = contextMenuContext.ColumnSearchBox
                 });
                 menu.Items.Add(new Separator());
             }
@@ -269,13 +269,13 @@ namespace WWSearchDataGrid.Modern.WPF
             {
                 Header = "Best Fit Column",
                 Command = ContextMenuCommands.BestFitColumnCommand,
-                CommandParameter = contextInfo.Column
+                CommandParameter = contextMenuContext.Column
             });
             menu.Items.Add(new MenuItem
             {
                 Header = "Best Fit All Columns",
                 Command = ContextMenuCommands.BestFitAllColumnsCommand,
-                CommandParameter = contextInfo.Grid
+                CommandParameter = contextMenuContext.Grid
             });
             menu.Items.Add(new Separator());
 
@@ -285,19 +285,19 @@ namespace WWSearchDataGrid.Modern.WPF
             {
                 Header = "Left",
                 Command = ContextMenuCommands.SetLeftAlignmentCommand,
-                CommandParameter = contextInfo.Column
+                CommandParameter = contextMenuContext.Column
             });
             alignmentMenu.Items.Add(new MenuItem
             {
                 Header = "Center",
                 Command = ContextMenuCommands.SetCenterAlignmentCommand,
-                CommandParameter = contextInfo.Column
+                CommandParameter = contextMenuContext.Column
             });
             alignmentMenu.Items.Add(new MenuItem
             {
                 Header = "Right",
                 Command = ContextMenuCommands.SetRightAlignmentCommand,
-                CommandParameter = contextInfo.Column
+                CommandParameter = contextMenuContext.Column
             });
             menu.Items.Add(alignmentMenu);
             menu.Items.Add(new Separator());
@@ -307,25 +307,25 @@ namespace WWSearchDataGrid.Modern.WPF
             {
                 Header = "Hide Column",
                 Command = ContextMenuCommands.HideSelectedColumnCommand,
-                CommandParameter = contextInfo.Column
+                CommandParameter = contextMenuContext.Column
             });
 
             // Dynamic Freeze/Unfreeze menu item
-            var isFrozen = IsColumnFrozen(contextInfo.Grid, contextInfo.Column);
+            var isFrozen = IsColumnFrozen(contextMenuContext.Grid, contextMenuContext.Column);
             menu.Items.Add(new MenuItem
             {
                 Header = isFrozen ? "Unfreeze Column" : "Freeze Column",
                 Command = isFrozen ? ContextMenuCommands.UnfreezeColumnCommand : ContextMenuCommands.FreezeColumnCommand,
-                CommandParameter = contextInfo.Column
+                CommandParameter = contextMenuContext.Column
             });
 
             // Dynamic Pin/Unpin menu item
-            var isPinned = IsColumnPinned(contextInfo.Grid, contextInfo.Column);
+            var isPinned = IsColumnPinned(contextMenuContext.Grid, contextMenuContext.Column);
             menu.Items.Add(new MenuItem
             {
                 Header = isPinned ? "Unpin Column" : "Pin Column",
                 Command = isPinned ? ContextMenuCommands.UnpinColumnCommand : ContextMenuCommands.PinColumnCommand,
-                CommandParameter = contextInfo.Column
+                CommandParameter = contextMenuContext.Column
             });
 
             return menu;
@@ -334,7 +334,7 @@ namespace WWSearchDataGrid.Modern.WPF
         /// <summary>
         /// Builds context menu for cells
         /// </summary>
-        private static ContextMenu BuildCellContextMenu(ContextInfo contextInfo)
+        private static ContextMenu BuildCellContextMenu(ContextMenuContext contextMenuContext)
         {
             var menu = new ContextMenu();
             AutomationProperties.SetAutomationId(menu, "cmuCell");
@@ -344,7 +344,7 @@ namespace WWSearchDataGrid.Modern.WPF
             {
                 Header = "Copy",
                 Command = ContextMenuCommands.CopySelectedCellValuesCommand,
-                CommandParameter = contextInfo.Grid,
+                CommandParameter = contextMenuContext.Grid,
                 InputGestureText = "Ctrl + C",
             });
 
@@ -352,7 +352,7 @@ namespace WWSearchDataGrid.Modern.WPF
             {
                 Header = "Copy With Headers",
                 Command = ContextMenuCommands.CopySelectedCellValuesWithHeadersCommand,
-                CommandParameter = contextInfo.Grid,
+                CommandParameter = contextMenuContext.Grid,
                 InputGestureText = "Shift + Ctrl + C"
             });
 
@@ -362,7 +362,7 @@ namespace WWSearchDataGrid.Modern.WPF
         /// <summary>
         /// Builds context menu for rows (including row headers)
         /// </summary>
-        private static ContextMenu BuildRowContextMenu(ContextInfo contextInfo)
+        private static ContextMenu BuildRowContextMenu(ContextMenuContext contextMenuContext)
         {
             var menu = new ContextMenu();
             AutomationProperties.SetAutomationId(menu, "cmuRowHeader");
@@ -372,14 +372,14 @@ namespace WWSearchDataGrid.Modern.WPF
             {
                 Header = "Copy",
                 Command = ContextMenuCommands.CopySelectedCellValuesCommand,
-                CommandParameter = contextInfo.Grid,
+                CommandParameter = contextMenuContext.Grid,
                 FontWeight = FontWeights.Bold
             });
             menu.Items.Add(new MenuItem
             {
                 Header = "Copy With Headers",
                 Command = ContextMenuCommands.CopySelectedCellValuesWithHeadersCommand,
-                CommandParameter = contextInfo.Grid,
+                CommandParameter = contextMenuContext.Grid,
                 InputGestureText = "Shift + Ctrl + C"
             });
 
@@ -389,7 +389,7 @@ namespace WWSearchDataGrid.Modern.WPF
         /// <summary>
         /// Builds context menu for general grid body
         /// </summary>
-        private static ContextMenu BuildGridBodyContextMenu(ContextInfo contextInfo)
+        private static ContextMenu BuildGridBodyContextMenu(ContextMenuContext contextMenuContext)
         {
             var menu = new ContextMenu();
 
@@ -398,25 +398,25 @@ namespace WWSearchDataGrid.Modern.WPF
             {
                 Header = "Clear All Filters",
                 Command = ContextMenuCommands.ClearAllFiltersCommand,
-                CommandParameter = contextInfo.Grid
+                CommandParameter = contextMenuContext.Grid
             });
             menu.Items.Add(new MenuItem
             {
                 Header = "Toggle Filter Panel",
                 Command = ContextMenuCommands.ToggleFilterPanelCommand,
-                CommandParameter = contextInfo.Grid
+                CommandParameter = contextMenuContext.Grid
             });
             menu.Items.Add(new MenuItem
             {
                 Header = "Save Filter Preset",
                 Command = ContextMenuCommands.SaveFilterPresetCommand,
-                CommandParameter = contextInfo.Grid
+                CommandParameter = contextMenuContext.Grid
             });
             menu.Items.Add(new MenuItem
             {
                 Header = "Load Filter Preset",
                 Command = ContextMenuCommands.LoadFilterPresetCommand,
-                CommandParameter = contextInfo.Grid
+                CommandParameter = contextMenuContext.Grid
             });
             menu.Items.Add(new Separator());
 
@@ -426,19 +426,19 @@ namespace WWSearchDataGrid.Modern.WPF
             {
                 Header = "Save Current Profile",
                 Command = ContextMenuCommands.SaveCurrentProfileCommand,
-                CommandParameter = contextInfo.Grid
+                CommandParameter = contextMenuContext.Grid
             });
             profilesMenu.Items.Add(new MenuItem
             {
                 Header = "Load Profile...",
                 Command = ContextMenuCommands.LoadProfileCommand,
-                CommandParameter = contextInfo.Grid
+                CommandParameter = contextMenuContext.Grid
             });
             profilesMenu.Items.Add(new MenuItem
             {
                 Header = "Manage Profiles...",
                 Command = ContextMenuCommands.ManageProfilesCommand,
-                CommandParameter = contextInfo.Grid
+                CommandParameter = contextMenuContext.Grid
             });
             menu.Items.Add(profilesMenu);
             menu.Items.Add(new Separator());
@@ -448,13 +448,13 @@ namespace WWSearchDataGrid.Modern.WPF
             {
                 Header = "Export to CSV",
                 Command = ContextMenuCommands.ExportToCsvCommand,
-                CommandParameter = contextInfo.Grid
+                CommandParameter = contextMenuContext.Grid
             });
             menu.Items.Add(new MenuItem
             {
                 Header = "Export to Excel",
                 Command = ContextMenuCommands.ExportToExcelCommand,
-                CommandParameter = contextInfo.Grid
+                CommandParameter = contextMenuContext.Grid
             });
             menu.Items.Add(new Separator());
 
@@ -463,13 +463,13 @@ namespace WWSearchDataGrid.Modern.WPF
             {
                 Header = "Show Column Editor",
                 Command = ContextMenuCommands.ShowColumnEditorCommand,
-                CommandParameter = contextInfo.Grid
+                CommandParameter = contextMenuContext.Grid
             });
             menu.Items.Add(new MenuItem
             {
                 Header = "Reset Layout",
                 Command = ContextMenuCommands.ResetLayoutCommand,
-                CommandParameter = contextInfo.Grid
+                CommandParameter = contextMenuContext.Grid
             });
 
             return menu;
@@ -490,20 +490,5 @@ namespace WWSearchDataGrid.Modern.WPF
         Row,
         GridBody
     }
-
-    /// <summary>
-    /// Contains information about the context menu target
-    /// </summary>
-    public class ContextInfo
-    {
-        public ContextMenuType ContextType { get; set; }
-        public SearchDataGrid Grid { get; set; }
-        public DataGridColumn Column { get; set; }
-        public ColumnSearchBox ColumnSearchBox { get; set; }
-        public object RowData { get; set; }
-        public object CellValue { get; set; }
-        public int RowIndex { get; set; }
-    }
-
     #endregion
 }
