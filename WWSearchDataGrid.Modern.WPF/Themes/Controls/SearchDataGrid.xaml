@@ -46,7 +46,7 @@
         </Setter>
     </Style>
 
-    <Style x:Key="DefaultSearchDataGridRowHeaderStyle" TargetType="DataGridRowHeader">
+    <Style x:Key="DefaultSearchDataGridRowHeaderStyle" TargetType="{x:Type DataGridRowHeader}">
         <Setter Property="HorizontalContentAlignment" Value="Center" />
         <Setter Property="VerticalContentAlignment" Value="Center" />
         <Setter Property="Padding" Value="4,0" />
@@ -57,7 +57,7 @@
         <Setter Property="BorderThickness" Value="0,0,1,1" />
         <Setter Property="Template">
             <Setter.Value>
-                <ControlTemplate TargetType="DataGridRowHeader">
+                <ControlTemplate TargetType="{x:Type DataGridRowHeader}">
                     <Border x:Name="HeaderBorder"
                             Background="{TemplateBinding Background}"
                             BorderBrush="{TemplateBinding BorderBrush}"
@@ -98,12 +98,12 @@
 
                         <!--  Search Control  -->
                         <sdg:ColumnSearchBox x:Name="PART_ColumnSearchBox"
-                                           Style="{Binding Mode=OneWay, Source={StaticResource DefaultColumnSearchBoxStyle}}"
-                                           Grid.Row="0"
-                                           BorderThickness="0"
-                                           Margin="0,1,1,0"
-                                           CurrentColumn="{Binding Column, RelativeSource={RelativeSource TemplatedParent}}"
-                                           SourceDataGrid="{Binding Mode=OneWay, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type sdg:SearchDataGrid}}}" />
+                                             Style="{Binding Mode=OneWay, Source={StaticResource DefaultColumnSearchBoxStyle}}"
+                                             Grid.Row="0"
+                                             BorderThickness="0"
+                                             Margin="0,1,1,0"
+                                             CurrentColumn="{Binding Column, RelativeSource={RelativeSource TemplatedParent}}"
+                                             SourceDataGrid="{Binding Mode=OneWay, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type sdg:SearchDataGrid}}}" />
 
                         <!--  Header Content  -->
                         <Border x:Name="HeaderBorder"
@@ -205,9 +205,9 @@
                             SnapsToDevicePixels="True">
                         <Grid>
                             <Grid.RowDefinitions>
-                                <RowDefinition Height="*" />      
+                                <RowDefinition Height="*" />
                                 <!--  DataGrid  -->
-                                <RowDefinition Height="Auto" />   
+                                <RowDefinition Height="Auto" />
                                 <!--  FilterPanel  -->
                             </Grid.RowDefinitions>
 
@@ -215,8 +215,8 @@
                             <ScrollViewer x:Name="DG_ScrollViewer"
                                           Grid.Row="0"
                                           Focusable="false"
-                                          CanContentScroll="true"
-                                          sdg:HorizontalScrollBehavior.EnableShiftMouseWheelScroll="True">
+                                          sdg:HorizontalScrollBehavior.EnableShiftMouseWheelScroll="True"
+                                          CanContentScroll="true">
                                 <ScrollViewer.Template>
                                     <ControlTemplate TargetType="ScrollViewer">
                                         <Grid>

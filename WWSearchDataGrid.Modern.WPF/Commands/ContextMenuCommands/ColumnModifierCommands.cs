@@ -20,10 +20,22 @@ namespace WWSearchDataGrid.Modern.WPF.Commands
         /// <summary>
         /// Opens the column management editor dialog
         /// </summary>
-        public static ICommand ShowColumnEditorCommand => new RelayCommand<SearchDataGrid>(grid =>
+        public static ICommand ShowColumnChooserCommand => new RelayCommand<SearchDataGrid>(grid =>
         {
-            Debug.WriteLine($"[PLACEHOLDER] Show Column Editor - Not implemented");
-            // TODO: Create and show ColumnEditor dialog
+            try
+            {
+                var ColumnChooser = new ColumnChooser
+                {
+                    SourceDataGrid = grid
+                };
+
+                // Show the non-modal window
+                ColumnChooser.Show();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error in ShowColumnChooserCommand: {ex.Message}");
+            }
         }, grid => grid != null);
 
         /// <summary>
@@ -31,9 +43,31 @@ namespace WWSearchDataGrid.Modern.WPF.Commands
         /// </summary>
         public static ICommand HideSelectedColumnCommand => new RelayCommand<DataGridColumn>(column =>
         {
-            Debug.WriteLine($"[PLACEHOLDER] Hide Column: '{column?.Header}' - Not implemented");
-            // TODO: Set column visibility to false
-        }, column => column != null);
+            try
+            {
+                if (column != null)
+                {
+                    // Set the column visibility to collapsed
+                    column.Visibility = Visibility.Collapsed;
+
+                    foreach (Window window in Application.Current.Windows)
+                    {
+                        if (window.Content is ColumnChooser columnChooser)
+                        {
+                            var columnInfo = columnChooser.Columns.FirstOrDefault(c => c.Column == column);
+                            if (columnInfo != null)
+                            {
+                                columnInfo.IsVisible = false;
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error hiding column '{column?.Header}': {ex.Message}");
+            }
+        }, column => column != null && column.Visibility == Visibility.Visible);
 
         /// <summary>
         /// Toggles the freeze state of a column (freezes if unfrozen, unfreezes if frozen)
@@ -140,7 +174,6 @@ namespace WWSearchDataGrid.Modern.WPF.Commands
             // Freeze as pixel width so it doesn't reflow later
             column.Width = new DataGridLength(target);
 
-            // Optional: ensure a tiny layout pass to stabilize
             grid.UpdateLayout();
         }
 
@@ -208,6 +241,21 @@ namespace WWSearchDataGrid.Modern.WPF.Commands
                 Debug.WriteLine($"Error in SortDescendingCommand: {ex.Message}");
             }
         }, context => context.Column != null && context.Column.SortDirection != ListSortDirection.Descending && CanSortColumn(context.Column));
+        
+        /// <summary>
+        /// Sorts the column in descending order
+        /// </summary>
+        public static ICommand ClearSortingCommand => new RelayCommand<ContextMenuContext>(context =>
+        {
+            try
+            {
+                context.Column.SortDirection = null;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error in SortDescendingCommand: {ex.Message}");
+            }
+        }, context => context.Column != null && context.Column.SortDirection != null);
 
         #endregion
 
@@ -271,6 +319,5 @@ namespace WWSearchDataGrid.Modern.WPF.Commands
         #endregion
 
         #endregion 
-
     }
 }

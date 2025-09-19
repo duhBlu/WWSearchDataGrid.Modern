@@ -257,6 +257,12 @@ namespace WWSearchDataGrid.Modern.WPF
                 "Sort Descending",
                 ContextMenuCommands.SortDescendingCommand,
                 contextMenuContext));
+            
+            menu.Items.Add(BuildMenuItem(
+                "miClearSorting",
+                "Clear Sorting",
+                ContextMenuCommands.ClearSortingCommand,
+                contextMenuContext));
 
             menu.Items.Add(new Separator());
 
@@ -316,8 +322,13 @@ namespace WWSearchDataGrid.Modern.WPF
 
             // Visibility and Layout
             menu.Items.Add(BuildMenuItem(
+                "miShowColumnChooser",
+                "Show Column Chooser",
+                ContextMenuCommands.ShowColumnChooserCommand,
+                contextMenuContext.Grid));
+            menu.Items.Add(BuildMenuItem(
                 "miHideColumn",
-                "Hide Column (Not Implemented)",
+                "Hide Column",
                 ContextMenuCommands.HideSelectedColumnCommand,
                 contextMenuContext.Column));
 
@@ -452,9 +463,9 @@ namespace WWSearchDataGrid.Modern.WPF
 
             // Layout operations
             menu.Items.Add(BuildMenuItem(
-                "miShowColumnEditor",
-                "Show Column Editor (Not Implemented)",
-                ContextMenuCommands.ShowColumnEditorCommand,
+                "miShowColumnChooser",
+                "Show Column Chooser",
+                ContextMenuCommands.ShowColumnChooserCommand,
                 contextMenuContext.Grid));
             menu.Items.Add(BuildMenuItem(
                 "miResetLayout",

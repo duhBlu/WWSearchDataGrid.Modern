@@ -225,13 +225,13 @@ namespace WWSearchDataGrid.Modern.WPF
             obj.SetValue(CustomSearchTemplateProperty, value);
 
         /// <summary>
-        /// Sets whether to show the column editor filter button
+        /// Sets whether to show the column chooser filter button
         /// </summary>
         public static void SetAllowRuleValueFiltering(DependencyObject element, bool value) =>
             element.SetValue(AllowRuleValueFilteringProperty, value);
 
         /// <summary>
-        /// Gets whether to show the column editor filter button
+        /// Gets whether to show the column chooser filter button
         /// </summary>
         public static bool GetAllowRuleValueFiltering(DependencyObject element) =>
             (bool)element.GetValue(AllowRuleValueFilteringProperty);
