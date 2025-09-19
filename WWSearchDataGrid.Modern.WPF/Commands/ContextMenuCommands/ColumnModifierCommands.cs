@@ -75,23 +75,76 @@ namespace WWSearchDataGrid.Modern.WPF.Commands
 
         #region Sizing & Alignment Commands
 
+        #region Best Fit Commands
+
         /// <summary>
         /// Auto-sizes the current column to fit content
         /// </summary>
-        public static ICommand BestFitColumnCommand => new RelayCommand<DataGridColumn>(column =>
+        public static ICommand BestFitColumnCommand => new RelayCommand<ContextMenuContext>(context =>
         {
-            Debug.WriteLine($"[PLACEHOLDER] Best Fit Column: '{column?.Header}' - Not implemented");
-            // TODO: Auto-size column to fit content
-        }, column => column != null);
+            try
+            {
+                BestFitColumn(context.Grid, context.Column);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"BestFitColumn error: {ex}");
+            }
+        }, context => context.Grid != null && context.Column != null);
 
         /// <summary>
         /// Auto-sizes all columns to fit content
         /// </summary>
-        public static ICommand BestFitAllColumnsCommand => new RelayCommand<SearchDataGrid>(grid =>
+        public static ICommand BestFitAllColumnsCommand => new RelayCommand<ContextMenuContext>(context =>
         {
-            Debug.WriteLine($"[PLACEHOLDER] Best Fit All Columns - Not implemented");
-            // TODO: Auto-size all columns to fit content
-        }, grid => grid != null);
+            try
+            {
+                foreach (var col in context.Grid.Columns)
+                {
+                    BestFitColumn(context.Grid, col);
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"BestFitAllColumns error: {ex}");
+            }
+        }, context => context.Grid != null && context.Grid.Columns != null);
+
+        /// <summary>
+        /// Best-fit a single column (header + realized cells), then freeze to pixel width.
+        /// </summary>
+        public static void BestFitColumn(DataGrid grid, DataGridColumn column)
+        {
+            if (grid == null || column == null) return;
+
+            // Keep current constraints
+            double min = column.MinWidth;
+            double max = double.IsNaN(column.MaxWidth) || column.MaxWidth <= 0 ? double.PositiveInfinity : column.MaxWidth;
+
+            // Measure header
+            column.Width = new DataGridLength(1, DataGridLengthUnitType.SizeToHeader);
+            grid.UpdateLayout();
+            double headerWidth = column.ActualWidth;
+
+            // Measure realized cells (visible rows)
+            column.Width = new DataGridLength(1, DataGridLengthUnitType.SizeToCells);
+            grid.UpdateLayout();
+            double cellsWidth = column.ActualWidth;
+
+            // Choose the larger, clamp to min/max
+            double target = Math.Max(headerWidth, cellsWidth);
+            target = Math.Max(target, min);
+            if (!double.IsPositiveInfinity(max))
+                target = Math.Min(target, max);
+
+            // Freeze as pixel width so it doesn't reflow later
+            column.Width = new DataGridLength(target);
+
+            // Optional: ensure a tiny layout pass to stabilize
+            grid.UpdateLayout();
+        }
+
+        #endregion
 
         /// <summary>
         /// Sets column alignment to left
@@ -122,7 +175,7 @@ namespace WWSearchDataGrid.Modern.WPF.Commands
 
         #endregion
 
-        #region Sorting Commands
+        #region Sorting
 
         #region Sorting Commands Implementation
 
@@ -138,9 +191,8 @@ namespace WWSearchDataGrid.Modern.WPF.Commands
             catch (Exception ex)
             {
                 Debug.WriteLine($"Error in SortAscendingCommand: {ex.Message}");
-                MessageBox.Show($"Error sorting column: {ex.Message}", "Sort Error", MessageBoxButton.OK, MessageBoxImage.Warning);
             }
-        }, context => CanSortColumn(context.Column));
+        }, context => context.Column != null && context.Column.SortDirection != ListSortDirection.Ascending && CanSortColumn(context.Column));
 
         /// <summary>
         /// Sorts the column in descending order
@@ -154,9 +206,8 @@ namespace WWSearchDataGrid.Modern.WPF.Commands
             catch (Exception ex)
             {
                 Debug.WriteLine($"Error in SortDescendingCommand: {ex.Message}");
-                MessageBox.Show($"Error sorting column: {ex.Message}", "Sort Error", MessageBoxButton.OK, MessageBoxImage.Warning);
             }
-        }, context => CanSortColumn(context.Column));
+        }, context => context.Column != null && context.Column.SortDirection != ListSortDirection.Descending && CanSortColumn(context.Column));
 
         #endregion
 

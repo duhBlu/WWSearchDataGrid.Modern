@@ -70,7 +70,7 @@ namespace WWSearchDataGrid.Modern.WPF
             Core.CommandManager.InvalidateRequerySuggested();
 
             // Find the context type by walking up the visual tree
-            var contextMenuContext = DeterminecontextMenuContext(grid, target);
+            var contextMenuContext = DetermineContextMenuContext(grid, target);
             ContextMenu cmu = contextMenuContext.ContextType switch
             {
                 ContextMenuType.ColumnHeader => BuildColumnHeaderContextMenu(contextMenuContext),
@@ -85,9 +85,9 @@ namespace WWSearchDataGrid.Modern.WPF
         /// <summary>
         /// Determines the context information for the clicked element
         /// </summary>
-        private static ContextMenuContext DeterminecontextMenuContext(SearchDataGrid grid, FrameworkElement target)
+        private static ContextMenuContext DetermineContextMenuContext(SearchDataGrid grid, FrameworkElement target)
         {
-            var contextMenuContext = new ContextMenuContext { Grid = grid };
+            var contextMenuContext = new ContextMenuContext { Grid = grid, ContextType = ContextMenuType.GridBody }; 
 
             // Walk up the visual tree to determine context
             var element = target;
@@ -207,270 +207,260 @@ namespace WWSearchDataGrid.Modern.WPF
 
         #region Context Menu Builders
 
-        /// <summary>
-        /// Builds context menu for column headers
-        /// </summary>
+        private static MenuItem BuildMenuItem(string name, string header, ICommand command, object parameter = null, string inputGestureText = "")
+        {
+            var item = new MenuItem
+            {
+                Name = name,
+                Header = header,
+                Command = command,
+                CommandParameter = parameter,
+                InputGestureText = inputGestureText
+            };
+
+            // Set AutomationId to match Name
+            AutomationProperties.SetAutomationId(item, name);
+
+            return item;
+        }
+
         private static ContextMenu BuildColumnHeaderContextMenu(ContextMenuContext contextMenuContext)
         {
             var menu = new ContextMenu();
             AutomationProperties.SetAutomationId(menu, "cmuColumnHeader");
 
             // Column-specific Copy Operations (Primary focus for column headers)
-            menu.Items.Add(new MenuItem
-            {
-                Header = "Copy",
-                Command = ContextMenuCommands.CopySelectedCellValuesCommand,
-                CommandParameter = contextMenuContext.Grid,
-            });
+            menu.Items.Add(BuildMenuItem(
+                "miCopy",
+                "Copy",
+                ContextMenuCommands.CopySelectedCellValuesCommand,
+                contextMenuContext.Grid,
+                "Ctrl+C"));
 
-            menu.Items.Add(new MenuItem
-            {
-                Header = "Copy With Headers",
-                Command = ContextMenuCommands.CopySelectedCellValuesWithHeadersCommand,
-                CommandParameter = contextMenuContext.Grid
-            });
+            menu.Items.Add(BuildMenuItem(
+                "miCopyWithHeaders",
+                "Copy With Headers",
+                ContextMenuCommands.CopySelectedCellValuesWithHeadersCommand,
+                contextMenuContext.Grid, "Ctrl+Shift+C"));
+
             menu.Items.Add(new Separator());
+
             // Sorting
-            menu.Items.Add(new MenuItem
-            {
-                Name = "miSortAscending",
-                Header = "Sort Ascending",
-                Command = ContextMenuCommands.SortAscendingCommand,
-                CommandParameter = contextMenuContext
-            });
-            menu.Items.Add(new MenuItem
-            {
-                Header = "Sort Descending",
-                Command = ContextMenuCommands.SortDescendingCommand,
-                CommandParameter = contextMenuContext
-            });
+            menu.Items.Add(BuildMenuItem(
+                "miSortAscending",
+                "Sort Ascending",
+                ContextMenuCommands.SortAscendingCommand,
+                contextMenuContext));
+
+            menu.Items.Add(BuildMenuItem(
+                "miSortDescending",
+                "Sort Descending",
+                ContextMenuCommands.SortDescendingCommand,
+                contextMenuContext));
+
             menu.Items.Add(new Separator());
 
             // Filtering
             if (contextMenuContext.ColumnSearchBox != null)
             {
-                menu.Items.Add(new MenuItem
-                {
-                    Header = "Show Filter Editor",
-                    Command = ContextMenuCommands.ShowFilterEditorCommand,
-                    CommandParameter = contextMenuContext.ColumnSearchBox
-                });
-                menu.Items.Add(new MenuItem
-                {
-                    Header = "Clear Column Filter",
-                    Command = ContextMenuCommands.ClearColumnFilterCommand,
-                    CommandParameter = contextMenuContext.ColumnSearchBox
-                });
+                menu.Items.Add(BuildMenuItem(
+                    "miShowFilterEditor",
+                    "Show Filter Editor (Not Implemented)",
+                    ContextMenuCommands.ShowFilterEditorCommand,
+                    contextMenuContext.ColumnSearchBox));
+
+                menu.Items.Add(BuildMenuItem(
+                    "miClearColumnFilter",
+                    "Clear Column Filter (Not Implemented)",
+                    ContextMenuCommands.ClearColumnFilterCommand,
+                    contextMenuContext.ColumnSearchBox));
+
                 menu.Items.Add(new Separator());
             }
 
             // Column Operations
-            menu.Items.Add(new MenuItem
-            {
-                Header = "Best Fit Column",
-                Command = ContextMenuCommands.BestFitColumnCommand,
-                CommandParameter = contextMenuContext.Column
-            });
-            menu.Items.Add(new MenuItem
-            {
-                Header = "Best Fit All Columns",
-                Command = ContextMenuCommands.BestFitAllColumnsCommand,
-                CommandParameter = contextMenuContext.Grid
-            });
+            menu.Items.Add(BuildMenuItem(
+                "miBestFitColumn",
+                "Best Fit Column (Not Implemented)",
+                ContextMenuCommands.BestFitColumnCommand,
+                contextMenuContext));
+
+            menu.Items.Add(BuildMenuItem(
+                "miBestFitAllColumns",
+                "Best Fit All Columns (Not Implemented)",
+                ContextMenuCommands.BestFitAllColumnsCommand,
+                contextMenuContext));
+
             menu.Items.Add(new Separator());
 
             // Alignment submenu
-            var alignmentMenu = new MenuItem { Header = "Alignment" };
-            alignmentMenu.Items.Add(new MenuItem
-            {
-                Header = "Left",
-                Command = ContextMenuCommands.SetLeftAlignmentCommand,
-                CommandParameter = contextMenuContext.Column
-            });
-            alignmentMenu.Items.Add(new MenuItem
-            {
-                Header = "Center",
-                Command = ContextMenuCommands.SetCenterAlignmentCommand,
-                CommandParameter = contextMenuContext.Column
-            });
-            alignmentMenu.Items.Add(new MenuItem
-            {
-                Header = "Right",
-                Command = ContextMenuCommands.SetRightAlignmentCommand,
-                CommandParameter = contextMenuContext.Column
-            });
+            var alignmentMenu = BuildMenuItem("miAlignment", "Alignment (Not Implemented)", null, null);
+            alignmentMenu.Items.Add(BuildMenuItem(
+                "miAlignLeft",
+                "Left",
+                ContextMenuCommands.SetLeftAlignmentCommand,
+                contextMenuContext.Column));
+            alignmentMenu.Items.Add(BuildMenuItem(
+                "miAlignCenter",
+                "Center",
+                ContextMenuCommands.SetCenterAlignmentCommand,
+                contextMenuContext.Column));
+            alignmentMenu.Items.Add(BuildMenuItem(
+                "miAlignRight",
+                "Right",
+                ContextMenuCommands.SetRightAlignmentCommand,
+                contextMenuContext.Column));
             menu.Items.Add(alignmentMenu);
+
             menu.Items.Add(new Separator());
 
             // Visibility and Layout
-            menu.Items.Add(new MenuItem
-            {
-                Header = "Hide Column",
-                Command = ContextMenuCommands.HideSelectedColumnCommand,
-                CommandParameter = contextMenuContext.Column
-            });
+            menu.Items.Add(BuildMenuItem(
+                "miHideColumn",
+                "Hide Column (Not Implemented)",
+                ContextMenuCommands.HideSelectedColumnCommand,
+                contextMenuContext.Column));
 
             // Dynamic Freeze/Unfreeze menu item
             var isFrozen = IsColumnFrozen(contextMenuContext.Grid, contextMenuContext.Column);
-            menu.Items.Add(new MenuItem
-            {
-                Header = isFrozen ? "Unfreeze Column" : "Freeze Column",
-                Command = isFrozen ? ContextMenuCommands.UnfreezeColumnCommand : ContextMenuCommands.FreezeColumnCommand,
-                CommandParameter = contextMenuContext.Column
-            });
+            var freezeName = isFrozen ? "miUnfreezeColumn" : "miFreezeColumn";
+            var freezeHeader = isFrozen ? "Unfreeze Column (Not Implemented)" : "Freeze Column (Not Implemented)";
+            menu.Items.Add(BuildMenuItem(
+                freezeName,
+                freezeHeader,
+                isFrozen ? ContextMenuCommands.UnfreezeColumnCommand : ContextMenuCommands.FreezeColumnCommand,
+                contextMenuContext.Column));
 
             // Dynamic Pin/Unpin menu item
             var isPinned = IsColumnPinned(contextMenuContext.Grid, contextMenuContext.Column);
-            menu.Items.Add(new MenuItem
-            {
-                Header = isPinned ? "Unpin Column" : "Pin Column",
-                Command = isPinned ? ContextMenuCommands.UnpinColumnCommand : ContextMenuCommands.PinColumnCommand,
-                CommandParameter = contextMenuContext.Column
-            });
+            var pinName = isPinned ? "miUnpinColumn" : "miPinColumn";
+            var pinHeader = isPinned ? "Unpin Column (Not Implemented)" : "Pin Column (Not Implemented)";
+            menu.Items.Add(BuildMenuItem(
+                pinName,
+                pinHeader,
+                isPinned ? ContextMenuCommands.UnpinColumnCommand : ContextMenuCommands.PinColumnCommand,
+                contextMenuContext.Column));
 
             return menu;
         }
 
-        /// <summary>
-        /// Builds context menu for cells
-        /// </summary>
+
         private static ContextMenu BuildCellContextMenu(ContextMenuContext contextMenuContext)
         {
             var menu = new ContextMenu();
             AutomationProperties.SetAutomationId(menu, "cmuCell");
 
-            // Cell-specific Copy Operations (Primary focus for cells)
-            menu.Items.Add(new MenuItem
-            {
-                Header = "Copy",
-                Command = ContextMenuCommands.CopySelectedCellValuesCommand,
-                CommandParameter = contextMenuContext.Grid,
-                InputGestureText = "Ctrl + C",
-            });
-
-            menu.Items.Add(new MenuItem
-            {
-                Header = "Copy With Headers",
-                Command = ContextMenuCommands.CopySelectedCellValuesWithHeadersCommand,
-                CommandParameter = contextMenuContext.Grid,
-                InputGestureText = "Shift + Ctrl + C"
-            });
+            menu.Items.Add(BuildMenuItem(
+                "miCopy",
+                "Copy",
+                ContextMenuCommands.CopySelectedCellValuesCommand,
+                contextMenuContext.Grid,
+                "Ctrl+C"));
+            menu.Items.Add(BuildMenuItem(
+                "miCopyWithHeaders",
+                "Copy With Headers",
+                ContextMenuCommands.CopySelectedCellValuesWithHeadersCommand,
+                contextMenuContext.Grid,
+                "Shift+Ctrl+C"));
 
             return menu;
         }
 
-        /// <summary>
-        /// Builds context menu for rows (including row headers)
-        /// </summary>
         private static ContextMenu BuildRowContextMenu(ContextMenuContext contextMenuContext)
         {
             var menu = new ContextMenu();
             AutomationProperties.SetAutomationId(menu, "cmuRowHeader");
 
-            // Row-specific Copy Operations (Primary focus for row headers)
-            menu.Items.Add(new MenuItem
-            {
-                Header = "Copy",
-                Command = ContextMenuCommands.CopySelectedCellValuesCommand,
-                CommandParameter = contextMenuContext.Grid,
-                FontWeight = FontWeights.Bold
-            });
-            menu.Items.Add(new MenuItem
-            {
-                Header = "Copy With Headers",
-                Command = ContextMenuCommands.CopySelectedCellValuesWithHeadersCommand,
-                CommandParameter = contextMenuContext.Grid,
-                InputGestureText = "Shift + Ctrl + C"
-            });
+            menu.Items.Add(BuildMenuItem(
+                "miCopy",
+                "Copy",
+                ContextMenuCommands.CopySelectedCellValuesCommand,
+                contextMenuContext.Grid,
+                "Ctrl+C"));
+            menu.Items.Add(BuildMenuItem(
+                "miCopyWithHeaders",
+                "Copy With Headers",
+                ContextMenuCommands.CopySelectedCellValuesWithHeadersCommand,
+                contextMenuContext.Grid, 
+                "Ctrl+C"));
 
             return menu;
         }
 
-        /// <summary>
-        /// Builds context menu for general grid body
-        /// </summary>
         private static ContextMenu BuildGridBodyContextMenu(ContextMenuContext contextMenuContext)
         {
             var menu = new ContextMenu();
+            AutomationProperties.SetAutomationId(menu, "cmuGridBody");
 
             // Filter operations
-            menu.Items.Add(new MenuItem
-            {
-                Header = "Clear All Filters",
-                Command = ContextMenuCommands.ClearAllFiltersCommand,
-                CommandParameter = contextMenuContext.Grid
-            });
-            menu.Items.Add(new MenuItem
-            {
-                Header = "Toggle Filter Panel",
-                Command = ContextMenuCommands.ToggleFilterPanelCommand,
-                CommandParameter = contextMenuContext.Grid
-            });
-            menu.Items.Add(new MenuItem
-            {
-                Header = "Save Filter Preset",
-                Command = ContextMenuCommands.SaveFilterPresetCommand,
-                CommandParameter = contextMenuContext.Grid
-            });
-            menu.Items.Add(new MenuItem
-            {
-                Header = "Load Filter Preset",
-                Command = ContextMenuCommands.LoadFilterPresetCommand,
-                CommandParameter = contextMenuContext.Grid
-            });
+            menu.Items.Add(BuildMenuItem(
+                "miClearAllFilters",
+                "Clear All Filters (Not Implemented)",
+                ContextMenuCommands.ClearAllFiltersCommand,
+                contextMenuContext.Grid));
+            menu.Items.Add(BuildMenuItem(
+                "miToggleFilterPanel",
+                "Toggle Filter Panel (Not Implemented)",
+                ContextMenuCommands.ToggleFilterPanelCommand,
+                contextMenuContext.Grid));
+            menu.Items.Add(BuildMenuItem(
+                "miSaveFilterPreset", 
+                "Save Filter Preset (Not Implemented)",
+                ContextMenuCommands.SaveFilterPresetCommand,
+                contextMenuContext.Grid));
+            menu.Items.Add(BuildMenuItem(
+                "miLoadFilterPreset",
+                "Load Filter Preset (Not Implemented)",
+                ContextMenuCommands.LoadFilterPresetCommand,
+                contextMenuContext.Grid));
             menu.Items.Add(new Separator());
 
             // Column Profiles submenu
-            var profilesMenu = new MenuItem { Header = "Column Profiles" };
-            profilesMenu.Items.Add(new MenuItem
-            {
-                Header = "Save Current Profile",
-                Command = ContextMenuCommands.SaveCurrentProfileCommand,
-                CommandParameter = contextMenuContext.Grid
-            });
-            profilesMenu.Items.Add(new MenuItem
-            {
-                Header = "Load Profile...",
-                Command = ContextMenuCommands.LoadProfileCommand,
-                CommandParameter = contextMenuContext.Grid
-            });
-            profilesMenu.Items.Add(new MenuItem
-            {
-                Header = "Manage Profiles...",
-                Command = ContextMenuCommands.ManageProfilesCommand,
-                CommandParameter = contextMenuContext.Grid
-            });
+            var profilesMenu = BuildMenuItem("miColumnProfiles", "Column Profiles", null, null);
+            profilesMenu.Items.Add(BuildMenuItem(
+                "miSaveCurrentProfile",
+                "Save Current Profile (Not Implemented)",
+                ContextMenuCommands.SaveCurrentProfileCommand,
+                contextMenuContext.Grid));
+            profilesMenu.Items.Add(BuildMenuItem(
+                "miLoadProfile",
+                "Load Profile... (Not Implemented)",
+                ContextMenuCommands.LoadProfileCommand,
+                contextMenuContext.Grid));
+            profilesMenu.Items.Add(BuildMenuItem(
+                "miManageProfiles",
+                "Manage Profiles... (Not Implemented)",
+                ContextMenuCommands.ManageProfilesCommand,
+                contextMenuContext.Grid));
             menu.Items.Add(profilesMenu);
+
             menu.Items.Add(new Separator());
 
             // Export operations
-            menu.Items.Add(new MenuItem
-            {
-                Header = "Export to CSV",
-                Command = ContextMenuCommands.ExportToCsvCommand,
-                CommandParameter = contextMenuContext.Grid
-            });
-            menu.Items.Add(new MenuItem
-            {
-                Header = "Export to Excel",
-                Command = ContextMenuCommands.ExportToExcelCommand,
-                CommandParameter = contextMenuContext.Grid
-            });
+            menu.Items.Add(BuildMenuItem(
+                "miExportToCsv",
+                "Export to CSV (Not Implemented)",
+                ContextMenuCommands.ExportToCsvCommand,
+                contextMenuContext.Grid));
+            menu.Items.Add(BuildMenuItem(
+                "miExportToExcel",
+                "Export to Excel (Not Implemented)",
+                ContextMenuCommands.ExportToExcelCommand,
+                contextMenuContext.Grid));
+
             menu.Items.Add(new Separator());
 
             // Layout operations
-            menu.Items.Add(new MenuItem
-            {
-                Header = "Show Column Editor",
-                Command = ContextMenuCommands.ShowColumnEditorCommand,
-                CommandParameter = contextMenuContext.Grid
-            });
-            menu.Items.Add(new MenuItem
-            {
-                Header = "Reset Layout",
-                Command = ContextMenuCommands.ResetLayoutCommand,
-                CommandParameter = contextMenuContext.Grid
-            });
+            menu.Items.Add(BuildMenuItem(
+                "miShowColumnEditor",
+                "Show Column Editor (Not Implemented)",
+                ContextMenuCommands.ShowColumnEditorCommand,
+                contextMenuContext.Grid));
+            menu.Items.Add(BuildMenuItem(
+                "miResetLayout",
+                "Reset Layout (Not Implemented)",
+                ContextMenuCommands.ResetLayoutCommand,
+                contextMenuContext.Grid));
 
             return menu;
         }
