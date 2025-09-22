@@ -1,5 +1,4 @@
 using System;
-using System.Diagnostics;
 using System.Linq;
 using System.Windows;
 using System.Windows.Automation;
@@ -7,7 +6,6 @@ using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Shapes;
 using WWSearchDataGrid.Modern.Core;
 using WWSearchDataGrid.Modern.WPF.Commands;
 
@@ -25,8 +23,18 @@ namespace WWSearchDataGrid.Modern.WPF
         {
             if (grid == null) return;
 
-            // Subscribe to ContextMenuOpening event
+            grid.PreviewMouseRightButtonDown += OnPreviewMouseRightButtonDown;
             grid.ContextMenuOpening += OnContextMenuOpening;
+        }
+
+        private static void OnPreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            if (sender is not SearchDataGrid grid) return;
+
+            var fe = e.OriginalSource as FrameworkElement;
+            var menu = BuildContextMenuForTarget(grid, fe);
+
+            grid.ContextMenu = (menu != null && menu.Items.Count > 0) ? menu : null;
         }
 
         /// <summary>
@@ -34,29 +42,11 @@ namespace WWSearchDataGrid.Modern.WPF
         /// </summary>
         private static void OnContextMenuOpening(object sender, ContextMenuEventArgs e)
         {
-            if (!(sender is SearchDataGrid grid))
-                return;
+            if (sender is not SearchDataGrid grid) return;
 
-            try
-            {
-                // Determine the context menu based on where the user clicked
-                var contextMenu = BuildContextMenuForTarget(grid, e.OriginalSource as FrameworkElement);
-
-                if (contextMenu != null && contextMenu.Items.Count > 0)
-                {
-                    grid.ContextMenu = contextMenu;
-                }
-                else
-                {
-                    // If no appropriate context menu, cancel the event
-                    e.Handled = true;
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Error building context menu: {ex.Message}");
+            // If nothing got prepared, cancel to avoid empty pop
+            if (grid.ContextMenu == null || grid.ContextMenu.Items.Count == 0)
                 e.Handled = true;
-            }
         }
 
         /// <summary>
@@ -67,6 +57,7 @@ namespace WWSearchDataGrid.Modern.WPF
             if (target == null || grid == null)
                 return null;
 
+            
             Core.CommandManager.InvalidateRequerySuggested();
 
             // Find the context type by walking up the visual tree
