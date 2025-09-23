@@ -95,11 +95,6 @@ namespace WWSearchDataGrid.Modern.WPF
         public ICommand RemoveTokenFilterCommand { get; private set; }
 
         /// <summary>
-        /// Gets the command to open the edit filters dialog
-        /// </summary>
-        public ICommand EditFiltersCommand { get; private set; }
-
-        /// <summary>
         /// Gets the command to clear all filters
         /// </summary>
         public ICommand ClearAllFiltersCommand { get; private set; }
@@ -159,11 +154,6 @@ namespace WWSearchDataGrid.Modern.WPF
         /// Event raised when a filter should be removed
         /// </summary>
         public event EventHandler<RemoveFilterEventArgs> FilterRemoved;
-
-        /// <summary>
-        /// Event raised when edit filters dialog should be opened
-        /// </summary>
-        public event EventHandler EditFiltersRequested;
 
         /// <summary>
         /// Event raised when all filters should be cleared
@@ -255,8 +245,6 @@ namespace WWSearchDataGrid.Modern.WPF
         {
             HasActiveFilters = ActiveFilters?.Count > 0;
             
-            if (EditFiltersCommand is RelayCommand editCommand)
-                editCommand.RaiseCanExecuteChanged();
             if (ClearAllFiltersCommand is RelayCommand clearCommand)
                 clearCommand.RaiseCanExecuteChanged();
         }
@@ -272,7 +260,6 @@ namespace WWSearchDataGrid.Modern.WPF
         {
             ToggleFiltersCommand = new RelayCommand(ExecuteToggleFilters);
             RemoveTokenFilterCommand = new RelayCommand<IFilterToken>(ExecuteRemoveTokenFilter, CanRemoveTokenFilter);
-            EditFiltersCommand = new RelayCommand(ExecuteEditFilters, CanEditFilters);
             ClearAllFiltersCommand = new RelayCommand(ExecuteClearAllFilters, CanClearAllFilters);
             ToggleExpandCommand = new RelayCommand(ExecuteToggleExpand);
             SetHoveredFilterCommand = new RelayCommand<string>(ExecuteSetHoveredFilter);
@@ -291,21 +278,7 @@ namespace WWSearchDataGrid.Modern.WPF
             FiltersEnabled = !FiltersEnabled;
         }
 
-        /// <summary>
-        /// Executes the edit filters command
-        /// </summary>
-        private void ExecuteEditFilters(object parameter)
-        {
-            EditFiltersRequested?.Invoke(this, EventArgs.Empty);
-        }
 
-        /// <summary>
-        /// Determines whether filters can be edited
-        /// </summary>
-        private bool CanEditFilters(object parameter)
-        {
-            return HasActiveFilters;
-        }
 
         /// <summary>
         /// Executes the clear all filters command
@@ -437,27 +410,68 @@ namespace WWSearchDataGrid.Modern.WPF
         /// </summary>
         private void CheckForOverflow(bool isRemovingFilter = false)
         {
+            // If expanded (and not shrinking after a remove), we don't show overflow UI.
             if (IsExpanded && !isRemovingFilter)
             {
                 HasOverflow = false;
                 return;
             }
 
-            var tokenizedControl = GetTemplateChild("PART_TokenizedFiltersControl") as FrameworkElement;
-            
-            if (tokenizedControl != null && tokenizedControl.ActualWidth > 0)
-            {
-                tokenizedControl.UpdateLayout();
-                
-                // Check if content width exceeds available space
-                var availableWidth = ActualWidth - 200; // Account for buttons and margins
-                HasOverflow = tokenizedControl.DesiredSize.Width > availableWidth;
+            // Get live template parts each call (no OnApplyTemplate needed)
+            var tokens = GetTemplateChild("PART_TokenizedFiltersControl") as FrameworkElement;
+            if (tokens == null)
+                return;
 
-                if (!HasOverflow && IsExpanded)
-                {
-                    IsExpanded = false;
-                }
+            var chk = GetTemplateChild("PART_FiltersEnabledCheckBox") as FrameworkElement;
+            var btnEx = GetTemplateChild("PART_ExpandButton") as FrameworkElement;
+            var btnCl = GetTemplateChild("PART_ClearAllButton") as FrameworkElement;
+
+            // Make sure everything has a layout pass before we read ActualWidth
+            UpdateLayout();
+
+            // --- 1) Compute how much width the token lane truly has ---
+            // Preferred: subtract visible side elements’ actual widths + margins from this control’s ActualWidth.
+            // (This mirrors your template: [CheckBox] [Tokens stretch *] [Buttons])
+            double leftSide = GetActualWidthWithMargin(chk);
+            double rightSide = GetActualWidthWithMargin(btnEx) + GetActualWidthWithMargin(btnCl);
+
+            // Account for our own padding/margins if you add them later; for now we assume none on the root border
+            double availableTokenLane = Math.Max(0, ActualWidth - leftSide - rightSide);
+
+            // --- 2) Measure how wide the tokens WANT to be on a single line ---
+            // Measure with infinite width to get their natural one-line DesiredSize
+            double heightHint = (tokens.ActualHeight > 0) ? tokens.ActualHeight : double.PositiveInfinity;
+            tokens.Measure(new Size(double.PositiveInfinity, heightHint));
+            double tokenNaturalWidth = tokens.DesiredSize.Width;
+
+            // --- 3) Decide overflow ---
+            bool overflow = tokenNaturalWidth > availableTokenLane;
+
+            // Edge case: if showing the expand button only appears *because* overflow turned true,
+            // the rightSide may have grown; do one stabilizing re-check.
+            if (overflow && btnEx != null && btnEx.Visibility == Visibility.Visible)
+            {
+                rightSide = GetActualWidthWithMargin(btnEx) + GetActualWidthWithMargin(btnCl);
+                availableTokenLane = Math.Max(0, ActualWidth - leftSide - rightSide);
+                overflow = tokenNaturalWidth > availableTokenLane;
             }
+
+            HasOverflow = overflow;
+
+            // If expanded but no longer overflowing (e.g., after removing a filter), auto-collapse
+            if (!HasOverflow && IsExpanded)
+                IsExpanded = false;
+        }
+
+        private static double GetActualWidthWithMargin(FrameworkElement fe)
+        {
+            if (fe == null || fe.Visibility != Visibility.Visible)
+                return 0;
+
+            // Ensure it's arranged before reading ActualWidth
+            fe.UpdateLayout();
+            var m = fe.Margin;
+            return fe.ActualWidth + m.Left + m.Right;
         }
 
         #endregion

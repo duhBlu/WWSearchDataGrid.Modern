@@ -2,25 +2,269 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:sdgCore="clr-namespace:WWSearchDataGrid.Modern.Core;assembly=WWSearchDataGrid.Modern.Core"
                     xmlns:sys="clr-namespace:System;assembly=mscorlib"
-                    xmlns:sdg="clr-namespace:WWSearchDataGrid.Modern.WPF"
-                    xmlns:converters="clr-namespace:WWSearchDataGrid.Modern.WPF.Converters">
-
-    <ResourceDictionary.MergedDictionaries>
-        <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF;component/Templates/SharedFilterRuleTemplates.xaml" />
-        <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF;component/Themes/Controls/primitives/NumericUpDown.xaml" />
-        <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF;component/Themes/Controls/Primitives/SearchTextBox.xaml" />
-    </ResourceDictionary.MergedDictionaries>
+                    xmlns:sdg="clr-namespace:WWSearchDataGrid.Modern.WPF;assembly=WWSearchDataGrid.Modern.WPF"
+                    xmlns:converters="clr-namespace:WWSearchDataGrid.Modern.WPF.Converters;assembly=WWSearchDataGrid.Modern.WPF">
 
     <!--  Converters  -->
+    <converters:BooleanToVisibilityCollapsedConverter x:Key="BooleanToVisibilityCollapsedConverter" />
+    <converters:StringToVisibilityConverter x:Key="StringToVisibilityConverter" />
     <converters:SearchTypeToBetweenVisibilityConverter x:Key="BetweenValueVisibilityConverter" />
-
-    <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+    <converters:SearchTypeToIconConverter x:Key="SearchTypeToIconConverter" />
+    <converters:DateIntervalToIconConverter x:Key="DateIntervalToIconConverter" />
     <converters:FilterInputTemplateToVisibilityConverter x:Key="FilterInputTemplateToVisibilityConverter" />
     <converters:EnumToStringConverter x:Key="EnumToStringConverter" />
 
+    <!--#region RuleTemplates-->
+
+    <!--  Single ComboBox Template  -->
+    <DataTemplate x:Key="SingleComboBoxTemplate">
+        <ComboBox Style="{StaticResource CustomEditableComboBoxStyle}"
+                  Text="{Binding SelectedValue}"
+                  Tag="Type or select..."
+                  ItemsSource="{Binding SearchTemplateController.ColumnValues}" />
+    </DataTemplate>
+
+    <!--  Single TextBox Template  -->
+    <DataTemplate x:Key="SingleTextBoxTemplate">
+        <sdg:SearchTextBox Text="{Binding SelectedValue, UpdateSourceTrigger=PropertyChanged}"
+                           Watermark="Enter text..."
+                           Style="{StaticResource CustomSearchTextBoxStyle}"
+                           ShowSearchIcon="False" />
+    </DataTemplate>
+
+    <!--  Dual ComboBox Template  -->
+    <DataTemplate x:Key="DualComboBoxTemplate">
+        <StackPanel Orientation="Horizontal">
+            <TextBlock Text="From:"
+                       Margin="0,0,5,0"
+                       VerticalAlignment="Center" />
+            <ComboBox Style="{StaticResource CustomEditableComboBoxStyle}"
+                      Text="{Binding SelectedValue, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
+                      MinWidth="120"
+                      Tag="Type or select..."
+                      ItemsSource="{Binding SearchTemplateController.ColumnValues}" />
+            <TextBlock Text="To:"
+                       Margin="10,0,5,0"
+                       VerticalAlignment="Center" />
+            <ComboBox Style="{StaticResource CustomEditableComboBoxStyle}"
+                      Text="{Binding SelectedSecondaryValue, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
+                      MinWidth="120"
+                      Tag="Type or select..."
+                      ItemsSource="{Binding SearchTemplateController.ColumnValues}" />
+        </StackPanel>
+    </DataTemplate>
+
+    <!--  Dual DateTime Picker Template  -->
+    <DataTemplate x:Key="DualDateTimePickerTemplate">
+        <StackPanel Orientation="Horizontal">
+            <TextBlock Text="From:"
+                       Margin="0,0,5,0"
+                       VerticalAlignment="Center" />
+            <DatePicker VerticalContentAlignment="Center"
+                        MinWidth="120"
+                        SelectedDate="{Binding SelectedValue}" />
+            <TextBlock Text="To:"
+                       Margin="10,0,5,0"
+                       VerticalAlignment="Center" />
+            <DatePicker VerticalContentAlignment="Center"
+                        MinWidth="120"
+                        SelectedDate="{Binding SelectedSecondaryValue}" />
+        </StackPanel>
+    </DataTemplate>
+
+    <!--  Numeric UpDown Template  -->
+    <DataTemplate x:Key="NumericUpDownTemplate">
+        <StackPanel Orientation="Horizontal">
+            <sdg:NumericUpDown Width="80"
+                               Style="{StaticResource CustomNumericUpDownStyle}"
+                               Minimum="1"
+                               Maximum="10000"
+                               Increment="1"
+                               Value="{Binding SelectedValue, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+            <TextBlock Foreground="Gray"
+                       Text="items"
+                       Margin="5,0,0,0"
+                       VerticalAlignment="Center" />
+        </StackPanel>
+    </DataTemplate>
+
+    <!--  No Input Template  -->
+    <DataTemplate x:Key="NoInputTemplate">
+        <TextBlock FontStyle="Italic"
+                   Foreground="Gray"
+                   Text="(No value required)"
+                   VerticalAlignment="Center" />
+    </DataTemplate>
+
+    <!--  ComboBox List Template  -->
+    <DataTemplate x:Key="ComboBoxListTemplate">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <Button Style="{StaticResource CustomBasicButtonStyle}"
+                    Grid.Row="0"
+                    Command="{Binding AddValueCommand}"
+                    Margin="0,0,0,5"
+                    HorizontalAlignment="Left"
+                    Content="Add Value" />
+
+            <ListBox Grid.Row="1"
+                     Background="Transparent"
+                     BorderThickness="0"
+                     MaxHeight="150"
+                     ItemsSource="{Binding SelectedValues}"
+                     ScrollViewer.CanContentScroll="True"
+                     VirtualizingPanel.IsVirtualizing="True"
+                     VirtualizingPanel.VirtualizationMode="Recycling">
+                <ListBox.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <VirtualizingStackPanel Orientation="Vertical" />
+                    </ItemsPanelTemplate>
+                </ListBox.ItemsPanel>
+                <ListBox.ItemContainerStyle>
+                    <Style TargetType="ListBoxItem">
+                        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                        <Setter Property="Background" Value="Transparent" />
+                        <Setter Property="BorderThickness" Value="0" />
+                        <Setter Property="Padding" Value="0" />
+                        <Style.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="Transparent" />
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter Property="Background" Value="Transparent" />
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </ListBox.ItemContainerStyle>
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <Border BorderBrush="#DDD"
+                                BorderThickness="1"
+                                Margin="0,2"
+                                Padding="3">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <ComboBox Style="{StaticResource CustomEditableComboBoxStyle}"
+                                          Grid.Column="0"
+                                          Tag="Type or select..."
+                                          ItemsSource="{Binding DataContext.SearchTemplateController.ColumnValues, RelativeSource={RelativeSource AncestorType=ListBox}}" />
+                                <Button Style="{StaticResource CustomTransparentFontIconButtonStyle}"
+                                        Grid.Column="1"
+                                        Command="{Binding DataContext.RemoveValueCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"
+                                        CommandParameter="{Binding}"
+                                        Margin="3,0,0,0"
+                                        Content="&#xE10A;" />
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </Grid>
+    </DataTemplate>
+
+    <!--  DateTime Picker List Template  -->
+    <DataTemplate x:Key="DateTimePickerListTemplate">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <Button Style="{StaticResource CustomBasicButtonStyle}"
+                    Grid.Row="0"
+                    Command="{Binding AddDateCommand}"
+                    Margin="0,0,0,5"
+                    HorizontalAlignment="Left"
+                    Content="Add Date" />
+
+            <ListBox Grid.Row="1"
+                     Background="Transparent"
+                     BorderThickness="0"
+                     MaxHeight="150"
+                     ItemsSource="{Binding SelectedDates}"
+                     ScrollViewer.CanContentScroll="True"
+                     VirtualizingPanel.IsVirtualizing="True"
+                     VirtualizingPanel.VirtualizationMode="Recycling">
+                <ListBox.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <VirtualizingStackPanel Orientation="Vertical" />
+                    </ItemsPanelTemplate>
+                </ListBox.ItemsPanel>
+                <ListBox.ItemContainerStyle>
+                    <Style TargetType="ListBoxItem">
+                        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                        <Setter Property="Background" Value="Transparent" />
+                        <Setter Property="BorderThickness" Value="0" />
+                        <Setter Property="Padding" Value="0" />
+                    </Style>
+                </ListBox.ItemContainerStyle>
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <Border BorderBrush="#DDD"
+                                BorderThickness="1"
+                                Margin="0,2"
+                                Padding="3">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <DatePicker Grid.Column="0" SelectedDate="{Binding DateValue}" />
+                                <Button Style="{StaticResource CustomTransparentFontIconButtonStyle}"
+                                        Grid.Column="1"
+                                        Command="{Binding DataContext.RemoveDateCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"
+                                        CommandParameter="{Binding}"
+                                        Margin="3,0,0,0"
+                                        Width="20"
+                                        Content="X" />
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </Grid>
+    </DataTemplate>
+
+    <!--  Date Interval CheckList Template  -->
+    <DataTemplate x:Key="DateIntervalCheckListTemplate">
+        <ScrollViewer MaxHeight="200">
+            <ItemsControl ItemsSource="{Binding DateIntervals}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <CheckBox Style="{StaticResource CustomCheckBoxStyle}"
+                                  IsChecked="{Binding IsSelected}"
+                                  Margin="0,2">
+                            <CheckBox.Content>
+                                <StackPanel Orientation="Horizontal">
+                                    <!--<Image Source="{Binding Interval, Converter={StaticResource DateIntervalToIconConverter}}"
+                                           Visibility="Collapsed"
+                                           Margin="0,0,6,0"
+                                           VerticalAlignment="Center"
+                                           Width="16"
+                                           Height="16" />-->
+                                    <TextBlock Text="{Binding DisplayName}" VerticalAlignment="Center" />
+                                </StackPanel>
+                            </CheckBox.Content>
+                        </CheckBox>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+    </DataTemplate>
+
+    <!--#endregion-->
+
+    <!--#region Column Filter Editor-->
 
     <!--  ColumnFilterEditor-specific Search Group Content Template  -->
-    <DataTemplate x:Key="AdvancedFilterSearchGroupContentTemplate" DataType="{x:Type sdgCore:SearchTemplateGroup}">
+    <DataTemplate x:Key="ColumnFilterSearchGroupContentTemplate" DataType="{x:Type sdgCore:SearchTemplateGroup}">
         <ItemsControl ItemsSource="{Binding SearchTemplates}"
                       VirtualizingPanel.IsVirtualizing="True"
                       VirtualizingPanel.VirtualizationMode="Recycling"
@@ -39,7 +283,8 @@
                                 Background="#FAFAFA"
                                 BorderBrush="#DDD"
                                 BorderThickness="1"
-                                Padding="6">
+                                Padding="6"
+                                CornerRadius="8">
                             <Grid>
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto" />
@@ -57,8 +302,9 @@
                                     </Grid.ColumnDefinitions>
 
                                     <ComboBox x:Name="PART_OperatorCombo"
+                                              Style="{StaticResource CustomComboBoxStyle}"
                                               Grid.Column="1"
-                                              Visibility="{Binding IsOperatorVisible, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                              Visibility="{Binding IsOperatorVisible, Converter={StaticResource BooleanToVisibilityCollapsedConverter}}"
                                               Margin="0,0,8,0"
                                               VerticalContentAlignment="Center"
                                               Width="Auto"
@@ -68,6 +314,7 @@
                                     </ComboBox>
 
                                     <ComboBox x:Name="PART_SearchTypeCombo"
+                                              Style="{StaticResource CustomComboBoxStyle}"
                                               Grid.Column="2"
                                               Margin="0,0,8,0"
                                               VerticalContentAlignment="Center"
@@ -92,9 +339,8 @@
 
                                     <!--  ColumnFilterEditor Remove/Clear SearchTemplate button  -->
                                     <Button x:Name="PART_ClearTemplateButton"
+                                            Style="{StaticResource CustomTransparentFontIconButtonStyle}"
                                             Grid.Column="4"
-                                            BorderThickness="0"
-                                            Cursor="Hand"
                                             Command="{Binding RemoveSearchTemplateCommand, RelativeSource={RelativeSource AncestorType=sdg:ColumnFilterEditor}}"
                                             CommandParameter="{Binding}"
                                             Margin="0,0,0,0"
@@ -102,46 +348,7 @@
                                             Height="{Binding ActualWidth, RelativeSource={RelativeSource Self}}"
                                             ToolTip="Remove"
                                             FontFamily="Segoe MDL2 Assets"
-                                            Content="&#xE10A;">
-                                        <Button.Style>
-                                            <Style TargetType="{x:Type Button}">
-                                                <Setter Property="Background" Value="Transparent" />
-                                                <Setter Property="Template">
-                                                    <Setter.Value>
-                                                        <ControlTemplate TargetType="{x:Type Button}">
-                                                            <Border x:Name="border"
-                                                                    Background="{TemplateBinding Background}"
-                                                                    BorderBrush="{TemplateBinding BorderBrush}"
-                                                                    BorderThickness="{TemplateBinding BorderThickness}">
-                                                                <ContentPresenter x:Name="contentPresenter"
-                                                                                  Focusable="False"
-                                                                                  Margin="{TemplateBinding Padding}"
-                                                                                  HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                                                                  VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
-                                                                                  RecognizesAccessKey="True"
-                                                                                  TextElement.Foreground="{TemplateBinding Foreground}"
-                                                                                  SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" />
-                                                            </Border>
-                                                        </ControlTemplate>
-                                                    </Setter.Value>
-                                                </Setter>
-                                                <Style.Triggers>
-                                                    <Trigger Property="IsMouseOver" Value="True">
-                                                        <Setter Property="Background" Value="#FFF0F0F0" />
-                                                        <Setter Property="Foreground" Value="#1c1c1c" />
-                                                    </Trigger>
-                                                    <Trigger Property="IsPressed" Value="True">
-                                                        <Setter Property="Background" Value="#FFE0E0E0" />
-                                                        <Setter Property="Foreground" Value="#000000" />
-                                                    </Trigger>
-                                                    <Trigger Property="IsEnabled" Value="False">
-                                                        <Setter Property="Opacity" Value="0.5" />
-                                                        <Setter Property="Cursor" Value="Arrow" />
-                                                    </Trigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </Button.Style>
-                                    </Button>
+                                            Content="&#xE10A;" />
                                 </Grid>
 
                                 <!--  Value Input Row  -->
@@ -192,18 +399,18 @@
     </DataTemplate>
 
     <!--  ColumnFilterEditor Style  -->
-    <Style x:Key="GenericColumnFilterEditorStyle" TargetType="{x:Type sdg:ColumnFilterEditor}">
+    <Style x:Key="CustomColumnFilterEditorStyle" TargetType="{x:Type sdg:ColumnFilterEditor}">
         <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.WindowBrushKey}}" />
-        <Setter Property="BorderBrush" Value="Gray" />
-        <Setter Property="Margin" Value="12" />
-        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="BorderBrush" Value="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" />
+        <Setter Property="Margin" Value="10" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type sdg:ColumnFilterEditor}">
                     <Border Background="{TemplateBinding Background}"
                             BorderBrush="{TemplateBinding BorderBrush}"
                             BorderThickness="{TemplateBinding BorderThickness}"
-                            Margin="{TemplateBinding Margin}">
+                            Margin="{TemplateBinding Margin}"
+                            CornerRadius="4">
                         <Border.Effect>
                             <DropShadowEffect Color="Black"
                                               Opacity="0.6"
@@ -218,8 +425,9 @@
 
                             <!--  Operator ComboBox  -->
                             <ComboBox x:Name="PART_OperatorComboBox"
+                                      Style="{StaticResource CustomComboBoxStyle}"
                                       Grid.Row="0"
-                                      Visibility="{Binding IsOperatorVisible, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                      Visibility="{Binding IsOperatorVisible, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource BooleanToVisibilityCollapsedConverter}}"
                                       HorizontalAlignment="Left"
                                       VerticalAlignment="Top"
                                       VerticalContentAlignment="Center"
@@ -231,7 +439,7 @@
                                 <sys:String>Or</sys:String>
                             </ComboBox>
 
-                            <!--  Rules Interface (No Tabs - Direct Rules Only)  -->
+                            <!--  Rules Interface  -->
                             <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
                                 <Grid>
                                     <Grid.RowDefinitions>
@@ -254,7 +462,7 @@
                                                                 </ItemsControl.ItemsPanel>
                                                                 <ItemsControl.ItemTemplate>
                                                                     <DataTemplate DataType="{x:Type sdgCore:SearchTemplateGroup}">
-                                                                        <ContentPresenter Content="{Binding}" ContentTemplate="{StaticResource AdvancedFilterSearchGroupContentTemplate}" />
+                                                                        <ContentPresenter Content="{Binding}" ContentTemplate="{StaticResource ColumnFilterSearchGroupContentTemplate}" />
                                                                     </DataTemplate>
                                                                 </ItemsControl.ItemTemplate>
                                                             </ItemsControl>
@@ -270,7 +478,8 @@
                                                 Orientation="Horizontal"
                                                 Margin="0,8,0,0"
                                                 HorizontalAlignment="Center">
-                                        <Button Command="{Binding AddSearchTemplateCommand, RelativeSource={RelativeSource TemplatedParent}}"
+                                        <Button Style="{StaticResource CustomBasicButtonStyle}"
+                                                Command="{Binding AddSearchTemplateCommand, RelativeSource={RelativeSource TemplatedParent}}"
                                                 Margin="0,0,8,0"
                                                 Padding="8,4"
                                                 MinWidth="100">
@@ -284,7 +493,8 @@
                                             </StackPanel>
                                         </Button>
 
-                                        <Button Command="{Binding ClearFilterCommand, RelativeSource={RelativeSource TemplatedParent}}"
+                                        <Button Style="{StaticResource CustomBasicButtonStyle}"
+                                                Command="{Binding ClearFilterCommand, RelativeSource={RelativeSource TemplatedParent}}"
                                                 Padding="8,4"
                                                 MinWidth="80">
                                             <StackPanel Orientation="Horizontal">
@@ -306,6 +516,8 @@
         </Setter>
     </Style>
 
-    <Style BasedOn="{StaticResource GenericColumnFilterEditorStyle}" TargetType="{x:Type sdg:ColumnFilterEditor}" />
+    <Style TargetType="{x:Type sdg:ColumnFilterEditor}" BasedOn="{StaticResource CustomColumnFilterEditorStyle}" />
+
+    <!--#endregion-->
 
 </ResourceDictionary>

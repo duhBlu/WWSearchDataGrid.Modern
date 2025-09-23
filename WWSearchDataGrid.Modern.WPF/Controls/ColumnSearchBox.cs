@@ -49,12 +49,12 @@ namespace WWSearchDataGrid.Modern.WPF
         private Popup _filterPopup;
         private ColumnFilterEditor _filterContent;
         private Timer _changeTimer;
-        private SearchTemplate _temporarySearchTemplate; // Track temporary template for real-time updates
+        /// <summary>
+        /// Track temporary template for real-time updates to the filter panel. 
+        /// </summary> 
+        private SearchTemplate _temporarySearchTemplate; 
         private CheckboxCycleState _checkboxCycleState = CheckboxCycleState.Intermediate; // Current logical cycling state
         private bool _isInitialState = true; // Tracks if we're in the initial uncycled state
-        private bool _isLoadingColumnValues = false; // Prevents infinite loop in LoadColumnValues
-        private DateTime _lastLoadColumnValuesTime = DateTime.MinValue; // For debouncing LoadColumnValues
-        private const int LOAD_COLUMN_VALUES_DEBOUNCE_MS = 100; // Minimum time between LoadColumnValues calls
 
         #endregion
 
@@ -105,6 +105,7 @@ namespace WWSearchDataGrid.Modern.WPF
         /// Gets the command to clear search text (only clears search text and temporary template)
         /// </summary>
         public ICommand ClearSearchTextCommand => new RelayCommand(_ => ClearSearchTextAndTemporaryFilter());
+        public ICommand ShowFilterEditorPopup => new RelayCommand(_ => ShowFilterPopup());
 
         /// <summary>
         /// Gets or sets the current column being filtered
@@ -286,18 +287,12 @@ namespace WWSearchDataGrid.Modern.WPF
             // Clean up temporary template reference
             _temporarySearchTemplate = null;
             
-            // Reset loading state flags
-            _isLoadingColumnValues = false;
-            _lastLoadColumnValuesTime = DateTime.MinValue;
-
-            // Clean up textbox event handlers
             if (searchTextBox != null)
             {
                 searchTextBox.TextChanged -= OnSearchTextBoxTextChanged;
                 searchTextBox.KeyDown -= OnSearchTextBoxKeyDown;
             }
 
-            // Clean up checkbox event handlers
             if (filterCheckBox != null)
             {
                 filterCheckBox.PreviewKeyDown -= OnCheckboxPreviewKeyDown;
@@ -376,11 +371,6 @@ namespace WWSearchDataGrid.Modern.WPF
                         
                     case NotifyCollectionChangedAction.Reset:
                         SearchTemplateController.RefreshColumnValues();
-                        
-                        Dispatcher.BeginInvoke(new Action(() =>
-                        {
-                            DetermineCheckboxColumnSettings();
-                        }), DispatcherPriority.Background);
                         break;
                         
                     case NotifyCollectionChangedAction.Move:
@@ -390,7 +380,6 @@ namespace WWSearchDataGrid.Modern.WPF
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Error in OnSourceDataGridCollectionChanged: {ex.Message}");
-                // Fallback to full refresh if incremental update fails
                 SearchTemplateController?.RefreshColumnValues();
             }
         }
@@ -512,9 +501,9 @@ namespace WWSearchDataGrid.Modern.WPF
             }
             else if (e.Key == Key.Tab && (Keyboard.Modifiers & ModifierKeys.Shift) == ModifierKeys.Shift)
             {
-                e.Handled = true;                         // stop DataGrid from stealing it
+                e.Handled = true; // stop DataGrid from stealing it
                 var req = new TraversalRequest(FocusNavigationDirection.Previous);
-                // move focus *from* the ColumnSearchBox to its previous peer
+                // move focus the ColumnSearchBox to its previous peer
                 (this as UIElement).MoveFocus(req);
             }
         }
@@ -569,9 +558,6 @@ namespace WWSearchDataGrid.Modern.WPF
                                 SearchTemplateController.ColumnDataType = detectedType;
                             }
                         }
-                        
-                        // Re-determine checkbox column settings
-                        DetermineCheckboxColumnSettings();
                     }
                     else
                     {
@@ -752,10 +738,8 @@ namespace WWSearchDataGrid.Modern.WPF
                     }
                 }
 
-                // FIXED: Text filtering logic - check for actual templates, not just SearchText
                 if (!hasFilter)
                 {
-                    // First check if we have actual search templates (confirmed filters)
                     hasFilter = SearchTemplateController.HasCustomExpression;
                     
                     // Only consider SearchText if we have a temporary template that exists
@@ -815,10 +799,7 @@ namespace WWSearchDataGrid.Modern.WPF
             {
                 _checkboxCycleState = state;
                 
-                // Update the visual checkbox state
                 UpdateVisualCheckboxState(state);
-                
-                // Apply the appropriate filter
                 ApplyCheckboxCycleFilter(state);
             }
             catch (Exception ex)
@@ -865,7 +846,6 @@ namespace WWSearchDataGrid.Modern.WPF
         /// <param name="state">The logical state</param>
         private void UpdateVisualCheckboxState(CheckboxCycleState state)
         {
-            // Convert logical state to nullable bool for FilterCheckboxState property
             bool? checkboxValue = state switch
             {
                 CheckboxCycleState.Intermediate => null,
@@ -874,7 +854,6 @@ namespace WWSearchDataGrid.Modern.WPF
                 _ => null
             };
 
-            // Update the dependency property (this will sync with the visual checkbox)
             FilterCheckboxState = checkboxValue;
         }
 
@@ -1040,11 +1019,9 @@ namespace WWSearchDataGrid.Modern.WPF
         {
             try
             {
-                // Skip if we don't have the required data yet
                 if (SourceDataGrid == null || CurrentColumn == null)
                     return;
 
-                // Create a controller if none exists
                 if (SearchTemplateController == null)
                 {
                     SearchTemplateController = new SearchTemplateController();
@@ -1052,28 +1029,19 @@ namespace WWSearchDataGrid.Modern.WPF
                 SearchTemplateController.ColumnName = CurrentColumn.Header;
                 BindingPath = CurrentColumn.SortMemberPath;
                 
-                // Set default search type from column's attached property
-                SearchTemplateController.DefaultSearchType = ColumnFilterEditor.GetDefaultSearchType(CurrentColumn); 
-
-                // This avoids any delay and provides instant UI feedback
                 DetermineCheckboxColumnTypeFromColumnDefinition();
 
-                // Add this control to the data grid's columns if not already there
                 if (!SourceDataGrid.DataColumns.Contains(this))
                     SourceDataGrid.DataColumns.Add(this);
 
-                // Hook into collection changed events
                 SourceDataGrid.CollectionChanged -= OnSourceDataGridCollectionChanged;
                 SourceDataGrid.CollectionChanged += OnSourceDataGridCollectionChanged;
 
-                // Hook into items source changed events for initial loading detection
                 SourceDataGrid.ItemsSourceChanged -= OnSourceDataGridItemsSourceChanged;
                 SourceDataGrid.ItemsSourceChanged += OnSourceDataGridItemsSourceChanged;
 
-                // Set up lazy loading - no initial eager loading
                 if (SourceDataGrid.Items != null && SourceDataGrid.Items.Count > 0)
                 {
-                    // Set up the lazy loading provider
                     SearchTemplateController.SetupColumnDataLazy(CurrentColumn.Header, GetColumnValuesFromDataGrid, BindingPath);
                     
                     // Determine column data type from a small sample for immediate UI setup
@@ -1095,9 +1063,6 @@ namespace WWSearchDataGrid.Modern.WPF
                             SearchTemplateController.ColumnDataType = ReflectionHelper.DetermineColumnDataType(sampleValues);
                         }
                     }
-                    
-                    // Determine checkbox column settings (doesn't require full data loading)
-                    DetermineCheckboxColumnSettings();
                 }
                 else
                 {
@@ -1257,27 +1222,6 @@ namespace WWSearchDataGrid.Modern.WPF
             }
         }
 
-
-        /// <summary>
-        /// Updated method that now focuses on value loading and null analysis rather than column type detection
-        /// Column type should already be determined by DetermineCheckboxColumnTypeFromColumnDefinition()
-        /// </summary>
-        private void DetermineCheckboxColumnSettings()
-        {
-            try
-            {
-                if (SearchTemplateController == null || SourceDataGrid == null)
-                    return;
-
-                // Checkbox column settings are now handled automatically by the SearchTemplateController
-                // when column values are loaded, so no additional processing is needed here
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Error in checkbox column settings analysis: {ex.Message}");
-            }
-        }
-
         /// <summary>
         /// Adds an incremental Contains filter with OR logic
         /// </summary>
@@ -1285,11 +1229,9 @@ namespace WWSearchDataGrid.Modern.WPF
         {
             try
             {
-                // Skip if controller is not available
                 if (SearchTemplateController == null || SourceDataGrid == null)
                     return;
 
-                // Ensure we have at least one search group
                 if (SearchTemplateController.SearchGroups.Count == 0)
                 {
                     SearchTemplateController.AddSearchGroup();
@@ -1297,17 +1239,14 @@ namespace WWSearchDataGrid.Modern.WPF
 
                 var firstGroup = SearchTemplateController.SearchGroups[0];
                 
-                // Remove temporary template if it exists
                 if (_temporarySearchTemplate != null)
                 {
                     firstGroup.SearchTemplates.Remove(_temporarySearchTemplate);
                     _temporarySearchTemplate = null;
                 }
                 
-                // Remove any default empty templates before adding our Contains template
                 RemoveDefaultEmptyTemplates(firstGroup);
                 
-                // Check for existing confirmed Contains templates in the first search group
                 var existingContainsTemplates = firstGroup.SearchTemplates
                     .Where(t => t.SearchType == SearchType.Contains && t.HasCustomFilter)
                     .ToList();
@@ -1581,14 +1520,11 @@ namespace WWSearchDataGrid.Modern.WPF
         {
             try
             {
-                // Skip if controller is not available
                 if (SearchTemplateController == null)
                     return;
 
-                // Clear temporary template reference
                 _temporarySearchTemplate = null;
 
-                // Clear the search template groups and add a default one back
                 SearchTemplateController.ClearAndReset();
 
                 HasAdvancedFilter = false;
@@ -1596,7 +1532,6 @@ namespace WWSearchDataGrid.Modern.WPF
                 // Apply the updated (empty) filter to the grid
                 SourceDataGrid?.FilterItemsSource();
 
-                // Update HasActiveFilter state
                 UpdateHasActiveFilterState();
             }
             catch (Exception ex)
@@ -1612,11 +1547,9 @@ namespace WWSearchDataGrid.Modern.WPF
         {
             try
             {
-                // Skip if source data grid is not available
                 if (SourceDataGrid == null)
                     return;
 
-                // Skip if controller is not available
                 if (SearchTemplateController == null)
                     InitializeSearchTemplateController();
 
@@ -1652,17 +1585,14 @@ namespace WWSearchDataGrid.Modern.WPF
                         MaxHeight = 600
                     };
 
-                    // Subscribe to popup events
                     _filterPopup.KeyDown += OnPopupKeyDown;
                     _filterPopup.Closed += OnPopupClosed;
                 }
                 else
                 {
-                    // Update placement target in case it changed
                     _filterPopup.PlacementTarget = this;
                 }
 
-                // Open the popup
                 _filterPopup.IsOpen = true;
             }
             catch (Exception ex)
@@ -1741,25 +1671,18 @@ namespace WWSearchDataGrid.Modern.WPF
         {
             try
             {
-                // Stop the timer if it's running
                 _changeTimer?.Stop();
 
-                // Clear the search text
                 SearchText = string.Empty;
                 if (searchTextBox != null)
                     searchTextBox.Text = string.Empty;
 
-                // Clear checkbox state if this is a checkbox column
                 if (IsCheckboxColumn)
                 {
                     ResetCheckboxToInitialState();
                 }
 
-                // Clear the filter internally
                 ClearFilterInternal();
-
-                // Update HasActiveFilter state (ClearFilterInternal already does this, but just to be safe)
-                UpdateHasActiveFilterState();
             }
             catch (Exception ex)
             {

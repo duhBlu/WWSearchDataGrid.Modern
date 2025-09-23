@@ -1,14 +1,15 @@
 ﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-                    xmlns:sdg="clr-namespace:WWSearchDataGrid.Modern.WPF"
-                    xmlns:converters="clr-namespace:WWSearchDataGrid.Modern.WPF.Converters">
+                    xmlns:sdg="clr-namespace:WWSearchDataGrid.Modern.WPF;assembly=WWSearchDataGrid.Modern.WPF"
+                    xmlns:converters="clr-namespace:WWSearchDataGrid.Modern.WPF.Converters;assembly=WWSearchDataGrid.Modern.WPF">
 
-    <!--  Converters  -->
     <converters:BooleanToVisibilityCollapsedConverter x:Key="BooleanToVisibilityCollapsedConverter" />
     <converters:StringToVisibilityConverter x:Key="StringToVisibilityConverter" />
 
+    <!--#region SearchTextBox-->
+
     <!--  Default SearchTextBox Style  -->
-    <Style x:Key="GenericSearchTextboxStyle" TargetType="{x:Type sdg:SearchTextBox}">
+    <Style x:Key="CustomSearchTextBoxStyle" TargetType="{x:Type sdg:SearchTextBox}">
         <Style.Resources>
             <!--  SearchTextBox brushes  -->
             <SolidColorBrush x:Key="SearchTextBox.BackgroundBrush" Color="#FFFFFFFF" />
@@ -36,7 +37,9 @@
         <Setter Property="BorderBrush" Value="{StaticResource SearchTextBox.BorderBrush.Default}" />
         <Setter Property="Foreground" Value="{StaticResource SearchTextBox.ForegroundBrush}" />
         <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="MinHeight" Value="24" />
+        <Setter Property="Padding" Value="8,4" />
+        <Setter Property="MinHeight" Value="32" />
+        <Setter Property="MinWidth" Value="150" />
         <Setter Property="HorizontalContentAlignment" Value="Left" />
         <Setter Property="VerticalContentAlignment" Value="Center" />
         <Setter Property="FontSize" Value="12" />
@@ -52,11 +55,12 @@
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type sdg:SearchTextBox}">
                     <Border x:Name="Border"
-                            Background="{TemplateBinding Background}"
-                            BorderBrush="{TemplateBinding BorderBrush}"
-                            BorderThickness="{TemplateBinding BorderThickness}"
-                            SnapsToDevicePixels="True"
-                            KeyboardNavigation.TabNavigation="Local">
+                        Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        CornerRadius="{TemplateBinding CornerRadius}"
+                        KeyboardNavigation.TabNavigation="Local"
+                        SnapsToDevicePixels="True">
                         <Grid KeyboardNavigation.TabNavigation="Local">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto" />
@@ -66,26 +70,26 @@
 
                             <!--  Search Icon  -->
                             <TextBlock x:Name="SearchIcon"
-                                       Grid.Column="0"
-                                       Foreground="{StaticResource SearchTextBox.SearchIconBrush}"
-                                       Text="&#xE721;"
-                                       IsHitTestVisible="False"
-                                       Margin="8,0,0,0"
-                                       VerticalAlignment="Center"
-                                       FontFamily="Segoe MDL2 Assets"
-                                       FontSize="12"
-                                       Visibility="{Binding ShowSearchIcon, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                   Grid.Column="0"
+                                   Foreground="{StaticResource SearchTextBox.SearchIconBrush}"
+                                   Text="&#xE721;"
+                                   Visibility="{Binding ShowSearchIcon, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource BooleanToVisibilityCollapsedConverter}}"
+                                   IsHitTestVisible="False"
+                                   Margin="8,0,0,0"
+                                   VerticalAlignment="Center"
+                                   FontFamily="Segoe MDL2 Assets"
+                                   FontSize="12" />
 
                             <!--  Text Input Area  -->
                             <Grid Grid.Column="1">
                                 <!--  Watermark Text  -->
                                 <TextBlock x:Name="WatermarkText"
-                                           Foreground="{StaticResource SearchTextBox.WatermarkBrush}"
-                                           Text="{TemplateBinding Watermark}"
-                                           IsHitTestVisible="False"
-                                           Margin="4,0"
-                                           VerticalAlignment="Center"
-                                           FontStyle="Italic">
+                                       FontStyle="Italic"
+                                       Foreground="{StaticResource SearchTextBox.WatermarkBrush}"
+                                       Text="{TemplateBinding Watermark}"
+                                       IsHitTestVisible="False"
+                                       Margin="4,0"
+                                       VerticalAlignment="Center">
                                     <TextBlock.Style>
                                         <Style TargetType="TextBlock">
                                             <Setter Property="Visibility" Value="Collapsed" />
@@ -105,33 +109,33 @@
 
                                 <!--  Text Input  -->
                                 <TextBox x:Name="PART_TextBox"
-                                         Background="Transparent"
-                                         BorderThickness="0"
-                                         Foreground="{TemplateBinding Foreground}"
-                                         FontFamily="{TemplateBinding FontFamily}"
-                                         FontSize="{TemplateBinding FontSize}"
-                                         FontWeight="{TemplateBinding FontWeight}"
-                                         Margin="4,0"
-                                         HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                         VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
-                                         SelectionBrush="#FF0078D4"
-                                         CaretBrush="{TemplateBinding Foreground}"
-                                         ContextMenu="{TemplateBinding ContextMenu}"
-                                         IsTabStop="True"
-                                         KeyboardNavigation.TabNavigation="None" />
+                                     Background="Transparent"
+                                     Foreground="{TemplateBinding Foreground}"
+                                     BorderThickness="0"
+                                     CaretBrush="{TemplateBinding Foreground}"
+                                     SelectionBrush="#FF0078D4"
+                                     Margin="4,0"
+                                     HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                     VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
+                                     FontFamily="{TemplateBinding FontFamily}"
+                                     FontSize="{TemplateBinding FontSize}"
+                                     FontWeight="{TemplateBinding FontWeight}"
+                                     ContextMenu="{TemplateBinding ContextMenu}"
+                                     IsTabStop="True"
+                                     KeyboardNavigation.TabNavigation="None" />
                             </Grid>
 
                             <!--  Clear Button  -->
                             <Button x:Name="PART_ClearButton"
-                                    Grid.Column="2"
-                                    Focusable="True"
-                                    IsTabStop="True"
-                                    Margin="0,0,6,0"
-                                    VerticalAlignment="Center"
-                                    Width="16"
-                                    Height="16"
-                                    ToolTip="Clear search"
-                                    Command="{Binding ClearCommand, RelativeSource={RelativeSource TemplatedParent}}">
+                                Grid.Column="2"
+                                Focusable="True"
+                                Command="{Binding ClearCommand, RelativeSource={RelativeSource TemplatedParent}}"
+                                Margin="0,0,6,0"
+                                VerticalAlignment="Center"
+                                Width="16"
+                                Height="16"
+                                IsTabStop="True"
+                                ToolTip="Clear search">
                                 <Button.Style>
                                     <Style TargetType="Button">
                                         <Setter Property="Background" Value="{StaticResource SearchTextBox.ClearButton.BackgroundBrush.Default}" />
@@ -143,15 +147,15 @@
                                         <Setter Property="Template">
                                             <Setter.Value>
                                                 <ControlTemplate TargetType="Button">
-                                                    <Border Background="{TemplateBinding Background}" 
-                                                            CornerRadius="0"
-                                                            SnapsToDevicePixels="True">
+                                                    <Border Background="{TemplateBinding Background}"
+                                                        CornerRadius="8"
+                                                        SnapsToDevicePixels="True">
                                                         <TextBlock Foreground="{TemplateBinding Foreground}"
-                                                                   Text="&#xE711;"
-                                                                   HorizontalAlignment="Center"
-                                                                   VerticalAlignment="Center"
-                                                                   FontFamily="{TemplateBinding FontFamily}"
-                                                                   FontSize="{TemplateBinding FontSize}" />
+                                                               Text="&#xE711;"
+                                                               HorizontalAlignment="Center"
+                                                               VerticalAlignment="Center"
+                                                               FontFamily="{TemplateBinding FontFamily}"
+                                                               FontSize="{TemplateBinding FontSize}" />
                                                     </Border>
                                                 </ControlTemplate>
                                             </Setter.Value>
@@ -196,4 +200,6 @@
         </Setter>
     </Style>
 
+    <!--#endregion-->
+    
 </ResourceDictionary>

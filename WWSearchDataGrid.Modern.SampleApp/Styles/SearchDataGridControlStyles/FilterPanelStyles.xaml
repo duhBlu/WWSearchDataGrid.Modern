@@ -1,0 +1,419 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:behaviors="clr-namespace:WWSearchDataGrid.Modern.WPF.Behaviors;assembly=WWSearchDataGrid.Modern.WPF"
+                    xmlns:converters="clr-namespace:WWSearchDataGrid.Modern.WPF.Converters;assembly=WWSearchDataGrid.Modern.WPF"
+                    xmlns:sdg="clr-namespace:WWSearchDataGrid.Modern.WPF;assembly=WWSearchDataGrid.Modern.WPF">
+
+    <!--  Converters  -->
+    <converters:StringEqualityConverter x:Key="StringEqualityConverter" />
+    <converters:BooleanToVisibilityCollapsedConverter x:Key="BooleanToVisibilityCollapsedConverter" />
+    <converters:StringToVisibilityConverter x:Key="StringToVisibilityConverter" />
+    <converters:GreaterThanConverter x:Key="GreaterThanConverter" />
+
+    <!--#region Filter Tokens-->
+
+    <!--  Token Template Selector  -->
+    <sdg:FilterTokenTemplateSelector x:Key="CustomFilterTokenTemplateSelector">
+
+        <!--  Opening Bracket Token Template  -->
+        <sdg:FilterTokenTemplateSelector.OpenBracketTemplate>
+            <DataTemplate>
+                <Border Background="Transparent"
+                        BorderThickness="1"
+                        Margin="0,0,-8,0"
+                        Width="10"
+                        Height="26"
+                        behaviors:TokenHoverBehavior.IsEnabled="True"
+                        Tag="{Binding FilterId}">
+                    <Border.BorderBrush>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                            <GradientStop Color="#9a9a9a" Offset="0" />
+                            <GradientStop Color="#9a9a9a" Offset="0.5" />
+                            <GradientStop Color="Transparent" Offset="0.51" />
+                            <GradientStop Color="Transparent" Offset="1" />
+                        </LinearGradientBrush>
+                    </Border.BorderBrush>
+                </Border>
+            </DataTemplate>
+        </sdg:FilterTokenTemplateSelector.OpenBracketTemplate>
+
+        <!--  Column Name Token Template  -->
+        <sdg:FilterTokenTemplateSelector.ColumnNameTemplate>
+            <DataTemplate>
+                <Border Background="#ffc69b"
+                        Margin="1,3"
+                        Padding="6,3"
+                        Height="24"
+                        behaviors:TokenHoverBehavior.IsEnabled="True"
+                        CornerRadius="6"
+                        Tag="{Binding FilterId}">
+                    <TextBlock Foreground="Black"
+                               Text="{Binding DisplayText}"
+                               VerticalAlignment="Center"
+                               FontWeight="SemiBold" />
+                </Border>
+            </DataTemplate>
+        </sdg:FilterTokenTemplateSelector.ColumnNameTemplate>
+
+        <!--  Search Type Token Template  -->
+        <sdg:FilterTokenTemplateSelector.SearchTypeTemplate>
+            <DataTemplate>
+                <Border Background="Transparent"
+                        Margin="2,1"
+                        Padding="4,3"
+                        Height="24"
+                        behaviors:TokenHoverBehavior.IsEnabled="True"
+                        Tag="{Binding FilterId}">
+                    <TextBlock Foreground="#666"
+                               Text="{Binding DisplayText}"
+                               VerticalAlignment="Center"
+                               FontSize="12" />
+                </Border>
+            </DataTemplate>
+        </sdg:FilterTokenTemplateSelector.SearchTypeTemplate>
+
+        <!--  Value Token Template  -->
+        <sdg:FilterTokenTemplateSelector.UnarySearchTypeTemplate>
+            <DataTemplate>
+                <Border Background="#bbe2c5"
+                        Margin="1,1"
+                        Padding="6,3"
+                        Height="24"
+                        behaviors:TokenHoverBehavior.IsEnabled="True"
+                        CornerRadius="6"
+                        Tag="{Binding FilterId}">
+                    <TextBlock Foreground="Black"
+                               Text="{Binding DisplayText}"
+                               VerticalAlignment="Center" />
+                </Border>
+            </DataTemplate>
+        </sdg:FilterTokenTemplateSelector.UnarySearchTypeTemplate>
+
+        <sdg:FilterTokenTemplateSelector.ValueTemplate>
+            <DataTemplate>
+                <Border Background="#bbe2c5"
+                        Margin="1,1"
+                        Padding="6,3"
+                        Height="24"
+                        behaviors:TokenHoverBehavior.IsEnabled="True"
+                        CornerRadius="6"
+                        Tag="{Binding FilterId}">
+                    <TextBlock Foreground="Black"
+                               Text="{Binding DisplayText}"
+                               VerticalAlignment="Center" />
+                </Border>
+            </DataTemplate>
+        </sdg:FilterTokenTemplateSelector.ValueTemplate>
+
+        <!--  Operator Token Template  -->
+        <sdg:FilterTokenTemplateSelector.OperatorTemplate>
+            <DataTemplate>
+                <Border Background="Transparent"
+                        Margin="1,1"
+                        Padding="3,3"
+                        Height="24"
+                        behaviors:TokenHoverBehavior.IsEnabled="True"
+                        Tag="{Binding FilterId}">
+                    <TextBlock Foreground="#888"
+                               Text="{Binding DisplayText}"
+                               VerticalAlignment="Center"
+                               FontSize="11" />
+                </Border>
+            </DataTemplate>
+        </sdg:FilterTokenTemplateSelector.OperatorTemplate>
+
+        <!--  Closing Bracket Token Template  -->
+        <sdg:FilterTokenTemplateSelector.CloseBracketTemplate>
+            <DataTemplate>
+                <Border Background="Transparent"
+                        BorderThickness="1"
+                        Margin="-8,0,0,0"
+                        Width="10"
+                        Height="26"
+                        behaviors:TokenHoverBehavior.IsEnabled="True"
+                        Tag="{Binding FilterId}">
+                    <Border.BorderBrush>
+                        <LinearGradientBrush StartPoint="1,0" EndPoint="0,0">
+                            <GradientStop Color="#9a9a9a" Offset="0" />
+                            <GradientStop Color="#9a9a9a" Offset="0.5" />
+                            <GradientStop Color="Transparent" Offset="0.51" />
+                            <GradientStop Color="Transparent" Offset="1" />
+                        </LinearGradientBrush>
+                    </Border.BorderBrush>
+                </Border>
+            </DataTemplate>
+        </sdg:FilterTokenTemplateSelector.CloseBracketTemplate>
+
+        <!--  Search Template group logical Connector Token Template  -->
+        <sdg:FilterTokenTemplateSelector.GroupLogicalConnectorTemplate>
+            <DataTemplate>
+                <Border Background="#cee8fb"
+                        Margin="4,1,14,0"
+                        Padding="8,3"
+                        Height="24"
+                        behaviors:TokenHoverBehavior.IsEnabled="True"
+                        CornerRadius="6"
+                        Tag="{Binding FilterId}">
+                    <TextBlock Foreground="#0078D4"
+                               Text="{Binding DisplayText}"
+                               VerticalAlignment="Center"
+                               FontWeight="Bold"
+                               FontSize="11" />
+                </Border>
+            </DataTemplate>
+        </sdg:FilterTokenTemplateSelector.GroupLogicalConnectorTemplate>
+
+        <!--  Search Template Logical Connector Token Template  -->
+        <sdg:FilterTokenTemplateSelector.TemplateLogicalConnectorTemplate>
+            <DataTemplate>
+                <Border Background="#cee8fb"
+                        Margin="2,2,2,0"
+                        Padding="5,1"
+                        Height="22"
+                        behaviors:TokenHoverBehavior.IsEnabled="True"
+                        CornerRadius="6"
+                        Tag="{Binding FilterId}">
+                    <TextBlock Foreground="#0078D4"
+                               Text="{Binding DisplayText}"
+                               VerticalAlignment="Center"
+                               FontWeight="Bold"
+                               FontSize="10" />
+                </Border>
+            </DataTemplate>
+        </sdg:FilterTokenTemplateSelector.TemplateLogicalConnectorTemplate>
+
+        <!--  Remove Action Token Template  -->
+        <sdg:FilterTokenTemplateSelector.RemoveActionTemplate>
+            <DataTemplate>
+                <Button Background="Transparent"
+                        BorderBrush="Transparent"
+                        Cursor="Hand"
+                        Command="{Binding RemoveTokenFilterCommand, RelativeSource={RelativeSource AncestorType=sdg:FilterPanel}}"
+                        CommandParameter="{Binding}"
+                        Margin="-3,-2,-7,0"
+                        VerticalAlignment="Top"
+                        Width="20"
+                        Height="20"
+                        behaviors:TokenHoverBehavior.IsEnabled="True"
+                        FontFamily="Segoe MDL2 Assets"
+                        FontSize="10"
+                        Content="&#xF78A;"
+                        ToolTip="Remove Filter"
+                        Tag="{Binding FilterId}">
+                    <Button.Style>
+                        <Style BasedOn="{StaticResource CustomTransparentFontIconButtonStyle}" TargetType="Button">
+                            <Setter Property="Foreground" Value="#999" />
+                            <Setter Property="Opacity" Value="0" />
+                            <Style.Triggers>
+                                <!--  Show when this token's FilterId matches HoveredFilterId  -->
+                                <DataTrigger Value="True">
+                                    <DataTrigger.Binding>
+                                        <MultiBinding Converter="{StaticResource StringEqualityConverter}">
+                                            <Binding Path="FilterId" />
+                                            <Binding RelativeSource="{RelativeSource AncestorType=sdg:FilterPanel}" Path="HoveredFilterId" />
+                                        </MultiBinding>
+                                    </DataTrigger.Binding>
+                                    <Setter Property="Opacity" Value="1" />
+                                </DataTrigger>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="Opacity" Value="1" />
+                                    <Setter Property="Foreground" Value="#666" />
+                                </Trigger>
+                                <Trigger Property="IsPressed" Value="True">
+                                    <Setter Property="Foreground" Value="#333" />
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
+            </DataTemplate>
+        </sdg:FilterTokenTemplateSelector.RemoveActionTemplate>
+
+    </sdg:FilterTokenTemplateSelector>
+
+    <!--#endregion-->
+
+    <!--#region FilterPanel-->
+
+    <!--  Default FilterPanel Style  -->
+    <Style x:Key="CustomFilterPanelStyle" TargetType="{x:Type sdg:FilterPanel}">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type sdg:FilterPanel}">
+                    <Border Background="#F8F9FA"
+                            BorderBrush="#E1E5E9"
+                            BorderThickness="0,1,0,0"
+                            Visibility="{Binding HasActiveFilters, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource BooleanToVisibilityCollapsedConverter}}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <!--  Filters enabled checkbox  -->
+                                <ColumnDefinition Width="*" />
+                                <!--  Filter tokens  -->
+                                <ColumnDefinition Width="Auto" />
+                                <!--  Action buttons  -->
+                            </Grid.ColumnDefinitions>
+
+                            <!--  Filters Enabled Checkbox  -->
+                            <CheckBox x:Name="PART_FiltersEnabledCheckBox"
+                                      Grid.Column="0"
+                                      IsChecked="{Binding FiltersEnabled, RelativeSource={RelativeSource TemplatedParent}}"
+                                      ToolTip="Enable or disable all filters without clearing filter definitions">
+                                <CheckBox.Style>
+                                    <Style BasedOn="{StaticResource CustomCheckBoxStyle}" TargetType="{x:Type CheckBox}">
+                                        <Setter Property="VerticalAlignment" Value="Top" />
+                                        <Setter Property="Margin" Value="6,6,0,0" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsExpanded, RelativeSource={RelativeSource TemplatedParent}}" Value="False">
+                                                <Setter Property="VerticalAlignment" Value="Center" />
+                                                <Setter Property="Margin" Value="6,0,0,0" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </CheckBox.Style>
+                            </CheckBox>
+
+                            <!--  Filter Tokens Area  -->
+                            <Grid Grid.Column="1" VerticalAlignment="Center">
+                                <!--  Tokenized Filter Display  -->
+                                <ItemsControl x:Name="PART_TokenizedFiltersControl"
+                                              ItemsSource="{Binding FilterTokens, RelativeSource={RelativeSource TemplatedParent}}"
+                                              ItemTemplateSelector="{StaticResource CustomFilterTokenTemplateSelector}">
+                                    <ItemsControl.Style>
+                                        <Style TargetType="ItemsControl">
+                                            <!--  Default collapsed state: use StackPanel for single line  -->
+                                            <Setter Property="ItemsPanel">
+                                                <Setter.Value>
+                                                    <ItemsPanelTemplate>
+                                                        <StackPanel Orientation="Horizontal" />
+                                                    </ItemsPanelTemplate>
+                                                </Setter.Value>
+                                            </Setter>
+                                            <Style.Triggers>
+                                                <!--  Expanded state: use WrapPanel for multiple lines  -->
+                                                <DataTrigger Binding="{Binding IsExpanded, RelativeSource={RelativeSource TemplatedParent}}" Value="True">
+                                                    <Setter Property="ItemsPanel">
+                                                        <Setter.Value>
+                                                            <ItemsPanelTemplate>
+                                                                <WrapPanel Orientation="Horizontal" MaxHeight="200" />
+                                                            </ItemsPanelTemplate>
+                                                        </Setter.Value>
+                                                    </Setter>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </ItemsControl.Style>
+                                </ItemsControl>
+                            </Grid>
+
+                            <Border x:Name="PART_FadeOverlay"
+                                    Grid.Column="1"
+                                    IsHitTestVisible="False"
+                                    Margin="0,0,-1,0"
+                                    HorizontalAlignment="Right"
+                                    Width="60">
+                                <Border.Background>
+                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                        <GradientStop Color="#00FFFFFF" Offset="0" />
+                                        <GradientStop Color="#FFF8F9FA" Offset="1" />
+                                    </LinearGradientBrush>
+                                </Border.Background>
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                        <Style.Triggers>
+                                            <MultiDataTrigger>
+                                                <MultiDataTrigger.Conditions>
+                                                    <Condition Binding="{Binding HasOverflow, RelativeSource={RelativeSource TemplatedParent}}" Value="True" />
+                                                    <Condition Binding="{Binding IsExpanded, RelativeSource={RelativeSource TemplatedParent}}" Value="False" />
+                                                </MultiDataTrigger.Conditions>
+                                                <Setter Property="Visibility" Value="Visible" />
+                                            </MultiDataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                            </Border>
+                            <!--  Action Buttons  -->
+                            <StackPanel Grid.Column="2" Orientation="Horizontal">
+                                <StackPanel.Style>
+                                    <Style TargetType="{x:Type StackPanel}">
+                                        <Setter Property="VerticalAlignment" Value="Bottom" />
+                                        <Setter Property="Margin" Value="0,0,4,3" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsExpanded, RelativeSource={RelativeSource TemplatedParent}}" Value="False">
+                                                <Setter Property="VerticalAlignment" Value="Center" />
+                                                <Setter Property="Margin" Value="0,0,4,0" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </StackPanel.Style>
+
+                                <!--  Expand/Collapse Toggle Button  -->
+                                <Button x:Name="PART_ExpandButton"
+                                        Command="{Binding ToggleExpandCommand, RelativeSource={RelativeSource TemplatedParent}}"
+                                        Width="24"
+                                        Height="24"
+                                        FontWeight="ExtraBlack"
+                                        FontSize="14">
+                                    <Button.Style>
+                                        <Style BasedOn="{StaticResource CustomTransparentFontIconButtonStyle}" TargetType="{x:Type Button}">
+                                            <Setter Property="Content" Value="&#xE712;" />
+                                            <Setter Property="Background" Value="Transparent" />
+                                            <Setter Property="ToolTip" Value="Expand filter panel" />
+                                            <Setter Property="Visibility" Value="Visible" />
+                                            <Style.Triggers>
+                                                <!--  Hide expand button when there's no overflow  -->
+                                                <DataTrigger Binding="{Binding HasOverflow, RelativeSource={RelativeSource TemplatedParent}}" Value="False">
+                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding IsExpanded, RelativeSource={RelativeSource TemplatedParent}}" Value="True">
+                                                    <Setter Property="Content" Value="&#xE896;" />
+                                                    <Setter Property="ToolTip" Value="Collapse filter panel" />
+                                                    <Setter Property="Visibility" Value="Visible" />
+                                                </DataTrigger>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter Property="Background" Value="#eee" />
+                                                    <Setter Property="Foreground" Value="#1c1c1c" />
+                                                </Trigger>
+                                                <Trigger Property="IsPressed" Value="True">
+                                                    <Setter Property="Background" Value="#ddd" />
+                                                    <Setter Property="Foreground" Value="#000000" />
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                </Button>
+
+                                <Button x:Name="PART_ClearAllButton"
+                                        Command="{Binding ClearAllFiltersCommand, RelativeSource={RelativeSource TemplatedParent}}"
+                                        Width="24"
+                                        Height="24"
+                                        Content="&#xE711;"
+                                        FontSize="14"
+                                        ToolTip="Clear all filters">
+                                    <Button.Style>
+                                        <Style BasedOn="{StaticResource CustomTransparentFontIconButtonStyle}" TargetType="{x:Type Button}">
+                                            <Style.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter Property="Background" Value="#eee" />
+                                                    <Setter Property="Foreground" Value="#CC0000" />
+                                                </Trigger>
+                                                <Trigger Property="IsPressed" Value="True">
+                                                    <Setter Property="Background" Value="#ddd" />
+                                                    <Setter Property="Foreground" Value="#990000" />
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                </Button>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!--#endregion-->
+
+</ResourceDictionary>

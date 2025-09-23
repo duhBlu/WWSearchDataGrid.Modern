@@ -4,7 +4,7 @@
     
     
     <!-- NumericUpDown Control Template -->
-    <Style TargetType="{x:Type sdg:NumericUpDown}">
+    <Style x:Key="GenericNumericUpDownStyle" TargetType="{x:Type sdg:NumericUpDown}">
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type sdg:NumericUpDown}">
@@ -101,5 +101,7 @@
         <Setter Property="Width" Value="80"/>
         <Setter Property="Height" Value="24"/>
     </Style>
-    
+
+    <Style TargetType="{x:Type sdg:NumericUpDown}" BasedOn="{StaticResource GenericNumericUpDownStyle}" />
+
 </ResourceDictionary>

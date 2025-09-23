@@ -10,7 +10,7 @@ namespace WWSearchDataGrid.Modern.Core
         {
             if (value is DateTime dt)
                 return dt;
-            if (DateTime.TryParse(value.ToString(), out DateTime parsed))
+            if (DateTime.TryParse(value?.ToString(), out DateTime parsed))
                 return parsed;
             return null;
         }
@@ -25,7 +25,7 @@ namespace WWSearchDataGrid.Modern.Core
                 return (decimal)d;
             if (value is float f)
                 return (decimal)f;
-            if (decimal.TryParse(value.ToString(), out decimal parsed))
+            if (decimal.TryParse(value?.ToString(), out decimal parsed))
                 return parsed;
             return null;
         }

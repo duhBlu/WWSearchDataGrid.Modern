@@ -20,9 +20,6 @@ namespace WWSearchDataGrid.Modern.Core.Caching
         
         private readonly object _lock = new object();
         
-        /// <summary>
-        /// Gets the singleton instance
-        /// </summary>
         public static ColumnValueCacheManager Instance => _instance.Value;
         
         private ColumnValueCacheManager() { }
@@ -88,34 +85,6 @@ namespace WWSearchDataGrid.Modern.Core.Caching
                 }
             }
         }
-        
-        /// <summary>
-        /// Gets cache statistics for monitoring
-        /// </summary>
-        /// <returns>Cache statistics</returns>
-        public CacheStatistics GetStatistics()
-        {
-            lock (_lock)
-            {
-                int totalEntries = _cacheEntries.Count;
-                int aliveEntries = 0;
-                
-                foreach (var weakRef in _cacheEntries.Values)
-                {
-                    if (weakRef.TryGetTarget(out _))
-                    {
-                        aliveEntries++;
-                    }
-                }
-                
-                return new CacheStatistics
-                {
-                    TotalEntries = totalEntries,
-                    AliveEntries = aliveEntries,
-                    DeadEntries = totalEntries - aliveEntries
-                };
-            }
-        }
     }
     
     /// <summary>
@@ -156,7 +125,7 @@ namespace WWSearchDataGrid.Modern.Core.Caching
             _containsNullValues = hasNulls;
             
             // Sort if collection is reasonable size
-            if (normalizedValues.Count <= 100000)
+            if (normalizedValues.Count <= 500000)
             {
                 normalizedValues.Sort((x, y) => CompareValues(x, y));
             }
@@ -218,17 +187,5 @@ namespace WWSearchDataGrid.Modern.Core.Caching
             
             return _cache.UniqueValues.Contains(normalizedValue);
         }
-    }
-    
-    
-    /// <summary>
-    /// Cache statistics for monitoring
-    /// </summary>
-    internal class CacheStatistics
-    {
-        public int TotalEntries { get; set; }
-        public int AliveEntries { get; set; }
-        public int DeadEntries { get; set; }
-        public double MemoryEfficiency => TotalEntries > 0 ? (double)AliveEntries / TotalEntries : 0.0;
     }
 }

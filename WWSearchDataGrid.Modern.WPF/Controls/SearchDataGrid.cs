@@ -148,11 +148,6 @@ namespace WWSearchDataGrid.Modern.WPF
         /// </summary>
         public event EventHandler ItemsSourceChanged;
 
-        /// <summary>
-        /// Event raised when items source is filtered
-        /// </summary>
-        public event EventHandler ItemsSourceFiltered;
-
         #endregion
 
         #region Constructor
@@ -170,7 +165,6 @@ namespace WWSearchDataGrid.Modern.WPF
             // Subscribe to FilterPanel events
             FilterPanel.FiltersEnabledChanged += OnFiltersEnabledChanged;
             FilterPanel.FilterRemoved += OnFilterRemoved;
-            FilterPanel.EditFiltersRequested += OnEditFiltersRequested;
             FilterPanel.ClearAllFiltersRequested += OnClearAllFiltersRequested;
 
             // Initialize context menu functionality
@@ -207,7 +201,6 @@ namespace WWSearchDataGrid.Modern.WPF
                 // Wire up events from template FilterPanel to our FilterPanel events
                 templateFilterPanel.FiltersEnabledChanged += (s, e) => OnFiltersEnabledChanged(s, e);
                 templateFilterPanel.FilterRemoved += (s, e) => OnFilterRemoved(s, e);
-                templateFilterPanel.EditFiltersRequested += (s, e) => OnEditFiltersRequested(s, e);
                 templateFilterPanel.ClearAllFiltersRequested += (s, e) => OnClearAllFiltersRequested(s, e);
                 
                 // Replace our FilterPanel property with the template instance so updates go to the right place
@@ -522,7 +515,6 @@ namespace WWSearchDataGrid.Modern.WPF
                     return;
                 }
 
-                // Commit any edits
                 CommitEdit(DataGridEditingUnit.Row, true);
 
                 // Check if filters are enabled before applying - respects FilterPanel checkbox
@@ -559,10 +551,6 @@ namespace WWSearchDataGrid.Modern.WPF
                     SearchFilter = null;
                 }
 
-                // Notify that items have been filtered
-                ItemsSourceFiltered?.Invoke(this, EventArgs.Empty);
-
-                // Update filter panel
                 UpdateFilterPanel();
             }
             catch (OperationCanceledException)
@@ -916,9 +904,6 @@ namespace WWSearchDataGrid.Modern.WPF
             SearchFilter = null;
 
             ForceRestoreOriginalData();
-
-            // Notify that items have been filtered
-            ItemsSourceFiltered?.Invoke(this, EventArgs.Empty);
         }
         
         /// <summary>
@@ -1201,12 +1186,10 @@ namespace WWSearchDataGrid.Modern.WPF
             {
                 if (e.Enabled)
                 {
-                    // Re-apply existing filters
                     FilterItemsSource();
                 }
                 else
                 {
-                    // Clear ALL filtering - both regular filters AND transformations
                     Items.Filter = null;
                     SearchFilter = null;
                 }
@@ -1234,54 +1217,6 @@ namespace WWSearchDataGrid.Modern.WPF
             catch (Exception ex)
             {
                 Debug.WriteLine($"Error in OnFilterRemoved: {ex.Message}");
-            }
-        }
-
-        /// <summary>
-        /// Handles requests to open the edit filters dialog
-        /// </summary>
-        private void OnEditFiltersRequested(object sender, EventArgs e)
-        {
-            try
-            {
-                // Create the DataGridFilterEditor custom control
-                var DataGridFilterEditor = new DataGridFilterEditor
-                {
-                    SourceDataGrid = this
-                };
-
-                // Create a window to host the custom control
-                var window = new Window
-                {
-                    Title = "Edit Filters",
-                    Height = 600,
-                    Width = 900,
-                    MinHeight = 500,
-                    MinWidth = 700,
-                    WindowStartupLocation = WindowStartupLocation.CenterOwner,
-                    Owner = Window.GetWindow(this),
-                    Content = DataGridFilterEditor,
-                    Background = System.Windows.Media.Brushes.White
-                };
-
-                // Handle dialog closing
-                DataGridFilterEditor.DialogClosing += (s, args) =>
-                {
-                    window.Close();
-                    
-                    // Update filter panel if changes were accepted
-                    if (args.Accepted)
-                    {
-                        UpdateFilterPanel();
-                    }
-                };
-
-                // Show the dialog
-                window.ShowDialog();
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"Error in OnEditFiltersRequested: {ex.Message}");
             }
         }
 

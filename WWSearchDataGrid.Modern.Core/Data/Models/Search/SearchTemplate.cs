@@ -48,7 +48,7 @@ namespace WWSearchDataGrid.Modern.Core
             get { return operatorName; }
             set
             {
-                // Normalize to title case (e.g., "OR" -> "Or", "and" -> "And")
+                // Normalize to title case for display text (e.g., "OR" -> "Or", "and" -> "And")
                 var normalizedValue = string.IsNullOrEmpty(value) ? value : 
                     char.ToUpper(value[0]) + (value.Length > 1 ? value.Substring(1).ToLower() : string.Empty);
                 
@@ -81,7 +81,6 @@ namespace WWSearchDataGrid.Modern.Core
 
         public bool HasChanges { get; set; }
 
-        // oparator 
         public bool IsOperatorVisible
         {
             get { return isOperatorVisible; }
@@ -98,9 +97,6 @@ namespace WWSearchDataGrid.Modern.Core
             }
         }
 
-        /// <summary>
-        /// Gets the target type for the search condition
-        /// </summary>
         private Type GetTargetType()
         {
             switch (ColumnDataType)
@@ -163,8 +159,7 @@ namespace WWSearchDataGrid.Modern.Core
                 var hasSelectedValue = SelectedValue != null;
                 var hasSelectedSecondaryValue = SelectedSecondaryValue != null;
 
-                var isNonDefaultSearchType = SearchTemplateController != null &&
-                                                    SearchType != SearchTemplateController.DefaultSearchType;
+                var isNonDefaultSearchType = SearchType != SearchType.Contains;
 
                 var hasSelectedValues = (SearchType == SearchType.IsAnyOf && SelectedValues.Any()) ||
                                       (SearchType == SearchType.IsNoneOf && SelectedValues.Any());
@@ -445,16 +440,26 @@ namespace WWSearchDataGrid.Modern.Core
             }
         }
 
-        private void EnsureOrderedForBetween()
+        /// <summary>
+        /// Gets the ordered values for Between operations without modifying the stored values
+        /// This prevents infinite loops (property changed listeners) while ensuring correct ordering for comparisons
+        /// </summary>
+        private (object minValue, object maxValue) GetOrderedBetweenValues()
         {
-            if (SearchType == SearchType.Between
-             || SearchType == SearchType.NotBetween
-             || SearchType == SearchType.BetweenDates
-             && Comparer.Default.Compare(SelectedValue, SelectedSecondaryValue) > 0)
+            // Check if this is a Between operation that needs ordering
+            if ((SearchType == SearchType.Between ||
+                 SearchType == SearchType.NotBetween ||
+                 SearchType == SearchType.BetweenDates) &&
+                SelectedValue != null &&
+                SelectedSecondaryValue != null &&
+                Comparer.Default.Compare(SelectedValue, SelectedSecondaryValue) > 0)
             {
-                (SelectedValue, SelectedSecondaryValue) =
-                    (SelectedSecondaryValue, SelectedValue);
+                // Return values in correct order (min, max) without modifying stored properties
+                return (SelectedSecondaryValue, SelectedValue);
             }
+
+            // Return original values if no ordering needed
+            return (SelectedValue, SelectedSecondaryValue);
         }
 
         /// <summary>
@@ -477,9 +482,9 @@ namespace WWSearchDataGrid.Modern.Core
             if (SearchType == SearchType.IsOnAnyOfDates) return BuildIsOnAnyOfDatesExpression();
             if (SearchType == SearchType.DateInterval) return BuildDateIntervalExpression();
 
-            EnsureOrderedForBetween();
+            var (orderedValue, orderedSecondaryValue) = GetOrderedBetweenValues(); 
 
-            var searchCondition = new SearchCondition(targetType, SearchType, SelectedValue, SelectedSecondaryValue);
+            var searchCondition = new SearchCondition(targetType, SearchType, orderedValue, orderedSecondaryValue);
             return obj => SearchEngine.EvaluateCondition(obj, searchCondition);
         }
 

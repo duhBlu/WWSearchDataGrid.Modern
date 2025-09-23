@@ -26,23 +26,6 @@ namespace WWSearchDataGrid.Modern.WPF
         #region Dependency Properties
 
         /// <summary>
-        /// Attached property for specifying the default search type for filter templates
-        /// </summary>
-        public static readonly DependencyProperty DefaultSearchTypeProperty =
-            DependencyProperty.RegisterAttached("DefaultSearchType", typeof(SearchType), typeof(ColumnFilterEditor),
-                new FrameworkPropertyMetadata(SearchType.Contains, FrameworkPropertyMetadataOptions.Inherits));
-
-        public static SearchType GetDefaultSearchType(DependencyObject obj)
-        {
-            return (SearchType)obj.GetValue(DefaultSearchTypeProperty);
-        }
-
-        public static void SetDefaultSearchType(DependencyObject obj, SearchType value)
-        {
-            obj.SetValue(DefaultSearchTypeProperty, value);
-        }
-
-        /// <summary>
         /// Dependency property for controlling operator ComboBox visibility
         /// </summary>
         public static readonly DependencyProperty IsOperatorVisibleProperty =
@@ -170,7 +153,7 @@ namespace WWSearchDataGrid.Modern.WPF
         {
             if (SearchTemplateController != null)
             {
-                SearchTemplateController.FilterShouldApply -= OnFilterShouldApply;
+                SearchTemplateController.AutoApplyFilter -= OnAutoApplyFilter;
             }
         }
 
@@ -306,19 +289,23 @@ namespace WWSearchDataGrid.Modern.WPF
             if (SearchTemplateController != null)
             {
                 // Subscribe to the single unified event
-                SearchTemplateController.FilterShouldApply += OnFilterShouldApply;
+                SearchTemplateController.AutoApplyFilter += OnAutoApplyFilter;
             }
         }
 
         /// <summary>
         /// Handle the unified filter should apply event from SearchTemplateController
         /// </summary>
-        private void OnFilterShouldApply(object sender, EventArgs e)
+        private void OnAutoApplyFilter(object sender, EventArgs e)
         {
-            Application.Current?.Dispatcher.Invoke(() =>
+            try
             {
-                ApplyFilterAutomatically();
-            });
+                Application.Current?.Dispatcher.Invoke(() =>
+                {
+                    ApplyFilterAutomatically();
+                });
+            }
+            catch { }
         }
 
         /// <summary>

@@ -2,7 +2,7 @@ using System.Windows;
 using System.Windows.Controls;
 using WWSearchDataGrid.Modern.Core;
 
-namespace WWSearchDataGrid.Modern.WPF.Templates
+namespace WWSearchDataGrid.Modern.WPF
 {
     /// <summary>
     /// Template selector for filter tokens based on their type

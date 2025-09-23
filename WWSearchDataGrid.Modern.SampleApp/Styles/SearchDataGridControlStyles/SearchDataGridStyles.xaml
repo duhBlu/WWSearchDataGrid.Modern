@@ -1,13 +1,8 @@
 ﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-                    xmlns:sdg="clr-namespace:WWSearchDataGrid.Modern.WPF"
-                    xmlns:converters="clr-namespace:WWSearchDataGrid.Modern.WPF.Converters">
-    <ResourceDictionary.MergedDictionaries>
-        <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF;component/Themes/Controls/ColumnSearchBox.xaml" />
-        <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF;component/Themes/Controls/FilterPanel.xaml" />
-    </ResourceDictionary.MergedDictionaries>
+                    xmlns:sdg="clr-namespace:WWSearchDataGrid.Modern.WPF;assembly=WWSearchDataGrid.Modern.WPF">
 
-    <Style x:Key="DefaultSelectAllButtonStyle" TargetType="{x:Type Button}">
+    <Style x:Key="CustomSelectAllButtonStyle" TargetType="{x:Type Button}">
         <Setter Property="Cursor" Value="Hand" />
         <Setter Property="Width" Value="{Binding RowHeaderWidth, RelativeSource={RelativeSource AncestorType={x:Type sdg:SearchDataGrid}}}" />
         <Setter Property="Template">
@@ -46,7 +41,7 @@
         </Setter>
     </Style>
 
-    <Style x:Key="DefaultSearchDataGridRowHeaderStyle" TargetType="{x:Type DataGridRowHeader}">
+    <Style x:Key="CustomSearchDataGridRowHeaderStyle" TargetType="{x:Type DataGridRowHeader}">
         <Setter Property="HorizontalContentAlignment" Value="Center" />
         <Setter Property="VerticalContentAlignment" Value="Center" />
         <Setter Property="Padding" Value="4,0" />
@@ -84,7 +79,7 @@
     </Style>
 
     <!--  Search Grid Column Header Style  -->
-    <Style x:Key="DefaultSearchDataGridColumnHeaderStyle" TargetType="{x:Type DataGridColumnHeader}">
+    <Style x:Key="CustomSearchDataGridColumnHeaderStyle" TargetType="{x:Type DataGridColumnHeader}">
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type DataGridColumnHeader}">
@@ -96,7 +91,7 @@
 
                         <!--  Search Control  -->
                         <sdg:ColumnSearchBox x:Name="PART_ColumnSearchBox"
-                                             Style="{Binding Mode=OneWay, Source={StaticResource GenericColumnSearchBoxStyle}}"
+                                             Style="{Binding Mode=OneWay, Source={StaticResource CustomColumnSearchBoxStyle}}"
                                              Grid.Row="0"
                                              BorderThickness="0"
                                              Margin="0,1,1,0"
@@ -191,9 +186,7 @@
     </Style>
 
     <!--  Modern Search DataGrid Style  -->
-    <Style x:Key="GenericSearchDataGridStyle" TargetType="{x:Type sdg:SearchDataGrid}">
-        <Setter Property="ColumnHeaderStyle" Value="{StaticResource DefaultSearchDataGridColumnHeaderStyle}" />
-        <Setter Property="RowHeaderStyle" Value="{StaticResource DefaultSearchDataGridRowHeaderStyle}" />
+    <Style x:Key="CustomSearchDataGridStyle" TargetType="{x:Type sdg:SearchDataGrid}">
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type sdg:SearchDataGrid}">
@@ -230,7 +223,7 @@
                                             </Grid.RowDefinitions>
 
                                             <!--  Per-Column Select All  -->
-                                            <Button Style="{StaticResource DefaultSelectAllButtonStyle}"
+                                            <Button Style="{StaticResource CustomSelectAllButtonStyle}"
                                                     Focusable="false"
                                                     Command="{x:Static DataGrid.SelectAllCommand}" />
 
@@ -272,15 +265,15 @@
                             </ScrollViewer>
 
                             <!--  FilterPanel  -->
-                            <sdg:FilterPanel x:Name="PART_FilterPanel" Grid.Row="1" Style="{StaticResource GenericFilterPanelStyle}" />
+                            <sdg:FilterPanel x:Name="PART_FilterPanel" Grid.Row="1" Style="{StaticResource CustomFilterPanelStyle}" />
                         </Grid>
                     </Border>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
         <Setter Property="Background" Value="White" />
-        <Setter Property="RowHeaderStyle" Value="{StaticResource DefaultSearchDataGridRowHeaderStyle}" />
-        <Setter Property="ColumnHeaderStyle" Value="{StaticResource DefaultSearchDataGridColumnHeaderStyle}" />
+        <Setter Property="RowHeaderStyle" Value="{StaticResource CustomSearchDataGridRowHeaderStyle}" />
+        <Setter Property="ColumnHeaderStyle" Value="{StaticResource CustomSearchDataGridColumnHeaderStyle}" />
         <Setter Property="RowHeaderWidth" Value="24" />
         <Setter Property="BorderBrush" Value="#FFDDDDDD" />
         <Setter Property="RowBackground" Value="White" />
@@ -308,5 +301,5 @@
         <Setter Property="ScrollViewer.IsDeferredScrollingEnabled" Value="True" />
     </Style>
 
-    <Style TargetType="{x:Type sdg:SearchDataGrid}" BasedOn="{StaticResource GenericSearchDataGridStyle}"/>
+    <Style TargetType="{x:Type sdg:SearchDataGrid}" BasedOn="{StaticResource CustomSearchDataGridStyle}" />
 </ResourceDictionary>

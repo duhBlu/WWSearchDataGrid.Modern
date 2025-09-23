@@ -6,7 +6,6 @@
                     xmlns:converters="clr-namespace:WWSearchDataGrid.Modern.WPF.Converters">
 
     <ResourceDictionary.MergedDictionaries>
-        <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF;component/Themes/Common/CommonStyles.xaml" />
         <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF;component/Themes/Controls/Primitives/SearchTextBox.xaml" />
     </ResourceDictionary.MergedDictionaries>
 
@@ -20,15 +19,33 @@
 
     <!--  Single ComboBox Template  -->
     <DataTemplate x:Key="SingleComboBoxTemplate">
-        <ComboBox Style="{StaticResource Editable_ComboBox_Style}"
-                  Text="{Binding SelectedValue}"
-                  Tag="Type or select..."
-                  ItemsSource="{Binding SearchTemplateController.ColumnValues}" />
+        <ComboBox Text="{Binding SelectedValue}" ItemsSource="{Binding SearchTemplateController.ColumnValues}">
+            <ComboBox.Style>
+                <Style TargetType="{x:Type ComboBox}">
+                    <Setter Property="IsEditable" Value="True" />
+                    <Setter Property="VirtualizingPanel.IsVirtualizing" Value="True" />
+                    <Setter Property="VirtualizingPanel.VirtualizationMode" Value="Recycling" />
+                    <Setter Property="ScrollViewer.IsDeferredScrollingEnabled" Value="True" />
+                    <Setter Property="ItemsPanel">
+                        <Setter.Value>
+                            <ItemsPanelTemplate>
+                                <VirtualizingStackPanel VirtualizingPanel.IsVirtualizing="True"
+                                                        VirtualizingPanel.VirtualizationMode="Recycling"
+                                                        VirtualizingPanel.ScrollUnit="Item" />
+                            </ItemsPanelTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Style>
+            </ComboBox.Style>
+        </ComboBox>
     </DataTemplate>
 
     <!--  Single TextBox Template  -->
     <DataTemplate x:Key="SingleTextBoxTemplate">
-        <sdg:SearchTextBox Text="{Binding SelectedValue, UpdateSourceTrigger=PropertyChanged}" Watermark="Enter text..." ShowSearchIcon="False" />
+        <sdg:SearchTextBox Text="{Binding SelectedValue, UpdateSourceTrigger=PropertyChanged}"
+                           Style="{StaticResource GenericSearchTextboxStyle}"
+                           Watermark="Enter text..."
+                           ShowSearchIcon="False" />
     </DataTemplate>
 
     <!--  Dual ComboBox Template  -->
@@ -37,19 +54,52 @@
             <TextBlock Text="From:"
                        Margin="0,0,5,0"
                        VerticalAlignment="Center" />
-            <ComboBox Style="{StaticResource Editable_ComboBox_Style}"
-                      Text="{Binding SelectedValue, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
+            <ComboBox Text="{Binding SelectedValue, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
                       MinWidth="120"
                       Tag="Type or select..."
-                      ItemsSource="{Binding SearchTemplateController.ColumnValues}" />
+                      ItemsSource="{Binding SearchTemplateController.ColumnValues}">
+                <ComboBox.Style>
+                    <Style TargetType="{x:Type ComboBox}">
+                        <Setter Property="IsEditable" Value="True" />
+                        <Setter Property="VirtualizingPanel.IsVirtualizing" Value="True" />
+                        <Setter Property="VirtualizingPanel.VirtualizationMode" Value="Recycling" />
+                        <Setter Property="ScrollViewer.IsDeferredScrollingEnabled" Value="True" />
+                        <Setter Property="ItemsPanel">
+                            <Setter.Value>
+                                <ItemsPanelTemplate>
+                                    <VirtualizingStackPanel VirtualizingPanel.IsVirtualizing="True"
+                                                            VirtualizingPanel.VirtualizationMode="Recycling"
+                                                            VirtualizingPanel.ScrollUnit="Item" />
+                                </ItemsPanelTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                </ComboBox.Style>
+            </ComboBox>
             <TextBlock Text="To:"
                        Margin="10,0,5,0"
                        VerticalAlignment="Center" />
-            <ComboBox Style="{StaticResource Editable_ComboBox_Style}"
-                      Text="{Binding SelectedSecondaryValue, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
+            <ComboBox Text="{Binding SelectedSecondaryValue, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
                       MinWidth="120"
-                      Tag="Type or select..."
-                      ItemsSource="{Binding SearchTemplateController.ColumnValues}" />
+                      ItemsSource="{Binding SearchTemplateController.ColumnValues}">
+                <ComboBox.Style>
+                    <Style TargetType="{x:Type ComboBox}">
+                        <Setter Property="IsEditable" Value="True" />
+                        <Setter Property="VirtualizingPanel.IsVirtualizing" Value="True" />
+                        <Setter Property="VirtualizingPanel.VirtualizationMode" Value="Recycling" />
+                        <Setter Property="ScrollViewer.IsDeferredScrollingEnabled" Value="True" />
+                        <Setter Property="ItemsPanel">
+                            <Setter.Value>
+                                <ItemsPanelTemplate>
+                                    <VirtualizingStackPanel VirtualizingPanel.IsVirtualizing="True"
+                                                            VirtualizingPanel.VirtualizationMode="Recycling"
+                                                            VirtualizingPanel.ScrollUnit="Item" />
+                                </ItemsPanelTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                </ComboBox.Style>
+            </ComboBox>
         </StackPanel>
     </DataTemplate>
 
@@ -102,8 +152,7 @@
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
-            <Button Style="{StaticResource Default_Button_Style}"
-                    Grid.Row="0"
+            <Button Grid.Row="0"
                     Command="{Binding AddValueCommand}"
                     Margin="0,0,0,5"
                     HorizontalAlignment="Left"
@@ -149,17 +198,76 @@
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
-                                <ComboBox Style="{StaticResource Editable_ComboBox_Style}"
-                                          Grid.Column="0"
-                                          Text="{Binding}"
-                                          Tag="Type or select..."
-                                          ItemsSource="{Binding DataContext.SearchTemplateController.ColumnValues, RelativeSource={RelativeSource AncestorType=ListBox}}" />
-                                <Button Style="{StaticResource TransparentFontIcon_Button_Style}"
-                                        Grid.Column="1"
+                                <ComboBox Grid.Column="0" ItemsSource="{Binding DataContext.SearchTemplateController.ColumnValues, RelativeSource={RelativeSource AncestorType=ListBox}}">
+                                    <ComboBox.Style>
+                                        <Style TargetType="{x:Type ComboBox}">
+                                            <Setter Property="IsEditable" Value="True" />
+                                            <Setter Property="VirtualizingPanel.IsVirtualizing" Value="True" />
+                                            <Setter Property="VirtualizingPanel.VirtualizationMode" Value="Recycling" />
+                                            <Setter Property="ScrollViewer.IsDeferredScrollingEnabled" Value="True" />
+                                            <Setter Property="ItemsPanel">
+                                                <Setter.Value>
+                                                    <ItemsPanelTemplate>
+                                                        <VirtualizingStackPanel VirtualizingPanel.IsVirtualizing="True"
+                                                                                VirtualizingPanel.VirtualizationMode="Recycling"
+                                                                                VirtualizingPanel.ScrollUnit="Item" />
+                                                    </ItemsPanelTemplate>
+                                                </Setter.Value>
+                                            </Setter>
+                                        </Style>
+                                    </ComboBox.Style>
+                                </ComboBox>
+                                <Button Grid.Column="1"
+                                        BorderThickness="0"
+                                        Cursor="Hand"
                                         Command="{Binding DataContext.RemoveValueCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"
                                         CommandParameter="{Binding}"
                                         Margin="3,0,0,0"
-                                        Content="&#xE10A;" />
+                                        Width="24"
+                                        Height="24"
+                                        FontFamily="Segoe MDL2 Assets"
+                                        Content="&#xE711;">
+                                    <Button.Style>
+                                        <Style TargetType="{x:Type Button}">
+                                            <Setter Property="Background" Value="Transparent" />
+                                            <Setter Property="Cursor" Value="Hand" />
+                                            <Setter Property="Foreground" Value="Gray" />
+                                            <Setter Property="Template">
+                                                <Setter.Value>
+                                                    <ControlTemplate TargetType="{x:Type Button}">
+                                                        <Border x:Name="border"
+                                                                Background="{TemplateBinding Background}"
+                                                                BorderBrush="{TemplateBinding BorderBrush}"
+                                                                BorderThickness="{TemplateBinding BorderThickness}">
+                                                            <ContentPresenter x:Name="contentPresenter"
+                                                                              Focusable="False"
+                                                                              Margin="{TemplateBinding Padding}"
+                                                                              HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                                                              VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                                                              RecognizesAccessKey="True"
+                                                                              TextElement.Foreground="{TemplateBinding Foreground}"
+                                                                              SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" />
+                                                        </Border>
+                                                    </ControlTemplate>
+                                                </Setter.Value>
+                                            </Setter>
+                                            <Style.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter Property="Background" Value="#FFF0F0F0" />
+                                                    <Setter Property="Foreground" Value="#1c1c1c" />
+                                                </Trigger>
+                                                <Trigger Property="IsPressed" Value="True">
+                                                    <Setter Property="Background" Value="#FFE0E0E0" />
+                                                    <Setter Property="Foreground" Value="#000000" />
+                                                </Trigger>
+                                                <Trigger Property="IsEnabled" Value="False">
+                                                    <Setter Property="Opacity" Value="0.5" />
+                                                    <Setter Property="Cursor" Value="Arrow" />
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                </Button>
                             </Grid>
                         </Border>
                     </DataTemplate>
@@ -176,8 +284,7 @@
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
-            <Button Style="{StaticResource Default_Button_Style}"
-                    Grid.Row="0"
+            <Button Grid.Row="0"
                     Command="{Binding AddDateCommand}"
                     Margin="0,0,0,5"
                     HorizontalAlignment="Left"
@@ -216,13 +323,54 @@
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
                                 <DatePicker Grid.Column="0" SelectedDate="{Binding DateValue}" />
-                                <Button Style="{StaticResource TransparentFontIcon_Button_Style}"
-                                        Grid.Column="1"
+                                <Button Grid.Column="1"
+                                        BorderThickness="0"
+                                        Cursor="Hand"
                                         Command="{Binding DataContext.RemoveDateCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"
                                         CommandParameter="{Binding}"
                                         Margin="3,0,0,0"
                                         Width="20"
-                                        Content="X" />
+                                        FontFamily="Segoe MDL2 Assets"
+                                        Content="&#xE711;">
+                                    <Button.Style>
+                                        <Style TargetType="{x:Type Button}">
+                                            <Setter Property="Background" Value="Transparent" />
+                                            <Setter Property="Template">
+                                                <Setter.Value>
+                                                    <ControlTemplate TargetType="{x:Type Button}">
+                                                        <Border x:Name="border"
+                                                                Background="{TemplateBinding Background}"
+                                                                BorderBrush="{TemplateBinding BorderBrush}"
+                                                                BorderThickness="{TemplateBinding BorderThickness}">
+                                                            <ContentPresenter x:Name="contentPresenter"
+                                                                              Focusable="False"
+                                                                              Margin="{TemplateBinding Padding}"
+                                                                              HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                                                              VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                                                              RecognizesAccessKey="True"
+                                                                              TextElement.Foreground="{TemplateBinding Foreground}"
+                                                                              SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" />
+                                                        </Border>
+                                                    </ControlTemplate>
+                                                </Setter.Value>
+                                            </Setter>
+                                            <Style.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter Property="Background" Value="#FFF0F0F0" />
+                                                    <Setter Property="Foreground" Value="#1c1c1c" />
+                                                </Trigger>
+                                                <Trigger Property="IsPressed" Value="True">
+                                                    <Setter Property="Background" Value="#FFE0E0E0" />
+                                                    <Setter Property="Foreground" Value="#000000" />
+                                                </Trigger>
+                                                <Trigger Property="IsEnabled" Value="False">
+                                                    <Setter Property="Opacity" Value="0.5" />
+                                                    <Setter Property="Cursor" Value="Arrow" />
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                </Button>
                             </Grid>
                         </Border>
                     </DataTemplate>
@@ -237,17 +385,15 @@
             <ItemsControl ItemsSource="{Binding DateIntervals}">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                        <CheckBox Style="{StaticResource Default_CheckBox_Style}"
-                                  IsChecked="{Binding IsSelected}"
-                                  Margin="0,2">
+                        <CheckBox IsChecked="{Binding IsSelected}" Margin="0,2">
                             <CheckBox.Content>
                                 <StackPanel Orientation="Horizontal">
-                                    <Image Source="{Binding Interval, Converter={StaticResource DateIntervalToIconConverter}}"
+                                    <!--<Image Source="{Binding Interval, Converter={StaticResource DateIntervalToIconConverter}}"
                                            Visibility="Collapsed"
                                            Margin="0,0,6,0"
                                            VerticalAlignment="Center"
                                            Width="16"
-                                           Height="16" />
+                                           Height="16" />-->
                                     <TextBlock Text="{Binding DisplayName}" VerticalAlignment="Center" />
                                 </StackPanel>
                             </CheckBox.Content>

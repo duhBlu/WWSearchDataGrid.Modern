@@ -20,7 +20,7 @@ namespace WWSearchDataGrid.Modern.Core
         /// <summary>
         /// Occurs when filters should be applied due to valid changes in templates or structure
         /// </summary>
-        public event EventHandler FilterShouldApply;
+        public event EventHandler AutoApplyFilter;
         
         #endregion
         
@@ -33,8 +33,6 @@ namespace WWSearchDataGrid.Modern.Core
         // Service dependencies
         private readonly FilterExpressionBuilder _filterExpressionBuilder;
 
-        private SearchType? defaultSearchType;
-        
         // Cache-based column values (replaces ObservableCollection approach)
         private string _cacheKey;
         private Func<IEnumerable<object>> _columnValuesProvider;
@@ -101,21 +99,8 @@ namespace WWSearchDataGrid.Modern.Core
             {
                 foreach (var template in group.SearchTemplates.OfType<SearchTemplate>())
                 {
-                    // Store the current search type to preserve it if still valid
-                    var currentSearchType = template.SearchType;
-                    
                     // Update the data type (this will trigger UpdateValidSearchTypes)
                     template.ColumnDataType = newDataType;
-                    
-                    // If the original search type is still valid, restore it
-                    if (DefaultSearchType is SearchType dst && template.ValidSearchTypes.Contains(dst))
-                    {
-                        template.SearchType = dst;
-                    }
-                    else
-                    {
-                        template.SearchType = currentSearchType;
-                    }
                 }
             }
         }
@@ -139,15 +124,6 @@ namespace WWSearchDataGrid.Modern.Core
         {
             get => hasCustomExpression;
             set => SetProperty(value, ref hasCustomExpression);
-        }
-
-        /// <summary>
-        /// Gets or sets the default search type for new templates
-        /// </summary>
-        public SearchType? DefaultSearchType
-        {
-            get => defaultSearchType;
-            set => SetProperty(value, ref defaultSearchType);
         }
 
         /// <summary>
@@ -200,18 +176,16 @@ namespace WWSearchDataGrid.Modern.Core
         /// </summary>
         public void ClearAndReset()
         {
-            // Unsubscribe from all existing templates before clearing
             UnsubscribeFromAllTemplates();
 
             SearchGroups.Clear();
-            AddSearchGroup(true, false); // Add default group without marking as changed
+            AddSearchGroup(true, false);
             HasCustomExpression = false;
         }
            
         
         /// <summary>
         /// Clears all data references that could prevent garbage collection
-        /// This method should be called when data is cleared to prevent memory leaks
         /// </summary>
         public void ClearDataReferences()
         {
@@ -235,12 +209,9 @@ namespace WWSearchDataGrid.Modern.Core
                 ColumnValuesByPath.Clear();
             }
             
-            // Clear cached column values reference
             _cachedColumnValues = null;
             _cacheKey = null;
             
-            // Only clear the provider if we're explicitly clearing data references
-            // The provider will be restored when new data is loaded
             _columnValuesProvider = null;
             
             // Trigger cache cleanup to remove dead references
@@ -285,11 +256,10 @@ namespace WWSearchDataGrid.Modern.Core
         /// <param name="markAsChanged">Whether to mark the template as changed</param>
         /// <param name="referenceTemplate">Reference template for positioning</param>
         /// <param name="group">Group to add the template to</param>
-        /// <param name="defaultSearchType">Optional default search type to use if compatible</param>
         public void AddSearchTemplate(bool markAsChanged = true, SearchTemplate referenceTemplate = null, SearchTemplateGroup group = null)
         {
             SearchTemplateGroup targetGroup = DetermineTargetGroup(group, referenceTemplate);
-            
+
             // Create new SearchTemplate with column data type
             var newTemplate = new SearchTemplate(ColumnDataType)
             {
@@ -299,9 +269,14 @@ namespace WWSearchDataGrid.Modern.Core
 
             // Subscribe to property changes for auto-apply monitoring
             newTemplate.PropertyChanged += OnSearchTemplatePropertyChanged;
+            newTemplate.SelectedValues.CollectionChanged += OnSearchTemplateValues_CollectionChanged;
+            newTemplate.SelectedDates.CollectionChanged += OnSearchTemplateValues_CollectionChanged;
+            foreach (var di in newTemplate.DateIntervals)
+            {
+                di.PropertyChanged += OnSearchTemplatePropertyChanged;
+            }
+            targetGroup.PropertyChanged += OnSearchGroup_PropertyChanged;
 
-            // Apply default search type if provided and compatible
-            ApplyDefaultSearchType(newTemplate, defaultSearchType);
 
             // Add the template at the appropriate position
             if (referenceTemplate == null)
@@ -325,7 +300,7 @@ namespace WWSearchDataGrid.Modern.Core
             }
 
             UpdateOperatorVisibility();
-            OnFilterShouldApply();
+            InvokeAutoApplyFilter();
         }
 
         /// <summary>
@@ -339,7 +314,6 @@ namespace WWSearchDataGrid.Modern.Core
             _cachedColumnValues = null;
             
             // Generate a cache key based on the provider hashcode and column name
-            // This ensures different columns get different cache entries
             _cacheKey = $"{ColumnName?.GetHashCode() ?? 0}_{valuesProvider?.GetHashCode() ?? 0}";
         }
         
@@ -386,7 +360,6 @@ namespace WWSearchDataGrid.Modern.Core
                 _cacheKey, 
                 () => values ?? Enumerable.Empty<object>());
             
-            // Clear provider when setting values directly
             _columnValuesProvider = null;
             
             // Determine column data type from the cached values
@@ -725,7 +698,7 @@ namespace WWSearchDataGrid.Modern.Core
             }
             UpdateFilterExpression();
             UpdateOperatorVisibility();
-            OnFilterShouldApply();
+            InvokeAutoApplyFilter();
         }
 
         /// <summary>
@@ -1399,26 +1372,6 @@ namespace WWSearchDataGrid.Modern.Core
         }
 
         /// <summary>
-        /// Applies the default search type to a template if it's compatible with the column data type
-        /// </summary>
-        /// <param name="template">The template to apply the default search type to</param>
-        /// <param name="defaultSearchType">The default search type to apply</param>
-        private void ApplyDefaultSearchType(SearchTemplate template, SearchType? defaultSearchType)
-        {
-            // Use the parameter first, then fall back to the property
-            var searchTypeToApply = defaultSearchType ?? DefaultSearchType;
-
-            if (searchTypeToApply.HasValue)
-            {
-                // Check if the search type is compatible with the column data type
-                if (SearchTypeRegistry.IsValidForDataType(searchTypeToApply.Value, ColumnDataType))
-                {
-                    template.SearchType = searchTypeToApply.Value;
-                }
-            }
-        }
-        
-        /// <summary>
         /// Gets whether all search templates in this controller represent valid, complete filters
         /// </summary>
         public bool HasValidFilters
@@ -1434,14 +1387,14 @@ namespace WWSearchDataGrid.Modern.Core
         }
 
         /// <summary>
-        /// Raises the FilterShouldApply event when there are valid filters that should be applied
+        /// Raises the AutoApplyFilter event when there are valid filters that should be applied
         /// </summary>
-        protected virtual void OnFilterShouldApply()
+        protected virtual void InvokeAutoApplyFilter()
         {
             // Only fire if we have at least one valid filter to apply
             if (HasValidFilters)
             {
-                FilterShouldApply?.Invoke(this, EventArgs.Empty);
+                AutoApplyFilter?.Invoke(this, EventArgs.Empty);
             }
         }
         
@@ -1457,17 +1410,32 @@ namespace WWSearchDataGrid.Modern.Core
                 nameof(SearchTemplate.SelectedValue),
                 nameof(SearchTemplate.SelectedSecondaryValue),
                 nameof(SearchTemplate.OperatorName),
-                nameof(SearchTemplate.SelectedValues),
-                nameof(SearchTemplate.SelectedDates),
-                nameof(SearchTemplate.DateIntervals)
+                nameof(DateIntervalItem.IsSelected)
             };
 
             if (filterRelevantProperties.Contains(e.PropertyName))
             {
-                OnFilterShouldApply();
+                InvokeAutoApplyFilter();
             }
         }
-        
+
+        private void OnSearchTemplateValues_CollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+        {
+            InvokeAutoApplyFilter();
+        }
+
+        private void OnSearchGroup_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+        {
+            var filterRelevantProperties = new[]
+            {
+                nameof(SearchTemplate.SearchType),
+            };
+            if (e.PropertyName.Equals(nameof(SearchTemplateGroup.OperatorName)))
+            {
+                InvokeAutoApplyFilter();
+            }
+        }
+
         /// <summary>
         /// Unsubscribe from all existing search template property changes
         /// </summary>
@@ -1482,8 +1450,11 @@ namespace WWSearchDataGrid.Modern.Core
                     foreach (var template in group.SearchTemplates)
                     {
                         template.PropertyChanged -= OnSearchTemplatePropertyChanged;
+                        template.SelectedValues.CollectionChanged -= OnSearchTemplateValues_CollectionChanged;
+                        template.SelectedDates.CollectionChanged -= OnSearchTemplateValues_CollectionChanged;
                     }
                 }
+                group.PropertyChanged -= OnSearchGroup_PropertyChanged;
             }
         }
 

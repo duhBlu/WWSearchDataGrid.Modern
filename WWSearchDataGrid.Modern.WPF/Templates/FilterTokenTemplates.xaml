@@ -5,18 +5,14 @@
                     xmlns:behaviors="clr-namespace:WWSearchDataGrid.Modern.WPF.Behaviors"
                     xmlns:sdg="clr-namespace:WWSearchDataGrid.Modern.WPF">
 
-    <ResourceDictionary.MergedDictionaries>
-        <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF;component/Themes/Common/CommonStyles.xaml" />
-    </ResourceDictionary.MergedDictionaries>
-
     <!--  Converters  -->
     <converters:StringEqualityConverter x:Key="StringEqualityConverter" />
 
     <!--  Token Template Selector  -->
-    <templates:FilterTokenTemplateSelector x:Key="FilterTokenTemplateSelector">
+    <sdg:FilterTokenTemplateSelector x:Key="GenericFilterTokenTemplateSelector">
 
         <!--  Opening Bracket Token Template  -->
-        <templates:FilterTokenTemplateSelector.OpenBracketTemplate>
+        <sdg:FilterTokenTemplateSelector.OpenBracketTemplate>
             <DataTemplate>
                 <Border Background="Transparent"
                         BorderThickness="1"
@@ -35,17 +31,17 @@
                     </Border.BorderBrush>
                 </Border>
             </DataTemplate>
-        </templates:FilterTokenTemplateSelector.OpenBracketTemplate>
+        </sdg:FilterTokenTemplateSelector.OpenBracketTemplate>
 
         <!--  Column Name Token Template  -->
-        <templates:FilterTokenTemplateSelector.ColumnNameTemplate>
+        <sdg:FilterTokenTemplateSelector.ColumnNameTemplate>
             <DataTemplate>
                 <Border Background="#ffc69b"
                         Margin="1,3"
                         Padding="6,3"
                         Height="24"
-                        CornerRadius="6"
                         behaviors:TokenHoverBehavior.IsEnabled="True"
+                        CornerRadius="6"
                         Tag="{Binding FilterId}">
                     <TextBlock Foreground="Black"
                                Text="{Binding DisplayText}"
@@ -53,10 +49,10 @@
                                FontWeight="SemiBold" />
                 </Border>
             </DataTemplate>
-        </templates:FilterTokenTemplateSelector.ColumnNameTemplate>
+        </sdg:FilterTokenTemplateSelector.ColumnNameTemplate>
 
         <!--  Search Type Token Template  -->
-        <templates:FilterTokenTemplateSelector.SearchTypeTemplate>
+        <sdg:FilterTokenTemplateSelector.SearchTypeTemplate>
             <DataTemplate>
                 <Border Background="Transparent"
                         Margin="2,1"
@@ -70,43 +66,43 @@
                                FontSize="12" />
                 </Border>
             </DataTemplate>
-        </templates:FilterTokenTemplateSelector.SearchTypeTemplate>
+        </sdg:FilterTokenTemplateSelector.SearchTypeTemplate>
 
         <!--  Value Token Template  -->
-        <templates:FilterTokenTemplateSelector.UnarySearchTypeTemplate>
+        <sdg:FilterTokenTemplateSelector.UnarySearchTypeTemplate>
             <DataTemplate>
                 <Border Background="#bbe2c5"
                         Margin="1,1"
                         Padding="6,3"
                         Height="24"
-                        CornerRadius="6"
                         behaviors:TokenHoverBehavior.IsEnabled="True"
+                        CornerRadius="6"
                         Tag="{Binding FilterId}">
                     <TextBlock Foreground="Black"
                                Text="{Binding DisplayText}"
                                VerticalAlignment="Center" />
                 </Border>
             </DataTemplate>
-        </templates:FilterTokenTemplateSelector.UnarySearchTypeTemplate>
-        
-        <templates:FilterTokenTemplateSelector.ValueTemplate>
+        </sdg:FilterTokenTemplateSelector.UnarySearchTypeTemplate>
+
+        <sdg:FilterTokenTemplateSelector.ValueTemplate>
             <DataTemplate>
                 <Border Background="#bbe2c5"
                         Margin="1,1"
                         Padding="6,3"
                         Height="24"
-                        CornerRadius="6"
                         behaviors:TokenHoverBehavior.IsEnabled="True"
+                        CornerRadius="6"
                         Tag="{Binding FilterId}">
                     <TextBlock Foreground="Black"
                                Text="{Binding DisplayText}"
                                VerticalAlignment="Center" />
                 </Border>
             </DataTemplate>
-        </templates:FilterTokenTemplateSelector.ValueTemplate>
+        </sdg:FilterTokenTemplateSelector.ValueTemplate>
 
         <!--  Operator Token Template  -->
-        <templates:FilterTokenTemplateSelector.OperatorTemplate>
+        <sdg:FilterTokenTemplateSelector.OperatorTemplate>
             <DataTemplate>
                 <Border Background="Transparent"
                         Margin="1,1"
@@ -120,10 +116,10 @@
                                FontSize="11" />
                 </Border>
             </DataTemplate>
-        </templates:FilterTokenTemplateSelector.OperatorTemplate>
+        </sdg:FilterTokenTemplateSelector.OperatorTemplate>
 
         <!--  Closing Bracket Token Template  -->
-        <templates:FilterTokenTemplateSelector.CloseBracketTemplate>
+        <sdg:FilterTokenTemplateSelector.CloseBracketTemplate>
             <DataTemplate>
                 <Border Background="Transparent"
                         BorderThickness="1"
@@ -142,17 +138,17 @@
                     </Border.BorderBrush>
                 </Border>
             </DataTemplate>
-        </templates:FilterTokenTemplateSelector.CloseBracketTemplate>
+        </sdg:FilterTokenTemplateSelector.CloseBracketTemplate>
 
         <!--  Search Template group logical Connector Token Template  -->
-        <templates:FilterTokenTemplateSelector.GroupLogicalConnectorTemplate>
+        <sdg:FilterTokenTemplateSelector.GroupLogicalConnectorTemplate>
             <DataTemplate>
                 <Border Background="#cee8fb"
                         Margin="4,1,14,0"
                         Padding="8,3"
                         Height="24"
-                        CornerRadius="6"
                         behaviors:TokenHoverBehavior.IsEnabled="True"
+                        CornerRadius="6"
                         Tag="{Binding FilterId}">
                     <TextBlock Foreground="#0078D4"
                                Text="{Binding DisplayText}"
@@ -161,17 +157,17 @@
                                FontSize="11" />
                 </Border>
             </DataTemplate>
-        </templates:FilterTokenTemplateSelector.GroupLogicalConnectorTemplate>
-        
-        <!-- Search Template Logical Connector Token Template  -->
-        <templates:FilterTokenTemplateSelector.TemplateLogicalConnectorTemplate>
+        </sdg:FilterTokenTemplateSelector.GroupLogicalConnectorTemplate>
+
+        <!--  Search Template Logical Connector Token Template  -->
+        <sdg:FilterTokenTemplateSelector.TemplateLogicalConnectorTemplate>
             <DataTemplate>
                 <Border Background="#cee8fb"
                         Margin="2,2,2,0"
                         Padding="5,1"
                         Height="22"
-                        CornerRadius="6"
                         behaviors:TokenHoverBehavior.IsEnabled="True"
+                        CornerRadius="6"
                         Tag="{Binding FilterId}">
                     <TextBlock Foreground="#0078D4"
                                Text="{Binding DisplayText}"
@@ -180,10 +176,10 @@
                                FontSize="10" />
                 </Border>
             </DataTemplate>
-        </templates:FilterTokenTemplateSelector.TemplateLogicalConnectorTemplate>
+        </sdg:FilterTokenTemplateSelector.TemplateLogicalConnectorTemplate>
 
         <!--  Remove Action Token Template  -->
-        <templates:FilterTokenTemplateSelector.RemoveActionTemplate>
+        <sdg:FilterTokenTemplateSelector.RemoveActionTemplate>
             <DataTemplate>
                 <Button Background="Transparent"
                         BorderBrush="Transparent"
@@ -191,26 +187,45 @@
                         Command="{Binding RemoveTokenFilterCommand, RelativeSource={RelativeSource AncestorType=sdg:FilterPanel}}"
                         CommandParameter="{Binding}"
                         Margin="-3,-2,-7,0"
-                        Width="20"
                         VerticalAlignment="Top"
+                        Width="20"
                         Height="20"
+                        behaviors:TokenHoverBehavior.IsEnabled="True"
                         FontFamily="Segoe MDL2 Assets"
                         FontSize="10"
                         Content="&#xF78A;"
                         ToolTip="Remove Filter"
-                        behaviors:TokenHoverBehavior.IsEnabled="True"
                         Tag="{Binding FilterId}">
                     <Button.Style>
-                        <Style BasedOn="{StaticResource TransparentFontIcon_Button_Style}" TargetType="Button">
+                        <Style TargetType="Button">
                             <Setter Property="Foreground" Value="#999" />
                             <Setter Property="Opacity" Value="0" />
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="{x:Type Button}">
+                                        <Border x:Name="border"
+                                                Background="{TemplateBinding Background}"
+                                                BorderBrush="{TemplateBinding BorderBrush}"
+                                                BorderThickness="{TemplateBinding BorderThickness}">
+                                            <ContentPresenter x:Name="contentPresenter"
+                                                              Focusable="False"
+                                                              Margin="{TemplateBinding Padding}"
+                                                              HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                                              VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                                              RecognizesAccessKey="True"
+                                                              TextElement.Foreground="{TemplateBinding Foreground}"
+                                                              SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" />
+                                        </Border>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
                             <Style.Triggers>
                                 <!--  Show when this token's FilterId matches HoveredFilterId  -->
                                 <DataTrigger Value="True">
                                     <DataTrigger.Binding>
                                         <MultiBinding Converter="{StaticResource StringEqualityConverter}">
                                             <Binding Path="FilterId" />
-                                            <Binding Path="HoveredFilterId" RelativeSource="{RelativeSource AncestorType=sdg:FilterPanel}" />
+                                            <Binding RelativeSource="{RelativeSource AncestorType=sdg:FilterPanel}" Path="HoveredFilterId" />
                                         </MultiBinding>
                                     </DataTrigger.Binding>
                                     <Setter Property="Opacity" Value="1" />
@@ -227,8 +242,8 @@
                     </Button.Style>
                 </Button>
             </DataTemplate>
-        </templates:FilterTokenTemplateSelector.RemoveActionTemplate>
+        </sdg:FilterTokenTemplateSelector.RemoveActionTemplate>
 
-    </templates:FilterTokenTemplateSelector>
+    </sdg:FilterTokenTemplateSelector>
 
 </ResourceDictionary>

@@ -278,13 +278,13 @@ namespace WWSearchDataGrid.Modern.WPF
             // Column Operations
             menu.Items.Add(BuildMenuItem(
                 "miBestFitColumn",
-                "Best Fit Column (Not Implemented)",
+                "Best Fit Column",
                 ContextMenuCommands.BestFitColumnCommand,
                 contextMenuContext));
 
             menu.Items.Add(BuildMenuItem(
                 "miBestFitAllColumns",
-                "Best Fit All Columns (Not Implemented)",
+                "Best Fit All Columns",
                 ContextMenuCommands.BestFitAllColumnsCommand,
                 contextMenuContext));
 
