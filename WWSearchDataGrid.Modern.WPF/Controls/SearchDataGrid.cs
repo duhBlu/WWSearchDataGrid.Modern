@@ -493,8 +493,8 @@ namespace WWSearchDataGrid.Modern.WPF
                     // Notify controls that items source has changed
                     ItemsSourceChanged?.Invoke(this, EventArgs.Empty);
 
-                    // Apply any existing filters
-                    if (Items.Filter != null)
+                    // Apply any existing filters - check for active column filters, not just Items.Filter
+                    if (HasActiveColumnFilters() || Items.Filter != null)
                     {
                         FilterItemsSource();
                     }
@@ -584,6 +584,16 @@ namespace WWSearchDataGrid.Modern.WPF
             {
                 ActualHasItems = hasAnyItems;
             }
+        }
+
+        /// <summary>
+        /// Checks if there are any active column filters that should be applied to new data
+        /// </summary>
+        /// <returns>True if there are active column filters</returns>
+        private bool HasActiveColumnFilters()
+        {
+            return DataColumns?.Any(d => d.SearchTemplateController?.HasCustomExpression == true) == true ||
+                   DataColumns?.Any(d => d.HasActiveFilter) == true;
         }
 
         /// <summary>
