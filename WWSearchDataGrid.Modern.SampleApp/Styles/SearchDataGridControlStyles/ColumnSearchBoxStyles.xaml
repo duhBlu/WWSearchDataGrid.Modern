@@ -145,6 +145,7 @@
                             </Button>
 
                             <Button x:Name="PART_AdvancedFilterButton"
+                                    Command="{Binding ShowFilterEditorPopup, RelativeSource={RelativeSource TemplatedParent}}"
                                     Grid.Column="2"
                                     Cursor="Hand"
                                     Margin="2,1,5,1"

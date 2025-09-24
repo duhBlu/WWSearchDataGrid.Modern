@@ -47,72 +47,30 @@ namespace WWSearchDataGrid.Modern.WPF
         #endregion
 
         #region Properties
-
-        /// <summary>
-        /// Gets or sets whether filters are enabled
-        /// </summary>
+        
         public bool FiltersEnabled
         {
             get => (bool)GetValue(FiltersEnabledProperty);
             set => SetValue(FiltersEnabledProperty, value);
         }
 
-        /// <summary>
-        /// Gets or sets the collection of active filters
-        /// </summary>
         public ObservableCollection<ColumnFilterInfo> ActiveFilters
         {
             get => (ObservableCollection<ColumnFilterInfo>)GetValue(ActiveFiltersProperty);
             set => SetValue(ActiveFiltersProperty, value);
         }
 
-        /// <summary>
-        /// Gets whether there are any active filters
-        /// </summary>
         public bool HasActiveFilters
         {
             get => (bool)GetValue(HasActiveFiltersProperty);
             private set => SetValue(HasActiveFiltersProperty, value);
         }
 
-        /// <summary>
-        /// Gets or sets whether the filter panel is expanded to show all filters
-        /// </summary>
         public bool IsExpanded
         {
             get => (bool)GetValue(IsExpandedProperty);
             set => SetValue(IsExpandedProperty, value);
         }
-
-        /// <summary>
-        /// Gets the command to toggle all filters on/off
-        /// </summary>
-        public ICommand ToggleFiltersCommand { get; private set; }
-
-        /// <summary>
-        /// Gets the command to remove a filter by token
-        /// </summary>
-        public ICommand RemoveTokenFilterCommand { get; private set; }
-
-        /// <summary>
-        /// Gets the command to clear all filters
-        /// </summary>
-        public ICommand ClearAllFiltersCommand { get; private set; }
-
-        /// <summary>
-        /// Gets the command to toggle the expand/collapse state
-        /// </summary>
-        public ICommand ToggleExpandCommand { get; private set; }
-
-        /// <summary>
-        /// Gets the command to set the hovered filter id
-        /// </summary>
-        public ICommand SetHoveredFilterCommand { get; private set; }
-
-        /// <summary>
-        /// Gets the command to clear the hovered filter id
-        /// </summary>
-        public ICommand ClearHoveredFilterCommand { get; private set; }
 
         /// <summary>
         /// Gets or sets the collection of filter tokens for tokenized display
@@ -140,6 +98,40 @@ namespace WWSearchDataGrid.Modern.WPF
             get => (string)GetValue(HoveredFilterIdProperty);
             set => SetValue(HoveredFilterIdProperty, value);
         }
+
+        #endregion
+
+        #region Commands
+
+        /// <summary>
+        /// Gets the command to toggle all filters on/off
+        /// </summary>
+        public ICommand ToggleFiltersCommand => new RelayCommand(ExecuteToggleFilters);
+
+        /// <summary>
+        /// Gets the command to remove a filter by token
+        /// </summary>
+        public ICommand RemoveTokenFilterCommand => new RelayCommand<IFilterToken>(ExecuteRemoveTokenFilter, CanRemoveTokenFilter);
+
+        /// <summary>
+        /// Gets the command to clear all filters
+        /// </summary>
+        public ICommand ClearAllFiltersCommand => new RelayCommand(_ => ClearAllFiltersRequested?.Invoke(this, EventArgs.Empty), _ => HasActiveFilters);
+
+        /// <summary>
+        /// Gets the command to toggle the expand/collapse state
+        /// </summary>
+        public ICommand ToggleExpandCommand => new RelayCommand(_ => IsExpanded = !IsExpanded);
+
+        /// <summary>
+        /// Gets the command to set the hovered filter id
+        /// </summary>
+        public ICommand SetHoveredFilterCommand => new RelayCommand<string>(filterId => HoveredFilterId = filterId);
+
+        /// <summary>
+        /// Gets the command to clear the hovered filter id
+        /// </summary>
+        public ICommand ClearHoveredFilterCommand => new RelayCommand(_ => HoveredFilterId = null);
 
         #endregion
 
@@ -172,10 +164,8 @@ namespace WWSearchDataGrid.Modern.WPF
             DefaultStyleKey = typeof(FilterPanel);
             ActiveFilters = new ObservableCollection<ColumnFilterInfo>();
             FilterTokens = new ObservableCollection<IFilterToken>();
-            InitializeCommands();
             UpdateHasActiveFilters();
             
-            // Subscribe to layout updates to detect overflow
             Loaded += OnFilterPanelLoaded;
             SizeChanged += OnFilterPanelSizeChanged;
         }
@@ -251,23 +241,6 @@ namespace WWSearchDataGrid.Modern.WPF
 
         #endregion
 
-        #region Command Initialization
-
-        /// <summary>
-        /// Initializes the commands
-        /// </summary>
-        private void InitializeCommands()
-        {
-            ToggleFiltersCommand = new RelayCommand(ExecuteToggleFilters);
-            RemoveTokenFilterCommand = new RelayCommand<IFilterToken>(ExecuteRemoveTokenFilter, CanRemoveTokenFilter);
-            ClearAllFiltersCommand = new RelayCommand(ExecuteClearAllFilters, CanClearAllFilters);
-            ToggleExpandCommand = new RelayCommand(ExecuteToggleExpand);
-            SetHoveredFilterCommand = new RelayCommand<string>(ExecuteSetHoveredFilter);
-            ClearHoveredFilterCommand = new RelayCommand(ExecuteClearHoveredFilter);
-        }
-
-        #endregion
-
         #region Command Execution
 
         /// <summary>
@@ -276,32 +249,6 @@ namespace WWSearchDataGrid.Modern.WPF
         private void ExecuteToggleFilters(object parameter)
         {
             FiltersEnabled = !FiltersEnabled;
-        }
-
-
-
-        /// <summary>
-        /// Executes the clear all filters command
-        /// </summary>
-        private void ExecuteClearAllFilters(object parameter)
-        {
-            ClearAllFiltersRequested?.Invoke(this, EventArgs.Empty);
-        }
-
-        /// <summary>
-        /// Determines whether all filters can be cleared
-        /// </summary>
-        private bool CanClearAllFilters(object parameter)
-        {
-            return HasActiveFilters;
-        }
-
-        /// <summary>
-        /// Executes the toggle expand command
-        /// </summary>
-        private void ExecuteToggleExpand(object parameter)
-        {
-            IsExpanded = !IsExpanded;
         }
 
         /// <summary>
@@ -324,22 +271,6 @@ namespace WWSearchDataGrid.Modern.WPF
             return token?.SourceFilter != null && token.SourceFilter.IsActive;
         }
 
-        /// <summary>
-        /// Executes the set hovered filter command
-        /// </summary>
-        private void ExecuteSetHoveredFilter(string filterId)
-        {
-            HoveredFilterId = filterId;
-        }
-
-        /// <summary>
-        /// Executes the clear hovered filter command
-        /// </summary>
-        private void ExecuteClearHoveredFilter(object parameter)
-        {
-            HoveredFilterId = null;
-        }
-
         #endregion
 
         #region Public Methods
@@ -347,7 +278,7 @@ namespace WWSearchDataGrid.Modern.WPF
         /// <summary>
         /// Updates the active filters collection
         /// </summary>
-        public void UpdateActiveFilters(System.Collections.Generic.IEnumerable<ColumnFilterInfo> filters)
+        public void UpdateActiveFilters(IEnumerable<ColumnFilterInfo> filters)
         {
             if (ActiveFilters == null)
                 ActiveFilters = new ObservableCollection<ColumnFilterInfo>();
@@ -385,7 +316,6 @@ namespace WWSearchDataGrid.Modern.WPF
                 }
             }
             
-            // Check for overflow after token update
             Dispatcher.BeginInvoke(() => CheckForOverflow(), System.Windows.Threading.DispatcherPriority.Loaded);
         }
 
@@ -429,25 +359,24 @@ namespace WWSearchDataGrid.Modern.WPF
             // Make sure everything has a layout pass before we read ActualWidth
             UpdateLayout();
 
-            // --- 1) Compute how much width the token lane truly has ---
-            // Preferred: subtract visible side elements’ actual widths + margins from this control’s ActualWidth.
-            // (This mirrors your template: [CheckBox] [Tokens stretch *] [Buttons])
+            // Get the token lane width taking into account other controls in the filter panel
+            // (This mirrors your template: [FiltersEnabledCheckBox] [Tokens stretch *] [Buttons])
             double leftSide = GetActualWidthWithMargin(chk);
             double rightSide = GetActualWidthWithMargin(btnEx) + GetActualWidthWithMargin(btnCl);
 
             // Account for our own padding/margins if you add them later; for now we assume none on the root border
             double availableTokenLane = Math.Max(0, ActualWidth - leftSide - rightSide);
 
-            // --- 2) Measure how wide the tokens WANT to be on a single line ---
+            // Measure how wide the tokens WANT to be on a single line
             // Measure with infinite width to get their natural one-line DesiredSize
             double heightHint = (tokens.ActualHeight > 0) ? tokens.ActualHeight : double.PositiveInfinity;
             tokens.Measure(new Size(double.PositiveInfinity, heightHint));
             double tokenNaturalWidth = tokens.DesiredSize.Width;
 
-            // --- 3) Decide overflow ---
+            
             bool overflow = tokenNaturalWidth > availableTokenLane;
 
-            // Edge case: if showing the expand button only appears *because* overflow turned true,
+            // If showing the expand button only appears *because* overflow turned true,
             // the rightSide may have grown; do one stabilizing re-check.
             if (overflow && btnEx != null && btnEx.Visibility == Visibility.Visible)
             {
@@ -458,7 +387,7 @@ namespace WWSearchDataGrid.Modern.WPF
 
             HasOverflow = overflow;
 
-            // If expanded but no longer overflowing (e.g., after removing a filter), auto-collapse
+            // If expanded but no longer overflowing (after removing a filter), auto-collapse
             if (!HasOverflow && IsExpanded)
                 IsExpanded = false;
         }
@@ -468,7 +397,6 @@ namespace WWSearchDataGrid.Modern.WPF
             if (fe == null || fe.Visibility != Visibility.Visible)
                 return 0;
 
-            // Ensure it's arranged before reading ActualWidth
             fe.UpdateLayout();
             var m = fe.Margin;
             return fe.ActualWidth + m.Left + m.Right;

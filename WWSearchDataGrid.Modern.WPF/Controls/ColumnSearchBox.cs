@@ -105,7 +105,14 @@ namespace WWSearchDataGrid.Modern.WPF
         /// Gets the command to clear search text (only clears search text and temporary template)
         /// </summary>
         public ICommand ClearSearchTextCommand => new RelayCommand(_ => ClearSearchTextAndTemporaryFilter());
-        public ICommand ShowFilterEditorPopup => new RelayCommand(_ => ShowFilterPopup());
+        public ICommand ShowFilterEditorPopup => new RelayCommand(_ => 
+        {
+            if(SourceDataGrid != null)
+            {
+                SourceDataGrid.CommitEdit(DataGridEditingUnit.Cell, true);
+            }
+            ShowFilterPopup();
+        });
 
         /// <summary>
         /// Gets or sets the current column being filtered
@@ -252,12 +259,6 @@ namespace WWSearchDataGrid.Modern.WPF
                 searchTextBox.KeyDown += OnSearchTextBoxKeyDown;
             }
             
-            advancedFilterButton = GetTemplateChild("PART_AdvancedFilterButton") as Button;
-            if (advancedFilterButton != null)
-            {
-                advancedFilterButton.Click += OnAdvancedFilterButtonClick;
-            }
-
             filterCheckBox = GetTemplateChild("PART_FilterCheckBox") as CheckBox;
             if (filterCheckBox != null)
             {
@@ -385,65 +386,37 @@ namespace WWSearchDataGrid.Modern.WPF
         }
         
         /// <summary>
-        /// Handles items being added to the collection with incremental updates
+        /// Handles items being added to the collection with immediate cache refresh
         /// </summary>
         private void HandleItemsAdded(System.Collections.IList newItems)
         {
             if (newItems == null || newItems.Count == 0) return;
-            
-            foreach (var item in newItems)
-            {
-                var value = ReflectionHelper.GetPropValue(item, BindingPath);
-                SearchTemplateController.AddOrUpdateColumnValue(value);
-            }
+
+            // Instead of incremental updates, force full refresh for consistency
+            SearchTemplateController.RefreshColumnValues();
+            SearchTemplateController.EnsureColumnValuesLoadedForFiltering();
         }
         
         /// <summary>
-        /// Handles items being removed from the collection with incremental updates
+        /// Handles items being removed from the collection with immediate cache refresh
         /// </summary>
         private void HandleItemsRemoved(System.Collections.IList oldItems)
         {
             if (oldItems == null || oldItems.Count == 0) return;
-            
-            // For removes, we need to check if the value still exists in other items
-            // If not, remove it from column values
-            foreach (var item in oldItems)
-            {
-                var value = ReflectionHelper.GetPropValue(item, BindingPath);
-                
-                // Check if this value still exists in the remaining items
-                bool valueStillExists = false;
-                foreach (var remainingItem in SourceDataGrid.Items)
-                {
-                    var remainingValue = ReflectionHelper.GetPropValue(remainingItem, BindingPath);
-                    if (Equals(value, remainingValue))
-                    {
-                        valueStillExists = true;
-                        break;
-                    }
-                }
-                
-                if (!valueStillExists)
-                {
-                    SearchTemplateController.RemoveColumnValue(value);
-                }
-            }
+
+            // Instead of complex incremental logic, force full refresh for consistency
+            SearchTemplateController.RefreshColumnValues();
+            SearchTemplateController.EnsureColumnValuesLoadedForFiltering();
         }
         
         /// <summary>
-        /// Handles items being replaced in the collection with incremental updates
+        /// Handles items being replaced in the collection with immediate cache refresh
         /// </summary>
         private void HandleItemsReplaced(System.Collections.IList oldItems, System.Collections.IList newItems)
         {
-            if (oldItems != null)
-            {
-                HandleItemsRemoved(oldItems);
-            }
-            
-            if (newItems != null)
-            {
-                HandleItemsAdded(newItems);
-            }
+            // Since we're now using full refresh approach, just do a single refresh
+            SearchTemplateController.RefreshColumnValues();
+            SearchTemplateController.EnsureColumnValuesLoadedForFiltering();
         }
 
         private static void OnCurrentColumnChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
@@ -507,8 +480,6 @@ namespace WWSearchDataGrid.Modern.WPF
                 (this as UIElement).MoveFocus(req);
             }
         }
-
-        private void OnAdvancedFilterButtonClick(object sender, RoutedEventArgs e) => ShowFilterPopup();
 
         private void OnColumnSearchBoxGotFocus(object sender, RoutedEventArgs e)
         {
@@ -1040,10 +1011,10 @@ namespace WWSearchDataGrid.Modern.WPF
                 SourceDataGrid.ItemsSourceChanged -= OnSourceDataGridItemsSourceChanged;
                 SourceDataGrid.ItemsSourceChanged += OnSourceDataGridItemsSourceChanged;
 
+                SearchTemplateController.SetupColumnDataLazy(CurrentColumn.Header, GetColumnValuesFromDataGrid, BindingPath);
+
                 if (SourceDataGrid.Items != null && SourceDataGrid.Items.Count > 0)
                 {
-                    SearchTemplateController.SetupColumnDataLazy(CurrentColumn.Header, GetColumnValuesFromDataGrid, BindingPath);
-                    
                     // Determine column data type from a small sample for immediate UI setup
                     var sampleSize = Math.Min(10, SourceDataGrid.Items.Count);
                     if (sampleSize > 0)
@@ -1067,7 +1038,6 @@ namespace WWSearchDataGrid.Modern.WPF
                 else
                 {
                     // No items yet - just set up basic structure
-                    SearchTemplateController.SetupColumnDataLazy(CurrentColumn.Header, GetColumnValuesFromDataGrid, BindingPath);
                 }
             }
             catch (Exception ex)
@@ -1649,14 +1619,18 @@ namespace WWSearchDataGrid.Modern.WPF
 
         /// <summary>
         /// Gets column values for the current column (lazy loading approach)
+        /// Uses OriginalItemsSource to ensure all values are included, not just filtered ones
         /// </summary>
         private IEnumerable<object> GetColumnValuesFromDataGrid()
         {
-            if (SourceDataGrid?.Items == null || string.IsNullOrEmpty(BindingPath))
+            // Use OriginalItemsSource to get all values, not just the filtered ones
+            var dataSource = SourceDataGrid?.OriginalItemsSource ?? SourceDataGrid?.Items;
+
+            if (dataSource == null || string.IsNullOrEmpty(BindingPath))
                 return Enumerable.Empty<object>();
-                
+
             var values = new List<object>();
-            foreach (var item in SourceDataGrid.Items)
+            foreach (var item in dataSource)
             {
                 var value = ReflectionHelper.GetPropValue(item, BindingPath);
                 values.Add(value);

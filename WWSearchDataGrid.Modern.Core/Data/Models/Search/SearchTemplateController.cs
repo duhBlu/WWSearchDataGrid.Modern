@@ -82,11 +82,8 @@ namespace WWSearchDataGrid.Modern.Core
             get => columnDataType;
             set
             {
-                if (SetProperty(value, ref columnDataType))
-                {
-                    // Update all templates with the new data type, but preserve existing SearchTypes if still valid
-                    UpdateTemplateDataTypes(value);
-                }
+                SetProperty(value, ref columnDataType);
+                UpdateTemplateDataTypes(value);
             }
         }
         
@@ -330,6 +327,7 @@ namespace WWSearchDataGrid.Modern.Core
                 _cacheKey = $"{ColumnName?.GetHashCode() ?? 0}_{_columnValuesProvider?.GetHashCode() ?? 0}_{DateTime.UtcNow.Ticks}";
                 // Values will be reloaded on next access
             }
+            OnPropertyChanged(nameof(ColumnValues));
         }
         
         /// <summary>
@@ -437,6 +435,7 @@ namespace WWSearchDataGrid.Modern.Core
         /// <param name="value">Value to add or update</param>
         public void AddOrUpdateColumnValue(object value)
         {
+            OnPropertyChanged(nameof(ColumnValues));
             if (_cachedColumnValues == null)
             {
                 // If values aren't loaded yet, just mark them as needing refresh
@@ -459,6 +458,7 @@ namespace WWSearchDataGrid.Modern.Core
         /// <param name="value">Value to remove</param>
         public void RemoveColumnValue(object value)
         {
+            OnPropertyChanged(nameof(ColumnValues));
             if (_cachedColumnValues == null)
             {
                 // If values aren't loaded yet, just mark them as needing refresh
@@ -490,7 +490,7 @@ namespace WWSearchDataGrid.Modern.Core
             
             // We'll determine column data type when values are first loaded
             // For now, start with string as default
-            ColumnDataType = ColumnDataType.String;
+            //ColumnDataType = ColumnDataType.String;
 
             AddSearchGroup(SearchGroups.Count == 0, false);
 

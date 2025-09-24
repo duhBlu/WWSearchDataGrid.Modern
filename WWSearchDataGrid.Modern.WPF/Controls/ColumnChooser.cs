@@ -76,9 +76,6 @@ namespace WWSearchDataGrid.Modern.WPF
 
         #region Properties
 
-        /// <summary>
-        /// Gets or sets the source data grid
-        /// </summary>
         public SearchDataGrid SourceDataGrid
         {
             get => (SearchDataGrid)GetValue(SourceDataGridProperty);
@@ -94,63 +91,42 @@ namespace WWSearchDataGrid.Modern.WPF
             set => SetValue(ColumnsProperty, value);
         }
 
-        /// <summary>
-        /// Gets or sets the style to apply to the window
-        /// </summary>
         public Style WindowStyle
         {
             get => (Style)GetValue(WindowStyleProperty);
             set => SetValue(WindowStyleProperty, value);
         }
 
-        /// <summary>
-        /// Gets or sets the title of the window
-        /// </summary>
         public string WindowTitle
         {
             get => (string)GetValue(WindowTitleProperty);
             set => SetValue(WindowTitleProperty, value);
         }
 
-        /// <summary>
-        /// Gets or sets the width of the window
-        /// </summary>
         public double WindowWidth
         {
             get => (double)GetValue(WindowWidthProperty);
             set => SetValue(WindowWidthProperty, value);
         }
 
-        /// <summary>
-        /// Gets or sets the height of the window
-        /// </summary>
         public double WindowHeight
         {
             get => (double)GetValue(WindowHeightProperty);
             set => SetValue(WindowHeightProperty, value);
         }
 
-        /// <summary>
-        /// Gets or sets the minimum width of the window
-        /// </summary>
         public double WindowMinWidth
         {
             get => (double)GetValue(WindowMinWidthProperty);
             set => SetValue(WindowMinWidthProperty, value);
         }
 
-        /// <summary>
-        /// Gets or sets the minimum height of the window
-        /// </summary>
         public double WindowMinHeight
         {
             get => (double)GetValue(WindowMinHeightProperty);
             set => SetValue(WindowMinHeightProperty, value);
         }
 
-        /// <summary>
-        /// Gets or sets the positioning mode for the window
-        /// </summary>
         public ColumnChooserPositionMode WindowPositionMode
         {
             get => (ColumnChooserPositionMode)GetValue(WindowPositionModeProperty);
@@ -161,27 +137,12 @@ namespace WWSearchDataGrid.Modern.WPF
 
         #region Commands
 
-        /// <summary>
-        /// Command to close the editor window
-        /// </summary>
         public ICommand CloseCommand => new RelayCommand(_ => CloseWindow());
-
-        #endregion
-
-        #region Events
-
-        /// <summary>
-        /// Event raised when a column visibility changes
-        /// </summary>
-        public event EventHandler<ColumnVisibilityChangedEventArgs> ColumnVisibilityChanged;
 
         #endregion
 
         #region Constructors
 
-        /// <summary>
-        /// Initializes a new instance of the ColumnChooser class
-        /// </summary>
         public ColumnChooser()
         {
             DefaultStyleKey = typeof(ColumnChooser);
@@ -207,9 +168,6 @@ namespace WWSearchDataGrid.Modern.WPF
             _parentWindow.Show();
         }
 
-        /// <summary>
-        /// Closes the column chooser window
-        /// </summary>
         public void Close()
         {
             _parentWindow?.Close();
@@ -248,14 +206,13 @@ namespace WWSearchDataGrid.Modern.WPF
             else
             {
                 // Try to find a default style for ColumnChooserWindow
-                var defaultStyle = TryFindResource(typeof(Window), "ColumnChooserWindowStyle") as Style;
+                var defaultStyle = TryFindResource(typeof(Window), "GenericColumnChooserWindowStyle") as Style;
                 if (defaultStyle != null)
                 {
                     _parentWindow.Style = defaultStyle;
                 }
             }
 
-            // Position the window based on the positioning mode
             PositionWindow(ownerWindow);
 
             _parentWindow.Closed += OnWindowClosed;
@@ -306,7 +263,6 @@ namespace WWSearchDataGrid.Modern.WPF
                     break;
             }
 
-            // Ensure the window is within screen bounds
             EnsureWindowInBounds();
         }
 
@@ -342,11 +298,9 @@ namespace WWSearchDataGrid.Modern.WPF
                 if (Resources.Contains(resourceKey))
                     return Resources[resourceKey];
 
-                // Try application resources
                 if (Application.Current?.Resources.Contains(resourceKey) == true)
                     return Application.Current.Resources[resourceKey];
 
-                // Try implicit style lookup
                 if (Application.Current?.Resources.Contains(targetType) == true)
                     return Application.Current.Resources[targetType];
 
@@ -409,7 +363,6 @@ namespace WWSearchDataGrid.Modern.WPF
                     IsVisible = column.Visibility == Visibility.Visible
                 };
 
-                // Subscribe to property changed to detect visibility changes
                 columnInfo.PropertyChanged += OnColumnInfoPropertyChanged;
 
                 Columns.Add(columnInfo);
@@ -423,31 +376,13 @@ namespace WWSearchDataGrid.Modern.WPF
         {
             if (e.PropertyName == nameof(ColumnVisibilityInfo.IsVisible) && sender is ColumnVisibilityInfo columnInfo)
             {
-                // Update the actual column visibility immediately
                 if (columnInfo.Column != null)
                 {
                     columnInfo.Column.Visibility = columnInfo.IsVisible ? Visibility.Visible : Visibility.Collapsed;
-
-                    // Raise the event
-                    ColumnVisibilityChanged?.Invoke(this, new ColumnVisibilityChangedEventArgs(columnInfo));
                 }
             }
         }
 
-        /// <summary>
-        /// Toggles the visibility of a column
-        /// </summary>
-        private void ToggleColumnVisibility(ColumnVisibilityInfo columnInfo)
-        {
-            if (columnInfo != null)
-            {
-                columnInfo.IsVisible = !columnInfo.IsVisible;
-            }
-        }
-
-        /// <summary>
-        /// Closes the window
-        /// </summary>
         private void CloseWindow()
         {
             _parentWindow?.Close();
@@ -465,36 +400,14 @@ namespace WWSearchDataGrid.Modern.WPF
     {
         private bool _isVisible;
 
-        /// <summary>
-        /// Gets or sets the associated DataGrid column
-        /// </summary>
         public DataGridColumn Column { get; set; }
 
-        /// <summary>
-        /// Gets or sets the display name of the column
-        /// </summary>
         public string DisplayName { get; set; }
 
-        /// <summary>
-        /// Gets or sets whether the column is visible
-        /// </summary>
         public bool IsVisible
         {
             get => _isVisible;
             set => SetProperty(value, ref _isVisible, nameof(IsVisible));
-        }
-    }
-
-    /// <summary>
-    /// Event arguments for column visibility changed events
-    /// </summary>
-    public class ColumnVisibilityChangedEventArgs : EventArgs
-    {
-        public ColumnVisibilityInfo ColumnInfo { get; }
-
-        public ColumnVisibilityChangedEventArgs(ColumnVisibilityInfo columnInfo)
-        {
-            ColumnInfo = columnInfo;
         }
     }
 

@@ -256,10 +256,8 @@ namespace WWSearchDataGrid.Modern.Core
             get { return columnDataType; }
             set
             {
-                if (SetProperty(value, ref columnDataType))
-                {
-                    UpdateValidSearchTypes();
-                }
+                SetProperty(value, ref columnDataType);
+                UpdateValidSearchTypes();
             }
         }
 
@@ -385,17 +383,28 @@ namespace WWSearchDataGrid.Modern.Core
 
         private void UpdateValidSearchTypes()
         {
-            ValidSearchTypes.Clear();
-
             // Use the controller's nullability detection instead of local analysis
-            bool isNullable = SearchTemplateController?.ContainsNullValues ?? true; // Default to nullable for backward compatibility
-
+            bool isNullable = SearchTemplateController?.ContainsNullValues ?? false;
             var validTypes = SearchTypeRegistry.GetFiltersForDataType(ColumnDataType, isNullable);
-            foreach (var filterType in validTypes)
+            var newValidSearchTypes = validTypes.Select(filterType => filterType.SearchType);
+
+            // Remove invalid search types (ones that are no longer valid)
+            var itemsToRemove = ValidSearchTypes.Where(searchType => !newValidSearchTypes.Contains(searchType)).ToList();
+            foreach (var item in itemsToRemove)
             {
-                ValidSearchTypes.Add(filterType.SearchType);
+                ValidSearchTypes.Remove(item);
             }
 
+            // Add new valid search types that don't already exist
+            foreach (var searchType in newValidSearchTypes)
+            {
+                if (!ValidSearchTypes.Contains(searchType))
+                {
+                    ValidSearchTypes.Add(searchType);
+                }
+            }
+
+            // If current SearchType is no longer valid and we have valid options, set to first valid option
             if (!ValidSearchTypes.Contains(SearchType) && ValidSearchTypes.Count > 0)
             {
                 SearchType = ValidSearchTypes[0];

@@ -4,7 +4,7 @@
                     xmlns:i="interactivity">
 
     <!--  Default Window Style for ColumnChooser  -->
-    <Style x:Key="ColumnChooserWindowStyle" TargetType="Window">
+    <Style x:Key="GenericColumnChooserWindowStyle" TargetType="Window">
         <Setter Property="Background" Value="White" />
         <Setter Property="BorderBrush" Value="#ADB5BD" />
         <Setter Property="BorderThickness" Value="1" />

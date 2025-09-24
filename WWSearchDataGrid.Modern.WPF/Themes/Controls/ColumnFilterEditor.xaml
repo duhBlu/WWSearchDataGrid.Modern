@@ -231,7 +231,7 @@
                                 <sys:String>Or</sys:String>
                             </ComboBox>
 
-                            <!--  Rules Interface (No Tabs - Direct Rules Only)  -->
+                            <!--  Rules Interface -->
                             <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
                                 <Grid>
                                     <Grid.RowDefinitions>

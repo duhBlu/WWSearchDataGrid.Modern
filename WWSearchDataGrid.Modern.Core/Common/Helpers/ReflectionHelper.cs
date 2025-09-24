@@ -127,7 +127,7 @@ namespace WWSearchDataGrid.Modern.Core
         /// </summary>
         public static ColumnDataType DetermineColumnDataType(IEnumerable<object> values)
         {
-            var nonNullValues = values.Where(v => v != null).Skip(1).Take(100).ToList(); // skip 1 incase of the null value display string at the front
+            var nonNullValues = values.Where(v => v != null && !v.Equals(NullDisplayValue.Instance)).Take(100).ToList();
 
             if (!nonNullValues.Any())
                 return ColumnDataType.String;

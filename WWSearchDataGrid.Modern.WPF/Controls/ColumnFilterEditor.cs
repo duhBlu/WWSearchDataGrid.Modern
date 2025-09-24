@@ -25,9 +25,6 @@ namespace WWSearchDataGrid.Modern.WPF
 
         #region Dependency Properties
 
-        /// <summary>
-        /// Dependency property for controlling operator ComboBox visibility
-        /// </summary>
         public static readonly DependencyProperty IsOperatorVisibleProperty =
             DependencyProperty.Register(nameof(IsOperatorVisible), typeof(bool), typeof(ColumnFilterEditor),
                 new PropertyMetadata(false));
@@ -37,20 +34,13 @@ namespace WWSearchDataGrid.Modern.WPF
 
         #region Properties
 
-        /// <summary>
-        /// Gets or sets the search controller for this control
-        /// </summary>
         public SearchTemplateController SearchTemplateController { get; set; }
 
-        /// <summary>
-        /// Gets or sets whether the operator ComboBox is visible
-        /// </summary>
         public bool IsOperatorVisible
         {
             get => (bool)GetValue(IsOperatorVisibleProperty);
             set => SetValue(IsOperatorVisibleProperty, value);
         }
-
 
         /// <summary>
         /// Gets the group operator name from the first search group
@@ -120,8 +110,6 @@ namespace WWSearchDataGrid.Modern.WPF
 
 
         #endregion
-
-        
 
         #region Event Handlers
 
@@ -327,7 +315,6 @@ namespace WWSearchDataGrid.Modern.WPF
                     columnSearchBox.SourceDataGrid.UpdateFilterPanel();
                 }
 
-                // Notify that filters were applied
                 FiltersApplied?.Invoke(this, EventArgs.Empty);
             }
             catch (Exception ex)
