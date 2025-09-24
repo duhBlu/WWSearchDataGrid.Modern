@@ -173,11 +173,12 @@ namespace WWSearchDataGrid.Modern.Core
         /// </summary>
         public void ClearAndReset()
         {
-            UnsubscribeFromAllTemplates();
+            UnsubscribeFromTemplates();
 
             SearchGroups.Clear();
             AddSearchGroup(true, false);
             HasCustomExpression = false;
+            FilterExpression = null;
         }
            
         
@@ -340,6 +341,76 @@ namespace WWSearchDataGrid.Modern.Core
             if (_cachedColumnValues == null && _columnValuesProvider != null)
             {
                 EnsureColumnValuesLoaded(); // This will load values and determine data type
+            }
+        }
+
+        /// <summary>
+        /// Attempts to add column values incrementally to avoid full cache refresh
+        /// </summary>
+        /// <param name="valuesToAdd">Values to add to the column cache</param>
+        /// <returns>True if successful, false if full refresh is needed</returns>
+        public bool TryAddColumnValues(IEnumerable<object> valuesToAdd)
+        {
+            if (valuesToAdd == null || string.IsNullOrEmpty(_cacheKey))
+                return false;
+
+            try
+            {
+                // Try incremental update via cache manager
+                bool updateSucceeded = ColumnValueCacheManager.Instance.TryAddValuesToCache(_cacheKey, valuesToAdd);
+
+                if (updateSucceeded)
+                {
+                    // Clear local cache to force reload with updated values
+                    _cachedColumnValues = null;
+
+                    // Trigger property change notification for UI bindings
+                    OnPropertyChanged(nameof(ColumnValues));
+
+                    return true;
+                }
+
+                return false;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error in TryAddColumnValues: {ex.Message}");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Attempts to remove column values incrementally to avoid full cache refresh
+        /// </summary>
+        /// <param name="valuesToRemove">Values to remove from the column cache</param>
+        /// <returns>True if successful, false if full refresh is needed</returns>
+        public bool TryRemoveColumnValues(IEnumerable<object> valuesToRemove)
+        {
+            if (valuesToRemove == null || string.IsNullOrEmpty(_cacheKey))
+                return false;
+
+            try
+            {
+                // Try incremental update via cache manager
+                bool updateSucceeded = ColumnValueCacheManager.Instance.TryRemoveValuesFromCache(_cacheKey, valuesToRemove);
+
+                if (updateSucceeded)
+                {
+                    // Clear local cache to force reload with updated values
+                    _cachedColumnValues = null;
+
+                    // Trigger property change notification for UI bindings
+                    OnPropertyChanged(nameof(ColumnValues));
+
+                    return true;
+                }
+
+                return false;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error in TryRemoveColumnValues: {ex.Message}");
+                return false;
             }
         }
         
@@ -682,23 +753,24 @@ namespace WWSearchDataGrid.Modern.Core
         {
             var group = SearchGroups.FirstOrDefault(g => g.SearchTemplates.Contains(template));
             if (group == null) return;
-            
+
+            UnsubscribeFromTemplates(new List<SearchTemplate> { template });
+
+            bool removingLastTemplate = false;
             // Unsubscribe from the template being removed
-            template.PropertyChanged -= OnSearchTemplatePropertyChanged;
-            
             if (group.SearchTemplates.Count > 1)
             {
                 group.SearchTemplates.Remove(template);
             }
             else
             {
-                // If this is the last template, add a new empty one after removing
-                group.SearchTemplates.Remove(template);
-                AddSearchTemplate(true, null, group);
+                // If this is the last template, just reset the whole group
+                ClearAndReset();
+                removingLastTemplate = true;
             }
             UpdateFilterExpression();
             UpdateOperatorVisibility();
-            InvokeAutoApplyFilter();
+            InvokeAutoApplyFilter(removingLastTemplate);
         }
 
         /// <summary>
@@ -1389,10 +1461,10 @@ namespace WWSearchDataGrid.Modern.Core
         /// <summary>
         /// Raises the AutoApplyFilter event when there are valid filters that should be applied
         /// </summary>
-        protected virtual void InvokeAutoApplyFilter()
+        protected virtual void InvokeAutoApplyFilter(bool isRemovingLastTemplate = false)
         {
             // Only fire if we have at least one valid filter to apply
-            if (HasValidFilters)
+            if (HasValidFilters || isRemovingLastTemplate)
             {
                 AutoApplyFilter?.Invoke(this, EventArgs.Empty);
             }
@@ -1439,7 +1511,7 @@ namespace WWSearchDataGrid.Modern.Core
         /// <summary>
         /// Unsubscribe from all existing search template property changes
         /// </summary>
-        private void UnsubscribeFromAllTemplates()
+        private void UnsubscribeFromTemplates(List<SearchTemplate> templatesToUnsubscribeFrom = null)
         {
             if (SearchGroups == null) return;
             
@@ -1449,6 +1521,9 @@ namespace WWSearchDataGrid.Modern.Core
                 {
                     foreach (var template in group.SearchTemplates)
                     {
+                        if (templatesToUnsubscribeFrom != null && !templatesToUnsubscribeFrom.Contains(template))
+                            continue;
+
                         template.PropertyChanged -= OnSearchTemplatePropertyChanged;
                         template.SelectedValues.CollectionChanged -= OnSearchTemplateValues_CollectionChanged;
                         template.SelectedDates.CollectionChanged -= OnSearchTemplateValues_CollectionChanged;
@@ -1484,7 +1559,7 @@ namespace WWSearchDataGrid.Modern.Core
                 if (disposing)
                 {
                     // Unsubscribe from all template events
-                    UnsubscribeFromAllTemplates();
+                    UnsubscribeFromTemplates();
                     
                     // Clear all data references
                     ClearDataReferences();

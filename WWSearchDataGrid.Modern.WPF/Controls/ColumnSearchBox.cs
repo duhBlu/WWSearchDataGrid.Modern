@@ -50,11 +50,17 @@ namespace WWSearchDataGrid.Modern.WPF
         private ColumnFilterEditor _filterContent;
         private Timer _changeTimer;
         /// <summary>
-        /// Track temporary template for real-time updates to the filter panel. 
-        /// </summary> 
-        private SearchTemplate _temporarySearchTemplate; 
+        /// Track temporary template for real-time updates to the filter panel.
+        /// </summary>
+        private SearchTemplate _temporarySearchTemplate;
         private CheckboxCycleState _checkboxCycleState = CheckboxCycleState.Intermediate; // Current logical cycling state
         private bool _isInitialState = true; // Tracks if we're in the initial uncycled state
+
+        // Batch update fields for performance optimization
+        private Timer _batchUpdateTimer;
+        private readonly HashSet<object> _pendingAddedValues = new HashSet<object>();
+        private readonly HashSet<object> _pendingRemovedValues = new HashSet<object>();
+        private readonly object _batchUpdateLock = new object();
 
         #endregion
 
@@ -285,6 +291,22 @@ namespace WWSearchDataGrid.Modern.WPF
                 _changeTimer = null;
             }
 
+            // Clean up batch update timer
+            if (_batchUpdateTimer != null)
+            {
+                _batchUpdateTimer.Stop();
+                _batchUpdateTimer.Elapsed -= OnBatchUpdateTimerElapsed;
+                _batchUpdateTimer.Dispose();
+                _batchUpdateTimer = null;
+            }
+
+            // Clean up pending batch operations
+            lock (_batchUpdateLock)
+            {
+                _pendingAddedValues.Clear();
+                _pendingRemovedValues.Clear();
+            }
+
             // Clean up temporary template reference
             _temporarySearchTemplate = null;
             
@@ -386,37 +408,168 @@ namespace WWSearchDataGrid.Modern.WPF
         }
         
         /// <summary>
-        /// Handles items being added to the collection with immediate cache refresh
+        /// Handles items being added to the collection by accumulating values for batch processing
         /// </summary>
         private void HandleItemsAdded(System.Collections.IList newItems)
         {
             if (newItems == null || newItems.Count == 0) return;
 
-            // Instead of incremental updates, force full refresh for consistency
-            SearchTemplateController.RefreshColumnValues();
-            SearchTemplateController.EnsureColumnValuesLoadedForFiltering();
+            // Extract column values from added items and accumulate for batch processing
+            AccumulateColumnValuesForBatch(newItems, isAddition: true);
         }
-        
+
         /// <summary>
-        /// Handles items being removed from the collection with immediate cache refresh
+        /// Handles items being removed from the collection by accumulating values for batch processing
         /// </summary>
         private void HandleItemsRemoved(System.Collections.IList oldItems)
         {
             if (oldItems == null || oldItems.Count == 0) return;
 
-            // Instead of complex incremental logic, force full refresh for consistency
-            SearchTemplateController.RefreshColumnValues();
-            SearchTemplateController.EnsureColumnValuesLoadedForFiltering();
+            // Extract column values from removed items and accumulate for batch processing
+            AccumulateColumnValuesForBatch(oldItems, isAddition: false);
         }
-        
+
         /// <summary>
-        /// Handles items being replaced in the collection with immediate cache refresh
+        /// Handles items being replaced in the collection by accumulating both old and new values
         /// </summary>
         private void HandleItemsReplaced(System.Collections.IList oldItems, System.Collections.IList newItems)
         {
-            // Since we're now using full refresh approach, just do a single refresh
-            SearchTemplateController.RefreshColumnValues();
-            SearchTemplateController.EnsureColumnValuesLoadedForFiltering();
+            if (oldItems != null && oldItems.Count > 0)
+            {
+                AccumulateColumnValuesForBatch(oldItems, isAddition: false);
+            }
+
+            if (newItems != null && newItems.Count > 0)
+            {
+                AccumulateColumnValuesForBatch(newItems, isAddition: true);
+            }
+        }
+
+        /// <summary>
+        /// Accumulates column values from items for batch processing to improve performance
+        /// </summary>
+        /// <param name="items">Items to extract values from</param>
+        /// <param name="isAddition">True for additions, false for removals</param>
+        private void AccumulateColumnValuesForBatch(System.Collections.IList items, bool isAddition)
+        {
+            if (string.IsNullOrEmpty(BindingPath) || SearchTemplateController == null)
+                return;
+
+            try
+            {
+                lock (_batchUpdateLock)
+                {
+                    var targetSet = isAddition ? _pendingAddedValues : _pendingRemovedValues;
+
+                    // Extract column values from items
+                    foreach (var item in items)
+                    {
+                        if (item != null)
+                        {
+                            var value = ReflectionHelper.GetPropValue(item, BindingPath);
+                            targetSet.Add(value);
+                        }
+                    }
+                }
+
+                // Start or restart the batch update timer
+                StartOrRestartBatchUpdateTimer();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error accumulating column values for batch: {ex.Message}");
+                // Fallback to full refresh on error
+                SearchTemplateController?.RefreshColumnValues();
+            }
+        }
+
+        /// <summary>
+        /// Starts or restarts the batch update timer to defer processing of accumulated changes
+        /// </summary>
+        private void StartOrRestartBatchUpdateTimer()
+        {
+            if (_batchUpdateTimer == null)
+            {
+                _batchUpdateTimer = new Timer(150) // 150ms debounce window
+                {
+                    AutoReset = false
+                };
+                _batchUpdateTimer.Elapsed += OnBatchUpdateTimerElapsed;
+            }
+
+            _batchUpdateTimer.Stop();
+            _batchUpdateTimer.Start();
+        }
+
+        /// <summary>
+        /// Processes accumulated batch changes when timer elapses
+        /// </summary>
+        private void OnBatchUpdateTimerElapsed(object sender, ElapsedEventArgs e)
+        {
+            // Execute on UI thread
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                try
+                {
+                    ProcessBatchUpdates();
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Error processing batch updates: {ex.Message}");
+                    // Fallback to full refresh on error
+                    SearchTemplateController?.RefreshColumnValues();
+                }
+            });
+        }
+
+        /// <summary>
+        /// Processes all accumulated batch updates and applies them to the cache
+        /// </summary>
+        private void ProcessBatchUpdates()
+        {
+            if (SearchTemplateController == null)
+                return;
+
+            HashSet<object> addedValues;
+            HashSet<object> removedValues;
+
+            // Copy and clear pending changes atomically
+            lock (_batchUpdateLock)
+            {
+                addedValues = new HashSet<object>(_pendingAddedValues);
+                removedValues = new HashSet<object>(_pendingRemovedValues);
+                _pendingAddedValues.Clear();
+                _pendingRemovedValues.Clear();
+            }
+
+            // If we have both additions and removals, or if the change count is very large,
+            // fall back to full refresh for consistency
+            if ((addedValues.Count > 0 && removedValues.Count > 0) ||
+                (addedValues.Count + removedValues.Count > 100))
+            {
+                SearchTemplateController.RefreshColumnValues();
+                SearchTemplateController.EnsureColumnValuesLoadedForFiltering();
+                return;
+            }
+
+            // Try incremental update if we have a single type of change
+            bool updateSucceeded = false;
+
+            if (addedValues.Count > 0 && removedValues.Count == 0)
+            {
+                updateSucceeded = SearchTemplateController.TryAddColumnValues(addedValues);
+            }
+            else if (removedValues.Count > 0 && addedValues.Count == 0)
+            {
+                updateSucceeded = SearchTemplateController.TryRemoveColumnValues(removedValues);
+            }
+
+            // Fall back to full refresh if incremental update failed
+            if (!updateSucceeded)
+            {
+                SearchTemplateController.RefreshColumnValues();
+                SearchTemplateController.EnsureColumnValuesLoadedForFiltering();
+            }
         }
 
         private static void OnCurrentColumnChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
