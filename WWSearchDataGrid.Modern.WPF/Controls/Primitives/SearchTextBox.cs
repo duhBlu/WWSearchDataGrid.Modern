@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.ComponentModel;
 using System.Linq;
+using System.Timers;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -32,10 +33,17 @@ namespace WWSearchDataGrid.Modern.WPF
         private Popup _popup;
         private ListBox _listBox;
         private bool _isNavigating;
+        private Timer _textChangeTimer;
+        private string _pendingText;
 
         static SearchTextBox()
         {
             DefaultStyleKeyProperty.OverrideMetadata(typeof(SearchTextBox), new FrameworkPropertyMetadata(typeof(SearchTextBox)));
+        }
+
+        public SearchTextBox()
+        {
+            Unloaded += OnControlUnloaded;
         }
 
         #region Dependency Properties
@@ -241,6 +249,10 @@ namespace WWSearchDataGrid.Modern.WPF
 
         private void ClearText()
         {
+            // Stop timer and clear pending text
+            _textChangeTimer?.Stop();
+            _pendingText = string.Empty;
+
             Text = string.Empty;
             _textBox?.Focus();
         }
@@ -311,6 +323,15 @@ namespace WWSearchDataGrid.Modern.WPF
             {
                 _popup.LostFocus -= OnPopupLostFocus;
                 _popup.PreviewKeyDown -= OnPopupPreviewKeyDown;
+            }
+
+            // Clean up timer when template is re-applied
+            if (_textChangeTimer != null)
+            {
+                _textChangeTimer.Stop();
+                _textChangeTimer.Elapsed -= OnTextChangeTimerElapsed;
+                _textChangeTimer.Dispose();
+                _textChangeTimer = null;
             }
 
             // Get template parts
@@ -403,6 +424,9 @@ namespace WWSearchDataGrid.Modern.WPF
         {
             if (_textBox != null && _textBox.Text != newText)
             {
+                // Stop timer for programmatic updates
+                _textChangeTimer?.Stop();
+                _pendingText = newText ?? string.Empty;
                 _textBox.Text = newText ?? string.Empty;
             }
 
@@ -416,7 +440,8 @@ namespace WWSearchDataGrid.Modern.WPF
         {
             if (_textBox != null && !_isNavigating)
             {
-                Text = _textBox.Text;
+                _pendingText = _textBox.Text;
+                StartOrResetTextChangeTimer();
             }
 
             // Forward the event args from the internal TextBox
@@ -626,6 +651,65 @@ namespace WWSearchDataGrid.Modern.WPF
             }
 
             return -1; // No matching item found
+        }
+
+        #endregion
+
+        #region Timer Methods
+
+        /// <summary>
+        /// Event handler for when control is unloaded - cleanup timer
+        /// </summary>
+        private void OnControlUnloaded(object sender, RoutedEventArgs e)
+        {
+            // Clean up timer when control is unloaded
+            if (_textChangeTimer != null)
+            {
+                _textChangeTimer.Stop();
+                _textChangeTimer.Elapsed -= OnTextChangeTimerElapsed;
+                _textChangeTimer.Dispose();
+                _textChangeTimer = null;
+            }
+        }
+
+        /// <summary>
+        /// Starts or restarts the debounce timer for text changes
+        /// </summary>
+        private void StartOrResetTextChangeTimer()
+        {
+            if (_textChangeTimer == null)
+            {
+                _textChangeTimer = new Timer(250) // 250ms delay matching ColumnSearchBox
+                {
+                    AutoReset = false
+                };
+                _textChangeTimer.Elapsed += OnTextChangeTimerElapsed;
+            }
+
+            _textChangeTimer.Stop();
+            _textChangeTimer.Start();
+        }
+
+        /// <summary>
+        /// Timer elapsed event handler - commits pending text to bound property
+        /// </summary>
+        private void OnTextChangeTimerElapsed(object sender, ElapsedEventArgs e)
+        {
+            // Execute on UI thread
+            Dispatcher.Invoke(() =>
+            {
+                try
+                {
+                    if (_pendingText != Text)
+                    {
+                        Text = _pendingText;
+                    }
+                }
+                catch (System.Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Error in OnTextChangeTimerElapsed: {ex.Message}");
+                }
+            });
         }
 
         #endregion
