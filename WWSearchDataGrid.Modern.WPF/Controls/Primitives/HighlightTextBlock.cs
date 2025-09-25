@@ -7,7 +7,7 @@ using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows;
 
-namespace WWSearchDataGrid.Modern.WPF.Controls.Primitives
+namespace WWSearchDataGrid.Modern.WPF
 {
     public class HighlightTextBlock : TextBlock
     {

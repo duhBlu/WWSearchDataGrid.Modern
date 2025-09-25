@@ -11,36 +11,47 @@
     <!--  Default SearchTextBox Style  -->
     <Style x:Key="CustomSearchTextboxStyle" TargetType="{x:Type sdg:SearchTextBox}">
         <Style.Resources>
-            <!--  SearchTextBox brushes  -->
+            <!-- Surface -->
             <SolidColorBrush x:Key="SearchTextBox.BackgroundBrush" Color="#FFFFFFFF" />
-            <SolidColorBrush x:Key="SearchTextBox.BorderBrush.Default" Color="#FFCCCCCC" />
-            <SolidColorBrush x:Key="SearchTextBox.BorderBrush.Hover" Color="#FF888888" />
-            <SolidColorBrush x:Key="SearchTextBox.BorderBrush.Focused" Color="#FF0078D4" />
-            <SolidColorBrush x:Key="SearchTextBox.BackgroundBrush.Hover" Color="#FFF9F9F9" />
+            <SolidColorBrush x:Key="SearchTextBox.BackgroundBrush.Hover" Color="#FFF8F9FB" />
+            <SolidColorBrush x:Key="SearchTextBox.BackgroundBrush.Readonly" Color="#FFF7F7F7" />
 
-            <!--  Text and watermark brushes  -->
-            <SolidColorBrush x:Key="SearchTextBox.ForegroundBrush" Color="#FF000000" />
-            <SolidColorBrush x:Key="SearchTextBox.WatermarkBrush" Color="#FF888888" />
+            <!-- Border -->
+            <SolidColorBrush x:Key="SearchTextBox.BorderBrush.Default" Color="#FFD0D5DD" />
+            <SolidColorBrush x:Key="SearchTextBox.BorderBrush.Hover" Color="#FFA8B0BB" />
+            <SolidColorBrush x:Key="SearchTextBox.BorderBrush.Focused" Color="#FF2B88FF" />
+            <SolidColorBrush x:Key="SearchTextBox.BorderBrush.Disabled" Color="#FFE5E7EB" />
 
-            <!--  Icon brushes  -->
-            <SolidColorBrush x:Key="SearchTextBox.SearchIconBrush" Color="#FF666666" />
+            <!-- Text -->
+            <SolidColorBrush x:Key="SearchTextBox.ForegroundBrush" Color="#FF111827" />
+            <SolidColorBrush x:Key="SearchTextBox.WatermarkBrush" Color="#FF6B7280" />
 
-            <!--  Clear button brushes  -->
-            <SolidColorBrush x:Key="SearchTextBox.ClearButton.BackgroundBrush.Default" Color="Transparent" />
-            <SolidColorBrush x:Key="SearchTextBox.ClearButton.BackgroundBrush.Hover" Color="#FFF0F0F0" />
-            <SolidColorBrush x:Key="SearchTextBox.ClearButton.BackgroundBrush.Pressed" Color="#FFE0E0E0" />
-            <SolidColorBrush x:Key="SearchTextBox.ClearButton.ForegroundBrush.Default" Color="#FF666666" />
-            <SolidColorBrush x:Key="SearchTextBox.ClearButton.ForegroundBrush.Hover" Color="#FFCC0000" />
-            <SolidColorBrush x:Key="SearchTextBox.ClearButton.ForegroundBrush.Pressed" Color="#FF990000" />
+            <!-- Icons -->
+            <SolidColorBrush x:Key="SearchTextBox.SearchIconBrush" Color="#FF4B5563" />
+
+            <!-- Clear button -->
+            <SolidColorBrush x:Key="SearchTextBox.ClearButton.BackgroundBrush.Default" Color="#00FFFFFF" />
+            <SolidColorBrush x:Key="SearchTextBox.ClearButton.BackgroundBrush.Hover" Color="#FFEFF4FF" />
+            <SolidColorBrush x:Key="SearchTextBox.ClearButton.BackgroundBrush.Pressed" Color="#FFDCE9FF" />
+            <SolidColorBrush x:Key="SearchTextBox.ClearButton.ForegroundBrush.Default" Color="#FF4B5563" />
+            <SolidColorBrush x:Key="SearchTextBox.ClearButton.ForegroundBrush.Hover" Color="#FFB00020" />
+            <SolidColorBrush x:Key="SearchTextBox.ClearButton.ForegroundBrush.Pressed" Color="#FF8C0019" />
+
+            <!-- Popup -->
+            <SolidColorBrush x:Key="SearchTextBox.Popup.Background" Color="#FFFFFFFF" />
+            <SolidColorBrush x:Key="SearchTextBox.Popup.Border" Color="#FFD0D5DD" />
+            <CornerRadius x:Key="SearchTextBox.Popup.CornerRadius">10</CornerRadius>
         </Style.Resources>
+
+        <!-- Defaults -->
         <Setter Property="Background" Value="{StaticResource SearchTextBox.BackgroundBrush}" />
         <Setter Property="BorderBrush" Value="{StaticResource SearchTextBox.BorderBrush.Default}" />
         <Setter Property="Foreground" Value="{StaticResource SearchTextBox.ForegroundBrush}" />
         <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="MinHeight" Value="24" />
+        <Setter Property="MinHeight" Value="32" />
         <Setter Property="HorizontalContentAlignment" Value="Left" />
         <Setter Property="VerticalContentAlignment" Value="Center" />
-        <Setter Property="FontSize" Value="12" />
+        <Setter Property="FontSize" Value="13" />
         <Setter Property="FontFamily" Value="Segoe UI" />
         <Setter Property="SnapsToDevicePixels" Value="True" />
         <Setter Property="UseLayoutRounding" Value="True" />
@@ -49,66 +60,54 @@
         <Setter Property="IsTabStop" Value="False" />
         <Setter Property="FocusVisualStyle" Value="{x:Null}" />
         <Setter Property="AllowDrop" Value="True" />
+
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type sdg:SearchTextBox}">
                     <Border x:Name="Border"
-                            Background="{TemplateBinding Background}"
-                            BorderBrush="{TemplateBinding BorderBrush}"
-                            BorderThickness="{TemplateBinding BorderThickness}"
-                            KeyboardNavigation.TabNavigation="Local"
-                            SnapsToDevicePixels="True">
+                        Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        CornerRadius="8"
+                        SnapsToDevicePixels="True"
+                        KeyboardNavigation.TabNavigation="Local">
                         <Grid KeyboardNavigation.TabNavigation="Local">
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto" />
                                 <ColumnDefinition Width="Auto" />
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
 
-                            <!--  Search Icon  -->
-                            <TextBlock x:Name="SearchIcon"
-                                       Grid.Column="0"
-                                       Foreground="{StaticResource SearchTextBox.SearchIconBrush}"
-                                       Text="&#xE721;"
-                                       Visibility="{Binding ShowSearchIcon, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource BooleanToVisibilityCollapsedConverter}}"
-                                       IsHitTestVisible="False"
-                                       Margin="8,0,0,0"
-                                       VerticalAlignment="Center"
-                                       FontFamily="Segoe MDL2 Assets"
-                                       FontSize="12" />
-
-                            <!--  Toggle Search Button  -->
-                            <ToggleButton x:Name="PART_ToggleButton"
-                                          Grid.Column="1"
-                                          Focusable="True"
-                                          Command="{Binding ToggleSearchCommand, RelativeSource={RelativeSource TemplatedParent}}"
-                                          Margin="4,0,0,0"
-                                          VerticalAlignment="Center"
-                                          Width="16"
-                                          Height="16"
-                                          IsTabStop="True"
-                                          ToolTip="Toggle search dropdown">
-                                <ToggleButton.Style>
-                                    <Style TargetType="ToggleButton">
+                            <!-- Toggle Search Button (left icon) -->
+                            <Button x:Name="PART_ToggleButton"
+                                Grid.Column="0"
+                                Focusable="True"
+                                IsTabStop="True"
+                                Margin="6,0,0,0"
+                                VerticalAlignment="Center"
+                                Width="24"
+                                Height="24"
+                                ToolTip="Toggle search dropdown">
+                                <Button.Style>
+                                    <Style TargetType="Button">
                                         <Setter Property="Background" Value="Transparent" />
                                         <Setter Property="Foreground" Value="{StaticResource SearchTextBox.SearchIconBrush}" />
                                         <Setter Property="BorderThickness" Value="0" />
                                         <Setter Property="Cursor" Value="Hand" />
                                         <Setter Property="FontFamily" Value="Segoe MDL2 Assets" />
-                                        <Setter Property="FontSize" Value="10" />
+                                        <Setter Property="FontSize" Value="12" />
                                         <Setter Property="Template">
                                             <Setter.Value>
-                                                <ControlTemplate TargetType="ToggleButton">
+                                                <ControlTemplate TargetType="Button">
                                                     <Border Background="{TemplateBinding Background}"
-                                                            CornerRadius="0"
-                                                            SnapsToDevicePixels="True">
+                                                        CornerRadius="6"
+                                                        SnapsToDevicePixels="True">
                                                         <TextBlock Foreground="{TemplateBinding Foreground}"
-                                                                   Text="&#xE70D;"
-                                                                   HorizontalAlignment="Center"
-                                                                   VerticalAlignment="Center"
-                                                                   FontFamily="{TemplateBinding FontFamily}"
-                                                                   FontSize="{TemplateBinding FontSize}" />
+                                                               Text="&#xE721;"
+                                                               HorizontalAlignment="Center"
+                                                               VerticalAlignment="Center"
+                                                               FontFamily="{TemplateBinding FontFamily}"
+                                                               FontSize="{TemplateBinding FontSize}" />
                                                     </Border>
                                                 </ControlTemplate>
                                             </Setter.Value>
@@ -119,86 +118,77 @@
                                                 <Setter Property="Visibility" Value="Visible" />
                                             </DataTrigger>
                                             <Trigger Property="IsMouseOver" Value="True">
-                                                <Setter Property="Background" Value="#FFF0F0F0" />
+                                                <Setter Property="Background" Value="#0F2B88FF" />
                                             </Trigger>
                                             <Trigger Property="IsPressed" Value="True">
-                                                <Setter Property="Background" Value="#FFE0E0E0" />
+                                                <Setter Property="Background" Value="#1A2B88FF" />
                                             </Trigger>
-                                            <Trigger Property="IsChecked" Value="True">
-                                                <Setter Property="Background" Value="#FFD0D0D0" />
+                                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                                <Setter Property="Background" Value="#142B88FF" />
                                             </Trigger>
                                         </Style.Triggers>
                                     </Style>
-                                </ToggleButton.Style>
-                            </ToggleButton>
+                                </Button.Style>
+                            </Button>
 
-                            <!--  Text Input Area  -->
-                            <Grid Grid.Column="2">
-                                <!--  Watermark Text  -->
+                            <!-- Text area -->
+                            <Grid Grid.Column="1">
+                                <!-- Watermark -->
                                 <TextBlock x:Name="WatermarkText"
-                                           FontStyle="Italic"
-                                           Foreground="{StaticResource SearchTextBox.WatermarkBrush}"
-                                           IsHitTestVisible="False"
-                                           Margin="4,0"
-                                           VerticalAlignment="Center">
+                                       Foreground="{StaticResource SearchTextBox.WatermarkBrush}"
+                                       Text="{TemplateBinding Watermark}"
+                                       IsHitTestVisible="False"
+                                       Margin="10,6"
+                                       VerticalAlignment="Center"
+                                       FontStyle="Italic"
+                                       TextTrimming="CharacterEllipsis">
                                     <TextBlock.Style>
                                         <Style TargetType="TextBlock">
                                             <Setter Property="Visibility" Value="Collapsed" />
-                                            <Setter Property="Text" Value="{Binding Watermark, RelativeSource={RelativeSource TemplatedParent}}" />
                                             <Style.Triggers>
-                                                <!--  Normal mode watermark  -->
                                                 <MultiDataTrigger>
                                                     <MultiDataTrigger.Conditions>
                                                         <Condition Binding="{Binding HasSearchText, RelativeSource={RelativeSource TemplatedParent}}" Value="False" />
                                                         <Condition Binding="{Binding IsSearchFocused, RelativeSource={RelativeSource TemplatedParent}}" Value="False" />
-                                                        <Condition Binding="{Binding IsSearchMode, RelativeSource={RelativeSource TemplatedParent}}" Value="False" />
+                                                        <Condition Binding="{Binding IsPopupOpen, RelativeSource={RelativeSource TemplatedParent}}" Value="False" />
                                                         <Condition Binding="{Binding Watermark, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource StringToVisibilityConverter}}" Value="Visible" />
                                                     </MultiDataTrigger.Conditions>
                                                     <Setter Property="Visibility" Value="Visible" />
-                                                </MultiDataTrigger>
-                                                <!--  Search mode watermark  -->
-                                                <MultiDataTrigger>
-                                                    <MultiDataTrigger.Conditions>
-                                                        <Condition Binding="{Binding IsSearchMode, RelativeSource={RelativeSource TemplatedParent}}" Value="True" />
-                                                        <Condition Binding="{Binding SearchWatermark, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource StringToVisibilityConverter}}" Value="Visible" />
-                                                    </MultiDataTrigger.Conditions>
-                                                    <Setter Property="Visibility" Value="Visible" />
-                                                    <Setter Property="Text" Value="{Binding SearchWatermark, RelativeSource={RelativeSource TemplatedParent}}" />
                                                 </MultiDataTrigger>
                                             </Style.Triggers>
                                         </Style>
                                     </TextBlock.Style>
                                 </TextBlock>
 
-                                <!--  Text Input  -->
+                                <!-- TextBox -->
                                 <TextBox x:Name="PART_TextBox"
-                                         Background="Transparent"
-                                         Foreground="{TemplateBinding Foreground}"
-                                         BorderThickness="0"
-                                         CaretBrush="{TemplateBinding Foreground}"
-                                         SelectionBrush="#FF0078D4"
-                                         Margin="4,0"
-                                         HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                         VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
-                                         FontFamily="{TemplateBinding FontFamily}"
-                                         FontSize="{TemplateBinding FontSize}"
-                                         FontWeight="{TemplateBinding FontWeight}"
-                                         ContextMenu="{TemplateBinding ContextMenu}"
-                                         IsTabStop="True"
-                                         KeyboardNavigation.TabNavigation="None" />
+                                     Background="Transparent"
+                                     BorderThickness="0"
+                                     Foreground="{TemplateBinding Foreground}"
+                                     FontFamily="{TemplateBinding FontFamily}"
+                                     FontSize="{TemplateBinding FontSize}"
+                                     FontWeight="{TemplateBinding FontWeight}"
+                                     Padding="10,6"
+                                     HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                     VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
+                                     SelectionBrush="#FF2B88FF"
+                                     CaretBrush="{TemplateBinding Foreground}"
+                                     ContextMenu="{TemplateBinding ContextMenu}"
+                                     IsTabStop="True"
+                                     KeyboardNavigation.TabNavigation="None" />
                             </Grid>
 
-                            <!--  Clear Button  -->
+                            <!-- Clear Button (right icon) -->
                             <Button x:Name="PART_ClearButton"
-                                    Grid.Column="3"
-                                    Focusable="True"
-                                    Command="{Binding ClearCommand, RelativeSource={RelativeSource TemplatedParent}}"
-                                    Margin="0,0,6,0"
-                                    VerticalAlignment="Center"
-                                    Width="16"
-                                    Height="16"
-                                    IsTabStop="True"
-                                    ToolTip="Clear search">
+                                Grid.Column="2"
+                                Focusable="True"
+                                IsTabStop="True"
+                                Margin="0,0,6,0"
+                                VerticalAlignment="Center"
+                                Width="24"
+                                Height="24"
+                                ToolTip="Clear search"
+                                Command="{Binding ClearCommand, RelativeSource={RelativeSource TemplatedParent}}">
                                 <Button.Style>
                                     <Style TargetType="Button">
                                         <Setter Property="Background" Value="{StaticResource SearchTextBox.ClearButton.BackgroundBrush.Default}" />
@@ -206,19 +196,19 @@
                                         <Setter Property="BorderThickness" Value="0" />
                                         <Setter Property="Cursor" Value="Hand" />
                                         <Setter Property="FontFamily" Value="Segoe MDL2 Assets" />
-                                        <Setter Property="FontSize" Value="10" />
+                                        <Setter Property="FontSize" Value="12" />
                                         <Setter Property="Template">
                                             <Setter.Value>
                                                 <ControlTemplate TargetType="Button">
-                                                    <Border Background="{TemplateBinding Background}"
-                                                            CornerRadius="0"
-                                                            SnapsToDevicePixels="True">
+                                                    <Border Background="{TemplateBinding Background}" 
+                                                        CornerRadius="6"
+                                                        SnapsToDevicePixels="True">
                                                         <TextBlock Foreground="{TemplateBinding Foreground}"
-                                                                   Text="&#xE711;"
-                                                                   HorizontalAlignment="Center"
-                                                                   VerticalAlignment="Center"
-                                                                   FontFamily="{TemplateBinding FontFamily}"
-                                                                   FontSize="{TemplateBinding FontSize}" />
+                                                               Text="&#xE711;"
+                                                               HorizontalAlignment="Center"
+                                                               VerticalAlignment="Center"
+                                                               FontFamily="{TemplateBinding FontFamily}"
+                                                               FontSize="{TemplateBinding FontSize}" />
                                                     </Border>
                                                 </ControlTemplate>
                                             </Setter.Value>
@@ -240,51 +230,67 @@
                                                 <Setter Property="Background" Value="{StaticResource SearchTextBox.ClearButton.BackgroundBrush.Pressed}" />
                                                 <Setter Property="Foreground" Value="{StaticResource SearchTextBox.ClearButton.ForegroundBrush.Pressed}" />
                                             </Trigger>
+                                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                                <Setter Property="Background" Value="#14B00020" />
+                                            </Trigger>
                                         </Style.Triggers>
                                     </Style>
                                 </Button.Style>
                             </Button>
 
-                            <!--  Popup for Search Items  -->
+                            <!-- Results Popup -->
                             <Popup x:Name="PART_Popup"
-                                   Grid.Column="0"
-                                   Grid.ColumnSpan="4"
-                                   AllowsTransparency="True"
-                                   IsOpen="{Binding IsPopupOpen, RelativeSource={RelativeSource TemplatedParent}}"
-                                   Focusable="False"
-                                   PlacementTarget="{Binding RelativeSource={RelativeSource TemplatedParent}}"
-                                   Placement="Bottom"
-                                   PopupAnimation="Slide"
-                                   StaysOpen="False">
-                                <Border Background="White"
-                                        BorderBrush="#FFCCCCCC"
-                                        BorderThickness="1"
-                                        MinWidth="{Binding ActualWidth, RelativeSource={RelativeSource TemplatedParent}}"
-                                        MaxHeight="200"
-                                        CornerRadius="4">
+                               Grid.Column="0"
+                               Grid.ColumnSpan="3"
+                               IsOpen="{Binding IsPopupOpen, RelativeSource={RelativeSource TemplatedParent}}"
+                               PlacementTarget="{Binding RelativeSource={RelativeSource TemplatedParent}}"
+                               Placement="Bottom"
+                               PopupAnimation="Slide"
+                               AllowsTransparency="True"
+                               StaysOpen="True"
+                               Focusable="True">
+                                <Border Background="{StaticResource SearchTextBox.Popup.Background}"
+                                    BorderBrush="{StaticResource SearchTextBox.Popup.Border}"
+                                    BorderThickness="1"
+                                    CornerRadius="{StaticResource SearchTextBox.Popup.CornerRadius}"
+                                    MinWidth="{Binding ActualWidth, RelativeSource={RelativeSource TemplatedParent}}"
+                                    MaxHeight="260">
+                                    <Border.Effect>
+                                        <DropShadowEffect Color="#99000000" BlurRadius="12" ShadowDepth="2" Opacity="0.35"/>
+                                    </Border.Effect>
                                     <ListBox x:Name="PART_ListBox"
-                                             Background="Transparent"
-                                             BorderThickness="0"
-                                             ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                                             ScrollViewer.VerticalScrollBarVisibility="Auto"
-                                             VirtualizingPanel.IsVirtualizing="True"
-                                             VirtualizingPanel.VirtualizationMode="Recycling"
-                                             ItemsSource="{Binding ItemsSource, RelativeSource={RelativeSource TemplatedParent}}">
+                                         Background="Transparent"
+                                         BorderThickness="0"
+                                         ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                         ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                         VirtualizingPanel.IsVirtualizing="True"
+                                         VirtualizingPanel.VirtualizationMode="Recycling"
+                                         ItemsSource="{Binding ItemsSource, RelativeSource={RelativeSource TemplatedParent}}">
                                         <ListBox.ItemsPanel>
                                             <ItemsPanelTemplate>
                                                 <VirtualizingStackPanel Orientation="Vertical" />
                                             </ItemsPanelTemplate>
                                         </ListBox.ItemsPanel>
+                                        <ListBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <sdg:HighlightTextBlock
+                                                HighlightTextBlockText="{Binding}"
+                                                HighlightText="{Binding Text, RelativeSource={RelativeSource AncestorType=sdg:SearchTextBox}}"
+                                                TextWrapping="NoWrap"
+                                                TextTrimming="CharacterEllipsis" />
+                                            </DataTemplate>
+                                        </ListBox.ItemTemplate>
                                         <ListBox.ItemContainerStyle>
                                             <Style TargetType="ListBoxItem">
-                                                <Setter Property="Padding" Value="8,4" />
+                                                <Setter Property="Padding" Value="12,8" />
                                                 <Setter Property="HorizontalContentAlignment" Value="Left" />
+                                                <Setter Property="Background" Value="Transparent" />
                                                 <Style.Triggers>
                                                     <Trigger Property="IsMouseOver" Value="True">
-                                                        <Setter Property="Background" Value="#FFF0F0F0" />
+                                                        <Setter Property="Background" Value="#0F2B88FF" />
                                                     </Trigger>
                                                     <Trigger Property="IsSelected" Value="True">
-                                                        <Setter Property="Background" Value="#FFE3F2FD" />
+                                                        <Setter Property="Background" Value="#1A2B88FF" />
                                                     </Trigger>
                                                 </Style.Triggers>
                                             </Style>
@@ -294,6 +300,8 @@
                             </Popup>
                         </Grid>
                     </Border>
+
+                    <!-- Visual states via triggers -->
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter TargetName="Border" Property="BorderBrush" Value="{StaticResource SearchTextBox.BorderBrush.Hover}" />
@@ -301,9 +309,18 @@
                         </Trigger>
                         <Trigger Property="IsSearchFocused" Value="True">
                             <Setter TargetName="Border" Property="BorderBrush" Value="{StaticResource SearchTextBox.BorderBrush.Focused}" />
+                            <Setter TargetName="Border" Property="Effect">
+                                <Setter.Value>
+                                    <DropShadowEffect Color="#4D2B88FF" BlurRadius="8" ShadowDepth="0" Opacity="0.45" />
+                                </Setter.Value>
+                            </Setter>
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="Border" Property="BorderBrush" Value="{StaticResource SearchTextBox.BorderBrush.Disabled}" />
                             <Setter Property="Opacity" Value="0.6" />
+                        </Trigger>
+                        <Trigger SourceName="PART_TextBox" Property="IsReadOnly" Value="True">
+                            <Setter TargetName="Border" Property="Background" Value="{StaticResource SearchTextBox.BackgroundBrush.Readonly}" />
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>

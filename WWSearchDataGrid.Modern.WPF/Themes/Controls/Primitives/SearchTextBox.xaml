@@ -1,7 +1,6 @@
 ﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:sdg="clr-namespace:WWSearchDataGrid.Modern.WPF"
-                    xmlns:primitives="clr-namespace:WWSearchDataGrid.Modern.WPF.Controls.Primitives"
                     xmlns:converters="clr-namespace:WWSearchDataGrid.Modern.WPF.Converters">
 
     <!--  Converters  -->
@@ -250,7 +249,7 @@
                                         </ListBox.ItemsPanel>
                                         <ListBox.ItemTemplate>
                                             <DataTemplate>
-                                                <primitives:HighlightTextBlock
+                                                <sdg:HighlightTextBlock
                                                     HighlightTextBlockText="{Binding}"
                                                     HighlightText="{Binding Text, RelativeSource={RelativeSource AncestorType=sdg:SearchTextBox}}"
                                                     TextWrapping="NoWrap"
