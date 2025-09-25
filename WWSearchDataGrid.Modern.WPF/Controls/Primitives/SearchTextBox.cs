@@ -31,7 +31,7 @@ namespace WWSearchDataGrid.Modern.WPF
         private Button _toggleButton;
         private Popup _popup;
         private ListBox _listBox;
-        private string _originalText;
+        private bool _isNavigating;
 
         static SearchTextBox()
         {
@@ -148,7 +148,7 @@ namespace WWSearchDataGrid.Modern.WPF
                 nameof(ItemsSource),
                 typeof(IEnumerable),
                 typeof(SearchTextBox),
-                new PropertyMetadata(null, OnItemsSourceChanged));
+                new PropertyMetadata(null));
 
         public IEnumerable ItemsSource
         {
@@ -275,11 +275,6 @@ namespace WWSearchDataGrid.Modern.WPF
             remove { RemoveHandler(TextChangedEvent, value); }
         }
 
-        /// <summary>
-        /// Occurs when the clear button is clicked
-        /// </summary>
-        public event RoutedEventHandler Cleared;
-
         #endregion
 
         #region Overrides
@@ -310,7 +305,6 @@ namespace WWSearchDataGrid.Modern.WPF
             if (_listBox != null)
             {
                 _listBox.SelectionChanged -= OnListBoxSelectionChanged;
-                _listBox.MouseDoubleClick -= OnListBoxMouseDoubleClick;
             }
 
             if (_popup != null)
@@ -332,7 +326,7 @@ namespace WWSearchDataGrid.Modern.WPF
                 _textBox.TextChanged += OnTextBoxTextChanged;
                 _textBox.GotFocus += OnTextBoxGotFocus;
                 _textBox.LostFocus += OnTextBoxLostFocus;
-                _textBox.KeyDown += OnTextBoxKeyDown;
+                _textBox.PreviewKeyDown += OnTextBoxKeyDown;
 
                 // Sync the text
                 _textBox.Text = Text ?? string.Empty;
@@ -352,8 +346,6 @@ namespace WWSearchDataGrid.Modern.WPF
             if (_listBox != null)
             {
                 _listBox.SelectionChanged += OnListBoxSelectionChanged;
-                _listBox.MouseDoubleClick += OnListBoxMouseDoubleClick;
-                UpdateFilteredItems();
             }
 
             if (_popup != null)
@@ -395,13 +387,6 @@ namespace WWSearchDataGrid.Modern.WPF
             control.OnTextChanged((string)e.NewValue);
         }
 
-        private static void OnItemsSourceChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
-        {
-            var control = (SearchTextBox)d;
-            control.OnItemsSourceChanged();
-        }
-
-
         private static void OnSelectedItemChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
             var control = (SearchTextBox)d;
@@ -429,14 +414,9 @@ namespace WWSearchDataGrid.Modern.WPF
 
         private void OnTextBoxTextChanged(object sender, TextChangedEventArgs e)
         {
-            if (_textBox != null)
+            if (_textBox != null && !_isNavigating)
             {
                 Text = _textBox.Text;
-
-                if (IsPopupOpen)
-                {
-                    UpdateFilteredItems();
-                }
             }
 
             // Forward the event args from the internal TextBox
@@ -459,14 +439,7 @@ namespace WWSearchDataGrid.Modern.WPF
         private void OnClearButtonClick(object sender, RoutedEventArgs e)
         {
             ClearText();
-            Cleared?.Invoke(this, e);
         }
-
-        private void OnItemsSourceChanged()
-        {
-            UpdateFilteredItems();
-        }
-
 
         private void OnSelectedItemChanged(object selectedItem)
         {
@@ -482,26 +455,20 @@ namespace WWSearchDataGrid.Modern.WPF
             {
                 _popup.IsOpen = isOpen;
             }
-
-            if (isOpen)
-            {
-                UpdateFilteredItems();
-            }
         }
 
         private void OnToggleButtonClick(object sender, RoutedEventArgs e)
         {
             IsPopupOpen = !IsPopupOpen;
+            _textBox?.Focus();
         }
 
         private void OnTextBoxKeyDown(object sender, KeyEventArgs e)
         {
-            if (!IsPopupOpen) return;
-
             switch (e.Key)
             {
                 case Key.Enter:
-                    if (_listBox?.SelectedItem != null)
+                    if (IsPopupOpen && _listBox?.SelectedItem != null)
                     {
                         SelectItem(_listBox.SelectedItem);
                         e.Handled = true;
@@ -509,34 +476,64 @@ namespace WWSearchDataGrid.Modern.WPF
                     break;
 
                 case Key.Escape:
-                    IsPopupOpen = false;
-                    e.Handled = true;
+                    if (IsPopupOpen)
+                    {
+                        // Just close popup without reverting text
+                        _listBox.SelectedIndex = -1;
+                        IsPopupOpen = false;
+                        e.Handled = true;
+                    }
                     break;
 
                 case Key.Tab:
-                    IsPopupOpen = false;
+                    if (IsPopupOpen)
+                    {
+                        IsPopupOpen = false;
+                    }
                     break;
 
                 case Key.Down:
-                    if (_listBox != null && _listBox.Items.Count > 0)
+                    // Auto-open popup if closed and there are items
+                    if (!IsPopupOpen && ItemsSource != null && !string.IsNullOrEmpty(_textBox?.Text))
                     {
-                        if (_listBox.SelectedIndex < _listBox.Items.Count - 1)
-                            _listBox.SelectedIndex++;
-                        else
-                            _listBox.SelectedIndex = 0;
-                        _listBox.ScrollIntoView(_listBox.SelectedItem);
+                        IsPopupOpen = true;
+                        e.Handled = true;
+                        return;
+                    }
+
+                    if (IsPopupOpen && _listBox != null && _listBox.Items.Count > 0)
+                    {
+                        _isNavigating = true;
+                        var nextIndex = FindNextMatchingItem(_listBox.SelectedIndex, true);
+                        if (nextIndex >= 0)
+                        {
+                            _listBox.SelectedIndex = nextIndex;
+                            _listBox.ScrollIntoView(_listBox.SelectedItem);
+                        }
+                        _isNavigating = false;
                         e.Handled = true;
                     }
                     break;
 
                 case Key.Up:
-                    if (_listBox != null && _listBox.Items.Count > 0)
+                    // Auto-open popup if closed and there are items
+                    if (!IsPopupOpen && ItemsSource != null && !string.IsNullOrEmpty(_textBox?.Text))
                     {
-                        if (_listBox.SelectedIndex > 0)
-                            _listBox.SelectedIndex--;
-                        else
-                            _listBox.SelectedIndex = _listBox.Items.Count - 1;
-                        _listBox.ScrollIntoView(_listBox.SelectedItem);
+                        IsPopupOpen = true;
+                        e.Handled = true;
+                        return;
+                    }
+
+                    if (IsPopupOpen && _listBox != null && _listBox.Items.Count > 0)
+                    {
+                        _isNavigating = true;
+                        var prevIndex = FindNextMatchingItem(_listBox.SelectedIndex, false);
+                        if (prevIndex >= 0)
+                        {
+                            _listBox.SelectedIndex = prevIndex;
+                            _listBox.ScrollIntoView(_listBox.SelectedItem);
+                        }
+                        _isNavigating = false;
                         e.Handled = true;
                     }
                     break;
@@ -545,15 +542,8 @@ namespace WWSearchDataGrid.Modern.WPF
 
         private void OnListBoxSelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (_listBox?.SelectedItem != null && e.AddedItems?.Count > 0)
-            {
-                SelectItem(_listBox.SelectedItem);
-            }
-        }
-
-        private void OnListBoxMouseDoubleClick(object sender, MouseButtonEventArgs e)
-        {
-            if (_listBox?.SelectedItem != null)
+            // Only select item if we're not in navigation mode
+            if (_listBox?.SelectedItem != null && e.AddedItems?.Count > 0 && !_isNavigating)
             {
                 SelectItem(_listBox.SelectedItem);
             }
@@ -585,26 +575,6 @@ namespace WWSearchDataGrid.Modern.WPF
             HasSearchText = !string.IsNullOrEmpty(Text);
         }
 
-        private void UpdateFilteredItems()
-        {
-            if (_listBox == null || ItemsSource == null)
-                return;
-
-            var view = CollectionViewSource.GetDefaultView(ItemsSource);
-
-            if (IsPopupOpen && !string.IsNullOrEmpty(_textBox?.Text))
-            {
-                var searchText = _textBox.Text.ToLowerInvariant();
-                view.Filter = item => item?.ToString()?.ToLowerInvariant().Contains(searchText) == true;
-            }
-            else
-            {
-                view.Filter = null;
-            }
-
-            _listBox.ItemsSource = view;
-        }
-
         private void SelectItem(object item)
         {
             SetCurrentValue(SelectedItemProperty, item);
@@ -612,6 +582,50 @@ namespace WWSearchDataGrid.Modern.WPF
             IsPopupOpen = false;
 
             _textBox?.Focus();
+        }
+
+        /// <summary>
+        /// Finds the next or previous item that matches the current search text
+        /// </summary>
+        /// <param name="currentIndex">Current selected index</param>
+        /// <param name="searchForward">True to search forward, false to search backward</param>
+        /// <returns>Index of next matching item, or -1 if none found</returns>
+        private int FindNextMatchingItem(int currentIndex, bool searchForward)
+        {
+            if (_listBox?.Items == null || _listBox.Items.Count == 0 || string.IsNullOrEmpty(_textBox?.Text))
+                return -1;
+
+            var searchText = _textBox.Text.ToLowerInvariant();
+            var itemCount = _listBox.Items.Count;
+
+            // Start from the next/previous position
+            var startIndex = searchForward
+                ? (currentIndex + 1) % itemCount
+                : (currentIndex - 1 + itemCount) % itemCount;
+
+            // If no current selection, start from beginning/end
+            if (currentIndex < 0)
+            {
+                startIndex = searchForward ? 0 : itemCount - 1;
+            }
+
+            // Search through all items
+            for (int i = 0; i < itemCount; i++)
+            {
+                var index = searchForward
+                    ? (startIndex + i) % itemCount
+                    : (startIndex - i + itemCount) % itemCount;
+
+                var item = _listBox.Items[index];
+                var itemText = item?.ToString()?.ToLowerInvariant() ?? string.Empty;
+
+                if (itemText.Contains(searchText))
+                {
+                    return index;
+                }
+            }
+
+            return -1; // No matching item found
         }
 
         #endregion
