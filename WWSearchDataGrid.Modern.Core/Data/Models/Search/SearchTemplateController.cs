@@ -756,7 +756,6 @@ namespace WWSearchDataGrid.Modern.Core
 
             UnsubscribeFromTemplates(new List<SearchTemplate> { template });
 
-            bool removingLastTemplate = false;
             // Unsubscribe from the template being removed
             if (group.SearchTemplates.Count > 1)
             {
@@ -766,11 +765,10 @@ namespace WWSearchDataGrid.Modern.Core
             {
                 // If this is the last template, just reset the whole group
                 ClearAndReset();
-                removingLastTemplate = true;
             }
             UpdateFilterExpression();
             UpdateOperatorVisibility();
-            InvokeAutoApplyFilter(removingLastTemplate);
+            InvokeAutoApplyFilter();
         }
 
         /// <summary>
@@ -1464,7 +1462,7 @@ namespace WWSearchDataGrid.Modern.Core
         protected virtual void InvokeAutoApplyFilter(bool isRemovingLastTemplate = false)
         {
             // Only fire if we have at least one valid filter to apply
-            if (HasValidFilters || isRemovingLastTemplate)
+            if (HasValidFilters || HasCustomExpression)
             {
                 AutoApplyFilter?.Invoke(this, EventArgs.Empty);
             }

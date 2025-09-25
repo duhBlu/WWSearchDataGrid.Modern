@@ -130,6 +130,9 @@ namespace WWSearchDataGrid.Modern.Core
                 if (SetProperty(value, ref selectedValue))
                 {
                     HasChanges = true;
+
+                    OnPropertyChanged(nameof(HasCustomFilter));
+                    OnPropertyChanged(nameof(IsValidFilter));
                 }
             }
         }
@@ -142,6 +145,8 @@ namespace WWSearchDataGrid.Modern.Core
                 if (SetProperty(value, ref selectedSecondaryValue))
                 {
                     HasChanges = true;
+                    OnPropertyChanged(nameof(HasCustomFilter));
+                    OnPropertyChanged(nameof(IsValidFilter));
                 }
             }
         }
@@ -156,8 +161,8 @@ namespace WWSearchDataGrid.Modern.Core
         {
             get
             {
-                var hasSelectedValue = SelectedValue != null;
-                var hasSelectedSecondaryValue = SelectedSecondaryValue != null;
+                var hasSelectedValue = SelectedValue != null && !string.IsNullOrEmpty(SelectedValue.ToString());
+                var hasSelectedSecondaryValue = SelectedSecondaryValue != null && !string.IsNullOrEmpty(SelectedValue.ToString());
 
                 var isNonDefaultSearchType = SearchType != SearchType.Contains;
 

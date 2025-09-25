@@ -248,6 +248,7 @@ namespace WWSearchDataGrid.Modern.WPF
         private void ToggleSearchMode()
         {
             IsPopupOpen = !IsPopupOpen;
+            _textBox?.Focus();
         }
 
         private bool CanToggleSearch()
