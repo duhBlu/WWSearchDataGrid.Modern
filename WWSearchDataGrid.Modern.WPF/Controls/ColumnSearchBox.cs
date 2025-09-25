@@ -601,7 +601,6 @@ namespace WWSearchDataGrid.Modern.WPF
                 }
                 else
                 {
-                    // FIXED: Create template immediately for state synchronization
                     control.CreateTemporaryTemplateImmediate();
                     
                     // Still use timer for debounced filter application

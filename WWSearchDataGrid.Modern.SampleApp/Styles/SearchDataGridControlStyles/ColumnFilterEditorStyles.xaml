@@ -16,41 +16,42 @@
 
     <!--#region RuleTemplates-->
 
-    <!--  Single ComboBox Template  -->
-    <DataTemplate x:Key="SingleComboBoxTemplate">
-        <ComboBox Style="{StaticResource CustomEditableComboBoxStyle}"
-                  Text="{Binding SelectedValue}"
-                  Tag="Type or select..."
-                  ItemsSource="{Binding SearchTemplateController.ColumnValues}" />
+    <!--  Single SearchTextBox Template  -->
+    <DataTemplate x:Key="SingleSearchTextBoxTemplate">
+        <sdg:SearchTextBox Style="{StaticResource CustomSearchTextboxStyle}"
+                           Text="{Binding SelectedValue, UpdateSourceTrigger=PropertyChanged}"
+                           ItemsSource="{Binding SearchTemplateController.ColumnValues}"
+                           SelectedItem="{Binding SelectedItem, UpdateSourceTrigger=PropertyChanged}"
+                           ShowToggleButton="True"
+                           PreserveValueOnSourceChange="True"
+                           Watermark="Enter or select value..."/>
     </DataTemplate>
 
-    <!--  Single TextBox Template  -->
-    <DataTemplate x:Key="SingleTextBoxTemplate">
-        <sdg:SearchTextBox Text="{Binding SelectedValue, UpdateSourceTrigger=PropertyChanged}"
-                           Watermark="Enter text..."
-                           Style="{StaticResource CustomSearchTextBoxStyle}"
-                           ShowSearchIcon="False" />
-    </DataTemplate>
-
-    <!--  Dual ComboBox Template  -->
-    <DataTemplate x:Key="DualComboBoxTemplate">
+    <!--  Dual SearchTextBox Template  -->
+    <DataTemplate x:Key="DualSearchTextBoxTemplate">
         <StackPanel Orientation="Horizontal">
             <TextBlock Text="From:"
                        Margin="0,0,5,0"
                        VerticalAlignment="Center" />
-            <ComboBox Style="{StaticResource CustomEditableComboBoxStyle}"
-                      Text="{Binding SelectedValue, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
-                      MinWidth="120"
-                      Tag="Type or select..."
-                      ItemsSource="{Binding SearchTemplateController.ColumnValues}" />
+            <sdg:SearchTextBox Style="{StaticResource CustomSearchTextboxStyle}"
+                               Text="{Binding SelectedValue, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
+                               MinWidth="120"
+                               ItemsSource="{Binding SearchTemplateController.ColumnValues}"
+                               SelectedItem="{Binding SelectedItem, UpdateSourceTrigger=PropertyChanged}"
+                               ShowToggleButton="True"
+                               PreserveValueOnSourceChange="True"
+                               Watermark="Enter or select..." />
             <TextBlock Text="To:"
                        Margin="10,0,5,0"
                        VerticalAlignment="Center" />
-            <ComboBox Style="{StaticResource CustomEditableComboBoxStyle}"
-                      Text="{Binding SelectedSecondaryValue, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
-                      MinWidth="120"
-                      Tag="Type or select..."
-                      ItemsSource="{Binding SearchTemplateController.ColumnValues}" />
+            <sdg:SearchTextBox Style="{StaticResource CustomSearchTextboxStyle}"
+                               Text="{Binding SelectedSecondaryValue, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
+                               MinWidth="120"
+                               ItemsSource="{Binding SearchTemplateController.ColumnValues}"
+                               SelectedItem="{Binding SelectedSecondaryItem, UpdateSourceTrigger=PropertyChanged}"
+                               ShowToggleButton="True"
+                               PreserveValueOnSourceChange="True"
+                               Watermark="Enter or select..."/>
         </StackPanel>
     </DataTemplate>
 
@@ -75,8 +76,8 @@
     <!--  Numeric UpDown Template  -->
     <DataTemplate x:Key="NumericUpDownTemplate">
         <StackPanel Orientation="Horizontal">
-            <sdg:NumericUpDown Width="80"
-                               Style="{StaticResource CustomNumericUpDownStyle}"
+            <sdg:NumericUpDown Style="{StaticResource CustomNumericUpDownStyle}"
+                               Width="80"
                                Minimum="1"
                                Maximum="10000"
                                Increment="1"
@@ -96,16 +97,15 @@
                    VerticalAlignment="Center" />
     </DataTemplate>
 
-    <!--  ComboBox List Template  -->
-    <DataTemplate x:Key="ComboBoxListTemplate">
+    <!--  SearchTextBox List Template  -->
+    <DataTemplate x:Key="SearchTextBoxListTemplate">
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
-            <Button Style="{StaticResource CustomBasicButtonStyle}"
-                    Grid.Row="0"
+            <Button Grid.Row="0"
                     Command="{Binding AddValueCommand}"
                     Margin="0,0,0,5"
                     HorizontalAlignment="Left"
@@ -151,16 +151,65 @@
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
-                                <ComboBox Style="{StaticResource CustomEditableComboBoxStyle}"
-                                          Grid.Column="0"
-                                          Tag="Type or select..."
-                                          ItemsSource="{Binding DataContext.SearchTemplateController.ColumnValues, RelativeSource={RelativeSource AncestorType=ListBox}}" />
-                                <Button Style="{StaticResource CustomTransparentFontIconButtonStyle}"
-                                        Grid.Column="1"
+                                <sdg:SearchTextBox Style="{StaticResource GenericSearchTextboxStyle}"
+                                                   Grid.Column="0"
+                                                   Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}"
+                                                   ItemsSource="{Binding DataContext.SearchTemplateController.ColumnValues, RelativeSource={RelativeSource AncestorType=ListBox}}"
+                                                   SelectedItem="{Binding SelectedItem, UpdateSourceTrigger=PropertyChanged}"
+                                                   ShowToggleButton="True"
+                                                   PreserveValueOnSourceChange="True"
+                                                   Watermark="Enter or select value..."/>
+                                <Button Grid.Column="1"
+                                        BorderThickness="0"
+                                        Cursor="Hand"
                                         Command="{Binding DataContext.RemoveValueCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"
                                         CommandParameter="{Binding}"
                                         Margin="3,0,0,0"
-                                        Content="&#xE10A;" />
+                                        Width="24"
+                                        Height="24"
+                                        FontFamily="Segoe MDL2 Assets"
+                                        Content="&#xE711;">
+                                    <Button.Style>
+                                        <Style TargetType="{x:Type Button}">
+                                            <Setter Property="Background" Value="Transparent" />
+                                            <Setter Property="Cursor" Value="Hand" />
+                                            <Setter Property="Foreground" Value="Gray" />
+                                            <Setter Property="Template">
+                                                <Setter.Value>
+                                                    <ControlTemplate TargetType="{x:Type Button}">
+                                                        <Border x:Name="border"
+                                                                Background="{TemplateBinding Background}"
+                                                                BorderBrush="{TemplateBinding BorderBrush}"
+                                                                BorderThickness="{TemplateBinding BorderThickness}">
+                                                            <ContentPresenter x:Name="contentPresenter"
+                                                                              Focusable="False"
+                                                                              Margin="{TemplateBinding Padding}"
+                                                                              HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                                                              VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                                                              RecognizesAccessKey="True"
+                                                                              TextElement.Foreground="{TemplateBinding Foreground}"
+                                                                              SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" />
+                                                        </Border>
+                                                    </ControlTemplate>
+                                                </Setter.Value>
+                                            </Setter>
+                                            <Style.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter Property="Background" Value="#FFF0F0F0" />
+                                                    <Setter Property="Foreground" Value="#1c1c1c" />
+                                                </Trigger>
+                                                <Trigger Property="IsPressed" Value="True">
+                                                    <Setter Property="Background" Value="#FFE0E0E0" />
+                                                    <Setter Property="Foreground" Value="#000000" />
+                                                </Trigger>
+                                                <Trigger Property="IsEnabled" Value="False">
+                                                    <Setter Property="Opacity" Value="0.5" />
+                                                    <Setter Property="Cursor" Value="Arrow" />
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                </Button>
                             </Grid>
                         </Border>
                     </DataTemplate>
@@ -359,14 +408,11 @@
                                     <ContentControl.Style>
                                         <Style TargetType="ContentControl">
                                             <Style.Triggers>
-                                                <DataTrigger Binding="{Binding InputTemplate}" Value="SingleComboBox">
-                                                    <Setter Property="ContentTemplate" Value="{StaticResource SingleComboBoxTemplate}" />
+                                                <DataTrigger Binding="{Binding InputTemplate}" Value="SingleSearchTextBox">
+                                                    <Setter Property="ContentTemplate" Value="{StaticResource SingleSearchTextBoxTemplate}" />
                                                 </DataTrigger>
-                                                <DataTrigger Binding="{Binding InputTemplate}" Value="SingleTextBox">
-                                                    <Setter Property="ContentTemplate" Value="{StaticResource SingleTextBoxTemplate}" />
-                                                </DataTrigger>
-                                                <DataTrigger Binding="{Binding InputTemplate}" Value="DualComboBox">
-                                                    <Setter Property="ContentTemplate" Value="{StaticResource DualComboBoxTemplate}" />
+                                                <DataTrigger Binding="{Binding InputTemplate}" Value="DualSearchTextBox">
+                                                    <Setter Property="ContentTemplate" Value="{StaticResource DualSearchTextBoxTemplate}" />
                                                 </DataTrigger>
                                                 <DataTrigger Binding="{Binding InputTemplate}" Value="DualDateTimePicker">
                                                     <Setter Property="ContentTemplate" Value="{StaticResource DualDateTimePickerTemplate}" />
@@ -377,8 +423,8 @@
                                                 <DataTrigger Binding="{Binding InputTemplate}" Value="NoInput">
                                                     <Setter Property="ContentTemplate" Value="{StaticResource NoInputTemplate}" />
                                                 </DataTrigger>
-                                                <DataTrigger Binding="{Binding InputTemplate}" Value="ComboBoxList">
-                                                    <Setter Property="ContentTemplate" Value="{StaticResource ComboBoxListTemplate}" />
+                                                <DataTrigger Binding="{Binding InputTemplate}" Value="SearchTextBoxList">
+                                                    <Setter Property="ContentTemplate" Value="{StaticResource SearchTextBoxListTemplate}" />
                                                 </DataTrigger>
                                                 <DataTrigger Binding="{Binding InputTemplate}" Value="DateTimePickerList">
                                                     <Setter Property="ContentTemplate" Value="{StaticResource DateTimePickerListTemplate}" />
@@ -516,7 +562,7 @@
         </Setter>
     </Style>
 
-    <Style TargetType="{x:Type sdg:ColumnFilterEditor}" BasedOn="{StaticResource CustomColumnFilterEditorStyle}" />
+    <Style BasedOn="{StaticResource CustomColumnFilterEditorStyle}" TargetType="{x:Type sdg:ColumnFilterEditor}" />
 
     <!--#endregion-->
 

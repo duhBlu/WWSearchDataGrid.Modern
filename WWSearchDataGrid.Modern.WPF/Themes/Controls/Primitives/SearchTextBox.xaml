@@ -64,17 +64,55 @@
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
 
-                            <!--  Search Icon  -->
-                            <TextBlock x:Name="SearchIcon"
-                                       Grid.Column="0"
-                                       Foreground="{StaticResource SearchTextBox.SearchIconBrush}"
-                                       Text="&#xE721;"
-                                       IsHitTestVisible="False"
-                                       Margin="8,0,0,0"
-                                       VerticalAlignment="Center"
-                                       FontFamily="Segoe MDL2 Assets"
-                                       FontSize="12"
-                                       Visibility="{Binding ShowSearchIcon, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                            <!--  Toggle Search Button  -->
+                            <Button x:Name="PART_ToggleButton"
+                                    Grid.Column="0"
+                                    Focusable="True"
+                                    IsTabStop="True"
+                                    Margin="6,0,0,0"
+                                    VerticalAlignment="Center"
+                                    Width="16"
+                                    Height="16"
+                                    ToolTip="Toggle search dropdown">
+                                <Button.Style>
+                                    <Style TargetType="Button">
+                                        <Setter Property="Background" Value="Transparent" />
+                                        <Setter Property="Foreground" Value="{StaticResource SearchTextBox.SearchIconBrush}" />
+                                        <Setter Property="BorderThickness" Value="0" />
+                                        <Setter Property="Cursor" Value="Hand" />
+                                        <Setter Property="FontFamily" Value="Segoe MDL2 Assets" />
+                                        <Setter Property="FontSize" Value="10" />
+                                        <Setter Property="Template">
+                                            <Setter.Value>
+                                                <ControlTemplate TargetType="Button">
+                                                    <Border Background="{TemplateBinding Background}"
+                                                            CornerRadius="0"
+                                                            SnapsToDevicePixels="True">
+                                                        <TextBlock Foreground="{TemplateBinding Foreground}"
+                                                                   Text="&#xE721;"
+                                                                   HorizontalAlignment="Center"
+                                                                   VerticalAlignment="Center"
+                                                                   FontFamily="{TemplateBinding FontFamily}"
+                                                                   FontSize="{TemplateBinding FontSize}" />
+                                                    </Border>
+                                                </ControlTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding ShowToggleButton, RelativeSource={RelativeSource TemplatedParent}}" Value="True">
+                                                <Setter Property="Visibility" Value="Visible" />
+                                            </DataTrigger>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter Property="Background" Value="#FFF0F0F0" />
+                                            </Trigger>
+                                            <Trigger Property="IsPressed" Value="True">
+                                                <Setter Property="Background" Value="#FFE0E0E0" />
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
 
                             <!--  Text Input Area  -->
                             <Grid Grid.Column="1">
@@ -94,6 +132,7 @@
                                                     <MultiDataTrigger.Conditions>
                                                         <Condition Binding="{Binding HasSearchText, RelativeSource={RelativeSource TemplatedParent}}" Value="False" />
                                                         <Condition Binding="{Binding IsSearchFocused, RelativeSource={RelativeSource TemplatedParent}}" Value="False" />
+                                                        <Condition Binding="{Binding IsPopupOpen, RelativeSource={RelativeSource TemplatedParent}}" Value="False" />
                                                         <Condition Binding="{Binding Watermark, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource StringToVisibilityConverter}}" Value="Visible" />
                                                     </MultiDataTrigger.Conditions>
                                                     <Setter Property="Visibility" Value="Visible" />
@@ -177,6 +216,54 @@
                                     </Style>
                                 </Button.Style>
                             </Button>
+
+                            <!--  Popup for Search Items  -->
+                            <Popup x:Name="PART_Popup"
+                                   Grid.Column="0"
+                                   Grid.ColumnSpan="3"
+                                   IsOpen="{Binding IsPopupOpen, RelativeSource={RelativeSource TemplatedParent}}"
+                                   PlacementTarget="{Binding RelativeSource={RelativeSource TemplatedParent}}"
+                                   Placement="Bottom"
+                                   PopupAnimation="Slide"
+                                   AllowsTransparency="True"
+                                   StaysOpen="True"
+                                   Focusable="True">
+                                <Border Background="White"
+                                        BorderBrush="#FFCCCCCC"
+                                        BorderThickness="1"
+                                        CornerRadius="4"
+                                        MinWidth="{Binding ActualWidth, RelativeSource={RelativeSource TemplatedParent}}"
+                                        MaxHeight="200">
+                                    <ListBox x:Name="PART_ListBox"
+                                             Background="Transparent"
+                                             BorderThickness="0"
+                                             ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                             ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                             VirtualizingPanel.IsVirtualizing="True"
+                                             VirtualizingPanel.VirtualizationMode="Recycling"
+                                             ItemsSource="{Binding ItemsSource, RelativeSource={RelativeSource TemplatedParent}}">
+                                        <ListBox.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <VirtualizingStackPanel Orientation="Vertical" />
+                                            </ItemsPanelTemplate>
+                                        </ListBox.ItemsPanel>
+                                        <ListBox.ItemContainerStyle>
+                                            <Style TargetType="ListBoxItem">
+                                                <Setter Property="Padding" Value="8,4" />
+                                                <Setter Property="HorizontalContentAlignment" Value="Left" />
+                                                <Style.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter Property="Background" Value="#FFF0F0F0" />
+                                                    </Trigger>
+                                                    <Trigger Property="IsSelected" Value="True">
+                                                        <Setter Property="Background" Value="#FFE3F2FD" />
+                                                    </Trigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </ListBox.ItemContainerStyle>
+                                    </ListBox>
+                                </Border>
+                            </Popup>
                         </Grid>
                     </Border>
                     <ControlTemplate.Triggers>

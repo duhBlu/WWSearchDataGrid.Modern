@@ -13,93 +13,47 @@
     <converters:SearchTypeToBetweenVisibilityConverter x:Key="BetweenValueVisibilityConverter" />
     <converters:SearchTypeToIconConverter x:Key="SearchTypeToIconConverter" />
     <converters:DateIntervalToIconConverter x:Key="DateIntervalToIconConverter" />
-    <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+    <converters:BooleanToVisibilityCollapsedConverter x:Key="BooleanToVisibilityCollapsedConverter" />
     <converters:FilterInputTemplateToVisibilityConverter x:Key="FilterInputTemplateToVisibilityConverter" />
     <converters:EnumToStringConverter x:Key="EnumToStringConverter" />
 
-    <!--  Single ComboBox Template  -->
-    <DataTemplate x:Key="SingleComboBoxTemplate">
-        <ComboBox Text="{Binding SelectedValue}" ItemsSource="{Binding SearchTemplateController.ColumnValues}">
-            <ComboBox.Style>
-                <Style TargetType="{x:Type ComboBox}">
-                    <Setter Property="IsEditable" Value="True" />
-                    <Setter Property="VirtualizingPanel.IsVirtualizing" Value="True" />
-                    <Setter Property="VirtualizingPanel.VirtualizationMode" Value="Recycling" />
-                    <Setter Property="ScrollViewer.IsDeferredScrollingEnabled" Value="True" />
-                    <Setter Property="ItemsPanel">
-                        <Setter.Value>
-                            <ItemsPanelTemplate>
-                                <VirtualizingStackPanel VirtualizingPanel.IsVirtualizing="True"
-                                                        VirtualizingPanel.VirtualizationMode="Recycling"
-                                                        VirtualizingPanel.ScrollUnit="Item" />
-                            </ItemsPanelTemplate>
-                        </Setter.Value>
-                    </Setter>
-                </Style>
-            </ComboBox.Style>
-        </ComboBox>
+    <!--  Single SearchTextBox Template -->
+    <DataTemplate x:Key="SingleSearchTextBoxTemplate">
+        <sdg:SearchTextBox Style="{StaticResource GenericSearchTextboxStyle}"
+                           Text="{Binding SelectedValue, UpdateSourceTrigger=PropertyChanged}"
+                           ItemsSource="{Binding SearchTemplateController.ColumnValues}"
+                           SelectedItem="{Binding SelectedItem, UpdateSourceTrigger=PropertyChanged}"
+                           ShowToggleButton="True"
+                           PreserveValueOnSourceChange="True"
+                           Watermark="Enter or select value..." />
     </DataTemplate>
 
-    <!--  Single TextBox Template  -->
-    <DataTemplate x:Key="SingleTextBoxTemplate">
-        <sdg:SearchTextBox Text="{Binding SelectedValue, UpdateSourceTrigger=PropertyChanged}"
-                           Style="{StaticResource GenericSearchTextboxStyle}"
-                           Watermark="Enter text..."
-                           ShowSearchIcon="False" />
-    </DataTemplate>
 
-    <!--  Dual ComboBox Template  -->
-    <DataTemplate x:Key="DualComboBoxTemplate">
+    <!--  Dual SearchTextBox Template -->
+    <DataTemplate x:Key="DualSearchTextBoxTemplate">
         <StackPanel Orientation="Horizontal">
             <TextBlock Text="From:"
                        Margin="0,0,5,0"
                        VerticalAlignment="Center" />
-            <ComboBox Text="{Binding SelectedValue, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
-                      MinWidth="120"
-                      Tag="Type or select..."
-                      ItemsSource="{Binding SearchTemplateController.ColumnValues}">
-                <ComboBox.Style>
-                    <Style TargetType="{x:Type ComboBox}">
-                        <Setter Property="IsEditable" Value="True" />
-                        <Setter Property="VirtualizingPanel.IsVirtualizing" Value="True" />
-                        <Setter Property="VirtualizingPanel.VirtualizationMode" Value="Recycling" />
-                        <Setter Property="ScrollViewer.IsDeferredScrollingEnabled" Value="True" />
-                        <Setter Property="ItemsPanel">
-                            <Setter.Value>
-                                <ItemsPanelTemplate>
-                                    <VirtualizingStackPanel VirtualizingPanel.IsVirtualizing="True"
-                                                            VirtualizingPanel.VirtualizationMode="Recycling"
-                                                            VirtualizingPanel.ScrollUnit="Item" />
-                                </ItemsPanelTemplate>
-                            </Setter.Value>
-                        </Setter>
-                    </Style>
-                </ComboBox.Style>
-            </ComboBox>
+            <sdg:SearchTextBox Style="{StaticResource GenericSearchTextboxStyle}"
+                               Text="{Binding SelectedValue, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
+                               MinWidth="120"
+                               ItemsSource="{Binding SearchTemplateController.ColumnValues}"
+                               SelectedItem="{Binding SelectedItem, UpdateSourceTrigger=PropertyChanged}"
+                               ShowToggleButton="True"
+                               PreserveValueOnSourceChange="True"
+                               Watermark="Enter or select..." />
             <TextBlock Text="To:"
                        Margin="10,0,5,0"
                        VerticalAlignment="Center" />
-            <ComboBox Text="{Binding SelectedSecondaryValue, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
-                      MinWidth="120"
-                      ItemsSource="{Binding SearchTemplateController.ColumnValues}">
-                <ComboBox.Style>
-                    <Style TargetType="{x:Type ComboBox}">
-                        <Setter Property="IsEditable" Value="True" />
-                        <Setter Property="VirtualizingPanel.IsVirtualizing" Value="True" />
-                        <Setter Property="VirtualizingPanel.VirtualizationMode" Value="Recycling" />
-                        <Setter Property="ScrollViewer.IsDeferredScrollingEnabled" Value="True" />
-                        <Setter Property="ItemsPanel">
-                            <Setter.Value>
-                                <ItemsPanelTemplate>
-                                    <VirtualizingStackPanel VirtualizingPanel.IsVirtualizing="True"
-                                                            VirtualizingPanel.VirtualizationMode="Recycling"
-                                                            VirtualizingPanel.ScrollUnit="Item" />
-                                </ItemsPanelTemplate>
-                            </Setter.Value>
-                        </Setter>
-                    </Style>
-                </ComboBox.Style>
-            </ComboBox>
+            <sdg:SearchTextBox Style="{StaticResource GenericSearchTextboxStyle}"
+                               Text="{Binding SelectedSecondaryValue, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
+                               MinWidth="120"
+                               ItemsSource="{Binding SearchTemplateController.ColumnValues}"
+                               SelectedItem="{Binding SelectedSecondaryItem, UpdateSourceTrigger=PropertyChanged}"
+                               ShowToggleButton="True"
+                               PreserveValueOnSourceChange="True"
+                               Watermark="Enter or select..." />
         </StackPanel>
     </DataTemplate>
 
@@ -144,8 +98,8 @@
                    VerticalAlignment="Center" />
     </DataTemplate>
 
-    <!--  ComboBox List Template  -->
-    <DataTemplate x:Key="ComboBoxListTemplate">
+    <!--  SearchTextBox List Template  -->
+    <DataTemplate x:Key="SearchTextBoxListTemplate">
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
@@ -198,25 +152,14 @@
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
-                                <ComboBox Grid.Column="0" ItemsSource="{Binding DataContext.SearchTemplateController.ColumnValues, RelativeSource={RelativeSource AncestorType=ListBox}}">
-                                    <ComboBox.Style>
-                                        <Style TargetType="{x:Type ComboBox}">
-                                            <Setter Property="IsEditable" Value="True" />
-                                            <Setter Property="VirtualizingPanel.IsVirtualizing" Value="True" />
-                                            <Setter Property="VirtualizingPanel.VirtualizationMode" Value="Recycling" />
-                                            <Setter Property="ScrollViewer.IsDeferredScrollingEnabled" Value="True" />
-                                            <Setter Property="ItemsPanel">
-                                                <Setter.Value>
-                                                    <ItemsPanelTemplate>
-                                                        <VirtualizingStackPanel VirtualizingPanel.IsVirtualizing="True"
-                                                                                VirtualizingPanel.VirtualizationMode="Recycling"
-                                                                                VirtualizingPanel.ScrollUnit="Item" />
-                                                    </ItemsPanelTemplate>
-                                                </Setter.Value>
-                                            </Setter>
-                                        </Style>
-                                    </ComboBox.Style>
-                                </ComboBox>
+                                <sdg:SearchTextBox Style="{StaticResource GenericSearchTextboxStyle}"
+                                                   Grid.Column="0"
+                                                   Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}"
+                                                   ItemsSource="{Binding DataContext.SearchTemplateController.ColumnValues, RelativeSource={RelativeSource AncestorType=ListBox}}"
+                                                   SelectedItem="{Binding SelectedItem, UpdateSourceTrigger=PropertyChanged}"
+                                                   ShowToggleButton="True"
+                                                   PreserveValueOnSourceChange="True"
+                                                   Watermark="Enter or select value..." />
                                 <Button Grid.Column="1"
                                         BorderThickness="0"
                                         Cursor="Hand"

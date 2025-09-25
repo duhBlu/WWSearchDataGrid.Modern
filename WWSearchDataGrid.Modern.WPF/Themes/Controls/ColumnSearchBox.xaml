@@ -5,7 +5,6 @@
 
     <converters:IntToVisibilityConverter x:Key="IntToVisibilityConverter" />
     <converters:HasValueToVisibilityConverter x:Key="HasValueToVisibilityConverter" />
-    <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
 
     <!--  ColumnSearchBox Style  -->
     <Style x:Key="GenericColumnSearchBoxStyle" TargetType="{x:Type sdg:ColumnSearchBox}">
@@ -148,6 +147,7 @@
                             <Button x:Name="PART_AdvancedFilterButton"
                                     Grid.Column="2"
                                     Cursor="Hand"
+                                    Command="{Binding ShowFilterEditorPopup, RelativeSource={RelativeSource TemplatedParent}}"
                                     Margin="2,1,5,1"
                                     Padding="4"
                                     VerticalAlignment="Center"

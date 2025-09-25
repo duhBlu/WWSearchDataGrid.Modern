@@ -14,7 +14,7 @@
     <!--  Converters  -->
     <converters:SearchTypeToBetweenVisibilityConverter x:Key="BetweenValueVisibilityConverter" />
 
-    <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+    <converters:BooleanToVisibilityCollapsedConverter x:Key="BooleanToVisibilityCollapsedConverter" />
     <converters:FilterInputTemplateToVisibilityConverter x:Key="FilterInputTemplateToVisibilityConverter" />
     <converters:EnumToStringConverter x:Key="EnumToStringConverter" />
 
@@ -58,7 +58,7 @@
 
                                     <ComboBox x:Name="PART_OperatorCombo"
                                               Grid.Column="1"
-                                              Visibility="{Binding IsOperatorVisible, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                              Visibility="{Binding IsOperatorVisible, Converter={StaticResource BooleanToVisibilityCollapsedConverter}}"
                                               Margin="0,0,8,0"
                                               VerticalContentAlignment="Center"
                                               Width="Auto"
@@ -152,14 +152,11 @@
                                     <ContentControl.Style>
                                         <Style TargetType="ContentControl">
                                             <Style.Triggers>
-                                                <DataTrigger Binding="{Binding InputTemplate}" Value="SingleComboBox">
-                                                    <Setter Property="ContentTemplate" Value="{StaticResource SingleComboBoxTemplate}" />
+                                                <DataTrigger Binding="{Binding InputTemplate}" Value="SingleSearchTextBox">
+                                                    <Setter Property="ContentTemplate" Value="{StaticResource SingleSearchTextBoxTemplate}" />
                                                 </DataTrigger>
-                                                <DataTrigger Binding="{Binding InputTemplate}" Value="SingleTextBox">
-                                                    <Setter Property="ContentTemplate" Value="{StaticResource SingleTextBoxTemplate}" />
-                                                </DataTrigger>
-                                                <DataTrigger Binding="{Binding InputTemplate}" Value="DualComboBox">
-                                                    <Setter Property="ContentTemplate" Value="{StaticResource DualComboBoxTemplate}" />
+                                                <DataTrigger Binding="{Binding InputTemplate}" Value="DualSearchTextBox">
+                                                    <Setter Property="ContentTemplate" Value="{StaticResource DualSearchTextBoxTemplate}" />
                                                 </DataTrigger>
                                                 <DataTrigger Binding="{Binding InputTemplate}" Value="DualDateTimePicker">
                                                     <Setter Property="ContentTemplate" Value="{StaticResource DualDateTimePickerTemplate}" />
@@ -170,8 +167,8 @@
                                                 <DataTrigger Binding="{Binding InputTemplate}" Value="NoInput">
                                                     <Setter Property="ContentTemplate" Value="{StaticResource NoInputTemplate}" />
                                                 </DataTrigger>
-                                                <DataTrigger Binding="{Binding InputTemplate}" Value="ComboBoxList">
-                                                    <Setter Property="ContentTemplate" Value="{StaticResource ComboBoxListTemplate}" />
+                                                <DataTrigger Binding="{Binding InputTemplate}" Value="SearchTextBoxList">
+                                                    <Setter Property="ContentTemplate" Value="{StaticResource SearchTextBoxListTemplate}" />
                                                 </DataTrigger>
                                                 <DataTrigger Binding="{Binding InputTemplate}" Value="DateTimePickerList">
                                                     <Setter Property="ContentTemplate" Value="{StaticResource DateTimePickerListTemplate}" />
@@ -219,7 +216,7 @@
                             <!--  Operator ComboBox  -->
                             <ComboBox x:Name="PART_OperatorComboBox"
                                       Grid.Row="0"
-                                      Visibility="{Binding IsOperatorVisible, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                      Visibility="{Binding IsOperatorVisible, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource BooleanToVisibilityCollapsedConverter}}"
                                       HorizontalAlignment="Left"
                                       VerticalAlignment="Top"
                                       VerticalContentAlignment="Center"

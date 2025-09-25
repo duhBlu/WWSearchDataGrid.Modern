@@ -6,16 +6,16 @@
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <!--<ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF;component/Themes/Generic.xaml"/>-->
+                <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF;component/Themes/Generic.xaml"/>
 
-                <ResourceDictionary Source="/Styles/SearchDataGridControlStyles/Primitives/NumericUpDownStyles.xaml" />
+                <!--<ResourceDictionary Source="/Styles/SearchDataGridControlStyles/Primitives/NumericUpDownStyles.xaml" />
                 <ResourceDictionary Source="/Styles/SearchDataGridControlStyles/Primitives/SearchTextBoxStyles.xaml" />
                 <ResourceDictionary Source="/Styles/DefaultControlStyles.xaml" />
                 <ResourceDictionary Source="/Styles/SearchDataGridControlStyles/ColumnChooserStyles.xaml" />
                 <ResourceDictionary Source="/Styles/SearchDataGridControlStyles/ColumnFilterEditorStyles.xaml" />
                 <ResourceDictionary Source="/Styles/SearchDataGridControlStyles/FilterPanelStyles.xaml" />
                 <ResourceDictionary Source="/Styles/SearchDataGridControlStyles/ColumnSearchBoxStyles.xaml" />
-                <ResourceDictionary Source="/Styles/SearchDataGridControlStyles/SearchDataGridStyles.xaml" />
+                <ResourceDictionary Source="/Styles/SearchDataGridControlStyles/SearchDataGridStyles.xaml" />-->
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Application.Resources>
