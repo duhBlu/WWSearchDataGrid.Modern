@@ -107,7 +107,7 @@ namespace WWSearchDataGrid.Modern.Core
 
                 // Update the custom expression flag
                 var hasMultipleGroups = searchGroups.Count > 1;
-                var hasCustomFilterTemplates = searchGroups.Any(g => g.SearchTemplates.Any(t => t.HasCustomFilter));
+                var hasCustomFilterTemplates = searchGroups.Any(g => g.SearchTemplates.Any(t => t.HasCustomFilter && t.IsValidFilter));
                 
                 if (searchGroups.Count > 0)
                 {

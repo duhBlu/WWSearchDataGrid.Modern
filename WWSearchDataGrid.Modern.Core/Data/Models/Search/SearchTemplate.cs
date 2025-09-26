@@ -487,6 +487,204 @@ namespace WWSearchDataGrid.Modern.Core
 
         #endregion
 
+        #region Value Removal Methods
+
+        /// <summary>
+        /// Removes the primary value from this template
+        /// </summary>
+        /// <returns>True if the template is still valid after removal, false if it should be removed</returns>
+        public bool RemovePrimaryValue()
+        {
+            SelectedValue = null;
+            HasChanges = true;
+
+            // Check if template is still valid
+            return IsValidFilter;
+        }
+
+        /// <summary>
+        /// Removes the secondary value from this template
+        /// </summary>
+        /// <returns>True if the template is still valid after removal, false if it should be removed</returns>
+        public bool RemoveSecondaryValue()
+        {
+            SelectedSecondaryValue = null;
+            HasChanges = true;
+
+            // For Between/Range templates, transform to single value template
+            if (SearchType == SearchType.Between && SelectedValue != null)
+            {
+                SearchType = SearchType.GreaterThanOrEqualTo;
+                return true;
+            }
+            else if (SearchType == SearchType.NotBetween && SelectedValue != null)
+            {
+                SearchType = SearchType.NotEquals;
+                return true;
+            }
+            else if (SearchType == SearchType.BetweenDates && SelectedValue != null)
+            {
+                SearchType = SearchType.GreaterThanOrEqualTo;
+                return true;
+            }
+
+            // Check if template is still valid
+            return IsValidFilter;
+        }
+
+        /// <summary>
+        /// Removes a specific value from the SelectedValues collection
+        /// </summary>
+        /// <param name="value">The value to remove</param>
+        /// <returns>True if the template is still valid after removal, false if it should be removed</returns>
+        public bool RemoveSelectedValue(object value)
+        {
+            if (SelectedValues != null && SelectedValues.Contains(value))
+            {
+                SelectedValues.Remove(value);
+                HasChanges = true;
+            }
+
+            // Check if template is still valid
+            return IsValidFilter;
+        }
+
+        /// <summary>
+        /// Removes a specific date from the SelectedDates collection
+        /// </summary>
+        /// <param name="date">The date to remove</param>
+        /// <returns>True if the template is still valid after removal, false if it should be removed</returns>
+        public bool RemoveSelectedDate(DateTime date)
+        {
+            if (SelectedDates != null && SelectedDates.Contains(date))
+            {
+                SelectedDates.Remove(date);
+                HasChanges = true;
+            }
+
+            // Check if template is still valid
+            return IsValidFilter;
+        }
+
+        /// <summary>
+        /// Checks if the template would be valid after value removal without actually performing the removal
+        /// </summary>
+        /// <param name="context">The removal context containing removal information</param>
+        /// <returns>True if the template would be valid after removal, false if it would become invalid</returns>
+        public bool WouldBeValidAfterValueRemoval(ValueRemovalContext context)
+        {
+            switch (context.ValueType)
+            {
+                case ValueType.Primary:
+                    // For primary value removal, template would be invalid if there's no secondary value
+                    return SelectedSecondaryValue != null || (SelectedValues?.Count > 1) || (SelectedDates?.Count > 0);
+
+                case ValueType.Secondary:
+                    // For secondary value removal, template would be invalid if there's no primary value
+                    return SelectedValue != null || (SelectedValues?.Count > 0) || (SelectedDates?.Count > 0);
+
+                case ValueType.CollectionItem:
+                    // For collection item removal, template would be invalid if this is the last item
+                    return (SelectedValues?.Count > 1);
+
+                case ValueType.DateItem:
+                    // For date item removal, template would be invalid if this is the last date
+                    return (SelectedDates?.Count > 1);
+
+                case ValueType.UnarySearchType:
+                    // Unary search types don't have values, so removing them always makes the template invalid
+                    return false;
+            }
+
+            // Default to checking current validity
+            return IsValidFilter;
+        }
+
+        /// <summary>
+        /// Handles value removal based on the removal context
+        /// </summary>
+        /// <param name="context">The removal context containing removal information</param>
+        /// <returns>True if the template is still valid after removal, false if it should be removed</returns>
+        public bool HandleValueRemoval(ValueRemovalContext context)
+        {
+            switch (context.ValueType)
+            {
+                case ValueType.Primary:
+                    return RemovePrimaryValue();
+
+                case ValueType.Secondary:
+                    return RemoveSecondaryValue();
+
+                case ValueType.CollectionItem:
+                    return RemoveSelectedValue(context.OriginalValue);
+
+                case ValueType.DateItem:
+                    if (context.OriginalValue is DateTime date)
+                        return RemoveSelectedDate(date);
+                    break;
+
+                case ValueType.UnarySearchType:
+                    return RemoveUnarySearchType();
+            }
+
+            return IsValidFilter;
+        }
+
+        /// <summary>
+        /// Removes a UnarySearchType template (templates that don't require input values)
+        /// </summary>
+        /// <returns>False since UnarySearchType templates should be completely removed</returns>
+        public bool RemoveUnarySearchType()
+        {
+            // UnarySearchType templates like IsNull, AboveAverage, Today, etc.
+            // should be completely removed since they don't have individual values
+            HasChanges = true;
+            return false; // Signal that the entire template should be removed
+        }
+
+        /// <summary>
+        /// Transforms Between search types to single-value equivalents when one value is removed
+        /// </summary>
+        /// <param name="removedValueType">The type of value that was removed</param>
+        public void TransformBetweenSearchType(ValueType removedValueType)
+        {
+            if (SearchType == SearchType.Between)
+            {
+                if (removedValueType == ValueType.Primary && SelectedSecondaryValue != null)
+                {
+                    SearchType = SearchType.LessThanOrEqualTo;
+                }
+                else if (removedValueType == ValueType.Secondary && SelectedValue != null)
+                {
+                    SearchType = SearchType.GreaterThanOrEqualTo;
+                }
+            }
+            else if (SearchType == SearchType.NotBetween)
+            {
+                if (removedValueType == ValueType.Primary && SelectedSecondaryValue != null)
+                {
+                    SearchType = SearchType.GreaterThan;
+                }
+                else if (removedValueType == ValueType.Secondary && SelectedValue != null)
+                {
+                    SearchType = SearchType.LessThan;
+                }
+            }
+            else if (SearchType == SearchType.BetweenDates)
+            {
+                if (removedValueType == ValueType.Primary && SelectedSecondaryValue != null)
+                {
+                    SearchType = SearchType.LessThanOrEqualTo;
+                }
+                else if (removedValueType == ValueType.Secondary && SelectedValue != null)
+                {
+                    SearchType = SearchType.GreaterThanOrEqualTo;
+                }
+            }
+        }
+
+        #endregion
+
         #region Expression Builders
 
         public Expression<Func<object, bool>> BuildExpression(Type targetType)

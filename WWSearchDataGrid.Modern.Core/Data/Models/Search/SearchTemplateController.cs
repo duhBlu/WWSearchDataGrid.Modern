@@ -756,16 +756,56 @@ namespace WWSearchDataGrid.Modern.Core
 
             UnsubscribeFromTemplates(new List<SearchTemplate> { template });
 
-            // Unsubscribe from the template being removed
-            if (group.SearchTemplates.Count > 1)
+            // Remove the template from the group
+            group.SearchTemplates.Remove(template);
+
+            // If this group now has no templates, remove the entire group
+            if (group.SearchTemplates.Count == 0)
             {
-                group.SearchTemplates.Remove(template);
+                SearchGroups.Remove(group);
+
+                // If we now have no groups at all, add a default empty group to maintain UI consistency
+                if (SearchGroups.Count == 0)
+                {
+                    AddSearchGroup(true, false);
+                }
             }
-            else
+
+            UpdateFilterExpression();
+            UpdateOperatorVisibility();
+            InvokeAutoApplyFilter();
+        }
+
+        /// <summary>
+        /// Handles the removal of individual values from search templates
+        /// </summary>
+        /// <param name="template">The template containing the value to remove</param>
+        /// <param name="context">The removal context specifying which value to remove</param>
+        public void HandleValueRemoval(SearchTemplate template, ValueRemovalContext context)
+        {
+            if (template == null || context == null)
+                return;
+
+            // Apply business rules for template transformation before removal
+            if ((template.SearchType == SearchType.Between ||
+                 template.SearchType == SearchType.NotBetween ||
+                 template.SearchType == SearchType.BetweenDates) &&
+                (context.ValueType == ValueType.Primary || context.ValueType == ValueType.Secondary))
             {
-                // If this is the last template, just reset the whole group
-                ClearAndReset();
+                template.TransformBetweenSearchType(context.ValueType);
             }
+
+            // Execute value removal on template
+            bool isTemplateStillValid = template.HandleValueRemoval(context);
+
+            // Clean up template if it becomes invalid
+            if (!isTemplateStillValid)
+            {
+                RemoveSearchTemplate(template);
+                return;
+            }
+
+            // Update filter expression and notify UI
             UpdateFilterExpression();
             UpdateOperatorVisibility();
             InvokeAutoApplyFilter();
@@ -1462,10 +1502,7 @@ namespace WWSearchDataGrid.Modern.Core
         protected virtual void InvokeAutoApplyFilter(bool isRemovingLastTemplate = false)
         {
             // Only fire if we have at least one valid filter to apply
-            if (HasValidFilters || HasCustomExpression)
-            {
-                AutoApplyFilter?.Invoke(this, EventArgs.Empty);
-            }
+            AutoApplyFilter?.Invoke(this, EventArgs.Empty);
         }
         
         /// <summary>

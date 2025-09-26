@@ -3,6 +3,37 @@ using System;
 namespace WWSearchDataGrid.Modern.Core
 {
     /// <summary>
+    /// Context information for value removal operations
+    /// </summary>
+    public class ValueRemovalContext
+    {
+        public SearchTemplate ParentTemplate { get; set; }
+        public ValueType ValueType { get; set; }
+        public object OriginalValue { get; set; }
+        public int? ValueIndex { get; set; }
+    }
+
+    /// <summary>
+    /// Specifies the type of value being represented
+    /// </summary>
+    public enum ValueType
+    {
+        Primary,
+        Secondary,
+        CollectionItem,
+        DateItem,
+        UnarySearchType
+    }
+
+    /// <summary>
+    /// Interface for tokens that can be individually removed
+    /// </summary>
+    public interface IRemovableToken : IFilterToken
+    {
+        ValueRemovalContext RemovalContext { get; }
+    }
+
+    /// <summary>
     /// Base class for filter tokens
     /// </summary>
     public abstract class FilterTokenBase : IFilterToken
@@ -62,11 +93,20 @@ namespace WWSearchDataGrid.Modern.Core
     /// <summary>
     /// Token representing a search type operation that does not require a value
     /// </summary>
-    public class UnarySearchTypeToken : FilterTokenBase
+    public class UnarySearchTypeToken : FilterTokenBase, IRemovableToken
     {
+        public ValueRemovalContext RemovalContext { get; protected set; }
+
         public UnarySearchTypeToken(string searchTypeText, string filterId, int orderIndex, ColumnFilterInfo sourceFilter)
             : base(searchTypeText, FilterTokenType.UnarySearchType, filterId, orderIndex, sourceFilter)
         {
+            RemovalContext = null;
+        }
+
+        public UnarySearchTypeToken(string searchTypeText, string filterId, int orderIndex, ColumnFilterInfo sourceFilter, ValueRemovalContext removalContext)
+            : base(searchTypeText, FilterTokenType.UnarySearchType, filterId, orderIndex, sourceFilter)
+        {
+            RemovalContext = removalContext;
         }
     }
 
@@ -74,11 +114,23 @@ namespace WWSearchDataGrid.Modern.Core
     /// <summary>
     /// Token representing an individual value
     /// </summary>
-    public class ValueToken : FilterTokenBase
+    public class ValueToken : FilterTokenBase, IRemovableToken
     {
+        public string ActualValue { get; protected set; }
+        public ValueRemovalContext RemovalContext { get; protected set; }
+
         public ValueToken(string value, string filterId, int orderIndex, ColumnFilterInfo sourceFilter)
             : base($"{value}", FilterTokenType.Value, filterId, orderIndex, sourceFilter)
         {
+            ActualValue = value;
+            RemovalContext = null;
+        }
+
+        public ValueToken(string value, string filterId, int orderIndex, ColumnFilterInfo sourceFilter, ValueRemovalContext removalContext)
+            : base($"{value}", FilterTokenType.Value, filterId, orderIndex, sourceFilter)
+        {
+            ActualValue = value;
+            RemovalContext = removalContext;
         }
     }
 

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 
 namespace WWSearchDataGrid.Modern.Core
 {
@@ -79,7 +80,9 @@ namespace WWSearchDataGrid.Modern.Core
                 }
                 else
                 {
-                    tokens.Add(new UnarySearchTypeToken(component.SearchTypeText, filterId, orderIndex++, sourceFilter));
+                    // UnarySearchType tokens can be removed entirely
+                    var unaryRemovalContext = CreateValueRemovalContext(sourceFilter, ValueType.UnarySearchType, component.SearchTypeText, null);
+                    tokens.Add(new UnarySearchTypeToken(component.SearchTypeText, filterId, orderIndex++, sourceFilter, unaryRemovalContext));
                 }
             }
 
@@ -91,7 +94,8 @@ namespace WWSearchDataGrid.Modern.Core
                 for (int i = 0; i < component.ValueItems.Count; i++)
                 {
                     var value = component.ValueItems[i];
-                    tokens.Add(new ValueToken(value, filterId, orderIndex++, sourceFilter));
+                    var removalContext = CreateValueRemovalContext(sourceFilter, ValueType.CollectionItem, value, i);
+                    tokens.Add(new ValueToken(value, filterId, orderIndex++, sourceFilter, removalContext));
                 }
             }
             else
@@ -99,7 +103,8 @@ namespace WWSearchDataGrid.Modern.Core
                 // Handle single or dual values
                 if (!string.IsNullOrEmpty(component.PrimaryValue) && !component.HasNoInputValues)
                 {
-                    tokens.Add(new ValueToken(component.PrimaryValue, filterId, orderIndex++, sourceFilter));
+                    var primaryRemovalContext = CreateValueRemovalContext(sourceFilter, ValueType.Primary, component.PrimaryValue, null);
+                    tokens.Add(new ValueToken(component.PrimaryValue, filterId, orderIndex++, sourceFilter, primaryRemovalContext));
                 }
 
                 // Add operator between values if present
@@ -111,11 +116,55 @@ namespace WWSearchDataGrid.Modern.Core
                 // Add secondary value if present
                 if (!string.IsNullOrEmpty(component.SecondaryValue))
                 {
-                    tokens.Add(new ValueToken(component.SecondaryValue, filterId, orderIndex++, sourceFilter));
+                    var secondaryRemovalContext = CreateValueRemovalContext(sourceFilter, ValueType.Secondary, component.SecondaryValue, null);
+                    tokens.Add(new ValueToken(component.SecondaryValue, filterId, orderIndex++, sourceFilter, secondaryRemovalContext));
                 }
             }
 
             return tokens;
+        }
+
+        /// <summary>
+        /// Creates a ValueRemovalContext for a token if possible
+        /// </summary>
+        /// <param name="sourceFilter">The source filter info containing the template reference</param>
+        /// <param name="valueType">The type of value being represented</param>
+        /// <param name="originalValue">The original value being displayed</param>
+        /// <param name="valueIndex">The index of the value in collections (optional)</param>
+        /// <returns>A ValueRemovalContext if the template can be accessed, null otherwise</returns>
+        private static ValueRemovalContext CreateValueRemovalContext(ColumnFilterInfo sourceFilter, ValueType valueType, object originalValue, int? valueIndex)
+        {
+            // Try to get the SearchTemplate from the source filter data
+            SearchTemplate template = null;
+
+            // Check if FilterData is a ColumnSearchBox with SearchTemplateController
+            if (sourceFilter?.FilterData != null)
+            {
+                var filterData = sourceFilter.FilterData;
+
+                // Using reflection to access SearchTemplateController from the column object
+                var searchTemplateControllerProperty = filterData.GetType().GetProperty("SearchTemplateController");
+                if (searchTemplateControllerProperty != null)
+                {
+                    var controller = searchTemplateControllerProperty.GetValue(filterData) as SearchTemplateController;
+
+                    // Get the first valid template - this is a simplification for now
+                    template = controller?.SearchGroups
+                        ?.FirstOrDefault()?.SearchTemplates
+                        ?.FirstOrDefault(t => t.HasCustomFilter);
+                }
+            }
+
+            if (template == null)
+                return null;
+
+            return new ValueRemovalContext
+            {
+                ParentTemplate = template,
+                ValueType = valueType,
+                OriginalValue = originalValue,
+                ValueIndex = valueIndex
+            };
         }
     }
 }

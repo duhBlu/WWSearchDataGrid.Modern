@@ -174,6 +174,7 @@ namespace WWSearchDataGrid.Modern.WPF
             // Subscribe to FilterPanel events
             FilterPanel.FiltersEnabledChanged += OnFiltersEnabledChanged;
             FilterPanel.FilterRemoved += OnFilterRemoved;
+            FilterPanel.ValueRemovedFromToken += OnValueRemovedFromToken;
             FilterPanel.ClearAllFiltersRequested += OnClearAllFiltersRequested;
 
             // Initialize context menu functionality
@@ -210,6 +211,7 @@ namespace WWSearchDataGrid.Modern.WPF
                 // Wire up events from template FilterPanel to our FilterPanel events
                 templateFilterPanel.FiltersEnabledChanged += (s, e) => OnFiltersEnabledChanged(s, e);
                 templateFilterPanel.FilterRemoved += (s, e) => OnFilterRemoved(s, e);
+                templateFilterPanel.ValueRemovedFromToken += (s, e) => OnValueRemovedFromToken(s, e);
                 templateFilterPanel.ClearAllFiltersRequested += (s, e) => OnClearAllFiltersRequested(s, e);
                 
                 // Replace our FilterPanel property with the template instance so updates go to the right place
@@ -1326,6 +1328,47 @@ namespace WWSearchDataGrid.Modern.WPF
             catch (Exception ex)
             {
                 Debug.WriteLine($"Error in OnFilterRemoved: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Handles requests to remove a specific value from a filter token
+        /// </summary>
+        private void OnValueRemovedFromToken(object sender, ValueRemovedFromTokenEventArgs e)
+        {
+            try
+            {
+                if (e.RemovableToken?.RemovalContext != null && e.RemovableToken.SourceFilter?.FilterData is ColumnSearchBox columnSearchBox)
+                {
+                    var template = e.RemovableToken.RemovalContext.ParentTemplate;
+                    var controller = columnSearchBox.SearchTemplateController;
+
+                    if (controller != null && template != null)
+                    {
+                        // Check if this is the last template in the controller and if removing the value would make it invalid
+                        var totalTemplates = controller.SearchGroups.SelectMany(g => g.SearchTemplates).Count();
+                        var wouldBeInvalid = !template.WouldBeValidAfterValueRemoval(e.RemovableToken.RemovalContext);
+
+                        if (totalTemplates <= 1 && wouldBeInvalid)
+                        {
+                            // If this is the last template and it would become invalid, clear the entire filter
+                            columnSearchBox.ClearFilter();
+                        }
+                        else
+                        {
+                            // Otherwise, handle the value removal normally
+                            controller.HandleValueRemoval(template, e.RemovableToken.RemovalContext);
+                        }
+                    }
+
+                    // Reapply filters and update UI
+                    FilterItemsSource();
+                    UpdateFilterPanel();
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error in OnValueRemovedFromToken: {ex.Message}");
             }
         }
 

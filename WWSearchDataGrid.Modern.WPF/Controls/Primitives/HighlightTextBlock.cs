@@ -9,17 +9,26 @@ using System.Windows;
 
 namespace WWSearchDataGrid.Modern.WPF
 {
+    /// <summary>
+    /// A TextBlock that highlights the first occurrence of a search term within a source string.
+    /// Bind <see cref="HighlightTextBlockText"/> to the full text and <see cref="HighlightText"/> to the term to match.
+    /// The matching segment is emitted as a separate <see cref="Run"/> so you can style it independently.
+    /// Use <see cref="HighlightRunStyle"/> to customize the appearance (e.g., FontWeight, FontStyle, Foreground, TextDecorations).
+    ///
+    /// Notes:
+    /// - Matching is case-insensitive and highlights only the first match.
+    /// - If either text is null/empty or no match is found, the control renders the full text without highlighting.
+    /// </summary>
     public class HighlightTextBlock : TextBlock
     {
-
         #region Dependency Properties
 
         public static readonly DependencyProperty HighlightTextProperty =
-           DependencyProperty.Register(
-               "HighlightText",
-               typeof(string),
-               typeof(HighlightTextBlock),
-               new PropertyMetadata(string.Empty, OnHighlightTextChanged));
+            DependencyProperty.Register(
+                "HighlightText",
+                typeof(string),
+                typeof(HighlightTextBlock),
+                new PropertyMetadata(string.Empty, OnHighlightTextChanged));
 
         public static readonly DependencyProperty HighlightTextBlockTextProperty =
             DependencyProperty.Register(
@@ -28,7 +37,18 @@ namespace WWSearchDataGrid.Modern.WPF
                 typeof(HighlightTextBlock),
                 new PropertyMetadata(string.Empty, OnTextChanged));
 
-        #endregion Dependency Properties
+        /// <summary>
+        /// A Style applied to the <see cref="Run"/> that represents the highlighted match.
+        /// TargetType should be <see cref="Run"/>. If null, a bold (UltraBlack) weight is applied by default.
+        /// </summary>
+        public static readonly DependencyProperty HighlightRunStyleProperty =
+            DependencyProperty.Register(
+                "HighlightRunStyle",
+                typeof(Style),
+                typeof(HighlightTextBlock),
+                new PropertyMetadata(null, OnHighlightRunStyleChanged));
+
+        #endregion
 
         #region Properties
 
@@ -37,77 +57,103 @@ namespace WWSearchDataGrid.Modern.WPF
             get => (string)GetValue(HighlightTextProperty);
             set => SetValue(HighlightTextProperty, value);
         }
+
         public string HighlightTextBlockText
         {
             get => (string)GetValue(HighlightTextBlockTextProperty);
             set => SetValue(HighlightTextBlockTextProperty, value);
         }
 
-        #endregion Properties
+        /// <summary>
+        /// Style applied to the highlighted Run. Example:
+        /// <code>
+        /// &lt;local:HighlightTextBlock.HighlightRunStyle&gt;
+        ///   &lt;Style TargetType="Run"&gt;
+        ///     &lt;Setter Property="FontWeight" Value="SemiBold"/&gt;
+        ///     &lt;Setter Property="FontStyle"  Value="Italic"/&gt;
+        ///     &lt;Setter Property="Foreground" Value="{DynamicResource AccentBrush}"/&gt;
+        ///   &lt;/Style&gt;
+        /// &lt;/local:HighlightTextBlock.HighlightRunStyle&gt;
+        /// </code>
+        /// </summary>
+        public Style HighlightRunStyle
+        {
+            get => (Style)GetValue(HighlightRunStyleProperty);
+            set => SetValue(HighlightRunStyleProperty, value);
+        }
 
-        #region Event Handlers
+        #endregion
+
+        #region Property Changed Handlers
 
         private static void OnHighlightTextChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
-            if (d is HighlightTextBlock textBlock)
-            {
-                textBlock.Highlight();
-            }
+            var textBlock = d as HighlightTextBlock;
+            if (textBlock != null) textBlock.Highlight();
         }
 
         private static void OnTextChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
-            if (d is HighlightTextBlock textBlock)
-            {
-                textBlock.Highlight();
-            }
+            var textBlock = d as HighlightTextBlock;
+            if (textBlock != null) textBlock.Highlight();
         }
 
-        #endregion Event Handlers
+        private static void OnHighlightRunStyleChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            var textBlock = d as HighlightTextBlock;
+            if (textBlock != null) textBlock.Highlight();
+        }
 
-        #region Methods
+        #endregion
+
+        #region Highlight Logic
 
         private void Highlight()
         {
             Inlines.Clear();
-            if (string.IsNullOrEmpty(HighlightTextBlockText) || string.IsNullOrEmpty(HighlightText))
+
+            var text = HighlightTextBlockText ?? string.Empty;
+            var term = HighlightText ?? string.Empty;
+
+            if (text.Length == 0 || term.Length == 0)
             {
-                Inlines.Add(new Run(HighlightTextBlockText));
+                Inlines.Add(new Run(text));
                 return;
             }
 
-            var textLower = HighlightTextBlockText.ToLower();
-            var highlightLower = HighlightText.ToLower();
-
-            // Use Contains logic
-            int index = textLower.IndexOf(highlightLower);
-
+            // Case-insensitive, first occurrence
+            int index = text.IndexOf(term, StringComparison.CurrentCultureIgnoreCase);
             if (index < 0)
             {
-                Inlines.Add(new Run(HighlightTextBlockText));
+                Inlines.Add(new Run(text));
                 return;
             }
 
-            int highlightLength = HighlightText.Length;
+            int matchLen = term.Length;
 
-            // Add text before the match
+            // Before match
             if (index > 0)
-            {
-                Inlines.Add(new Run(HighlightTextBlockText.Substring(0, index)));
-            }
+                Inlines.Add(new Run(text.Substring(0, index)));
 
-            // Add the matching text with highlight
-            var match = new Run(HighlightTextBlockText.Substring(index, highlightLength)) { FontWeight = FontWeights.UltraBlack };
-            Inlines.Add(match);
-
-            // Add text after the match
-            if (index + highlightLength < HighlightTextBlockText.Length)
+            // Match (apply style or fallback weight)
+            var matchRun = new Run(text.Substring(index, matchLen));
+            if (HighlightRunStyle != null)
             {
-                Inlines.Add(new Run(HighlightTextBlockText.Substring(index + highlightLength)));
+                matchRun.Style = HighlightRunStyle;
             }
+            else
+            {
+                // Back-compat default look
+                matchRun.FontWeight = FontWeights.UltraBlack;
+            }
+            Inlines.Add(matchRun);
+
+            // After match
+            int afterIndex = index + matchLen;
+            if (afterIndex < text.Length)
+                Inlines.Add(new Run(text.Substring(afterIndex)));
         }
 
-
-        #endregion Methods
+        #endregion
     }
 }

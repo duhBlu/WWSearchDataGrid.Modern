@@ -133,6 +133,11 @@ namespace WWSearchDataGrid.Modern.WPF
         /// </summary>
         public ICommand ClearHoveredFilterCommand => new RelayCommand(_ => HoveredFilterId = null);
 
+        /// <summary>
+        /// Gets the command to remove a specific value from a filter token
+        /// </summary>
+        public ICommand RemoveValueFromTokenCommand => new RelayCommand<IRemovableToken>(ExecuteRemoveValueFromToken, CanRemoveValueFromToken);
+
         #endregion
 
         #region Events
@@ -146,6 +151,11 @@ namespace WWSearchDataGrid.Modern.WPF
         /// Event raised when a filter should be removed
         /// </summary>
         public event EventHandler<RemoveFilterEventArgs> FilterRemoved;
+
+        /// <summary>
+        /// Event raised when a specific value should be removed from a filter token
+        /// </summary>
+        public event EventHandler<ValueRemovedFromTokenEventArgs> ValueRemovedFromToken;
 
         /// <summary>
         /// Event raised when all filters should be cleared
@@ -269,6 +279,28 @@ namespace WWSearchDataGrid.Modern.WPF
         private bool CanRemoveTokenFilter(IFilterToken token)
         {
             return token?.SourceFilter != null && token.SourceFilter.IsActive;
+        }
+
+        /// <summary>
+        /// Executes the remove value from token command
+        /// </summary>
+        private void ExecuteRemoveValueFromToken(IRemovableToken removableToken)
+        {
+            if (removableToken?.RemovalContext != null)
+            {
+                ValueRemovedFromToken?.Invoke(this, new ValueRemovedFromTokenEventArgs(removableToken));
+                CheckForOverflow(true);
+            }
+        }
+
+        /// <summary>
+        /// Determines whether a value can be removed from a token
+        /// </summary>
+        private bool CanRemoveValueFromToken(IRemovableToken removableToken)
+        {
+            return removableToken?.RemovalContext != null &&
+                   removableToken.SourceFilter != null &&
+                   removableToken.SourceFilter.IsActive;
         }
 
         #endregion

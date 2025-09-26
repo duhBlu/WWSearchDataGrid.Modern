@@ -1379,6 +1379,7 @@ namespace WWSearchDataGrid.Modern.WPF
                 newTemplate.SelectedValue = SearchText;
                 newTemplate.SearchTemplateController = SearchTemplateController; // Ensure template has controller reference
                 
+
                 // If this is not the first template, set OR operator
                 if (existingContainsTemplates.Any())
                 {
