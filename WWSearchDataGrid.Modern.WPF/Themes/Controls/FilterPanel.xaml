@@ -25,11 +25,8 @@
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto" />
-                                <!--  Filters enabled checkbox  -->
                                 <ColumnDefinition Width="*" />
-                                <!--  Filter tokens  -->
                                 <ColumnDefinition Width="Auto" />
-                                <!--  Action buttons  -->
                             </Grid.ColumnDefinitions>
 
                             <!--  Filters Enabled Checkbox  -->
