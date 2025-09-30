@@ -138,6 +138,11 @@ namespace WWSearchDataGrid.Modern.WPF
         /// </summary>
         public ICommand RemoveValueFromTokenCommand => new RelayCommand<IRemovableToken>(ExecuteRemoveValueFromToken, CanRemoveValueFromToken);
 
+        /// <summary>
+        /// Gets the command to toggle an operator token between AND and OR
+        /// </summary>
+        public ICommand ToggleOperatorCommand => new RelayCommand<IFilterToken>(ExecuteToggleOperator, CanToggleOperator);
+
         #endregion
 
         #region Events
@@ -156,6 +161,11 @@ namespace WWSearchDataGrid.Modern.WPF
         /// Event raised when a specific value should be removed from a filter token
         /// </summary>
         public event EventHandler<ValueRemovedFromTokenEventArgs> ValueRemovedFromToken;
+
+        /// <summary>
+        /// Event raised when an operator token is toggled between AND and OR
+        /// </summary>
+        public event EventHandler<OperatorToggledEventArgs> OperatorToggled;
 
         /// <summary>
         /// Event raised when all filters should be cleared
@@ -301,6 +311,50 @@ namespace WWSearchDataGrid.Modern.WPF
             return removableToken?.RemovalContext != null &&
                    removableToken.SourceFilter != null &&
                    removableToken.SourceFilter.IsActive;
+        }
+
+        /// <summary>
+        /// Executes the toggle operator command
+        /// </summary>
+        private void ExecuteToggleOperator(IFilterToken token)
+        {
+            if (token == null)
+                return;
+
+            // Determine the operator level and new operator value
+            OperatorLevel level;
+            string newOperator;
+
+            if (token is GroupLogicalConnectorToken)
+            {
+                level = OperatorLevel.Group;
+                // Toggle between AND and OR
+                newOperator = string.Equals(token.DisplayText, "And", StringComparison.OrdinalIgnoreCase) ? "Or" : "And";
+            }
+            else if (token is TemplateLogicalConnectorToken)
+            {
+                level = OperatorLevel.Template;
+                // Toggle between AND and OR
+                newOperator = string.Equals(token.DisplayText, "And", StringComparison.OrdinalIgnoreCase) ? "Or" : "And";
+            }
+            else
+            {
+                return; // Not an operator token
+            }
+
+            // Raise the event
+            OperatorToggled?.Invoke(this, new OperatorToggledEventArgs(token, level, newOperator));
+        }
+
+        /// <summary>
+        /// Determines whether an operator token can be toggled
+        /// </summary>
+        private bool CanToggleOperator(IFilterToken token)
+        {
+            return token != null &&
+                   (token is GroupLogicalConnectorToken || token is TemplateLogicalConnectorToken) &&
+                   token.SourceFilter != null &&
+                   token.SourceFilter.IsActive;
         }
 
         #endregion

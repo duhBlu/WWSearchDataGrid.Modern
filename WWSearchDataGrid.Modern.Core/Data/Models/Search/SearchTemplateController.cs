@@ -873,22 +873,33 @@ namespace WWSearchDataGrid.Modern.Core
 
                 bool isFirstComponent = true;
 
-                foreach (var group in SearchGroups)
+                for (int groupIndex = 0; groupIndex < SearchGroups.Count; groupIndex++)
                 {
+                    var group = SearchGroups[groupIndex];
                     bool isFirstTemplateInGroup = true;
-                    foreach (var template in group.SearchTemplates.Where(t => t.HasCustomFilter))
+                    var templatesWithFilter = group.SearchTemplates.Where(t => t.HasCustomFilter).ToList();
+
+                    for (int templateIndex = 0; templateIndex < templatesWithFilter.Count; templateIndex++)
                     {
+                        var template = templatesWithFilter[templateIndex];
                         var component = GetTemplateComponents(template);
-                        
+
+                        // Set group and template indices for operator targeting
+                        component.GroupIndex = groupIndex;
+                        component.TemplateIndex = templateIndex;
+
                         // Set operators for templates within the group
                         if (!isFirstTemplateInGroup)
                         {
+                            // Template-level operator (within a group)
                             component.Operator = template.OperatorName?.ToUpper() ?? "And";
+                            component.IsGroupLevelOperator = false;
                         }
                         else if (!isFirstComponent)
                         {
-                            // First template in a group gets the group's operator
+                            // First template in a group gets the group's operator (between groups)
                             component.Operator = group.OperatorName?.ToUpper() ?? "And";
+                            component.IsGroupLevelOperator = true;
                         }
 
                         components.Add(component);
@@ -1073,9 +1084,13 @@ namespace WWSearchDataGrid.Modern.Core
 
                     // Multi-value filters
                     case SearchType.IsAnyOf:
-                        return FormatMultiValueFilter("In", template.SelectedValues);
+                        // Extract actual values from SelectableValueItem wrappers
+                        var anyOfValues = template.SelectedValues?.Select(v => v?.Value).Where(v => !string.IsNullOrEmpty(v));
+                        return FormatMultiValueFilter("In", anyOfValues);
                     case SearchType.IsNoneOf:
-                        return FormatMultiValueFilter("Not in", template.SelectedValues);
+                        // Extract actual values from SelectableValueItem wrappers
+                        var noneOfValues = template.SelectedValues?.Select(v => v?.Value).Where(v => !string.IsNullOrEmpty(v));
+                        return FormatMultiValueFilter("Not in", noneOfValues);
                     case SearchType.IsOnAnyOfDates:
                         return FormatDateListFilter("In", template.SelectedDates);
                     case SearchType.DateInterval:
@@ -1254,13 +1269,17 @@ namespace WWSearchDataGrid.Modern.Core
                         break;
                     case SearchType.IsAnyOf:
                         components.SearchTypeText = "In";
-                        components.PrimaryValue = FormatMultiValueFilter("", template.SelectedValues);
-                        PopulateValueItems(components, template.SelectedValues);
+                        // Extract actual values from SelectableValueItem wrappers
+                        var anyOfValues = template.SelectedValues?.Select(v => v?.Value).Where(v => !string.IsNullOrEmpty(v));
+                        components.PrimaryValue = FormatMultiValueFilter("", anyOfValues);
+                        PopulateValueItems(components, anyOfValues);
                         break;
                     case SearchType.IsNoneOf:
                         components.SearchTypeText = "Not in";
-                        components.PrimaryValue = FormatMultiValueFilter("", template.SelectedValues);
-                        PopulateValueItems(components, template.SelectedValues);
+                        // Extract actual values from SelectableValueItem wrappers
+                        var noneOfValues = template.SelectedValues?.Select(v => v?.Value).Where(v => !string.IsNullOrEmpty(v));
+                        components.PrimaryValue = FormatMultiValueFilter("", noneOfValues);
+                        PopulateValueItems(components, noneOfValues);
                         break;
                     case SearchType.IsOnAnyOfDates:
                         components.SearchTypeText = "In";
@@ -1516,7 +1535,7 @@ namespace WWSearchDataGrid.Modern.Core
                 nameof(SearchTemplate.SearchType),
                 nameof(SearchTemplate.SelectedValue),
                 nameof(SearchTemplate.SelectedSecondaryValue),
-                nameof(SearchTemplate.OperatorName),
+                nameof(SearchTemplate.OperatorFunction),
                 nameof(DateIntervalItem.IsSelected)
             };
 

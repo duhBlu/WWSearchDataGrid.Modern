@@ -24,7 +24,7 @@ namespace WWSearchDataGrid.Modern.Core
 
         private ColumnDataType columnDataType;
         private FilterInputTemplate inputTemplate;
-        private ObservableCollection<object> selectedValues;
+        private ObservableCollection<SelectableValueItem> selectedValues;
         private ObservableCollection<DateTime> selectedDates;
         private ObservableCollection<DateIntervalItem> dateIntervals;
 
@@ -49,18 +49,18 @@ namespace WWSearchDataGrid.Modern.Core
             set
             {
                 // Normalize to title case for display text (e.g., "OR" -> "Or", "and" -> "And")
-                var normalizedValue = string.IsNullOrEmpty(value) ? value : 
+                var normalizedValue = string.IsNullOrEmpty(value) ? value :
                     char.ToUpper(value[0]) + (value.Length > 1 ? value.Substring(1).ToLower() : string.Empty);
-                
+
                 if (SetProperty(normalizedValue, ref operatorName))
                 {
                     if(normalizedValue?.ToLower() == "and")
                     {
-                        OperatorFunction = Expression.And;
+                        OperatorFunction = Expression.AndAlso;
                     }
                     else
                     {
-                        OperatorFunction = Expression.Or;
+                        OperatorFunction = Expression.OrElse;
                     }
                 }
             }
@@ -275,7 +275,7 @@ namespace WWSearchDataGrid.Modern.Core
         public ObservableCollection<SearchType> ValidSearchTypes { get; private set; }
 
 
-        public ObservableCollection<object> SelectedValues
+        public ObservableCollection<SelectableValueItem> SelectedValues
         {
             get { return selectedValues; }
             set { SetProperty(value, ref selectedValues); }
@@ -303,7 +303,7 @@ namespace WWSearchDataGrid.Modern.Core
             {
                 if (addValueCommand == null)
                 {
-                    addValueCommand = new RelayCommand(_ => SelectedValues.Add(null));
+                    addValueCommand = new RelayCommand(_ => SelectedValues.Add(new SelectableValueItem()));
                 }
                 return addValueCommand;
             }
@@ -317,7 +317,10 @@ namespace WWSearchDataGrid.Modern.Core
                 {
                     removeValueCommand = new RelayCommand(value =>
                     {
-                        SelectedValues.Remove(value);
+                        if (value is SelectableValueItem item)
+                        {
+                            SelectedValues.Remove(item);
+                        }
                     });
                 }
                 return removeValueCommand;
@@ -363,7 +366,7 @@ namespace WWSearchDataGrid.Modern.Core
         public SearchTemplate(ColumnDataType dataType)
         {
             ValidSearchTypes = new ObservableCollection<SearchType>();
-            SelectedValues = new ObservableCollection<object>();
+            SelectedValues = new ObservableCollection<SelectableValueItem>();
             SelectedDates = new ObservableCollection<DateTime>();
             DateIntervals = new ObservableCollection<DateIntervalItem>();
 
@@ -539,10 +542,17 @@ namespace WWSearchDataGrid.Modern.Core
         /// <returns>True if the template is still valid after removal, false if it should be removed</returns>
         public bool RemoveSelectedValue(object value)
         {
-            if (SelectedValues != null && SelectedValues.Contains(value))
+            if (SelectedValues != null && value != null)
             {
-                SelectedValues.Remove(value);
-                HasChanges = true;
+                // Find the SelectableValueItem that contains this value
+                var valueString = value.ToString();
+                var itemToRemove = SelectedValues.FirstOrDefault(v => v?.Value == valueString);
+
+                if (itemToRemove != null)
+                {
+                    SelectedValues.Remove(itemToRemove);
+                    HasChanges = true;
+                }
             }
 
             // Check if template is still valid
@@ -702,14 +712,22 @@ namespace WWSearchDataGrid.Modern.Core
 
         private Expression<Func<object, bool>> BuildIsAnyOfExpression()
         {
-            var values = SelectedValues.ToList();
-            return obj => values.Contains(obj);
+            // Extract actual values from SelectableValueItem wrappers
+            var values = SelectedValues
+                .Where(v => v != null && !string.IsNullOrEmpty(v.Value))
+                .Select(v => (object)v.Value)
+                .ToList();
+            return obj => obj != null && values.Contains(obj.ToString());
         }
 
         private Expression<Func<object, bool>> BuildIsNoneOfExpression()
         {
-            var values = SelectedValues.ToList();
-            return obj => !values.Contains(obj);
+            // Extract actual values from SelectableValueItem wrappers
+            var values = SelectedValues
+                .Where(v => v != null && !string.IsNullOrEmpty(v.Value))
+                .Select(v => (object)v.Value)
+                .ToList();
+            return obj => obj == null || !values.Contains(obj.ToString());
         }
 
         private Expression<Func<object, bool>> BuildIsOnAnyOfDatesExpression()

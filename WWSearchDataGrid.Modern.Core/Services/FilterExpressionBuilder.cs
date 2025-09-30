@@ -83,8 +83,8 @@ namespace WWSearchDataGrid.Modern.Core
                     }
                     else
                     {
-                        // Ensure OperatorFunction is not null, default to And if it is
-                        var operatorFunc = group.OperatorFunction ?? Expression.And;
+                        // Ensure OperatorFunction is not null, default to AndAlso if it is
+                        var operatorFunc = group.OperatorFunction ?? Expression.AndAlso;
                         groupExpression = groupExpression.Compose(templateExpression, operatorFunc);
                     }
                 }

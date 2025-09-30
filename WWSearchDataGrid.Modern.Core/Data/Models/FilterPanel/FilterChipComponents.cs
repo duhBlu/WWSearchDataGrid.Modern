@@ -47,6 +47,22 @@ namespace WWSearchDataGrid.Modern.Core
         public string Operator { get; set; }
 
         /// <summary>
+        /// Gets or sets the index of the SearchTemplateGroup this component belongs to
+        /// </summary>
+        public int GroupIndex { get; set; }
+
+        /// <summary>
+        /// Gets or sets the index of the SearchTemplate this component belongs to
+        /// </summary>
+        public int TemplateIndex { get; set; }
+
+        /// <summary>
+        /// Gets or sets whether this component's operator represents a group-level operator (between groups)
+        /// rather than a template-level operator (within a group)
+        /// </summary>
+        public bool IsGroupLevelOperator { get; set; }
+
+        /// <summary>
         /// Gets or sets the collection of individual values for multi-value filters
         /// </summary>
         public ObservableCollection<string> ValueItems { get; set; } = new ObservableCollection<string>();

@@ -17,7 +17,7 @@ namespace WWSearchDataGrid.Modern.Core
         private int groupNumber;
         private bool isOperatorVisible = true;
 
-        private Func<Expression, Expression, Expression> operatorFunction = Expression.And;
+        private Func<Expression, Expression, Expression> operatorFunction = Expression.AndAlso;
 
         #endregion
 
@@ -44,16 +44,16 @@ namespace WWSearchDataGrid.Modern.Core
                     // Use case-insensitive comparison and handle edge cases
                     if (string.Equals(value, "And", StringComparison.OrdinalIgnoreCase))
                     {
-                        OperatorFunction = Expression.And;
+                        OperatorFunction = Expression.AndAlso;
                     }
                     else if (string.Equals(value, "Or", StringComparison.OrdinalIgnoreCase))
                     {
-                        OperatorFunction = Expression.Or;
+                        OperatorFunction = Expression.OrElse;
                     }
                     else
                     {
                         // Handle unexpected values - default to And for safety
-                        OperatorFunction = Expression.And;
+                        OperatorFunction = Expression.AndAlso;
                     }
                 }
             }

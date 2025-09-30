@@ -175,6 +175,7 @@ namespace WWSearchDataGrid.Modern.WPF
             FilterPanel.FiltersEnabledChanged += OnFiltersEnabledChanged;
             FilterPanel.FilterRemoved += OnFilterRemoved;
             FilterPanel.ValueRemovedFromToken += OnValueRemovedFromToken;
+            FilterPanel.OperatorToggled += OnOperatorToggled;
             FilterPanel.ClearAllFiltersRequested += OnClearAllFiltersRequested;
 
             // Initialize context menu functionality
@@ -212,6 +213,7 @@ namespace WWSearchDataGrid.Modern.WPF
                 templateFilterPanel.FiltersEnabledChanged += (s, e) => OnFiltersEnabledChanged(s, e);
                 templateFilterPanel.FilterRemoved += (s, e) => OnFilterRemoved(s, e);
                 templateFilterPanel.ValueRemovedFromToken += (s, e) => OnValueRemovedFromToken(s, e);
+                templateFilterPanel.OperatorToggled += (s, e) => OnOperatorToggled(s, e);
                 templateFilterPanel.ClearAllFiltersRequested += (s, e) => OnClearAllFiltersRequested(s, e);
                 
                 // Replace our FilterPanel property with the template instance so updates go to the right place
@@ -1369,6 +1371,63 @@ namespace WWSearchDataGrid.Modern.WPF
             catch (Exception ex)
             {
                 Debug.WriteLine($"Error in OnValueRemovedFromToken: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Handles operator toggle requests from the filter panel
+        /// </summary>
+        private void OnOperatorToggled(object sender, OperatorToggledEventArgs e)
+        {
+            try
+            {
+                if (e.OperatorToken?.SourceFilter?.FilterData is ColumnSearchBox columnSearchBox)
+                {
+                    var controller = columnSearchBox.SearchTemplateController;
+                    if (controller == null)
+                        return;
+
+                    // Update the operator based on the level
+                    if (e.Level == OperatorLevel.Group)
+                    {
+                        // Group-level operator: This represents the operator between different columns
+                        // The column-level operator is always stored in SearchGroups[0].OperatorName
+                        // (See GetActiveColumnFilters line 1208)
+                        if (controller.SearchGroups.Count > 0)
+                        {
+                            controller.SearchGroups[0].OperatorName = e.NewOperator;
+                        }
+                    }
+                    else if (e.Level == OperatorLevel.Template)
+                    {
+                        // Update the SearchTemplate operator
+                        if (e.OperatorToken is TemplateLogicalConnectorToken templateToken)
+                        {
+                            var groupIndex = templateToken.GroupIndex;
+                            var templateIndex = templateToken.TemplateIndex;
+
+                            if (groupIndex >= 0 && groupIndex < controller.SearchGroups.Count)
+                            {
+                                var group = controller.SearchGroups[groupIndex];
+                                if (templateIndex >= 0 && templateIndex < group.SearchTemplates.Count)
+                                {
+                                    group.SearchTemplates[templateIndex].OperatorName = e.NewOperator;
+                                }
+                            }
+                        }
+                    }
+
+                    // Trigger filter update
+                    controller.UpdateFilterExpression();
+
+                    // Reapply filters and update UI
+                    FilterItemsSource();
+                    UpdateFilterPanel();
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error in OnOperatorToggled: {ex.Message}");
             }
         }
 

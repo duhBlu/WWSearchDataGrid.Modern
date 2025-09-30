@@ -157,24 +157,42 @@ namespace WWSearchDataGrid.Modern.Core
     }
 
     /// <summary>
-    /// Token representing a logical connector between filters
+    /// Token representing a logical connector between SearchTemplateGroups
     /// </summary>
     public class GroupLogicalConnectorToken : FilterTokenBase
     {
-        public GroupLogicalConnectorToken(string connectorText, string filterId, int orderIndex, ColumnFilterInfo sourceFilter)
+        /// <summary>
+        /// Gets the index of the SearchTemplateGroup this operator is associated with
+        /// </summary>
+        public int GroupIndex { get; }
+
+        public GroupLogicalConnectorToken(string connectorText, string filterId, int orderIndex, ColumnFilterInfo sourceFilter, int groupIndex = 0)
             : base(connectorText, FilterTokenType.GroupLogicalConnectorToken, filterId, orderIndex, sourceFilter)
         {
+            GroupIndex = groupIndex;
         }
     }
-    
+
     /// <summary>
-    /// Token representing a logical connector between filters
+    /// Token representing a logical connector between SearchTemplates within a group
     /// </summary>
     public class TemplateLogicalConnectorToken : FilterTokenBase
     {
-        public TemplateLogicalConnectorToken(string connectorText, string filterId, int orderIndex, ColumnFilterInfo sourceFilter)
+        /// <summary>
+        /// Gets the index of the SearchTemplateGroup this operator belongs to
+        /// </summary>
+        public int GroupIndex { get; }
+
+        /// <summary>
+        /// Gets the index of the SearchTemplate this operator is associated with
+        /// </summary>
+        public int TemplateIndex { get; }
+
+        public TemplateLogicalConnectorToken(string connectorText, string filterId, int orderIndex, ColumnFilterInfo sourceFilter, int groupIndex = 0, int templateIndex = 0)
             : base(connectorText, FilterTokenType.TemplateLogicalConnectorToken, filterId, orderIndex, sourceFilter)
         {
+            GroupIndex = groupIndex;
+            TemplateIndex = templateIndex;
         }
     }
 

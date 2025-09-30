@@ -459,6 +459,10 @@ namespace WWSearchDataGrid.Modern.WPF
         private void OnTextBoxLostFocus(object sender, RoutedEventArgs e)
         {
             IsSearchFocused = false;
+            if (IsPopupOpen)
+            {
+                IsPopupOpen = false;
+            }
         }
 
         private void OnClearButtonClick(object sender, RoutedEventArgs e)
