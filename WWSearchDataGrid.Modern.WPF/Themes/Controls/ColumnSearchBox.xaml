@@ -195,7 +195,7 @@
                                             </Trigger>
                                             <MultiDataTrigger>
                                                 <MultiDataTrigger.Conditions>
-                                                    <Condition Binding="{Binding AllowRuleValueFiltering, RelativeSource={RelativeSource TemplatedParent}}" Value="True" />
+                                                    <Condition Binding="{Binding IsComplexFilteringEnabled, RelativeSource={RelativeSource TemplatedParent}}" Value="True" />
                                                     <Condition Binding="{Binding SearchText, RelativeSource={RelativeSource AncestorType={x:Type sdg:ColumnSearchBox}}}" Value="" />
                                                     <Condition Binding="{Binding IsCheckboxColumn, RelativeSource={RelativeSource AncestorType={x:Type sdg:ColumnSearchBox}}}" Value="False" />
                                                 </MultiDataTrigger.Conditions>

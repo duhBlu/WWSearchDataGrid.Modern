@@ -86,8 +86,8 @@ namespace WWSearchDataGrid.Modern.WPF
             DependencyProperty.RegisterAttached("CustomSearchTemplate", typeof(Type), typeof(ColumnSearchBox),
                 new FrameworkPropertyMetadata(typeof(SearchTemplate)));
 
-        public static readonly DependencyProperty AllowRuleValueFilteringProperty =
-            DependencyProperty.RegisterAttached("AllowRuleValueFiltering", typeof(bool), typeof(ColumnSearchBox),
+        public static readonly DependencyProperty EnableComplexFilteringProperty =
+            DependencyProperty.RegisterAttached("EnableComplexFiltering", typeof(bool), typeof(ColumnSearchBox),
                 new FrameworkPropertyMetadata(true, FrameworkPropertyMetadataOptions.Inherits));
 
         public static readonly DependencyProperty FilterCheckboxStateProperty =
@@ -157,12 +157,30 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
-        /// Gets or sets whether to show the advanced filter button
+        /// Gets or sets whether complex filtering is enabled for this column.
+        /// This setting is overridden by the grid-level EnableComplexFiltering property.
         /// </summary>
-        public bool AllowRuleValueFiltering
+        public bool EnableComplexFiltering
         {
-            get => (bool)GetValue(AllowRuleValueFilteringProperty);
-            set => SetValue(AllowRuleValueFilteringProperty, value);
+            get => (bool)GetValue(EnableComplexFilteringProperty);
+            set => SetValue(EnableComplexFilteringProperty, value);
+        }
+
+        /// <summary>
+        /// Gets whether complex filtering is actually enabled for this column,
+        /// taking into account both grid-level and column-level settings.
+        /// </summary>
+        public bool IsComplexFilteringEnabled
+        {
+            get
+            {
+                // Grid-level setting takes precedence
+                if (SourceDataGrid != null && !SourceDataGrid.EnableComplexFiltering)
+                    return false;
+
+                // If grid allows it, check column-level setting
+                return EnableComplexFiltering;
+            }
         }
 
         /// <summary>
@@ -239,16 +257,16 @@ namespace WWSearchDataGrid.Modern.WPF
             obj.SetValue(CustomSearchTemplateProperty, value);
 
         /// <summary>
-        /// Sets whether to show the column chooser filter button
+        /// Sets whether to enable complex filtering for a column
         /// </summary>
-        public static void SetAllowRuleValueFiltering(DependencyObject element, bool value) =>
-            element.SetValue(AllowRuleValueFilteringProperty, value);
+        public static void SetEnableComplexFiltering(DependencyObject element, bool value) =>
+            element.SetValue(EnableComplexFilteringProperty, value);
 
         /// <summary>
-        /// Gets whether to show the column chooser filter button
+        /// Gets whether complex filtering is enabled for a column
         /// </summary>
-        public static bool GetAllowRuleValueFiltering(DependencyObject element) =>
-            (bool)element.GetValue(AllowRuleValueFilteringProperty);
+        public static bool GetEnableComplexFiltering(DependencyObject element) =>
+            (bool)element.GetValue(EnableComplexFilteringProperty);
 
         #endregion
 
@@ -577,7 +595,7 @@ namespace WWSearchDataGrid.Modern.WPF
             if (d is ColumnSearchBox control && e.NewValue is DataGridColumn column)
             {
                 control.BindingPath = column.SortMemberPath;
-                control.AllowRuleValueFiltering = GetAllowRuleValueFiltering(control.CurrentColumn);
+                control.EnableComplexFiltering = GetEnableComplexFiltering(control.CurrentColumn);
                 control.InitializeSearchTemplateController();
             }
         }
@@ -621,8 +639,13 @@ namespace WWSearchDataGrid.Modern.WPF
                 ClearSearchTextAndTemporaryFilter();
             else if (e.Key == Key.Enter)
             {
-                // Ctrl+Enter creates permanent filter and refocuses textbox
-                CreatePermanentFilterAndRefocus();
+                // Only create permanent filters if complex filtering is enabled
+                if (IsComplexFilteringEnabled)
+                {
+                    // Ctrl+Enter creates permanent filter and refocuses textbox
+                    CreatePermanentFilterAndRefocus();
+                }
+                // In simple mode, Enter key does nothing - text persists and filters continue
             }
             else if (e.Key == Key.Tab && (Keyboard.Modifiers & ModifierKeys.Shift) == ModifierKeys.Shift)
             {

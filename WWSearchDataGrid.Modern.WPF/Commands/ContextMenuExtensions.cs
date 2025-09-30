@@ -363,7 +363,7 @@ namespace WWSearchDataGrid.Modern.WPF
                 "Copy With Headers",
                 ContextMenuCommands.CopySelectedCellValuesWithHeadersCommand,
                 contextMenuContext.Grid,
-                "Shift+Ctrl+C"));
+                "Ctrl+Shift+C"));
 
             return menu;
         }

@@ -282,6 +282,7 @@
                                 Grid.Row="0"
                                 IsReadOnly="False"
                                 Margin="10"
+                                EnableComplexFiltering="True"
                                 SelectionMode="Extended"
                                 SelectionUnit="CellOrRowHeader"
                                 ItemsSource="{Binding Items}"
@@ -290,7 +291,7 @@
                 <sdg:SearchDataGrid.Columns>
                     <DataGridTextColumn Width="120"
                                         Header="Customer Name"
-                                        sdg:ColumnSearchBox.AllowRuleValueFiltering="True"
+                                        sdg:ColumnSearchBox.EnableComplexFiltering="False"
                                         Binding="{Binding CustomerName}" />
 
                       <!--Boolean Types-->  

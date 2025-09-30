@@ -55,6 +55,13 @@ namespace WWSearchDataGrid.Modern.WPF
             DependencyProperty.Register("ActualHasItems", typeof(bool), typeof(SearchDataGrid),
                 new PropertyMetadata(false, OnActualHasItemsChanged));
 
+        /// <summary>
+        /// Dependency property for EnableComplexFiltering
+        /// </summary>
+        public static readonly DependencyProperty EnableComplexFilteringProperty =
+            DependencyProperty.Register("EnableComplexFiltering", typeof(bool), typeof(SearchDataGrid),
+                new FrameworkPropertyMetadata(false, FrameworkPropertyMetadataOptions.Inherits));
+
         #endregion
 
         #region Properties
@@ -83,6 +90,17 @@ namespace WWSearchDataGrid.Modern.WPF
         {
             get { return (bool)GetValue(ActualHasItemsProperty); }
             private set { SetValue(ActualHasItemsProperty, value); }
+        }
+
+        /// <summary>
+        /// Gets or sets whether complex filtering is enabled at the grid level.
+        /// When false, all columns use simple filtering mode only.
+        /// When true, per-column EnableComplexFiltering settings are respected.
+        /// </summary>
+        public bool EnableComplexFiltering
+        {
+            get { return (bool)GetValue(EnableComplexFilteringProperty); }
+            set { SetValue(EnableComplexFilteringProperty, value); }
         }
 
         /// <summary>
