@@ -1525,12 +1525,30 @@ namespace WWSearchDataGrid.Modern.Core
         }
         
         /// <summary>
+        /// Subscribes to property and collection change events for a search template
+        /// This ensures the template triggers auto-apply when modified
+        /// </summary>
+        /// <param name="template">The template to subscribe to</param>
+        internal void SubscribeToTemplateChanges(SearchTemplate template)
+        {
+            if (template == null) return;
+
+            template.PropertyChanged += OnSearchTemplatePropertyChanged;
+            template.SelectedValues.CollectionChanged += OnSearchTemplateValues_CollectionChanged;
+            template.SelectedDates.CollectionChanged += OnSearchTemplateValues_CollectionChanged;
+            foreach (var di in template.DateIntervals)
+            {
+                di.PropertyChanged += OnSearchTemplatePropertyChanged;
+            }
+        }
+
+        /// <summary>
         /// Handle property changes from SearchTemplates to determine when to auto-apply
         /// </summary>
         private void OnSearchTemplatePropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
         {
             // Only trigger auto-apply for filter-relevant properties
-            var filterRelevantProperties = new[] 
+            var filterRelevantProperties = new[]
             {
                 nameof(SearchTemplate.SearchType),
                 nameof(SearchTemplate.SelectedValue),

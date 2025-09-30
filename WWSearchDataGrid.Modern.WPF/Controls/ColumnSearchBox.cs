@@ -1032,7 +1032,7 @@ namespace WWSearchDataGrid.Modern.WPF
 
                 // Clear existing groups
                 SearchTemplateController.SearchGroups.Clear();
-                
+
                 // Create a new search group
                 var group = new SearchTemplateGroup();
                 SearchTemplateController.SearchGroups.Add(group);
@@ -1043,8 +1043,14 @@ namespace WWSearchDataGrid.Modern.WPF
                 template.SelectedValue = value;
                 template.SearchTemplateController = SearchTemplateController; // Ensure template has controller reference
 
+                // Bind to property changes for auto-apply monitoring
+                SearchTemplateController.SubscribeToTemplateChanges(template);
+
                 // Add the template
                 group.SearchTemplates.Add(template);
+
+                // Update operator visibility for all templates
+                SearchTemplateController.UpdateOperatorVisibility();
 
                 // Update the filter expression
                 SearchTemplateController.UpdateFilterExpression();
@@ -1066,7 +1072,7 @@ namespace WWSearchDataGrid.Modern.WPF
 
                 // Clear existing groups
                 SearchTemplateController.SearchGroups.Clear();
-                
+
                 // Create a new search group
                 var group = new SearchTemplateGroup();
                 SearchTemplateController.SearchGroups.Add(group);
@@ -1075,9 +1081,15 @@ namespace WWSearchDataGrid.Modern.WPF
                 var template = new SearchTemplate(ColumnDataType.Boolean);
                 template.SearchType = SearchType.IsNull;
                 template.SearchTemplateController = SearchTemplateController; // Ensure template has controller reference
-                
+
+                // Bind to property changes for auto-apply monitoring
+                SearchTemplateController.SubscribeToTemplateChanges(template);
+
                 // Add the template
                 group.SearchTemplates.Add(template);
+
+                // Update operator visibility for all templates
+                SearchTemplateController.UpdateOperatorVisibility();
 
                 // Update the filter expression
                 SearchTemplateController.UpdateFilterExpression();
@@ -1378,15 +1390,20 @@ namespace WWSearchDataGrid.Modern.WPF
                 newTemplate.SearchType = SearchType.Contains;
                 newTemplate.SelectedValue = SearchText;
                 newTemplate.SearchTemplateController = SearchTemplateController; // Ensure template has controller reference
-                
+
+                // Bind to property changes for auto-apply monitoring
+                SearchTemplateController.SubscribeToTemplateChanges(newTemplate);
 
                 // If this is not the first template, set OR operator
                 if (existingContainsTemplates.Any())
                 {
                     newTemplate.OperatorName = "Or";
                 }
-                
+
                 firstGroup.SearchTemplates.Add(newTemplate);
+
+                // Update operator visibility for all templates
+                SearchTemplateController.UpdateOperatorVisibility();
 
                 // Update the filter expression
                 SearchTemplateController.UpdateFilterExpression();
@@ -1513,20 +1530,26 @@ namespace WWSearchDataGrid.Modern.WPF
                     _temporarySearchTemplate.SearchType = SearchType.Contains;
                     _temporarySearchTemplate.SelectedValue = SearchText;
                     _temporarySearchTemplate.SearchTemplateController = SearchTemplateController; // Ensure template has controller reference
-                    
+
+                    // Bind to property changes for auto-apply monitoring
+                    SearchTemplateController.SubscribeToTemplateChanges(_temporarySearchTemplate);
+
                     // Check if we have existing confirmed Contains templates
                     var existingContainsTemplates = firstGroup.SearchTemplates
                         .Where(t => t.SearchType == SearchType.Contains && t.HasCustomFilter)
                         .ToList();
-                    
+
                     // If this is not the first template, set OR operator
                     if (existingContainsTemplates.Any())
                     {
                         _temporarySearchTemplate.OperatorName = "Or";
                     }
-                    
+
                     firstGroup.SearchTemplates.Add(_temporarySearchTemplate);
                 }
+
+                // Update operator visibility for all templates
+                SearchTemplateController.UpdateOperatorVisibility();
 
                 // Update HasActiveFilter state immediately
                 UpdateHasActiveFilterState();
