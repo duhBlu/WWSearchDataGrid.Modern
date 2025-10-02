@@ -186,16 +186,12 @@ namespace WWSearchDataGrid.Modern.Core
         {
             if (disposing)
             {
-                // Clear all cached values to release memory references immediately
-                // This allows the large data structures to be garbage collected
+                // Clear all cached values to release memory references
                 _extractedValues.Clear();
                 _average.Clear();
                 _sortedDescending.Clear();
                 _sortedAscending.Clear();
                 _valueGroups.Clear();
-                
-                // Clear any direct references we might have
-                // (Currently we don't hold any direct references to items beyond the constructor parameter)
             }
         }
         

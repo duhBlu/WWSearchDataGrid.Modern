@@ -152,12 +152,6 @@ namespace WWSearchDataGrid.Modern.WPF
 
         #endregion
 
-        #region Commands
-
-        public ICommand OpenGlobalFilterCommand => new RelayCommand(_ => ShowGlobalFilterWindow());
-
-        #endregion Commands
-
         #region Events
 
         /// <summary>
@@ -332,37 +326,33 @@ namespace WWSearchDataGrid.Modern.WPF
 
                         if (editedValue != null)
                         {
-                            // Use the value we captured and converted from the editing element
                             finalValue = editedValue;
                         }
                         else
                         {
-                            // Fallback: try to commit and get value from the data object
                             try
                             {
                                 CommitEdit(DataGridEditingUnit.Cell, true);
                             }
                             catch
                             {
-                                // Ignore commit errors
                             }
                             finalValue = ReflectionHelper.GetPropValue(e.Row.Item, bindingPath);
                         }
 
-                        // Compare values using existing comparer
-                        if (!ObjectEqualityComparer.Instance.Equals(originalValue, finalValue))
+                        if (!EqualityComparer<object>.Default.Equals(originalValue, finalValue))
                         {
                             OnCellValueChangedInternal(e.Row.Item, e.Column, bindingPath,
                                 originalValue, finalValue, rowIndex, columnIndex);
                         }
-
-                        // Clean up snapshot after processing
-                        _cellValueSnapshots.Remove(snapshotKey);
                     }
                     catch (Exception ex)
                     {
                         Debug.WriteLine($"Error in delayed cell edit processing: {ex.Message}");
-                        // Clean up snapshot even on error
+                    }
+                    finally
+                    {
+                        // Clean up snapshot after processing/error
                         _cellValueSnapshots.Remove(snapshotKey);
                     }
                 }), DispatcherPriority.DataBind);
@@ -376,51 +366,6 @@ namespace WWSearchDataGrid.Modern.WPF
         #endregion
 
         #region Methods
-
-        private static void OnAdvancedFilterModeChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
-        {
-            if (d is SearchDataGrid grid)
-            {
-                // Update the visibility of the advanced filter button in column headers
-                grid.UpdateColumnHeaderFilterVisibility();
-            }
-        }
-
-        /// <summary>
-        /// Initialize the global filter controller with column data
-        /// </summary>
-        private void InitializeGlobalFilterController()
-        {
-            var controller = GlobalFilterController;
-
-            // Load column data for each column
-            foreach (var column in DataColumns)
-            {
-                if (!string.IsNullOrEmpty(column.BindingPath))
-                {
-                    var columnValues = new HashSet<object>();
-                    foreach (var item in Items)
-                    {
-                        var value = ReflectionHelper.GetPropValue(item, column.BindingPath);
-                        columnValues.Add(value);
-                    }
-
-                    controller.LoadColumnData(
-                        column.CurrentColumn.Header,
-                        columnValues,
-                        column.BindingPath);
-                }
-            }
-        }
-
-        /// <summary>
-        /// Updates the visibility of advanced filter buttons in column headers
-        /// </summary>
-        private void UpdateColumnHeaderFilterVisibility()
-        {
-            // This method will be called when the AdvancedFilterMode changes
-            // In a real implementation, you might want to update the XAML bindings instead
-        }
 
         protected override void OnRender(DrawingContext drawingContext)
         {
@@ -929,42 +874,6 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
-        /// Shows the global filter window
-        /// </summary>
-        private void ShowGlobalFilterWindow()
-        {
-            // Initialize the global filter controller if needed
-            InitializeGlobalFilterController();
-
-            var window = new Window
-            {
-                Title = "Advanced Filter (Global)",
-                Width = 800,
-                Height = 500,
-                WindowStartupLocation = WindowStartupLocation.CenterOwner,
-                Owner = Application.Current.MainWindow
-            };
-
-            var filterControl = new ColumnFilterEditor
-            {
-                SearchTemplateController = GlobalFilterController,
-                DataContext = this
-            };
-
-            window.Content = filterControl;
-            window.Closed += (s, e) =>
-            {
-                // Apply filters after the window is closed
-                if (GlobalFilterController.HasCustomExpression)
-                {
-                    FilterItemsSource();
-                }
-            };
-
-            window.ShowDialog();
-        }
-
-        /// <summary>
         /// Evaluate a filter against an item for per-column filtering
         /// </summary>
         private static bool EvaluateFilter(object item, ColumnSearchBox filter)
@@ -1245,8 +1154,6 @@ namespace WWSearchDataGrid.Modern.WPF
                 // PRIORITY: Always check SearchTemplateController first (handles incremental Contains filters)
                 if (column.SearchTemplateController?.HasCustomExpression == true)
                 {
-                    filterInfo.DisplayText = column.SearchTemplateController.GetFilterDisplayText();
-                    
                     // Get structured components from SearchTemplateController
                     var components = column.SearchTemplateController.GetTokenizedFilter();
                     filterInfo.SearchTypeText = components.SearchTypeText;
@@ -1266,9 +1173,6 @@ namespace WWSearchDataGrid.Modern.WPF
                 }
                 else if (!string.IsNullOrWhiteSpace(column.SearchText) && column.HasTemporaryTemplate)
                 {
-                    // This ensures synchronization between HasActiveFilter state and actual template existence
-                    filterInfo.DisplayText = $"Contains '{column.SearchText}'";
-                    
                     // Set component properties for simple filters
                     filterInfo.SearchTypeText = "Contains";
                     filterInfo.PrimaryValue = column.SearchText;

@@ -5,9 +5,6 @@ using System.Windows.Input;
 
 namespace WWSearchDataGrid.Modern.Core
 {
-    /// <summary>
-    /// Relay command implementation
-    /// </summary>
     internal class RelayCommand : ICommand
     {
         private readonly Action<object> execute;

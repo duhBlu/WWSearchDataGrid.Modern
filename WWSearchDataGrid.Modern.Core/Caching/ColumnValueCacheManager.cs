@@ -8,7 +8,6 @@ namespace WWSearchDataGrid.Modern.Core.Caching
 {
     /// <summary>
     /// Centralized cache manager for column values using WeakReference-based storage
-    /// Eliminates data duplication and enables proper memory cleanup for large datasets
     /// </summary>
     internal class ColumnValueCacheManager
     {
@@ -40,14 +39,12 @@ namespace WWSearchDataGrid.Modern.Core.Caching
 
             lock (_lock)
             {
-                // Try to get existing cache entry
                 if (_cacheEntries.TryGetValue(cacheKey, out var weakRef) &&
                     weakRef.TryGetTarget(out var existingCache))
                 {
                     return new ReadOnlyColumnValues(existingCache);
                 }
 
-                // Create new cache entry
                 var newCache = new ColumnValueCache(valuesProvider());
                 _cacheEntries[cacheKey] = new WeakReference<ColumnValueCache>(newCache);
 
@@ -68,7 +65,6 @@ namespace WWSearchDataGrid.Modern.Core.Caching
 
             lock (_lock)
             {
-                // Try to get existing cache entry
                 if (!_cacheEntries.TryGetValue(cacheKey, out var weakRef) ||
                     !weakRef.TryGetTarget(out var existingCache))
                 {
@@ -167,35 +163,35 @@ namespace WWSearchDataGrid.Modern.Core.Caching
         {
             if (values == null)
                 throw new ArgumentNullException(nameof(values));
-            
+
             _uniqueValues = new HashSet<object>();
             var normalizedValues = new List<object>();
             bool hasNulls = false;
-            
+
             // Single pass for normalization, deduplication, and null detection
             foreach (var value in values)
             {
-                // Check for null values
+                // Skip null and blank values entirely - users can use IsNull/IsNotNull search types instead
                 if (value == null || (value is string stringValue && string.IsNullOrWhiteSpace(stringValue)))
                 {
                     hasNulls = true;
+                    continue; // Don't add to available values
                 }
-                
-                var normalizedValue = NormalizeValue(value);
-                if (_uniqueValues.Add(normalizedValue))
+
+                // Add non-null values
+                if (_uniqueValues.Add(value))
                 {
-                    normalizedValues.Add(normalizedValue);
+                    normalizedValues.Add(value);
                 }
             }
-            
+
             _containsNullValues = hasNulls;
-            
-            // Sort if collection is reasonable size
+
             if (normalizedValues.Count <= 500000)
             {
                 normalizedValues.Sort((x, y) => CompareValues(x, y));
             }
-            
+
             _values = normalizedValues;
         }
         
@@ -223,16 +219,17 @@ namespace WWSearchDataGrid.Modern.Core.Caching
                 // Process new values
                 foreach (var value in valuesToAdd)
                 {
-                    // Check for null values
+                    // Skip null and blank values - don't add to available values
                     if (value == null || (value is string stringValue && string.IsNullOrWhiteSpace(stringValue)))
                     {
                         hasNewNulls = true;
+                        continue;
                     }
 
-                    var normalizedValue = NormalizeValue(value);
-                    if (newUniqueValues.Add(normalizedValue))
+                    // Add non-null values
+                    if (newUniqueValues.Add(value))
                     {
-                        additionalValues.Add(normalizedValue);
+                        additionalValues.Add(value);
                     }
                 }
 
@@ -274,30 +271,25 @@ namespace WWSearchDataGrid.Modern.Core.Caching
 
             try
             {
-                var normalizedValuesToRemove = new HashSet<object>();
+                var valuesToRemoveSet = new HashSet<object>();
                 bool removingNulls = false;
 
-                // Normalize values to remove
+                // Collect values to remove (skip nulls as they're not in the cache anyway)
                 foreach (var value in valuesToRemove)
                 {
                     if (value == null || (value is string stringValue && string.IsNullOrWhiteSpace(stringValue)))
                     {
                         removingNulls = true;
+                        continue; // Nulls aren't in available values, so nothing to remove
                     }
-                    normalizedValuesToRemove.Add(NormalizeValue(value));
+                    valuesToRemoveSet.Add(value);
                 }
 
-                // Create filtered values
-                var filteredValues = _values.Where(v => !normalizedValuesToRemove.Contains(v)).ToList();
+                var filteredValues = _values.Where(v => !valuesToRemoveSet.Contains(v)).ToList();
                 var filteredUniqueValues = new HashSet<object>(filteredValues);
 
-                // Determine if nulls still exist after removal
+                // Update null tracking
                 bool hasNullsAfterRemoval = _containsNullValues && !removingNulls;
-                if (removingNulls && _containsNullValues)
-                {
-                    // Need to check if any nulls remain after removal
-                    hasNullsAfterRemoval = filteredUniqueValues.Contains(NullDisplayValue.Instance);
-                }
 
                 // If no values were actually removed, return current cache
                 if (filteredValues.Count == _values.Count)
@@ -305,7 +297,6 @@ namespace WWSearchDataGrid.Modern.Core.Caching
                     return this;
                 }
 
-                // Create new cache instance
                 return new ColumnValueCache(filteredValues, filteredUniqueValues, hasNullsAfterRemoval);
             }
             catch (Exception ex)
@@ -324,15 +315,7 @@ namespace WWSearchDataGrid.Modern.Core.Caching
             _uniqueValues = uniqueValues ?? throw new ArgumentNullException(nameof(uniqueValues));
             _containsNullValues = containsNulls;
         }
-        
-        private static object NormalizeValue(object value)
-        {
-            if (value == null) return NullDisplayValue.Instance;
-            if (value is string stringValue && string.IsNullOrWhiteSpace(stringValue))
-                return NullDisplayValue.Instance;
-            return value;
-        }
-        
+
         private static int CompareValues(object x, object y)
         {
             var xStr = x?.ToString() ?? string.Empty;
@@ -369,10 +352,11 @@ namespace WWSearchDataGrid.Modern.Core.Caching
         /// <returns>True if value exists</returns>
         public bool Contains(object value)
         {
-            var normalizedValue = value == null ? NullDisplayValue.Instance :
-                (value is string stringValue && string.IsNullOrWhiteSpace(stringValue)) ? NullDisplayValue.Instance : value;
-            
-            return _cache.UniqueValues.Contains(normalizedValue);
+            // Null values are not in the available values collection
+            if (value == null || (value is string stringValue && string.IsNullOrWhiteSpace(stringValue)))
+                return false;
+
+            return _cache.UniqueValues.Contains(value);
         }
     }
 }

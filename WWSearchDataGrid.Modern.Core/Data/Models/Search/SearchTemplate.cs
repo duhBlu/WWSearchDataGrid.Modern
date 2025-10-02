@@ -114,6 +114,7 @@ namespace WWSearchDataGrid.Modern.Core
 
         /// <summary>
         /// Gets available values from the parent controller (direct binding)
+        /// Note: Null/blank values are not included - users should use IsNull/IsNotNull search types
         /// </summary>
         public IEnumerable<object> AvailableValues => SearchTemplateController?.ColumnValues ?? Enumerable.Empty<object>();
 
@@ -457,27 +458,7 @@ namespace WWSearchDataGrid.Modern.Core
             }
         }
 
-        /// <summary>
-        /// Gets the ordered values for Between operations without modifying the stored values
-        /// This prevents infinite loops (property changed listeners) while ensuring correct ordering for comparisons
-        /// </summary>
-        private (object minValue, object maxValue) GetOrderedBetweenValues()
-        {
-            // Check if this is a Between operation that needs ordering
-            if ((SearchType == SearchType.Between ||
-                 SearchType == SearchType.NotBetween ||
-                 SearchType == SearchType.BetweenDates) &&
-                SelectedValue != null &&
-                SelectedSecondaryValue != null &&
-                Comparer.Default.Compare(SelectedValue, SelectedSecondaryValue) > 0)
-            {
-                // Return values in correct order (min, max) without modifying stored properties
-                return (SelectedSecondaryValue, SelectedValue);
-            }
-
-            // Return original values if no ordering needed
-            return (SelectedValue, SelectedSecondaryValue);
-        }
+        
 
         /// <summary>
         /// Gets display text for a value (simplified version without count information)
@@ -658,37 +639,69 @@ namespace WWSearchDataGrid.Modern.Core
         /// <param name="removedValueType">The type of value that was removed</param>
         public void TransformBetweenSearchType(ValueType removedValueType)
         {
-            if (SearchType == SearchType.Between)
+            // Cache current values
+            var v1 = SelectedValue;
+            var v2 = SelectedSecondaryValue;
+
+            // If we don't have the "other" value to pivot to, there's nothing to transform into.
+            bool hasV1 = v1 != null;
+            bool hasV2 = v2 != null;
+            if (!hasV1 && !hasV2) return;
+
+            // Compute min/max (works for IComparable or numeric/date types via Comparer.Default)
+            object min = v1;
+            object max = v2;
+
+            if (hasV1 && hasV2)
             {
-                if (removedValueType == ValueType.Primary && SelectedSecondaryValue != null)
-                {
-                    SearchType = SearchType.LessThanOrEqualTo;
-                }
-                else if (removedValueType == ValueType.Secondary && SelectedValue != null)
-                {
-                    SearchType = SearchType.GreaterThanOrEqualTo;
-                }
+                int cmp = Comparer.Default.Compare(v1, v2);
+                if (cmp <= 0) { min = v1; max = v2; }
+                else { min = v2; max = v1; }
             }
-            else if (SearchType == SearchType.NotBetween)
+            else
             {
-                if (removedValueType == ValueType.Primary && SelectedSecondaryValue != null)
-                {
-                    SearchType = SearchType.GreaterThan;
-                }
-                else if (removedValueType == ValueType.Secondary && SelectedValue != null)
-                {
-                    SearchType = SearchType.LessThan;
-                }
+                // Only one value present; treat it as both min/max
+                min = max = hasV1 ? v1 : v2;
             }
-            else if (SearchType == SearchType.BetweenDates)
+
+            switch (SearchType)
             {
-                if (removedValueType == ValueType.Primary && SelectedSecondaryValue != null)
+                case SearchType.Between:
+                case SearchType.BetweenDates:
                 {
-                    SearchType = SearchType.LessThanOrEqualTo;
+                    if (removedValueType == ValueType.Primary && hasV2)
+                    {
+                        // Removed the "primary" bound -> become <= larger of the two
+                        SearchType = SearchType.LessThanOrEqualTo;
+                        SelectedValue = max;
+                        SelectedSecondaryValue = null;
+                    }
+                    else if (removedValueType == ValueType.Secondary && hasV1)
+                    {
+                        // Removed the "secondary" bound -> become >= smaller of the two
+                        SearchType = SearchType.GreaterThanOrEqualTo;
+                        SelectedValue = min;
+                        SelectedSecondaryValue = null;
+                    }
+                    break;
                 }
-                else if (removedValueType == ValueType.Secondary && SelectedValue != null)
+                case SearchType.NotBetween:
                 {
-                    SearchType = SearchType.GreaterThanOrEqualTo;
+                    if (removedValueType == ValueType.Primary && hasV2)
+                    {
+                        // Inverse of Between: removing the lower bound -> > larger
+                        SearchType = SearchType.GreaterThan;
+                        SelectedValue = max;
+                        SelectedSecondaryValue = null;
+                    }
+                    else if (removedValueType == ValueType.Secondary && hasV1)
+                    {
+                        // Removing the upper bound -> < smaller
+                        SearchType = SearchType.LessThan;
+                        SelectedValue = min;
+                        SelectedSecondaryValue = null;
+                    }
+                    break;
                 }
             }
         }
@@ -704,9 +717,7 @@ namespace WWSearchDataGrid.Modern.Core
             if (SearchType == SearchType.IsOnAnyOfDates) return BuildIsOnAnyOfDatesExpression();
             if (SearchType == SearchType.DateInterval) return BuildDateIntervalExpression();
 
-            var (orderedValue, orderedSecondaryValue) = GetOrderedBetweenValues(); 
-
-            var searchCondition = new SearchCondition(targetType, SearchType, orderedValue, orderedSecondaryValue);
+            var searchCondition = new SearchCondition(targetType, SearchType, SelectedValue, SelectedSecondaryValue);
             return obj => SearchEngine.EvaluateCondition(obj, searchCondition);
         }
 

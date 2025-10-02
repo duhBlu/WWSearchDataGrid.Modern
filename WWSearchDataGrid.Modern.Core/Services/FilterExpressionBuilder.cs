@@ -69,7 +69,7 @@ namespace WWSearchDataGrid.Modern.Core
                         // Combine with previous expressions in this group
                         templateExpression = templateExpression == null
                             ? currentExpression
-                            : templateExpression.Compose(currentExpression, template.OperatorFunction);
+                            : Compose(templateExpression, currentExpression, template.OperatorFunction);
                     }
 
                     // Skip empty groups
@@ -85,7 +85,7 @@ namespace WWSearchDataGrid.Modern.Core
                     {
                         // Ensure OperatorFunction is not null, default to AndAlso if it is
                         var operatorFunc = group.OperatorFunction ?? Expression.AndAlso;
-                        groupExpression = groupExpression.Compose(templateExpression, operatorFunc);
+                        groupExpression = Compose(groupExpression, templateExpression, operatorFunc);
                     }
                 }
 
@@ -108,7 +108,7 @@ namespace WWSearchDataGrid.Modern.Core
                 // Update the custom expression flag
                 var hasMultipleGroups = searchGroups.Count > 1;
                 var hasCustomFilterTemplates = searchGroups.Any(g => g.SearchTemplates.Any(t => t.HasCustomFilter && t.IsValidFilter));
-                
+
                 if (searchGroups.Count > 0)
                 {
                     for (int i = 0; i < searchGroups.Count; i++)
@@ -120,7 +120,7 @@ namespace WWSearchDataGrid.Modern.Core
                         }
                     }
                 }
-                
+
                 result.HasCustomExpression = searchGroups.Count > 0 && (hasMultipleGroups || hasCustomFilterTemplates);
 
                 result.HasCollectionContextFilters = hasCollectionContextFilters;
@@ -199,5 +199,95 @@ namespace WWSearchDataGrid.Modern.Core
             }
             return typeof(string); // Fallback to string
         }
+
+        #region Expression Composition
+
+        /// <summary>
+        /// Composes two expressions using the specified combining function
+        /// </summary>
+        /// <typeparam name="T">Type of the parameter</typeparam>
+        /// <param name="first">First expression</param>
+        /// <param name="second">Second expression</param>
+        /// <param name="merge">Function to merge the expression bodies</param>
+        /// <returns>Combined expression</returns>
+        private static Expression<Func<T, bool>> Compose<T>(
+            Expression<Func<T, bool>> first,
+            Expression<Func<T, bool>> second,
+            Func<Expression, Expression, Expression> merge)
+        {
+            var map = first.Parameters
+                .Select((f, i) => new { f, s = second.Parameters[i] })
+                .ToDictionary(p => p.s, p => p.f);
+
+            var secondBody = ParameterRebinder.ReplaceParameters(map, second.Body);
+            return Expression.Lambda<Func<T, bool>>(merge(first.Body, secondBody), first.Parameters);
+        }
+
+        #endregion
+
+        #region Nested Classes
+
+        /// <summary>
+        /// Result of filter expression building operation
+        /// </summary>
+        internal class FilterExpressionResult
+        {
+            /// <summary>
+            /// The compiled filter expression function
+            /// </summary>
+            public Func<object, bool> FilterExpression { get; set; }
+
+            /// <summary>
+            /// Whether the result has custom expression logic
+            /// </summary>
+            public bool HasCustomExpression { get; set; }
+
+            /// <summary>
+            /// Whether the expression contains collection-context filters that need special handling
+            /// </summary>
+            public bool HasCollectionContextFilters { get; set; }
+
+            /// <summary>
+            /// Error message if expression building failed
+            /// </summary>
+            public string ErrorMessage { get; set; }
+
+            /// <summary>
+            /// Whether the expression building was successful
+            /// </summary>
+            public bool IsSuccess => string.IsNullOrEmpty(ErrorMessage);
+        }
+
+        /// <summary>
+        /// Expression visitor for rebinding parameters in lambda expressions
+        /// Used for expression composition operations
+        /// </summary>
+        private sealed class ParameterRebinder : ExpressionVisitor
+        {
+            private readonly Dictionary<ParameterExpression, ParameterExpression> _map;
+
+            public ParameterRebinder(Dictionary<ParameterExpression, ParameterExpression> map)
+            {
+                _map = map ?? new Dictionary<ParameterExpression, ParameterExpression>();
+            }
+
+            public static Expression ReplaceParameters(
+                Dictionary<ParameterExpression, ParameterExpression> map,
+                Expression exp)
+            {
+                return new ParameterRebinder(map).Visit(exp);
+            }
+
+            protected override Expression VisitParameter(ParameterExpression p)
+            {
+                if (_map.TryGetValue(p, out ParameterExpression replacement))
+                {
+                    return replacement;
+                }
+                return base.VisitParameter(p);
+            }
+        }
+
+        #endregion
     }
 }

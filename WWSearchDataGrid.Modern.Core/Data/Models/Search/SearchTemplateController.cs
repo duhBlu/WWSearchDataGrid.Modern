@@ -486,20 +486,6 @@ namespace WWSearchDataGrid.Modern.Core
         }
         
         /// <summary>
-        /// Normalizes a value (null/empty/whitespace → NullDisplayValue for UI display)
-        /// </summary>
-        /// <param name="value">Value to normalize</param>
-        /// <returns>Normalized value</returns>
-        private object NormalizeValue(object value)
-        {
-            if (value == null) return NullDisplayValue.Instance;
-            if (value is string stringValue && string.IsNullOrWhiteSpace(stringValue))
-                return NullDisplayValue.Instance;
-            return value;
-        }
-        
-        
-        /// <summary>
         /// Adds or updates a single value in the column values (for incremental updates)
         /// Note: With cache-based approach, incremental updates require refreshing the entire cache
         /// </summary>
@@ -512,16 +498,19 @@ namespace WWSearchDataGrid.Modern.Core
                 // If values aren't loaded yet, just mark them as needing refresh
                 return;
             }
-            
-            var normalizedValue = NormalizeValue(value);
-            if (!_cachedColumnValues.Contains(normalizedValue))
+
+            // Skip null/blank values as they're not in available values
+            if (value == null || (value is string stringValue && string.IsNullOrWhiteSpace(stringValue)))
+                return;
+
+            if (!_cachedColumnValues.Contains(value))
             {
                 // For cache-based approach, we need to refresh the entire cache
                 // This is less efficient for single updates but necessary for data consistency
                 RefreshColumnValues();
             }
         }
-        
+
         /// <summary>
         /// Removes a value from the column values (for incremental updates)
         /// Note: With cache-based approach, incremental updates require refreshing the entire cache
@@ -535,9 +524,12 @@ namespace WWSearchDataGrid.Modern.Core
                 // If values aren't loaded yet, just mark them as needing refresh
                 return;
             }
-            
-            var normalizedValue = NormalizeValue(value);
-            if (_cachedColumnValues.Contains(normalizedValue))
+
+            // Skip null/blank values as they're not in available values
+            if (value == null || (value is string stringValue && string.IsNullOrWhiteSpace(stringValue)))
+                return;
+
+            if (_cachedColumnValues.Contains(value))
             {
                 // For cache-based approach, we need to refresh the entire cache
                 // This is less efficient for single updates but necessary for data consistency
@@ -617,7 +609,6 @@ namespace WWSearchDataGrid.Modern.Core
                     targetColumnType = _filterExpressionBuilder.DetermineTargetColumnType(ColumnDataType, new HashSet<object>(_cachedColumnValues?.UniqueValues ?? new HashSet<object>()));
                 }
 
-                // Use the filter expression builder service
                 var result = _filterExpressionBuilder.BuildFilterExpression(SearchGroups, targetColumnType, forceTargetTypeAsString);
                 
                 if (!result.IsSuccess)
@@ -836,9 +827,12 @@ namespace WWSearchDataGrid.Modern.Core
                     return GetTemplateComponents(firstTemplate);
                 }
 
-                // Fallback to parsing the display text
-                var displayText = GetFilterDisplayText();
-                return FilterDisplayTextParser.ParseDisplayText(displayText, SearchType.Contains);
+                // failed to get filter chips, default to this.
+                return new FilterChipComponents
+                {
+                    SearchTypeText = "Advanced filter",
+                    HasNoInputValues = false
+                };
             }
             catch (Exception ex)
             {
@@ -884,14 +878,12 @@ namespace WWSearchDataGrid.Modern.Core
                         var template = templatesWithFilter[templateIndex];
                         var component = GetTemplateComponents(template);
 
-                        // Set group and template indices for operator targeting
                         component.GroupIndex = groupIndex;
                         component.TemplateIndex = templateIndex;
 
                         // Set operators for templates within the group
                         if (!isFirstTemplateInGroup)
                         {
-                            // Template-level operator (within a group)
                             component.Operator = template.OperatorName?.ToUpper() ?? "And";
                             component.IsGroupLevelOperator = false;
                         }
@@ -922,190 +914,9 @@ namespace WWSearchDataGrid.Modern.Core
             }
         }
 
-
-        /// <summary>
-        /// Gets a human-readable display text for the current filter state
-        /// </summary>
-        /// <returns>Description of the active filters</returns>
-        public string GetFilterDisplayText()
-        {
-            try
-            {
-                if (!HasCustomExpression || SearchGroups.Count == 0)
-                    return "No filter";
-
-                var groupTexts = new List<(string text, SearchTemplateGroup group)>();
-
-                foreach (var group in SearchGroups)
-                {
-                    var templateTexts = new List<(string text, SearchTemplate template)>();
-
-                    foreach (var template in group.SearchTemplates)
-                    {
-                        if (template.HasCustomFilter)
-                        {
-                            var templateText = GetTemplateDisplayText(template);
-                            if (!string.IsNullOrWhiteSpace(templateText))
-                            {
-                                templateTexts.Add((templateText, template));
-                            }
-                        }
-                    }
-
-                    if (templateTexts.Count > 0)
-                    {
-                        string groupText;
-                        if (templateTexts.Count == 1)
-                        {
-                            groupText = templateTexts[0].text;
-                        }
-                        else
-                        {
-                            // Combine templates within the group using their operators
-                            var combinedText = new System.Text.StringBuilder();
-                            combinedText.Append(templateTexts[0].text);
-
-                            for (int i = 1; i < templateTexts.Count; i++)
-                            {
-                                var operatorName = templateTexts[i].template.OperatorName?.ToUpper() ?? "And";
-                                combinedText.Append($" {operatorName} ");
-                                combinedText.Append(templateTexts[i].text);
-                            }
-
-                            groupText = $"({combinedText})";
-                        }
-
-                        groupTexts.Add((groupText, group));
-                    }
-                }
-
-                if (groupTexts.Count == 0)
-                    return "No filter";
-
-                if (groupTexts.Count == 1)
-                    return groupTexts[0].text;
-
-                // Combine groups using their operators
-                var result = new System.Text.StringBuilder();
-                result.Append(groupTexts[0].text);
-
-                for (int i = 1; i < groupTexts.Count; i++)
-                {
-                    var operatorName = groupTexts[i].group.OperatorName?.ToUpper() ?? "AND";
-                    result.Append($" {operatorName} ");
-                    result.Append(groupTexts[i].text);
-                }
-
-                return result.ToString();
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Error in GetFilterDisplayText: {ex.Message}");
-                return "Advanced filter";
-            }
-        }
-
         #endregion
 
         #region Private Methods
-
-        /// <summary>
-        /// Gets display text for a single search template
-        /// </summary>
-        private string GetTemplateDisplayText(SearchTemplate template)
-        {
-            try
-            {
-                var value = template.SelectedValue?.ToString();
-                var secondaryValue = template.SelectedSecondaryValue?.ToString();
-
-                switch (template.SearchType)
-                {
-                    case SearchType.Contains:
-                        return $"Contains '{value}'";
-                    case SearchType.DoesNotContain:
-                        return $"Does not contain '{value}'";
-                    case SearchType.Equals:
-                        return $"= '{value}'";
-                    case SearchType.NotEquals:
-                        // For NotEquals (exclusion logic), the actual excluded value is in SelectedValues
-                        if (template.SelectedValues?.Any() == true)
-                        {
-                            var firstValue = template.SelectedValues.First();
-                            var excludedValue = firstValue?.ToString() ?? "null";
-                            return $"≠ '{excludedValue}'";
-                        }
-                        else
-                        {
-                            return $"≠ '{value}'"; // Fallback to SelectedValue
-                        }
-                    case SearchType.StartsWith:
-                        return $"Starts with '{value}'";
-                    case SearchType.EndsWith:
-                        return $"Ends with '{value}'";
-                    case SearchType.Between:
-                        return $"Between '{value}' and '{secondaryValue}'";
-                    case SearchType.NotBetween:
-                        return $"Not between '{value}' and '{secondaryValue}'";
-                    case SearchType.BetweenDates:
-                        return $"Between dates '{FormatDateValue(value)}' and '{FormatDateValue(secondaryValue)}'";
-                    case SearchType.GreaterThan:
-                        return $"> '{value}'";
-                    case SearchType.GreaterThanOrEqualTo:
-                        return $">= '{value}'";
-                    case SearchType.LessThan:
-                        return $"< '{value}'";
-                    case SearchType.LessThanOrEqualTo:
-                        return $"<= '{value}'";
-                    case SearchType.IsLike:
-                        return $"Is like '{value}'";
-                    case SearchType.IsNotLike:
-                        return $"Is not like '{value}'";
-                    case SearchType.IsNull:
-                        return "Is null";
-                    case SearchType.IsNotNull:
-                        return "Is not null";
-                    case SearchType.TopN:
-                        return $"Top {value}";
-                    case SearchType.BottomN:
-                        return $"Bottom {value}";
-                    case SearchType.AboveAverage:
-                        return "Above average";
-                    case SearchType.BelowAverage:
-                        return "Below average";
-                    case SearchType.Unique:
-                        return "Unique values";
-                    case SearchType.Duplicate:
-                        return "Duplicate values";
-                    case SearchType.Yesterday:
-                        return "Is yesterday";
-                    case SearchType.Today:
-                        return "Is today";
-
-                    // Multi-value filters
-                    case SearchType.IsAnyOf:
-                        // Extract actual values from SelectableValueItem wrappers
-                        var anyOfValues = template.SelectedValues?.Select(v => v?.Value).Where(v => !string.IsNullOrEmpty(v));
-                        return FormatMultiValueFilter("In", anyOfValues);
-                    case SearchType.IsNoneOf:
-                        // Extract actual values from SelectableValueItem wrappers
-                        var noneOfValues = template.SelectedValues?.Select(v => v?.Value).Where(v => !string.IsNullOrEmpty(v));
-                        return FormatMultiValueFilter("Not in", noneOfValues);
-                    case SearchType.IsOnAnyOfDates:
-                        return FormatDateListFilter("In", template.SelectedDates);
-                    case SearchType.DateInterval:
-                        return FormatDateIntervalFilter(template.DateIntervals);
-
-                    default:
-                        return template.SearchType.ToString();
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Error in GetTemplateDisplayText: {ex.Message}");
-                return "Filter";
-            }
-        }
 
         private string FormatDateValue(string value)
         {

@@ -32,7 +32,7 @@ namespace WWSearchDataGrid.Modern.Core
         /// <returns>True if value was changed, false otherwise</returns>
         protected bool SetProperty<T>(T value, ref T field, [CallerMemberName] string propertyName = null)
         {
-            if (ObjectEqualityComparer.Instance.Equals(field, value))
+            if (EqualityComparer<T>.Default.Equals(field, value))
                 return false;
 
             field = value;
@@ -51,7 +51,7 @@ namespace WWSearchDataGrid.Modern.Core
         /// <returns>True if value was changed, false otherwise</returns>
         protected bool SetProperty<T>(T value, ref T field, Action onChanged, [CallerMemberName] string propertyName = null)
         {
-            if (ObjectEqualityComparer.Instance.Equals(field, value))
+            if (EqualityComparer<T>.Default.Equals(field, value))
                 return false;
 
             field = value;
@@ -60,5 +60,4 @@ namespace WWSearchDataGrid.Modern.Core
             return true;
         }
     }
-
 }

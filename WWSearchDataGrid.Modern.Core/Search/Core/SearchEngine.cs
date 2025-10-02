@@ -21,7 +21,6 @@ namespace WWSearchDataGrid.Modern.Core
         {
             try
             {
-                // Handle null cases first
                 if (columnValue == null && comparisonValue == null)
                     return 0;
                 if (columnValue == null)
@@ -29,7 +28,6 @@ namespace WWSearchDataGrid.Modern.Core
                 if (comparisonValue == null)
                     return 1;
 
-                // Convert both values to the same type for comparison
                 if (searchCondition.IsDateTime)
                 {
                     var columnDate = TypeTranslatorHelper.ConvertToDateTime(columnValue);
@@ -53,7 +51,6 @@ namespace WWSearchDataGrid.Modern.Core
                     return string.Compare(columnString, comparisonString, StringComparison.OrdinalIgnoreCase);
                 }
 
-                // Fallback to string comparison
                 return string.Compare(columnValue.ToString(), comparisonValue.ToString(), StringComparison.OrdinalIgnoreCase);
             }
             catch (Exception ex)

@@ -19,12 +19,12 @@
     <!--  Single SearchTextBox Template  -->
     <DataTemplate x:Key="SingleSearchTextBoxTemplate">
         <sdg:SearchTextBox Style="{StaticResource CustomSearchTextboxStyle}"
-                           Text="{Binding SelectedValue, UpdateSourceTrigger=PropertyChanged}"
-                           ItemsSource="{Binding SearchTemplateController.ColumnValues}"
-                           SelectedItem="{Binding SelectedItem, UpdateSourceTrigger=PropertyChanged}"
-                           ShowToggleButton="True"
-                           PreserveValueOnSourceChange="True"
-                           Watermark="Enter or select value..."/>
+                       Text="{Binding SelectedValue, UpdateSourceTrigger=PropertyChanged}"
+                       ItemsSource="{Binding SearchTemplateController.ColumnValues}"
+                       SelectedItem="{Binding SelectedItem, UpdateSourceTrigger=PropertyChanged}"
+                       ShowToggleButton="True"
+                       PreserveValueOnSourceChange="True"
+                       Watermark="Enter or select value..." />
     </DataTemplate>
 
     <!--  Dual SearchTextBox Template  -->
@@ -51,7 +51,7 @@
                                SelectedItem="{Binding SelectedSecondaryItem, UpdateSourceTrigger=PropertyChanged}"
                                ShowToggleButton="True"
                                PreserveValueOnSourceChange="True"
-                               Watermark="Enter or select..."/>
+                               Watermark="Enter or select..." />
         </StackPanel>
     </DataTemplate>
 

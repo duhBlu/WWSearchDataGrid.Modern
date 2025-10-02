@@ -4,9 +4,6 @@ using System.Text;
 
 namespace WWSearchDataGrid.Modern.Core
 {
-    /// <summary>
-    /// Command manager for WPF commands
-    /// </summary>
     internal static class CommandManager
     {
         public static event EventHandler RequerySuggested;
