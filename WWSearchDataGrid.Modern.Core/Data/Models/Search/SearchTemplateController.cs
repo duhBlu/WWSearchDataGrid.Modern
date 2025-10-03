@@ -75,6 +75,20 @@ namespace WWSearchDataGrid.Modern.Core
         }
 
         /// <summary>
+        /// Gets the occurrence count for each unique column value
+        /// Uses shared cache manager to eliminate data duplication
+        /// Values are loaded lazily when first accessed
+        /// </summary>
+        public IReadOnlyDictionary<object, int> ColumnValueCounts
+        {
+            get
+            {
+                EnsureColumnValuesLoaded();
+                return _cachedColumnValues?.ValueCounts ?? new Dictionary<object, int>();
+            }
+        }
+
+        /// <summary>
         /// Gets or sets the column data type
         /// </summary>
         public ColumnDataType ColumnDataType
@@ -82,8 +96,10 @@ namespace WWSearchDataGrid.Modern.Core
             get => columnDataType;
             set
             {
-                SetProperty(value, ref columnDataType);
-                UpdateTemplateDataTypes(value);
+                if(SetProperty(value, ref columnDataType))
+                {
+                    UpdateTemplateDataTypes(value);
+                }
             }
         }
         
@@ -430,9 +446,8 @@ namespace WWSearchDataGrid.Modern.Core
                 () => values ?? Enumerable.Empty<object>());
             
             _columnValuesProvider = null;
-            
-            // Determine column data type from the cached values
-            DetermineColumnDataTypeFromValues();
+
+            ColumnDataType = _cachedColumnValues.DataType;
         }
         
         /// <summary>
@@ -445,25 +460,31 @@ namespace WWSearchDataGrid.Modern.Core
                 try
                 {
                     _cachedColumnValues = ColumnValueCacheManager.Instance.GetOrCreateColumnValues(
-                        _cacheKey, 
+                        _cacheKey,
                         _columnValuesProvider);
-                    
-                    // Determine column data type from the cached values
-                    DetermineColumnDataTypeFromValues();
+
+                    ColumnDataType = _cachedColumnValues.DataType;
+
+                    // Notify bindings that ColumnValueCounts has changed
+                    OnPropertyChanged(nameof(ColumnValueCounts));
                 }
                 catch (Exception ex)
                 {
                     System.Diagnostics.Debug.WriteLine($"Error loading column values: {ex.Message}");
                     // Create empty cache entry to prevent repeated failures
                     _cachedColumnValues = ColumnValueCacheManager.Instance.GetOrCreateColumnValues(
-                        _cacheKey, 
+                        _cacheKey,
                         () => Enumerable.Empty<object>());
+
+                    // Notify bindings even for empty cache
+                    OnPropertyChanged(nameof(ColumnValueCounts));
                 }
             }
         }
         
         /// <summary>
         /// Determines column data type from cached values (called when values are first accessed)
+        /// The cache manager has already detected the type, so we just read it
         /// </summary>
         private void DetermineColumnDataTypeFromValues()
         {
@@ -472,11 +493,9 @@ namespace WWSearchDataGrid.Modern.Core
                 // Only determine data type if values are loaded
                 if (_cachedColumnValues != null && _cachedColumnValues.Count > 0)
                 {
-                    var detectedType = ReflectionHelper.DetermineColumnDataType(new HashSet<object>(_cachedColumnValues.UniqueValues));
-                    
-                    // Always update with the detected type from the full dataset
-                    // This overrides any previous sampling-based detection
-                    ColumnDataType = detectedType;
+                    // Get the data type that was already detected by the cache manager
+                    // This avoids duplicate type detection work
+                    ColumnDataType = _cachedColumnValues.DataType;
                 }
             }
             catch (Exception ex)
@@ -561,36 +580,6 @@ namespace WWSearchDataGrid.Modern.Core
             UpdateOperatorVisibility();
         }
         
-        /// <summary>
-        /// Loads column data into the search templates (legacy approach for backward compatibility)
-        /// </summary>
-        /// <param name="header">Column header</param>
-        /// <param name="values">Column values</param>
-        /// <param name="displayValueMappings">Mappings for display values</param>
-        /// <param name="bindingPath">The binding path for the column</param>
-        public void LoadColumnData(
-            object header,
-            HashSet<object> values,
-            string bindingPath = null)
-        {
-            SetColumnValues(values); // Use legacy approach
-            ColumnName = header;
-
-            // Auto-detect column data type when values are accessed
-            DetermineColumnDataTypeFromValues();
-
-            // Store column values by binding path for global filtering
-            if (!string.IsNullOrEmpty(bindingPath))
-            {
-                ColumnValuesByPath[bindingPath] = new HashSet<object>(ColumnValues);
-            }
-
-            AddSearchGroup(SearchGroups.Count == 0, false);
-
-            // Ensure operator visibility is properly set after loading
-            UpdateOperatorVisibility();
-        }
-
         /// <summary>
         /// Updates the filter expression based on current templates
         /// </summary>

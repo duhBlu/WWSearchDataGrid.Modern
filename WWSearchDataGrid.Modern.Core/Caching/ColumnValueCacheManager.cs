@@ -157,18 +157,21 @@ namespace WWSearchDataGrid.Modern.Core.Caching
     {
         private readonly List<object> _values;
         private readonly HashSet<object> _uniqueValues;
+        private readonly Dictionary<object, int> _valueCounts;
         private readonly bool _containsNullValues;
-        
+        private readonly ColumnDataType _dataType;
+
         public ColumnValueCache(IEnumerable<object> values)
         {
             if (values == null)
                 throw new ArgumentNullException(nameof(values));
 
             _uniqueValues = new HashSet<object>();
+            _valueCounts = new Dictionary<object, int>();
             var normalizedValues = new List<object>();
             bool hasNulls = false;
 
-            // Single pass for normalization, deduplication, and null detection
+            // Single pass for normalization, deduplication, null detection, and counting
             foreach (var value in values)
             {
                 // Skip null and blank values entirely - users can use IsNull/IsNotNull search types instead
@@ -178,26 +181,34 @@ namespace WWSearchDataGrid.Modern.Core.Caching
                     continue; // Don't add to available values
                 }
 
-                // Add non-null values
+                // Add non-null values and count occurrences
                 if (_uniqueValues.Add(value))
                 {
                     normalizedValues.Add(value);
+                    _valueCounts[value] = 1;
+                }
+                else
+                {
+                    _valueCounts[value]++;
                 }
             }
 
             _containsNullValues = hasNulls;
 
-            if (normalizedValues.Count <= 500000)
-            {
-                normalizedValues.Sort((x, y) => CompareValues(x, y));
-            }
+            // Detect data type from values
+            _dataType = DetectColumnDataType(normalizedValues);
+
+            // Always sort values using type-aware comparison
+            SortValuesByDataType(normalizedValues, _dataType);
 
             _values = normalizedValues;
         }
-        
+
         public IReadOnlyList<object> Values => _values;
         public IReadOnlyCollection<object> UniqueValues => _uniqueValues;
+        public IReadOnlyDictionary<object, int> ValueCounts => _valueCounts;
         public bool ContainsNullValues => _containsNullValues;
+        public ColumnDataType DataType => _dataType;
         public int Count => _values.Count;
 
         /// <summary>
@@ -214,6 +225,7 @@ namespace WWSearchDataGrid.Modern.Core.Caching
             {
                 var additionalValues = new List<object>();
                 var newUniqueValues = new HashSet<object>(_uniqueValues);
+                var newValueCounts = new Dictionary<object, int>(_valueCounts);
                 bool hasNewNulls = _containsNullValues;
 
                 // Process new values
@@ -226,10 +238,22 @@ namespace WWSearchDataGrid.Modern.Core.Caching
                         continue;
                     }
 
-                    // Add non-null values
+                    // Add non-null values and update counts
                     if (newUniqueValues.Add(value))
                     {
                         additionalValues.Add(value);
+                        newValueCounts[value] = 1;
+                    }
+                    else
+                    {
+                        if (newValueCounts.TryGetValue(value, out var existingCount))
+                        {
+                            newValueCounts[value] = existingCount + 1;
+                        }
+                        else
+                        {
+                            newValueCounts[value] = 1;
+                        }
                     }
                 }
 
@@ -243,14 +267,8 @@ namespace WWSearchDataGrid.Modern.Core.Caching
                 var combinedValues = new List<object>(_values);
                 combinedValues.AddRange(additionalValues);
 
-                // Re-sort if collection is reasonable size (same logic as constructor)
-                if (combinedValues.Count <= 500000)
-                {
-                    combinedValues.Sort((x, y) => CompareValues(x, y));
-                }
-
-                // Create new cache instance
-                return new ColumnValueCache(combinedValues, newUniqueValues, hasNewNulls);
+                // Create new cache instance (which will detect type and sort automatically)
+                return new ColumnValueCache(combinedValues, newUniqueValues, newValueCounts, hasNewNulls);
             }
             catch (Exception ex)
             {
@@ -287,6 +305,16 @@ namespace WWSearchDataGrid.Modern.Core.Caching
 
                 var filteredValues = _values.Where(v => !valuesToRemoveSet.Contains(v)).ToList();
                 var filteredUniqueValues = new HashSet<object>(filteredValues);
+                var filteredValueCounts = new Dictionary<object, int>();
+
+                // Rebuild counts for remaining values
+                foreach (var value in filteredValues)
+                {
+                    if (_valueCounts.TryGetValue(value, out var count))
+                    {
+                        filteredValueCounts[value] = count;
+                    }
+                }
 
                 // Update null tracking
                 bool hasNullsAfterRemoval = _containsNullValues && !removingNulls;
@@ -297,7 +325,7 @@ namespace WWSearchDataGrid.Modern.Core.Caching
                     return this;
                 }
 
-                return new ColumnValueCache(filteredValues, filteredUniqueValues, hasNullsAfterRemoval);
+                return new ColumnValueCache(filteredValues, filteredUniqueValues, filteredValueCounts, hasNullsAfterRemoval);
             }
             catch (Exception ex)
             {
@@ -309,18 +337,202 @@ namespace WWSearchDataGrid.Modern.Core.Caching
         /// <summary>
         /// Private constructor for creating cache instances from incremental operations
         /// </summary>
-        private ColumnValueCache(List<object> values, HashSet<object> uniqueValues, bool containsNulls)
+        private ColumnValueCache(List<object> values, HashSet<object> uniqueValues, Dictionary<object, int> valueCounts, bool containsNulls)
         {
             _values = values ?? throw new ArgumentNullException(nameof(values));
             _uniqueValues = uniqueValues ?? throw new ArgumentNullException(nameof(uniqueValues));
+            _valueCounts = valueCounts ?? throw new ArgumentNullException(nameof(valueCounts));
             _containsNullValues = containsNulls;
+
+            // Detect data type and sort
+            _dataType = DetectColumnDataType(_values);
+            SortValuesByDataType(_values, _dataType);
         }
 
-        private static int CompareValues(object x, object y)
+        /// <summary>
+        /// Sorts a list of values using type-aware comparison based on detected ColumnDataType
+        /// </summary>
+        private static void SortValuesByDataType(List<object> values, ColumnDataType dataType)
         {
-            var xStr = x?.ToString() ?? string.Empty;
-            var yStr = y?.ToString() ?? string.Empty;
+            if (values == null || values.Count <= 1)
+                return;
+
+            // Use type-specific sorting based on ColumnDataType
+            switch (dataType)
+            {
+                case ColumnDataType.Number:
+                    values.Sort(CompareAsNumber);
+                    break;
+                case ColumnDataType.DateTime:
+                    values.Sort(CompareAsDateTime);
+                    break;
+                case ColumnDataType.Boolean:
+                    values.Sort(CompareAsBoolean);
+                    break;
+                case ColumnDataType.Enum:
+                case ColumnDataType.String:
+                default:
+                    values.Sort(CompareAsString);
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// Detects the dominant ColumnDataType in a collection
+        /// Samples up to 100 values for performance
+        /// Uses the same logic as ReflectionHelper.DetermineColumnDataType
+        /// </summary>
+        private static ColumnDataType DetectColumnDataType(List<object> values)
+        {
+            if (values == null || values.Count == 0)
+                return ColumnDataType.String;
+
+            int sampleSize = Math.Min(100, values.Count);
+
+            for (int i = 0; i < sampleSize; i++)
+            {
+                var value = values[i];
+                if (value == null) continue;
+
+                var type = value.GetType();
+
+                // Check in priority order: DateTime > Boolean > Number > Enum > String
+                if (type == typeof(DateTime) || type == typeof(DateTimeOffset))
+                {
+                    return ColumnDataType.DateTime;
+                }
+
+                if (type == typeof(bool))
+                {
+                    return ColumnDataType.Boolean;
+                }
+
+                if (IsNumericType(type))
+                {
+                    return ColumnDataType.Number;
+                }
+
+                if (type.IsEnum)
+                {
+                    return ColumnDataType.Enum;
+                }
+            }
+
+            return ColumnDataType.String;
+        }
+
+        /// <summary>
+        /// Checks if a type is numeric (same logic as ReflectionHelper)
+        /// </summary>
+        private static bool IsNumericType(Type type)
+        {
+            return type == typeof(byte) || type == typeof(sbyte) ||
+                   type == typeof(short) || type == typeof(ushort) ||
+                   type == typeof(int) || type == typeof(uint) ||
+                   type == typeof(long) || type == typeof(ulong) ||
+                   type == typeof(float) || type == typeof(double) ||
+                   type == typeof(decimal);
+        }
+
+        /// <summary>
+        /// Compares two values as numbers (handles both integers and decimals)
+        /// Falls back to string comparison if conversion fails
+        /// </summary>
+        private static int CompareAsNumber(object x, object y)
+        {
+            if (x == null && y == null) return 0;
+            if (x == null) return -1;
+            if (y == null) return 1;
+
+            // Try to convert to double for universal numeric comparison
+            if (TryConvertToDouble(x, out double xDouble) && TryConvertToDouble(y, out double yDouble))
+            {
+                return xDouble.CompareTo(yDouble);
+            }
+
+            // Fallback to string comparison
+            return CompareAsString(x, y);
+        }
+
+        /// <summary>
+        /// Compares two values as DateTimes
+        /// </summary>
+        private static int CompareAsDateTime(object x, object y)
+        {
+            if (x == null && y == null) return 0;
+            if (x == null) return -1;
+            if (y == null) return 1;
+
+            // Direct DateTime comparison
+            if (x is DateTime xDateTime && y is DateTime yDateTime)
+            {
+                return xDateTime.CompareTo(yDateTime);
+            }
+
+            // DateTimeOffset comparison
+            if (x is DateTimeOffset xDateTimeOffset && y is DateTimeOffset yDateTimeOffset)
+            {
+                return xDateTimeOffset.CompareTo(yDateTimeOffset);
+            }
+
+            // Fallback to string comparison
+            return CompareAsString(x, y);
+        }
+
+        /// <summary>
+        /// Compares two values as booleans (false < true)
+        /// </summary>
+        private static int CompareAsBoolean(object x, object y)
+        {
+            if (x == null && y == null) return 0;
+            if (x == null) return -1;
+            if (y == null) return 1;
+
+            if (x is bool xBool && y is bool yBool)
+            {
+                return xBool.CompareTo(yBool);
+            }
+
+            // Fallback to string comparison
+            return CompareAsString(x, y);
+        }
+
+        /// <summary>
+        /// Compares two values as strings using ordinal ignore case
+        /// </summary>
+        private static int CompareAsString(object x, object y)
+        {
+            if (x == null && y == null) return 0;
+            if (x == null) return -1;
+            if (y == null) return 1;
+
+            var xStr = x.ToString();
+            var yStr = y.ToString();
+
             return string.Compare(xStr, yStr, StringComparison.OrdinalIgnoreCase);
+        }
+
+        /// <summary>
+        /// Tries to convert a value to double for decimal comparison
+        /// </summary>
+        private static bool TryConvertToDouble(object value, out double result)
+        {
+            result = 0;
+            if (value == null) return false;
+
+            var type = value.GetType();
+
+            // Direct conversions (fastest)
+            if (type == typeof(double)) { result = (double)value; return true; }
+            if (type == typeof(float)) { result = (float)value; return true; }
+            if (type == typeof(decimal)) { result = (double)(decimal)value; return true; }
+            if (type == typeof(int)) { result = (int)value; return true; }
+            if (type == typeof(long)) { result = (long)value; return true; }
+            if (type == typeof(short)) { result = (short)value; return true; }
+            if (type == typeof(byte)) { result = (byte)value; return true; }
+
+            // Try parse for other types
+            return double.TryParse(value.ToString(), out result);
         }
     }
     
@@ -331,20 +543,22 @@ namespace WWSearchDataGrid.Modern.Core.Caching
     internal class ReadOnlyColumnValues : IReadOnlyList<object>
     {
         private readonly ColumnValueCache _cache;
-        
+
         internal ReadOnlyColumnValues(ColumnValueCache cache)
         {
             _cache = cache ?? throw new ArgumentNullException(nameof(cache));
         }
-        
+
         public object this[int index] => _cache.Values[index];
         public int Count => _cache.Count;
         public bool ContainsNullValues => _cache.ContainsNullValues;
         public IReadOnlyCollection<object> UniqueValues => _cache.UniqueValues;
-        
+        public IReadOnlyDictionary<object, int> ValueCounts => _cache.ValueCounts;
+        public ColumnDataType DataType => _cache.DataType;
+
         public IEnumerator<object> GetEnumerator() => _cache.Values.GetEnumerator();
         System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
-        
+
         /// <summary>
         /// Checks if the collection contains a specific value
         /// </summary>

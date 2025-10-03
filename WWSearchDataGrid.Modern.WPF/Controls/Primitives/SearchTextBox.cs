@@ -1,4 +1,6 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Timers;
@@ -12,26 +14,78 @@ using WWSearchDataGrid.Modern.Core;
 namespace WWSearchDataGrid.Modern.WPF
 {
     /// <summary>
+    /// Sort mode for dropdown values
+    /// </summary>
+    public enum SearchTextBoxSortMode
+    {
+        /// <summary>
+        /// Sort by value (natural order: alphabetical, numeric, chronological)
+        /// </summary>
+        ByValue,
+
+        /// <summary>
+        /// Sort by occurrence count (most frequent first)
+        /// </summary>
+        ByQuantity
+    }
+
+    /// <summary>
+    /// Custom comparer that sorts by quantity (descending) then by value (ascending)
+    /// </summary>
+    internal class QuantityThenValueComparer : System.Collections.IComparer, System.Collections.Generic.IComparer<object>
+    {
+        private readonly IReadOnlyDictionary<object, int> _valueCounts;
+
+        public QuantityThenValueComparer(IReadOnlyDictionary<object, int> valueCounts)
+        {
+            _valueCounts = valueCounts;
+        }
+
+        public int Compare(object x, object y)
+        {
+            if (x == null && y == null) return 0;
+            if (x == null) return 1;
+            if (y == null) return -1;
+
+            // Get counts for both values
+            int xCount = _valueCounts != null && _valueCounts.TryGetValue(x, out var xc) ? xc : 0;
+            int yCount = _valueCounts != null && _valueCounts.TryGetValue(y, out var yc) ? yc : 0;
+
+            // Sort by count descending (higher counts first)
+            int countComparison = yCount.CompareTo(xCount);
+            if (countComparison != 0)
+                return countComparison;
+
+            // If counts are equal, sort by value ascending (alphabetical/natural order)
+            var xStr = x?.ToString() ?? string.Empty;
+            var yStr = y?.ToString() ?? string.Empty;
+            return string.Compare(xStr, yStr, StringComparison.OrdinalIgnoreCase);
+        }
+    }
+
+    /// <summary>
     /// A custom TextBox with watermark text and clear button functionality
     /// </summary>
     [TemplatePart(Name = PART_TextBox, Type = typeof(TextBox))]
     [TemplatePart(Name = PART_ClearButton, Type = typeof(Button))]
-    [TemplatePart(Name = PART_ToggleButton, Type = typeof(Button))]
+    [TemplatePart(Name = PART_SearchButton, Type = typeof(Button))]
     [TemplatePart(Name = PART_Popup, Type = typeof(Popup))]
     [TemplatePart(Name = PART_ListBox, Type = typeof(ListBox))]
-    public class SearchTextBox : Control
+    public class SearchTextBox : Control, INotifyPropertyChanged
     {
         private const string PART_TextBox = "PART_TextBox";
         private const string PART_ClearButton = "PART_ClearButton";
-        private const string PART_ToggleButton = "PART_ToggleButton";
+        private const string PART_SearchButton = "PART_SearchButton";
         private const string PART_Popup = "PART_Popup";
         private const string PART_ListBox = "PART_ListBox";
+        private const string PART_SortToggleButton = "PART_SortToggleButton";
 
         private TextBox _textBox;
         private Button _clearButton;
         private Button _toggleButton;
         private Popup _popup;
         private ListBox _listBox;
+        private Button _sortToggleButton;
         private bool _isNavigating;
         private Timer _textChangeTimer;
         private string _pendingText;
@@ -156,12 +210,29 @@ namespace WWSearchDataGrid.Modern.WPF
                 nameof(ItemsSource),
                 typeof(IEnumerable),
                 typeof(SearchTextBox),
-                new PropertyMetadata(null));
+                new PropertyMetadata(null, OnItemsSourceChanged));
 
         public IEnumerable ItemsSource
         {
             get => (IEnumerable)GetValue(ItemsSourceProperty);
             set => SetValue(ItemsSourceProperty, value);
+        }
+
+        /// <summary>
+        /// The actual items source used by the ListBox (may be sorted)
+        /// Internal property - updated automatically based on ItemsSource and SortMode
+        /// </summary>
+        public static readonly DependencyProperty ActualItemsSourceProperty =
+            DependencyProperty.Register(
+                nameof(ActualItemsSource),
+                typeof(IEnumerable),
+                typeof(SearchTextBox),
+                new PropertyMetadata(null));
+
+        public IEnumerable ActualItemsSource
+        {
+            get => (IEnumerable)GetValue(ActualItemsSourceProperty);
+            private set => SetValue(ActualItemsSourceProperty, value);
         }
 
 
@@ -233,6 +304,63 @@ namespace WWSearchDataGrid.Modern.WPF
             set => SetValue(IsPopupOpenProperty, value);
         }
 
+        /// <summary>
+        /// The sort mode for dropdown items (ByValue or ByQuantity)
+        /// </summary>
+        public static readonly DependencyProperty SortModeProperty =
+            DependencyProperty.Register(
+                nameof(SortMode),
+                typeof(SearchTextBoxSortMode),
+                typeof(SearchTextBox),
+                new PropertyMetadata(SearchTextBoxSortMode.ByValue, OnSortModeChanged));
+
+        public SearchTextBoxSortMode SortMode
+        {
+            get => (SearchTextBoxSortMode)GetValue(SortModeProperty);
+            set => SetValue(SortModeProperty, value);
+        }
+
+        /// <summary>
+        /// Dictionary of value occurrence counts for displaying counts in dropdown
+        /// </summary>
+        public static readonly DependencyProperty ColumnValueCountsProperty =
+            DependencyProperty.Register(
+                nameof(ColumnValueCounts),
+                typeof(IReadOnlyDictionary<object, int>),
+                typeof(SearchTextBox),
+                new PropertyMetadata(null, OnColumnValueCountsChanged));
+
+        public IReadOnlyDictionary<object, int> ColumnValueCounts
+        {
+            get => (IReadOnlyDictionary<object, int>)GetValue(ColumnValueCountsProperty);
+            set => SetValue(ColumnValueCountsProperty, value);
+        }
+
+        #endregion
+
+        #region Computed Properties for Binding
+
+        /// <summary>
+        /// Gets the text to display for the sort mode toggle button
+        /// </summary>
+        public string SortModeText
+        {
+            get
+            {
+                return SortMode == SearchTextBoxSortMode.ByQuantity
+                    ? "Sort: Quantity"
+                    : "Sort: Value";
+            }
+        }
+
+        /// <summary>
+        /// Gets whether the current sort mode is ByQuantity (for ToggleButton.IsChecked binding)
+        /// </summary>
+        public bool IsSortByQuantity
+        {
+            get => SortMode == SearchTextBoxSortMode.ByQuantity;
+        }
+
         #endregion
 
         #region Commands
@@ -246,6 +374,11 @@ namespace WWSearchDataGrid.Modern.WPF
         /// Command to toggle search mode
         /// </summary>
         public ICommand ToggleSearchCommand => new RelayCommand(_ => ToggleSearchMode(), _ => CanToggleSearch());
+
+        /// <summary>
+        /// Command to toggle sort mode between ByValue and ByQuantity
+        /// </summary>
+        public ICommand ToggleSortModeCommand => new RelayCommand(_ => ToggleSortMode());
 
         private void ClearText()
         {
@@ -266,6 +399,13 @@ namespace WWSearchDataGrid.Modern.WPF
         private bool CanToggleSearch()
         {
             return ItemsSource != null && ShowToggleButton;
+        }
+
+        private void ToggleSortMode()
+        {
+            SortMode = SortMode == SearchTextBoxSortMode.ByValue
+                ? SearchTextBoxSortMode.ByQuantity
+                : SearchTextBoxSortMode.ByValue;
         }
 
         #endregion
@@ -337,9 +477,10 @@ namespace WWSearchDataGrid.Modern.WPF
             // Get template parts
             _textBox = GetTemplateChild(PART_TextBox) as TextBox;
             _clearButton = GetTemplateChild(PART_ClearButton) as Button;
-            _toggleButton = GetTemplateChild(PART_ToggleButton) as Button;
+            _toggleButton = GetTemplateChild(PART_SearchButton) as Button;
             _popup = GetTemplateChild(PART_Popup) as Popup;
             _listBox = GetTemplateChild(PART_ListBox) as ListBox;
+            _sortToggleButton = GetTemplateChild(PART_SortToggleButton) as Button;
 
             // Hook up new events
             if (_textBox != null)
@@ -420,6 +561,24 @@ namespace WWSearchDataGrid.Modern.WPF
             control.OnIsPopupOpenChanged((bool)e.NewValue);
         }
 
+        private static void OnSortModeChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            var control = (SearchTextBox)d;
+            control.OnSortModeChanged();
+        }
+
+        private static void OnItemsSourceChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            var control = (SearchTextBox)d;
+            control.OnItemsSourceChanged();
+        }
+
+        private static void OnColumnValueCountsChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            var control = (SearchTextBox)d;
+            control.OnColumnValueCountsChanged();
+        }
+
         private void OnTextChanged(string newText)
         {
             if (_textBox != null && _textBox.Text != newText)
@@ -461,7 +620,24 @@ namespace WWSearchDataGrid.Modern.WPF
             IsSearchFocused = false;
             if (IsPopupOpen)
             {
-                IsPopupOpen = false;
+                // Don't close popup if the sort toggle button was clicked
+                // Use Dispatcher to delay the check so the new focused element is set
+                Dispatcher.BeginInvoke(new Action(() =>
+                {
+                    if (IsPopupOpen)
+                    {
+                        // Check if the currently focused element is the sort toggle button
+                        var focusedElement = Keyboard.FocusedElement as DependencyObject;
+                        if (_sortToggleButton == null || focusedElement != _sortToggleButton)
+                        {
+                            // Also check if it's the button itself (in case focus moved to the button)
+                            if (!(_sortToggleButton != null && _sortToggleButton.IsMouseOver))
+                            {
+                                IsPopupOpen = false;
+                            }
+                        }
+                    }
+                }), System.Windows.Threading.DispatcherPriority.Input);
             }
         }
 
@@ -483,6 +659,34 @@ namespace WWSearchDataGrid.Modern.WPF
             if (_popup != null)
             {
                 _popup.IsOpen = isOpen;
+            }
+        }
+
+        private void OnSortModeChanged()
+        {
+            // Update computed properties for binding
+            OnPropertyChanged(nameof(SortModeText));
+            OnPropertyChanged(nameof(IsSortByQuantity));
+
+            // Apply sorting to the ListBox (use Dispatcher to ensure bindings are evaluated)
+            Dispatcher.BeginInvoke(new Action(() =>
+            {
+                UpdateActualItemsSource();
+            }), System.Windows.Threading.DispatcherPriority.Loaded);
+        }
+
+        private void OnItemsSourceChanged()
+        {
+            // When ItemsSource changes, update the actual items source based on current sort mode
+            UpdateActualItemsSource();
+        }
+
+        private void OnColumnValueCountsChanged()
+        {
+            // When ColumnValueCounts changes, update sorting if we're in quantity mode
+            if (SortMode == SearchTextBoxSortMode.ByQuantity)
+            {
+                UpdateActualItemsSource();
             }
         }
 
@@ -657,6 +861,53 @@ namespace WWSearchDataGrid.Modern.WPF
             return -1; // No matching item found
         }
 
+        /// <summary>
+        /// Updates the ActualItemsSource based on the current SortMode and ItemsSource
+        /// </summary>
+        private void UpdateActualItemsSource()
+        {
+            if (ItemsSource == null)
+            {
+                ActualItemsSource = null;
+                return;
+            }
+
+            // Get the original items source as IEnumerable
+            var originalItems = ItemsSource as System.Collections.IEnumerable;
+            if (originalItems == null)
+            {
+                ActualItemsSource = null;
+                return;
+            }
+
+            if (SortMode == SearchTextBoxSortMode.ByQuantity)
+            {
+                var valueCounts = ColumnValueCounts;
+
+                // Check if ColumnValueCounts is null
+                if (valueCounts == null || valueCounts.Count == 0)
+                {
+                    ActualItemsSource = ItemsSource;
+                    return;
+                }
+
+                // Create a sorted list by quantity (descending), then by value (ascending)
+                var comparer = new QuantityThenValueComparer(valueCounts);
+                var sortedList = originalItems.Cast<object>()
+                    .OrderBy(x => x, comparer)
+                    .ToList();
+
+                // Set the sorted list
+                ActualItemsSource = sortedList;
+            }
+            else
+            {
+                // Sort by value (natural sort - use original order from cache)
+                // Use original ItemsSource to restore original order
+                ActualItemsSource = ItemsSource;
+            }
+        }
+
         #endregion
 
         #region Timer Methods
@@ -714,6 +965,17 @@ namespace WWSearchDataGrid.Modern.WPF
                     System.Diagnostics.Debug.WriteLine($"Error in OnTextChangeTimerElapsed: {ex.Message}");
                 }
             });
+        }
+
+        #endregion
+
+        #region INotifyPropertyChanged Implementation
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        protected virtual void OnPropertyChanged(string propertyName)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
         #endregion

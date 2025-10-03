@@ -37,7 +37,7 @@ namespace WWSearchDataGrid.Modern.WPF
         /// <summary>
         /// Gets or sets the template for operator tokens
         /// </summary>
-        public DataTemplate OperatorTemplate { get; set; }
+        public DataTemplate ValueOperatorTemplate { get; set; }
 
         /// <summary>
         /// Gets or sets the template for closing bracket tokens
@@ -76,7 +76,7 @@ namespace WWSearchDataGrid.Modern.WPF
                     FilterTokenType.SearchType => SearchTypeTemplate,
                     FilterTokenType.UnarySearchType => UnarySearchTypeTemplate,
                     FilterTokenType.Value => ValueTemplate,
-                    FilterTokenType.Operator => OperatorTemplate,
+                    FilterTokenType.Operator => ValueOperatorTemplate,
                     FilterTokenType.CloseBracket => CloseBracketTemplate,
                     FilterTokenType.GroupLogicalConnectorToken => GroupLogicalConnectorTemplate,
                     FilterTokenType.TemplateLogicalConnectorToken => TemplateLogicalConnectorTemplate,

@@ -17,19 +17,19 @@
     <converters:FilterInputTemplateToVisibilityConverter x:Key="FilterInputTemplateToVisibilityConverter" />
     <converters:EnumToStringConverter x:Key="EnumToStringConverter" />
 
-    <!--  Single SearchTextBox Template -->
+    <!--  Single SearchTextBox Template  -->
     <DataTemplate x:Key="SingleSearchTextBoxTemplate">
         <sdg:SearchTextBox Style="{StaticResource GenericSearchTextboxStyle}"
                            Text="{Binding SelectedValue, UpdateSourceTrigger=PropertyChanged}"
                            ItemsSource="{Binding SearchTemplateController.ColumnValues}"
                            SelectedItem="{Binding SelectedItem, UpdateSourceTrigger=PropertyChanged}"
+                           ColumnValueCounts="{Binding SearchTemplateController.ColumnValueCounts, UpdateSourceTrigger=PropertyChanged}"
                            ShowToggleButton="True"
                            PreserveValueOnSourceChange="True"
                            Watermark="Enter or select value..." />
     </DataTemplate>
 
-
-    <!--  Dual SearchTextBox Template -->
+    <!--  Dual SearchTextBox Template  -->
     <DataTemplate x:Key="DualSearchTextBoxTemplate">
         <StackPanel Orientation="Horizontal">
             <TextBlock Text="From:"
@@ -38,6 +38,7 @@
             <sdg:SearchTextBox Style="{StaticResource GenericSearchTextboxStyle}"
                                Text="{Binding SelectedValue, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
                                MinWidth="120"
+                               ColumnValueCounts="{Binding SearchTemplateController.ColumnValueCounts, UpdateSourceTrigger=PropertyChanged}"
                                ItemsSource="{Binding SearchTemplateController.ColumnValues}"
                                SelectedItem="{Binding SelectedItem, UpdateSourceTrigger=PropertyChanged}"
                                ShowToggleButton="True"
@@ -49,6 +50,7 @@
             <sdg:SearchTextBox Style="{StaticResource GenericSearchTextboxStyle}"
                                Text="{Binding SelectedSecondaryValue, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
                                MinWidth="120"
+                               ColumnValueCounts="{Binding SearchTemplateController.ColumnValueCounts, UpdateSourceTrigger=PropertyChanged}"
                                ItemsSource="{Binding SearchTemplateController.ColumnValues}"
                                SelectedItem="{Binding SelectedSecondaryItem, UpdateSourceTrigger=PropertyChanged}"
                                ShowToggleButton="True"
@@ -156,6 +158,7 @@
                                                    Grid.Column="0"
                                                    Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}"
                                                    ItemsSource="{Binding DataContext.SearchTemplateController.ColumnValues, RelativeSource={RelativeSource AncestorType=ListBox}}"
+                                                   ColumnValueCounts="{Binding SearchTemplateController.ColumnValueCounts, UpdateSourceTrigger=PropertyChanged}"
                                                    SelectedItem="{Binding SelectedItem, UpdateSourceTrigger=PropertyChanged}"
                                                    ShowToggleButton="True"
                                                    PreserveValueOnSourceChange="True"

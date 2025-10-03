@@ -6,6 +6,7 @@
     <!--  Converters  -->
     <converters:BooleanToVisibilityCollapsedConverter x:Key="BooleanToVisibilityCollapsedConverter" />
     <converters:StringToVisibilityConverter x:Key="StringToVisibilityConverter" />
+    <converters:ValueToCountConverter x:Key="ValueToCountConverter" />
 
     <!--  Default SearchTextBox Style  -->
     <Style x:Key="GenericSearchTextboxStyle" TargetType="{x:Type sdg:SearchTextBox}">
@@ -64,8 +65,8 @@
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
 
-                            <!--  Toggle Search Button  -->
-                            <Button x:Name="PART_ToggleButton"
+                            <!-- Search Button  -->
+                            <Button x:Name="PART_SearchButton"
                                     Grid.Column="0"
                                     Focusable="True"
                                     Margin="3,0,0,0"
@@ -75,17 +76,20 @@
                                     IsTabStop="True"
                                     ToolTip="Toggle search dropdown">
                                 <Button.Style>
-                                    <Style TargetType="Button">
+                                    <Style TargetType="{x:Type Button}">
                                         <Setter Property="Background" Value="Transparent" />
+                                        <Setter Property="BorderBrush" Value="Transparent" />
                                         <Setter Property="Foreground" Value="{StaticResource SearchTextBox.SearchIconBrush}" />
-                                        <Setter Property="BorderThickness" Value="0" />
+                                        <Setter Property="BorderThickness" Value="1" />
                                         <Setter Property="Cursor" Value="Hand" />
                                         <Setter Property="FontFamily" Value="Segoe MDL2 Assets" />
                                         <Setter Property="FontSize" Value="10" />
                                         <Setter Property="Template">
                                             <Setter.Value>
-                                                <ControlTemplate TargetType="Button">
+                                                <ControlTemplate TargetType="{x:Type Button}">
                                                     <Border Background="{TemplateBinding Background}"
+                                                            BorderBrush="{TemplateBinding BorderBrush}"
+                                                            BorderThickness="{TemplateBinding BorderThickness}"
                                                             CornerRadius="0"
                                                             SnapsToDevicePixels="True">
                                                         <TextBlock Foreground="{TemplateBinding Foreground}"
@@ -105,9 +109,11 @@
                                             </DataTrigger>
                                             <Trigger Property="IsMouseOver" Value="True">
                                                 <Setter Property="Background" Value="#FFF0F0F0" />
+                                                <Setter Property="BorderBrush" Value="#FFAAAAAA" />
                                             </Trigger>
                                             <Trigger Property="IsPressed" Value="True">
                                                 <Setter Property="Background" Value="#FFE0E0E0" />
+                                                <Setter Property="BorderBrush" Value="#FF999999" />
                                             </Trigger>
                                         </Style.Triggers>
                                     </Style>
@@ -234,49 +240,131 @@
                                         MinWidth="{Binding ActualWidth, RelativeSource={RelativeSource TemplatedParent}}"
                                         MaxHeight="200"
                                         CornerRadius="4">
-                                    <ListBox x:Name="PART_ListBox"
-                                             Background="Transparent"
-                                             BorderThickness="0"
-                                             ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                                             ScrollViewer.VerticalScrollBarVisibility="Auto"
-                                             VirtualizingPanel.IsVirtualizing="True"
-                                             VirtualizingPanel.VirtualizationMode="Recycling"
-                                             ItemsSource="{Binding ItemsSource, RelativeSource={RelativeSource TemplatedParent}}">
-                                        <ListBox.ItemsPanel>
-                                            <ItemsPanelTemplate>
-                                                <VirtualizingStackPanel Orientation="Vertical" />
-                                            </ItemsPanelTemplate>
-                                        </ListBox.ItemsPanel>
-                                        <ListBox.ItemTemplate>
-                                            <DataTemplate>
-                                                <sdg:HighlightTextBlock HighlightTextBlockText="{Binding}"
-                                                                        HighlightText="{Binding Text, RelativeSource={RelativeSource AncestorType=sdg:SearchTextBox}}"
-                                                                        TextWrapping="NoWrap"
-                                                                        TextTrimming="CharacterEllipsis">
-                                                    <sdg:HighlightTextBlock.HighlightRunStyle>
-                                                        <Style TargetType="Run">
-                                                            <Setter Property="FontWeight" Value="SemiBold" />
-                                                            <Setter Property="Background" Value="#44007acc" />
-                                                        </Style>
-                                                    </sdg:HighlightTextBlock.HighlightRunStyle>
-                                                </sdg:HighlightTextBlock>
-                                            </DataTemplate>
-                                        </ListBox.ItemTemplate>
-                                        <ListBox.ItemContainerStyle>
-                                            <Style TargetType="ListBoxItem">
-                                                <Setter Property="Padding" Value="8,4" />
-                                                <Setter Property="HorizontalContentAlignment" Value="Left" />
-                                                <Style.Triggers>
-                                                    <Trigger Property="IsMouseOver" Value="True">
-                                                        <Setter Property="Background" Value="#FFF0F0F0" />
-                                                    </Trigger>
-                                                    <Trigger Property="IsSelected" Value="True">
-                                                        <Setter Property="Background" Value="#FFE3F2FD" />
-                                                    </Trigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </ListBox.ItemContainerStyle>
-                                    </ListBox>
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="*" />
+                                        </Grid.RowDefinitions>
+
+                                        <!--  Header with Sort Toggle  -->
+                                        <Border Grid.Row="0"
+                                                Background="#FFF5F5F5"
+                                                BorderBrush="#FFDDDDDD"
+                                                BorderThickness="0,0,0,1"
+                                                Padding="4">
+                                            <Button x:Name="PART_SortToggleButton"
+                                                    HorizontalAlignment="Left"
+                                                    VerticalAlignment="Center"
+                                                    Command="{Binding ToggleSortModeCommand, RelativeSource={RelativeSource AncestorType={x:Type sdg:SearchTextBox}}}"
+                                                    Content="{Binding SortModeText, RelativeSource={RelativeSource TemplatedParent}}"
+                                                    FontSize="11"
+                                                    Padding="6,2">
+                                                <Button.Style>
+                                                    <Style TargetType="Button">
+                                                        <Setter Property="Background" Value="Transparent" />
+                                                        <Setter Property="Foreground" Value="#FF666666" />
+                                                        <Setter Property="BorderBrush" Value="#FFCCCCCC" />
+                                                        <Setter Property="BorderThickness" Value="1" />
+                                                        <Setter Property="Cursor" Value="Hand" />
+                                                        <Setter Property="Template">
+                                                            <Setter.Value>
+                                                                <ControlTemplate TargetType="Button">
+                                                                    <Border Background="{TemplateBinding Background}"
+                                                                            BorderBrush="{TemplateBinding BorderBrush}"
+                                                                            BorderThickness="{TemplateBinding BorderThickness}"
+                                                                            CornerRadius="3"
+                                                                            Padding="{TemplateBinding Padding}">
+                                                                        <ContentPresenter HorizontalAlignment="Center"
+                                                                                          VerticalAlignment="Center" />
+                                                                    </Border>
+                                                                </ControlTemplate>
+                                                            </Setter.Value>
+                                                        </Setter>
+                                                        <Style.Triggers>
+                                                            <Trigger Property="IsMouseOver" Value="True">
+                                                                <Setter Property="Background" Value="#FFF0F0F0" />
+                                                                <Setter Property="BorderBrush" Value="#FF999999" />
+                                                            </Trigger>
+                                                            <DataTrigger Binding="{Binding IsSortByQuantity, RelativeSource={RelativeSource TemplatedParent}}" Value="True">
+                                                                <Setter Property="Background" Value="#FFE3F2FD" />
+                                                                <Setter Property="BorderBrush" Value="#FF0078D4" />
+                                                                <Setter Property="Foreground" Value="#FF0078D4" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Button.Style>
+                                            </Button>
+                                        </Border>
+
+                                        <!--  ListBox with Items  -->
+                                        <ListBox x:Name="PART_ListBox"
+                                                 Grid.Row="1"
+                                                 Background="Transparent"
+                                                 BorderThickness="0"
+                                                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                                 ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                                 VirtualizingPanel.IsVirtualizing="True"
+                                                 VirtualizingPanel.VirtualizationMode="Recycling"
+                                                 ItemsSource="{Binding ActualItemsSource, RelativeSource={RelativeSource TemplatedParent}}">
+                                            <ListBox.ItemsPanel>
+                                                <ItemsPanelTemplate>
+                                                    <VirtualizingStackPanel Orientation="Vertical" />
+                                                </ItemsPanelTemplate>
+                                            </ListBox.ItemsPanel>
+                                            <ListBox.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Grid>
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="*" />
+                                                            <ColumnDefinition Width="Auto" />
+                                                        </Grid.ColumnDefinitions>
+
+                                                        <!--  Value with Highlighting  -->
+                                                        <sdg:HighlightTextBlock Grid.Column="0"
+                                                                                HighlightTextBlockText="{Binding}"
+                                                                                HighlightText="{Binding Text, RelativeSource={RelativeSource AncestorType=sdg:SearchTextBox}}"
+                                                                                TextWrapping="NoWrap"
+                                                                                TextTrimming="CharacterEllipsis">
+                                                            <sdg:HighlightTextBlock.HighlightRunStyle>
+                                                                <Style TargetType="{x:Type Run}">
+                                                                    <Setter Property="FontWeight" Value="SemiBold" />
+                                                                    <Setter Property="Background" Value="#44007acc" />
+                                                                </Style>
+                                                            </sdg:HighlightTextBlock.HighlightRunStyle>
+                                                        </sdg:HighlightTextBlock>
+
+                                                        <!--  Count Display  -->
+                                                        <TextBlock Grid.Column="1"
+                                                                   Margin="8,0,0,0"
+                                                                   Foreground="#FF999999"
+                                                                   FontSize="10"
+                                                                   VerticalAlignment="Center">
+                                                            <TextBlock.Text>
+                                                                <MultiBinding Converter="{StaticResource ValueToCountConverter}">
+                                                                    <Binding Path="." />
+                                                                    <Binding Path="ColumnValueCounts" RelativeSource="{RelativeSource AncestorType={x:Type sdg:SearchTextBox}}" />
+                                                                </MultiBinding>
+                                                            </TextBlock.Text>
+                                                        </TextBlock>
+                                                    </Grid>
+                                                </DataTemplate>
+                                            </ListBox.ItemTemplate>
+                                            <ListBox.ItemContainerStyle>
+                                                <Style TargetType="ListBoxItem">
+                                                    <Setter Property="Padding" Value="8,4" />
+                                                    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                                    <Style.Triggers>
+                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                            <Setter Property="Background" Value="#FFF0F0F0" />
+                                                        </Trigger>
+                                                        <Trigger Property="IsSelected" Value="True">
+                                                            <Setter Property="Background" Value="#FFE3F2FD" />
+                                                        </Trigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </ListBox.ItemContainerStyle>
+                                        </ListBox>
+                                    </Grid>
                                 </Border>
                             </Popup>
                         </Grid>
