@@ -12,6 +12,27 @@ namespace WWSearchDataGrid.Modern.WPF.Commands
     internal partial class ContextMenuCommands
     {
         /// <summary>
+        /// Opens the column management editor dialog
+        /// </summary>
+        public static ICommand ShowColumnChooserCommand => new RelayCommand<SearchDataGrid>(grid =>
+        {
+            try
+            {
+                var ColumnChooser = new ColumnChooser
+                {
+                    SourceDataGrid = grid
+                };
+
+                // Show the non-modal window
+                ColumnChooser.Show();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error in ShowColumnChooserCommand: {ex.Message}");
+            }
+        }, grid => grid != null);
+
+        /// <summary>
         /// Toggles the visibility of the totals/summary row
         /// </summary>
         public static ICommand ToggleTotalsRowCommand => new RelayCommand<SearchDataGrid>(grid =>

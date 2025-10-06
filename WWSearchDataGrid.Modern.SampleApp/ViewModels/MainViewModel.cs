@@ -209,6 +209,8 @@ namespace WWSearchDataGrid.Modern.SampleApp
                 NullableGuidValue = rnd.NextDouble() < 0.22 ? null : (Guid?)Guid.NewGuid(),
                 PriorityValue = priorityValue,
                 NullablePriorityValue = rnd.NextDouble() < 0.23 ? null : (Priority?)priorityValue,
+                IsActiveTemplate = rnd.NextDouble() < 0.65,
+                CurrencyTemplate = (decimal)(rnd.NextDouble() * 50000),
             };
         }
 

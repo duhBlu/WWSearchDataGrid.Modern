@@ -16,8 +16,7 @@ namespace WWSearchDataGrid.Modern.WPF.Commands
         /// </summary>
         public static ICommand ClearAllFiltersCommand => new RelayCommand<SearchDataGrid>(grid =>
         {
-            Debug.WriteLine($"[PLACEHOLDER] Clear All Filters - Not implemented");
-            // TODO: Call grid.ClearAllFilters()
+            grid.ClearAllFilters();
         }, grid => grid?.DataColumns?.Any(c => c.HasActiveFilter) == true);
 
 
@@ -26,8 +25,7 @@ namespace WWSearchDataGrid.Modern.WPF.Commands
         /// </summary>
         public static ICommand ClearColumnFilterCommand => new RelayCommand<ColumnSearchBox>(columnSearchBox =>
         {
-            Debug.WriteLine($"[PLACEHOLDER] Clear Column Filter: Column '{columnSearchBox?.CurrentColumn?.Header}' - Not implemented");
-            // TODO: Call columnSearchBox.ClearFilter()
+            columnSearchBox.ClearFilter();
         }, columnSearchBox => columnSearchBox?.HasActiveFilter == true);
 
     }

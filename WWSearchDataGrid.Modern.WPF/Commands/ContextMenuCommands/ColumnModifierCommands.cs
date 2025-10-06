@@ -18,27 +18,6 @@ namespace WWSearchDataGrid.Modern.WPF.Commands
         #region Visibility & Layout Commands
 
         /// <summary>
-        /// Opens the column management editor dialog
-        /// </summary>
-        public static ICommand ShowColumnChooserCommand => new RelayCommand<SearchDataGrid>(grid =>
-        {
-            try
-            {
-                var ColumnChooser = new ColumnChooser
-                {
-                    SourceDataGrid = grid
-                };
-
-                // Show the non-modal window
-                ColumnChooser.Show();
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"Error in ShowColumnChooserCommand: {ex.Message}");
-            }
-        }, grid => grid != null);
-
-        /// <summary>
         /// Hides the selected column
         /// </summary>
         public static ICommand HideSelectedColumnCommand => new RelayCommand<DataGridColumn>(column =>

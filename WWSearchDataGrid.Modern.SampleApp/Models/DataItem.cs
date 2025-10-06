@@ -49,5 +49,9 @@ namespace WWSearchDataGrid.Modern.SampleApp
         // Enum types
         public Priority PriorityValue { get; set; }
         public Priority? NullablePriorityValue { get; set; }
+
+        // Template column properties
+        public bool IsActiveTemplate { get; set; }
+        public decimal CurrencyTemplate { get; set; }
     }
 }

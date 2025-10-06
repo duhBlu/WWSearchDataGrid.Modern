@@ -1075,13 +1075,8 @@ namespace WWSearchDataGrid.Modern.WPF
                     // Read the JSON file
                     string json = System.IO.File.ReadAllText(dialog.FileName);
 
-                    // Try to determine if this is a global or per-column filter
-                    bool isGlobal = json.Contains("\"FilterMode\":\"Global\"");
-
-
                     // Clear existing filters
                     ClearAllFilters();
-
 
                     // Deserialize from JSON
                     var filterData = Newtonsoft.Json.JsonConvert.DeserializeObject<List<dynamic>>(json);
@@ -1115,6 +1110,85 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
+        /// Extracts the text content from a column header, handling both simple strings and template headers
+        /// </summary>
+        /// <param name="column">The DataGrid column</param>
+        /// <returns>The extracted header text, or null if no text could be found</returns>
+        internal static string ExtractColumnHeaderText(DataGridColumn column)
+        {
+            if (column == null)
+                return null;
+
+            var header = column.Header;
+            if (header == null)
+                return null;
+
+            // If header is already a string, return it directly
+            if (header is string headerString)
+                return headerString;
+
+            // If header is a FrameworkElement (template), extract text from it
+            if (header is FrameworkElement element)
+            {
+                return ExtractTextFromVisualTree(element);
+            }
+
+            // Fallback: try ToString()
+            return header.ToString();
+        }
+
+        /// <summary>
+        /// Recursively extracts text content from a visual tree, prioritizing common text-bearing controls
+        /// </summary>
+        /// <param name="element">The root element to search</param>
+        /// <returns>The extracted text, or null if no text could be found</returns>
+        internal static string ExtractTextFromVisualTree(DependencyObject element)
+        {
+            if (element == null)
+                return null;
+
+            // Check common text-bearing controls first
+            switch (element)
+            {
+                case TextBlock textBlock:
+                    if (!string.IsNullOrWhiteSpace(textBlock.Text))
+                        return textBlock.Text;
+                    break;
+
+                case System.Windows.Controls.Label label:
+                    if (label.Content is string labelText && !string.IsNullOrWhiteSpace(labelText))
+                        return labelText;
+                    else if (label.Content is FrameworkElement labelContent)
+                        return ExtractTextFromVisualTree(labelContent);
+                    break;
+
+                case TextBox textBox:
+                    if (!string.IsNullOrWhiteSpace(textBox.Text))
+                        return textBox.Text;
+                    break;
+
+                case ContentControl contentControl:
+                    if (contentControl.Content is string contentText && !string.IsNullOrWhiteSpace(contentText))
+                        return contentText;
+                    else if (contentControl.Content is FrameworkElement contentElement)
+                        return ExtractTextFromVisualTree(contentElement);
+                    break;
+            }
+
+            // Recursively search children in the visual tree
+            int childCount = VisualTreeHelper.GetChildrenCount(element);
+            for (int i = 0; i < childCount; i++)
+            {
+                var child = VisualTreeHelper.GetChild(element, i);
+                var text = ExtractTextFromVisualTree(child);
+                if (!string.IsNullOrWhiteSpace(text))
+                    return text;
+            }
+
+            return null;
+        }
+
+        /// <summary>
         /// Gets the active column filters for the filter panel
         /// </summary>
         /// <returns>Collection of active filter information</returns>
@@ -1143,7 +1217,7 @@ namespace WWSearchDataGrid.Modern.WPF
 
                 var filterInfo = new ColumnFilterInfo
                 {
-                    ColumnName = column.CurrentColumn?.Header?.ToString() ?? "Unknown",
+                    ColumnName = ExtractColumnHeaderText(column.CurrentColumn) ?? "Unknown",
                     BindingPath = column.BindingPath,
                     IsActive = true,
                     FilterData = column,
