@@ -6,6 +6,7 @@
         xmlns:local="clr-namespace:WWSearchDataGrid.Modern.SampleApp"
         xmlns:sdg="clr-namespace:WWSearchDataGrid.Modern.WPF;assembly=WWSearchDataGrid.Modern.WPF"
         xmlns:sdgCore="clr-namespace:WWSearchDataGrid.Modern.Core;assembly=WWSearchDataGrid.Modern.Core"
+        xmlns:sampleConverters="clr-namespace:WWSearchDataGrid.Modern.SampleApp.Converters"
         Title="SearchDataGrid Demo"
         Width="1280"
         Height="800"
@@ -16,10 +17,15 @@
     </Window.DataContext>
 
     <Window.Resources>
+
+        <!--  Converters  -->
+        <sampleConverters:BooleanToStringConverter x:Key="BooleanToStringConverter" />
+
+        <!--  Data  -->
         <CollectionViewSource x:Key="ComboBoxItemsSource" Source="{Binding ComboBoxItems}" />
         <CollectionViewSource x:Key="ComboBoxStringSource" Source="{Binding ComboBoxStringValues}" />
 
-
+        <!--  Non sdg Styles  -->
         <Style x:Key="DefaultButtonStyle" TargetType="Button">
             <Setter Property="Padding" Value="10,5" />
             <Setter Property="Background" Value="#FFFFFF" />
@@ -326,18 +332,8 @@
                             <DataTemplate>
                                 <ToggleButton IsChecked="{Binding IsActiveTemplate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                               HorizontalAlignment="Center"
-                                              VerticalAlignment="Center" >
-                                    <ToggleButton.Style>
-                                        <Style TargetType="{x:Type ToggleButton}">
-                                            <Setter Property="Content" Value="Yes" />
-                                            <Style.Triggers>
-                                                <Trigger Property="IsChecked" Value="False">
-                                                    <Setter Property="Content" Value="No" />
-                                                </Trigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </ToggleButton.Style>
-                                </ToggleButton>
+                                              VerticalAlignment="Center"
+                                              Content="{Binding IsActiveTemplate, Converter={StaticResource BooleanToStringConverter}, ConverterParameter='Yes,No'}" />
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
