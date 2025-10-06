@@ -60,12 +60,11 @@
 
     <DockPanel>
         <!--  Header with app title  -->
-        <StackPanel Orientation="Horizontal" Background="white">
-                    <StackPanel.Resources>
-                        <ScaleTransform ScaleX="0.8" 
-                                        ScaleY="0.8" x:Key="scale" />
-                    </StackPanel.Resources>
-                    <!--<Image Height="18" Width="18" Margin="5" Source="{StaticResource EqualsDrawingImage}" />
+        <StackPanel Background="white" Orientation="Horizontal">
+            <StackPanel.Resources>
+                <ScaleTransform x:Key="scale" ScaleX="0.8" ScaleY="0.8" />
+            </StackPanel.Resources>
+            <!--<Image Height="18" Width="18" Margin="5" Source="{StaticResource EqualsDrawingImage}" />
                     <Image Height="18" Width="18" Margin="5" Source="{StaticResource Does_not_equalDrawingImage}" />
                     <Image Height="18" Width="18" Margin="5" Source="{StaticResource Is_greater_thanDrawingImage}" />
                     <Image Height="18" Width="18" Margin="5" Source="{StaticResource Is_greater_than_or_equal_toDrawingImage}" />
@@ -103,7 +102,7 @@
                     <Image Height="18" Width="18" Margin="5" Source="{StaticResource Is_Earlier_This_MonthDrawingImage}" />
                     <Image Height="18" Width="18" Margin="5" Source="{StaticResource Is_Earlier_This_YearDrawingImage}" />
                     <Image Height="18" Width="18" Margin="5" Source="{StaticResource Is_Prior_This_YearDrawingImage}" />-->
-                </StackPanel>
+        </StackPanel>
 
         <!--  Control Panel  -->
         <Grid DockPanel.Dock="Bottom" Background="#F0F0F0">
@@ -121,7 +120,7 @@
                            VerticalAlignment="Center"
                            FontWeight="Bold" />
                 <TextBlock Text="{Binding ItemCount}" VerticalAlignment="Center" />
-                
+
                 <TextBlock Text="Filtered Rows: "
                            Margin="10,0,0,0"
                            VerticalAlignment="Center"
@@ -129,11 +128,25 @@
                 <TextBlock Text="{Binding ElementName=DataGrid, Path=Items.Count, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center" />
             </StackPanel>
 
+            <Button Style="{StaticResource DefaultButtonStyle}"
+                    Grid.Column="0"
+                    Grid.ColumnSpan="2"
+                    Background="#6A4C93"
+                    Foreground="White"
+                    Command="{Binding ToggleThemeCommand}"
+                    Margin="5"
+                    Padding="10,5"
+                    HorizontalAlignment="Center">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Theme: " />
+                    <TextBlock Text="{Binding CurrentThemeName}" FontWeight="Bold" />
+                </StackPanel>
+            </Button>
+
             <!--  Buttons  -->
-            <StackPanel Grid.Column="1"
-                        Orientation="Horizontal"
-                        HorizontalAlignment="Right">
-                <sdg:NumericUpDown Value="{Binding ItemsToGenerate, Mode=TwoWay}" Increment="1000"/>
+            <StackPanel Grid.Column="1" Orientation="Horizontal">
+
+                <sdg:NumericUpDown Increment="1000" Value="{Binding ItemsToGenerate, Mode=TwoWay}" />
                 <Button Style="{StaticResource DefaultButtonStyle}"
                         Background="#007ACC"
                         Foreground="White"
@@ -180,7 +193,9 @@
                             Header="Customer Name"
                             Binding="{Binding CustomerName}" />
 
-                    --><!--  Boolean Types  --><!--
+            -->
+            <!--  Boolean Types  -->
+            <!--
                     <DataGridCheckBoxColumn Width="80"
                                 Header="Bool Value"
                                 Binding="{Binding BoolValue}" />
@@ -188,7 +203,9 @@
                                 Header="Nullable Bool"
                                 Binding="{Binding NullableBoolValue}" />
 
-                    --><!--  Integer Types  --><!--
+            -->
+            <!--  Integer Types  -->
+            <!--
                     <DataGridTextColumn Width="80"
                             Header="Int"
                             Binding="{Binding IntValue}" />
@@ -214,7 +231,9 @@
                             Header="Nullable Byte"
                             Binding="{Binding NullableByteValue}" />
 
-                    --><!--  Floating-point and Decimal Types  --><!--
+            -->
+            <!--  Floating-point and Decimal Types  -->
+            <!--
                     <DataGridTextColumn Width="80"
                             Header="Float"
                             Binding="{Binding FloatValue, StringFormat=N2}" />
@@ -234,7 +253,9 @@
                             Header="Nullable Decimal"
                             Binding="{Binding NullableDecimalValue, StringFormat=N2}" />
 
-                    --><!--  Text Types  --><!--
+            -->
+            <!--  Text Types  -->
+            <!--
                     <DataGridTextColumn Width="100"
                             Header="String Value"
                             Binding="{Binding StringValue}" />
@@ -245,7 +266,9 @@
                             Header="Nullable Char"
                             Binding="{Binding NullableCharValue}" />
 
-                    --><!--  Date and Time Types with Precision  --><!--
+            -->
+            <!--  Date and Time Types with Precision  -->
+            <!--
                     <DataGridTextColumn Width="140"
                             Header="DateTime"
                             Binding="{Binding DateTimeValue, StringFormat=g}" />
@@ -259,7 +282,9 @@
                             Header="Nullable TimeSpan"
                             Binding="{Binding NullableTimeSpanValue}" />
 
-                    --><!--  GUID Types  --><!--
+            -->
+            <!--  GUID Types  -->
+            <!--
                     <DataGridTextColumn Width="120"
                             Header="GUID"
                             Binding="{Binding GuidValue}" />
@@ -267,7 +292,9 @@
                             Header="Nullable GUID"
                             Binding="{Binding NullableGuidValue}" />
 
-                    --><!--  Enum Types  --><!--
+            -->
+            <!--  Enum Types  -->
+            <!--
                     <DataGridTextColumn Width="80"
                             Header="Priority Enum"
                             Binding="{Binding PriorityValue}" />
@@ -290,11 +317,11 @@
 
                 <sdg:SearchDataGrid.Columns>
                     <DataGridTextColumn Width="120"
-                                        Header="Customer Name"
                                         sdg:ColumnSearchBox.EnableComplexFiltering="False"
+                                        Header="Customer Name"
                                         Binding="{Binding CustomerName}" />
 
-                      <!--Boolean Types-->  
+                    <!--  Boolean Types  -->
                     <DataGridCheckBoxColumn Width="80"
                                             Header="Bool Value"
                                             Binding="{Binding BoolValue}" />
@@ -302,7 +329,7 @@
                                             Header="Nullable Bool"
                                             Binding="{Binding NullableBoolValue}" />
 
-                      <!--Integer Types-->  
+                    <!--  Integer Types  -->
                     <DataGridTextColumn Width="80"
                                         Header="Int"
                                         Binding="{Binding IntValue}" />
@@ -328,7 +355,7 @@
                                         Header="Nullable Byte"
                                         Binding="{Binding NullableByteValue}" />
 
-                      <!--Floating-point and Decimal Types-->  
+                    <!--  Floating-point and Decimal Types  -->
                     <DataGridTextColumn Width="80"
                                         Header="Float"
                                         Binding="{Binding FloatValue, StringFormat=N2}" />
@@ -348,7 +375,7 @@
                                         Header="Nullable Decimal"
                                         Binding="{Binding NullableDecimalValue, StringFormat=N2}" />
 
-                      <!--Text Types-->  
+                    <!--  Text Types  -->
                     <DataGridTextColumn Width="100"
                                         Header="String Value"
                                         Binding="{Binding StringValue}" />
@@ -359,7 +386,7 @@
                                         Header="Nullable Char"
                                         Binding="{Binding NullableCharValue}" />
 
-                      <!--Date and Time Types with Precision-->  
+                    <!--  Date and Time Types with Precision  -->
                     <DataGridTextColumn Width="140"
                                         Header="DateTime"
                                         Binding="{Binding DateTimeValue, StringFormat=g}" />
@@ -373,7 +400,7 @@
                                         Header="Nullable TimeSpan"
                                         Binding="{Binding NullableTimeSpanValue}" />
 
-                      <!--GUID Types-->  
+                    <!--  GUID Types  -->
                     <DataGridTextColumn Width="120"
                                         Header="GUID"
                                         Binding="{Binding GuidValue}" />
@@ -381,7 +408,7 @@
                                         Header="Nullable GUID"
                                         Binding="{Binding NullableGuidValue}" />
 
-                      <!--Enum Types-->  
+                    <!--  Enum Types  -->
                     <DataGridTextColumn Width="80"
                                         Header="Priority Enum"
                                         Binding="{Binding PriorityValue}" />

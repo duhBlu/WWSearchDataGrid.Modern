@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using WWSearchDataGrid.Modern.WPF;
 using WWSearchDataGrid.Modern.SampleApp.Models;
+using WWSearchDataGrid.Modern.SampleApp.Services;
 
 namespace WWSearchDataGrid.Modern.SampleApp
 {
@@ -35,6 +36,9 @@ namespace WWSearchDataGrid.Modern.SampleApp
 
         [ObservableProperty]
         private int _itemsToGenerate = 5000;
+
+        [ObservableProperty]
+        private string _currentThemeName = "Custom";
 
         // Reference to the SearchDataGrid for memory cleanup operations
         private SearchDataGrid _searchDataGrid;
@@ -114,6 +118,16 @@ namespace WWSearchDataGrid.Modern.SampleApp
             // Clear cached data in the SearchDataGrid to prevent memory leaks
             GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced, blocking: true, compacting: true);
             GC.WaitForPendingFinalizers();
+        }
+
+        [RelayCommand]
+        private void ToggleTheme()
+        {
+            var currentTheme = ThemeManager.Instance.CurrentTheme;
+            var newTheme = currentTheme == ThemeType.Custom ? ThemeType.Generic : ThemeType.Custom;
+
+            ThemeManager.Instance.SwitchTheme(newTheme);
+            CurrentThemeName = newTheme.ToString();
         }
 
         #endregion

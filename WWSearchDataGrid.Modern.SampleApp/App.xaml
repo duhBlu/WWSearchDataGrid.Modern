@@ -8,6 +8,7 @@
             <ResourceDictionary.MergedDictionaries>
                 <!--<ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF;component/Themes/Generic.xaml"/>-->
 
+                <ResourceDictionary Source="/Styles/SearchDataGridControlStyles/ThemeResources.xaml" />
                 <ResourceDictionary Source="/Styles/SearchDataGridControlStyles/Primitives/NumericUpDownStyles.xaml" />
                 <ResourceDictionary Source="/Styles/SearchDataGridControlStyles/Primitives/SearchTextBoxStyles.xaml" />
                 <ResourceDictionary Source="/Styles/DefaultControlStyles.xaml" />
