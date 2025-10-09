@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Diagnostics;
@@ -8,6 +9,7 @@ using System.Timers;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
+using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
@@ -44,7 +46,6 @@ namespace WWSearchDataGrid.Modern.WPF
         #region Fields
 
         private TextBox searchTextBox;
-        private Button advancedFilterButton;
         private CheckBox filterCheckBox;
         private Popup _filterPopup;
         private ColumnFilterEditor _filterContent;
@@ -420,7 +421,7 @@ namespace WWSearchDataGrid.Modern.WPF
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error in OnSourceDataGridCollectionChanged: {ex.Message}");
+                Debug.WriteLine($"Error in OnSourceDataGridCollectionChanged: {ex.Message}");
                 SearchTemplateController?.RefreshColumnValues();
             }
         }
@@ -428,7 +429,7 @@ namespace WWSearchDataGrid.Modern.WPF
         /// <summary>
         /// Handles items being added to the collection by accumulating values for batch processing
         /// </summary>
-        private void HandleItemsAdded(System.Collections.IList newItems)
+        private void HandleItemsAdded(IList newItems)
         {
             if (newItems == null || newItems.Count == 0) return;
 
@@ -439,7 +440,7 @@ namespace WWSearchDataGrid.Modern.WPF
         /// <summary>
         /// Handles items being removed from the collection by accumulating values for batch processing
         /// </summary>
-        private void HandleItemsRemoved(System.Collections.IList oldItems)
+        private void HandleItemsRemoved(IList oldItems)
         {
             if (oldItems == null || oldItems.Count == 0) return;
 
@@ -450,7 +451,7 @@ namespace WWSearchDataGrid.Modern.WPF
         /// <summary>
         /// Handles items being replaced in the collection by accumulating both old and new values
         /// </summary>
-        private void HandleItemsReplaced(System.Collections.IList oldItems, System.Collections.IList newItems)
+        private void HandleItemsReplaced(IList oldItems, IList newItems)
         {
             if (oldItems != null && oldItems.Count > 0)
             {
@@ -468,7 +469,7 @@ namespace WWSearchDataGrid.Modern.WPF
         /// </summary>
         /// <param name="items">Items to extract values from</param>
         /// <param name="isAddition">True for additions, false for removals</param>
-        private void AccumulateColumnValuesForBatch(System.Collections.IList items, bool isAddition)
+        private void AccumulateColumnValuesForBatch(IList items, bool isAddition)
         {
             if (string.IsNullOrEmpty(BindingPath) || SearchTemplateController == null)
                 return;
@@ -495,7 +496,7 @@ namespace WWSearchDataGrid.Modern.WPF
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error accumulating column values for batch: {ex.Message}");
+                Debug.WriteLine($"Error accumulating column values for batch: {ex.Message}");
                 // Fallback to full refresh on error
                 SearchTemplateController?.RefreshColumnValues();
             }
@@ -533,7 +534,7 @@ namespace WWSearchDataGrid.Modern.WPF
                 }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Debug.WriteLine($"Error processing batch updates: {ex.Message}");
+                    Debug.WriteLine($"Error processing batch updates: {ex.Message}");
                     // Fallback to full refresh on error
                     SearchTemplateController?.RefreshColumnValues();
                 }
@@ -717,7 +718,7 @@ namespace WWSearchDataGrid.Modern.WPF
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error in OnSourceDataGridItemsSourceChanged: {ex.Message}");
+                Debug.WriteLine($"Error in OnSourceDataGridItemsSourceChanged: {ex.Message}");
             }
         }
 
@@ -738,7 +739,7 @@ namespace WWSearchDataGrid.Modern.WPF
                         return;
                     }
                 }
-            }), System.Windows.Threading.DispatcherPriority.Background);
+            }), DispatcherPriority.Background);
         }
         
         private bool IsWithinSearchBox(DependencyObject element)
@@ -801,7 +802,7 @@ namespace WWSearchDataGrid.Modern.WPF
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error in OnCheckboxPreviewKeyDown: {ex.Message}");
+                Debug.WriteLine($"Error in OnCheckboxPreviewKeyDown: {ex.Message}");
             }
         }
 
@@ -830,7 +831,7 @@ namespace WWSearchDataGrid.Modern.WPF
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error in OnCheckboxPreviewMouseDown: {ex.Message}");
+                Debug.WriteLine($"Error in OnCheckboxPreviewMouseDown: {ex.Message}");
             }
         }
 
@@ -850,7 +851,7 @@ namespace WWSearchDataGrid.Modern.WPF
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error in OnCheckboxFilterChanged: {ex.Message}");
+                Debug.WriteLine($"Error in OnCheckboxFilterChanged: {ex.Message}");
             }
         }
 
@@ -913,7 +914,7 @@ namespace WWSearchDataGrid.Modern.WPF
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error in CycleCheckboxStateForward: {ex.Message}");
+                Debug.WriteLine($"Error in CycleCheckboxStateForward: {ex.Message}");
                 // Fallback to safe state
                 ResetCheckboxToInitialState();
             }
@@ -931,7 +932,7 @@ namespace WWSearchDataGrid.Modern.WPF
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error in ResetCheckboxToInitialState: {ex.Message}");
+                Debug.WriteLine($"Error in ResetCheckboxToInitialState: {ex.Message}");
             }
         }
 
@@ -950,7 +951,7 @@ namespace WWSearchDataGrid.Modern.WPF
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error in SetCheckboxCycleState: {ex.Message}");
+                Debug.WriteLine($"Error in SetCheckboxCycleState: {ex.Message}");
             }
         }
 
@@ -1080,7 +1081,7 @@ namespace WWSearchDataGrid.Modern.WPF
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error in ApplyCheckboxBooleanFilter: {ex.Message}");
+                Debug.WriteLine($"Error in ApplyCheckboxBooleanFilter: {ex.Message}");
             }
         }
 
@@ -1119,7 +1120,7 @@ namespace WWSearchDataGrid.Modern.WPF
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error in ApplyCheckboxIsNullFilter: {ex.Message}");
+                Debug.WriteLine($"Error in ApplyCheckboxIsNullFilter: {ex.Message}");
             }
         }
 
@@ -1148,7 +1149,7 @@ namespace WWSearchDataGrid.Modern.WPF
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error in CreatePermanentFilterAndRefocus: {ex.Message}");
+                Debug.WriteLine($"Error in CreatePermanentFilterAndRefocus: {ex.Message}");
             }
         }
 
@@ -1229,7 +1230,7 @@ namespace WWSearchDataGrid.Modern.WPF
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error in InitializeSearchTemplateController: {ex.Message}");
+                Debug.WriteLine($"Error in InitializeSearchTemplateController: {ex.Message}");
             }
         }
 
@@ -1251,7 +1252,7 @@ namespace WWSearchDataGrid.Modern.WPF
                     isCheckboxType = true;
                 }
                 // Check binding property type for bound columns
-                else if (CurrentColumn is DataGridBoundColumn boundColumn && boundColumn.Binding is System.Windows.Data.Binding binding)
+                else if (CurrentColumn is DataGridBoundColumn boundColumn && boundColumn.Binding is Binding binding)
                 {
                     var bindingPath = binding.Path?.Path;
                     if (!string.IsNullOrEmpty(bindingPath))
@@ -1281,7 +1282,7 @@ namespace WWSearchDataGrid.Modern.WPF
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error determining column type from definition: {ex.Message}");
+                Debug.WriteLine($"Error determining column type from definition: {ex.Message}");
                 SetCheckboxColumnState(false);
             }
         }
@@ -1322,7 +1323,7 @@ namespace WWSearchDataGrid.Modern.WPF
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error determining boolean property from data context: {ex.Message}");
+                Debug.WriteLine($"Error determining boolean property from data context: {ex.Message}");
                 return false;
             }
         }
@@ -1439,7 +1440,7 @@ namespace WWSearchDataGrid.Modern.WPF
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error in AddIncrementalContainsFilter: {ex.Message}");
+                Debug.WriteLine($"Error in AddIncrementalContainsFilter: {ex.Message}");
             }
         }
 
@@ -1461,7 +1462,7 @@ namespace WWSearchDataGrid.Modern.WPF
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error in ClearSearchTextOnly: {ex.Message}");
+                Debug.WriteLine($"Error in ClearSearchTextOnly: {ex.Message}");
             }
         }
 
@@ -1513,7 +1514,7 @@ namespace WWSearchDataGrid.Modern.WPF
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error in ClearSearchTextAndTemporaryFilter: {ex.Message}");
+                Debug.WriteLine($"Error in ClearSearchTextAndTemporaryFilter: {ex.Message}");
             }
         }
 
@@ -1579,7 +1580,7 @@ namespace WWSearchDataGrid.Modern.WPF
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error in CreateTemporaryTemplateImmediate: {ex.Message}");
+                Debug.WriteLine($"Error in CreateTemporaryTemplateImmediate: {ex.Message}");
             }
         }
 
@@ -1617,7 +1618,7 @@ namespace WWSearchDataGrid.Modern.WPF
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error in ClearTemporaryTemplate: {ex.Message}");
+                Debug.WriteLine($"Error in ClearTemporaryTemplate: {ex.Message}");
             }
         }
 
@@ -1654,7 +1655,7 @@ namespace WWSearchDataGrid.Modern.WPF
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error in UpdateSimpleFilter: {ex.Message}");
+                Debug.WriteLine($"Error in UpdateSimpleFilter: {ex.Message}");
             }
         }
 
@@ -1678,7 +1679,7 @@ namespace WWSearchDataGrid.Modern.WPF
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error in RemoveDefaultEmptyTemplates: {ex.Message}");
+                Debug.WriteLine($"Error in RemoveDefaultEmptyTemplates: {ex.Message}");
             }
         }
 
@@ -1705,7 +1706,7 @@ namespace WWSearchDataGrid.Modern.WPF
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error in ClearFilterInternal: {ex.Message}");
+                Debug.WriteLine($"Error in ClearFilterInternal: {ex.Message}");
             }
         }
 
@@ -1739,6 +1740,9 @@ namespace WWSearchDataGrid.Modern.WPF
                     _filterContent.FiltersCleared += OnFiltersCleared;
                 }
 
+                // Calculate the vertical offset to position below the column header
+                double verticalOffset = CalculateVerticalOffsetForColumnHeader();
+
                 // Create popup if none exists
                 if (_filterPopup == null)
                 {
@@ -1751,7 +1755,9 @@ namespace WWSearchDataGrid.Modern.WPF
                         PopupAnimation = PopupAnimation.Fade,
                         StaysOpen = false,
                         MaxWidth = 500,
-                        MaxHeight = 600
+                        MaxHeight = 600,
+                        HorizontalOffset = _filterContent.HorizontalOffset,
+                        VerticalOffset = verticalOffset
                     };
 
                     _filterPopup.KeyDown += OnPopupKeyDown;
@@ -1760,17 +1766,80 @@ namespace WWSearchDataGrid.Modern.WPF
                 else
                 {
                     _filterPopup.PlacementTarget = this;
+                    _filterPopup.HorizontalOffset = _filterContent.HorizontalOffset;
+                    _filterPopup.VerticalOffset = verticalOffset;
                 }
 
                 _filterPopup.IsOpen = true;
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error in ShowFilterPopup: {ex.Message}");
+                Debug.WriteLine($"Error in ShowFilterPopup: {ex.Message}");
                 if (_filterPopup != null)
                 {
                     _filterPopup.IsOpen = false;
                 }
+            }
+        }
+
+        /// <summary>
+        /// Calculates the vertical offset needed to position the popup below the column header
+        /// </summary>
+        private double CalculateVerticalOffsetForColumnHeader()
+        {
+            try
+            {
+                // Start with the base offset from the ColumnFilterEditor style
+                double offset = _filterContent.VerticalOffset;
+
+                // Find the parent DataGridColumnHeader
+                var columnHeader = FindVisualParent<DataGridColumnHeader>(this);
+                if (columnHeader != null)
+                {
+                    // Get the total height of the column header (includes both search box and header content)
+                    double headerHeight = columnHeader.ActualHeight;
+
+                    // Get the height of this ColumnSearchBox
+                    double searchBoxHeight = this.ActualHeight;
+
+                    // Calculate the additional offset needed to place the popup below the header content
+                    // This is the height of the header content (headerHeight - searchBoxHeight)
+                    double headerContentHeight = headerHeight - searchBoxHeight - 1;
+
+                    // Add the header content height to the base offset
+                    offset += headerContentHeight;
+                }
+
+                return offset;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error calculating vertical offset: {ex.Message}");
+                // Return the base offset from the style if calculation fails
+                return _filterContent.VerticalOffset;
+            }
+        }
+
+        /// <summary>
+        /// Finds a parent of a specific type in the visual tree
+        /// </summary>
+        private T FindVisualParent<T>(DependencyObject child) where T : DependencyObject
+        {
+            try
+            {
+                DependencyObject parentObject = VisualTreeHelper.GetParent(child);
+
+                if (parentObject == null)
+                    return null;
+
+                if (parentObject is T parent)
+                    return parent;
+
+                return FindVisualParent<T>(parentObject);
+            }
+            catch
+            {
+                return null;
             }
         }
 
@@ -1859,7 +1928,7 @@ namespace WWSearchDataGrid.Modern.WPF
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error in ClearFilter: {ex.Message}");
+                Debug.WriteLine($"Error in ClearFilter: {ex.Message}");
             }
         }
         #endregion

@@ -1,11 +1,9 @@
 using System;
 using System.ComponentModel;
-using System.Linq;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using System.Timers;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Threading;
 using WWSearchDataGrid.Modern.Core;
@@ -20,7 +18,7 @@ namespace WWSearchDataGrid.Modern.WPF
         #region Fields
 
         private bool _isInitialized;
-        
+
         #endregion
 
         #region Dependency Properties
@@ -29,6 +27,29 @@ namespace WWSearchDataGrid.Modern.WPF
             DependencyProperty.Register(nameof(IsOperatorVisible), typeof(bool), typeof(ColumnFilterEditor),
                 new PropertyMetadata(false));
 
+        /// <summary>
+        /// Horizontal offset to be applied to the containing Popup.
+        /// Positive values move right; negative values move left.
+        /// This property is read by the Popup owner (ColumnSearchBox) when creating/showing the Popup.
+        /// </summary>
+        public static readonly DependencyProperty HorizontalOffsetProperty =
+            DependencyProperty.Register(
+                nameof(HorizontalOffset),
+                typeof(double),
+                typeof(ColumnFilterEditor),
+                new PropertyMetadata(0.0));
+
+        /// <summary>
+        /// Vertical offset to be applied to the containing Popup.
+        /// Positive values move down; negative values move up.
+        /// This property is read by the Popup owner (ColumnSearchBox) when creating/showing the Popup.
+        /// </summary>
+        public static readonly DependencyProperty VerticalOffsetProperty =
+            DependencyProperty.Register(
+                nameof(VerticalOffset),
+                typeof(double),
+                typeof(ColumnFilterEditor),
+                new PropertyMetadata(0.0));
 
         #endregion
 
@@ -40,6 +61,26 @@ namespace WWSearchDataGrid.Modern.WPF
         {
             get => (bool)GetValue(IsOperatorVisibleProperty);
             set => SetValue(IsOperatorVisibleProperty, value);
+        }
+
+        /// <summary>
+        /// Horizontal offset (pixels) for the containing Popup.
+        /// This value is read by the Popup owner when positioning the Popup.
+        /// </summary>
+        public double HorizontalOffset
+        {
+            get => (double)GetValue(HorizontalOffsetProperty);
+            set => SetValue(HorizontalOffsetProperty, value);
+        }
+
+        /// <summary>
+        /// Vertical offset (pixels) for the containing Popup.
+        /// This value is read by the Popup owner when positioning the Popup.
+        /// </summary>
+        public double VerticalOffset
+        {
+            get => (double)GetValue(VerticalOffsetProperty);
+            set => SetValue(VerticalOffsetProperty, value);
         }
 
         /// <summary>
@@ -113,6 +154,11 @@ namespace WWSearchDataGrid.Modern.WPF
 
         #region Event Handlers
 
+        public override void OnApplyTemplate()
+        {
+            base.OnApplyTemplate();
+        }
+
         private void OnControlLoaded(object sender, RoutedEventArgs e)
         {
             if (_isInitialized) return;
@@ -124,7 +170,7 @@ namespace WWSearchDataGrid.Modern.WPF
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error loading ColumnFilterEditor: {ex.Message}");
+                Debug.WriteLine($"Error loading ColumnFilterEditor: {ex.Message}");
             }
         }
 
@@ -133,7 +179,7 @@ namespace WWSearchDataGrid.Modern.WPF
             _isInitialized = false;
             CleanupEventSubscriptions();
         }
-        
+
         /// <summary>
         /// Clean up all event subscriptions
         /// </summary>
@@ -156,7 +202,11 @@ namespace WWSearchDataGrid.Modern.WPF
         {
             TriggerColumnValueLoading();
             UpdateOperatorVisibility();
-            SetupAutoApplyMonitoring();
+
+            if(SearchTemplateController != null)
+            {
+                SearchTemplateController.AutoApplyFilter += OnAutoApplyFilter;
+            }
         }
 
         /// <summary>
@@ -166,7 +216,7 @@ namespace WWSearchDataGrid.Modern.WPF
         {
             try
             {
-                if (DataContext is ColumnSearchBox columnSearchBox && 
+                if (DataContext is ColumnSearchBox columnSearchBox &&
                     columnSearchBox.SearchTemplateController != null)
                 {
                     columnSearchBox.SearchTemplateController.EnsureColumnValuesLoadedForFiltering();
@@ -174,7 +224,7 @@ namespace WWSearchDataGrid.Modern.WPF
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error triggering column value loading: {ex.Message}");
+                Debug.WriteLine($"Error triggering column value loading: {ex.Message}");
             }
         }
 
@@ -229,7 +279,7 @@ namespace WWSearchDataGrid.Modern.WPF
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Clear filter failed: {ex.Message}");
+                Debug.WriteLine($"Clear filter failed: {ex.Message}");
             }
         }
 
@@ -243,7 +293,7 @@ namespace WWSearchDataGrid.Modern.WPF
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Add search template failed: {ex.Message}");
+                Debug.WriteLine($"Add search template failed: {ex.Message}");
             }
         }
 
@@ -261,25 +311,13 @@ namespace WWSearchDataGrid.Modern.WPF
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Remove search template failed: {ex.Message}");
+                Debug.WriteLine($"Remove search template failed: {ex.Message}");
             }
         }
 
         #endregion
 
         #region Auto-Apply Methods
-
-        /// <summary>
-        /// Set up monitoring for auto-apply triggers
-        /// </summary>
-        private void SetupAutoApplyMonitoring()
-        {
-            if (SearchTemplateController != null)
-            {
-                // Subscribe to the single unified event
-                SearchTemplateController.AutoApplyFilter += OnAutoApplyFilter;
-            }
-        }
 
         /// <summary>
         /// Handle the unified filter should apply event from SearchTemplateController
@@ -319,7 +357,7 @@ namespace WWSearchDataGrid.Modern.WPF
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Auto filter application failed: {ex.Message}");
+                Debug.WriteLine($"Auto filter application failed: {ex.Message}");
             }
         }
 

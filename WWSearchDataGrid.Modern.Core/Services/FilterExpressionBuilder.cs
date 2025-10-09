@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Linq.Expressions;
 
@@ -128,7 +129,7 @@ namespace WWSearchDataGrid.Modern.Core
             catch (Exception ex)
             {
                 result.ErrorMessage = $"Error building filter expression: {ex.Message}";
-                System.Diagnostics.Debug.WriteLine(result.ErrorMessage);
+                Debug.WriteLine(result.ErrorMessage);
             }
 
             return result;

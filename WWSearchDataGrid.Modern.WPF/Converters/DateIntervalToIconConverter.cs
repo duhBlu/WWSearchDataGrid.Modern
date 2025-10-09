@@ -1,5 +1,6 @@
 using System;
 using System.Globalization;
+using System.Windows;
 using System.Windows.Data;
 using System.Windows.Media;
 using WWSearchDataGrid.Modern.Core;
@@ -19,7 +20,7 @@ namespace WWSearchDataGrid.Modern.WPF.Converters
                 if (!string.IsNullOrEmpty(resourceKey))
                 {
                     // Try to find the resource in the current application resources
-                    var resource = System.Windows.Application.Current?.FindResource(resourceKey);
+                    var resource = Application.Current?.FindResource(resourceKey);
                     if (resource is DrawingImage drawingImage)
                     {
                         return drawingImage;

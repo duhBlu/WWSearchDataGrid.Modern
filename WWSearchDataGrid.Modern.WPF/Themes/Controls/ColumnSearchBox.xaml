@@ -14,7 +14,7 @@
                     <Border Background="{TemplateBinding Background}"
                             BorderBrush="{TemplateBinding BorderBrush}"
                             BorderThickness="{TemplateBinding BorderThickness}"
-                            CornerRadius="6"
+                            CornerRadius="0"
                             SnapsToDevicePixels="True">
                         <Grid KeyboardNavigation.TabNavigation="Local">
                             <Grid.ColumnDefinitions>

@@ -8,6 +8,8 @@
         <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF;component/Themes/Controls/GroupPanel.xaml" />
     </ResourceDictionary.MergedDictionaries>
 
+    <converters:NullOrEmptyToBooleanConverter x:Key="NullOrEmptyToBooleanConverter" />
+
     <converters:HierarchicalMarginConverter x:Key="HorizontalIndentConverter"
                                             Direction="Horizontal"
                                             IndentPerLevel="20"
@@ -55,7 +57,6 @@
     <Style x:Key="GenericSearchDataGridRowHeaderStyle" TargetType="{x:Type DataGridRowHeader}">
         <Setter Property="HorizontalContentAlignment" Value="Center" />
         <Setter Property="VerticalContentAlignment" Value="Center" />
-        <Setter Property="Padding" Value="4,0" />
         <Setter Property="FontWeight" Value="Normal" />
         <Setter Property="Foreground" Value="#FF444444" />
         <Setter Property="Background" Value="#F9F9F9" />
@@ -65,6 +66,7 @@
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type DataGridRowHeader}">
                     <Border x:Name="HeaderBorder"
+                            Padding="0,0,20,0"
                             Background="{TemplateBinding Background}"
                             BorderBrush="{TemplateBinding BorderBrush}"
                             BorderThickness="{TemplateBinding BorderThickness}">
@@ -190,18 +192,14 @@
                                 <!--  Group Value  -->
                                 <TextBlock Grid.Column="3"
                                            Foreground="#333333"
-                                           Text="{Binding Group.Name, RelativeSource={RelativeSource TemplatedParent}}"
                                            VerticalAlignment="Center"
                                            FontWeight="Bold"
                                            TextTrimming="CharacterEllipsis">
                                     <TextBlock.Style>
                                         <Style TargetType="TextBlock">
+                                            <Setter Property="Text" Value="{Binding Group.Name, RelativeSource={RelativeSource TemplatedParent}}" />
                                             <Style.Triggers>
-                                                <DataTrigger Binding="{Binding Group.Name, RelativeSource={RelativeSource TemplatedParent}}" Value="{x:Null}">
-                                                    <Setter Property="Text" Value="(Null)" />
-                                                    <Setter Property="FontStyle" Value="Italic" />
-                                                </DataTrigger>
-                                                <DataTrigger Binding="{Binding Group.Name, RelativeSource={RelativeSource TemplatedParent}}" Value="">
+                                                <DataTrigger Binding="{Binding Group.Name, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource NullOrEmptyToBooleanConverter}}" Value="True">
                                                     <Setter Property="Text" Value="(Null)" />
                                                     <Setter Property="FontStyle" Value="Italic" />
                                                 </DataTrigger>
@@ -505,7 +503,7 @@
         <Setter Property="VirtualizingPanel.IsVirtualizing" Value="True" />
         <Setter Property="VirtualizingPanel.IsVirtualizingWhenGrouping" Value="True" />
         <Setter Property="VirtualizingPanel.VirtualizationMode" Value="Recycling" />
-        <Setter Property="VirtualizingPanel.ScrollUnit" Value="Pixel" />
+        <Setter Property="VirtualizingPanel.ScrollUnit" Value="Item" />
         <Setter Property="ScrollViewer.IsDeferredScrollingEnabled" Value="True" />
         <Setter Property="ScrollViewer.CanContentScroll" Value="True" />
     </Style>

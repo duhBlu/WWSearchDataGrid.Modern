@@ -1,6 +1,8 @@
 ﻿using System.Configuration;
 using System.Data;
+using System.Diagnostics;
 using System.Windows;
+using System.Windows.Threading;
 
 namespace WWSearchDataGrid.Modern.SampleApp
 {
@@ -21,10 +23,10 @@ namespace WWSearchDataGrid.Modern.SampleApp
         /// <summary>
         /// Handles unhandled exceptions in the application
         /// </summary>
-        private void App_DispatcherUnhandledException(object sender, System.Windows.Threading.DispatcherUnhandledExceptionEventArgs e)
+        private void App_DispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
         {
             // Log the exception
-            System.Diagnostics.Debug.WriteLine($"Unhandled exception: {e.Exception}");
+            Debug.WriteLine($"Unhandled exception: {e.Exception}");
 
             // Show a user-friendly message
             MessageBox.Show(

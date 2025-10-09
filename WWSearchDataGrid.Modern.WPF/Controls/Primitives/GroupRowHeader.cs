@@ -1,4 +1,6 @@
 using System;
+using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
@@ -37,7 +39,16 @@ namespace WWSearchDataGrid.Modern.WPF
 
         public static readonly DependencyProperty IsExpandedProperty =
             DependencyProperty.Register(nameof(IsExpanded), typeof(bool), typeof(GroupRowHeader),
-                new PropertyMetadata(false));
+                new PropertyMetadata(false, OnIsExpandedChanged));
+
+        private static void OnIsExpandedChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            if (d is GroupRowHeader header && header.Group != null)
+            {
+                // Store the expanded state so it persists across virtualization
+                SearchDataGrid.SetGroupExpandedState(header.Group, (bool)e.NewValue);
+            }
+        }
 
         public static readonly DependencyProperty GroupLevelProperty =
             DependencyProperty.Register(nameof(GroupLevel), typeof(int), typeof(GroupRowHeader),
@@ -97,6 +108,20 @@ namespace WWSearchDataGrid.Modern.WPF
         {
             // Control is now in the visual tree - safe to update
             UpdateFromDataContext();
+
+            // Check if there's a stored expanded state for this group
+            if (DataContext is CollectionViewGroup group)
+            {
+                var dataGrid = FindVisualParent<SearchDataGrid>(this);
+                if (dataGrid != null)
+                {
+                    bool storedState = SearchDataGrid.GetGroupExpandedState(group);
+                    if (storedState != IsExpanded)
+                    {
+                        IsExpanded = storedState;
+                    }
+                }
+            }
         }
 
         /// <summary>
@@ -141,13 +166,13 @@ namespace WWSearchDataGrid.Modern.WPF
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error calculating group level: {ex.Message}");
+                Debug.WriteLine($"Error calculating group level: {ex.Message}");
             }
             return 0;
         }
 
         private int CalculateGroupLevelRecursive(CollectionViewGroup targetGroup,
-            System.Collections.ObjectModel.ReadOnlyObservableCollection<object> groups,
+            ReadOnlyObservableCollection<object> groups,
             int currentLevel)
         {
             // Check if target group is at this level
@@ -163,7 +188,7 @@ namespace WWSearchDataGrid.Modern.WPF
                     if (parentGroup.Items[0] is CollectionViewGroup)
                     {
                         // Collect all subgroups
-                        var subGroups = new System.Collections.ObjectModel.ObservableCollection<object>();
+                        var subGroups = new ObservableCollection<object>();
                         foreach (var subItem in parentGroup.Items)
                         {
                             if (subItem is CollectionViewGroup subGroup)
@@ -172,7 +197,7 @@ namespace WWSearchDataGrid.Modern.WPF
 
                         if (subGroups.Count > 0)
                         {
-                            var readOnlySubGroups = new System.Collections.ObjectModel.ReadOnlyObservableCollection<object>(subGroups);
+                            var readOnlySubGroups = new ReadOnlyObservableCollection<object>(subGroups);
                             int level = CalculateGroupLevelRecursive(targetGroup, readOnlySubGroups, currentLevel + 1);
                             // If we found it in subgroups (level != -1), return that level
                             if (level != -1)
@@ -213,7 +238,7 @@ namespace WWSearchDataGrid.Modern.WPF
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error getting column name: {ex.Message}");
+                Debug.WriteLine($"Error getting column name: {ex.Message}");
             }
             return string.Empty;
         }

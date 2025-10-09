@@ -1,9 +1,11 @@
 using System;
+using System.Diagnostics;
 using System.Linq;
 using System.Windows;
 using System.Windows.Automation;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
+using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
 using WWSearchDataGrid.Modern.Core;
@@ -79,7 +81,7 @@ namespace WWSearchDataGrid.Modern.WPF
         /// </summary>
         private static ContextMenuContext DetermineContextMenuContext(SearchDataGrid grid, FrameworkElement target)
         {
-            var contextMenuContext = new ContextMenuContext { Grid = grid, ContextType = ContextMenuType.GridBody }; 
+            var contextMenuContext = new ContextMenuContext { Grid = grid, ContextType = ContextMenuType.GridBody };
 
             // Walk up the visual tree to determine context
             var element = target;
@@ -87,8 +89,17 @@ namespace WWSearchDataGrid.Modern.WPF
             {
                 switch (element)
                 {
-                    case GroupPanel _:
+                    case GroupPanel groupPanel:
                         contextMenuContext.ContextType = ContextMenuType.GroupPanel;
+
+                        // Try to find specific GroupColumnInfo from visual tree
+                        var groupItem = FindAncestor<ContentPresenter>(target);
+                        if (groupItem?.DataContext is GroupColumnInfo groupInfo)
+                        {
+                            contextMenuContext.GroupColumnInfo = groupInfo;
+                            contextMenuContext.Column = groupInfo.Column;
+                        }
+
                         return contextMenuContext;
 
                     case DataGridColumnHeader header:
@@ -137,6 +148,21 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
+        /// Finds an ancestor of a specific type in the visual tree
+        /// </summary>
+        private static T FindAncestor<T>(DependencyObject current) where T : DependencyObject
+        {
+            while (current != null)
+            {
+                if (current is T ancestor)
+                    return ancestor;
+
+                current = VisualTreeHelper.GetParent(current);
+            }
+            return null;
+        }
+
+        /// <summary>
         /// Determines if a column is currently frozen
         /// </summary>
         private static bool IsColumnFrozen(SearchDataGrid grid, DataGridColumn column)
@@ -162,29 +188,133 @@ namespace WWSearchDataGrid.Modern.WPF
 
         private static ContextMenu BuildGroupPanelContextMenu(ContextMenuContext contextMenuContext)
         {
-            var menu = new ContextMenu();
-            AutomationProperties.SetAutomationId(menu, "cmuGroupPanel");
+            // If context has GroupColumnInfo, build column-specific menu
+            if (contextMenuContext.GroupColumnInfo != null)
+            {
+                return BuildGroupPanelColumnItemContextMenu(contextMenuContext);
+            }
 
-            // Expand All Groups
+            // Otherwise, build panel-level menu
+            return BuildGroupPanelBackgroundContextMenu(contextMenuContext);
+        }
+
+        /// <summary>
+        /// Builds context menu for a specific grouped column item
+        /// </summary>
+        private static ContextMenu BuildGroupPanelColumnItemContextMenu(ContextMenuContext contextMenuContext)
+        {
+            var menu = new ContextMenu();
+            AutomationProperties.SetAutomationId(menu, "cmuGroupPanelColumnItem");
+
+            // Full Expand
             menu.Items.Add(BuildMenuItem(
                 "miExpandAllGroups",
-                "Expand All Groups",
+                "Full Expand",
                 ContextMenuCommands.ExpandAllGroupsCommand,
                 contextMenuContext.Grid));
 
-            // Collapse All Groups
+            // Full Collapse
             menu.Items.Add(BuildMenuItem(
                 "miCollapseAllGroups",
-                "Collapse All Groups",
+                "Full Collapse",
                 ContextMenuCommands.CollapseAllGroupsCommand,
                 contextMenuContext.Grid));
 
             menu.Items.Add(new Separator());
 
-            // Clear All Grouping
+            // Sort Ascending
+            menu.Items.Add(BuildMenuItem(
+                "miSortAscending",
+                "Sort Ascending",
+                ContextMenuCommands.SortAscendingCommand,
+                contextMenuContext));
+
+            // Sort Descending
+            menu.Items.Add(BuildMenuItem(
+                "miSortDescending",
+                "Sort Descending",
+                ContextMenuCommands.SortDescendingCommand,
+                contextMenuContext));
+
+            // Clear Sorting
+            menu.Items.Add(BuildMenuItem(
+                "miClearSorting",
+                "Clear Sorting",
+                ContextMenuCommands.ClearSortingCommand,
+                contextMenuContext));
+
+            menu.Items.Add(new Separator());
+
+            // Ungroup
+            menu.Items.Add(BuildMenuItem(
+                "miUngroup",
+                "Ungroup",
+                ContextMenuCommands.UngroupColumnCommand,
+                contextMenuContext));
+
+            // Hide Group Panel
+            menu.Items.Add(BuildMenuItem(
+                "miHideGroupPanel",
+                "Hide Group Panel",
+                ContextMenuCommands.ToggleGroupPanelVisibilityCommand,
+                contextMenuContext.Grid));
+
+            menu.Items.Add(new Separator());
+
+            // Show Column Chooser
+            menu.Items.Add(BuildMenuItem(
+                "miShowColumnChooser",
+                "Show Column Chooser",
+                ContextMenuCommands.ShowColumnChooserCommand,
+                contextMenuContext.Grid));
+
+            // Best Fit (all columns)
+            menu.Items.Add(BuildMenuItem(
+                "miBestFitAllColumns",
+                "Best Fit (all columns)",
+                ContextMenuCommands.BestFitAllColumnsCommand,
+                contextMenuContext));
+
+            menu.Items.Add(new Separator());
+
+            // Clear Filter
+            menu.Items.Add(BuildMenuItem(
+                "miClearColumnFilter",
+                "Clear Filter",
+                ContextMenuCommands.ClearColumnFilterCommand,
+                contextMenuContext));
+
+            return menu;
+        }
+
+        /// <summary>
+        /// Builds context menu for the group panel background
+        /// </summary>
+        private static ContextMenu BuildGroupPanelBackgroundContextMenu(ContextMenuContext contextMenuContext)
+        {
+            var menu = new ContextMenu();
+            AutomationProperties.SetAutomationId(menu, "cmuGroupPanelBackground");
+
+            // Full Expand
+            menu.Items.Add(BuildMenuItem(
+                "miExpandAllGroups",
+                "Full Expand",
+                ContextMenuCommands.ExpandAllGroupsCommand,
+                contextMenuContext.Grid));
+
+            // Full Collapse
+            menu.Items.Add(BuildMenuItem(
+                "miCollapseAllGroups",
+                "Full Collapse",
+                ContextMenuCommands.CollapseAllGroupsCommand,
+                contextMenuContext.Grid));
+
+            menu.Items.Add(new Separator());
+
+            // Clear Grouping
             menu.Items.Add(BuildMenuItem(
                 "miClearGrouping",
-                "Clear All Grouping",
+                "Clear Grouping",
                 ContextMenuCommands.ClearGroupingCommand,
                 contextMenuContext.Grid));
 
@@ -209,7 +339,7 @@ namespace WWSearchDataGrid.Modern.WPF
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error getting cell value: {ex.Message}");
+                Debug.WriteLine($"Error getting cell value: {ex.Message}");
             }
 
             return null;
@@ -223,7 +353,7 @@ namespace WWSearchDataGrid.Modern.WPF
             switch (column)
             {
                 case DataGridBoundColumn boundColumn:
-                    return (boundColumn.Binding as System.Windows.Data.Binding)?.Path?.Path;
+                    return (boundColumn.Binding as Binding)?.Path?.Path;
                 case DataGridTemplateColumn templateColumn:
                     // For template columns, we'd need more complex logic to extract the binding
                     return null;

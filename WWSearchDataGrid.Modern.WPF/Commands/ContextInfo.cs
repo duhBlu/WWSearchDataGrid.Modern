@@ -13,6 +13,7 @@ namespace WWSearchDataGrid.Modern.WPF.Commands
         public SearchDataGrid Grid { get; set; }
         public DataGridColumn Column { get; set; }
         public ColumnSearchBox ColumnSearchBox { get; set; }
+        public GroupColumnInfo GroupColumnInfo { get; set; }
         public object RowData { get; set; }
         public object CellValue { get; set; }
         public int RowIndex { get; set; }

@@ -95,5 +95,19 @@ namespace WWSearchDataGrid.Modern.WPF.Commands
             },
             grid => grid?.IsGroupingEnabled == true
                 && grid?.GroupedColumns?.Any() == true);
+
+        /// <summary>
+        /// Removes a specific column from grouping
+        /// </summary>
+        public static ICommand UngroupColumnCommand => new RelayCommand<ContextMenuContext>(
+            context =>
+            {
+                if (context?.Grid?.GroupPanel == null || context.GroupColumnInfo == null)
+                    return;
+
+                context.Grid.GroupPanel.RemoveGrouping(context.GroupColumnInfo);
+            },
+            context => context?.GroupColumnInfo != null
+                && context?.Grid?.IsGroupingEnabled == true);
     }
 }

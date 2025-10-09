@@ -183,13 +183,26 @@ namespace WWSearchDataGrid.Modern.WPF.Commands
         {
             try
             {
-                context.Column.SortDirection = null;
+                var view = CollectionViewSource.GetDefaultView(context.Grid.ItemsSource);
+                if(view != null)
+                {
+                    view.SortDescriptions.Clear();
+                    view.Refresh();
+                }
+                else
+                {
+                    context.Grid.Items.SortDescriptions.Clear();
+                    context.Grid.Items.Refresh();
+
+                }
+                foreach (var c in context.Grid.Columns)
+                    c.SortDirection = null;
             }
             catch (Exception ex)
             {
                 Debug.WriteLine($"Error in SortDescendingCommand: {ex.Message}");
             }
-        }, context => context.Column != null && context.Column.SortDirection != null);
+        }, context => context.Column != null && context.Grid != null && context.Column.SortDirection != null);
 
         #endregion
 

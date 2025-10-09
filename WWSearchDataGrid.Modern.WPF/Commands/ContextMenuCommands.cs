@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Media3D;
@@ -29,7 +30,7 @@ namespace WWSearchDataGrid.Modern.WPF.Commands
             switch (column)
             {
                 case DataGridBoundColumn boundColumn:
-                    return (boundColumn.Binding as System.Windows.Data.Binding)?.Path?.Path;
+                    return (boundColumn.Binding as Binding)?.Path?.Path;
                 case DataGridTemplateColumn templateColumn:
                     // For template columns, we'd need more complex logic to extract the binding
                     return null;

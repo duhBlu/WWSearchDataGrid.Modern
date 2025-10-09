@@ -23,10 +23,28 @@ namespace WWSearchDataGrid.Modern.WPF.Commands
         /// <summary>
         /// Clears the filter on the current column
         /// </summary>
-        public static ICommand ClearColumnFilterCommand => new RelayCommand<ColumnSearchBox>(columnSearchBox =>
-        {
-            columnSearchBox.ClearFilter();
-        }, columnSearchBox => columnSearchBox?.HasActiveFilter == true);
+        public static ICommand ClearColumnFilterCommand => new RelayCommand(
+            parameter =>
+            {
+                switch (parameter)
+                {
+                    case ColumnSearchBox columnSearchBox:
+                        columnSearchBox.ClearFilter();
+                        break;
+                    case ContextMenuContext context when context.ColumnSearchBox != null:
+                        context.ColumnSearchBox.ClearFilter();
+                        break;
+                }
+            },
+            parameter =>
+            {
+                return parameter switch
+                {
+                    ColumnSearchBox columnSearchBox => columnSearchBox?.HasActiveFilter == true,
+                    ContextMenuContext context => context?.ColumnSearchBox?.HasActiveFilter == true,
+                    _ => false
+                };
+            });
 
     }
 }

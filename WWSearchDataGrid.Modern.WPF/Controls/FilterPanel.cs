@@ -1,10 +1,12 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Threading;
 using WWSearchDataGrid.Modern.Core;
 
 namespace WWSearchDataGrid.Modern.WPF
@@ -235,14 +237,14 @@ namespace WWSearchDataGrid.Modern.WPF
         {
             if (d is FilterPanel panel)
             {
-                panel.Dispatcher.BeginInvoke(() => panel.CheckForOverflow(), System.Windows.Threading.DispatcherPriority.Loaded);
+                panel.Dispatcher.BeginInvoke(() => panel.CheckForOverflow(), DispatcherPriority.Loaded);
             }
         }
 
         /// <summary>
         /// Handles changes to the ActiveFilters collection
         /// </summary>
-        private void OnActiveFiltersCollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+        private void OnActiveFiltersCollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
         {
             UpdateHasActiveFilters();
             UpdateFilterTokens();
@@ -402,7 +404,7 @@ namespace WWSearchDataGrid.Modern.WPF
                 }
             }
             
-            Dispatcher.BeginInvoke(() => CheckForOverflow(), System.Windows.Threading.DispatcherPriority.Loaded);
+            Dispatcher.BeginInvoke(() => CheckForOverflow(), DispatcherPriority.Loaded);
         }
 
         /// <summary>

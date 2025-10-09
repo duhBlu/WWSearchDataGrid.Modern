@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 
 namespace WWSearchDataGrid.Modern.Core
@@ -33,7 +34,7 @@ namespace WWSearchDataGrid.Modern.Core
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error in TopN evaluation: {ex.Message}");
+                Debug.WriteLine($"Error in TopN evaluation: {ex.Message}");
                 return false;
             }
         }
@@ -85,7 +86,7 @@ namespace WWSearchDataGrid.Modern.Core
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error in BottomN evaluation: {ex.Message}");
+                Debug.WriteLine($"Error in BottomN evaluation: {ex.Message}");
                 return false;
             }
         }
@@ -140,7 +141,7 @@ namespace WWSearchDataGrid.Modern.Core
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error in AboveAverage evaluation: {ex.Message}");
+                Debug.WriteLine($"Error in AboveAverage evaluation: {ex.Message}");
                 return false;
             }
         }
@@ -190,7 +191,7 @@ namespace WWSearchDataGrid.Modern.Core
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error in BelowAverage evaluation: {ex.Message}");
+                Debug.WriteLine($"Error in BelowAverage evaluation: {ex.Message}");
                 return false;
             }
         }
@@ -235,7 +236,7 @@ namespace WWSearchDataGrid.Modern.Core
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error in Unique evaluation: {ex.Message}");
+                Debug.WriteLine($"Error in Unique evaluation: {ex.Message}");
                 return false;
             }
         }
@@ -268,7 +269,7 @@ namespace WWSearchDataGrid.Modern.Core
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error in Duplicate evaluation: {ex.Message}");
+                Debug.WriteLine($"Error in Duplicate evaluation: {ex.Message}");
                 return false;
             }
         }

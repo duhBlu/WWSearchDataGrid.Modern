@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text.RegularExpressions;
 
@@ -55,7 +56,7 @@ namespace WWSearchDataGrid.Modern.Core
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error in CompareValues: {ex.Message}");
+                Debug.WriteLine($"Error in CompareValues: {ex.Message}");
                 throw;
             }
         }
@@ -99,12 +100,12 @@ namespace WWSearchDataGrid.Modern.Core
                 }
                 
                 // Fallback to original logic for unknown search types
-                System.Diagnostics.Debug.WriteLine($"No evaluator found for search type: {searchCondition.SearchType}");
+                Debug.WriteLine($"No evaluator found for search type: {searchCondition.SearchType}");
                 return false;
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error evaluating search condition: {ex.Message}");
+                Debug.WriteLine($"Error evaluating search condition: {ex.Message}");
                 return false;
             }
         }

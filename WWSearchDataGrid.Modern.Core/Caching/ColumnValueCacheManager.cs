@@ -1,6 +1,8 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
 
@@ -272,7 +274,7 @@ namespace WWSearchDataGrid.Modern.Core.Caching
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error in AddValues: {ex.Message}");
+                Debug.WriteLine($"Error in AddValues: {ex.Message}");
                 return null; // Signal that full refresh is needed
             }
         }
@@ -329,7 +331,7 @@ namespace WWSearchDataGrid.Modern.Core.Caching
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error in RemoveValues: {ex.Message}");
+                Debug.WriteLine($"Error in RemoveValues: {ex.Message}");
                 return null; // Signal that full refresh is needed
             }
         }
@@ -557,7 +559,7 @@ namespace WWSearchDataGrid.Modern.Core.Caching
         public ColumnDataType DataType => _cache.DataType;
 
         public IEnumerator<object> GetEnumerator() => _cache.Values.GetEnumerator();
-        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
         /// <summary>
         /// Checks if the collection contains a specific value

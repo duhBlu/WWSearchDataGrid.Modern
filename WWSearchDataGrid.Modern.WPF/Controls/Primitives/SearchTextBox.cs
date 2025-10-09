@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Timers;
 using System.Windows;
@@ -9,6 +10,7 @@ using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Data;
 using System.Windows.Input;
+using System.Windows.Threading;
 using WWSearchDataGrid.Modern.Core;
 
 namespace WWSearchDataGrid.Modern.WPF
@@ -32,7 +34,7 @@ namespace WWSearchDataGrid.Modern.WPF
     /// <summary>
     /// Custom comparer that sorts by quantity (descending) then by value (ascending)
     /// </summary>
-    internal class QuantityThenValueComparer : System.Collections.IComparer, System.Collections.Generic.IComparer<object>
+    internal class QuantityThenValueComparer : IComparer, IComparer<object>
     {
         private readonly IReadOnlyDictionary<object, int> _valueCounts;
 
@@ -637,7 +639,7 @@ namespace WWSearchDataGrid.Modern.WPF
                             }
                         }
                     }
-                }), System.Windows.Threading.DispatcherPriority.Input);
+                }), DispatcherPriority.Input);
             }
         }
 
@@ -672,7 +674,7 @@ namespace WWSearchDataGrid.Modern.WPF
             Dispatcher.BeginInvoke(new Action(() =>
             {
                 UpdateActualItemsSource();
-            }), System.Windows.Threading.DispatcherPriority.Loaded);
+            }), DispatcherPriority.Loaded);
         }
 
         private void OnItemsSourceChanged()
@@ -873,8 +875,7 @@ namespace WWSearchDataGrid.Modern.WPF
             }
 
             // Get the original items source as IEnumerable
-            var originalItems = ItemsSource as System.Collections.IEnumerable;
-            if (originalItems == null)
+            if (ItemsSource is not IEnumerable originalItems)
             {
                 ActualItemsSource = null;
                 return;
@@ -960,9 +961,9 @@ namespace WWSearchDataGrid.Modern.WPF
                         Text = _pendingText;
                     }
                 }
-                catch (System.Exception ex)
+                catch (Exception ex)
                 {
-                    System.Diagnostics.Debug.WriteLine($"Error in OnTextChangeTimerElapsed: {ex.Message}");
+                    Debug.WriteLine($"Error in OnTextChangeTimerElapsed: {ex.Message}");
                 }
             });
         }

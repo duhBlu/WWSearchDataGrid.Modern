@@ -17,6 +17,7 @@ using System.Collections.Generic;
 using System.Windows.Threading;
 using WWSearchDataGrid.Modern.WPF.Commands;
 using System.Windows.Controls.Primitives;
+using System.IO;
 
 namespace WWSearchDataGrid.Modern.WPF
 {
@@ -191,8 +192,8 @@ namespace WWSearchDataGrid.Modern.WPF
         /// <summary>
         /// Gets the current grouped columns
         /// </summary>
-        public System.Collections.Generic.IReadOnlyList<GroupColumnInfo> GroupedColumns =>
-            GroupPanel?.GroupedColumns?.ToList() ?? new System.Collections.Generic.List<GroupColumnInfo>();
+        public IReadOnlyList<GroupColumnInfo> GroupedColumns =>
+            GroupPanel?.GroupedColumns?.ToList() ?? new List<GroupColumnInfo>();
 
         /// <summary>
         /// Gets the count of original items for debugging purposes
@@ -549,6 +550,13 @@ namespace WWSearchDataGrid.Modern.WPF
                     {
                         FilterItemsSource();
                     }
+
+                    // Reapply grouping if it was active
+                    if (IsGroupingEnabled && GroupPanel?.GroupedColumns != null && GroupPanel.GroupedColumns.Count > 0)
+                    {
+                        ApplyGrouping(GroupPanel.GroupedColumns);
+                    }
+
                     UpdateLayout();
                 }
                 else
@@ -584,7 +592,7 @@ namespace WWSearchDataGrid.Modern.WPF
         {
             // Update ActualHasItems property when collection changes
             UpdateHasItemsProperty();
-            
+
             // Invalidate collection context cache when items are added/removed
             // This ensures statistical calculations reflect the current data
             if (e.Action == NotifyCollectionChangedAction.Add ||
@@ -596,6 +604,23 @@ namespace WWSearchDataGrid.Modern.WPF
             if (e.Action == NotifyCollectionChangedAction.Reset)
             {
                 ClearAllCachedData();
+            }
+
+            // Refresh grouping when collection changes
+            if (IsGroupingEnabled && GroupPanel?.GroupedColumns != null && GroupPanel.GroupedColumns.Count > 0)
+            {
+                var view = CollectionViewSource.GetDefaultView(ItemsSource);
+                if (view != null)
+                {
+                    try
+                    {
+                        view.Refresh();
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine($"Error refreshing grouping after collection change: {ex.Message}");
+                    }
+                }
             }
 
             CollectionChanged?.Invoke(this, e);
@@ -1129,7 +1154,7 @@ namespace WWSearchDataGrid.Modern.WPF
                         Newtonsoft.Json.Formatting.Indented);
 
                     // Save to file
-                    System.IO.File.WriteAllText(dialog.FileName, json);
+                    File.WriteAllText(dialog.FileName, json);
 
                     MessageBox.Show("Filters saved successfully.");
                 }
@@ -1157,7 +1182,7 @@ namespace WWSearchDataGrid.Modern.WPF
                 try
                 {
                     // Read the JSON file
-                    string json = System.IO.File.ReadAllText(dialog.FileName);
+                    string json = File.ReadAllText(dialog.FileName);
 
                     // Clear existing filters
                     ClearAllFilters();
@@ -1239,7 +1264,7 @@ namespace WWSearchDataGrid.Modern.WPF
                         return textBlock.Text;
                     break;
 
-                case System.Windows.Controls.Label label:
+                case Label label:
                     if (label.Content is string labelText && !string.IsNullOrWhiteSpace(labelText))
                         return labelText;
                     else if (label.Content is FrameworkElement labelContent)
@@ -1538,7 +1563,7 @@ namespace WWSearchDataGrid.Modern.WPF
         {
             if (column is DataGridBoundColumn boundColumn)
             {
-                if (boundColumn.Binding is System.Windows.Data.Binding binding)
+                if (boundColumn.Binding is Binding binding)
                 {
                     return binding.Path.Path;
                 }
@@ -1724,6 +1749,30 @@ namespace WWSearchDataGrid.Modern.WPF
                 // Invalidate collection context cache to refresh statistical calculations
                 InvalidateCollectionContextCache();
 
+                // Check if the changed column is part of active grouping
+                if (IsGroupingEnabled && GroupPanel?.GroupedColumns != null && GroupPanel.GroupedColumns.Count > 0)
+                {
+                    // Check if this property is one of the grouped columns
+                    var isGroupedColumn = GroupPanel.GroupedColumns.Any(g => g.BindingPath == bindingPath);
+
+                    if (isGroupedColumn)
+                    {
+                        // Refresh the CollectionView to update grouping
+                        var view = CollectionViewSource.GetDefaultView(ItemsSource);
+                        if (view != null)
+                        {
+                            try
+                            {
+                                view.Refresh();
+                            }
+                            catch (Exception ex)
+                            {
+                                Debug.WriteLine($"Error refreshing grouping after cell value change: {ex.Message}");
+                            }
+                        }
+                    }
+                }
+
                 // Raise public event for external subscribers
                 var eventArgs = new CellValueChangedEventArgs(item, column, bindingPath,
                     oldValue, newValue, rowIndex, columnIndex);
@@ -1814,11 +1863,11 @@ namespace WWSearchDataGrid.Modern.WPF
         /// Applies grouping to the CollectionView.
         /// Called when GroupPanel.GroupingChanged fires.
         /// </summary>
-        private void ApplyGrouping(System.Collections.Generic.IEnumerable<GroupColumnInfo> groupedColumns)
+        private void ApplyGrouping(IEnumerable<GroupColumnInfo> groupedColumns)
         {
             try
             {
-                var view = System.Windows.Data.CollectionViewSource.GetDefaultView(ItemsSource);
+                var view = CollectionViewSource.GetDefaultView(ItemsSource);
                 if (view == null) return;
 
                 using (view.DeferRefresh())
@@ -1855,7 +1904,7 @@ namespace WWSearchDataGrid.Modern.WPF
         /// <summary>
         /// Updates column visibility based on which columns are grouped
         /// </summary>
-        private void UpdateGroupedColumnVisibility(System.Collections.Generic.IEnumerable<GroupColumnInfo> groupedColumns)
+        private void UpdateGroupedColumnVisibility(IEnumerable<GroupColumnInfo> groupedColumns)
         {
             try
             {
@@ -1998,7 +2047,7 @@ namespace WWSearchDataGrid.Modern.WPF
         public void ClearGrouping()
         {
             GroupPanel?.ClearAllGrouping();
-            ApplyGrouping(System.Linq.Enumerable.Empty<GroupColumnInfo>());
+            ApplyGrouping(Enumerable.Empty<GroupColumnInfo>());
         }
 
         /// <summary>
@@ -2032,16 +2081,98 @@ namespace WWSearchDataGrid.Modern.WPF
             try
             {
                 // Access the CollectionView and iterate through groups
-                var view = System.Windows.Data.CollectionViewSource.GetDefaultView(ItemsSource);
+                var view = CollectionViewSource.GetDefaultView(ItemsSource);
                 if (view?.Groups == null) return;
 
-                ExpandOrCollapseGroups(view.Groups, expand);
+                // Store the expand/collapse state on the groups themselves using attached properties
+                // This persists even when groups are virtualized
+                SetExpandedStateOnGroups(view.Groups, expand);
+
+                // Force the grid to update its layout to apply the changes
+                UpdateLayout();
+
+                // Use dispatcher to ensure visual tree updates for visible items
+                Dispatcher.BeginInvoke(new Action(() =>
+                {
+                    try
+                    {
+                        // Now apply to any realized visual elements
+                        ExpandOrCollapseGroups(view.Groups, expand);
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine($"Error in delayed expand/collapse: {ex.Message}");
+                    }
+                }), DispatcherPriority.Loaded);
             }
             catch (Exception ex)
             {
                 Debug.WriteLine($"Error in OnExpandCollapseAllRequested: {ex.Message}");
             }
         }
+
+        /// <summary>
+        /// Attached property to store expand/collapse state on CollectionViewGroup objects
+        /// </summary>
+        private static readonly DependencyProperty IsExpandedStateProperty =
+            DependencyProperty.RegisterAttached("IsExpandedState", typeof(bool), typeof(SearchDataGrid),
+                new PropertyMetadata(false));
+
+        /// <summary>
+        /// Sets the expanded state on all groups recursively using attached properties
+        /// This allows the state to persist even when groups are virtualized
+        /// </summary>
+        private void SetExpandedStateOnGroups(ReadOnlyObservableCollection<object> groups, bool expand)
+        {
+            if (groups == null) return;
+
+            foreach (var item in groups)
+            {
+                if (item is CollectionViewGroup group)
+                {
+                    // Store the expanded state as an attached property on the group
+                    SetIsExpandedState(group, expand);
+
+                    // Recursively handle subgroups
+                    if (group.Items != null && group.Items.Count > 0 && group.Items[0] is CollectionViewGroup)
+                    {
+                        var subGroupsList = group.Items.Cast<object>().ToList();
+                        var subGroupsCollection = new ObservableCollection<object>(subGroupsList);
+                        var readOnlySubGroups = new ReadOnlyObservableCollection<object>(subGroupsCollection);
+                        SetExpandedStateOnGroups(readOnlySubGroups, expand);
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Sets the stored expanded state for a group. Public so GroupRowHeader can update it.
+        /// </summary>
+        public static void SetGroupExpandedState(CollectionViewGroup group, bool value)
+        {
+            // Use a dictionary to track expanded state
+            if (group != null)
+            {
+                _groupExpandedStates[group] = value;
+            }
+        }
+
+        /// <summary>
+        /// Gets the stored expanded state for a group. Public so GroupRowHeader can access it.
+        /// </summary>
+        public static bool GetGroupExpandedState(CollectionViewGroup group)
+        {
+            return _groupExpandedStates.TryGetValue(group, out bool value) ? value : false;
+        }
+
+        // Helper method for internal use
+        private static void SetIsExpandedState(CollectionViewGroup group, bool value)
+        {
+            SetGroupExpandedState(group, value);
+        }
+
+        // Dictionary to track expanded state of groups
+        private static readonly Dictionary<CollectionViewGroup, bool> _groupExpandedStates = new Dictionary<CollectionViewGroup, bool>();
 
         /// <summary>
         /// Recursively expands or collapses all group levels
@@ -2075,11 +2206,21 @@ namespace WWSearchDataGrid.Modern.WPF
                 var groupItem = FindGroupItem(this, group);
                 if (groupItem != null)
                 {
-                    // Find the Expander within the GroupItem
-                    var expander = FindVisualChild<System.Windows.Controls.Expander>(groupItem);
-                    if (expander != null)
+
+                    // Find the GroupRowHeader within the GroupItem (custom control for this grid)
+                    var groupRowHeader = FindVisualChild<GroupRowHeader>(groupItem);
+                    if (groupRowHeader != null)
                     {
-                        expander.IsExpanded = expand;
+                        groupRowHeader.IsExpanded = expand;
+                    }
+                    else
+                    {
+                        // Fallback: Try to find a standard Expander
+                        var expander = FindVisualChild<Expander>(groupItem);
+                        if (expander != null)
+                        {
+                            expander.IsExpanded = expand;
+                        }
                     }
                 }
             }
@@ -2092,7 +2233,7 @@ namespace WWSearchDataGrid.Modern.WPF
         /// <summary>
         /// Finds the GroupItem container for a specific CollectionViewGroup
         /// </summary>
-        private System.Windows.Controls.GroupItem FindGroupItem(DependencyObject parent, CollectionViewGroup group)
+        private GroupItem FindGroupItem(DependencyObject parent, CollectionViewGroup group)
         {
             if (parent == null) return null;
 
@@ -2101,7 +2242,7 @@ namespace WWSearchDataGrid.Modern.WPF
             {
                 var child = VisualTreeHelper.GetChild(parent, i);
 
-                if (child is System.Windows.Controls.GroupItem groupItem && groupItem.Content == group)
+                if (child is GroupItem groupItem && groupItem.Content == group)
                 {
                     return groupItem;
                 }

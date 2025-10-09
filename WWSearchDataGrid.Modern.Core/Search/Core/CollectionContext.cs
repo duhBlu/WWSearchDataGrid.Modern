@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using WWSearchDataGrid.Modern.Core.Caching;
@@ -81,7 +82,7 @@ namespace WWSearchDataGrid.Modern.Core
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error extracting values for column {ColumnPath}: {ex.Message}");
+                Debug.WriteLine($"Error extracting values for column {ColumnPath}: {ex.Message}");
                 return new List<(object item, object value)>();
             }
         }
@@ -106,7 +107,7 @@ namespace WWSearchDataGrid.Modern.Core
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error computing average for column {ColumnPath}: {ex.Message}");
+                Debug.WriteLine($"Error computing average for column {ColumnPath}: {ex.Message}");
                 return null;
             }
         }
@@ -127,7 +128,7 @@ namespace WWSearchDataGrid.Modern.Core
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error sorting descending for column {ColumnPath}: {ex.Message}");
+                Debug.WriteLine($"Error sorting descending for column {ColumnPath}: {ex.Message}");
                 return Enumerable.Empty<object>();
             }
         }
@@ -148,7 +149,7 @@ namespace WWSearchDataGrid.Modern.Core
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error sorting ascending for column {ColumnPath}: {ex.Message}");
+                Debug.WriteLine($"Error sorting ascending for column {ColumnPath}: {ex.Message}");
                 return Enumerable.Empty<object>();
             }
         }
@@ -167,7 +168,7 @@ namespace WWSearchDataGrid.Modern.Core
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error computing value groups for column {ColumnPath}: {ex.Message}");
+                Debug.WriteLine($"Error computing value groups for column {ColumnPath}: {ex.Message}");
                 return new Dictionary<object, List<object>>();
             }
         }

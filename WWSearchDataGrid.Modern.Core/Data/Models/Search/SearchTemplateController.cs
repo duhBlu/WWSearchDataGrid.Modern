@@ -1,6 +1,10 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
+using System.ComponentModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Text.Json.Serialization;
@@ -390,7 +394,7 @@ namespace WWSearchDataGrid.Modern.Core
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error in TryAddColumnValues: {ex.Message}");
+                Debug.WriteLine($"Error in TryAddColumnValues: {ex.Message}");
                 return false;
             }
         }
@@ -425,7 +429,7 @@ namespace WWSearchDataGrid.Modern.Core
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error in TryRemoveColumnValues: {ex.Message}");
+                Debug.WriteLine($"Error in TryRemoveColumnValues: {ex.Message}");
                 return false;
             }
         }
@@ -470,7 +474,7 @@ namespace WWSearchDataGrid.Modern.Core
                 }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Debug.WriteLine($"Error loading column values: {ex.Message}");
+                    Debug.WriteLine($"Error loading column values: {ex.Message}");
                     // Create empty cache entry to prevent repeated failures
                     _cachedColumnValues = ColumnValueCacheManager.Instance.GetOrCreateColumnValues(
                         _cacheKey,
@@ -500,7 +504,7 @@ namespace WWSearchDataGrid.Modern.Core
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error determining column data type: {ex.Message}");
+                Debug.WriteLine($"Error determining column data type: {ex.Message}");
             }
         }
         
@@ -615,7 +619,7 @@ namespace WWSearchDataGrid.Modern.Core
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error updating filter expression: {ex}");
+                Debug.WriteLine($"Error updating filter expression: {ex}");
                 FilterExpression = null;
                 HasCustomExpression = false;
             }
@@ -664,7 +668,7 @@ namespace WWSearchDataGrid.Modern.Core
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error in EvaluateWithCollectionContext: {ex.Message}");
+                Debug.WriteLine($"Error in EvaluateWithCollectionContext: {ex.Message}");
                 return false;
             }
         }
@@ -720,7 +724,7 @@ namespace WWSearchDataGrid.Modern.Core
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error evaluating template with context: {ex.Message}");
+                Debug.WriteLine($"Error evaluating template with context: {ex.Message}");
                 return false;
             }
         }
@@ -825,7 +829,7 @@ namespace WWSearchDataGrid.Modern.Core
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error in GetFilterComponents: {ex.Message}");
+                Debug.WriteLine($"Error in GetFilterComponents: {ex.Message}");
                 return new FilterChipComponents
                 {
                     SearchTypeText = "Advanced filter",
@@ -893,7 +897,7 @@ namespace WWSearchDataGrid.Modern.Core
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error in GetAllFilterComponents: {ex.Message}");
+                Debug.WriteLine($"Error in GetAllFilterComponents: {ex.Message}");
                 components.Add(new FilterChipComponents
                 {
                     SearchTypeText = "Advanced filter",
@@ -916,7 +920,7 @@ namespace WWSearchDataGrid.Modern.Core
             return value;
         }
 
-        private string FormatMultiValueFilter(string prefix, System.Collections.IEnumerable selectedValues)
+        private string FormatMultiValueFilter(string prefix, IEnumerable selectedValues)
         {
             if (selectedValues == null)
                 return prefix + " (no values)";
@@ -940,7 +944,7 @@ namespace WWSearchDataGrid.Modern.Core
             }
         }
 
-        private string FormatDateListFilter(string prefix, System.Collections.IEnumerable selectedDates)
+        private string FormatDateListFilter(string prefix, IEnumerable selectedDates)
         {
             if (selectedDates == null)
                 return prefix + " (no dates)";
@@ -1128,7 +1132,7 @@ namespace WWSearchDataGrid.Modern.Core
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error in GetTemplateComponents: {ex.Message}");
+                Debug.WriteLine($"Error in GetTemplateComponents: {ex.Message}");
                 return new FilterChipComponents
                 {
                     SearchTypeText = "Filter",
@@ -1156,7 +1160,7 @@ namespace WWSearchDataGrid.Modern.Core
                    searchType == SearchType.Yesterday;
         }
 
-        private string FormatDateIntervalFilter(System.Collections.IEnumerable dateIntervals)
+        private string FormatDateIntervalFilter(IEnumerable dateIntervals)
         {
             if (dateIntervals == null)
                 return "Date intervals (none)";
@@ -1180,7 +1184,7 @@ namespace WWSearchDataGrid.Modern.Core
         /// <summary>
         /// Populates ValueItems collection from SelectedValues
         /// </summary>
-        private void PopulateValueItems(FilterChipComponents components, System.Collections.IEnumerable selectedValues)
+        private void PopulateValueItems(FilterChipComponents components, IEnumerable selectedValues)
         {
             if (selectedValues == null) return;
 
@@ -1197,7 +1201,7 @@ namespace WWSearchDataGrid.Modern.Core
         /// <summary>
         /// Populates ValueItems collection from SelectedDates
         /// </summary>
-        private void PopulateDateValueItems(FilterChipComponents components, System.Collections.IEnumerable selectedDates)
+        private void PopulateDateValueItems(FilterChipComponents components, IEnumerable selectedDates)
         {
             if (selectedDates == null) return;
 
@@ -1214,7 +1218,7 @@ namespace WWSearchDataGrid.Modern.Core
         /// <summary>
         /// Populates ValueItems collection from DateIntervals
         /// </summary>
-        private void PopulateDateIntervalItems(FilterChipComponents components, System.Collections.IEnumerable dateIntervals)
+        private void PopulateDateIntervalItems(FilterChipComponents components, IEnumerable dateIntervals)
         {
             if (dateIntervals == null) return;
 
@@ -1345,7 +1349,7 @@ namespace WWSearchDataGrid.Modern.Core
         /// <summary>
         /// Handle property changes from SearchTemplates to determine when to auto-apply
         /// </summary>
-        private void OnSearchTemplatePropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+        private void OnSearchTemplatePropertyChanged(object sender, PropertyChangedEventArgs e)
         {
             // Only trigger auto-apply for filter-relevant properties
             var filterRelevantProperties = new[]
@@ -1363,12 +1367,12 @@ namespace WWSearchDataGrid.Modern.Core
             }
         }
 
-        private void OnSearchTemplateValues_CollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+        private void OnSearchTemplateValues_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
         {
             InvokeAutoApplyFilter();
         }
 
-        private void OnSearchGroup_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+        private void OnSearchGroup_PropertyChanged(object sender, PropertyChangedEventArgs e)
         {
             var filterRelevantProperties = new[]
             {

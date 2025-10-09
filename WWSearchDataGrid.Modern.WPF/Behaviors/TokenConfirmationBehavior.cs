@@ -1,3 +1,4 @@
+using System;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Threading;
@@ -103,7 +104,7 @@ namespace WWSearchDataGrid.Modern.WPF.Behaviors
                     var timer = (DispatcherTimer)element.GetValue(TimerProperty);
                     if (timer == null)
                     {
-                        timer = new DispatcherTimer { Interval = System.TimeSpan.FromSeconds(1) };
+                        timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
                         timer.Tick += (s, args) =>
                         {
                             timer.Stop();

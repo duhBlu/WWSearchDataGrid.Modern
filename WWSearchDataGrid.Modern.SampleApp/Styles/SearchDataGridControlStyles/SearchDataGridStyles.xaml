@@ -3,6 +3,8 @@
                     xmlns:sdg="clr-namespace:WWSearchDataGrid.Modern.WPF;assembly=WWSearchDataGrid.Modern.WPF"
                     xmlns:converters="clr-namespace:WWSearchDataGrid.Modern.WPF.Converters;assembly=WWSearchDataGrid.Modern.WPF">
 
+    <converters:NullOrEmptyToBooleanConverter x:Key="NullOrEmptyToBooleanConverter" />
+
     <converters:HierarchicalMarginConverter x:Key="HorizontalIndentConverter"
                                             Direction="Horizontal"
                                             IndentPerLevel="20"
@@ -127,10 +129,10 @@
                                               IsChecked="{Binding IsExpanded, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}"
                                               HorizontalAlignment="Center"
                                               VerticalAlignment="Center"
-                                              FontFamily="Segoe Fluent Icons"
-                                              FontSize="10">
+                                              FontFamily="Segoe Fluent Icons">
                                     <ToggleButton.Style>
                                         <Style TargetType="{x:Type ToggleButton}">
+                                            <Setter Property="FontSize" Value="10" />
                                             <Setter Property="Content" Value="&#xF08F;" />
                                             <Setter Property="Foreground" Value="#666666" />
                                             <Setter Property="Template">
@@ -154,7 +156,8 @@
                                             </Setter>
                                             <Style.Triggers>
                                                 <DataTrigger Binding="{Binding IsExpanded, RelativeSource={RelativeSource TemplatedParent}}" Value="True">
-                                                    <Setter Property="Content" Value="&#xF08E;" />
+                                                    <Setter Property="Content" Value="&#xF169;" />
+                                                    <Setter Property="FontSize" Value="7" />
                                                 </DataTrigger>
                                                 <Trigger Property="IsMouseOver" Value="True">
                                                     <Setter Property="Foreground" Value="#333333" />
@@ -185,18 +188,14 @@
                                 <!--  Group Value  -->
                                 <TextBlock Grid.Column="3"
                                            Foreground="#333333"
-                                           Text="{Binding Group.Name, RelativeSource={RelativeSource TemplatedParent}}"
                                            VerticalAlignment="Center"
                                            FontWeight="Bold"
                                            TextTrimming="CharacterEllipsis">
                                     <TextBlock.Style>
                                         <Style TargetType="TextBlock">
+                                            <Setter Property="Text" Value="{Binding Group.Name, RelativeSource={RelativeSource TemplatedParent}}" />
                                             <Style.Triggers>
-                                                <DataTrigger Binding="{Binding Group.Name, RelativeSource={RelativeSource TemplatedParent}}" Value="{x:Null}">
-                                                    <Setter Property="Text" Value="(Null)" />
-                                                    <Setter Property="FontStyle" Value="Italic" />
-                                                </DataTrigger>
-                                                <DataTrigger Binding="{Binding Group.Name, RelativeSource={RelativeSource TemplatedParent}}" Value="">
+                                                <DataTrigger Binding="{Binding Group.Name, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource NullOrEmptyToBooleanConverter}}" Value="True">
                                                     <Setter Property="Text" Value="(Null)" />
                                                     <Setter Property="FontStyle" Value="Italic" />
                                                 </DataTrigger>
@@ -474,9 +473,9 @@
         <Setter Property="Background" Value="White" />
         <Setter Property="BorderBrush" Value="#FFDDDDDD" />
         <Setter Property="RowBackground" Value="White" />
-        <Setter Property="AlternatingRowBackground" Value="#FFF9F9F9" />
-        <Setter Property="HorizontalGridLinesBrush" Value="#FFDDDDDD" />
-        <Setter Property="VerticalGridLinesBrush" Value="#FFDDDDDD" />
+        <Setter Property="AlternatingRowBackground" Value="#F2F4F9" />
+        <Setter Property="HorizontalGridLinesBrush" Value="#C6D2DD" />
+        <Setter Property="VerticalGridLinesBrush" Value="#C6D2DD" />
 
         <Setter Property="RowHeaderStyle" Value="{StaticResource CustomSearchDataGridRowHeaderStyle}" />
         <Setter Property="ColumnHeaderStyle" Value="{StaticResource CustomSearchDataGridColumnHeaderStyle}" />

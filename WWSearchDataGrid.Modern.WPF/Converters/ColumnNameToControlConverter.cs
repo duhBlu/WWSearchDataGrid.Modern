@@ -21,7 +21,7 @@ namespace WWSearchDataGrid.Modern.WPF.Converters
             string columnName = values[0] as string;
             string bindingPath = values[1] as string;
 
-            if (string.IsNullOrEmpty(columnName) || values[2] is not System.Collections.Generic.IEnumerable<ColumnSearchBox> dataColumns)
+            if (string.IsNullOrEmpty(columnName) || values[2] is not IEnumerable<ColumnSearchBox> dataColumns)
                 return null;
 
             // Find the matching column control
