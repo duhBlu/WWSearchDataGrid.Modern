@@ -269,6 +269,19 @@ namespace WWSearchDataGrid.Modern.WPF
 
         private void OnMouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
+            // Don't toggle if the double-click originated from the ToggleButton
+            // (the ToggleButton will handle its own state changes)
+            if (e.OriginalSource is DependencyObject source)
+            {
+                // Check if the click came from a ToggleButton or any of its children
+                var toggleButton = FindVisualParent<System.Windows.Controls.Primitives.ToggleButton>(source);
+                if (toggleButton != null)
+                {
+                    // The click came from the toggle button, let it handle the toggle
+                    return;
+                }
+            }
+
             IsExpanded = !IsExpanded;
             e.Handled = true;
         }
