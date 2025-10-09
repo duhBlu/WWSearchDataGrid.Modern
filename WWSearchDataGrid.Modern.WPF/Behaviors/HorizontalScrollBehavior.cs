@@ -56,7 +56,7 @@ namespace WWSearchDataGrid.Modern.WPF
                 sv.ExtentWidth <= sv.ViewportWidth)
                 return;
 
-            double delta = -e.Delta * SystemParameters.WheelScrollLines / 3.0;
+            double delta = -e.Delta * SystemParameters.WheelScrollLines / 15.0;
             sv.ScrollToHorizontalOffset(
                 Math.Clamp(sv.HorizontalOffset + delta, 0, sv.ScrollableWidth));
             e.Handled = true;
@@ -109,7 +109,7 @@ namespace WWSearchDataGrid.Modern.WPF
                 if (sv != null && sv.ExtentWidth > sv.ViewportWidth)
                 {
                     // adjust horizontal offset
-                    double offset = sv.HorizontalOffset + (delta * SystemParameters.WheelScrollLines / 3.0);
+                    double offset = sv.HorizontalOffset + (delta * SystemParameters.WheelScrollLines / 15.0);
                     sv.ScrollToHorizontalOffset(
                         Math.Clamp(offset, 0, sv.ScrollableWidth));
                     handled = true;

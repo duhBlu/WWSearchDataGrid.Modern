@@ -171,7 +171,7 @@
                                         Margin="3,0,0,0"
                                         Width="24"
                                         Height="24"
-                                        FontFamily="Segoe MDL2 Assets"
+                                        FontFamily="Segoe Fluent Icons"
                                         Content="&#xE711;">
                                     <Button.Style>
                                         <Style TargetType="{x:Type Button}">
@@ -400,7 +400,7 @@
                                             Padding="4"
                                             Height="{Binding ActualWidth, RelativeSource={RelativeSource Self}}"
                                             ToolTip="Remove"
-                                            FontFamily="Segoe MDL2 Assets"
+                                            FontFamily="Segoe Fluent Icons"
                                             Content="&#xE10A;" />
                                 </Grid>
 
@@ -537,7 +537,7 @@
                                                 <TextBlock Text="&#xE109;"
                                                            Margin="0,0,4,0"
                                                            VerticalAlignment="Center"
-                                                           FontFamily="Segoe MDL2 Assets"
+                                                           FontFamily="Segoe Fluent Icons"
                                                            FontSize="12" />
                                                 <TextBlock Text="Add Rule" VerticalAlignment="Center" />
                                             </StackPanel>
@@ -551,7 +551,7 @@
                                                 <TextBlock Text="&#xE10A;"
                                                            Margin="0,0,4,0"
                                                            VerticalAlignment="Center"
-                                                           FontFamily="Segoe MDL2 Assets"
+                                                           FontFamily="Segoe Fluent Icons"
                                                            FontSize="12" />
                                                 <TextBlock Text="Clear All" VerticalAlignment="Center" />
                                             </StackPanel>

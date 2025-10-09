@@ -38,7 +38,7 @@ namespace WWSearchDataGrid.Modern.SampleApp
         private int _itemsToGenerate = 5000;
 
         [ObservableProperty]
-        private string _currentThemeName = "Custom";
+        private string _currentThemeName = "Generic";
 
         // Reference to the SearchDataGrid for memory cleanup operations
         private SearchDataGrid _searchDataGrid;

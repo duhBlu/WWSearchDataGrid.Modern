@@ -13,7 +13,7 @@ namespace WWSearchDataGrid.Modern.SampleApp.Services
         private static ThemeManager? _instance;
         public static ThemeManager Instance => _instance ??= new ThemeManager();
 
-        private ThemeType _currentTheme = ThemeType.Custom; // Default based on App.xaml
+        private ThemeType _currentTheme = ThemeType.Generic; 
 
         /// <summary>
         /// Theme resource URI mappings
@@ -31,7 +31,6 @@ namespace WWSearchDataGrid.Modern.SampleApp.Services
                 ThemeType.Custom,
                 new List<Uri>
                 {
-                    new Uri("/Styles/SearchDataGridControlStyles/ThemeResources.xaml", UriKind.Relative),
                     new Uri("/Styles/SearchDataGridControlStyles/Primitives/NumericUpDownStyles.xaml", UriKind.Relative),
                     new Uri("/Styles/SearchDataGridControlStyles/Primitives/SearchTextBoxStyles.xaml", UriKind.Relative),
                     new Uri("/Styles/DefaultControlStyles.xaml", UriKind.Relative),
@@ -39,6 +38,7 @@ namespace WWSearchDataGrid.Modern.SampleApp.Services
                     new Uri("/Styles/SearchDataGridControlStyles/ColumnFilterEditorStyles.xaml", UriKind.Relative),
                     new Uri("/Styles/SearchDataGridControlStyles/FilterPanelStyles.xaml", UriKind.Relative),
                     new Uri("/Styles/SearchDataGridControlStyles/ColumnSearchBoxStyles.xaml", UriKind.Relative),
+                    new Uri("/Styles/SearchDataGridControlStyles/GroupPanelStyles.xaml", UriKind.Relative),
                     new Uri("/Styles/SearchDataGridControlStyles/SearchDataGridStyles.xaml", UriKind.Relative)
                 }
             }
@@ -77,9 +77,6 @@ namespace WWSearchDataGrid.Modern.SampleApp.Services
             AddThemeResources(targetTheme);
 
             _currentTheme = targetTheme;
-
-            // Update dynamic theme resources
-            UpdateDynamicThemeResources(targetTheme);
         }
 
         /// <summary>
@@ -140,36 +137,6 @@ namespace WWSearchDataGrid.Modern.SampleApp.Services
             var sourceString = source.ToString();
             return themeUris.Any(themeUri =>
                 string.Equals(sourceString, themeUri.ToString(), StringComparison.OrdinalIgnoreCase));
-        }
-
-        /// <summary>
-        /// Updates dynamic theme resources that MainWindow binds to
-        /// </summary>
-        /// <param name="theme">The active theme</param>
-        private void UpdateDynamicThemeResources(ThemeType theme)
-        {
-            var resources = Application.Current.Resources;
-
-            if (theme == ThemeType.Custom)
-            {
-                // Dark theme colors for MainWindow
-                resources["Theme.ControlPanel.Background"] = new System.Windows.Media.SolidColorBrush(
-                    (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#2D2D30"));
-                resources["Theme.ControlPanel.Foreground"] = new System.Windows.Media.SolidColorBrush(
-                    (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#CCCCCC"));
-                resources["Theme.Window.Background"] = new System.Windows.Media.SolidColorBrush(
-                    (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#1E1E1E"));
-            }
-            else
-            {
-                // Light theme colors for MainWindow
-                resources["Theme.ControlPanel.Background"] = new System.Windows.Media.SolidColorBrush(
-                    (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#F0F0F0"));
-                resources["Theme.ControlPanel.Foreground"] = new System.Windows.Media.SolidColorBrush(
-                    (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#333333"));
-                resources["Theme.Window.Background"] = new System.Windows.Media.SolidColorBrush(
-                    (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#FFFFFF"));
-            }
         }
     }
 

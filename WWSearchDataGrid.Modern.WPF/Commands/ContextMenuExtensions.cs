@@ -68,6 +68,7 @@ namespace WWSearchDataGrid.Modern.WPF
                 ContextMenuType.Cell => BuildCellContextMenu(contextMenuContext),
                 ContextMenuType.Row => BuildRowContextMenu(contextMenuContext),
                 ContextMenuType.GridBody => BuildGridBodyContextMenu(contextMenuContext),
+                ContextMenuType.GroupPanel => BuildGroupPanelContextMenu(contextMenuContext),
                 _ => null
             };
             return cmu;
@@ -86,6 +87,10 @@ namespace WWSearchDataGrid.Modern.WPF
             {
                 switch (element)
                 {
+                    case GroupPanel _:
+                        contextMenuContext.ContextType = ContextMenuType.GroupPanel;
+                        return contextMenuContext;
+
                     case DataGridColumnHeader header:
                         contextMenuContext.ContextType = ContextMenuType.ColumnHeader;
                         contextMenuContext.Column = header.Column;
@@ -153,6 +158,37 @@ namespace WWSearchDataGrid.Modern.WPF
             // TODO: Implement actual pinned column detection
             // For now, return false as placeholder
             return false;
+        }
+
+        private static ContextMenu BuildGroupPanelContextMenu(ContextMenuContext contextMenuContext)
+        {
+            var menu = new ContextMenu();
+            AutomationProperties.SetAutomationId(menu, "cmuGroupPanel");
+
+            // Expand All Groups
+            menu.Items.Add(BuildMenuItem(
+                "miExpandAllGroups",
+                "Expand All Groups",
+                ContextMenuCommands.ExpandAllGroupsCommand,
+                contextMenuContext.Grid));
+
+            // Collapse All Groups
+            menu.Items.Add(BuildMenuItem(
+                "miCollapseAllGroups",
+                "Collapse All Groups",
+                ContextMenuCommands.CollapseAllGroupsCommand,
+                contextMenuContext.Grid));
+
+            menu.Items.Add(new Separator());
+
+            // Clear All Grouping
+            menu.Items.Add(BuildMenuItem(
+                "miClearGrouping",
+                "Clear All Grouping",
+                ContextMenuCommands.ClearGroupingCommand,
+                contextMenuContext.Grid));
+
+            return menu;
         }
 
         /// <summary>
@@ -255,6 +291,29 @@ namespace WWSearchDataGrid.Modern.WPF
                 ContextMenuCommands.ClearSortingCommand,
                 contextMenuContext));
 
+            // Grouping (only show if grouping is enabled)
+            if (contextMenuContext.Grid?.IsGroupingEnabled == true)
+            {
+                menu.Items.Add(new Separator());
+
+                menu.Items.Add(BuildMenuItem(
+                    "miGroupByColumn",
+                    "Group By This Column",
+                    ContextMenuCommands.GroupByColumnCommand,
+                    contextMenuContext));
+
+                var isGroupPanelVisible = contextMenuContext.Grid.GroupPanel?.IsPanelVisible ?? false;
+                var groupPanelText = isGroupPanelVisible
+                    ? "Hide Group Panel"
+                    : "Show Group Panel";
+
+                menu.Items.Add(BuildMenuItem(
+                    "miToggleGroupPanel",
+                    groupPanelText,
+                    ContextMenuCommands.ToggleGroupPanelVisibilityCommand,
+                    contextMenuContext.Grid));
+            }
+
             menu.Items.Add(new Separator());
 
             // Filtering
@@ -290,27 +349,6 @@ namespace WWSearchDataGrid.Modern.WPF
 
             menu.Items.Add(new Separator());
 
-            // Alignment submenu
-            var alignmentMenu = BuildMenuItem("miAlignment", "Alignment (Not Implemented)", null, null);
-            alignmentMenu.Items.Add(BuildMenuItem(
-                "miAlignLeft",
-                "Left",
-                ContextMenuCommands.SetLeftAlignmentCommand,
-                contextMenuContext.Column));
-            alignmentMenu.Items.Add(BuildMenuItem(
-                "miAlignCenter",
-                "Center",
-                ContextMenuCommands.SetCenterAlignmentCommand,
-                contextMenuContext.Column));
-            alignmentMenu.Items.Add(BuildMenuItem(
-                "miAlignRight",
-                "Right",
-                ContextMenuCommands.SetRightAlignmentCommand,
-                contextMenuContext.Column));
-            menu.Items.Add(alignmentMenu);
-
-            menu.Items.Add(new Separator());
-
             // Visibility and Layout
             menu.Items.Add(BuildMenuItem(
                 "miShowColumnChooser",
@@ -333,19 +371,8 @@ namespace WWSearchDataGrid.Modern.WPF
                 isFrozen ? ContextMenuCommands.UnfreezeColumnCommand : ContextMenuCommands.FreezeColumnCommand,
                 contextMenuContext.Column));
 
-            // Dynamic Pin/Unpin menu item
-            var isPinned = IsColumnPinned(contextMenuContext.Grid, contextMenuContext.Column);
-            var pinName = isPinned ? "miUnpinColumn" : "miPinColumn";
-            var pinHeader = isPinned ? "Unpin Column (Not Implemented)" : "Pin Column (Not Implemented)";
-            menu.Items.Add(BuildMenuItem(
-                pinName,
-                pinHeader,
-                isPinned ? ContextMenuCommands.UnpinColumnCommand : ContextMenuCommands.PinColumnCommand,
-                contextMenuContext.Column));
-
             return menu;
         }
-
 
         private static ContextMenu BuildCellContextMenu(ContextMenuContext contextMenuContext)
         {
@@ -480,7 +507,8 @@ namespace WWSearchDataGrid.Modern.WPF
         ColumnHeader,
         Cell,
         Row,
-        GridBody
+        GridBody,
+        GroupPanel
     }
     #endregion
 }

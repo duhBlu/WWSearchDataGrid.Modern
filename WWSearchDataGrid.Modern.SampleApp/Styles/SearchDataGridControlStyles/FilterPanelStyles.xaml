@@ -89,7 +89,7 @@
                     CommandParameter="{Binding}"
                     HorizontalAlignment="Stretch"
                     VerticalAlignment="Stretch"
-                    FontFamily="Segoe MDL2 Assets"
+                    FontFamily="Segoe Fluent Icons"
                     FontSize="12"
                     Content="&#xF78A;"
                     Tag="{Binding FilterId}">
@@ -171,7 +171,7 @@
                     Margin="1"
                     HorizontalAlignment="Stretch"
                     VerticalAlignment="Stretch"
-                    FontFamily="Segoe MDL2 Assets"
+                    FontFamily="Segoe Fluent Icons"
                     FontSize="12"
                     Content="&#xF78A;"
                     Tag="{Binding FilterId}">
@@ -334,7 +334,7 @@
             Width="20"
             Height="20"
             behaviors:TokenHoverBehavior.IsEnabled="True"
-            FontFamily="Segoe MDL2 Assets"
+            FontFamily="Segoe Fluent Icons"
             FontSize="10"
             Content="&#xF78A;"
             ToolTip="Remove Filter"

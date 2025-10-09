@@ -61,7 +61,7 @@
                                             Command="{Binding Content.CloseCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                             Width="28"
                                             Height="28"
-                                            FontFamily="Segoe MDL2 Assets"
+                                            FontFamily="Segoe Fluent Icons"
                                             FontSize="10"
                                             Content="&#xE8BB;"
                                             WindowChrome.IsHitTestVisibleInChrome="True"

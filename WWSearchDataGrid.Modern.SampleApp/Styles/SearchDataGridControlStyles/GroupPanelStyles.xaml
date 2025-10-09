@@ -1,0 +1,138 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sdg="clr-namespace:WWSearchDataGrid.Modern.WPF;assembly=WWSearchDataGrid.Modern.WPF"
+                    xmlns:converters="clr-namespace:WWSearchDataGrid.Modern.WPF.Converters;assembly=WWSearchDataGrid.Modern.WPF">
+
+    <converters:HierarchicalMarginConverter x:Key="VerticalIndentConverter"
+                                            Direction="Vertical"
+                                            IndentPerLevel="8"
+                                            BaseLeftMargin="4" />
+
+    <Style x:Key="CustomGroupPanelStyle" TargetType="{x:Type sdg:GroupPanel}">
+        <Setter Property="Background" Value="#F5F5F5" />
+        <Setter Property="BorderBrush" Value="#DDDDDD" />
+        <Setter Property="BorderThickness" Value="0,0,0,1" />
+        <Setter Property="MinHeight" Value="40" />
+        <Setter Property="Padding" Value="8,4" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type sdg:GroupPanel}">
+                    <Border Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            Padding="{TemplateBinding Padding}"
+                            MinHeight="{TemplateBinding MinHeight}"
+                            AllowDrop="True">
+                        <Grid>
+                            <!--  Empty state message  -->
+                            <TextBlock FontStyle="Italic"
+                                       Foreground="#999999"
+                                       Text="Drag column headers here to group by that column"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding GroupedColumns.Count, RelativeSource={RelativeSource TemplatedParent}}" Value="0">
+                                                <Setter Property="Visibility" Value="Visible" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+
+                            <!--  Grouped columns display  -->
+                            <ItemsControl ItemsSource="{TemplateBinding GroupedColumns}">
+                                <ItemsControl.Style>
+                                    <Style TargetType="ItemsControl">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding GroupedColumns.Count, RelativeSource={RelativeSource TemplatedParent}}" Value="0">
+                                                <Setter Property="Visibility" Value="Collapsed" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </ItemsControl.Style>
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <StackPanel Orientation="Horizontal" />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate DataType="{x:Type sdg:GroupColumnInfo}">
+                                        <Border Background="White"
+                                                BorderBrush="#CCCCCC"
+                                                BorderThickness="1"
+                                                Margin="{Binding GroupLevel, Converter={StaticResource VerticalIndentConverter}}"
+                                                Padding="4,0"
+                                                Width="Auto"
+                                                Height="24"
+                                                CornerRadius="3">
+                                            <StackPanel Orientation="Horizontal">
+
+                                                <!--  Column header text  -->
+                                                <TextBlock Text="{Binding HeaderText}"
+                                                           Margin="0,0,8,0"
+                                                           VerticalAlignment="Center"
+                                                           FontWeight="SemiBold" />
+
+                                                <!--  Remove button  -->
+                                                <Button BorderThickness="0"
+                                                        Cursor="Hand"
+                                                        Command="{Binding RemoveGroupCommand, RelativeSource={RelativeSource AncestorType=sdg:GroupPanel}}"
+                                                        CommandParameter="{Binding}"
+                                                        Padding="4,2"
+                                                        VerticalAlignment="Center"
+                                                        Width="20"
+                                                        Height="20"
+                                                        Content="&#xE711;"
+                                                        FontFamily="Segoe Fluent Icons"
+                                                        FontSize="10"
+                                                        ToolTip="Remove grouping">
+                                                    <Button.Style>
+                                                        <Style TargetType="Button">
+                                                            <Setter Property="Foreground" Value="#666666" />
+                                                            <Setter Property="Background" Value="Transparent" />
+                                                            <Setter Property="Template">
+                                                                <Setter.Value>
+                                                                    <ControlTemplate TargetType="{x:Type Button}">
+                                                                        <Border x:Name="border"
+                                                                                Background="{TemplateBinding Background}"
+                                                                                BorderBrush="{TemplateBinding BorderBrush}"
+                                                                                BorderThickness="{TemplateBinding BorderThickness}"
+                                                                                CornerRadius="3">
+                                                                            <ContentPresenter x:Name="contentPresenter"
+                                                                                              Focusable="False"
+                                                                                              Margin="{TemplateBinding Padding}"
+                                                                                              HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                                                                              VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                                                                              RecognizesAccessKey="True"
+                                                                                              TextElement.Foreground="{TemplateBinding Foreground}"
+                                                                                              SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" />
+                                                                        </Border>
+                                                                    </ControlTemplate>
+                                                                </Setter.Value>
+                                                            </Setter>
+                                                            <Style.Triggers>
+                                                                <Trigger Property="IsMouseOver" Value="True">
+                                                                    <Setter Property="Foreground" Value="#CC0000" />
+                                                                    <Setter Property="Background" Value="#eeeeee" />
+                                                                </Trigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Button.Style>
+                                                </Button>
+                                            </StackPanel>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </Grid>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+</ResourceDictionary>

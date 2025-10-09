@@ -3,6 +3,7 @@ using System.ComponentModel;
 using System.Linq;
 using System.Windows.Controls;
 using System.Windows;
+using System.Windows.Data;
 using System.Windows.Media;
 using System.Windows.Input;
 using WWSearchDataGrid.Modern.Core;
@@ -15,6 +16,7 @@ using System.Collections.ObjectModel;
 using System.Collections.Generic;
 using System.Windows.Threading;
 using WWSearchDataGrid.Modern.WPF.Commands;
+using System.Windows.Controls.Primitives;
 
 namespace WWSearchDataGrid.Modern.WPF
 {
@@ -30,18 +32,21 @@ namespace WWSearchDataGrid.Modern.WPF
         private IEnumerable originalItemsSource;
         private bool initialUpdateLayoutCompleted;
         private SearchTemplateController globalFilterController;
-        
+
         // Collection context caching for performance optimization
-        private readonly Dictionary<string, CollectionContext> _collectionContextCache = 
+        private readonly Dictionary<string, CollectionContext> _collectionContextCache =
             new Dictionary<string, CollectionContext>();
         private List<object> _materializedDataSource;
         private readonly object _contextCacheLock = new object();
-        
+
         // Asynchronous filtering support
         private CancellationTokenSource _filterCancellationTokenSource;
 
         // Cell value change detection support
         private readonly Dictionary<string, object> _cellValueSnapshots = new Dictionary<string, object>();
+
+        // Grouping support
+        private GroupPanel _groupPanel;
 
         #endregion
 
@@ -61,6 +66,20 @@ namespace WWSearchDataGrid.Modern.WPF
         public static readonly DependencyProperty EnableComplexFilteringProperty =
             DependencyProperty.Register("EnableComplexFiltering", typeof(bool), typeof(SearchDataGrid),
                 new FrameworkPropertyMetadata(false, FrameworkPropertyMetadataOptions.Inherits));
+
+        /// <summary>
+        /// Dependency property for EnableGrouping
+        /// </summary>
+        public static readonly DependencyProperty EnableGroupingProperty =
+            DependencyProperty.Register("EnableGrouping", typeof(bool), typeof(SearchDataGrid),
+                new PropertyMetadata(false, OnEnableGroupingChanged));
+
+        /// <summary>
+        /// Attached property for default GroupStyle
+        /// </summary>
+        public static readonly DependencyProperty DefaultGroupStyleProperty =
+            DependencyProperty.Register("DefaultGroupStyle", typeof(GroupStyle), typeof(SearchDataGrid),
+                new PropertyMetadata(null, OnDefaultGroupStyleChanged));
 
         #endregion
 
@@ -138,16 +157,54 @@ namespace WWSearchDataGrid.Modern.WPF
         public FilterPanel FilterPanel { get; private set; }
 
         /// <summary>
+        /// Gets or sets whether grouping functionality is enabled
+        /// </summary>
+        public bool EnableGrouping
+        {
+            get { return (bool)GetValue(EnableGroupingProperty); }
+            set { SetValue(EnableGroupingProperty, value); }
+        }
+        
+        /// <summary>
+        /// Gets or sets whether grouping functionality is enabled
+        /// </summary>
+        public GroupStyle DefaultGroupStyle
+        {
+            get { return (GroupStyle)GetValue(DefaultGroupStyleProperty); }
+            set { SetValue(DefaultGroupStyleProperty, value); }
+        }
+
+        /// <summary>
+        /// Gets the group panel control instance
+        /// </summary>
+        public GroupPanel GroupPanel
+        {
+            get { return _groupPanel; }
+            private set { _groupPanel = value; }
+        }
+
+        /// <summary>
+        /// Gets whether grouping is currently enabled
+        /// </summary>
+        public bool IsGroupingEnabled => EnableGrouping;
+
+        /// <summary>
+        /// Gets the current grouped columns
+        /// </summary>
+        public System.Collections.Generic.IReadOnlyList<GroupColumnInfo> GroupedColumns =>
+            GroupPanel?.GroupedColumns?.ToList() ?? new System.Collections.Generic.List<GroupColumnInfo>();
+
+        /// <summary>
         /// Gets the count of original items for debugging purposes
         /// </summary>
-        public int OriginalItemsCount 
-        { 
-            get 
-            { 
+        public int OriginalItemsCount
+        {
+            get
+            {
                 if (originalItemsSource == null) return 0;
                 if (originalItemsSource is ICollection collection) return collection.Count;
                 return originalItemsSource.Cast<object>().Count();
-            } 
+            }
         }
 
         #endregion
@@ -220,17 +277,44 @@ namespace WWSearchDataGrid.Modern.WPF
                 // Copy the current state from our FilterPanel to the template FilterPanel
                 templateFilterPanel.FiltersEnabled = FilterPanel.FiltersEnabled;
                 templateFilterPanel.UpdateActiveFilters(FilterPanel.ActiveFilters);
-                
+
                 // Wire up events from template FilterPanel to our FilterPanel events
                 templateFilterPanel.FiltersEnabledChanged += (s, e) => OnFiltersEnabledChanged(s, e);
                 templateFilterPanel.FilterRemoved += (s, e) => OnFilterRemoved(s, e);
                 templateFilterPanel.ValueRemovedFromToken += (s, e) => OnValueRemovedFromToken(s, e);
                 templateFilterPanel.OperatorToggled += (s, e) => OnOperatorToggled(s, e);
                 templateFilterPanel.ClearAllFiltersRequested += (s, e) => OnClearAllFiltersRequested(s, e);
-                
+
                 // Replace our FilterPanel property with the template instance so updates go to the right place
                 FilterPanel = templateFilterPanel;
             }
+
+            // Get the GroupPanel template part and connect it to our GroupPanel instance (if grouping is enabled)
+            if (IsGroupingEnabled && GetTemplateChild("PART_GroupPanel") is GroupPanel templateGroupPanel)
+            {
+                // If we already have a GroupPanel instance with state, transfer it
+                if (GroupPanel != null && GroupPanel.GroupedColumns != null && GroupPanel.GroupedColumns.Count > 0)
+                {
+                    // Copy grouped columns to template instance
+                    foreach (var groupCol in GroupPanel.GroupedColumns)
+                    {
+                        templateGroupPanel.GroupedColumns.Add(groupCol);
+                    }
+                    templateGroupPanel.IsPanelVisible = GroupPanel.IsPanelVisible;
+                    templateGroupPanel.Visibility = GroupPanel.Visibility;
+                }
+
+                // Wire up events from template GroupPanel
+                templateGroupPanel.GroupingChanged += OnGroupingChanged;
+                templateGroupPanel.ExpandCollapseAllRequested += OnExpandCollapseAllRequested;
+                templateGroupPanel.ParentDataGrid = this;
+
+                // Replace our GroupPanel property with the template instance
+                GroupPanel = templateGroupPanel;
+            }
+
+            // Apply the default GroupStyle from attached property if not already set
+            ApplyDefaultGroupStyle();
         }
 
         #endregion
@@ -1649,6 +1733,410 @@ namespace WWSearchDataGrid.Modern.WPF
             {
                 Debug.WriteLine($"Error in OnCellValueChangedInternal: {ex.Message}");
             }
+        }
+
+        #endregion
+
+        #region Grouping Methods
+
+        /// <summary>
+        /// Callback handler for DefaultGroupStyle property changes
+        /// </summary>
+        private static void OnDefaultGroupStyleChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            if (d is SearchDataGrid grid)
+            {
+                grid.GroupStyle.Clear();
+                grid.ApplyDefaultGroupStyle();
+            }
+        }
+
+        /// <summary>
+        /// Applies the default GroupStyle from the attached property
+        /// </summary>
+        private void ApplyDefaultGroupStyle()
+        {
+            // Only apply if no custom GroupStyle is already set
+            if (this.GroupStyle.Count == 0)
+            {
+                var defaultGroupStyle = DefaultGroupStyle;
+                if (defaultGroupStyle != null)
+                {
+                    this.GroupStyle.Add(defaultGroupStyle);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Callback handler for EnableGrouping property changes
+        /// </summary>
+        private static void OnEnableGroupingChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            if (d is SearchDataGrid grid)
+            {
+                bool isEnabled = (bool)e.NewValue;
+
+                if (isEnabled)
+                {
+                    // Initialize GroupPanel if not already created
+                    if (grid.GroupPanel == null)
+                    {
+                        grid.GroupPanel = new GroupPanel();
+                        grid.GroupPanel.ParentDataGrid = grid;
+                        grid.GroupPanel.Visibility = Visibility.Collapsed; // Start collapsed until user groups a column
+                        grid.GroupPanel.IsPanelVisible = false; // Explicitly set to false
+
+                        // Subscribe to GroupPanel events
+                        grid.GroupPanel.GroupingChanged += grid.OnGroupingChanged;
+                        grid.GroupPanel.ExpandCollapseAllRequested += grid.OnExpandCollapseAllRequested;
+
+                        Debug.WriteLine("GroupPanel initialized and ready (collapsed by default)");
+                    }
+                }
+                else
+                {
+                    // Disable grouping - clear any existing groups and hide panel
+                    if (grid.GroupPanel != null)
+                    {
+                        grid.ClearGrouping();
+                        grid.GroupPanel.Visibility = Visibility.Collapsed;
+                        grid.GroupPanel.IsPanelVisible = false;
+                        Debug.WriteLine("Grouping disabled - panel hidden and groups cleared");
+                    }
+                }
+
+                // Enable/disable drag-drop on column headers
+                grid.UpdateColumnHeaderDragDrop(isEnabled);
+            }
+        }
+
+        /// <summary>
+        /// Applies grouping to the CollectionView.
+        /// Called when GroupPanel.GroupingChanged fires.
+        /// </summary>
+        private void ApplyGrouping(System.Collections.Generic.IEnumerable<GroupColumnInfo> groupedColumns)
+        {
+            try
+            {
+                var view = System.Windows.Data.CollectionViewSource.GetDefaultView(ItemsSource);
+                if (view == null) return;
+
+                using (view.DeferRefresh())
+                {
+                    // Clear existing grouping
+                    view.GroupDescriptions.Clear();
+
+                    // Add new grouping in hierarchical order
+                    if (groupedColumns != null && groupedColumns.Any())
+                    {
+                        foreach (var groupCol in groupedColumns.OrderBy(g => g.GroupLevel))
+                        {
+                            if (!string.IsNullOrEmpty(groupCol.BindingPath))
+                            {
+                                view.GroupDescriptions.Add(
+                                    new PropertyGroupDescription(groupCol.BindingPath));
+                            }
+                        }
+                    }
+                }
+
+                // Hide/show columns based on grouping
+                UpdateGroupedColumnVisibility(groupedColumns);
+
+                // Refresh the view
+                view.Refresh();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error applying grouping: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Updates column visibility based on which columns are grouped
+        /// </summary>
+        private void UpdateGroupedColumnVisibility(System.Collections.Generic.IEnumerable<GroupColumnInfo> groupedColumns)
+        {
+            try
+            {
+                var groupedPaths = groupedColumns?.Select(g => g.BindingPath).ToHashSet() ?? new HashSet<string>();
+
+                foreach (var column in Columns)
+                {
+                    var bindingPath = GetColumnBindingPath(column);
+                    if (!string.IsNullOrEmpty(bindingPath))
+                    {
+                        // Hide column if it's grouped
+                        if (groupedPaths.Contains(bindingPath))
+                        {
+                            // Store original visibility state if not already stored
+                            if (!(bool)column.GetValue(OriginalVisibilityProperty))
+                            {
+                                column.SetValue(OriginalVisibilityProperty, column.Visibility);
+                            }
+                            column.Visibility = Visibility.Collapsed;
+                        }
+                        else
+                        {
+                            // Restore original visibility if it was hidden due to grouping
+                            var originalVisibility = column.GetValue(OriginalVisibilityProperty);
+                            if (originalVisibility is Visibility vis)
+                            {
+                                column.Visibility = vis;
+                                column.ClearValue(OriginalVisibilityProperty);
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error updating grouped column visibility: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Attached property to store original column visibility
+        /// </summary>
+        private static readonly DependencyProperty OriginalVisibilityProperty =
+            DependencyProperty.RegisterAttached("OriginalVisibility", typeof(Visibility), typeof(SearchDataGrid),
+                new PropertyMetadata(Visibility.Visible));
+
+        /// <summary>
+        /// Updates drag-drop capability on column headers
+        /// </summary>
+        private void UpdateColumnHeaderDragDrop(bool enable)
+        {
+            try
+            {
+                if (enable)
+                {
+                    // Subscribe to column header events for drag-drop
+                    this.Loaded += OnSearchDataGridLoaded;
+                }
+                else
+                {
+                    // Unsubscribe from events
+                    this.Loaded -= OnSearchDataGridLoaded;
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error updating column header drag-drop: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Handles the Loaded event to attach drag-drop handlers to column headers
+        /// </summary>
+        private void OnSearchDataGridLoaded(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                // Find all DataGridColumnHeader elements and attach mouse handlers
+                AttachColumnHeaderHandlers(this);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error in OnSearchDataGridLoaded: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Recursively finds and attaches mouse handlers to column headers
+        /// </summary>
+        private void AttachColumnHeaderHandlers(DependencyObject parent)
+        {
+            if (parent == null) return;
+
+            int childCount = VisualTreeHelper.GetChildrenCount(parent);
+            for (int i = 0; i < childCount; i++)
+            {
+                var child = VisualTreeHelper.GetChild(parent, i);
+
+                if (child is DataGridColumnHeader header)
+                {
+                    // Detach first to avoid duplicate subscriptions
+                    header.MouseMove -= OnColumnHeaderMouseMove;
+                    header.MouseMove += OnColumnHeaderMouseMove;
+                }
+
+                // Recursively search children
+                AttachColumnHeaderHandlers(child);
+            }
+        }
+
+        /// <summary>
+        /// Handles mouse move on column headers to initiate drag operation
+        /// </summary>
+        private void OnColumnHeaderMouseMove(object sender, MouseEventArgs e)
+        {
+            if (e.LeftButton == MouseButtonState.Pressed && sender is DataGridColumnHeader header)
+            {
+                try
+                {
+                    // Only allow drag if grouping is enabled
+                    if (!IsGroupingEnabled || header.Column == null)
+                        return;
+
+                    // Create drag data
+                    var dragData = new DataObject(typeof(DataGridColumn), header.Column);
+
+                    // Initiate drag-drop operation
+                    DragDrop.DoDragDrop(header, dragData, DragDropEffects.Copy);
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"Error in OnColumnHeaderMouseMove: {ex.Message}");
+                }
+            }
+        }
+
+        /// <summary>
+        /// Clears all grouping and resets to flat view
+        /// </summary>
+        public void ClearGrouping()
+        {
+            GroupPanel?.ClearAllGrouping();
+            ApplyGrouping(System.Linq.Enumerable.Empty<GroupColumnInfo>());
+        }
+
+        /// <summary>
+        /// Event handler for GroupPanel.GroupingChanged
+        /// </summary>
+        private void OnGroupingChanged(object sender, EventArgs e)
+        {
+            if (GroupPanel?.GroupedColumns != null)
+            {
+                // Automatically show the GroupPanel when columns are grouped
+                if (GroupPanel.GroupedColumns.Count > 0)
+                {
+                    GroupPanel.IsPanelVisible = true;
+                    GroupPanel.Visibility = Visibility.Visible;
+                }
+                else
+                {
+                    // Hide panel when all groups are removed
+                    GroupPanel.Visibility = Visibility.Collapsed;
+                }
+
+                ApplyGrouping(GroupPanel.GroupedColumns);
+            }
+        }
+
+        /// <summary>
+        /// Event handler for GroupPanel.ExpandCollapseAllRequested
+        /// </summary>
+        private void OnExpandCollapseAllRequested(object sender, bool expand)
+        {
+            try
+            {
+                // Access the CollectionView and iterate through groups
+                var view = System.Windows.Data.CollectionViewSource.GetDefaultView(ItemsSource);
+                if (view?.Groups == null) return;
+
+                ExpandOrCollapseGroups(view.Groups, expand);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error in OnExpandCollapseAllRequested: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Recursively expands or collapses all group levels
+        /// </summary>
+        private void ExpandOrCollapseGroups(ReadOnlyObservableCollection<object> groups, bool expand)
+        {
+            foreach (CollectionViewGroup group in groups)
+            {
+                // Set IsExpanded on the group container
+                SetGroupExpanded(group, expand);
+
+                // Recursively handle subgroups
+                if (group.Items.Count > 0 && group.Items[0] is CollectionViewGroup)
+                {
+                    var subGroupsList = group.Items.Cast<object>().ToList();
+                    var subGroupsCollection = new ObservableCollection<object>(subGroupsList);
+                    var readOnlySubGroups = new ReadOnlyObservableCollection<object>(subGroupsCollection);
+                    ExpandOrCollapseGroups(readOnlySubGroups, expand);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Sets the IsExpanded property on a group's visual container
+        /// </summary>
+        private void SetGroupExpanded(CollectionViewGroup group, bool expand)
+        {
+            try
+            {
+                // Find the GroupItem container for this group in the visual tree
+                var groupItem = FindGroupItem(this, group);
+                if (groupItem != null)
+                {
+                    // Find the Expander within the GroupItem
+                    var expander = FindVisualChild<System.Windows.Controls.Expander>(groupItem);
+                    if (expander != null)
+                    {
+                        expander.IsExpanded = expand;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error setting group expanded state: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Finds the GroupItem container for a specific CollectionViewGroup
+        /// </summary>
+        private System.Windows.Controls.GroupItem FindGroupItem(DependencyObject parent, CollectionViewGroup group)
+        {
+            if (parent == null) return null;
+
+            int childCount = VisualTreeHelper.GetChildrenCount(parent);
+            for (int i = 0; i < childCount; i++)
+            {
+                var child = VisualTreeHelper.GetChild(parent, i);
+
+                if (child is System.Windows.Controls.GroupItem groupItem && groupItem.Content == group)
+                {
+                    return groupItem;
+                }
+
+                // Recursively search children
+                var result = FindGroupItem(child, group);
+                if (result != null) return result;
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Finds a child of a specific type in the visual tree
+        /// </summary>
+        private T FindVisualChild<T>(DependencyObject parent) where T : DependencyObject
+        {
+            if (parent == null) return null;
+
+            int childCount = VisualTreeHelper.GetChildrenCount(parent);
+            for (int i = 0; i < childCount; i++)
+            {
+                var child = VisualTreeHelper.GetChild(parent, i);
+
+                if (child is T typedChild)
+                {
+                    return typedChild;
+                }
+
+                // Recursively search children
+                var result = FindVisualChild<T>(child);
+                if (result != null) return result;
+            }
+
+            return null;
         }
 
         #endregion

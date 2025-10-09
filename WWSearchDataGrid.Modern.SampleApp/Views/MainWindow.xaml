@@ -316,40 +316,12 @@
                                 IsReadOnly="False"
                                 Margin="10"
                                 EnableComplexFiltering="True"
+                                EnableGrouping="True"
                                 SelectionMode="Extended"
                                 SelectionUnit="CellOrRowHeader"
                                 ItemsSource="{Binding Items}"
                                 CanUserAddRows="False">
-
                 <sdg:SearchDataGrid.Columns>
-
-                    <!--  Template Columns for Testing  -->
-                    <DataGridTemplateColumn Width="120" SortMemberPath="IsActiveTemplate">
-                        <DataGridTemplateColumn.Header>
-                            <TextBlock Text="Is Active (Template)" />
-                        </DataGridTemplateColumn.Header>
-                        <DataGridTemplateColumn.CellTemplate>
-                            <DataTemplate>
-                                <ToggleButton IsChecked="{Binding IsActiveTemplate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                              HorizontalAlignment="Center"
-                                              VerticalAlignment="Center"
-                                              Content="{Binding IsActiveTemplate, Converter={StaticResource BooleanToStringConverter}, ConverterParameter='Yes,No'}" />
-                            </DataTemplate>
-                        </DataGridTemplateColumn.CellTemplate>
-                    </DataGridTemplateColumn>
-
-                    <DataGridTemplateColumn Width="150" SortMemberPath="CurrencyTemplate">
-                        <DataGridTemplateColumn.Header>
-                            <TextBlock Text="Currency (Template)" />
-                        </DataGridTemplateColumn.Header>
-                        <DataGridTemplateColumn.CellTemplate>
-                            <DataTemplate>
-                                <TextBlock Text="{Binding CurrencyTemplate, StringFormat=C}"
-                                           Margin="5,0"
-                                           VerticalAlignment="Center" />
-                            </DataTemplate>
-                        </DataGridTemplateColumn.CellTemplate>
-                    </DataGridTemplateColumn>
 
                     <DataGridTextColumn Width="120"
                                         sdg:ColumnSearchBox.EnableComplexFiltering="False"

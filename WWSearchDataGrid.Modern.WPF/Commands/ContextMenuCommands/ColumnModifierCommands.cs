@@ -66,24 +66,6 @@ namespace WWSearchDataGrid.Modern.WPF.Commands
             // TODO: Remove column from frozen state
         }, column => column != null);
 
-        /// <summary>
-        /// Toggles the pin state of a column (pins if unpinned, unpins if pinned)
-        /// </summary>
-        public static ICommand PinColumnCommand => new RelayCommand<DataGridColumn>(column =>
-        {
-            Debug.WriteLine($"[PLACEHOLDER] Pin Column: '{column?.Header}' - Not implemented");
-            // TODO: Move column to pinned zone, persisting across layout changes
-        }, column => column != null);
-
-        /// <summary>
-        /// Toggles the pin state of a column (unpins if pinned, pins if unpinned)
-        /// </summary>
-        public static ICommand UnpinColumnCommand => new RelayCommand<DataGridColumn>(column =>
-        {
-            Debug.WriteLine($"[PLACEHOLDER] Unpin Column: '{column?.Header}' - Not implemented");
-            // TODO: Remove column from pinned zone
-        }, column => column != null);
-
         #endregion
 
         #region Sizing & Alignment Commands
@@ -157,33 +139,6 @@ namespace WWSearchDataGrid.Modern.WPF.Commands
         }
 
         #endregion
-
-        /// <summary>
-        /// Sets column alignment to left
-        /// </summary>
-        public static ICommand SetLeftAlignmentCommand => new RelayCommand<DataGridColumn>(column =>
-        {
-            Debug.WriteLine($"[PLACEHOLDER] Set Left Alignment: Column '{column?.Header}' - Not implemented");
-            // TODO: Set column text alignment to left
-        }, column => column != null);
-
-        /// <summary>
-        /// Sets column alignment to center
-        /// </summary>
-        public static ICommand SetCenterAlignmentCommand => new RelayCommand<DataGridColumn>(column =>
-        {
-            Debug.WriteLine($"[PLACEHOLDER] Set Center Alignment: Column '{column?.Header}' - Not implemented");
-            // TODO: Set column text alignment to center
-        }, column => column != null);
-
-        /// <summary>
-        /// Sets column alignment to right
-        /// </summary>
-        public static ICommand SetRightAlignmentCommand => new RelayCommand<DataGridColumn>(column =>
-        {
-            Debug.WriteLine($"[PLACEHOLDER] Set Right Alignment: Column '{column?.Header}' - Not implemented");
-            // TODO: Set column text alignment to right
-        }, column => column != null);
 
         #endregion
 

@@ -83,7 +83,7 @@
                                     TabIndex="1"
                                     KeyboardNavigation.IsTabStop="True"
                                     ToolTip="Clear filter"
-                                    FontFamily="Segoe MDL2 Assets"
+                                    FontFamily="Segoe Fluent Icons"
                                     FontSize="10"
                                     Content="&#xE8BB;">
                                 <Button.Style>
@@ -154,7 +154,7 @@
                                     TabIndex="2"
                                     KeyboardNavigation.IsTabStop="True"
                                     ToolTip="Advanced Filter"
-                                    FontFamily="Segoe MDL2 Assets"
+                                    FontFamily="Segoe Fluent Icons"
                                     FontSize="12"
                                     Content="&#xE71C;">
                                 <Button.Style>

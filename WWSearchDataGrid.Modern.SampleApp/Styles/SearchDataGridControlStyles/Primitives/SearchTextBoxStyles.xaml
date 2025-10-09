@@ -95,7 +95,7 @@
                                         <Setter Property="Foreground" Value="{StaticResource SearchTextBox.SearchIconBrush}" />
                                         <Setter Property="BorderThickness" Value="1" />
                                         <Setter Property="Cursor" Value="Hand" />
-                                        <Setter Property="FontFamily" Value="Segoe MDL2 Assets" />
+                                        <Setter Property="FontFamily" Value="Segoe Fluent Icons" />
                                         <Setter Property="FontSize" Value="12" />
                                         <Setter Property="Template">
                                             <Setter.Value>
@@ -201,7 +201,7 @@
                                         <Setter Property="Foreground" Value="{StaticResource SearchTextBox.ClearButton.ForegroundBrush.Default}" />
                                         <Setter Property="BorderThickness" Value="0" />
                                         <Setter Property="Cursor" Value="Hand" />
-                                        <Setter Property="FontFamily" Value="Segoe MDL2 Assets" />
+                                        <Setter Property="FontFamily" Value="Segoe Fluent Icons" />
                                         <Setter Property="FontSize" Value="12" />
                                         <Setter Property="Template">
                                             <Setter.Value>
