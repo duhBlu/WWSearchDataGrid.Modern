@@ -205,12 +205,8 @@ namespace WWSearchDataGrid.Modern.SampleApp
                 NullableDateTimeValue = rnd.NextDouble() < 0.17 ? null : (DateTime?)orderDateTime.AddHours(rnd.Next(-100, 100)),
                 TimeSpanValue = TimeSpan.FromMinutes(rnd.Next(30, 480)),
                 NullableTimeSpanValue = rnd.NextDouble() < 0.19 ? null : (TimeSpan?)TimeSpan.FromHours(rnd.NextDouble() * 24),
-                GuidValue = Guid.NewGuid(),
-                NullableGuidValue = rnd.NextDouble() < 0.22 ? null : (Guid?)Guid.NewGuid(),
                 PriorityValue = priorityValue,
                 NullablePriorityValue = rnd.NextDouble() < 0.23 ? null : (Priority?)priorityValue,
-                IsActiveTemplate = rnd.NextDouble() < 0.65,
-                CurrencyTemplate = (decimal)(rnd.NextDouble() * 50000),
             };
         }
 

@@ -42,16 +42,8 @@ namespace WWSearchDataGrid.Modern.SampleApp
         public TimeSpan TimeSpanValue { get; set; }
         public TimeSpan? NullableTimeSpanValue { get; set; }
 
-        // GUID types
-        public Guid GuidValue { get; set; }
-        public Guid? NullableGuidValue { get; set; }
-
         // Enum types
         public Priority PriorityValue { get; set; }
         public Priority? NullablePriorityValue { get; set; }
-
-        // Template column properties
-        public bool IsActiveTemplate { get; set; }
-        public decimal CurrencyTemplate { get; set; }
     }
 }

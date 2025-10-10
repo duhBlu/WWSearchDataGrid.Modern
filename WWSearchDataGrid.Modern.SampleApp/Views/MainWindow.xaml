@@ -401,20 +401,6 @@
                     <DataGridTextColumn Width="150"
                                         Header="Nullable DateTime"
                                         Binding="{Binding NullableDateTimeValue, StringFormat=g}" />
-                    <DataGridTextColumn Width="100"
-                                        Header="TimeSpan"
-                                        Binding="{Binding TimeSpanValue}" />
-                    <DataGridTextColumn Width="120"
-                                        Header="Nullable TimeSpan"
-                                        Binding="{Binding NullableTimeSpanValue}" />
-
-                    <!--  GUID Types  -->
-                    <DataGridTextColumn Width="120"
-                                        Header="GUID"
-                                        Binding="{Binding GuidValue}" />
-                    <DataGridTextColumn Width="130"
-                                        Header="Nullable GUID"
-                                        Binding="{Binding NullableGuidValue}" />
 
                     <!--  Enum Types  -->
                     <DataGridTextColumn Width="80"
