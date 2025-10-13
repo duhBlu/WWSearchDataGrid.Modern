@@ -317,7 +317,7 @@
                                 IsReadOnly="False"
                                 Margin="10"
                                 EnableComplexFiltering="True"
-                                EnableGrouping="True"
+                                
                                 SelectionMode="Extended"
                                 SelectionUnit="CellOrRowHeader"
                                 ItemsSource="{Binding Items}"

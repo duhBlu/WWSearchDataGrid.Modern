@@ -70,7 +70,6 @@ namespace WWSearchDataGrid.Modern.WPF
                 ContextMenuType.Cell => BuildCellContextMenu(contextMenuContext),
                 ContextMenuType.Row => BuildRowContextMenu(contextMenuContext),
                 ContextMenuType.GridBody => BuildGridBodyContextMenu(contextMenuContext),
-                ContextMenuType.GroupPanel => BuildGroupPanelContextMenu(contextMenuContext),
                 _ => null
             };
             return cmu;
@@ -89,19 +88,6 @@ namespace WWSearchDataGrid.Modern.WPF
             {
                 switch (element)
                 {
-                    case GroupPanel groupPanel:
-                        contextMenuContext.ContextType = ContextMenuType.GroupPanel;
-
-                        // Try to find specific GroupColumnInfo from visual tree
-                        var groupItem = FindAncestor<ContentPresenter>(target);
-                        if (groupItem?.DataContext is GroupColumnInfo groupInfo)
-                        {
-                            contextMenuContext.GroupColumnInfo = groupInfo;
-                            contextMenuContext.Column = groupInfo.Column;
-                        }
-
-                        return contextMenuContext;
-
                     case DataGridColumnHeader header:
                         contextMenuContext.ContextType = ContextMenuType.ColumnHeader;
                         contextMenuContext.Column = header.Column;
@@ -184,141 +170,6 @@ namespace WWSearchDataGrid.Modern.WPF
             // TODO: Implement actual pinned column detection
             // For now, return false as placeholder
             return false;
-        }
-
-        private static ContextMenu BuildGroupPanelContextMenu(ContextMenuContext contextMenuContext)
-        {
-            // If context has GroupColumnInfo, build column-specific menu
-            if (contextMenuContext.GroupColumnInfo != null)
-            {
-                return BuildGroupPanelColumnItemContextMenu(contextMenuContext);
-            }
-
-            // Otherwise, build panel-level menu
-            return BuildGroupPanelBackgroundContextMenu(contextMenuContext);
-        }
-
-        /// <summary>
-        /// Builds context menu for a specific grouped column item
-        /// </summary>
-        private static ContextMenu BuildGroupPanelColumnItemContextMenu(ContextMenuContext contextMenuContext)
-        {
-            var menu = new ContextMenu();
-            AutomationProperties.SetAutomationId(menu, "cmuGroupPanelColumnItem");
-
-            // Full Expand
-            menu.Items.Add(BuildMenuItem(
-                "miExpandAllGroups",
-                "Full Expand",
-                ContextMenuCommands.ExpandAllGroupsCommand,
-                contextMenuContext.Grid));
-
-            // Full Collapse
-            menu.Items.Add(BuildMenuItem(
-                "miCollapseAllGroups",
-                "Full Collapse",
-                ContextMenuCommands.CollapseAllGroupsCommand,
-                contextMenuContext.Grid));
-
-            menu.Items.Add(new Separator());
-
-            // Sort Ascending
-            menu.Items.Add(BuildMenuItem(
-                "miSortAscending",
-                "Sort Ascending",
-                ContextMenuCommands.SortAscendingCommand,
-                contextMenuContext));
-
-            // Sort Descending
-            menu.Items.Add(BuildMenuItem(
-                "miSortDescending",
-                "Sort Descending",
-                ContextMenuCommands.SortDescendingCommand,
-                contextMenuContext));
-
-            // Clear Sorting
-            menu.Items.Add(BuildMenuItem(
-                "miClearSorting",
-                "Clear Sorting",
-                ContextMenuCommands.ClearSortingCommand,
-                contextMenuContext));
-
-            menu.Items.Add(new Separator());
-
-            // Ungroup
-            menu.Items.Add(BuildMenuItem(
-                "miUngroup",
-                "Ungroup",
-                ContextMenuCommands.UngroupColumnCommand,
-                contextMenuContext));
-
-            // Hide Group Panel
-            menu.Items.Add(BuildMenuItem(
-                "miHideGroupPanel",
-                "Hide Group Panel",
-                ContextMenuCommands.ToggleGroupPanelVisibilityCommand,
-                contextMenuContext.Grid));
-
-            menu.Items.Add(new Separator());
-
-            // Show Column Chooser
-            menu.Items.Add(BuildMenuItem(
-                "miShowColumnChooser",
-                "Show Column Chooser",
-                ContextMenuCommands.ShowColumnChooserCommand,
-                contextMenuContext.Grid));
-
-            // Best Fit (all columns)
-            menu.Items.Add(BuildMenuItem(
-                "miBestFitAllColumns",
-                "Best Fit (all columns)",
-                ContextMenuCommands.BestFitAllColumnsCommand,
-                contextMenuContext));
-
-            menu.Items.Add(new Separator());
-
-            // Clear Filter
-            menu.Items.Add(BuildMenuItem(
-                "miClearColumnFilter",
-                "Clear Filter",
-                ContextMenuCommands.ClearColumnFilterCommand,
-                contextMenuContext));
-
-            return menu;
-        }
-
-        /// <summary>
-        /// Builds context menu for the group panel background
-        /// </summary>
-        private static ContextMenu BuildGroupPanelBackgroundContextMenu(ContextMenuContext contextMenuContext)
-        {
-            var menu = new ContextMenu();
-            AutomationProperties.SetAutomationId(menu, "cmuGroupPanelBackground");
-
-            // Full Expand
-            menu.Items.Add(BuildMenuItem(
-                "miExpandAllGroups",
-                "Full Expand",
-                ContextMenuCommands.ExpandAllGroupsCommand,
-                contextMenuContext.Grid));
-
-            // Full Collapse
-            menu.Items.Add(BuildMenuItem(
-                "miCollapseAllGroups",
-                "Full Collapse",
-                ContextMenuCommands.CollapseAllGroupsCommand,
-                contextMenuContext.Grid));
-
-            menu.Items.Add(new Separator());
-
-            // Clear Grouping
-            menu.Items.Add(BuildMenuItem(
-                "miClearGrouping",
-                "Clear Grouping",
-                ContextMenuCommands.ClearGroupingCommand,
-                contextMenuContext.Grid));
-
-            return menu;
         }
 
         /// <summary>
@@ -420,29 +271,6 @@ namespace WWSearchDataGrid.Modern.WPF
                 "Clear Sorting",
                 ContextMenuCommands.ClearSortingCommand,
                 contextMenuContext));
-
-            // Grouping (only show if grouping is enabled)
-            if (contextMenuContext.Grid?.IsGroupingEnabled == true)
-            {
-                menu.Items.Add(new Separator());
-
-                menu.Items.Add(BuildMenuItem(
-                    "miGroupByColumn",
-                    "Group By This Column",
-                    ContextMenuCommands.GroupByColumnCommand,
-                    contextMenuContext));
-
-                var isGroupPanelVisible = contextMenuContext.Grid.GroupPanel?.IsPanelVisible ?? false;
-                var groupPanelText = isGroupPanelVisible
-                    ? "Hide Group Panel"
-                    : "Show Group Panel";
-
-                menu.Items.Add(BuildMenuItem(
-                    "miToggleGroupPanel",
-                    groupPanelText,
-                    ContextMenuCommands.ToggleGroupPanelVisibilityCommand,
-                    contextMenuContext.Grid));
-            }
 
             menu.Items.Add(new Separator());
 
@@ -638,7 +466,6 @@ namespace WWSearchDataGrid.Modern.WPF
         Cell,
         Row,
         GridBody,
-        GroupPanel
     }
     #endregion
 }

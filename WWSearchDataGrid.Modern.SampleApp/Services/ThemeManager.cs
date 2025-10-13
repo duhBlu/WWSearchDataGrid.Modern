@@ -38,7 +38,6 @@ namespace WWSearchDataGrid.Modern.SampleApp.Services
                     new Uri("/Styles/SearchDataGridControlStyles/ColumnFilterEditorStyles.xaml", UriKind.Relative),
                     new Uri("/Styles/SearchDataGridControlStyles/FilterPanelStyles.xaml", UriKind.Relative),
                     new Uri("/Styles/SearchDataGridControlStyles/ColumnSearchBoxStyles.xaml", UriKind.Relative),
-                    new Uri("/Styles/SearchDataGridControlStyles/GroupPanelStyles.xaml", UriKind.Relative),
                     new Uri("/Styles/SearchDataGridControlStyles/SearchDataGridStyles.xaml", UriKind.Relative)
                 }
             }

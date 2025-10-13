@@ -144,12 +144,12 @@
                     <ControlTemplate.Triggers>
                         <!--  Hover  -->
                         <Trigger Property="IsHighlighted" Value="True">
-                            <Setter TargetName="Bg" Property="Background" Value="#0F2B88FF" />
+                            <Setter TargetName="Bg" Property="Background" Value="#11000000" />
                         </Trigger>
 
                         <!--  Pressed  -->
                         <Trigger Property="IsPressed" Value="True">
-                            <Setter TargetName="Bg" Property="Background" Value="#1A2B88FF" />
+                            <Setter TargetName="Bg" Property="Background" Value="#22000000" />
                         </Trigger>
 
                         <!--  Disabled  -->
@@ -177,7 +177,7 @@
 
                         <!--  Open submenu  -->
                         <Trigger Property="IsSubmenuOpen" Value="True">
-                            <Setter TargetName="Bg" Property="Background" Value="#1A2B88FF" />
+                            <Setter TargetName="Bg" Property="Background" Value="#17000000" />
                         </Trigger>
 
                     </ControlTemplate.Triggers>
