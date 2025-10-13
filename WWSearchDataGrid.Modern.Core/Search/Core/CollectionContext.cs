@@ -97,13 +97,10 @@ namespace WWSearchDataGrid.Modern.Core
                 var extractedValues = _extractedValues.Value;
                 var numericValues = extractedValues
                     .Where(x => x.value != null && ReflectionHelper.IsNumericValue(x.value))
-                    .Select(x => ((object)x is null) 
-                                    ? double.NaN
-                                    : Convert.ToDouble(x, CultureInfo.InvariantCulture))
-                    .Where(value => !double.IsNaN(value))
+                    .Select(v => Convert.ToDouble(v, CultureInfo.InvariantCulture))
                     .ToList();
 
-                return numericValues.Count > 0 ? (double?)numericValues.Average() : null;
+                return numericValues.Count > 0 ? numericValues.Average() : (double?)null;
             }
             catch (Exception ex)
             {
@@ -163,7 +160,7 @@ namespace WWSearchDataGrid.Modern.Core
             {
                 var extractedValues = _extractedValues.Value;
                 return extractedValues
-                    .GroupBy(x => x.value?.ToString() ?? string.Empty)
+                    .GroupBy(x => x.value, EqualityComparer<object>.Default)
                     .ToDictionary(g => (object)g.Key, g => g.Select(x => x.item).ToList());
             }
             catch (Exception ex)

@@ -1044,7 +1044,7 @@ namespace WWSearchDataGrid.Modern.WPF
                 if (column.SearchTemplateController?.HasCustomExpression == true)
                 {
                     // Get structured components from SearchTemplateController
-                    var components = column.SearchTemplateController.GetTokenizedFilter();
+                    var components = column.SearchTemplateController.GetTokenizedFilterComponents();
                     filterInfo.SearchTypeText = components.SearchTypeText;
                     filterInfo.PrimaryValue = components.PrimaryValue;
                     filterInfo.SecondaryValue = components.SecondaryValue;
@@ -1053,7 +1053,7 @@ namespace WWSearchDataGrid.Modern.WPF
                     filterInfo.HasNoInputValues = components.HasNoInputValues;
                     
                     // Get all components for complex filters (including multiple Contains templates)
-                    var allComponents = column.SearchTemplateController.GetAllFilterComponents();
+                    var allComponents = column.SearchTemplateController.GetAllTokenizedFilterComponents();
                     filterInfo.FilterComponents.Clear();
                     foreach (var component in allComponents)
                     {

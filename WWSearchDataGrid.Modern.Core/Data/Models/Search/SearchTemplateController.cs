@@ -799,7 +799,7 @@ namespace WWSearchDataGrid.Modern.Core
         /// Gets structured filter components for the current filter state
         /// </summary>
         /// <returns>Structured filter components for display</returns>
-        public FilterChipComponents GetTokenizedFilter()
+        public FilterChipComponents GetTokenizedFilterComponents()
         {
             try
             {
@@ -842,7 +842,7 @@ namespace WWSearchDataGrid.Modern.Core
         /// Gets all filter components for display, including multiple search conditions with operators
         /// </summary>
         /// <returns>Collection of all filter components</returns>
-        public List<FilterChipComponents> GetAllFilterComponents()
+        public List<FilterChipComponents> GetAllTokenizedFilterComponents()
         {
             var components = new List<FilterChipComponents>();
 

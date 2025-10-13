@@ -70,17 +70,15 @@ namespace WWSearchDataGrid.Modern.Core.Caching
                 if (!_cacheEntries.TryGetValue(cacheKey, out var weakRef) ||
                     !weakRef.TryGetTarget(out var existingCache))
                 {
-                    return false; // Cache entry not found, needs full refresh
+                    return false; 
                 }
 
-                // Create new cache with added values
                 var updatedCache = existingCache.AddValues(valuesToAdd);
                 if (updatedCache == null)
                 {
-                    return false; // Addition failed, needs full refresh
+                    return false;
                 }
 
-                // Update the cache entry
                 _cacheEntries[cacheKey] = new WeakReference<ColumnValueCache>(updatedCache);
                 return true;
             }
@@ -99,21 +97,18 @@ namespace WWSearchDataGrid.Modern.Core.Caching
 
             lock (_lock)
             {
-                // Try to get existing cache entry
                 if (!_cacheEntries.TryGetValue(cacheKey, out var weakRef) ||
                     !weakRef.TryGetTarget(out var existingCache))
                 {
-                    return false; // Cache entry not found, needs full refresh
+                    return false;
                 }
 
-                // Create new cache with removed values
                 var updatedCache = existingCache.RemoveValues(valuesToRemove);
                 if (updatedCache == null)
                 {
-                    return false; // Removal failed, needs full refresh
+                    return false;
                 }
 
-                // Update the cache entry
                 _cacheEntries[cacheKey] = new WeakReference<ColumnValueCache>(updatedCache);
                 return true;
             }
@@ -163,6 +158,13 @@ namespace WWSearchDataGrid.Modern.Core.Caching
         private readonly bool _containsNullValues;
         private readonly ColumnDataType _dataType;
 
+        public IReadOnlyList<object> Values => _values;
+        public IReadOnlyCollection<object> UniqueValues => _uniqueValues;
+        public IReadOnlyDictionary<object, int> ValueCounts => _valueCounts;
+        public bool ContainsNullValues => _containsNullValues;
+        public ColumnDataType DataType => _dataType;
+        public int Count => _values.Count;
+
         public ColumnValueCache(IEnumerable<object> values)
         {
             if (values == null)
@@ -180,7 +182,7 @@ namespace WWSearchDataGrid.Modern.Core.Caching
                 if (value == null || (value is string stringValue && string.IsNullOrWhiteSpace(stringValue)))
                 {
                     hasNulls = true;
-                    continue; // Don't add to available values
+                    continue; // Don't add to normalized values
                 }
 
                 // Add non-null values and count occurrences
@@ -196,22 +198,10 @@ namespace WWSearchDataGrid.Modern.Core.Caching
             }
 
             _containsNullValues = hasNulls;
-
-            // Detect data type from values
             _dataType = DetectColumnDataType(normalizedValues);
-
-            // Always sort values using type-aware comparison
             SortValuesByDataType(normalizedValues, _dataType);
-
             _values = normalizedValues;
         }
-
-        public IReadOnlyList<object> Values => _values;
-        public IReadOnlyCollection<object> UniqueValues => _uniqueValues;
-        public IReadOnlyDictionary<object, int> ValueCounts => _valueCounts;
-        public bool ContainsNullValues => _containsNullValues;
-        public ColumnDataType DataType => _dataType;
-        public int Count => _values.Count;
 
         /// <summary>
         /// Creates a new cache with additional values added incrementally
@@ -230,7 +220,6 @@ namespace WWSearchDataGrid.Modern.Core.Caching
                 var newValueCounts = new Dictionary<object, int>(_valueCounts);
                 bool hasNewNulls = _containsNullValues;
 
-                // Process new values
                 foreach (var value in valuesToAdd)
                 {
                     // Skip null and blank values - don't add to available values
@@ -240,7 +229,6 @@ namespace WWSearchDataGrid.Modern.Core.Caching
                         continue;
                     }
 
-                    // Add non-null values and update counts
                     if (newUniqueValues.Add(value))
                     {
                         additionalValues.Add(value);
@@ -265,7 +253,6 @@ namespace WWSearchDataGrid.Modern.Core.Caching
                     return this;
                 }
 
-                // Create combined values list
                 var combinedValues = new List<object>(_values);
                 combinedValues.AddRange(additionalValues);
 
@@ -275,7 +262,7 @@ namespace WWSearchDataGrid.Modern.Core.Caching
             catch (Exception ex)
             {
                 Debug.WriteLine($"Error in AddValues: {ex.Message}");
-                return null; // Signal that full refresh is needed
+                return null;
             }
         }
 
@@ -394,7 +381,6 @@ namespace WWSearchDataGrid.Modern.Core.Caching
             for (int i = 0; i < sampleSize; i++)
             {
                 var value = values[i];
-                if (value == null) continue;
 
                 var type = value.GetType();
 

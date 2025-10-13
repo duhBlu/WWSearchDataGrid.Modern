@@ -312,12 +312,11 @@
             </DataGrid>-->
 
 
-            <sdg:SearchDataGrid x:Name="DataGrid"
+            <sdg:SearchDataGrid x:Name="SearchDataGrid"
                                 Grid.Row="0"
                                 IsReadOnly="False"
                                 Margin="10"
                                 EnableComplexFiltering="True"
-                                
                                 SelectionMode="Extended"
                                 SelectionUnit="CellOrRowHeader"
                                 ItemsSource="{Binding Items}"
