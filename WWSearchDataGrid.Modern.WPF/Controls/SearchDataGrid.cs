@@ -31,7 +31,6 @@ namespace WWSearchDataGrid.Modern.WPF
         private readonly ObservableCollection<ColumnSearchBox> dataColumns = new ObservableCollection<ColumnSearchBox>();
         private IEnumerable originalItemsSource;
         private bool initialUpdateLayoutCompleted;
-        private SearchTemplateController globalFilterController;
 
         // Collection context caching for performance optimization
         private readonly Dictionary<string, CollectionContext> _collectionContextCache =
@@ -104,28 +103,6 @@ namespace WWSearchDataGrid.Modern.WPF
         {
             get { return (bool)GetValue(EnableComplexFilteringProperty); }
             set { SetValue(EnableComplexFilteringProperty, value); }
-        }
-
-        /// <summary>
-        /// Gets the global filter controller
-        /// </summary>
-        public SearchTemplateController GlobalFilterController
-        {
-            get
-            {
-                if (globalFilterController == null)
-                {
-                    globalFilterController = new SearchTemplateController();
-
-                    // Initialize with first column if available
-                    var firstColumn = DataColumns.FirstOrDefault();
-                    if (firstColumn != null)
-                    {
-                        globalFilterController.ColumnName = "Global Filter";
-                    }
-                }
-                return globalFilterController;
-            }
         }
 
         /// <summary>
@@ -885,8 +862,6 @@ namespace WWSearchDataGrid.Modern.WPF
                 control.ClearFilter();
             }
 
-            globalFilterController?.ClearAndReset();
-
             Items.Filter = null;
             SearchFilter = null;
 
@@ -920,20 +895,6 @@ namespace WWSearchDataGrid.Modern.WPF
                     }
                 }
             }
-            
-            // Dispose of global filter controller
-            if (globalFilterController is IDisposable disposableGlobalController)
-            {
-                try
-                {
-                    disposableGlobalController.Dispose();
-                }
-                catch (Exception ex)
-                {
-                    Debug.WriteLine($"Error disposing global filter controller: {ex.Message}");
-                }
-            }
-            globalFilterController = null; // Clear reference after disposal
             
             // Clear filters to release any remaining references
             Items.Filter = null;
