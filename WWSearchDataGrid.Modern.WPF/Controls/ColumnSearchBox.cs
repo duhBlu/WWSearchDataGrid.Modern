@@ -554,7 +554,6 @@ namespace WWSearchDataGrid.Modern.WPF
         {
             if (d is ColumnSearchBox control && e.NewValue is DataGridColumn column)
             {
-                control.BindingPath = column.SortMemberPath;
                 control.InitializeSearchTemplateController();
             }
         }
@@ -1144,7 +1143,30 @@ namespace WWSearchDataGrid.Modern.WPF
                     SearchTemplateController = new SearchTemplateController();
                 }
                 SearchTemplateController.ColumnName = CurrentColumn.Header;
-                BindingPath = CurrentColumn.SortMemberPath;
+
+                // Three-tier fallback logic for determining the binding path:
+                // 1. FilterMemberPath (explicit override via GridColumn attached property)
+                // 2. SortMemberPath (standard DataGrid column property)
+                // 3. Binding path (extracted from DataGridBoundColumn.Binding)
+                string resolvedPath = GridColumn.GetFilterMemberPath(CurrentColumn);
+
+                if (string.IsNullOrEmpty(resolvedPath))
+                {
+                    resolvedPath = CurrentColumn.SortMemberPath;
+                }
+
+                if (string.IsNullOrEmpty(resolvedPath) && CurrentColumn is DataGridBoundColumn boundColumn)
+                {
+                    resolvedPath = (boundColumn.Binding as Binding)?.Path?.Path;
+                }
+
+                BindingPath = resolvedPath;
+
+                // Debug logging when FilterMemberPath is explicitly used
+                if (!string.IsNullOrEmpty(GridColumn.GetFilterMemberPath(CurrentColumn)))
+                {
+                    Debug.WriteLine($"Column '{CurrentColumn.Header}': Using explicit FilterMemberPath='{BindingPath}'");
+                }
                 
                 DetermineCheckboxColumnTypeFromColumnDefinition();
 

@@ -131,7 +131,7 @@
                            Margin="10,0,0,0"
                            VerticalAlignment="Center"
                            FontWeight="Bold" />
-                <TextBlock Text="{Binding ElementName=DataGrid, Path=Items.Count, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center" />
+                <TextBlock Text="{Binding ElementName=SearchDataGrid, Path=Items.Count, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center" />
             </StackPanel>
 
             <Button Style="{StaticResource DefaultButtonStyle}"
@@ -323,94 +323,144 @@
                                 CanUserAddRows="False">
                 <sdg:SearchDataGrid.Columns>
 
-                    <!--  Text Column with Simple Filtering Only (new GridColumn property)  -->
+                    <!--  String / Customer  -->
                     <DataGridTextColumn Width="120"
                                         sdg:GridColumn.EnableComplexFiltering="False"
+                                        sdg:GridColumn.FilterMemberPath="CustomerName"
+                                        SortMemberPath="CustomerName"
                                         Header="Customer Name"
                                         Binding="{Binding CustomerName}" />
 
                     <!--  Boolean Types with Explicit Checkbox Filtering (new GridColumn property)  -->
                     <DataGridCheckBoxColumn Width="80"
                                             sdg:GridColumn.UseCheckBoxInSearchBox="True"
+                                            sdg:GridColumn.FilterMemberPath="BoolValue"
+                                            SortMemberPath="BoolValue"
                                             Header="Bool Value"
                                             Binding="{Binding BoolValue}" />
+
                     <DataGridCheckBoxColumn Width="100"
                                             sdg:GridColumn.UseCheckBoxInSearchBox="True"
+                                            sdg:GridColumn.FilterMemberPath="NullableBoolValue"
+                                            SortMemberPath="NullableBoolValue"
                                             Header="Nullable Bool"
                                             Binding="{Binding NullableBoolValue}" />
 
                     <!--  Integer Types  -->
                     <DataGridTextColumn Width="80"
+                                        sdg:GridColumn.FilterMemberPath="IntValue"
+                                        SortMemberPath="IntValue"
                                         Header="Int"
                                         Binding="{Binding IntValue}" />
                     <DataGridTextColumn Width="90"
+                                        sdg:GridColumn.FilterMemberPath="NullableIntValue"
+                                        SortMemberPath="NullableIntValue"
                                         Header="Nullable Int"
                                         Binding="{Binding NullableIntValue}" />
                     <DataGridTextColumn Width="90"
+                                        sdg:GridColumn.FilterMemberPath="LongValue"
+                                        SortMemberPath="LongValue"
                                         Header="Long"
                                         Binding="{Binding LongValue}" />
                     <DataGridTextColumn Width="100"
+                                        sdg:GridColumn.FilterMemberPath="NullableLongValue"
+                                        SortMemberPath="NullableLongValue"
                                         Header="Nullable Long"
                                         Binding="{Binding NullableLongValue}" />
                     <DataGridTextColumn Width="70"
+                                        sdg:GridColumn.FilterMemberPath="ShortValue"
+                                        SortMemberPath="ShortValue"
                                         Header="Short"
                                         Binding="{Binding ShortValue}" />
                     <DataGridTextColumn Width="90"
+                                        sdg:GridColumn.FilterMemberPath="NullableShortValue"
+                                        SortMemberPath="NullableShortValue"
                                         Header="Nullable Short"
                                         Binding="{Binding NullableShortValue}" />
                     <DataGridTextColumn Width="60"
+                                        sdg:GridColumn.FilterMemberPath="ByteValue"
+                                        SortMemberPath="ByteValue"
                                         Header="Byte"
                                         Binding="{Binding ByteValue}" />
                     <DataGridTextColumn Width="80"
+                                        sdg:GridColumn.FilterMemberPath="NullableByteValue"
+                                        SortMemberPath="NullableByteValue"
                                         Header="Nullable Byte"
                                         Binding="{Binding NullableByteValue}" />
 
                     <!--  Floating-point and Decimal Types  -->
                     <DataGridTextColumn Width="80"
+                                        sdg:GridColumn.FilterMemberPath="FloatValue"
+                                        SortMemberPath="FloatValue"
                                         Header="Float"
                                         Binding="{Binding FloatValue, StringFormat=N2}" />
                     <DataGridTextColumn Width="100"
+                                        sdg:GridColumn.FilterMemberPath="NullableFloatValue"
+                                        SortMemberPath="NullableFloatValue"
                                         Header="Nullable Float"
                                         Binding="{Binding NullableFloatValue, StringFormat=N2}" />
                     <DataGridTextColumn Width="90"
+                                        sdg:GridColumn.FilterMemberPath="DoubleValue"
+                                        SortMemberPath="DoubleValue"
                                         Header="Double"
                                         Binding="{Binding DoubleValue, StringFormat=N2}" />
                     <DataGridTextColumn Width="110"
+                                        sdg:GridColumn.FilterMemberPath="NullableDoubleValue"
+                                        SortMemberPath="NullableDoubleValue"
                                         Header="Nullable Double"
                                         Binding="{Binding NullableDoubleValue, StringFormat=N2}" />
                     <DataGridTextColumn Width="90"
+                                        sdg:GridColumn.FilterMemberPath="DecimalValue"
+                                        SortMemberPath="DecimalValue"
                                         Header="Decimal"
                                         Binding="{Binding DecimalValue, StringFormat=N2}" />
                     <DataGridTextColumn Width="110"
+                                        sdg:GridColumn.FilterMemberPath="NullableDecimalValue"
+                                        SortMemberPath="NullableDecimalValue"
                                         Header="Nullable Decimal"
                                         Binding="{Binding NullableDecimalValue, StringFormat=N2}" />
 
                     <!--  Text Types  -->
                     <DataGridTextColumn Width="100"
+                                        sdg:GridColumn.FilterMemberPath="StringValue"
+                                        SortMemberPath="StringValue"
                                         Header="String Value"
                                         Binding="{Binding StringValue}" />
                     <DataGridTextColumn Width="60"
+                                        sdg:GridColumn.FilterMemberPath="CharValue"
+                                        SortMemberPath="CharValue"
                                         Header="Char"
                                         Binding="{Binding CharValue}" />
                     <DataGridTextColumn Width="80"
+                                        sdg:GridColumn.FilterMemberPath="NullableCharValue"
+                                        SortMemberPath="NullableCharValue"
                                         Header="Nullable Char"
                                         Binding="{Binding NullableCharValue}" />
 
                     <!--  Date and Time Types with Precision  -->
                     <DataGridTextColumn Width="140"
+                                        sdg:GridColumn.FilterMemberPath="DateTimeValue"
+                                        SortMemberPath="DateTimeValue"
                                         Header="DateTime"
                                         Binding="{Binding DateTimeValue, StringFormat=g}" />
                     <DataGridTextColumn Width="150"
+                                        sdg:GridColumn.FilterMemberPath="NullableDateTimeValue"
+                                        SortMemberPath="NullableDateTimeValue"
                                         Header="Nullable DateTime"
                                         Binding="{Binding NullableDateTimeValue, StringFormat=g}" />
 
                     <!--  Enum Types  -->
                     <DataGridTextColumn Width="80"
+                                        sdg:GridColumn.FilterMemberPath="PriorityValue"
+                                        SortMemberPath="PriorityValue"
                                         Header="Priority Enum"
                                         Binding="{Binding PriorityValue}" />
                     <DataGridTextColumn Width="100"
+                                        sdg:GridColumn.FilterMemberPath="NullablePriorityValue"
+                                        SortMemberPath="NullablePriorityValue"
                                         Header="Nullable Priority Enum"
                                         Binding="{Binding NullablePriorityValue}" />
+
                 </sdg:SearchDataGrid.Columns>
             </sdg:SearchDataGrid>
         </Grid>

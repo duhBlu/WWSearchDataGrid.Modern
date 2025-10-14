@@ -23,7 +23,10 @@ namespace WWSearchDataGrid.Modern.WPF.Commands
         #region Helper Methods
 
         /// <summary>
-        /// Extracts the binding path from a DataGridColumn
+        /// Extracts the binding path from a DataGridColumn for context menu operations.
+        /// NOTE: This intentionally does NOT check GridColumn.FilterMemberPath, as it extracts
+        /// the actual binding path used for cell display, not the filter path.
+        /// Use ColumnSearchBox.BindingPath for filter-related operations.
         /// </summary>
         private static string GetBindingPath(DataGridColumn column)
         {

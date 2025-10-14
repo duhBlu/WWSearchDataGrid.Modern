@@ -1436,7 +1436,10 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
-        /// Internal handler for cell value changes that updates caches and raises events
+        /// Internal handler for cell value changes that updates caches and raises events.
+        /// NOTE: When a column uses GridColumn.FilterMemberPath that differs from its Binding.Path,
+        /// this method prioritizes finding the ColumnSearchBox by column reference to ensure
+        /// cache updates work correctly even when the paths differ.
         /// </summary>
         private void OnCellValueChangedInternal(object item, DataGridColumn column, string bindingPath,
             object oldValue, object newValue, int rowIndex, int columnIndex)
@@ -1444,7 +1447,14 @@ namespace WWSearchDataGrid.Modern.WPF
             try
             {
                 // Find the corresponding column search box
-                var columnSearchBox = DataColumns.FirstOrDefault(d => d.BindingPath == bindingPath);
+                // Priority 1: Match by column reference (handles FilterMemberPath != Binding.Path scenarios)
+                var columnSearchBox = DataColumns.FirstOrDefault(d => d.CurrentColumn == column);
+
+                // Priority 2: Fallback to BindingPath matching (for backward compatibility)
+                if (columnSearchBox == null)
+                {
+                    columnSearchBox = DataColumns.FirstOrDefault(d => d.BindingPath == bindingPath);
+                }
                 if (columnSearchBox?.SearchTemplateController != null)
                 {
                     // Update column value caches

@@ -178,5 +178,56 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         #endregion
+
+        #region FilterMemberPath Attached Property
+
+        /// <summary>
+        /// Identifies the FilterMemberPath attached property.
+        /// Specifies the property path used for retrieving filter values from data objects.
+        /// This path determines which property is used to populate filter dropdown values.
+        ///
+        /// Resolution priority:
+        /// 1. FilterMemberPath (if explicitly set)
+        /// 2. Column's SortMemberPath
+        /// 3. Binding path extracted from DataGridBoundColumn.Binding
+        ///
+        /// Default value: null (falls back to SortMemberPath or Binding path)
+        /// </summary>
+        public static readonly DependencyProperty FilterMemberPathProperty =
+            DependencyProperty.RegisterAttached(
+                "FilterMemberPath",
+                typeof(string),
+                typeof(GridColumn),
+                new FrameworkPropertyMetadata(null));
+
+        /// <summary>
+        /// Gets the filter member path for the specified column.
+        /// Returns the explicit property path to use for filtering, or null to use fallback logic.
+        /// </summary>
+        /// <param name="element">The column to query</param>
+        /// <returns>The property path for filtering, or null if not explicitly set</returns>
+        public static string GetFilterMemberPath(DependencyObject element)
+        {
+            if (element == null)
+                throw new ArgumentNullException(nameof(element));
+
+            return (string)element.GetValue(FilterMemberPathProperty);
+        }
+
+        /// <summary>
+        /// Sets the filter member path for the specified column.
+        /// Use this to explicitly control which property is used for filter value retrieval.
+        /// </summary>
+        /// <param name="element">The column to configure</param>
+        /// <param name="value">The property path to use for filtering (e.g., "Department.Name")</param>
+        public static void SetFilterMemberPath(DependencyObject element, string value)
+        {
+            if (element == null)
+                throw new ArgumentNullException(nameof(element));
+
+            element.SetValue(FilterMemberPathProperty, value);
+        }
+
+        #endregion
     }
 }
