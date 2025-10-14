@@ -323,16 +323,19 @@
                                 CanUserAddRows="False">
                 <sdg:SearchDataGrid.Columns>
 
+                    <!--  Text Column with Simple Filtering Only (new GridColumn property)  -->
                     <DataGridTextColumn Width="120"
-                                        sdg:ColumnSearchBox.EnableComplexFiltering="False"
+                                        sdg:GridColumn.EnableComplexFiltering="False"
                                         Header="Customer Name"
                                         Binding="{Binding CustomerName}" />
 
-                    <!--  Boolean Types  -->
+                    <!--  Boolean Types with Explicit Checkbox Filtering (new GridColumn property)  -->
                     <DataGridCheckBoxColumn Width="80"
+                                            sdg:GridColumn.UseCheckBoxInSearchBox="True"
                                             Header="Bool Value"
                                             Binding="{Binding BoolValue}" />
                     <DataGridCheckBoxColumn Width="100"
+                                            sdg:GridColumn.UseCheckBoxInSearchBox="True"
                                             Header="Nullable Bool"
                                             Binding="{Binding NullableBoolValue}" />
 

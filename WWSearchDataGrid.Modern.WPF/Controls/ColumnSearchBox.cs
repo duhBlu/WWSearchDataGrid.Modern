@@ -83,14 +83,6 @@ namespace WWSearchDataGrid.Modern.WPF
             DependencyProperty.Register("HasAdvancedFilter", typeof(bool), typeof(ColumnSearchBox),
                 new PropertyMetadata(false));
 
-        public static readonly DependencyProperty CustomSearchTemplateProperty =
-            DependencyProperty.RegisterAttached("CustomSearchTemplate", typeof(Type), typeof(ColumnSearchBox),
-                new FrameworkPropertyMetadata(typeof(SearchTemplate)));
-
-        public static readonly DependencyProperty EnableComplexFilteringProperty =
-            DependencyProperty.RegisterAttached("EnableComplexFiltering", typeof(bool), typeof(ColumnSearchBox),
-                new FrameworkPropertyMetadata(true, FrameworkPropertyMetadataOptions.Inherits));
-
         public static readonly DependencyProperty FilterCheckboxStateProperty =
             DependencyProperty.Register("FilterCheckboxState", typeof(bool?), typeof(ColumnSearchBox),
                 new PropertyMetadata(null, OnFilterCheckboxStateChanged));
@@ -98,7 +90,6 @@ namespace WWSearchDataGrid.Modern.WPF
         public static readonly DependencyProperty IsCheckboxColumnProperty =
             DependencyProperty.Register("IsCheckboxColumn", typeof(bool), typeof(ColumnSearchBox),
                 new PropertyMetadata(false));
-
 
         public static readonly DependencyProperty HasActiveFilterProperty =
             DependencyProperty.Register("HasActiveFilter", typeof(bool), typeof(ColumnSearchBox),
@@ -158,16 +149,6 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
-        /// Gets or sets whether complex filtering is enabled for this column.
-        /// This setting is overridden by the grid-level EnableComplexFiltering property.
-        /// </summary>
-        public bool EnableComplexFiltering
-        {
-            get => (bool)GetValue(EnableComplexFilteringProperty);
-            set => SetValue(EnableComplexFilteringProperty, value);
-        }
-
-        /// <summary>
         /// Gets whether complex filtering is actually enabled for this column,
         /// taking into account both grid-level and column-level settings.
         /// </summary>
@@ -179,8 +160,14 @@ namespace WWSearchDataGrid.Modern.WPF
                 if (SourceDataGrid != null && !SourceDataGrid.EnableComplexFiltering)
                     return false;
 
-                // If grid allows it, check column-level setting
-                return EnableComplexFiltering;
+                // If grid allows it, check column-level setting from GridColumn attached property
+                if (CurrentColumn != null)
+                {
+                    return GridColumn.GetEnableComplexFiltering(CurrentColumn);
+                }
+
+                // Default to true if no column is set
+                return true;
             }
         }
 
@@ -240,34 +227,6 @@ namespace WWSearchDataGrid.Modern.WPF
             LostFocus += OnColumnSearchBoxLostFocus;
             GotFocus += OnColumnSearchBoxGotFocus;
         }
-
-        #endregion
-
-        #region Attached Property Methods
-
-        /// <summary>
-        /// Gets the custom search template for an object
-        /// </summary>
-        public static Type GetCustomSearchTemplate(DependencyObject obj) =>
-            (Type)obj.GetValue(CustomSearchTemplateProperty);
-
-        /// <summary>
-        /// Sets the custom search template for an object
-        /// </summary>
-        public static void SetCustomSearchTemplate(DependencyObject obj, Type value) =>
-            obj.SetValue(CustomSearchTemplateProperty, value);
-
-        /// <summary>
-        /// Sets whether to enable complex filtering for a column
-        /// </summary>
-        public static void SetEnableComplexFiltering(DependencyObject element, bool value) =>
-            element.SetValue(EnableComplexFilteringProperty, value);
-
-        /// <summary>
-        /// Gets whether complex filtering is enabled for a column
-        /// </summary>
-        public static bool GetEnableComplexFiltering(DependencyObject element) =>
-            (bool)element.GetValue(EnableComplexFilteringProperty);
 
         #endregion
 
@@ -596,7 +555,6 @@ namespace WWSearchDataGrid.Modern.WPF
             if (d is ColumnSearchBox control && e.NewValue is DataGridColumn column)
             {
                 control.BindingPath = column.SortMemberPath;
-                control.EnableComplexFiltering = GetEnableComplexFiltering(control.CurrentColumn);
                 control.InitializeSearchTemplateController();
             }
         }
@@ -1244,30 +1202,35 @@ namespace WWSearchDataGrid.Modern.WPF
                     return;
                 }
 
-                var isCheckboxType = false;
+                // First check the new explicit property on GridColumn
+                bool isCheckboxType = GridColumn.GetUseCheckBoxInSearchBox(CurrentColumn);
 
-                // Check if it's explicitly a DataGridCheckBoxColumn
-                if (CurrentColumn is DataGridCheckBoxColumn)
+                // If not explicitly set via GridColumn, maintain backward compatibility with auto-detection
+                if (!isCheckboxType)
                 {
-                    isCheckboxType = true;
-                }
-                // Check binding property type for bound columns
-                else if (CurrentColumn is DataGridBoundColumn boundColumn && boundColumn.Binding is Binding binding)
-                {
-                    var bindingPath = binding.Path?.Path;
-                    if (!string.IsNullOrEmpty(bindingPath))
+                    // Check if it's explicitly a DataGridCheckBoxColumn
+                    if (CurrentColumn is DataGridCheckBoxColumn)
                     {
-                        isCheckboxType = DetermineIfBooleanPropertyFromDataContext(bindingPath);
+                        isCheckboxType = true;
                     }
-                }
-                // Check DependencyObjectType for template columns or custom scenarios
-                else if (CurrentColumn is DataGridTemplateColumn)
-                {
-                    var dependencyObjectType = CurrentColumn.DependencyObjectType;
-                    if (dependencyObjectType != null)
+                    // Check binding property type for bound columns
+                    else if (CurrentColumn is DataGridBoundColumn boundColumn && boundColumn.Binding is Binding binding)
                     {
-                        // Add logic based on dependencyObjectType.Name patterns you observe
-                        isCheckboxType = IsCheckboxColumnByDependencyObjectType(dependencyObjectType);
+                        var bindingPath = binding.Path?.Path;
+                        if (!string.IsNullOrEmpty(bindingPath))
+                        {
+                            isCheckboxType = DetermineIfBooleanPropertyFromDataContext(bindingPath);
+                        }
+                    }
+                    // Check DependencyObjectType for template columns or custom scenarios
+                    else if (CurrentColumn is DataGridTemplateColumn)
+                    {
+                        var dependencyObjectType = CurrentColumn.DependencyObjectType;
+                        if (dependencyObjectType != null)
+                        {
+                            // Add logic based on dependencyObjectType.Name patterns you observe
+                            isCheckboxType = IsCheckboxColumnByDependencyObjectType(dependencyObjectType);
+                        }
                     }
                 }
 
