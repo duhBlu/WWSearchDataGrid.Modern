@@ -359,7 +359,7 @@ namespace WWSearchDataGrid.Modern.WPF
                 var columnInfo = new ColumnVisibilityInfo
                 {
                     Column = column,
-                    DisplayName = SearchDataGrid.ExtractColumnHeaderText(column) ?? "Unknown Column",
+                    DisplayName = GridColumn.GetEffectiveColumnDisplayName(column) ?? "Unknown Column",
                     IsVisible = column.Visibility == Visibility.Visible
                 };
 

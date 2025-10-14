@@ -1032,7 +1032,7 @@ namespace WWSearchDataGrid.Modern.WPF
 
                 var filterInfo = new ColumnFilterInfo
                 {
-                    ColumnName = ExtractColumnHeaderText(column.CurrentColumn) ?? "Unknown",
+                    ColumnName = GridColumn.GetEffectiveColumnDisplayName(column.CurrentColumn) ?? "Unknown",
                     BindingPath = column.BindingPath,
                     IsActive = true,
                     FilterData = column,

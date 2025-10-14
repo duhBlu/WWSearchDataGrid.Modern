@@ -125,13 +125,13 @@
                 <TextBlock Text="Total Data Items: "
                            VerticalAlignment="Center"
                            FontWeight="Bold" />
-                <TextBlock Text="{Binding ItemCount}" VerticalAlignment="Center" />
+                <TextBlock Text="{Binding ItemCount, StringFormat={}{0:N0}}" VerticalAlignment="Center" />
 
                 <TextBlock Text="Filtered Rows: "
                            Margin="10,0,0,0"
                            VerticalAlignment="Center"
                            FontWeight="Bold" />
-                <TextBlock Text="{Binding ElementName=SearchDataGrid, Path=Items.Count, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center" />
+                <TextBlock Text="{Binding ElementName=SearchDataGrid, Path=Items.Count, StringFormat={}{0:N0}, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center" />
             </StackPanel>
 
             <Button Style="{StaticResource DefaultButtonStyle}"
@@ -327,6 +327,8 @@
                     <DataGridTextColumn Width="120"
                                         sdg:GridColumn.EnableComplexFiltering="False"
                                         sdg:GridColumn.FilterMemberPath="CustomerName"
+                                        sdg:GridColumn.ColumnDisplayName="Customer Column Display Name!!!"
+                                        sdg:GridColumn.DefaultSearchMode="StartsWith"
                                         SortMemberPath="CustomerName"
                                         Header="Customer Name"
                                         Binding="{Binding CustomerName}" />
@@ -349,6 +351,7 @@
                     <!--  Integer Types  -->
                     <DataGridTextColumn Width="80"
                                         sdg:GridColumn.FilterMemberPath="IntValue"
+                                        sdg:GridColumn.DefaultSearchMode="EndsWith"
                                         SortMemberPath="IntValue"
                                         Header="Int"
                                         Binding="{Binding IntValue}" />

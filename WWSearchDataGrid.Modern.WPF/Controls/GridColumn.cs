@@ -1,5 +1,6 @@
 using System;
 using System.Windows;
+using System.Windows.Controls;
 using WWSearchDataGrid.Modern.Core;
 
 namespace WWSearchDataGrid.Modern.WPF
@@ -226,6 +227,177 @@ namespace WWSearchDataGrid.Modern.WPF
                 throw new ArgumentNullException(nameof(element));
 
             element.SetValue(FilterMemberPathProperty, value);
+        }
+
+        #endregion
+
+        #region ColumnDisplayName Attached Property
+
+        /// <summary>
+        /// Identifies the ColumnDisplayName attached property.
+        /// Specifies the display name shown in Column Chooser, Filter Panel, and other UI components.
+        ///
+        /// When not explicitly set, falls back to extracting text from the column's Header property.
+        /// The fallback logic handles complex scenarios where Header may be a template or FrameworkElement.
+        ///
+        /// Default value: null (uses Header as fallback)
+        /// </summary>
+        /// <example>
+        /// <code>
+        /// &lt;DataGridTextColumn Header="CustomerID"
+        ///                     Binding="{Binding CustomerId}"
+        ///                     local:GridColumn.ColumnDisplayName="Customer ID"/&gt;
+        /// </code>
+        /// </example>
+        public static readonly DependencyProperty ColumnDisplayNameProperty =
+            DependencyProperty.RegisterAttached(
+                "ColumnDisplayName",
+                typeof(string),
+                typeof(GridColumn),
+                new FrameworkPropertyMetadata(null));
+
+        /// <summary>
+        /// Gets the explicit column display name for the specified column.
+        /// Returns null if not explicitly set (use GetEffectiveColumnDisplayName for fallback logic).
+        /// </summary>
+        /// <param name="element">The column to query</param>
+        /// <returns>The explicit display name, or null if not set</returns>
+        public static string GetColumnDisplayName(DependencyObject element)
+        {
+            if (element == null)
+                throw new ArgumentNullException(nameof(element));
+
+            return (string)element.GetValue(ColumnDisplayNameProperty);
+        }
+
+        /// <summary>
+        /// Sets the column display name for the specified column.
+        /// This name will be shown in Column Chooser, Filter Panel, and other UI components.
+        /// </summary>
+        /// <param name="element">The column to configure</param>
+        /// <param name="value">The user-friendly display name</param>
+        public static void SetColumnDisplayName(DependencyObject element, string value)
+        {
+            if (element == null)
+                throw new ArgumentNullException(nameof(element));
+
+            element.SetValue(ColumnDisplayNameProperty, value);
+        }
+
+        #endregion
+
+        #region DefaultSearchMode Attached Property
+
+        /// <summary>
+        /// Identifies the DefaultSearchMode attached property.
+        /// Specifies the search type used when creating temporary search templates from simple textbox input.
+        /// <para>
+        /// This property controls which SearchType is used when users type directly in the column's
+        /// simple search textbox. It only affects the default behavior of temporary search templates,
+        /// not the available options in the advanced filter UI.
+        /// </para>
+        /// <para>
+        /// Default value: DefaultSearchMode.Contains (standard text search behavior)
+        /// </para>
+        /// <para>
+        /// Available modes:
+        /// </para>
+        /// <list type="bullet">
+        /// <item><description>Contains: Finds matches anywhere in the value (default)</description></item>
+        /// <item><description>StartsWith: ID columns, part numbers, customer codes where users know the prefix</description></item>
+        /// <item><description>EndsWith: File extensions, domain suffixes, or similar patterns</description></item>
+        /// <item><description>Equals: Status codes, enum values, or scenarios requiring exact matches</description></item>
+        /// </list>
+        /// <para>
+        /// Note: This only affects simple textbox search behavior. The advanced filter button
+        /// still shows all valid search types for the column's data type.
+        /// </para>
+        /// </summary>
+        /// <example>
+        /// <code language="xaml">
+        /// &lt;!-- StartsWith for ID columns --&gt;
+        /// &lt;DataGridTextColumn Header="Customer ID"
+        ///                     Binding="{Binding CustomerId}"
+        ///                     local:GridColumn.DefaultSearchMode="StartsWith"/&gt;
+        ///
+        /// &lt;!-- Equals for exact code matching --&gt;
+        /// &lt;DataGridTextColumn Header="Status Code"
+        ///                     Binding="{Binding StatusCode}"
+        ///                     local:GridColumn.DefaultSearchMode="Equals"/&gt;
+        ///
+        /// &lt;!-- EndsWith for file extensions --&gt;
+        /// &lt;DataGridTextColumn Header="File Name"
+        ///                     Binding="{Binding FileName}"
+        ///                     local:GridColumn.DefaultSearchMode="EndsWith"/&gt;
+        /// </code>
+        /// </example>
+        public static readonly DependencyProperty DefaultSearchModeProperty =
+            DependencyProperty.RegisterAttached(
+                "DefaultSearchMode",
+                typeof(DefaultSearchMode),
+                typeof(GridColumn),
+                new FrameworkPropertyMetadata(DefaultSearchMode.Contains));
+
+        /// <summary>
+        /// Gets the default search mode for the specified column.
+        /// Returns the default search mode to use when creating temporary search templates from textbox input.
+        /// </summary>
+        /// <param name="element">The column to query</param>
+        /// <returns>The default search mode for simple textbox searches</returns>
+        public static DefaultSearchMode GetDefaultSearchMode(DependencyObject element)
+        {
+            if (element == null)
+                throw new ArgumentNullException(nameof(element));
+
+            return (DefaultSearchMode)element.GetValue(DefaultSearchModeProperty);
+        }
+
+        /// <summary>
+        /// Sets the default search mode for the specified column.
+        /// Specifies which search mode to use when users type in the simple search textbox.
+        /// </summary>
+        /// <param name="element">The column to configure</param>
+        /// <param name="value">The search mode to use for simple textbox searches</param>
+        public static void SetDefaultSearchMode(DependencyObject element, DefaultSearchMode value)
+        {
+            if (element == null)
+                throw new ArgumentNullException(nameof(element));
+
+            element.SetValue(DefaultSearchModeProperty, value);
+        }
+
+        #endregion
+
+        #region Helper Methods
+
+        /// <summary>
+        /// Gets the effective display name for a column, using fallback logic.
+        ///
+        /// Resolution priority:
+        /// 1. Explicit ColumnDisplayName attached property (if set and non-empty)
+        /// 2. Extracted text from column Header (handles templates, FrameworkElements, and strings)
+        ///
+        /// This is the recommended method for retrieving column display names across all components.
+        /// </summary>
+        /// <param name="column">The column to get the display name for</param>
+        /// <returns>The effective display name, or null if column is null</returns>
+        /// <example>
+        /// <code>
+        /// string displayName = GridColumn.GetEffectiveColumnDisplayName(column);
+        /// </code>
+        /// </example>
+        public static string GetEffectiveColumnDisplayName(DataGridColumn column)
+        {
+            if (column == null)
+                return null;
+
+            // Check for explicit ColumnDisplayName
+            string explicitName = GetColumnDisplayName(column);
+            if (!string.IsNullOrEmpty(explicitName))
+                return explicitName;
+
+            // Extract from Header using existing helper
+            return SearchDataGrid.ExtractColumnHeaderText(column);
         }
 
         #endregion

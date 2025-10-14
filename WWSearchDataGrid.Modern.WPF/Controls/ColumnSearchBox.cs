@@ -641,7 +641,7 @@ namespace WWSearchDataGrid.Modern.WPF
                     if (SourceDataGrid.Items != null && SourceDataGrid.Items.Count > 0)
                     {
                         // Re-setup the lazy loading provider
-                        SearchTemplateController.SetupColumnDataLazy(CurrentColumn.Header, GetColumnValuesFromDataGrid, BindingPath);
+                        SearchTemplateController.SetupColumnDataLazy(GridColumn.GetEffectiveColumnDisplayName(CurrentColumn), GetColumnValuesFromDataGrid, BindingPath);
                         
                         // Determine column data type from a small sample for immediate UI setup
                         var sampleSize = Math.Min(10, SourceDataGrid.Items.Count);
@@ -666,7 +666,7 @@ namespace WWSearchDataGrid.Modern.WPF
                     else
                     {
                         // No items yet - just set up basic structure
-                        SearchTemplateController.SetupColumnDataLazy(CurrentColumn.Header, GetColumnValuesFromDataGrid, BindingPath);
+                        SearchTemplateController.SetupColumnDataLazy(GridColumn.GetEffectiveColumnDisplayName(CurrentColumn), GetColumnValuesFromDataGrid, BindingPath);
                     }
 
                     // Only re-determine column type based on definition, not data
@@ -1142,7 +1142,7 @@ namespace WWSearchDataGrid.Modern.WPF
                 {
                     SearchTemplateController = new SearchTemplateController();
                 }
-                SearchTemplateController.ColumnName = CurrentColumn.Header;
+                SearchTemplateController.ColumnName = GridColumn.GetEffectiveColumnDisplayName(CurrentColumn);
 
                 // Three-tier fallback logic for determining the binding path:
                 // 1. FilterMemberPath (explicit override via GridColumn attached property)
@@ -1179,7 +1179,7 @@ namespace WWSearchDataGrid.Modern.WPF
                 SourceDataGrid.ItemsSourceChanged -= OnSourceDataGridItemsSourceChanged;
                 SourceDataGrid.ItemsSourceChanged += OnSourceDataGridItemsSourceChanged;
 
-                SearchTemplateController.SetupColumnDataLazy(CurrentColumn.Header, GetColumnValuesFromDataGrid, BindingPath);
+                SearchTemplateController.SetupColumnDataLazy(GridColumn.GetEffectiveColumnDisplayName(CurrentColumn), GetColumnValuesFromDataGrid, BindingPath);
 
                 if (SourceDataGrid.Items != null && SourceDataGrid.Items.Count > 0)
                 {
@@ -1366,7 +1366,7 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
-        /// Adds an incremental Contains filter with OR logic
+        /// Adds an incremental filter with OR logic, preserving the search type from DefaultSearchMode
         /// </summary>
         private void AddIncrementalContainsFilter()
         {
@@ -1381,30 +1381,42 @@ namespace WWSearchDataGrid.Modern.WPF
                 }
 
                 var firstGroup = SearchTemplateController.SearchGroups[0];
-                
+
+                // Get the search type from temporary template (if it exists) to preserve DefaultSearchMode
+                var searchType = SearchType.Contains; // Default fallback
                 if (_temporarySearchTemplate != null)
                 {
+                    searchType = _temporarySearchTemplate.SearchType;
                     firstGroup.SearchTemplates.Remove(_temporarySearchTemplate);
                     _temporarySearchTemplate = null;
                 }
-                
+                else
+                {
+                    // If no temporary template exists, get from column property
+                    var defaultMode = CurrentColumn != null
+                        ? GridColumn.GetDefaultSearchMode(CurrentColumn)
+                        : DefaultSearchMode.Contains;
+                    searchType = MapDefaultSearchModeToSearchType(defaultMode);
+                }
+
                 RemoveDefaultEmptyTemplates(firstGroup);
-                
-                var existingContainsTemplates = firstGroup.SearchTemplates
-                    .Where(t => t.SearchType == SearchType.Contains && t.HasCustomFilter)
+
+                // Find existing templates with same search type for OR logic
+                var existingTemplatesOfSameType = firstGroup.SearchTemplates
+                    .Where(t => t.SearchType == searchType && t.HasCustomFilter)
                     .ToList();
 
-                // Create new confirmed Contains template
+                // Create new confirmed template with the preserved search type
                 var newTemplate = new SearchTemplate(SearchTemplateController.ColumnDataType);
-                newTemplate.SearchType = SearchType.Contains;
+                newTemplate.SearchType = searchType;
                 newTemplate.SelectedValue = SearchText;
                 newTemplate.SearchTemplateController = SearchTemplateController; // Ensure template has controller reference
 
                 // Bind to property changes for auto-apply monitoring
                 SearchTemplateController.SubscribeToTemplateChanges(newTemplate);
 
-                // If this is not the first template, set OR operator
-                if (existingContainsTemplates.Any())
+                // If this is not the first template of this type, set OR operator
+                if (existingTemplatesOfSameType.Any())
                 {
                     newTemplate.OperatorName = "Or";
                 }
@@ -1534,9 +1546,17 @@ namespace WWSearchDataGrid.Modern.WPF
                 }
                 else
                 {
+                    // Get search mode from column or use default Contains
+                    var defaultMode = CurrentColumn != null
+                        ? GridColumn.GetDefaultSearchMode(CurrentColumn)
+                        : DefaultSearchMode.Contains;
+
+                    // Map DefaultSearchMode to SearchType
+                    var searchType = MapDefaultSearchModeToSearchType(defaultMode);
+
                     // Create new temporary template
                     _temporarySearchTemplate = new SearchTemplate(SearchTemplateController.ColumnDataType);
-                    _temporarySearchTemplate.SearchType = SearchType.Contains;
+                    _temporarySearchTemplate.SearchType = searchType;
                     _temporarySearchTemplate.SelectedValue = SearchText;
                     _temporarySearchTemplate.SearchTemplateController = SearchTemplateController; // Ensure template has controller reference
 
@@ -1666,6 +1686,25 @@ namespace WWSearchDataGrid.Modern.WPF
             {
                 Debug.WriteLine($"Error in RemoveDefaultEmptyTemplates: {ex.Message}");
             }
+        }
+
+        /// <summary>
+        /// Maps the DefaultSearchMode enum to the corresponding SearchType enum value.
+        /// This provides a type-safe way to convert from the restricted set of default modes
+        /// to the full SearchType enum used by the filtering engine.
+        /// </summary>
+        /// <param name="mode">The default search mode to map</param>
+        /// <returns>The corresponding SearchType enum value</returns>
+        private SearchType MapDefaultSearchModeToSearchType(DefaultSearchMode mode)
+        {
+            return mode switch
+            {
+                DefaultSearchMode.Contains => SearchType.Contains,
+                DefaultSearchMode.StartsWith => SearchType.StartsWith,
+                DefaultSearchMode.EndsWith => SearchType.EndsWith,
+                DefaultSearchMode.Equals => SearchType.Equals,
+                _ => SearchType.Contains // Fallback to Contains for any unexpected values
+            };
         }
 
         /// <summary>
