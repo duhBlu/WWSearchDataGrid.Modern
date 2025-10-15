@@ -57,12 +57,6 @@ namespace WWSearchDataGrid.Modern.WPF
         private CheckboxCycleState _checkboxCycleState = CheckboxCycleState.Intermediate; // Current logical cycling state
         private bool _isInitialState = true; // Tracks if we're in the initial uncycled state
 
-        // Batch update fields for performance optimization
-        private Timer _batchUpdateTimer;
-        private readonly HashSet<object> _pendingAddedValues = new HashSet<object>();
-        private readonly HashSet<object> _pendingRemovedValues = new HashSet<object>();
-        private readonly object _batchUpdateLock = new object();
-
         #endregion
 
         #region Dependency Properties
@@ -269,22 +263,6 @@ namespace WWSearchDataGrid.Modern.WPF
                 _changeTimer = null;
             }
 
-            // Clean up batch update timer
-            if (_batchUpdateTimer != null)
-            {
-                _batchUpdateTimer.Stop();
-                _batchUpdateTimer.Elapsed -= OnBatchUpdateTimerElapsed;
-                _batchUpdateTimer.Dispose();
-                _batchUpdateTimer = null;
-            }
-
-            // Clean up pending batch operations
-            lock (_batchUpdateLock)
-            {
-                _pendingAddedValues.Clear();
-                _pendingRemovedValues.Clear();
-            }
-
             // Clean up temporary template reference
             _temporarySearchTemplate = null;
             
@@ -350,6 +328,10 @@ namespace WWSearchDataGrid.Modern.WPF
 
         private void OnSourceDataGridCollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
         {
+            // NOTE: SearchDataGrid.OnCollectionChanged already handles incremental cache updates
+            // for all columns via UpdateColumnCachesForAddedItems/UpdateColumnCachesForRemovedItems.
+            // This handler only needs to deal with Reset actions that require full refresh.
+
             // Check if we have valid data to process
             if (string.IsNullOrEmpty(BindingPath) || SearchTemplateController == null)
                 return;
@@ -358,23 +340,18 @@ namespace WWSearchDataGrid.Modern.WPF
             {
                 switch (e.Action)
                 {
-                    case NotifyCollectionChangedAction.Add:
-                        HandleItemsAdded(e.NewItems);
-                        break;
-                        
-                    case NotifyCollectionChangedAction.Remove:
-                        HandleItemsRemoved(e.OldItems);
-                        break;
-                        
-                    case NotifyCollectionChangedAction.Replace:
-                        HandleItemsReplaced(e.OldItems, e.NewItems);
-                        break;
-                        
                     case NotifyCollectionChangedAction.Reset:
+                        // Only handle Reset - full refresh is required
                         SearchTemplateController.RefreshColumnValues();
                         break;
-                        
+
+                    // For Add/Remove/Replace actions, do nothing - SearchDataGrid already handled
+                    // the cache updates incrementally via UpdateColumnCachesForAddedItems/Removed
+                    case NotifyCollectionChangedAction.Add:
+                    case NotifyCollectionChangedAction.Remove:
+                    case NotifyCollectionChangedAction.Replace:
                     case NotifyCollectionChangedAction.Move:
+                        // Cache is already updated by SearchDataGrid
                         break;
                 }
             }
@@ -385,170 +362,7 @@ namespace WWSearchDataGrid.Modern.WPF
             }
         }
         
-        /// <summary>
-        /// Handles items being added to the collection by accumulating values for batch processing
-        /// </summary>
-        private void HandleItemsAdded(IList newItems)
-        {
-            if (newItems == null || newItems.Count == 0) return;
-
-            // Extract column values from added items and accumulate for batch processing
-            AccumulateColumnValuesForBatch(newItems, isAddition: true);
-        }
-
-        /// <summary>
-        /// Handles items being removed from the collection by accumulating values for batch processing
-        /// </summary>
-        private void HandleItemsRemoved(IList oldItems)
-        {
-            if (oldItems == null || oldItems.Count == 0) return;
-
-            // Extract column values from removed items and accumulate for batch processing
-            AccumulateColumnValuesForBatch(oldItems, isAddition: false);
-        }
-
-        /// <summary>
-        /// Handles items being replaced in the collection by accumulating both old and new values
-        /// </summary>
-        private void HandleItemsReplaced(IList oldItems, IList newItems)
-        {
-            if (oldItems != null && oldItems.Count > 0)
-            {
-                AccumulateColumnValuesForBatch(oldItems, isAddition: false);
-            }
-
-            if (newItems != null && newItems.Count > 0)
-            {
-                AccumulateColumnValuesForBatch(newItems, isAddition: true);
-            }
-        }
-
-        /// <summary>
-        /// Accumulates column values from items for batch processing to improve performance
-        /// </summary>
-        /// <param name="items">Items to extract values from</param>
-        /// <param name="isAddition">True for additions, false for removals</param>
-        private void AccumulateColumnValuesForBatch(IList items, bool isAddition)
-        {
-            if (string.IsNullOrEmpty(BindingPath) || SearchTemplateController == null)
-                return;
-
-            try
-            {
-                lock (_batchUpdateLock)
-                {
-                    var targetSet = isAddition ? _pendingAddedValues : _pendingRemovedValues;
-
-                    // Extract column values from items
-                    foreach (var item in items)
-                    {
-                        if (item != null)
-                        {
-                            var value = ReflectionHelper.GetPropValue(item, BindingPath);
-                            targetSet.Add(value);
-                        }
-                    }
-                }
-
-                // Start or restart the batch update timer
-                StartOrRestartBatchUpdateTimer();
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"Error accumulating column values for batch: {ex.Message}");
-                // Fallback to full refresh on error
-                SearchTemplateController?.RefreshColumnValues();
-            }
-        }
-
-        /// <summary>
-        /// Starts or restarts the batch update timer to defer processing of accumulated changes
-        /// </summary>
-        private void StartOrRestartBatchUpdateTimer()
-        {
-            if (_batchUpdateTimer == null)
-            {
-                _batchUpdateTimer = new Timer(150) // 150ms debounce window
-                {
-                    AutoReset = false
-                };
-                _batchUpdateTimer.Elapsed += OnBatchUpdateTimerElapsed;
-            }
-
-            _batchUpdateTimer.Stop();
-            _batchUpdateTimer.Start();
-        }
-
-        /// <summary>
-        /// Processes accumulated batch changes when timer elapses
-        /// </summary>
-        private void OnBatchUpdateTimerElapsed(object sender, ElapsedEventArgs e)
-        {
-            // Execute on UI thread
-            Application.Current.Dispatcher.Invoke(() =>
-            {
-                try
-                {
-                    ProcessBatchUpdates();
-                }
-                catch (Exception ex)
-                {
-                    Debug.WriteLine($"Error processing batch updates: {ex.Message}");
-                    // Fallback to full refresh on error
-                    SearchTemplateController?.RefreshColumnValues();
-                }
-            });
-        }
-
-        /// <summary>
-        /// Processes all accumulated batch updates and applies them to the cache
-        /// </summary>
-        private void ProcessBatchUpdates()
-        {
-            if (SearchTemplateController == null)
-                return;
-
-            HashSet<object> addedValues;
-            HashSet<object> removedValues;
-
-            // Copy and clear pending changes atomically
-            lock (_batchUpdateLock)
-            {
-                addedValues = new HashSet<object>(_pendingAddedValues);
-                removedValues = new HashSet<object>(_pendingRemovedValues);
-                _pendingAddedValues.Clear();
-                _pendingRemovedValues.Clear();
-            }
-
-            // If we have both additions and removals, or if the change count is very large,
-            // fall back to full refresh for consistency
-            if ((addedValues.Count > 0 && removedValues.Count > 0) ||
-                (addedValues.Count + removedValues.Count > 100))
-            {
-                SearchTemplateController.RefreshColumnValues();
-                SearchTemplateController.EnsureColumnValuesLoadedForFiltering();
-                return;
-            }
-
-            // Try incremental update if we have a single type of change
-            bool updateSucceeded = false;
-
-            if (addedValues.Count > 0 && removedValues.Count == 0)
-            {
-                updateSucceeded = SearchTemplateController.TryAddColumnValues(addedValues);
-            }
-            else if (removedValues.Count > 0 && addedValues.Count == 0)
-            {
-                updateSucceeded = SearchTemplateController.TryRemoveColumnValues(removedValues);
-            }
-
-            // Fall back to full refresh if incremental update failed
-            if (!updateSucceeded)
-            {
-                SearchTemplateController.RefreshColumnValues();
-                SearchTemplateController.EnsureColumnValuesLoadedForFiltering();
-            }
-        }
+        // NOTE: Batch update methods removed - SearchDataGrid now handles all cache updates centrally
 
         private static void OnCurrentColumnChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
@@ -642,7 +456,9 @@ namespace WWSearchDataGrid.Modern.WPF
                     {
                         // Re-setup the lazy loading provider
                         SearchTemplateController.SetupColumnDataLazy(GridColumn.GetEffectiveColumnDisplayName(CurrentColumn), GetColumnValuesFromDataGrid, BindingPath);
-                        
+
+                        SearchTemplateController.RefreshColumnValues();
+
                         // Determine column data type from a small sample for immediate UI setup
                         var sampleSize = Math.Min(10, SourceDataGrid.Items.Count);
                         if (sampleSize > 0)
@@ -667,6 +483,9 @@ namespace WWSearchDataGrid.Modern.WPF
                     {
                         // No items yet - just set up basic structure
                         SearchTemplateController.SetupColumnDataLazy(GridColumn.GetEffectiveColumnDisplayName(CurrentColumn), GetColumnValuesFromDataGrid, BindingPath);
+
+                        // Only refresh if cache exists - keep lazy loading for empty sources
+                        //SearchTemplateController.RefreshColumnValues();
                     }
 
                     // Only re-determine column type based on definition, not data
@@ -1163,7 +982,6 @@ namespace WWSearchDataGrid.Modern.WPF
                 BindingPath = resolvedPath;
 
                 // Debug logging when FilterMemberPath is explicitly used
-                
                 DetermineCheckboxColumnTypeFromColumnDefinition();
 
                 if (!SourceDataGrid.DataColumns.Contains(this))

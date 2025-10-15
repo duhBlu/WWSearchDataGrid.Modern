@@ -19,12 +19,6 @@ namespace WWSearchDataGrid.Modern.SampleApp
         public MainWindow()
         {
             InitializeComponent();
-            
-            // Set up the SearchDataGrid reference in the ViewModel for memory cleanup
-            if (DataContext is MainViewModel viewModel)
-            {
-                viewModel.SetSearchDataGrid(SearchDataGrid);
-            }
         }
     }
 }

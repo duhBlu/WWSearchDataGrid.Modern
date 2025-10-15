@@ -253,11 +253,12 @@ namespace WWSearchDataGrid.Modern.Core.Caching
                     return this;
                 }
 
-                var combinedValues = new List<object>(_values);
-                combinedValues.AddRange(additionalValues);
+                // Instead of re-sorting the entire combined list,
+                // use efficient insertion to maintain sorted order
+                var mergedValues = InsertSortedValues(_values, additionalValues, _dataType);
 
-                // Create new cache instance (which will detect type and sort automatically)
-                return new ColumnValueCache(combinedValues, newUniqueValues, newValueCounts, hasNewNulls);
+                // Create new cache instance using optimized constructor that skips sorting
+                return new ColumnValueCache(mergedValues, newUniqueValues, newValueCounts, hasNewNulls, _dataType, skipSort: true);
             }
             catch (Exception ex)
             {
@@ -326,16 +327,151 @@ namespace WWSearchDataGrid.Modern.Core.Caching
         /// <summary>
         /// Private constructor for creating cache instances from incremental operations
         /// </summary>
-        private ColumnValueCache(List<object> values, HashSet<object> uniqueValues, Dictionary<object, int> valueCounts, bool containsNulls)
+        private ColumnValueCache(List<object> values, HashSet<object> uniqueValues, Dictionary<object, int> valueCounts, bool containsNulls, ColumnDataType? dataType = null, bool skipSort = false)
         {
             _values = values ?? throw new ArgumentNullException(nameof(values));
             _uniqueValues = uniqueValues ?? throw new ArgumentNullException(nameof(uniqueValues));
             _valueCounts = valueCounts ?? throw new ArgumentNullException(nameof(valueCounts));
             _containsNullValues = containsNulls;
 
-            // Detect data type and sort
-            _dataType = DetectColumnDataType(_values);
-            SortValuesByDataType(_values, _dataType);
+            // Use provided data type or detect if not provided
+            _dataType = dataType ?? DetectColumnDataType(_values);
+
+            // Skip sorting if values are already sorted (optimization for incremental updates)
+            if (!skipSort)
+            {
+                SortValuesByDataType(_values, _dataType);
+            }
+        }
+
+        /// <summary>
+        /// Efficiently merges new values into an already-sorted list using binary search insertion
+        /// This avoids re-sorting the entire list when adding a small number of values to a large sorted list
+        /// </summary>
+        /// <param name="sortedValues">Existing sorted list (will not be modified)</param>
+        /// <param name="newValues">New values to insert (unsorted)</param>
+        /// <param name="dataType">Data type for comparison logic</param>
+        /// <returns>New list with all values in sorted order</returns>
+        private static List<object> InsertSortedValues(List<object> sortedValues, List<object> newValues, ColumnDataType dataType)
+        {
+            if (newValues == null || newValues.Count == 0)
+                return new List<object>(sortedValues);
+
+            // Choose strategy based on the ratio of new to existing values
+            // If adding many values relative to existing, merge sort is more efficient
+            // If adding few values, binary insertion is more efficient
+            double ratio = sortedValues.Count > 0 ? (double)newValues.Count / sortedValues.Count : 1.0;
+
+            if (ratio > 0.1 || sortedValues.Count < 1000)
+            {
+                // For large additions or small lists, use merge sort approach
+                return MergeSortedLists(sortedValues, newValues, dataType);
+            }
+            else
+            {
+                // For small additions to large lists, use binary insertion
+                return BinaryInsertValues(sortedValues, newValues, dataType);
+            }
+        }
+
+        /// <summary>
+        /// Merges sorted list with new values using merge sort algorithm
+        /// First sorts the new values, then merges two sorted lists
+        /// </summary>
+        private static List<object> MergeSortedLists(List<object> sortedValues, List<object> newValues, ColumnDataType dataType)
+        {
+            // Sort the new values first
+            var sortedNewValues = new List<object>(newValues);
+            SortValuesByDataType(sortedNewValues, dataType);
+
+            // Merge two sorted lists
+            var result = new List<object>(sortedValues.Count + sortedNewValues.Count);
+            int i = 0, j = 0;
+            var comparer = GetComparerForDataType(dataType);
+
+            while (i < sortedValues.Count && j < sortedNewValues.Count)
+            {
+                if (comparer(sortedValues[i], sortedNewValues[j]) <= 0)
+                {
+                    result.Add(sortedValues[i++]);
+                }
+                else
+                {
+                    result.Add(sortedNewValues[j++]);
+                }
+            }
+
+            // Add remaining values
+            while (i < sortedValues.Count)
+                result.Add(sortedValues[i++]);
+            while (j < sortedNewValues.Count)
+                result.Add(sortedNewValues[j++]);
+
+            return result;
+        }
+
+        /// <summary>
+        /// Inserts new values into sorted list using binary search for each value
+        /// Most efficient when adding few values to a large list
+        /// </summary>
+        private static List<object> BinaryInsertValues(List<object> sortedValues, List<object> newValues, ColumnDataType dataType)
+        {
+            var result = new List<object>(sortedValues.Count + newValues.Count);
+            result.AddRange(sortedValues);
+
+            var comparer = GetComparerForDataType(dataType);
+
+            foreach (var newValue in newValues)
+            {
+                int insertIndex = BinarySearchInsertPosition(result, newValue, comparer);
+                result.Insert(insertIndex, newValue);
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Finds the insertion position for a value in a sorted list using binary search
+        /// </summary>
+        private static int BinarySearchInsertPosition(List<object> sortedList, object value, Comparison<object> comparer)
+        {
+            int left = 0;
+            int right = sortedList.Count;
+
+            while (left < right)
+            {
+                int mid = left + (right - left) / 2;
+                if (comparer(sortedList[mid], value) < 0)
+                {
+                    left = mid + 1;
+                }
+                else
+                {
+                    right = mid;
+                }
+            }
+
+            return left;
+        }
+
+        /// <summary>
+        /// Returns the appropriate comparison function for the given data type
+        /// </summary>
+        private static Comparison<object> GetComparerForDataType(ColumnDataType dataType)
+        {
+            switch (dataType)
+            {
+                case ColumnDataType.Number:
+                    return CompareAsNumber;
+                case ColumnDataType.DateTime:
+                    return CompareAsDateTime;
+                case ColumnDataType.Boolean:
+                    return CompareAsBoolean;
+                case ColumnDataType.Enum:
+                case ColumnDataType.String:
+                default:
+                    return CompareAsString;
+            }
         }
 
         /// <summary>

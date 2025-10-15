@@ -132,20 +132,6 @@ namespace WWSearchDataGrid.Modern.SampleApp
 
         #endregion
         
-        #region Public Methods
-        
-        /// <summary>
-        /// Sets the SearchDataGrid reference for memory cleanup operations
-        /// This should be called from the code-behind after the grid is initialized
-        /// </summary>
-        /// <param name="searchDataGrid">The SearchDataGrid instance</param>
-        public void SetSearchDataGrid(SearchDataGrid searchDataGrid)
-        {
-            _searchDataGrid = searchDataGrid;
-        }
-        
-        #endregion
-
         #region Private Methods
 
         /// <summary>

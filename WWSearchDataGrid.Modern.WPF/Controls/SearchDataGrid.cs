@@ -480,20 +480,131 @@ namespace WWSearchDataGrid.Modern.WPF
             // Update ActualHasItems property when collection changes
             UpdateHasItemsProperty();
 
-            // Invalidate collection context cache when items are added/removed
-            // This ensures statistical calculations reflect the current data
-            if (e.Action == NotifyCollectionChangedAction.Add ||
-                e.Action == NotifyCollectionChangedAction.Remove ||
-                e.Action == NotifyCollectionChangedAction.Replace)
+            // Handle incremental column value cache updates for better performance
+            if (e.Action == NotifyCollectionChangedAction.Add && e.NewItems != null)
             {
+                // Incrementally add new values to column caches
+                UpdateColumnCachesForAddedItems(e.NewItems);
                 InvalidateCollectionContextCache();
             }
-            if (e.Action == NotifyCollectionChangedAction.Reset)
+            else if (e.Action == NotifyCollectionChangedAction.Remove && e.OldItems != null)
             {
+                // Incrementally remove values from column caches
+                UpdateColumnCachesForRemovedItems(e.OldItems);
+                InvalidateCollectionContextCache();
+            }
+            else if (e.Action == NotifyCollectionChangedAction.Replace)
+            {
+                // Handle replace as remove old + add new
+                if (e.OldItems != null)
+                    UpdateColumnCachesForRemovedItems(e.OldItems);
+                if (e.NewItems != null)
+                    UpdateColumnCachesForAddedItems(e.NewItems);
+                InvalidateCollectionContextCache();
+            }
+            else if (e.Action == NotifyCollectionChangedAction.Reset)
+            {
+                // Full reset - clear all cached data
                 ClearAllCachedData();
             }
 
             CollectionChanged?.Invoke(this, e);
+        }
+
+        /// <summary>
+        /// Updates column value caches incrementally when items are added
+        /// </summary>
+        private void UpdateColumnCachesForAddedItems(IList newItems)
+        {
+            if (newItems == null || newItems.Count == 0 || DataColumns.Count == 0)
+                return;
+
+            try
+            {
+                // For each column with a search template controller, update its cache
+                foreach (var columnSearchBox in DataColumns)
+                {
+                    if (columnSearchBox?.SearchTemplateController == null ||
+                        string.IsNullOrEmpty(columnSearchBox.BindingPath))
+                        continue;
+
+                    try
+                    {
+                        // Extract values from new items for this column
+                        var newValues = new List<object>();
+                        foreach (var item in newItems)
+                        {
+                            var value = ReflectionHelper.GetPropValue(item, columnSearchBox.BindingPath);
+                            newValues.Add(value);
+                        }
+
+                        // Try incremental update
+                        bool success = columnSearchBox.SearchTemplateController.TryAddColumnValues(newValues);
+
+                        if (!success)
+                        {
+                            // Fallback: refresh this column's cache
+                            Debug.WriteLine($"Incremental add failed for column {columnSearchBox.BindingPath}, refreshing cache");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine($"Error updating cache for column {columnSearchBox.BindingPath}: {ex.Message}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error in UpdateColumnCachesForAddedItems: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Updates column value caches incrementally when items are removed
+        /// </summary>
+        private void UpdateColumnCachesForRemovedItems(IList oldItems)
+        {
+            if (oldItems == null || oldItems.Count == 0 || DataColumns.Count == 0)
+                return;
+
+            try
+            {
+                // For each column with a search template controller, update its cache
+                foreach (var columnSearchBox in DataColumns)
+                {
+                    if (columnSearchBox?.SearchTemplateController == null ||
+                        string.IsNullOrEmpty(columnSearchBox.BindingPath))
+                        continue;
+
+                    try
+                    {
+                        // Extract values from removed items for this column
+                        var removedValues = new List<object>();
+                        foreach (var item in oldItems)
+                        {
+                            var value = ReflectionHelper.GetPropValue(item, columnSearchBox.BindingPath);
+                            removedValues.Add(value);
+                        }
+
+                        // Try incremental update
+                        bool success = columnSearchBox.SearchTemplateController.TryRemoveColumnValues(removedValues);
+
+                        if (!success)
+                        {
+                            // Fallback: refresh this column's cache
+                            Debug.WriteLine($"Incremental remove failed for column {columnSearchBox.BindingPath}, refreshing cache");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine($"Error updating cache for column {columnSearchBox.BindingPath}: {ex.Message}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error in UpdateColumnCachesForRemovedItems: {ex.Message}");
+            }
         }
 
         /// <summary>

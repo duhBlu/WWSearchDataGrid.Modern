@@ -7,6 +7,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Numerics;
 using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
@@ -469,7 +470,7 @@ namespace WWSearchDataGrid.Modern.Core
 
                     ColumnDataType = _cachedColumnValues.DataType;
 
-                    // Notify bindings that ColumnValueCounts has changed
+                    // Notify bindings that related properties have changed
                     OnPropertyChanged(nameof(ColumnValueCounts));
                 }
                 catch (Exception ex)
@@ -486,39 +487,18 @@ namespace WWSearchDataGrid.Modern.Core
             }
         }
         
-        /// <summary>
-        /// Determines column data type from cached values (called when values are first accessed)
-        /// The cache manager has already detected the type, so we just read it
-        /// </summary>
-        private void DetermineColumnDataTypeFromValues()
-        {
-            try
-            {
-                // Only determine data type if values are loaded
-                if (_cachedColumnValues != null && _cachedColumnValues.Count > 0)
-                {
-                    // Get the data type that was already detected by the cache manager
-                    // This avoids duplicate type detection work
-                    ColumnDataType = _cachedColumnValues.DataType;
-                }
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"Error determining column data type: {ex.Message}");
-            }
-        }
         
         /// <summary>
         /// Adds or updates a single value in the column values (for incremental updates)
-        /// Note: With cache-based approach, incremental updates require refreshing the entire cache
+        /// Uses efficient incremental cache update instead of full refresh
         /// </summary>
         /// <param name="value">Value to add or update</param>
         public void AddOrUpdateColumnValue(object value)
         {
-            OnPropertyChanged(nameof(ColumnValues));
             if (_cachedColumnValues == null)
             {
                 // If values aren't loaded yet, just mark them as needing refresh
+                OnPropertyChanged(nameof(ColumnValues));
                 return;
             }
 
@@ -526,25 +506,28 @@ namespace WWSearchDataGrid.Modern.Core
             if (value == null || (value is string stringValue && string.IsNullOrWhiteSpace(stringValue)))
                 return;
 
-            if (!_cachedColumnValues.Contains(value))
+            // Use efficient incremental update for both new and existing values
+            // This will either add the new value or increment the count for existing values
+            bool updateSucceeded = TryAddColumnValues(new[] { value });
+
+            if (!updateSucceeded)
             {
-                // For cache-based approach, we need to refresh the entire cache
-                // This is less efficient for single updates but necessary for data consistency
+                // Fallback to full refresh if incremental update fails
                 RefreshColumnValues();
             }
         }
 
         /// <summary>
         /// Removes a value from the column values (for incremental updates)
-        /// Note: With cache-based approach, incremental updates require refreshing the entire cache
+        /// Uses efficient incremental cache update instead of full refresh
         /// </summary>
         /// <param name="value">Value to remove</param>
         public void RemoveColumnValue(object value)
         {
-            OnPropertyChanged(nameof(ColumnValues));
             if (_cachedColumnValues == null)
             {
                 // If values aren't loaded yet, just mark them as needing refresh
+                OnPropertyChanged(nameof(ColumnValues));
                 return;
             }
 
@@ -552,10 +535,12 @@ namespace WWSearchDataGrid.Modern.Core
             if (value == null || (value is string stringValue && string.IsNullOrWhiteSpace(stringValue)))
                 return;
 
-            if (_cachedColumnValues.Contains(value))
+            // Use efficient incremental update instead of full refresh
+            bool updateSucceeded = TryRemoveColumnValues(new[] { value });
+
+            if (!updateSucceeded)
             {
-                // For cache-based approach, we need to refresh the entire cache
-                // This is less efficient for single updates but necessary for data consistency
+                // Fallback to full refresh if incremental update fails
                 RefreshColumnValues();
             }
         }
