@@ -342,7 +342,7 @@
                                             Binding="{Binding BoolValue}" />
 
                     <DataGridCheckBoxColumn Width="100"
-                                            sdg:GridColumn.UseCheckBoxInSearchBox="True"
+                                            sdg:GridColumn.UseCheckBoxInSearchBox="False"
                                             sdg:GridColumn.FilterMemberPath="NullableBoolValue"
                                             SortMemberPath="NullableBoolValue"
                                             Header="Nullable Bool"

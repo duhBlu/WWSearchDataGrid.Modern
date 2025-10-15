@@ -1163,10 +1163,6 @@ namespace WWSearchDataGrid.Modern.WPF
                 BindingPath = resolvedPath;
 
                 // Debug logging when FilterMemberPath is explicitly used
-                if (!string.IsNullOrEmpty(GridColumn.GetFilterMemberPath(CurrentColumn)))
-                {
-                    Debug.WriteLine($"Column '{CurrentColumn.Header}': Using explicit FilterMemberPath='{BindingPath}'");
-                }
                 
                 DetermineCheckboxColumnTypeFromColumnDefinition();
 
@@ -1214,6 +1210,9 @@ namespace WWSearchDataGrid.Modern.WPF
             }
         }
 
+        /// <summary>
+        /// Determines if checkbox filtering should be used based on GridColumn.UseCheckBoxInSearchBox property
+        /// </summary>
         private void DetermineCheckboxColumnTypeFromColumnDefinition()
         {
             try
@@ -1224,37 +1223,8 @@ namespace WWSearchDataGrid.Modern.WPF
                     return;
                 }
 
-                // First check the new explicit property on GridColumn
+                // Check the explicit property on GridColumn
                 bool isCheckboxType = GridColumn.GetUseCheckBoxInSearchBox(CurrentColumn);
-
-                // If not explicitly set via GridColumn, maintain backward compatibility with auto-detection
-                if (!isCheckboxType)
-                {
-                    // Check if it's explicitly a DataGridCheckBoxColumn
-                    if (CurrentColumn is DataGridCheckBoxColumn)
-                    {
-                        isCheckboxType = true;
-                    }
-                    // Check binding property type for bound columns
-                    else if (CurrentColumn is DataGridBoundColumn boundColumn && boundColumn.Binding is Binding binding)
-                    {
-                        var bindingPath = binding.Path?.Path;
-                        if (!string.IsNullOrEmpty(bindingPath))
-                        {
-                            isCheckboxType = DetermineIfBooleanPropertyFromDataContext(bindingPath);
-                        }
-                    }
-                    // Check DependencyObjectType for template columns or custom scenarios
-                    else if (CurrentColumn is DataGridTemplateColumn)
-                    {
-                        var dependencyObjectType = CurrentColumn.DependencyObjectType;
-                        if (dependencyObjectType != null)
-                        {
-                            // Add logic based on dependencyObjectType.Name patterns you observe
-                            isCheckboxType = IsCheckboxColumnByDependencyObjectType(dependencyObjectType);
-                        }
-                    }
-                }
 
                 // Set the UI state immediately
                 SetCheckboxColumnState(isCheckboxType);
@@ -1270,68 +1240,6 @@ namespace WWSearchDataGrid.Modern.WPF
                 Debug.WriteLine($"Error determining column type from definition: {ex.Message}");
                 SetCheckboxColumnState(false);
             }
-        }
-
-        /// <summary>
-        /// Determines if a binding path points to a boolean property by examining the data context
-        /// </summary>
-        private bool DetermineIfBooleanPropertyFromDataContext(string bindingPath)
-        {
-            try
-            {
-                // If we have data available, check the first item's property type
-                if (SourceDataGrid?.Items?.Count > 0)
-                {
-                    var firstItem = SourceDataGrid.Items.Cast<object>().FirstOrDefault(item => item != null);
-                    if (firstItem != null)
-                    {
-                        var propertyType = ReflectionHelper.GetPropertyType(firstItem, bindingPath);
-                        return propertyType == typeof(bool) || propertyType == typeof(bool?);
-                    }
-                }
-
-                // If no data available yet, check if we can infer from the ItemsSource type
-                if (SourceDataGrid?.OriginalItemsSource != null)
-                {
-                    var itemsSourceType = SourceDataGrid.OriginalItemsSource.GetType();
-                    if (itemsSourceType.IsGenericType)
-                    {
-                        var itemType = itemsSourceType.GetGenericArguments().FirstOrDefault();
-                        if (itemType != null)
-                        {
-                            return ReflectionHelper.IsBooleanProperty(itemType, bindingPath);
-                        }
-                    }
-                }
-
-                return false;
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"Error determining boolean property from data context: {ex.Message}");
-                return false;
-            }
-        }
-
-        /// <summary>
-        /// Determines if a column should be treated as checkbox based on DependencyObjectType
-        /// </summary>
-        private bool IsCheckboxColumnByDependencyObjectType(DependencyObjectType dependencyObjectType)
-        {
-            var typeName = dependencyObjectType.Name;
-
-            if (typeName.Contains("CheckBox", StringComparison.OrdinalIgnoreCase) ||
-                typeName.Contains("Boolean", StringComparison.OrdinalIgnoreCase) ||
-                typeName.Contains("Toggle", StringComparison.OrdinalIgnoreCase))
-            {
-                return true;
-            }
-
-            // Add more patterns for custom if necessary
-            // if (typeName == "YourCustomCheckboxColumnType")
-            //     return true;
-
-            return false;
         }
 
         /// <summary>

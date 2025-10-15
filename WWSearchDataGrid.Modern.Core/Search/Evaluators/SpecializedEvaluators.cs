@@ -250,5 +250,4 @@ namespace WWSearchDataGrid.Modern.Core
             }
         }
     }
-
 }
