@@ -43,6 +43,9 @@ namespace WWSearchDataGrid.Modern.Core
         private Func<IEnumerable<object>> _columnValuesProvider;
         private ReadOnlyColumnValues _cachedColumnValues;
 
+        // Deferred null status determination
+        private bool _isNullStatusDetermined = false;
+
         #endregion
 
         #region Properties
@@ -67,15 +70,29 @@ namespace WWSearchDataGrid.Modern.Core
         }
 
         /// <summary>
+        /// Gets whether null status has been explicitly determined
+        /// Used to defer null checking until actually needed
+        /// </summary>
+        public bool IsNullStatusDetermined => _isNullStatusDetermined;
+
+        /// <summary>
         /// Gets whether the column data contains any null values
-        /// This is determined when column values are loaded
+        /// Only triggers cache load if cache is already loaded
+        /// PERFORMANCE: Defers cache loading until EnsureNullStatusDetermined() is called
         /// </summary>
         public bool ContainsNullValues
         {
             get
             {
-                EnsureColumnValuesLoaded();
-                return _cachedColumnValues?.ContainsNullValues ?? false;
+                // If cache is loaded, get from cache and mark as determined
+                if (_cachedColumnValues != null)
+                {
+                    _isNullStatusDetermined = true;
+                    return _cachedColumnValues.ContainsNullValues;
+                }
+
+                // Default to false if not determined yet
+                return false;
             }
         }
 
@@ -217,7 +234,7 @@ namespace WWSearchDataGrid.Modern.Core
                 }
                 PropertyValues.Clear();
             }
-            
+
             // Clear ColumnValuesByPath dictionary while preserving the dictionary structure
             if (ColumnValuesByPath != null)
             {
@@ -227,12 +244,29 @@ namespace WWSearchDataGrid.Modern.Core
                 }
                 ColumnValuesByPath.Clear();
             }
-            
+
+            // Clear cached data
             _cachedColumnValues = null;
-            _cacheKey = null;
-            
-            _columnValuesProvider = null;
-            
+
+            // Regenerate cache key to force fresh load when values are accessed again
+            // This ensures stale cache entries aren't reused after data is cleared
+            if (_columnValuesProvider != null)
+            {
+                _cacheKey = $"{ColumnName?.GetHashCode() ?? 0}_{_columnValuesProvider?.GetHashCode() ?? 0}_{DateTime.UtcNow.Ticks}";
+            }
+            else
+            {
+                _cacheKey = null;
+            }
+
+            // IMPORTANT: Do NOT clear _columnValuesProvider here
+            // We need to preserve it so incremental updates (CollectionChanged Add events)
+            // can still rebuild the cache after a Reset event clears the data
+            // _columnValuesProvider = null;  // REMOVED - causes incremental updates to break
+
+            // Reset null status since data has changed
+            _isNullStatusDetermined = false;
+
             // Trigger cache cleanup to remove dead references
             ColumnValueCacheManager.Instance.Cleanup(clearAll: false);
         }
@@ -345,13 +379,31 @@ namespace WWSearchDataGrid.Modern.Core
             if (_columnValuesProvider != null)
             {
                 _cachedColumnValues = null;
+                _isNullStatusDetermined = false;  // Reset when cache is invalidated
                 // Update cache key to force new cache entry
                 _cacheKey = $"{ColumnName?.GetHashCode() ?? 0}_{_columnValuesProvider?.GetHashCode() ?? 0}_{DateTime.UtcNow.Ticks}";
                 // Values will be reloaded on next access
             }
             OnPropertyChanged(nameof(ColumnValues));
         }
-        
+
+        /// <summary>
+        /// Forces determination of null status by ensuring cache is loaded
+        /// Call this when null status is actually needed (filter editor open, checkbox cycle)
+        /// PERFORMANCE: This is where cache loading happens - only when user explicitly interacts with filters
+        /// </summary>
+        public void EnsureNullStatusDetermined()
+        {
+            if (!_isNullStatusDetermined)
+            {
+                EnsureColumnValuesLoaded();  // This loads cache and determines null status
+                _isNullStatusDetermined = true;
+
+                // Update all templates with the now-known null status
+                UpdateTemplateDataTypes(ColumnDataType);
+            }
+        }
+
         /// <summary>
         /// Forces immediate loading of column values (for filter editors)
         /// This ensures values are available and data type is correctly detected
@@ -385,8 +437,12 @@ namespace WWSearchDataGrid.Modern.Core
                     // Clear local cache to force reload with updated values
                     _cachedColumnValues = null;
 
+                    // Reset null status determination - cache data has changed
+                    _isNullStatusDetermined = false;
+
                     // Trigger property change notification for UI bindings
                     OnPropertyChanged(nameof(ColumnValues));
+                    OnPropertyChanged(nameof(ContainsNullValues));
 
                     return true;
                 }
@@ -420,8 +476,12 @@ namespace WWSearchDataGrid.Modern.Core
                     // Clear local cache to force reload with updated values
                     _cachedColumnValues = null;
 
+                    // Reset null status determination - cache data has changed
+                    _isNullStatusDetermined = false;
+
                     // Trigger property change notification for UI bindings
                     OnPropertyChanged(nameof(ColumnValues));
+                    OnPropertyChanged(nameof(ContainsNullValues));
 
                     return true;
                 }

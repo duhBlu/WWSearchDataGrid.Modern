@@ -392,8 +392,12 @@ namespace WWSearchDataGrid.Modern.Core
 
         private void UpdateValidSearchTypes()
         {
-            // Use the controller's nullability detection instead of local analysis
-            bool isNullable = SearchTemplateController?.ContainsNullValues ?? false;
+            // PERFORMANCE: Check if null status has been determined yet
+            // If not, assume non-nullable until we know otherwise (will update later)
+            bool isNullable = SearchTemplateController?.IsNullStatusDetermined == true
+                ? SearchTemplateController.ContainsNullValues
+                : false;
+
             var validTypes = SearchTypeRegistry.GetFiltersForDataType(ColumnDataType, isNullable);
             var newValidSearchTypes = validTypes.Select(filterType => filterType.SearchType);
 

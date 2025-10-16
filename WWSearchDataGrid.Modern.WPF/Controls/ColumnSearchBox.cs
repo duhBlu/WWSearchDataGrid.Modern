@@ -678,12 +678,19 @@ namespace WWSearchDataGrid.Modern.WPF
 
         /// <summary>
         /// Cycles the checkbox state forward based on current state and column properties
+        /// PERFORMANCE: Triggers null status determination on first cycle - acceptable delay for user interaction
         /// </summary>
         private void CycleCheckboxStateForward()
         {
             try
             {
                 _isInitialState = false; // We're now cycling, not in initial state
+
+                // Ensure null status is determined before cycling
+                // This will load cache if not already loaded, which is acceptable
+                // since user is actively interacting with the filter
+                SearchTemplateController?.EnsureNullStatusDetermined();
+
                 var allowsNullValues = SearchTemplateController?.ContainsNullValues ?? false;
                 var nextState = GetNextCycleState(_checkboxCycleState, allowsNullValues);
                 SetCheckboxCycleState(nextState);
@@ -782,10 +789,15 @@ namespace WWSearchDataGrid.Modern.WPF
 
         /// <summary>
         /// Applies the appropriate filter based on the current cycle state
+        /// PERFORMANCE: Assumes null status already determined by CycleCheckboxStateForward
         /// </summary>
         /// <param name="state">The state to apply filter for</param>
         private void ApplyCheckboxCycleFilter(CheckboxCycleState state)
         {
+            // Null status should already be determined by CycleCheckboxStateForward
+            // but check again to be safe
+            SearchTemplateController?.EnsureNullStatusDetermined();
+
             var allowsNullValues = SearchTemplateController?.ContainsNullValues ?? false;
             switch (state)
             {

@@ -211,6 +211,7 @@ namespace WWSearchDataGrid.Modern.WPF
 
         /// <summary>
         /// Triggers loading of column values when filter editor opens
+        /// PERFORMANCE: This is where cache loading happens - deferred until user explicitly opens filter
         /// </summary>
         private void TriggerColumnValueLoading()
         {
@@ -219,7 +220,11 @@ namespace WWSearchDataGrid.Modern.WPF
                 if (DataContext is ColumnSearchBox columnSearchBox &&
                     columnSearchBox.SearchTemplateController != null)
                 {
+                    // Ensure column values are loaded (this will also determine null status)
                     columnSearchBox.SearchTemplateController.EnsureColumnValuesLoadedForFiltering();
+
+                    // Explicitly ensure null status is determined and templates updated
+                    columnSearchBox.SearchTemplateController.EnsureNullStatusDetermined();
                 }
             }
             catch (Exception ex)
