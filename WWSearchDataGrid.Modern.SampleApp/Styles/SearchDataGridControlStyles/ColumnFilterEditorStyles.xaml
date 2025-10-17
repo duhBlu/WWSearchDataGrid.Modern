@@ -154,7 +154,7 @@
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
-                                <sdg:SearchTextBox Style="{StaticResource GenericSearchTextboxStyle}"
+                                <sdg:SearchTextBox Style="{StaticResource CustomSearchTextboxStyle}"
                                                    Grid.Column="0"
                                                    Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}"
                                                    ItemsSource="{Binding DataContext.SearchTemplateController.ColumnValues, RelativeSource={RelativeSource AncestorType=ListBox}}"

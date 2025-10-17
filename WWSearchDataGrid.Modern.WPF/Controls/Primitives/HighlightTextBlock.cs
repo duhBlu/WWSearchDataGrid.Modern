@@ -9,6 +9,8 @@ using System.Windows;
 
 namespace WWSearchDataGrid.Modern.WPF
 {
+
+
     /// <summary>
     /// A TextBlock that highlights the first occurrence of a search term within a source string.
     /// Bind <see cref="HighlightTextBlockText"/> to the full text and <see cref="HighlightText"/> to the term to match.

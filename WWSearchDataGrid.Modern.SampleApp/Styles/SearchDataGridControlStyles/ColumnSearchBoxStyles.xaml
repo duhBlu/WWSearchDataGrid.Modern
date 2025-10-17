@@ -24,29 +24,36 @@
                             </Grid.ColumnDefinitions>
 
                             <!--  TextBox for non-checkbox columns  -->
-                            <TextBox x:Name="PART_SearchTextBox"
-                                     Grid.Column="0"
-                                     Background="Transparent"
-                                     BorderThickness="0"
-                                     Text="{Binding SearchText, RelativeSource={RelativeSource TemplatedParent}, UpdateSourceTrigger=PropertyChanged}"
-                                     Padding="6,2"
-                                     VerticalAlignment="Center"
-                                     VerticalContentAlignment="Center"
-                                     Height="28"
-                                     TabIndex="0"
-                                     FontSize="12"
-                                     FontFamily="Segoe UI">
-                                <TextBox.Style>
-                                    <Style TargetType="TextBox">
+                            <sdg:SearchTextBox x:Name="PART_SearchTextBox"
+                                               Grid.Column="0"
+                                               BorderThickness="0"
+                                               MinHeight="0"
+                                               Text="{Binding SearchText, RelativeSource={RelativeSource TemplatedParent}, UpdateSourceTrigger=PropertyChanged}"
+                                               Padding="4,2"
+                                               HorizontalContentAlignment="Left"
+                                               VerticalAlignment="Center"
+                                               VerticalContentAlignment="Center"
+                                               Height="28"
+                                               ShowToggleButton="False"
+                                               ShowClearButton="False"
+                                               TabIndex="0"
+                                               FontSize="12">
+                                <sdg:SearchTextBox.Style>
+                                    <Style BasedOn="{StaticResource CustomSearchTextboxStyle}" TargetType="{x:Type sdg:SearchTextBox}">
                                         <Setter Property="Visibility" Value="Visible" />
+                                        <Setter Property="Background" Value="Transparent" />
                                         <Style.Triggers>
                                             <DataTrigger Binding="{Binding IsCheckboxColumn, RelativeSource={RelativeSource TemplatedParent}}" Value="True">
                                                 <Setter Property="Visibility" Value="Collapsed" />
                                             </DataTrigger>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter Property="BorderBrush" Value="Transparent" />
+                                                <Setter Property="Background" Value="Transparent" />
+                                            </Trigger>
                                         </Style.Triggers>
                                     </Style>
-                                </TextBox.Style>
-                            </TextBox>
+                                </sdg:SearchTextBox.Style>
+                            </sdg:SearchTextBox>
 
                             <!--  CheckBox for boolean columns  -->
                             <CheckBox x:Name="PART_FilterCheckBox"
@@ -145,9 +152,9 @@
                             </Button>
 
                             <Button x:Name="PART_AdvancedFilterButton"
-                                    Command="{Binding ShowFilterEditorPopup, RelativeSource={RelativeSource TemplatedParent}}"
                                     Grid.Column="2"
                                     Cursor="Hand"
+                                    Command="{Binding ShowFilterEditorPopup, RelativeSource={RelativeSource TemplatedParent}}"
                                     Margin="2,1,5,1"
                                     Padding="4"
                                     VerticalAlignment="Center"

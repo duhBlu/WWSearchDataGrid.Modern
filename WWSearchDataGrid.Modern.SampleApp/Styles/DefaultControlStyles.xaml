@@ -253,6 +253,7 @@
                             <Setter TargetName="Border" Property="Background" Value="{StaticResource Checkbox.FillBrush.Checked}" />
                             <Setter TargetName="Border" Property="BorderBrush" Value="{StaticResource Checkbox.FillBrush.Checked}" />
                             <Setter TargetName="CheckIcon" Property="Foreground" Value="{StaticResource Checkbox.ForegroundBrush.Checked}" />
+                            <Setter TargetName="Border" Property="BorderThickness" Value="0" />
                             <Setter TargetName="IndeterminateIcon" Property="Visibility" Value="Collapsed" />
                         </Trigger>
 
@@ -260,6 +261,8 @@
                         <Trigger Property="IsChecked" Value="{x:Null}">
                             <Setter TargetName="Border" Property="Background" Value="{StaticResource Checkbox.FillBrush.Checked}" />
                             <Setter TargetName="Border" Property="BorderBrush" Value="{StaticResource Checkbox.FillBrush.Checked}" />
+                            <Setter TargetName="Border" Property="BorderThickness" Value="0" />
+                            <Setter TargetName="Border" Property="Padding" Value="0,1,0,0" />
                             <Setter TargetName="CheckIcon" Property="Visibility" Value="Collapsed" />
                             <Setter TargetName="IndeterminateIcon" Property="Fill" Value="{StaticResource Checkbox.ForegroundBrush.Checked}" />
                             <Setter TargetName="IndeterminateIcon" Property="Visibility" Value="Visible" />

@@ -1,10 +1,36 @@
 using System;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 using WWSearchDataGrid.Modern.Core;
 
 namespace WWSearchDataGrid.Modern.WPF
 {
+    /// <summary>
+    /// Defines the scope of items affected by the select-all checkbox operation.
+    /// </summary>
+    public enum SelectAllScope
+    {
+        /// <summary>
+        /// Affects only the currently filtered/visible rows in the data grid.
+        /// This is the default behavior and respects any active column filters.
+        /// </summary>
+        FilteredRows = 0,
+
+        /// <summary>
+        /// Affects only the currently selected rows (or rows containing selected cells when SelectionUnit is Cell).
+        /// When this scope is active, the select-all checkbox will show the count of affected rows.
+        /// </summary>
+        SelectedRows = 1,
+
+        /// <summary>
+        /// Affects all items in the ItemsSource regardless of filtering or selection state.
+        /// This operates on the complete dataset, bypassing any active filters.
+        /// </summary>
+        AllItems = 2
+    }
+
     /// <summary>
     /// Provides attached properties for configuring data grid columns with search and filtering capabilities.
     /// These properties work with all DataGridColumn types including TextColumn, CheckBoxColumn, TemplateColumn, and ComboBoxColumn.
@@ -241,14 +267,6 @@ namespace WWSearchDataGrid.Modern.WPF
         /// The fallback logic handles complex scenarios where Header may be a template or FrameworkElement.
         ///
         /// Default value: null (uses Header as fallback)
-        /// </summary>
-        /// <example>
-        /// <code>
-        /// &lt;DataGridTextColumn Header="CustomerID"
-        ///                     Binding="{Binding CustomerId}"
-        ///                     local:GridColumn.ColumnDisplayName="Customer ID"/&gt;
-        /// </code>
-        /// </example>
         public static readonly DependencyProperty ColumnDisplayNameProperty =
             DependencyProperty.RegisterAttached(
                 "ColumnDisplayName",
@@ -313,24 +331,6 @@ namespace WWSearchDataGrid.Modern.WPF
         /// still shows all valid search types for the column's data type.
         /// </para>
         /// </summary>
-        /// <example>
-        /// <code language="xaml">
-        /// &lt;!-- StartsWith for ID columns --&gt;
-        /// &lt;DataGridTextColumn Header="Customer ID"
-        ///                     Binding="{Binding CustomerId}"
-        ///                     local:GridColumn.DefaultSearchMode="StartsWith"/&gt;
-        ///
-        /// &lt;!-- Equals for exact code matching --&gt;
-        /// &lt;DataGridTextColumn Header="Status Code"
-        ///                     Binding="{Binding StatusCode}"
-        ///                     local:GridColumn.DefaultSearchMode="Equals"/&gt;
-        ///
-        /// &lt;!-- EndsWith for file extensions --&gt;
-        /// &lt;DataGridTextColumn Header="File Name"
-        ///                     Binding="{Binding FileName}"
-        ///                     local:GridColumn.DefaultSearchMode="EndsWith"/&gt;
-        /// </code>
-        /// </example>
         public static readonly DependencyProperty DefaultSearchModeProperty =
             DependencyProperty.RegisterAttached(
                 "DefaultSearchMode",
@@ -368,6 +368,149 @@ namespace WWSearchDataGrid.Modern.WPF
 
         #endregion
 
+        #region IsSelectAllColumn Attached Property
+
+        /// <summary>
+        /// Identifies the IsSelectAllColumn attached property.
+        /// Enables a "Select All" checkbox in the column header that toggles boolean values across all visible rows.
+        /// <para>
+        /// This property only functions correctly when the column's data type is boolean (bool or bool?).
+        /// If set on a non-boolean column, it will be automatically disabled.
+        /// </para>
+        /// <para>
+        /// Behavior: The select-all checkbox cycles between true and false values only.
+        /// Null values are never modified - they remain as null after toggle operations.
+        /// </para>
+        /// <para>
+        /// The checkbox displays three states:
+        /// </para>
+        /// <list type="bullet">
+        /// <item><description>Checked: All non-null values in visible rows are true</description></item>
+        /// <item><description>Unchecked: All non-null values in visible rows are false</description></item>
+        /// <item><description>Indeterminate: Mixed state (some true, some false among visible rows)</description></item>
+        /// </list>
+        /// <para>
+        /// When clicked, the checkbox toggles all non-null boolean values to the opposite state:
+        /// - If currently all true → sets all to false
+        /// - If currently all false → sets all to true
+        /// - If mixed (indeterminate) → sets all to true
+        /// </para>
+        /// <para>
+        /// Default value: false
+        /// </para>
+        /// <para>
+        /// Example usage:
+        /// <code>
+        /// &lt;DataGridCheckBoxColumn
+        ///     Header="Active"
+        ///     Binding="{Binding IsActive}"
+        ///     sdg:GridColumn.IsSelectAllColumn="True"
+        ///     sdg:GridColumn.FilterMemberPath="IsActive" /&gt;
+        /// </code>
+        /// </para>
+        /// </summary>
+        public static readonly DependencyProperty IsSelectAllColumnProperty =
+            DependencyProperty.RegisterAttached(
+                "IsSelectAllColumn",
+                typeof(bool),
+                typeof(GridColumn),
+                new FrameworkPropertyMetadata(false, FrameworkPropertyMetadataOptions.Inherits));
+
+        /// <summary>
+        /// Gets the value indicating whether select-all functionality is enabled for the specified column.
+        /// </summary>
+        /// <param name="element">The column to query</param>
+        /// <returns>True if select-all functionality is enabled; otherwise, false</returns>
+        public static bool GetIsSelectAllColumn(DependencyObject element)
+        {
+            if (element == null)
+                throw new ArgumentNullException(nameof(element));
+
+            return (bool)element.GetValue(IsSelectAllColumnProperty);
+        }
+
+        /// <summary>
+        /// Sets whether select-all functionality is enabled for the specified column.
+        /// Note: This only works correctly with boolean-typed columns.
+        /// </summary>
+        /// <param name="element">The column to configure</param>
+        /// <param name="value">True to enable select-all functionality; false to disable</param>
+        public static void SetIsSelectAllColumn(DependencyObject element, bool value)
+        {
+            if (element == null)
+                throw new ArgumentNullException(nameof(element));
+
+            element.SetValue(IsSelectAllColumnProperty, value);
+        }
+
+        #endregion
+
+        #region SelectAllScope Attached Property
+
+        /// <summary>
+        /// Identifies the SelectAllScope attached property.
+        /// Determines which items are affected when the select-all checkbox is toggled.
+        /// <para>
+        /// This property works in conjunction with IsSelectAllColumn and defines the scope
+        /// of rows that will be affected by the select-all checkbox operation.
+        /// </para>
+        /// <para>
+        /// Available scopes:
+        /// </para>
+        /// <list type="bullet">
+        /// <item><description>FilteredRows (default): Affects only currently visible/filtered rows</description></item>
+        /// <item><description>SelectedRows: Affects only selected rows (or rows with selected cells). Shows row count in header.</description></item>
+        /// <item><description>AllItems: Affects all items in ItemsSource regardless of filtering or selection</description></item>
+        /// </list>
+        /// <para>
+        /// Default value: SelectAllScope.FilteredRows
+        /// </para>
+        /// <para>
+        /// Example usage:
+        /// <code>
+        /// &lt;DataGridCheckBoxColumn
+        ///     Header="Active"
+        ///     Binding="{Binding IsActive}"
+        ///     sdg:GridColumn.IsSelectAllColumn="True"
+        ///     sdg:GridColumn.SelectAllScope="SelectedRows" /&gt;
+        /// </code>
+        /// </para>
+        /// </summary>
+        public static readonly DependencyProperty SelectAllScopeProperty =
+            DependencyProperty.RegisterAttached(
+                "SelectAllScope",
+                typeof(SelectAllScope),
+                typeof(GridColumn),
+                new FrameworkPropertyMetadata(SelectAllScope.FilteredRows, FrameworkPropertyMetadataOptions.Inherits));
+
+        /// <summary>
+        /// Gets the select-all scope for the specified column.
+        /// </summary>
+        /// <param name="element">The column to query</param>
+        /// <returns>The SelectAllScope value determining which items are affected by select-all operations</returns>
+        public static SelectAllScope GetSelectAllScope(DependencyObject element)
+        {
+            if (element == null)
+                throw new ArgumentNullException(nameof(element));
+
+            return (SelectAllScope)element.GetValue(SelectAllScopeProperty);
+        }
+
+        /// <summary>
+        /// Sets the select-all scope for the specified column.
+        /// </summary>
+        /// <param name="element">The column to configure</param>
+        /// <param name="value">The scope of items to affect with select-all operations</param>
+        public static void SetSelectAllScope(DependencyObject element, SelectAllScope value)
+        {
+            if (element == null)
+                throw new ArgumentNullException(nameof(element));
+
+            element.SetValue(SelectAllScopeProperty, value);
+        }
+
+        #endregion
+
         #region Helper Methods
 
         /// <summary>
@@ -398,6 +541,73 @@ namespace WWSearchDataGrid.Modern.WPF
 
             // Extract from Header using existing helper
             return SearchDataGrid.ExtractColumnHeaderText(column);
+        }
+
+        /// <summary>
+        /// Determines if a column is a boolean type based on various detection methods.
+        /// This method is used internally by the IsSelectAllColumn functionality to validate
+        /// that the column can support select-all checkbox behavior.
+        ///
+        /// Detection priority:
+        /// 1. Checks if column is DataGridCheckBoxColumn
+        /// 2. Checks GridColumn.UseCheckBoxInSearchBox explicit property
+        /// 3. Checks SearchTemplateController.ColumnDataType (if controller is available)
+        /// 4. Uses reflection to examine binding path type
+        /// </summary>
+        /// <param name="column">The column to check</param>
+        /// <param name="grid">The SearchDataGrid that owns the column (optional, for accessing SearchTemplateController)</param>
+        /// <returns>True if the column is determined to be boolean type; otherwise, false</returns>
+        internal static bool IsColumnBooleanType(DataGridColumn column, SearchDataGrid grid = null)
+        {
+            if (column == null)
+                return false;
+
+            try
+            {
+                // Method 1: Check if it's a DataGridCheckBoxColumn
+                if (column is DataGridCheckBoxColumn)
+                    return true;
+
+                // Method 2: Check explicit UseCheckBoxInSearchBox property
+                if (GetUseCheckBoxInSearchBox(column))
+                    return true;
+
+                // Method 3: Check SearchTemplateController if grid is available
+                if (grid != null)
+                {
+                    var columnSearchBox = grid.DataColumns.FirstOrDefault(c => c.CurrentColumn == column);
+                    if (columnSearchBox?.SearchTemplateController != null)
+                    {
+                        return columnSearchBox.SearchTemplateController.ColumnDataType == ColumnDataType.Boolean;
+                    }
+                }
+
+                // Method 4: Use reflection to check binding type
+                if (column is DataGridBoundColumn boundColumn &&
+                    boundColumn.Binding is Binding binding &&
+                    !string.IsNullOrEmpty(binding.Path?.Path))
+                {
+                    // Try to get property type from binding path
+                    var propertyType = ReflectionHelper.GetPropertyType(grid?.ItemsSource, binding.Path.Path);
+                    if (propertyType != null)
+                    {
+                        // Check if it's bool or bool?
+                        if (propertyType == typeof(bool))
+                            return true;
+                        if (propertyType == typeof(bool?))
+                            return true;
+                        if (Nullable.GetUnderlyingType(propertyType) == typeof(bool))
+                            return true;
+                    }
+                }
+
+                return false;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error determining if column is boolean type: {ex.Message}");
+                return false;
+            }
         }
 
         #endregion

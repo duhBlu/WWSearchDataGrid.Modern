@@ -333,17 +333,24 @@
                                         Header="Customer Name"
                                         Binding="{Binding CustomerName}" />
 
-                    <!--  Boolean Types with Explicit Checkbox Filtering (new GridColumn property)  -->
-                    <DataGridCheckBoxColumn Width="80"
+                    <!--  Boolean Types with Explicit Checkbox Filtering  -->
+                    <DataGridCheckBoxColumn Width="110"
                                             sdg:GridColumn.UseCheckBoxInSearchBox="True"
                                             sdg:GridColumn.FilterMemberPath="BoolValue"
+                                            sdg:GridColumn.IsSelectAllColumn="True"
+                                            sdg:GridColumn.SelectAllScope="SelectedRows"
                                             SortMemberPath="BoolValue"
-                                            Header="Bool Value"
-                                            Binding="{Binding BoolValue}" />
+                                            Binding="{Binding BoolValue}">
+                        <DataGridCheckBoxColumn.Header>
+                            <TextBlock Text="Bool Value" />
+                        </DataGridCheckBoxColumn.Header>
+                    </DataGridCheckBoxColumn>
 
                     <DataGridCheckBoxColumn Width="100"
                                             sdg:GridColumn.UseCheckBoxInSearchBox="True"
                                             sdg:GridColumn.FilterMemberPath="NullableBoolValue"
+                                            sdg:GridColumn.IsSelectAllColumn="True"
+                                            sdg:GridColumn.SelectAllScope="FilteredRows"
                                             SortMemberPath="NullableBoolValue"
                                             Header="Nullable Bool"
                                             Binding="{Binding NullableBoolValue}" />

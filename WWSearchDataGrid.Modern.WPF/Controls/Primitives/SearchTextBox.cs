@@ -237,6 +237,21 @@ namespace WWSearchDataGrid.Modern.WPF
             private set => SetValue(ActualItemsSourceProperty, value);
         }
 
+        /// <summary>
+        /// Whether the control has an items source available
+        /// </summary>
+        public static readonly DependencyProperty HasItemsSourceProperty =
+            DependencyProperty.Register(
+                nameof(HasItemsSource),
+                typeof(bool),
+                typeof(SearchTextBox),
+                new PropertyMetadata(false));
+
+        public bool HasItemsSource
+        {
+            get => (bool)GetValue(HasItemsSourceProperty);
+            set => SetValue(HasItemsSourceProperty, value);
+        }
 
         /// <summary>
         /// Currently selected item from ItemsSource
@@ -871,6 +886,7 @@ namespace WWSearchDataGrid.Modern.WPF
             if (ItemsSource == null)
             {
                 ActualItemsSource = null;
+                HasItemsSource = false;
                 return;
             }
 
@@ -878,6 +894,7 @@ namespace WWSearchDataGrid.Modern.WPF
             if (ItemsSource is not IEnumerable originalItems)
             {
                 ActualItemsSource = null;
+                HasItemsSource = false;
                 return;
             }
 
@@ -889,6 +906,10 @@ namespace WWSearchDataGrid.Modern.WPF
                 if (valueCounts == null || valueCounts.Count == 0)
                 {
                     ActualItemsSource = ItemsSource;
+
+                    HasItemsSource = ActualItemsSource != null &&
+                       ActualItemsSource.Cast<object>().Any();
+
                     return;
                 }
 
@@ -906,6 +927,9 @@ namespace WWSearchDataGrid.Modern.WPF
                 // Sort by value (natural sort - use original order from cache)
                 // Use original ItemsSource to restore original order
                 ActualItemsSource = ItemsSource;
+
+                HasItemsSource = ActualItemsSource != null &&
+                       ActualItemsSource.Cast<object>().Any();
             }
         }
 

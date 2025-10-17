@@ -134,21 +134,6 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
-        /// Finds an ancestor of a specific type in the visual tree
-        /// </summary>
-        private static T FindAncestor<T>(DependencyObject current) where T : DependencyObject
-        {
-            while (current != null)
-            {
-                if (current is T ancestor)
-                    return ancestor;
-
-                current = VisualTreeHelper.GetParent(current);
-            }
-            return null;
-        }
-
-        /// <summary>
         /// Determines if a column is currently frozen
         /// </summary>
         private static bool IsColumnFrozen(SearchDataGrid grid, DataGridColumn column)
@@ -156,18 +141,6 @@ namespace WWSearchDataGrid.Modern.WPF
             if (grid == null || column == null) return false;
 
             // TODO: Implement actual frozen column detection
-            // For now, return false as placeholder
-            return false;
-        }
-
-        /// <summary>
-        /// Determines if a column is currently pinned
-        /// </summary>
-        private static bool IsColumnPinned(SearchDataGrid grid, DataGridColumn column)
-        {
-            if (grid == null || column == null) return false;
-
-            // TODO: Implement actual pinned column detection
             // For now, return false as placeholder
             return false;
         }
@@ -245,14 +218,13 @@ namespace WWSearchDataGrid.Modern.WPF
                 "miCopy",
                 "Copy",
                 ContextMenuCommands.CopySelectedCellValuesCommand,
-                contextMenuContext.Grid,
-                "Ctrl+C"));
+                contextMenuContext.Grid));
 
             menu.Items.Add(BuildMenuItem(
                 "miCopyWithHeaders",
                 "Copy With Headers",
                 ContextMenuCommands.CopySelectedCellValuesWithHeadersCommand,
-                contextMenuContext.Grid, "Ctrl+Shift+C"));
+                contextMenuContext.Grid));
 
             menu.Items.Add(new Separator());
 
@@ -277,24 +249,7 @@ namespace WWSearchDataGrid.Modern.WPF
 
             menu.Items.Add(new Separator());
 
-            // Filtering
-            if (contextMenuContext.ColumnSearchBox != null)
-            {
-                menu.Items.Add(BuildMenuItem(
-                    "miShowFilterEditor",
-                    "Show Filter Editor (Not Implemented)",
-                    ContextMenuCommands.ShowFilterEditorCommand,
-                    contextMenuContext.ColumnSearchBox));
-
-                menu.Items.Add(BuildMenuItem(
-                    "miClearColumnFilter",
-                    "Clear Column Filter (Not Implemented)",
-                    ContextMenuCommands.ClearColumnFilterCommand,
-                    contextMenuContext.ColumnSearchBox));
-
-                menu.Items.Add(new Separator());
-            }
-
+            
             // Column Operations
             menu.Items.Add(BuildMenuItem(
                 "miBestFitColumn",
@@ -322,6 +277,20 @@ namespace WWSearchDataGrid.Modern.WPF
                 ContextMenuCommands.HideSelectedColumnCommand,
                 contextMenuContext.Column));
 
+            menu.Items.Add(new Separator());
+            
+            // Filtering
+            if (contextMenuContext.ColumnSearchBox != null && contextMenuContext.ColumnSearchBox.HasActiveFilter)
+            {
+                menu.Items.Add(BuildMenuItem(
+                    "miClearColumnFilter",
+                    "Clear Column Filter (Not Implemented)",
+                    ContextMenuCommands.ClearColumnFilterCommand,
+                    contextMenuContext.ColumnSearchBox));
+
+                menu.Items.Add(new Separator());
+            }
+
             // Dynamic Freeze/Unfreeze menu item
             var isFrozen = IsColumnFrozen(contextMenuContext.Grid, contextMenuContext.Column);
             var freezeName = isFrozen ? "miUnfreezeColumn" : "miFreezeColumn";
@@ -344,14 +313,12 @@ namespace WWSearchDataGrid.Modern.WPF
                 "miCopy",
                 "Copy",
                 ContextMenuCommands.CopySelectedCellValuesCommand,
-                contextMenuContext.Grid,
-                "Ctrl+C"));
+                contextMenuContext.Grid));
             menu.Items.Add(BuildMenuItem(
                 "miCopyWithHeaders",
                 "Copy With Headers",
                 ContextMenuCommands.CopySelectedCellValuesWithHeadersCommand,
-                contextMenuContext.Grid,
-                "Ctrl+Shift+C"));
+                contextMenuContext.Grid));
 
             return menu;
         }
@@ -365,14 +332,12 @@ namespace WWSearchDataGrid.Modern.WPF
                 "miCopy",
                 "Copy",
                 ContextMenuCommands.CopySelectedCellValuesCommand,
-                contextMenuContext.Grid,
-                "Ctrl+C"));
+                contextMenuContext.Grid));
             menu.Items.Add(BuildMenuItem(
                 "miCopyWithHeaders",
                 "Copy With Headers",
                 ContextMenuCommands.CopySelectedCellValuesWithHeadersCommand,
-                contextMenuContext.Grid, 
-                "Ctrl+C"));
+                contextMenuContext.Grid));
 
             return menu;
         }

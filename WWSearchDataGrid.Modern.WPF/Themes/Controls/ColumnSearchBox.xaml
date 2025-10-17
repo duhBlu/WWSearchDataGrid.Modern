@@ -3,6 +3,10 @@
                     xmlns:sdg="clr-namespace:WWSearchDataGrid.Modern.WPF"
                     xmlns:converters="clr-namespace:WWSearchDataGrid.Modern.WPF.Converters">
 
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF;component/Themes/Controls/Primitives/SearchTextBox.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+
     <converters:IntToVisibilityConverter x:Key="IntToVisibilityConverter" />
     <converters:HasValueToVisibilityConverter x:Key="HasValueToVisibilityConverter" />
 
@@ -23,8 +27,38 @@
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
 
+                            <sdg:SearchTextBox x:Name="PART_SearchTextBox"
+                                               Grid.Column="0"
+                                               Background="Transparent"
+                                               BorderThickness="0"
+                                               Text="{Binding SearchText, RelativeSource={RelativeSource TemplatedParent}, UpdateSourceTrigger=PropertyChanged}"
+                                               Padding="6,2"
+                                               Margin="0"
+                                               VerticalAlignment="Center"
+                                               VerticalContentAlignment="Center"
+                                               HorizontalContentAlignment="Left"
+                                               Height="28"
+                                               ShowToggleButton="False"
+                                               ShowClearButton="False"
+                                               TabIndex="0"
+                                               FontSize="12">
+                                <sdg:SearchTextBox.Style>
+                                    <Style BasedOn="{StaticResource GenericSearchTextboxStyle}" TargetType="{x:Type sdg:SearchTextBox}">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsCheckboxColumn, RelativeSource={RelativeSource TemplatedParent}}" Value="True">
+                                                <Setter Property="Visibility" Value="Collapsed" />
+                                            </DataTrigger>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter Property="Background" Value="Transparent" />
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </sdg:SearchTextBox.Style>
+                            </sdg:SearchTextBox>
+
                             <!--  TextBox for non-checkbox columns  -->
-                            <TextBox x:Name="PART_SearchTextBox"
+                            <!--<TextBox x:Name="PART_SearchTextBox"
                                      Grid.Column="0"
                                      Background="Transparent"
                                      BorderThickness="0"
@@ -46,7 +80,7 @@
                                         </Style.Triggers>
                                     </Style>
                                 </TextBox.Style>
-                            </TextBox>
+                            </TextBox>-->
 
                             <!--  CheckBox for boolean columns  -->
                             <CheckBox x:Name="PART_FilterCheckBox"

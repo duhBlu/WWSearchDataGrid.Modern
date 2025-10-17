@@ -40,9 +40,6 @@ namespace WWSearchDataGrid.Modern.SampleApp
         [ObservableProperty]
         private string _currentThemeName = "Generic";
 
-        // Reference to the SearchDataGrid for memory cleanup operations
-        private SearchDataGrid _searchDataGrid;
-
         #endregion
 
         #region Static Data (Preallocated)

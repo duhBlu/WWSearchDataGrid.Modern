@@ -418,25 +418,6 @@
 
                     <!--  Visual states via triggers  -->
                     <ControlTemplate.Triggers>
-                        <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Border" Property="BorderBrush" Value="{StaticResource SearchTextBox.BorderBrush.Hover}" />
-                            <Setter TargetName="Border" Property="Background" Value="{StaticResource SearchTextBox.BackgroundBrush.Hover}" />
-                        </Trigger>
-                        <Trigger Property="IsSearchFocused" Value="True">
-                            <Setter TargetName="Border" Property="BorderBrush" Value="{StaticResource SearchTextBox.BorderBrush.Focused}" />
-                            <Setter TargetName="Border" Property="Effect">
-                                <Setter.Value>
-                                    <DropShadowEffect Color="#4D2B88FF"
-                                                      Opacity="0.45"
-                                                      BlurRadius="8"
-                                                      ShadowDepth="0" />
-                                </Setter.Value>
-                            </Setter>
-                        </Trigger>
-                        <Trigger Property="IsEnabled" Value="False">
-                            <Setter TargetName="Border" Property="BorderBrush" Value="{StaticResource SearchTextBox.BorderBrush.Disabled}" />
-                            <Setter Property="Opacity" Value="0.6" />
-                        </Trigger>
                         <Trigger SourceName="PART_TextBox" Property="IsReadOnly" Value="True">
                             <Setter TargetName="Border" Property="Background" Value="{StaticResource SearchTextBox.BackgroundBrush.Readonly}" />
                         </Trigger>
@@ -444,6 +425,19 @@
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="BorderBrush" Value="{StaticResource SearchTextBox.BorderBrush.Hover}" />
+                <Setter Property="Background" Value="{StaticResource SearchTextBox.BackgroundBrush.Hover}" />
+            </Trigger>
+            <Trigger Property="IsSearchFocused" Value="True">
+                <Setter Property="BorderBrush" Value="{StaticResource SearchTextBox.BorderBrush.Focused}" />
+            </Trigger>
+            <Trigger Property="IsEnabled" Value="False">
+                <Setter Property="BorderBrush" Value="{StaticResource SearchTextBox.BorderBrush.Disabled}" />
+                <Setter Property="Opacity" Value="0.6" />
+            </Trigger>
+        </Style.Triggers>
     </Style>
 
     <!--#endregion-->

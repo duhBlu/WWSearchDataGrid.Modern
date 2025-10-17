@@ -5,18 +5,17 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Common\Interfaces\**" />
     <Compile Remove="Common\Models\**" />
+    <EmbeddedResource Remove="Common\Interfaces\**" />
     <EmbeddedResource Remove="Common\Models\**" />
+    <None Remove="Common\Interfaces\**" />
     <None Remove="Common\Models\**" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="System.Text.Json" Version="9.0.5" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Common\Interfaces\" />
   </ItemGroup>
 
 </Project>

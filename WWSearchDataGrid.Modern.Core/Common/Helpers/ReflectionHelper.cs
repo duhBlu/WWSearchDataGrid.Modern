@@ -40,6 +40,42 @@ namespace WWSearchDataGrid.Modern.Core
         }
 
         /// <summary>
+        /// Sets property value on an object using a property path
+        /// </summary>
+        public static void SetPropValue(object obj, string propPath, object value)
+        {
+            if (obj == null || string.IsNullOrEmpty(propPath))
+                return;
+
+            // Handle nested properties
+            var props = propPath.Split('.');
+            var currentObj = obj;
+
+            // Navigate to the parent object for nested properties
+            for (int i = 0; i < props.Length - 1; i++)
+            {
+                if (currentObj == null)
+                    return;
+
+                var propInfo = currentObj.GetType().GetProperty(props[i]);
+                if (propInfo == null)
+                    return;
+
+                currentObj = propInfo.GetValue(currentObj);
+            }
+
+            if (currentObj == null)
+                return;
+
+            // Set the final property
+            var finalPropInfo = currentObj.GetType().GetProperty(props[props.Length - 1]);
+            if (finalPropInfo != null && finalPropInfo.CanWrite)
+            {
+                finalPropInfo.SetValue(currentObj, value);
+            }
+        }
+
+        /// <summary>
         /// Gets the property type for a given object and property path
         /// </summary>
         public static Type GetPropertyType(object obj, string propertyPath)

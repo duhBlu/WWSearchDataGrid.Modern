@@ -111,19 +111,39 @@
                                 Padding="{TemplateBinding Padding}">
                             <Grid>
                                 <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
 
+                                <!--  Select All Checkbox (visible only when IsSelectAllColumn is true AND column is boolean)  -->
+                                <StackPanel Grid.Column="0"
+                                            Orientation="Horizontal"
+                                            VerticalAlignment="Center">
+
+                                    <CheckBox x:Name="PART_SelectAllCheckBox"
+                                              Visibility="Collapsed"
+                                              VerticalAlignment="Center"
+                                              IsThreeState="True" />
+
+                                    <!--  Row Count Display (visible only when using SelectedRows scope)  -->
+                                    <TextBlock x:Name="PART_SelectAllRowCount"
+                                               Foreground="#666666"
+                                               Visibility="Collapsed"
+                                               Margin="0,0,4,2"
+                                               VerticalAlignment="Center"
+                                               FontSize="10" />
+                                </StackPanel>
+
                                 <!--  Header Content  -->
-                                <ContentPresenter Grid.Column="0"
+                                <ContentPresenter Grid.Column="1"
                                                   HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
                                                   VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
                                                   SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" />
 
                                 <!--  Sort Arrow  -->
                                 <TextBlock x:Name="SortArrow"
-                                           Grid.Column="1"
+                                           Grid.Column="2"
                                            Foreground="{TemplateBinding Foreground}"
                                            Visibility="Collapsed"
                                            VerticalAlignment="Center"

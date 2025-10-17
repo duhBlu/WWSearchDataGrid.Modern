@@ -36,6 +36,8 @@
         <Setter Property="Background" Value="{StaticResource SearchTextBox.BackgroundBrush}" />
         <Setter Property="BorderBrush" Value="{StaticResource SearchTextBox.BorderBrush.Default}" />
         <Setter Property="Foreground" Value="{StaticResource SearchTextBox.ForegroundBrush}" />
+        <Setter Property="ShowToggleButton" Value="True" />
+        <Setter Property="ShowClearButton" Value="True" />
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="MinHeight" Value="24" />
         <Setter Property="HorizontalContentAlignment" Value="Left" />
@@ -65,7 +67,7 @@
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
 
-                            <!-- Search Button  -->
+                            <!--  Search Button  -->
                             <Button x:Name="PART_SearchButton"
                                     Grid.Column="0"
                                     Focusable="True"
@@ -106,6 +108,9 @@
                                         <Style.Triggers>
                                             <DataTrigger Binding="{Binding ShowToggleButton, RelativeSource={RelativeSource TemplatedParent}}" Value="True">
                                                 <Setter Property="Visibility" Value="Visible" />
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding HasItemsSource, RelativeSource={RelativeSource TemplatedParent}}" Value="False">
+                                                <Setter Property="Visibility" Value="Collapsed" />
                                             </DataTrigger>
                                             <Trigger Property="IsMouseOver" Value="True">
                                                 <Setter Property="Background" Value="#FFF0F0F0" />
@@ -253,12 +258,12 @@
                                                 BorderThickness="0,0,0,1"
                                                 Padding="4">
                                             <Button x:Name="PART_SortToggleButton"
+                                                    Command="{Binding ToggleSortModeCommand, RelativeSource={RelativeSource AncestorType={x:Type sdg:SearchTextBox}}}"
+                                                    Padding="6,2"
                                                     HorizontalAlignment="Left"
                                                     VerticalAlignment="Center"
-                                                    Command="{Binding ToggleSortModeCommand, RelativeSource={RelativeSource AncestorType={x:Type sdg:SearchTextBox}}}"
                                                     Content="{Binding SortModeText, RelativeSource={RelativeSource TemplatedParent}}"
-                                                    FontSize="11"
-                                                    Padding="6,2">
+                                                    FontSize="11">
                                                 <Button.Style>
                                                     <Style TargetType="Button">
                                                         <Setter Property="Background" Value="Transparent" />
@@ -272,10 +277,9 @@
                                                                     <Border Background="{TemplateBinding Background}"
                                                                             BorderBrush="{TemplateBinding BorderBrush}"
                                                                             BorderThickness="{TemplateBinding BorderThickness}"
-                                                                            CornerRadius="3"
-                                                                            Padding="{TemplateBinding Padding}">
-                                                                        <ContentPresenter HorizontalAlignment="Center"
-                                                                                          VerticalAlignment="Center" />
+                                                                            Padding="{TemplateBinding Padding}"
+                                                                            CornerRadius="3">
+                                                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
                                                                     </Border>
                                                                 </ControlTemplate>
                                                             </Setter.Value>
@@ -335,14 +339,14 @@
 
                                                         <!--  Count Display  -->
                                                         <TextBlock Grid.Column="1"
-                                                                   Margin="8,0,0,0"
                                                                    Foreground="#FF999999"
-                                                                   FontSize="10"
-                                                                   VerticalAlignment="Center">
+                                                                   Margin="8,0,0,0"
+                                                                   VerticalAlignment="Center"
+                                                                   FontSize="10">
                                                             <TextBlock.Text>
                                                                 <MultiBinding Converter="{StaticResource ValueToCountConverter}">
                                                                     <Binding Path="." />
-                                                                    <Binding Path="ColumnValueCounts" RelativeSource="{RelativeSource AncestorType={x:Type sdg:SearchTextBox}}" />
+                                                                    <Binding RelativeSource="{RelativeSource AncestorType={x:Type sdg:SearchTextBox}}" Path="ColumnValueCounts" />
                                                                 </MultiBinding>
                                                             </TextBlock.Text>
                                                         </TextBlock>
@@ -369,21 +373,21 @@
                             </Popup>
                         </Grid>
                     </Border>
-                    <ControlTemplate.Triggers>
-                        <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Border" Property="BorderBrush" Value="{StaticResource SearchTextBox.BorderBrush.Hover}" />
-                            <Setter TargetName="Border" Property="Background" Value="{StaticResource SearchTextBox.BackgroundBrush.Hover}" />
-                        </Trigger>
-                        <Trigger Property="IsSearchFocused" Value="True">
-                            <Setter TargetName="Border" Property="BorderBrush" Value="{StaticResource SearchTextBox.BorderBrush.Focused}" />
-                        </Trigger>
-                        <Trigger Property="IsEnabled" Value="False">
-                            <Setter Property="Opacity" Value="0.6" />
-                        </Trigger>
-                    </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="BorderBrush" Value="{StaticResource SearchTextBox.BorderBrush.Hover}" />
+                <Setter Property="Background" Value="{StaticResource SearchTextBox.BackgroundBrush.Hover}" />
+            </Trigger>
+            <Trigger Property="IsSearchFocused" Value="True">
+                <Setter Property="BorderBrush" Value="{StaticResource SearchTextBox.BorderBrush.Focused}" />
+            </Trigger>
+            <Trigger Property="IsEnabled" Value="False">
+                <Setter Property="Opacity" Value="0.6" />
+            </Trigger>
+        </Style.Triggers>
     </Style>
 
 </ResourceDictionary>
