@@ -118,11 +118,14 @@
 
                                 <!--  Select All Checkbox (visible only when IsSelectAllColumn is true AND column is boolean)  -->
                                 <StackPanel Grid.Column="0"
+                                            Margin="0,0,4,0"
                                             Orientation="Horizontal"
                                             VerticalAlignment="Center">
 
                                     <CheckBox x:Name="PART_SelectAllCheckBox"
+                                              Style="{StaticResource CustomCheckBoxStyle}"
                                               Visibility="Collapsed"
+                                              Margin="-1"
                                               VerticalAlignment="Center"
                                               IsThreeState="True" />
 
@@ -130,7 +133,7 @@
                                     <TextBlock x:Name="PART_SelectAllRowCount"
                                                Foreground="#666666"
                                                Visibility="Collapsed"
-                                               Margin="0,0,4,2"
+                                               Margin="0,0,0,2"
                                                VerticalAlignment="Center"
                                                FontSize="10" />
                                 </StackPanel>
