@@ -45,7 +45,6 @@ namespace WWSearchDataGrid.Modern.WPF
         // Cell value change detection support
         private readonly Dictionary<string, object> _cellValueSnapshots = new Dictionary<string, object>();
 
-
         #endregion
 
         #region Dependency Properties
@@ -1949,8 +1948,8 @@ namespace WWSearchDataGrid.Modern.WPF
                 {
                     var value = ReflectionHelper.GetPropValue(item, bindingPath);
 
-                    // Only modify non-null boolean values
-                    if (value != null && value is bool)
+                    // Only modify boolean values
+                    if (value == null || value is bool?)
                     {
                         ReflectionHelper.SetPropValue(item, bindingPath, newValue);
                     }
@@ -2189,37 +2188,6 @@ namespace WWSearchDataGrid.Modern.WPF
             catch (Exception ex)
             {
                 Debug.WriteLine($"Error updating select-all row count display: {ex.Message}");
-            }
-        }
-
-        /// <summary>
-        /// Updates the select-all checkbox state for a specific column header.
-        /// This method is called to synchronize the checkbox visual state with the data.
-        /// </summary>
-        /// <param name="column">The column to update the checkbox for</param>
-        internal void UpdateSelectAllCheckboxForColumn(DataGridColumn column)
-        {
-            try
-            {
-                if (column == null)
-                    return;
-
-                // Find the column header in the visual tree
-                var columnHeader = FindColumnHeader(column);
-                if (columnHeader == null)
-                    return;
-
-                // Find the select-all checkbox in the header template
-                var checkbox = FindVisualChild<CheckBox>(columnHeader, "PART_SelectAllCheckBox");
-                if (checkbox == null)
-                    return;
-
-                // Calculate and set the checkbox state
-                checkbox.IsChecked = CalculateSelectAllCheckboxState(column);
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"Error updating select-all checkbox: {ex.Message}");
             }
         }
 
