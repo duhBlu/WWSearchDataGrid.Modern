@@ -68,16 +68,16 @@ namespace WWSearchDataGrid.Modern.WPF
     /// </summary>
     public static class GridColumn
     {
-        #region EnableComplexFiltering Attached Property
+        #region EnableRuleFiltering Attached Property
 
         /// <summary>
-        /// Identifies the EnableComplexFiltering attached property.
+        /// Identifies the EnableRuleFiltering attached property.
         /// Enables or disables complex filtering UI for a column.
         /// Default value: true
         /// </summary>
-        public static readonly DependencyProperty EnableComplexFilteringProperty =
+        public static readonly DependencyProperty EnableRuleFilteringProperty =
             DependencyProperty.RegisterAttached(
-                "EnableComplexFiltering",
+                "EnableRuleFiltering",
                 typeof(bool),
                 typeof(GridColumn),
                 new FrameworkPropertyMetadata(true, FrameworkPropertyMetadataOptions.Inherits));
@@ -87,12 +87,12 @@ namespace WWSearchDataGrid.Modern.WPF
         /// </summary>
         /// <param name="element">The column to query</param>
         /// <returns>True if complex filtering is enabled; otherwise, false</returns>
-        public static bool GetEnableComplexFiltering(DependencyObject element)
+        public static bool GetEnableRuleFiltering(DependencyObject element)
         {
             if (element == null)
                 throw new ArgumentNullException(nameof(element));
 
-            return (bool)element.GetValue(EnableComplexFilteringProperty);
+            return (bool)element.GetValue(EnableRuleFilteringProperty);
         }
 
         /// <summary>
@@ -100,12 +100,12 @@ namespace WWSearchDataGrid.Modern.WPF
         /// </summary>
         /// <param name="element">The column to configure</param>
         /// <param name="value">True to enable complex filtering; false to disable</param>
-        public static void SetEnableComplexFiltering(DependencyObject element, bool value)
+        public static void SetEnableRuleFiltering(DependencyObject element, bool value)
         {
             if (element == null)
                 throw new ArgumentNullException(nameof(element));
 
-            element.SetValue(EnableComplexFilteringProperty, value);
+            element.SetValue(EnableRuleFilteringProperty, value);
         }
 
         #endregion
@@ -291,7 +291,6 @@ namespace WWSearchDataGrid.Modern.WPF
         #region ColumnDisplayName Attached Property
 
         /// <summary>
-        /// Identifies the ColumnDisplayName attached property.
         /// Specifies the display name shown in Column Chooser, Filter Panel, and other UI components.
         ///
         /// When not explicitly set, falls back to extracting text from the column's Header property.
@@ -542,7 +541,7 @@ namespace WWSearchDataGrid.Modern.WPF
 
         #endregion
 
-        #region Helper Methods
+       #region Helper Methods
 
         /// <summary>
         /// Gets the effective display name for a column, using fallback logic.

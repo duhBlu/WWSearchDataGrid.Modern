@@ -6,20 +6,33 @@ using System.Windows.Threading;
 namespace WWSearchDataGrid.Modern.WPF.Behaviors
 {
     /// <summary>
-    /// Attached property behavior for managing token confirmation state for deletion UI
+    /// Adds a two-step “confirm to delete” interaction to any <see cref="FrameworkElement"/>.
+    /// When enabled, the first left-click enters a confirmation state; moving the mouse away
+    /// starts a 1s timeout that clears the state, and re-entering cancels the timeout.
     /// </summary>
+    /// <remarks>
+    /// Set <see cref="IsEnabledProperty"/> to <c>true</c> on the target element.
+    /// The first click is marked handled to avoid triggering other click behaviors.
+    /// </remarks>
     public static class TokenConfirmationBehavior
     {
-        // Private timer property for managing focus loss
+        /// <summary>
+        /// Per-element 1s timer used to exit the confirmation state after mouse leave.
+        /// </summary>
         private static readonly DependencyProperty TimerProperty =
             DependencyProperty.RegisterAttached("Timer", typeof(DispatcherTimer), typeof(TokenConfirmationBehavior));
 
-        // Public attached property for enabling confirmation behavior
+        /// <summary>
+        /// Attached property that turns the confirmation behavior on/off.
+        /// </summary>
         public static readonly DependencyProperty IsEnabledProperty =
-            DependencyProperty.RegisterAttached("IsEnabled", typeof(bool), typeof(TokenConfirmationBehavior),
+        DependencyProperty.RegisterAttached("IsEnabled", typeof(bool), typeof(TokenConfirmationBehavior),
                 new PropertyMetadata(false, OnIsEnabledChanged));
 
-        // Public attached property for tracking confirmation state
+        /// <summary>
+        /// Attached property indicating whether the element is currently in the confirmation state.
+        /// Typically bound by the UI to show a “Confirm” affordance.
+        /// </summary>
         public static readonly DependencyProperty IsInConfirmationStateProperty =
             DependencyProperty.RegisterAttached("IsInConfirmationState", typeof(bool), typeof(TokenConfirmationBehavior),
                 new PropertyMetadata(false));
@@ -67,10 +80,8 @@ namespace WWSearchDataGrid.Modern.WPF.Behaviors
         {
             if (sender is FrameworkElement element)
             {
-                // Enter confirmation state on first click
                 SetIsInConfirmationState(element, true);
 
-                // Cancel any existing timer
                 var timer = (DispatcherTimer)element.GetValue(TimerProperty);
                 timer?.Stop();
 
@@ -83,10 +94,8 @@ namespace WWSearchDataGrid.Modern.WPF.Behaviors
         {
             if (sender is FrameworkElement element)
             {
-                // Only react if we're in confirmation state
                 if (GetIsInConfirmationState(element))
                 {
-                    // Cancel any existing timer - mouse is back over the token
                     var timer = (DispatcherTimer)element.GetValue(TimerProperty);
                     timer?.Stop();
                 }
@@ -97,7 +106,6 @@ namespace WWSearchDataGrid.Modern.WPF.Behaviors
         {
             if (sender is FrameworkElement element)
             {
-                // Only react if we're in confirmation state
                 if (GetIsInConfirmationState(element))
                 {
                     // Create or reuse a timer for delayed exit from confirmation state

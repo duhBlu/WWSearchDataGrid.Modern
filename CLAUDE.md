@@ -149,18 +149,6 @@ SearchText    Manages State     Builds Expressions    Evaluates Items   Compiles
 - **Command Pattern**: RelayCommand for UI interactions
 - **Custom Controls**: WPF Generic.xaml pattern for reusability
 
-## 📦 **Dependencies**
-
-### Core (.NET Standard 2.0)
-- Newtonsoft.Json
-- System.Text.Json
-
-### WPF (.NET 9.0-windows)
-- Microsoft.Xaml.Behaviors.Wpf
-
-### Sample App (.NET 9.0-windows)
-- CommunityToolkit.Mvvm
-
 ## 🚨 **Important File Paths for Common Issues**
 
 ### Filter Logic Problems

@@ -316,7 +316,7 @@
                                 Grid.Row="0"
                                 IsReadOnly="False"
                                 Margin="10"
-                                EnableComplexFiltering="True"
+                                EnableRuleFiltering="True"
                                 SelectionMode="Extended"
                                 SelectionUnit="CellOrRowHeader"
                                 ItemsSource="{Binding Items}"
@@ -325,7 +325,7 @@
 
                     <!--  String / Customer  -->
                     <DataGridTextColumn Width="120"
-                                        sdg:GridColumn.EnableComplexFiltering="False"
+                                        sdg:GridColumn.EnableRuleFiltering="False"
                                         sdg:GridColumn.FilterMemberPath="CustomerName"
                                         sdg:GridColumn.ColumnDisplayName="Customer Column Display Name!!!"
                                         sdg:GridColumn.DefaultSearchMode="StartsWith"

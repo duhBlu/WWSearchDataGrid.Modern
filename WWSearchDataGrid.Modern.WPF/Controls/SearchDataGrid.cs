@@ -34,8 +34,7 @@ namespace WWSearchDataGrid.Modern.WPF
         private bool initialUpdateLayoutCompleted;
 
         // Collection context caching for performance optimization
-        private readonly Dictionary<string, CollectionContext> _collectionContextCache =
-            new Dictionary<string, CollectionContext>();
+        private readonly Dictionary<string, CollectionContext> _collectionContextCache = new Dictionary<string, CollectionContext>();
         private List<object> _materializedDataSource;
         private readonly object _contextCacheLock = new object();
 
@@ -58,10 +57,10 @@ namespace WWSearchDataGrid.Modern.WPF
                 new PropertyMetadata(false, OnActualHasItemsChanged));
 
         /// <summary>
-        /// Dependency property for EnableComplexFiltering
+        /// Dependency property for EnableRuleFiltering
         /// </summary>
-        public static readonly DependencyProperty EnableComplexFilteringProperty =
-            DependencyProperty.Register("EnableComplexFiltering", typeof(bool), typeof(SearchDataGrid),
+        public static readonly DependencyProperty EnableRuleFilteringProperty =
+            DependencyProperty.Register("EnableRuleFiltering", typeof(bool), typeof(SearchDataGrid),
                 new FrameworkPropertyMetadata(false, FrameworkPropertyMetadataOptions.Inherits));
 
         #endregion
@@ -95,14 +94,14 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
-        /// Gets or sets whether complex filtering is enabled at the grid level.
-        /// When false, all columns use simple filtering mode only.
-        /// When true, per-column EnableComplexFiltering settings are respected.
+        /// Gets or sets whether rule filtering is enabled at the grid level.
+        /// When false, all columns use ColumnSearchBox filtering only, and only single text filter per column.
+        /// When true, per-column EnableRuleFiltering settings are respected.
         /// </summary>
-        public bool EnableComplexFiltering
+        public bool EnableRuleFiltering
         {
-            get { return (bool)GetValue(EnableComplexFilteringProperty); }
-            set { SetValue(EnableComplexFilteringProperty, value); }
+            get { return (bool)GetValue(EnableRuleFilteringProperty); }
+            set { SetValue(EnableRuleFilteringProperty, value); }
         }
 
         /// <summary>
@@ -158,20 +157,10 @@ namespace WWSearchDataGrid.Modern.WPF
                 .FromProperty(ItemsControl.ItemsSourceProperty, typeof(SearchDataGrid))
                 .AddValueChanged(this, (s, e) => UpdateHasItemsProperty());
 
-            // Initialize FilterPanel
-            FilterPanel = new FilterPanel();
-
-            // Subscribe to FilterPanel events
-            FilterPanel.FiltersEnabledChanged += OnFiltersEnabledChanged;
-            FilterPanel.FilterRemoved += OnFilterRemoved;
-            FilterPanel.ValueRemovedFromToken += OnValueRemovedFromToken;
-            FilterPanel.OperatorToggled += OnOperatorToggled;
-            FilterPanel.ClearAllFiltersRequested += OnClearAllFiltersRequested;
 
             // Initialize context menu functionality
             this.InitializeContextMenu();
 
-            // Add keyboard shortcuts for copy operations
             this.InputBindings.Add(new KeyBinding(new RelayCommand(_ => ContextMenuCommands.CopySelectedCellValuesCommand.Execute(this)), Key.C, ModifierKeys.Control));
             this.InputBindings.Add(new KeyBinding(new RelayCommand(_ => ContextMenuCommands.CopySelectedCellValuesWithHeadersCommand.Execute(this)), Key.C, ModifierKeys.Control | ModifierKeys.Shift));
 
@@ -229,11 +218,11 @@ namespace WWSearchDataGrid.Modern.WPF
             try
             {
                 // Find all column headers
-                var headersPresenter = FindVisualChild<DataGridColumnHeadersPresenter>(this);
+                var headersPresenter = VisualTreeHelperMethods.FindVisualChild<DataGridColumnHeadersPresenter>(this);
                 if (headersPresenter == null)
                     return;
 
-                var headers = FindVisualChildren<DataGridColumnHeader>(headersPresenter).ToList();
+                var headers = VisualTreeHelperMethods.FindVisualChildren<DataGridColumnHeader>(headersPresenter).ToList();
 
                 foreach (var header in headers)
                 {
@@ -246,12 +235,12 @@ namespace WWSearchDataGrid.Modern.WPF
                     bool isBooleanColumn = GridColumn.IsColumnBooleanType(column, this);
 
                     // Find the select-all checkbox in the header
-                    var checkbox = FindVisualChild<CheckBox>(header, "PART_SelectAllCheckBox");
+                    var checkbox = VisualTreeHelperMethods.FindVisualChild<CheckBox>(header, "PART_SelectAllCheckBox");
                     if (checkbox == null)
                         continue;
 
                     // Find the row count TextBlock in the header
-                    var rowCountTextBlock = FindVisualChild<TextBlock>(header, "PART_SelectAllRowCount");
+                    var rowCountTextBlock = VisualTreeHelperMethods.FindVisualChild<TextBlock>(header, "PART_SelectAllRowCount");
 
                     // Show checkbox only if both conditions are met
                     if (isSelectAllColumn && isBooleanColumn)
@@ -388,11 +377,11 @@ namespace WWSearchDataGrid.Modern.WPF
             try
             {
                 // Find all column headers
-                var headersPresenter = FindVisualChild<DataGridColumnHeadersPresenter>(this);
+                var headersPresenter = VisualTreeHelperMethods.FindVisualChild<DataGridColumnHeadersPresenter>(this);
                 if (headersPresenter == null)
                     return;
 
-                var headers = FindVisualChildren<DataGridColumnHeader>(headersPresenter).ToList();
+                var headers = VisualTreeHelperMethods.FindVisualChildren<DataGridColumnHeader>(headersPresenter).ToList();
 
                 foreach (var header in headers)
                 {
@@ -412,7 +401,7 @@ namespace WWSearchDataGrid.Modern.WPF
                     if (scope == SelectAllScope.SelectedRows)
                     {
                         // Find the row count TextBlock
-                        var countTextBlock = FindVisualChild<TextBlock>(header, "PART_SelectAllRowCount");
+                        var countTextBlock = VisualTreeHelperMethods.FindVisualChild<TextBlock>(header, "PART_SelectAllRowCount");
                         if (countTextBlock != null && countTextBlock.Visibility == Visibility.Visible)
                         {
                             // Update the count
@@ -425,7 +414,7 @@ namespace WWSearchDataGrid.Modern.WPF
                     if (scope == SelectAllScope.SelectedRows)
                     {
                         // Find the select-all checkbox in the header
-                        var checkbox = FindVisualChild<CheckBox>(header, "PART_SelectAllCheckBox");
+                        var checkbox = VisualTreeHelperMethods.FindVisualChild<CheckBox>(header, "PART_SelectAllCheckBox");
                         if (checkbox != null && checkbox.Visibility == Visibility.Visible)
                         {
                             // Update the checkbox state based on the selected rows
@@ -1216,8 +1205,6 @@ namespace WWSearchDataGrid.Modern.WPF
 
             Items.Filter = null;
             SearchFilter = null;
-
-            ForceRestoreOriginalData();
         }
         
         /// <summary>
@@ -1258,22 +1245,6 @@ namespace WWSearchDataGrid.Modern.WPF
             // Force garbage collection to reclaim memory immediately
             GC.Collect();
             GC.WaitForPendingFinalizers();
-        }
-
-        /// <summary>
-        /// Forces restoration of the original data source
-        /// </summary>
-        public void ForceRestoreOriginalData()
-        {
-            if (originalItemsSource != null)
-            {
-                // No longer needed - using unified filtering approach
-                
-                // Clear the filter to show all items from original source
-                Items.Filter = null;
-                
-                Debug.WriteLine($"ForceRestoreOriginalData: ItemsSource count = {Items.Count} (event connectivity preserved)");
-            }
         }
 
         /// <summary>
@@ -2179,7 +2150,7 @@ namespace WWSearchDataGrid.Modern.WPF
                     return;
 
                 // Find the row count TextBlock in the header template
-                var countTextBlock = FindVisualChild<TextBlock>(columnHeader, "PART_SelectAllRowCount");
+                var countTextBlock = VisualTreeHelperMethods.FindVisualChild<TextBlock>(columnHeader, "PART_SelectAllRowCount");
                 if (countTextBlock != null)
                 {
                     countTextBlock.Text = $"({count})";
@@ -2199,11 +2170,11 @@ namespace WWSearchDataGrid.Modern.WPF
             try
             {
                 // Find all column headers
-                var headersPresenter = FindVisualChild<DataGridColumnHeadersPresenter>(this);
+                var headersPresenter = VisualTreeHelperMethods.FindVisualChild<DataGridColumnHeadersPresenter>(this);
                 if (headersPresenter == null)
                     return;
 
-                var headers = FindVisualChildren<DataGridColumnHeader>(headersPresenter).ToList();
+                var headers = VisualTreeHelperMethods.FindVisualChildren<DataGridColumnHeader>(headersPresenter).ToList();
 
                 foreach (var header in headers)
                 {
@@ -2217,7 +2188,7 @@ namespace WWSearchDataGrid.Modern.WPF
                         continue;
 
                     // Find the select-all checkbox in the header
-                    var checkbox = FindVisualChild<CheckBox>(header, "PART_SelectAllCheckBox");
+                    var checkbox = VisualTreeHelperMethods.FindVisualChild<CheckBox>(header, "PART_SelectAllCheckBox");
                     if (checkbox == null || checkbox.Visibility != Visibility.Visible)
                         continue;
 
@@ -2242,12 +2213,12 @@ namespace WWSearchDataGrid.Modern.WPF
                     return null;
 
                 // Get the column headers presenter
-                var headersPresenter = FindVisualChild<DataGridColumnHeadersPresenter>(this);
+                var headersPresenter = VisualTreeHelperMethods.FindAncestor<DataGridColumnHeadersPresenter>(this);
                 if (headersPresenter == null)
                     return null;
 
                 // Find all column headers
-                var headers = FindVisualChildren<DataGridColumnHeader>(headersPresenter);
+                var headers = VisualTreeHelperMethods.FindVisualChildren<DataGridColumnHeader>(headersPresenter);
 
                 // Find the header for this specific column
                 return headers.FirstOrDefault(h => h.Column == column);
@@ -2256,74 +2227,6 @@ namespace WWSearchDataGrid.Modern.WPF
             {
                 return null;
             }
-        }
-
-        /// <summary>
-        /// Finds a child of a specific type with a specific name in the visual tree
-        /// </summary>
-        private T FindVisualChild<T>(DependencyObject parent, string name = null) where T : DependencyObject
-        {
-            try
-            {
-                if (parent == null)
-                    return null;
-
-                int childCount = VisualTreeHelper.GetChildrenCount(parent);
-                for (int i = 0; i < childCount; i++)
-                {
-                    var child = VisualTreeHelper.GetChild(parent, i);
-
-                    if (child is T typedChild)
-                    {
-                        if (string.IsNullOrEmpty(name))
-                            return typedChild;
-
-                        if (child is FrameworkElement element && element.Name == name)
-                            return typedChild;
-                    }
-
-                    var result = FindVisualChild<T>(child, name);
-                    if (result != null)
-                        return result;
-                }
-
-                return null;
-            }
-            catch
-            {
-                return null;
-            }
-        }
-
-        /// <summary>
-        /// Finds all children of a specific type in the visual tree
-        /// </summary>
-        private IEnumerable<T> FindVisualChildren<T>(DependencyObject parent) where T : DependencyObject
-        {
-            var children = new List<T>();
-
-            try
-            {
-                if (parent == null)
-                    return children;
-
-                int childCount = VisualTreeHelper.GetChildrenCount(parent);
-                for (int i = 0; i < childCount; i++)
-                {
-                    var child = VisualTreeHelper.GetChild(parent, i);
-
-                    if (child is T typedChild)
-                        children.Add(typedChild);
-
-                    children.AddRange(FindVisualChildren<T>(child));
-                }
-            }
-            catch
-            {
-                // Return what we found so far
-            }
-
-            return children;
         }
 
         #endregion

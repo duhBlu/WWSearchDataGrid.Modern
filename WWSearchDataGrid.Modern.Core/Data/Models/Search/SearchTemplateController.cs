@@ -8,7 +8,6 @@ using System.Diagnostics;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Numerics;
-using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 using WWSearchDataGrid.Modern.Core.Caching;
@@ -143,13 +142,11 @@ namespace WWSearchDataGrid.Modern.Core
         /// <summary>
         /// Gets the list of available logical operators
         /// </summary>
-        [JsonIgnore]
         public List<string> LogicalOperators { get; } = new List<string> { "And", "Or" };
 
         /// <summary>
         /// Gets or sets the custom filter expression
         /// </summary>
-        [JsonIgnore]
         public Func<object, bool> FilterExpression { get; set; }
 
         /// <summary>

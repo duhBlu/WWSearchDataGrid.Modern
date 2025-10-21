@@ -10,15 +10,15 @@
         <Setter Property="HasDropShadow" Value="False" />
         <Setter Property="VerticalOffset" Value="-14" />
         <Setter Property="HorizontalOffset" Value="-14" />
-        <Setter Property="Padding" Value="6,10" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="ContextMenu">
                     <Border Background="#FAFAFA"
                             BorderBrush="#14000000"
                             Margin="10"
+                            Padding="0,2"
                             BorderThickness="1"
-                            CornerRadius="6"
+                            CornerRadius="4"
                             SnapsToDevicePixels="True">
                         <Border.Effect>
                             <DropShadowEffect Color="#80000000"
@@ -39,8 +39,6 @@
 
     <Style x:Key="CustomMenuItem" TargetType="{x:Type MenuItem}">
         <Setter Property="SnapsToDevicePixels" Value="True" />
-        <Setter Property="Padding" Value="0" />
-        <Setter Property="Height" Value="28" />
         <Setter Property="Foreground" Value="#111111" />
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="Template">
@@ -57,15 +55,16 @@
                             <!--  Gesture  -->
                             <ColumnDefinition Width="Auto" />
                             <!--  Arrow  -->
-                            <ColumnDefinition Width="16" />
+                            <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
 
                         <!--  Hover/Pressed background  -->
                         <Border x:Name="Bg"
                                 Grid.ColumnSpan="5"
                                 Background="Transparent"
+                                Padding="4,12"
                                 Margin="4,2"
-                                CornerRadius="6" />
+                                CornerRadius="3" />
 
                         <!--  Checkmark  -->
                         <Path x:Name="CheckGlyph"
@@ -107,9 +106,9 @@
                         <TextBlock x:Name="Arrow"
                                    Grid.Column="3"
                                    Opacity="0.75"
+                                   Margin="0,0,5,0"
                                    Text="&#xE76C;"
                                    FontFamily="Segoe Fluent Icons"
-                                   Margin="0"
                                    HorizontalAlignment="Right"
                                    VerticalAlignment="Center" />
 
@@ -125,8 +124,9 @@
                             <Border Background="#FAFAFA"
                                     BorderBrush="#14000000"
                                     Margin="10"
+                                    Padding="0,2"
                                     BorderThickness="1"
-                                    CornerRadius="10">
+                                    CornerRadius="4">
                                 <Border.Effect>
                                     <DropShadowEffect Color="#80000000"
                                                       Opacity="0.25"
@@ -177,7 +177,7 @@
 
                         <!--  Open submenu  -->
                         <Trigger Property="IsSubmenuOpen" Value="True">
-                            <Setter TargetName="Bg" Property="Background" Value="#17000000" />
+                            <Setter TargetName="Bg" Property="Background" Value="#09000000" />
                         </Trigger>
 
                     </ControlTemplate.Triggers>

@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Interop;
@@ -11,10 +8,22 @@ using System.Windows;
 
 namespace WWSearchDataGrid.Modern.WPF
 {
+    /// <summary>
+    /// Enables horizontal scrolling for a <see cref="ScrollViewer"/> using Shift + Mouse Wheel or a mouse tilt wheel.
+    /// When enabled, vertical wheel input with Shift or native WM_MOUSEHWHEEL messages scroll horizontally
+    /// (only when horizontal overflow exists). The window hook is attached on load and removed on unload.
+    /// </summary>
+    /// <remarks>
+    /// Set <see cref="EnableShiftMouseWheelScrollProperty"/> to <c>true</c> to activate.
+    /// Automatically clamps the offset within <see cref="ScrollViewer.ScrollableWidth"/>.
+    /// </remarks>
     public static class HorizontalScrollBehavior
     {
         #region EnableShiftMouseWheelScroll
 
+        /// <summary>
+        /// Attached property that enables Shift + Wheel and tilt-based horizontal scrolling.
+        /// </summary>
         public static readonly DependencyProperty EnableShiftMouseWheelScrollProperty =
                 DependencyProperty.RegisterAttached(
                     "EnableShiftMouseWheelScroll",
@@ -34,9 +43,10 @@ namespace WWSearchDataGrid.Modern.WPF
 
             if ((bool)e.NewValue)
             {
-                // 1a) vertical wheel + Shift
+                // vertical wheel + Shift
                 sv.PreviewMouseWheel += ScrollViewer_PreviewMouseWheel;
-                // 1b) hook window messages for horizontal tilt
+
+                // hook window messages for horizontal tilt
                 sv.Loaded += ScrollViewer_Loaded;
                 sv.Unloaded += ScrollViewer_Unloaded;
             }
@@ -102,9 +112,7 @@ namespace WWSearchDataGrid.Modern.WPF
         {
             if (msg == WM_MOUSEHWHEEL)
             {
-                // Extract tilt-delta
                 int delta = (short)((wParam.ToInt64() >> 16) & 0xffff);
-                // Find the ScrollViewer currently under the mouse
                 var sv = GetScrollViewerUnderMouse();
                 if (sv != null && sv.ExtentWidth > sv.ViewportWidth)
                 {
@@ -118,7 +126,7 @@ namespace WWSearchDataGrid.Modern.WPF
             return IntPtr.Zero;
         }
 
-        private static ScrollViewer? GetScrollViewerUnderMouse()
+        private static ScrollViewer GetScrollViewerUnderMouse()
         {
             // hit-test the window under the pointer
             var win = Application.Current.Windows

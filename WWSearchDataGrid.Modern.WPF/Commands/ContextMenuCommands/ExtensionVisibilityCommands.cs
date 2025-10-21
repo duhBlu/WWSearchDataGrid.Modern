@@ -60,15 +60,6 @@ namespace WWSearchDataGrid.Modern.WPF.Commands
         }, grid => grid != null);
 
         /// <summary>
-        /// Toggles the visibility of the grouping panel
-        /// </summary>
-        public static ICommand ToggleGroupPanelCommand => new RelayCommand<SearchDataGrid>(grid =>
-        {
-            Debug.WriteLine($"[PLACEHOLDER] Toggle Group Panel - Not implemented");
-            // TODO: Toggle grouping panel visibility
-        }, grid => grid != null);
-
-        /// <summary>
         /// Shows the advanced filter editor for the column
         /// </summary>
         public static ICommand ShowFilterEditorCommand => new RelayCommand<ColumnSearchBox>(columnSearchBox =>

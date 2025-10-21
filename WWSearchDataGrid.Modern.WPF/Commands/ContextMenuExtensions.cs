@@ -133,17 +133,6 @@ namespace WWSearchDataGrid.Modern.WPF
             return grid.DataColumns?.FirstOrDefault(c => c.CurrentColumn == column);
         }
 
-        /// <summary>
-        /// Determines if a column is currently frozen
-        /// </summary>
-        private static bool IsColumnFrozen(SearchDataGrid grid, DataGridColumn column)
-        {
-            if (grid == null || column == null) return false;
-
-            // TODO: Implement actual frozen column detection
-            // For now, return false as placeholder
-            return false;
-        }
 
         /// <summary>
         /// Gets the value from a DataGridCell
@@ -277,30 +266,18 @@ namespace WWSearchDataGrid.Modern.WPF
                 ContextMenuCommands.HideSelectedColumnCommand,
                 contextMenuContext.Column));
 
-            menu.Items.Add(new Separator());
             
             // Filtering
             if (contextMenuContext.ColumnSearchBox != null && contextMenuContext.ColumnSearchBox.HasActiveFilter)
             {
+                menu.Items.Add(new Separator());
+
                 menu.Items.Add(BuildMenuItem(
                     "miClearColumnFilter",
                     "Clear Column Filter (Not Implemented)",
                     ContextMenuCommands.ClearColumnFilterCommand,
                     contextMenuContext.ColumnSearchBox));
-
-                menu.Items.Add(new Separator());
             }
-
-            // Dynamic Freeze/Unfreeze menu item
-            var isFrozen = IsColumnFrozen(contextMenuContext.Grid, contextMenuContext.Column);
-            var freezeName = isFrozen ? "miUnfreezeColumn" : "miFreezeColumn";
-            var freezeHeader = isFrozen ? "Unfreeze Column (Not Implemented)" : "Freeze Column (Not Implemented)";
-            menu.Items.Add(BuildMenuItem(
-                freezeName,
-                freezeHeader,
-                isFrozen ? ContextMenuCommands.UnfreezeColumnCommand : ContextMenuCommands.FreezeColumnCommand,
-                contextMenuContext.Column));
-
             return menu;
         }
 

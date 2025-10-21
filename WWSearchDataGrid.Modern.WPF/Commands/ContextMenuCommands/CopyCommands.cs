@@ -57,7 +57,6 @@ namespace WWSearchDataGrid.Modern.WPF.Commands
                     {
                         var result = string.Join(Environment.NewLine, lines);
                         Clipboard.SetText(result);
-                        Debug.WriteLine($"Copied {lines.Count} row(s) of selected cell values to clipboard");
                     }
                 }
             }

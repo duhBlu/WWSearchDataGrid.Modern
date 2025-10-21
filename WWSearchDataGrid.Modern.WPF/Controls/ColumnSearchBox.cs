@@ -151,13 +151,13 @@ namespace WWSearchDataGrid.Modern.WPF
             get
             {
                 // Grid-level setting takes precedence
-                if (SourceDataGrid != null && !SourceDataGrid.EnableComplexFiltering)
+                if (SourceDataGrid != null && !SourceDataGrid.EnableRuleFiltering)
                     return false;
 
                 // If grid allows it, check column-level setting from GridColumn attached property
                 if (CurrentColumn != null)
                 {
-                    return GridColumn.GetEnableComplexFiltering(CurrentColumn);
+                    return GridColumn.GetEnableRuleFiltering(CurrentColumn);
                 }
 
                 // Default to true if no column is set
@@ -1555,7 +1555,7 @@ namespace WWSearchDataGrid.Modern.WPF
                 double offset = _filterContent.VerticalOffset;
 
                 // Find the parent DataGridColumnHeader
-                var columnHeader = FindVisualParent<DataGridColumnHeader>(this);
+                var columnHeader = VisualTreeHelperMethods.FindAncestor<DataGridColumnHeader>(this);
                 if (columnHeader != null)
                 {
                     // Get the total height of the column header (includes both search box and header content)
@@ -1579,29 +1579,6 @@ namespace WWSearchDataGrid.Modern.WPF
                 Debug.WriteLine($"Error calculating vertical offset: {ex.Message}");
                 // Return the base offset from the style if calculation fails
                 return _filterContent.VerticalOffset;
-            }
-        }
-
-        /// <summary>
-        /// Finds a parent of a specific type in the visual tree
-        /// </summary>
-        private T FindVisualParent<T>(DependencyObject child) where T : DependencyObject
-        {
-            try
-            {
-                DependencyObject parentObject = VisualTreeHelper.GetParent(child);
-
-                if (parentObject == null)
-                    return null;
-
-                if (parentObject is T parent)
-                    return parent;
-
-                return FindVisualParent<T>(parentObject);
-            }
-            catch
-            {
-                return null;
             }
         }
 

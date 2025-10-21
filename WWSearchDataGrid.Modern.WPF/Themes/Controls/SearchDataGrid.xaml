@@ -178,6 +178,11 @@
                             <Setter TargetName="PART_ColumnSearchBox" Property="Visibility" Value="Collapsed" />
                             <Setter TargetName="HeaderBorder" Property="BorderThickness" Value="0,0,0,1" />
                         </DataTrigger>
+                        
+                        <DataTrigger Binding="{Binding IsPinned, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type sdg:GridColumn}}}" Value="False">
+                            <Setter TargetName="PART_ColumnSearchBox" Property="Visibility" Value="Collapsed" />
+                            <Setter TargetName="HeaderBorder" Property="BorderThickness" Value="1,0,0,1" />
+                        </DataTrigger>
 
                         <!--  Sort Direction  -->
                         <Trigger Property="SortDirection" Value="Ascending">

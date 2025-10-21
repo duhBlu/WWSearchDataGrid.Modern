@@ -48,24 +48,6 @@ namespace WWSearchDataGrid.Modern.WPF.Commands
             }
         }, column => column != null && column.Visibility == Visibility.Visible);
 
-        /// <summary>
-        /// Toggles the freeze state of a column (freezes if unfrozen, unfreezes if frozen)
-        /// </summary>
-        public static ICommand FreezeColumnCommand => new RelayCommand<DataGridColumn>(column =>
-        {
-            Debug.WriteLine($"[PLACEHOLDER] Freeze Column: '{column?.Header}' - Not implemented");
-            // TODO: Set column to frozen state to keep it visible during horizontal scroll
-        }, column => column != null);
-
-        /// <summary>
-        /// Toggles the freeze state of a column (unfreezes if frozen, freezes if unfrozen)
-        /// </summary>
-        public static ICommand UnfreezeColumnCommand => new RelayCommand<DataGridColumn>(column =>
-        {
-            Debug.WriteLine($"[PLACEHOLDER] Unfreeze Column: '{column?.Header}' - Not implemented");
-            // TODO: Remove column from frozen state
-        }, column => column != null);
-
         #endregion
 
         #region Sizing & Alignment Commands

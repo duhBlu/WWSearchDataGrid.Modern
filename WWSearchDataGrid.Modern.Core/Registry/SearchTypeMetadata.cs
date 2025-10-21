@@ -13,7 +13,7 @@ namespace WWSearchDataGrid.Modern.Core
         public string DisplayName { get; set; }
         public FilterInputTemplate InputTemplate { get; set; }
         public HashSet<ColumnDataType> SupportedDataTypes { get; set; }
-        public bool RequiresCollection { get; set; } // For filters like TopN, AboveAverage
+        public bool RequiresCollection { get; set; }
 
         public SearchTypeMetadata(SearchType searchType, string displayName,
             FilterInputTemplate inputTemplate, params ColumnDataType[] supportedTypes)
