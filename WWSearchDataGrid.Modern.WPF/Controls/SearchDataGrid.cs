@@ -157,8 +157,6 @@ namespace WWSearchDataGrid.Modern.WPF
                 .FromProperty(ItemsControl.ItemsSourceProperty, typeof(SearchDataGrid))
                 .AddValueChanged(this, (s, e) => UpdateHasItemsProperty());
 
-            FilterPanel = new FilterPanel();
-
             // Initialize context menu functionality
             this.InitializeContextMenu();
 
@@ -186,8 +184,13 @@ namespace WWSearchDataGrid.Modern.WPF
             this.RowEditEnding += OnRowEditEnding;
             this.CellEditEnding += OnCellEditEnding;
 
+            if (FilterPanel == null)
+            {
+                FilterPanel = new FilterPanel();
+            }
+
             // Get the FilterPanel template part and connect it to our FilterPanel instance
-            if (GetTemplateChild("PART_FilterPanel") is FilterPanel templateFilterPanel && FilterPanel != null)
+            if (GetTemplateChild("PART_FilterPanel") is FilterPanel templateFilterPanel && templateFilterPanel != null)
             {
                 // Copy the current state from our FilterPanel to the template FilterPanel
                 templateFilterPanel.FiltersEnabled = FilterPanel.FiltersEnabled;

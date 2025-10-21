@@ -9,7 +9,7 @@ using WWSearchDataGrid.Modern.Core;
 
 namespace WWSearchDataGrid.Modern.WPF.Commands
 {
-    internal partial class ContextMenuCommands
+    public partial class ContextMenuCommands
     {
         /// <summary>
         /// Opens the column management editor dialog

@@ -8,7 +8,7 @@ using WWSearchDataGrid.Modern.Core;
 
 namespace WWSearchDataGrid.Modern.WPF.Commands
 {
-    internal partial class ContextMenuCommands
+    public partial class ContextMenuCommands
     {
         #region Data & Export Commands
 

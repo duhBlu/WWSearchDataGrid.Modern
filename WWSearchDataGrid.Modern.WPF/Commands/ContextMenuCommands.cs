@@ -18,7 +18,7 @@ namespace WWSearchDataGrid.Modern.WPF.Commands
     /// Collection of placeholder context menu commands for SearchDataGrid
     /// All commands are placeholder implementations that log the action and can be implemented later
     /// </summary>
-    internal static partial class ContextMenuCommands
+    public static partial class ContextMenuCommands
     {
         #region Helper Methods
 

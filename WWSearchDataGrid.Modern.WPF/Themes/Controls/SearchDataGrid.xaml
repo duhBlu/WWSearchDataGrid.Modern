@@ -1,6 +1,7 @@
 ﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:sdg="clr-namespace:WWSearchDataGrid.Modern.WPF"
+                    xmlns:commands="clr-namespace:WWSearchDataGrid.Modern.WPF.Commands"
                     xmlns:converters="clr-namespace:WWSearchDataGrid.Modern.WPF.Converters">
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF;component/Themes/Controls/ColumnSearchBox.xaml" />
@@ -56,6 +57,20 @@
         <Setter Property="Background" Value="#F9F9F9" />
         <Setter Property="BorderBrush" Value="#FFDDDDDD" />
         <Setter Property="BorderThickness" Value="0,0,1,1" />
+        <Setter Property="ContextMenu">
+            <Setter.Value>
+                <ContextMenu AutomationProperties.AutomationId="cmuRowHeader">
+                    <MenuItem x:Name="miCopy"
+                              Header="Copy"
+                              Command="{x:Static commands:ContextMenuCommands.CopySelectedCellValuesCommand}"
+                              CommandParameter="{Binding Grid}" />
+                    <MenuItem x:Name="miCopyWithHeaders"
+                              Header="Copy With Headers"
+                              Command="{x:Static commands:ContextMenuCommands.CopySelectedCellValuesWithHeadersCommand}"
+                              CommandParameter="{Binding Grid}" />
+                </ContextMenu>
+            </Setter.Value>
+        </Setter>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type DataGridRowHeader}">
@@ -88,6 +103,87 @@
     <!--  Search Grid Column Header Style  -->
     <Style x:Key="GenericSearchDataGridColumnHeaderStyle" TargetType="{x:Type DataGridColumnHeader}">
         <Setter Property="AllowDrop" Value="True" />
+        <Setter Property="ContextMenu">
+            <Setter.Value>
+                <ContextMenu AutomationProperties.AutomationId="cmuColumnHeader">
+                    <!-- Column-specific Copy Operations -->
+                    <MenuItem x:Name="miCopy"
+                              Header="Copy"
+                              Command="{x:Static commands:ContextMenuCommands.CopySelectedCellValuesCommand}"
+                              CommandParameter="{Binding Grid}" />
+                    <MenuItem x:Name="miCopyWithHeaders"
+                              Header="Copy With Headers"
+                              Command="{x:Static commands:ContextMenuCommands.CopySelectedCellValuesWithHeadersCommand}"
+                              CommandParameter="{Binding Grid}" />
+                    <Separator />
+
+                    <!-- Sorting -->
+                    <MenuItem x:Name="miSortAscending"
+                              Header="Sort Ascending"
+                              Command="{x:Static commands:ContextMenuCommands.SortAscendingCommand}"
+                              CommandParameter="{Binding}" />
+                    <MenuItem x:Name="miSortDescending"
+                              Header="Sort Descending"
+                              Command="{x:Static commands:ContextMenuCommands.SortDescendingCommand}"
+                              CommandParameter="{Binding}" />
+                    <MenuItem x:Name="miClearSorting"
+                              Header="Clear Sorting"
+                              Command="{x:Static commands:ContextMenuCommands.ClearSortingCommand}"
+                              CommandParameter="{Binding}" />
+                    <Separator />
+
+                    <!-- Column Operations -->
+                    <MenuItem x:Name="miBestFitColumn"
+                              Header="Best Fit Column"
+                              Command="{x:Static commands:ContextMenuCommands.BestFitColumnCommand}"
+                              CommandParameter="{Binding}" />
+                    <MenuItem x:Name="miBestFitAllColumns"
+                              Header="Best Fit All Columns"
+                              Command="{x:Static commands:ContextMenuCommands.BestFitAllColumnsCommand}"
+                              CommandParameter="{Binding}" />
+                    <Separator />
+
+                    <!-- Visibility and Layout -->
+                    <MenuItem x:Name="miShowColumnChooser"
+                              Header="Show Column Chooser"
+                              Command="{x:Static commands:ContextMenuCommands.ShowColumnChooserCommand}"
+                              CommandParameter="{Binding Grid}" />
+                    <MenuItem x:Name="miHideColumn"
+                              Header="Hide Column"
+                              Command="{x:Static commands:ContextMenuCommands.HideSelectedColumnCommand}"
+                              CommandParameter="{Binding Column}" />
+
+                    <!-- Conditional Filtering (only shows when there's an active filter) -->
+                    <Separator>
+                        <Separator.Style>
+                            <Style TargetType="Separator">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding HasActiveFilter}" Value="True">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Separator.Style>
+                    </Separator>
+                    <MenuItem x:Name="miClearColumnFilter"
+                              Header="Clear Column Filter (Not Implemented)"
+                              Command="{x:Static commands:ContextMenuCommands.ClearColumnFilterCommand}"
+                              CommandParameter="{Binding ColumnSearchBox}">
+                        <MenuItem.Style>
+                            <Style TargetType="MenuItem">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding HasActiveFilter}" Value="True">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </MenuItem.Style>
+                    </MenuItem>
+                </ContextMenu>
+            </Setter.Value>
+        </Setter>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type DataGridColumnHeader}">
@@ -178,11 +274,6 @@
                             <Setter TargetName="PART_ColumnSearchBox" Property="Visibility" Value="Collapsed" />
                             <Setter TargetName="HeaderBorder" Property="BorderThickness" Value="0,0,0,1" />
                         </DataTrigger>
-                        
-                        <DataTrigger Binding="{Binding IsPinned, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type sdg:GridColumn}}}" Value="False">
-                            <Setter TargetName="PART_ColumnSearchBox" Property="Visibility" Value="Collapsed" />
-                            <Setter TargetName="HeaderBorder" Property="BorderThickness" Value="1,0,0,1" />
-                        </DataTrigger>
 
                         <!--  Sort Direction  -->
                         <Trigger Property="SortDirection" Value="Ascending">
@@ -216,8 +307,91 @@
         <Setter Property="VerticalContentAlignment" Value="Center" />
     </Style>
 
+    <!--  Default Cell Style with Context Menu  -->
+    <Style x:Key="GenericSearchDataGridCellStyle" TargetType="{x:Type DataGridCell}">
+        <Setter Property="ContextMenu">
+            <Setter.Value>
+                <ContextMenu AutomationProperties.AutomationId="cmuCell">
+                    <MenuItem x:Name="miCopy"
+                              Header="Copy"
+                              Command="{x:Static commands:ContextMenuCommands.CopySelectedCellValuesCommand}"
+                              CommandParameter="{Binding Grid}" />
+                    <MenuItem x:Name="miCopyWithHeaders"
+                              Header="Copy With Headers"
+                              Command="{x:Static commands:ContextMenuCommands.CopySelectedCellValuesWithHeadersCommand}"
+                              CommandParameter="{Binding Grid}" />
+                </ContextMenu>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
     <!--  Modern Search DataGrid Style  -->
     <Style x:Key="GenericSearchDataGridStyle" TargetType="{x:Type sdg:SearchDataGrid}">
+        <Setter Property="CellStyle" Value="{StaticResource GenericSearchDataGridCellStyle}" />
+        <Setter Property="ContextMenu">
+            <Setter.Value>
+                <ContextMenu AutomationProperties.AutomationId="cmuGridBody">
+                    <!-- Filter operations -->
+                    <MenuItem x:Name="miClearAllFilters"
+                              Header="Clear All Filters (Not Implemented)"
+                              Command="{x:Static commands:ContextMenuCommands.ClearAllFiltersCommand}"
+                              CommandParameter="{Binding Grid}" />
+                    <MenuItem x:Name="miToggleFilterPanel"
+                              Header="Toggle Filter Panel (Not Implemented)"
+                              Command="{x:Static commands:ContextMenuCommands.ToggleFilterPanelCommand}"
+                              CommandParameter="{Binding Grid}" />
+                    <MenuItem x:Name="miSaveFilterPreset"
+                              Header="Save Filter Preset (Not Implemented)"
+                              Command="{x:Static commands:ContextMenuCommands.SaveFilterPresetCommand}"
+                              CommandParameter="{Binding Grid}" />
+                    <MenuItem x:Name="miLoadFilterPreset"
+                              Header="Load Filter Preset (Not Implemented)"
+                              Command="{x:Static commands:ContextMenuCommands.LoadFilterPresetCommand}"
+                              CommandParameter="{Binding Grid}" />
+                    <Separator />
+
+                    <!-- Column Profiles submenu -->
+                    <MenuItem x:Name="miColumnProfiles" Header="Column Profiles">
+                        <MenuItem x:Name="miSaveCurrentProfile"
+                                  Header="Save Current Profile (Not Implemented)"
+                                  Command="{x:Static commands:ContextMenuCommands.SaveCurrentProfileCommand}"
+                                  CommandParameter="{Binding Grid}" />
+                        <MenuItem x:Name="miLoadProfile"
+                                  Header="Load Profile... (Not Implemented)"
+                                  Command="{x:Static commands:ContextMenuCommands.LoadProfileCommand}"
+                                  CommandParameter="{Binding Grid}" />
+                        <MenuItem x:Name="miManageProfiles"
+                                  Header="Manage Profiles... (Not Implemented)"
+                                  Command="{x:Static commands:ContextMenuCommands.ManageProfilesCommand}"
+                                  CommandParameter="{Binding Grid}" />
+                    </MenuItem>
+
+                    <Separator />
+
+                    <!-- Export operations -->
+                    <MenuItem x:Name="miExportToCsv"
+                              Header="Export to CSV (Not Implemented)"
+                              Command="{x:Static commands:ContextMenuCommands.ExportToCsvCommand}"
+                              CommandParameter="{Binding Grid}" />
+                    <MenuItem x:Name="miExportToExcel"
+                              Header="Export to Excel (Not Implemented)"
+                              Command="{x:Static commands:ContextMenuCommands.ExportToExcelCommand}"
+                              CommandParameter="{Binding Grid}" />
+
+                    <Separator />
+
+                    <!-- Layout operations -->
+                    <MenuItem x:Name="miShowColumnChooser"
+                              Header="Show Column Chooser"
+                              Command="{x:Static commands:ContextMenuCommands.ShowColumnChooserCommand}"
+                              CommandParameter="{Binding Grid}" />
+                    <MenuItem x:Name="miResetLayout"
+                              Header="Reset Layout (Not Implemented)"
+                              Command="{x:Static commands:ContextMenuCommands.ResetLayoutCommand}"
+                              CommandParameter="{Binding Grid}" />
+                </ContextMenu>
+            </Setter.Value>
+        </Setter>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type sdg:SearchDataGrid}">

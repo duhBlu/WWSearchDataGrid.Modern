@@ -5,7 +5,7 @@ using WWSearchDataGrid.Modern.Core;
 
 namespace WWSearchDataGrid.Modern.WPF.Commands
 {
-    internal partial class ContextMenuCommands
+    public partial class ContextMenuCommands
     {
         /// <summary>
         /// Shows count summary for the column

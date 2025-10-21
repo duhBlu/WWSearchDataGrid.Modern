@@ -2,7 +2,6 @@ using System;
 using System.Diagnostics;
 using System.Linq;
 using System.Windows;
-using System.Windows.Automation;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Data;
@@ -14,10 +13,43 @@ using WWSearchDataGrid.Modern.WPF.Commands;
 namespace WWSearchDataGrid.Modern.WPF
 {
     /// <summary>
-    /// Extension methods for adding context menu functionality to SearchDataGrid
+    /// Provides attached properties and infrastructure for XAML-based context menu support
     /// </summary>
-    internal static class ContextMenuExtensions
+    public static class ContextMenuExtensions
     {
+        #region Attached Properties
+
+        /// <summary>
+        /// Attached property that stores the ContextMenuContext for any element
+        /// This enables XAML bindings to access context information
+        /// </summary>
+        public static readonly DependencyProperty ContextProperty =
+            DependencyProperty.RegisterAttached(
+                "Context",
+                typeof(ContextMenuContext),
+                typeof(ContextMenuExtensions),
+                new PropertyMetadata(null));
+
+        /// <summary>
+        /// Gets the ContextMenuContext attached to an element
+        /// </summary>
+        public static ContextMenuContext GetContext(DependencyObject obj)
+        {
+            return (ContextMenuContext)obj.GetValue(ContextProperty);
+        }
+
+        /// <summary>
+        /// Sets the ContextMenuContext attached to an element
+        /// </summary>
+        public static void SetContext(DependencyObject obj, ContextMenuContext value)
+        {
+            obj.SetValue(ContextProperty, value);
+        }
+
+        #endregion
+
+        #region Initialization
+
         /// <summary>
         /// Initializes context menu functionality for the SearchDataGrid
         /// </summary>
@@ -25,54 +57,99 @@ namespace WWSearchDataGrid.Modern.WPF
         {
             if (grid == null) return;
 
-            grid.PreviewMouseRightButtonDown += OnPreviewMouseRightButtonDown;
             grid.ContextMenuOpening += OnContextMenuOpening;
         }
 
-        private static void OnPreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e)
-        {
-            if (sender is not SearchDataGrid grid) return;
-
-            var fe = e.OriginalSource as FrameworkElement;
-            var menu = BuildContextMenuForTarget(grid, fe);
-
-            grid.ContextMenu = (menu != null && menu.Items.Count > 0) ? menu : null;
-        }
-
         /// <summary>
-        /// Handles the context menu opening event
+        /// Handles the context menu opening event - determines context and sets attached property
         /// </summary>
         private static void OnContextMenuOpening(object sender, ContextMenuEventArgs e)
         {
             if (sender is not SearchDataGrid grid) return;
 
-            // If nothing got prepared, cancel to avoid empty pop
-            if (grid.ContextMenu == null || grid.ContextMenu.Items.Count == 0)
+            Core.CommandManager.InvalidateRequerySuggested();
+
+            // Determine context from the source element
+            var sourceElement = e.OriginalSource as FrameworkElement;
+            var context = DetermineContextMenuContext(grid, sourceElement);
+
+            if (context == null)
+            {
                 e.Handled = true;
+                return;
+            }
+
+            // Find the target element that will show the context menu
+            var targetElement = FindContextMenuTarget(sourceElement, context.ContextType);
+
+            if (targetElement != null)
+            {
+                // Set the context on the target element
+                SetContext(targetElement, context);
+
+                // Also set it on the ContextMenu itself for easier binding
+                var contextMenu = GetContextMenuForElement(targetElement);
+                if (contextMenu != null)
+                {
+                    contextMenu.DataContext = context;
+                }
+                else
+                {
+                    // No context menu defined in XAML
+                    e.Handled = true;
+                }
+            }
+            else
+            {
+                e.Handled = true;
+            }
+        }
+
+        #endregion
+
+        #region Helper Methods
+
+        /// <summary>
+        /// Gets the ContextMenu from an element
+        /// </summary>
+        private static ContextMenu GetContextMenuForElement(FrameworkElement element)
+        {
+            if (element == null) return null;
+
+            return element switch
+            {
+                DataGridColumnHeader header => header.ContextMenu,
+                DataGridCell cell => cell.ContextMenu,
+                DataGridRowHeader rowHeader => rowHeader.ContextMenu,
+                DataGridRow row => row.ContextMenu,
+                SearchDataGrid grid => grid.ContextMenu,
+                _ => null
+            };
         }
 
         /// <summary>
-        /// Builds the appropriate context menu based on the target element
+        /// Finds the appropriate target element for setting the context based on context type
         /// </summary>
-        private static ContextMenu BuildContextMenuForTarget(SearchDataGrid grid, FrameworkElement target)
+        private static FrameworkElement FindContextMenuTarget(FrameworkElement source, ContextMenuType contextType)
         {
-            if (target == null || grid == null)
-                return null;
+            if (source == null) return null;
 
-            
-            Core.CommandManager.InvalidateRequerySuggested();
-
-            // Find the context type by walking up the visual tree
-            var contextMenuContext = DetermineContextMenuContext(grid, target);
-            ContextMenu cmu = contextMenuContext.ContextType switch
+            var element = source;
+            while (element != null)
             {
-                ContextMenuType.ColumnHeader => BuildColumnHeaderContextMenu(contextMenuContext),
-                ContextMenuType.Cell => BuildCellContextMenu(contextMenuContext),
-                ContextMenuType.Row => BuildRowContextMenu(contextMenuContext),
-                ContextMenuType.GridBody => BuildGridBodyContextMenu(contextMenuContext),
-                _ => null
-            };
-            return cmu;
+                switch (contextType)
+                {
+                    case ContextMenuType.ColumnHeader when element is DataGridColumnHeader:
+                    case ContextMenuType.Cell when element is DataGridCell:
+                    case ContextMenuType.Row when element is DataGridRowHeader or DataGridRow:
+                    case ContextMenuType.GridBody when element is SearchDataGrid:
+                        return element;
+                }
+
+                element = VisualTreeHelper.GetParent(element) as FrameworkElement;
+            }
+
+            return null;
         }
 
         /// <summary>
@@ -133,7 +210,6 @@ namespace WWSearchDataGrid.Modern.WPF
             return grid.DataColumns?.FirstOrDefault(c => c.CurrentColumn == column);
         }
 
-
         /// <summary>
         /// Gets the value from a DataGridCell
         /// </summary>
@@ -178,225 +254,6 @@ namespace WWSearchDataGrid.Modern.WPF
             }
         }
 
-        #region Context Menu Builders
-
-        private static MenuItem BuildMenuItem(string name, string header, ICommand command, object parameter = null, string inputGestureText = "")
-        {
-            var item = new MenuItem
-            {
-                Name = name,
-                Header = header,
-                Command = command,
-                CommandParameter = parameter,
-                InputGestureText = inputGestureText
-            };
-
-            // Set AutomationId to match Name
-            AutomationProperties.SetAutomationId(item, name);
-
-            return item;
-        }
-
-        private static ContextMenu BuildColumnHeaderContextMenu(ContextMenuContext contextMenuContext)
-        {
-            var menu = new ContextMenu();
-            AutomationProperties.SetAutomationId(menu, "cmuColumnHeader");
-
-            // Column-specific Copy Operations (Primary focus for column headers)
-            menu.Items.Add(BuildMenuItem(
-                "miCopy",
-                "Copy",
-                ContextMenuCommands.CopySelectedCellValuesCommand,
-                contextMenuContext.Grid));
-
-            menu.Items.Add(BuildMenuItem(
-                "miCopyWithHeaders",
-                "Copy With Headers",
-                ContextMenuCommands.CopySelectedCellValuesWithHeadersCommand,
-                contextMenuContext.Grid));
-
-            menu.Items.Add(new Separator());
-
-            // Sorting
-            menu.Items.Add(BuildMenuItem(
-                "miSortAscending",
-                "Sort Ascending",
-                ContextMenuCommands.SortAscendingCommand,
-                contextMenuContext));
-
-            menu.Items.Add(BuildMenuItem(
-                "miSortDescending",
-                "Sort Descending",
-                ContextMenuCommands.SortDescendingCommand,
-                contextMenuContext));
-            
-            menu.Items.Add(BuildMenuItem(
-                "miClearSorting",
-                "Clear Sorting",
-                ContextMenuCommands.ClearSortingCommand,
-                contextMenuContext));
-
-            menu.Items.Add(new Separator());
-
-            
-            // Column Operations
-            menu.Items.Add(BuildMenuItem(
-                "miBestFitColumn",
-                "Best Fit Column",
-                ContextMenuCommands.BestFitColumnCommand,
-                contextMenuContext));
-
-            menu.Items.Add(BuildMenuItem(
-                "miBestFitAllColumns",
-                "Best Fit All Columns",
-                ContextMenuCommands.BestFitAllColumnsCommand,
-                contextMenuContext));
-
-            menu.Items.Add(new Separator());
-
-            // Visibility and Layout
-            menu.Items.Add(BuildMenuItem(
-                "miShowColumnChooser",
-                "Show Column Chooser",
-                ContextMenuCommands.ShowColumnChooserCommand,
-                contextMenuContext.Grid));
-            menu.Items.Add(BuildMenuItem(
-                "miHideColumn",
-                "Hide Column",
-                ContextMenuCommands.HideSelectedColumnCommand,
-                contextMenuContext.Column));
-
-            
-            // Filtering
-            if (contextMenuContext.ColumnSearchBox != null && contextMenuContext.ColumnSearchBox.HasActiveFilter)
-            {
-                menu.Items.Add(new Separator());
-
-                menu.Items.Add(BuildMenuItem(
-                    "miClearColumnFilter",
-                    "Clear Column Filter (Not Implemented)",
-                    ContextMenuCommands.ClearColumnFilterCommand,
-                    contextMenuContext.ColumnSearchBox));
-            }
-            return menu;
-        }
-
-        private static ContextMenu BuildCellContextMenu(ContextMenuContext contextMenuContext)
-        {
-            var menu = new ContextMenu();
-            AutomationProperties.SetAutomationId(menu, "cmuCell");
-
-            menu.Items.Add(BuildMenuItem(
-                "miCopy",
-                "Copy",
-                ContextMenuCommands.CopySelectedCellValuesCommand,
-                contextMenuContext.Grid));
-            menu.Items.Add(BuildMenuItem(
-                "miCopyWithHeaders",
-                "Copy With Headers",
-                ContextMenuCommands.CopySelectedCellValuesWithHeadersCommand,
-                contextMenuContext.Grid));
-
-            return menu;
-        }
-
-        private static ContextMenu BuildRowContextMenu(ContextMenuContext contextMenuContext)
-        {
-            var menu = new ContextMenu();
-            AutomationProperties.SetAutomationId(menu, "cmuRowHeader");
-
-            menu.Items.Add(BuildMenuItem(
-                "miCopy",
-                "Copy",
-                ContextMenuCommands.CopySelectedCellValuesCommand,
-                contextMenuContext.Grid));
-            menu.Items.Add(BuildMenuItem(
-                "miCopyWithHeaders",
-                "Copy With Headers",
-                ContextMenuCommands.CopySelectedCellValuesWithHeadersCommand,
-                contextMenuContext.Grid));
-
-            return menu;
-        }
-
-        private static ContextMenu BuildGridBodyContextMenu(ContextMenuContext contextMenuContext)
-        {
-            var menu = new ContextMenu();
-            AutomationProperties.SetAutomationId(menu, "cmuGridBody");
-
-            // Filter operations
-            menu.Items.Add(BuildMenuItem(
-                "miClearAllFilters",
-                "Clear All Filters (Not Implemented)",
-                ContextMenuCommands.ClearAllFiltersCommand,
-                contextMenuContext.Grid));
-            menu.Items.Add(BuildMenuItem(
-                "miToggleFilterPanel",
-                "Toggle Filter Panel (Not Implemented)",
-                ContextMenuCommands.ToggleFilterPanelCommand,
-                contextMenuContext.Grid));
-            menu.Items.Add(BuildMenuItem(
-                "miSaveFilterPreset", 
-                "Save Filter Preset (Not Implemented)",
-                ContextMenuCommands.SaveFilterPresetCommand,
-                contextMenuContext.Grid));
-            menu.Items.Add(BuildMenuItem(
-                "miLoadFilterPreset",
-                "Load Filter Preset (Not Implemented)",
-                ContextMenuCommands.LoadFilterPresetCommand,
-                contextMenuContext.Grid));
-            menu.Items.Add(new Separator());
-
-            // Column Profiles submenu
-            var profilesMenu = BuildMenuItem("miColumnProfiles", "Column Profiles", null, null);
-            profilesMenu.Items.Add(BuildMenuItem(
-                "miSaveCurrentProfile",
-                "Save Current Profile (Not Implemented)",
-                ContextMenuCommands.SaveCurrentProfileCommand,
-                contextMenuContext.Grid));
-            profilesMenu.Items.Add(BuildMenuItem(
-                "miLoadProfile",
-                "Load Profile... (Not Implemented)",
-                ContextMenuCommands.LoadProfileCommand,
-                contextMenuContext.Grid));
-            profilesMenu.Items.Add(BuildMenuItem(
-                "miManageProfiles",
-                "Manage Profiles... (Not Implemented)",
-                ContextMenuCommands.ManageProfilesCommand,
-                contextMenuContext.Grid));
-            menu.Items.Add(profilesMenu);
-
-            menu.Items.Add(new Separator());
-
-            // Export operations
-            menu.Items.Add(BuildMenuItem(
-                "miExportToCsv",
-                "Export to CSV (Not Implemented)",
-                ContextMenuCommands.ExportToCsvCommand,
-                contextMenuContext.Grid));
-            menu.Items.Add(BuildMenuItem(
-                "miExportToExcel",
-                "Export to Excel (Not Implemented)",
-                ContextMenuCommands.ExportToExcelCommand,
-                contextMenuContext.Grid));
-
-            menu.Items.Add(new Separator());
-
-            // Layout operations
-            menu.Items.Add(BuildMenuItem(
-                "miShowColumnChooser",
-                "Show Column Chooser",
-                ContextMenuCommands.ShowColumnChooserCommand,
-                contextMenuContext.Grid));
-            menu.Items.Add(BuildMenuItem(
-                "miResetLayout",
-                "Reset Layout (Not Implemented)",
-                ContextMenuCommands.ResetLayoutCommand,
-                contextMenuContext.Grid));
-
-            return menu;
-        }
-
         #endregion
     }
 
@@ -412,5 +269,6 @@ namespace WWSearchDataGrid.Modern.WPF
         Row,
         GridBody,
     }
+
     #endregion
 }
