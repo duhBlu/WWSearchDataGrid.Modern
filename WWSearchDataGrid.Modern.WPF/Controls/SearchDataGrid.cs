@@ -157,6 +157,7 @@ namespace WWSearchDataGrid.Modern.WPF
                 .FromProperty(ItemsControl.ItemsSourceProperty, typeof(SearchDataGrid))
                 .AddValueChanged(this, (s, e) => UpdateHasItemsProperty());
 
+            FilterPanel = new FilterPanel();
 
             // Initialize context menu functionality
             this.InitializeContextMenu();
