@@ -97,7 +97,7 @@ namespace WWSearchDataGrid.Modern.WPF
         /// Gets the command to clear search text (only clears search text and temporary template)
         /// </summary>
         public ICommand ClearSearchTextCommand => new RelayCommand(_ => ClearSearchTextAndTemporaryFilter());
-        public ICommand ShowFilterEditorPopup => new RelayCommand(_ => 
+        public ICommand ShowRuleFilterEditorCommand => new RelayCommand(_ => 
         {
             if(SourceDataGrid != null)
             {
@@ -1648,6 +1648,7 @@ namespace WWSearchDataGrid.Modern.WPF
         /// <summary>
         /// Clears the current filter
         /// </summary>
+
         public void ClearFilter()
         {
             try

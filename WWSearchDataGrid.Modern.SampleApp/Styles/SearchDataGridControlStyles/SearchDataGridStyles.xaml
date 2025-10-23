@@ -443,6 +443,7 @@
 
                                             <!--  Scrollbars  -->
                                             <ScrollBar x:Name="PART_VerticalScrollBar"
+                                                       Style="{StaticResource CustomScrollBarStyle}"
                                                        Grid.Row="1"
                                                        Grid.Column="2"
                                                        Orientation="Vertical"
@@ -456,6 +457,7 @@
                                                     <ColumnDefinition Width="*" />
                                                 </Grid.ColumnDefinitions>
                                                 <ScrollBar x:Name="PART_HorizontalScrollBar"
+                                                           Style="{StaticResource CustomScrollBarStyle}"
                                                            Grid.Column="1"
                                                            Orientation="Horizontal"
                                                            Visibility="{TemplateBinding ComputedHorizontalScrollBarVisibility}"
@@ -513,7 +515,7 @@
         <Setter Property="VirtualizingPanel.IsVirtualizing" Value="True" />
         <Setter Property="VirtualizingPanel.IsVirtualizingWhenGrouping" Value="True" />
         <Setter Property="VirtualizingPanel.VirtualizationMode" Value="Recycling" />
-        <Setter Property="VirtualizingPanel.ScrollUnit" Value="Pixel" />
+        <Setter Property="VirtualizingPanel.ScrollUnit" Value="Item" />
         <Setter Property="ScrollViewer.IsDeferredScrollingEnabled" Value="True" />
         <Setter Property="ScrollViewer.CanContentScroll" Value="True" />
     </Style>

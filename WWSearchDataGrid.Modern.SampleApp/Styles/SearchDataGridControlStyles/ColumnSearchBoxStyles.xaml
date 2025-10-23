@@ -151,16 +151,16 @@
                                 </Button.Style>
                             </Button>
 
-                            <Button x:Name="PART_AdvancedFilterButton"
+                            <Button x:Name="PART_RuleFilterEditorButton"
                                     Grid.Column="2"
                                     Cursor="Hand"
-                                    Command="{Binding ShowFilterEditorPopup, RelativeSource={RelativeSource TemplatedParent}}"
+                                    Command="{Binding ShowRuleFilterEditorCommand, RelativeSource={RelativeSource TemplatedParent}}"
                                     Margin="2,1,5,1"
                                     Padding="4"
                                     VerticalAlignment="Center"
                                     TabIndex="2"
                                     KeyboardNavigation.IsTabStop="True"
-                                    ToolTip="Advanced Filter"
+                                    ToolTip="Show Rule Filter Editor"
                                     FontFamily="Segoe Fluent Icons"
                                     FontSize="12"
                                     Content="&#xE71C;">

@@ -453,7 +453,6 @@ ClearAllFiltersRequested        // Clear all clicked
 **Attached Properties**:
 ```csharp
 EnableRuleFiltering              // Enable/disable complex filtering (default: true)
-AllowRuleValueFiltering          // Show/hide advanced filter button (default: true)
 UseCheckBoxInSearchBox           // Force checkbox filtering mode (default: false)
 FilterMemberPath                 // Explicit property path for filtering
 ColumnDisplayName                // Display name for UI (falls back to Header)
@@ -566,7 +565,7 @@ Command logic runs (often delegates to control methods)
 
 **Template Parts** (PART_* naming):
 - `PART_FilterPanel`, `PART_SearchTextBox`, `PART_FilterCheckBox`
-- `PART_ClearFilterButton`, `PART_AdvancedFilterButton`, `PART_Popup`
+- `PART_ClearFilterButton`, `PART_RuleFilterEditorButton`, `PART_Popup`
 
 ---
 

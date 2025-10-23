@@ -31,9 +31,9 @@ namespace WWSearchDataGrid.Modern.SampleApp.Services
                 ThemeType.Custom,
                 new List<Uri>
                 {
+                    new Uri("/Styles/DefaultControlStyles.xaml", UriKind.Relative),
                     new Uri("/Styles/SearchDataGridControlStyles/Primitives/NumericUpDownStyles.xaml", UriKind.Relative),
                     new Uri("/Styles/SearchDataGridControlStyles/Primitives/SearchTextBoxStyles.xaml", UriKind.Relative),
-                    new Uri("/Styles/DefaultControlStyles.xaml", UriKind.Relative),
                     new Uri("/Styles/SearchDataGridControlStyles/ColumnChooserStyles.xaml", UriKind.Relative),
                     new Uri("/Styles/SearchDataGridControlStyles/ColumnFilterEditorStyles.xaml", UriKind.Relative),
                     new Uri("/Styles/SearchDataGridControlStyles/FilterPanelStyles.xaml", UriKind.Relative),

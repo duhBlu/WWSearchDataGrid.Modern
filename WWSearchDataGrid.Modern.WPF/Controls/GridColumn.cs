@@ -152,62 +152,30 @@ namespace WWSearchDataGrid.Modern.WPF
 
         #endregion
 
-        #region AllowRuleValueFiltering Attached Property
-
-        /// <summary>
-        /// Identifies the AllowRuleValueFiltering attached property.
-        /// Shows or hides the advanced filter button for a column.
-        /// Default value: true
-        /// </summary>
-        public static readonly DependencyProperty AllowRuleValueFilteringProperty =
-            DependencyProperty.RegisterAttached(
-                "AllowRuleValueFiltering",
-                typeof(bool),
-                typeof(GridColumn),
-                new FrameworkPropertyMetadata(true, FrameworkPropertyMetadataOptions.Inherits));
-
-        /// <summary>
-        /// Gets the value indicating whether rule-based value filtering is allowed for the specified column.
-        /// </summary>
-        /// <param name="element">The column to query</param>
-        /// <returns>True if rule-based value filtering is allowed; otherwise, false</returns>
-        public static bool GetAllowRuleValueFiltering(DependencyObject element)
-        {
-            if (element == null)
-                throw new ArgumentNullException(nameof(element));
-
-            return (bool)element.GetValue(AllowRuleValueFilteringProperty);
-        }
-
-        /// <summary>
-        /// Sets whether rule-based value filtering is allowed for the specified column.
-        /// </summary>
-        /// <param name="element">The column to configure</param>
-        /// <param name="value">True to allow rule-based value filtering; false to disable</param>
-        public static void SetAllowRuleValueFiltering(DependencyObject element, bool value)
-        {
-            if (element == null)
-                throw new ArgumentNullException(nameof(element));
-
-            element.SetValue(AllowRuleValueFilteringProperty, value);
-        }
-
-        #endregion
-
         #region UseCheckBoxInSearchBox Attached Property
 
         /// <summary>
-        /// Identifies the UseCheckBoxInSearchBox attached property.
-        /// Explicitly enables checkbox filtering mode in the search box for a column.
-        /// This replaces auto-detection logic and works with any column type.
-        /// Default value: false
+        /// Identifies the <c>UseCheckBoxInSearchBox</c> attached property.  
+        /// Explicitly enables checkbox filtering mode within a column's search box,  
+        /// overriding the default auto-detection logic.  
         /// </summary>
+        /// <remarks>
+        /// <para>
+        /// When enabled, the search box displays a checkbox selector instead of a text box,  
+        /// allowing users to filter boolean or flag-based values more intuitively.  
+        /// This property can be applied to any column type, even when automatic type detection  
+        /// would not normally enable checkbox mode.
+        /// </para>
+        ///
+        /// <para><b>Default value:</b> <c>false</c></para>
+        /// </remarks>
+
         public static readonly DependencyProperty UseCheckBoxInSearchBoxProperty =
             DependencyProperty.RegisterAttached(
                 "UseCheckBoxInSearchBox",
                 typeof(bool),
                 typeof(GridColumn),
-                new FrameworkPropertyMetadata(false));
+                new PropertyMetadata(false));
 
         /// <summary>
         /// Gets the value indicating whether checkbox filtering should be used in the search box for the specified column.
@@ -240,17 +208,21 @@ namespace WWSearchDataGrid.Modern.WPF
         #region FilterMemberPath Attached Property
 
         /// <summary>
-        /// Identifies the FilterMemberPath attached property.
-        /// Specifies the property path used for retrieving filter values from data objects.
+        /// Identifies the <c>FilterMemberPath</c> attached property.  
+        /// Specifies the property path used to retrieve filter values from data objects.  
         /// This path determines which property is used to populate filter dropdown values.
-        ///
-        /// Resolution priority:
-        /// 1. FilterMemberPath (if explicitly set)
-        /// 2. Column's SortMemberPath
-        /// 3. Binding path extracted from DataGridBoundColumn.Binding
-        ///
-        /// Default value: null (falls back to SortMemberPath or Binding path)
         /// </summary>
+        /// <remarks>
+        /// <para><b>Resolution priority:</b></para>
+        /// <list type="number">
+        ///   <item><description><c>FilterMemberPath</c> — if explicitly set.</description></item>
+        ///   <item><description><see cref="System.Windows.Controls.DataGridColumn.SortMemberPath"/> — if available.</description></item>
+        ///   <item><description>Binding path extracted from <see cref="System.Windows.Controls.DataGridBoundColumn.Binding"/>.</description></item>
+        /// </list>
+        ///
+        /// <para><b>Default value:</b> <c>null</c> (falls back to <see cref="System.Windows.Controls.DataGridColumn.SortMemberPath"/> or the column's binding path).</para>
+        /// </remarks>
+
         public static readonly DependencyProperty FilterMemberPathProperty =
             DependencyProperty.RegisterAttached(
                 "FilterMemberPath",
@@ -351,11 +323,10 @@ namespace WWSearchDataGrid.Modern.WPF
         /// Available modes:
         /// </para>
         /// <list type="bullet">
-        /// <item><description>Contains: Finds matches anywhere in the value (default)</description></item>
-        /// <item><description>StartsWith: ID columns, part numbers, customer codes where users know the prefix</description></item>
-        /// <item><description>EndsWith: File extensions, domain suffixes, or similar patterns</description></item>
-        /// <item><description>Equals: Status codes, enum values, or scenarios requiring exact matches</description></item>
-        /// </list>
+        /// <item><description><see cref="DefaultSearchMode.Contains"/> – Finds matches anywhere in the value (default)</description></item>
+        /// <item><description><see cref="DefaultSearchMode.StartsWith"/> – For ID columns, part numbers, or customer codes where users know the prefix</description></item>
+        /// <item><description><see cref="DefaultSearchMode.EndsWith"/> – For file extensions, domain suffixes, or similar patterns</description></item>
+        /// <item><description><see cref="DefaultSearchMode.Equals"/> – For status codes, enum values, or scenarios requiring exact matches</description></item>        /// </list>
         /// <para>
         /// Note: This only affects simple textbox search behavior. The advanced filter button
         /// still shows all valid search types for the column's data type.
@@ -366,7 +337,7 @@ namespace WWSearchDataGrid.Modern.WPF
                 "DefaultSearchMode",
                 typeof(DefaultSearchMode),
                 typeof(GridColumn),
-                new FrameworkPropertyMetadata(DefaultSearchMode.Contains));
+                new PropertyMetadata(DefaultSearchMode.Contains));
 
         /// <summary>
         /// Gets the default search mode for the specified column.
@@ -409,7 +380,6 @@ namespace WWSearchDataGrid.Modern.WPF
         /// </para>
         /// <para>
         /// Behavior: The select-all checkbox cycles between true and false values only.
-        /// Null values are never modified - they remain as null after toggle operations.
         /// </para>
         /// <para>
         /// The checkbox displays three states:
@@ -427,16 +397,6 @@ namespace WWSearchDataGrid.Modern.WPF
         /// </para>
         /// <para>
         /// Default value: false
-        /// </para>
-        /// <para>
-        /// Example usage:
-        /// <code>
-        /// &lt;DataGridCheckBoxColumn
-        ///     Header="Active"
-        ///     Binding="{Binding IsActive}"
-        ///     sdg:GridColumn.IsSelectAllColumn="True"
-        ///     sdg:GridColumn.FilterMemberPath="IsActive" /&gt;
-        /// </code>
         /// </para>
         /// </summary>
         public static readonly DependencyProperty IsSelectAllColumnProperty =
@@ -487,23 +447,16 @@ namespace WWSearchDataGrid.Modern.WPF
         /// <para>
         /// Available scopes:
         /// </para>
-        /// <list type="bullet">
-        /// <item><description>FilteredRows (default): Affects only currently visible/filtered rows</description></item>
+        /// <list type="table">
+        /// <item><description>FilteredRows: Affects only currently visible/filtered rows</description></item>
         /// <item><description>SelectedRows: Affects only selected rows (or rows with selected cells). Shows row count in header.</description></item>
-        /// <item><description>AllItems: Affects all items in ItemsSource regardless of filtering or selection</description></item>
+        /// <item><description>AllItems (default): Affects all items in ItemsSource regardless of filtering or selection</description></item>
         /// </list>
         /// <para>
-        /// Default value: SelectAllScope.FilteredRows
+        /// Default value: SelectAllScope.AllItems
         /// </para>
         /// <para>
-        /// Example usage:
-        /// <code>
-        /// &lt;DataGridCheckBoxColumn
-        ///     Header="Active"
-        ///     Binding="{Binding IsActive}"
-        ///     sdg:GridColumn.IsSelectAllColumn="True"
-        ///     sdg:GridColumn.SelectAllScope="SelectedRows" /&gt;
-        /// </code>
+        /// Recommendation: Disable column sorting on these columns. The grid reapplies the sort order/filter after the values change, causing them to 'disappear' from the grid when their values change.
         /// </para>
         /// </summary>
         public static readonly DependencyProperty SelectAllScopeProperty =
@@ -511,7 +464,7 @@ namespace WWSearchDataGrid.Modern.WPF
                 "SelectAllScope",
                 typeof(SelectAllScope),
                 typeof(GridColumn),
-                new FrameworkPropertyMetadata(SelectAllScope.FilteredRows, FrameworkPropertyMetadataOptions.Inherits));
+                new FrameworkPropertyMetadata(SelectAllScope.AllItems, FrameworkPropertyMetadataOptions.Inherits));
 
         /// <summary>
         /// Gets the select-all scope for the specified column.
@@ -639,6 +592,7 @@ namespace WWSearchDataGrid.Modern.WPF
                 return false;
             }
         }
+
 
         #endregion
     }

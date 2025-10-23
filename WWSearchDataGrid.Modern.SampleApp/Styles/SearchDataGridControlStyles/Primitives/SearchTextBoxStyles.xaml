@@ -168,6 +168,7 @@
 
                                 <!--  TextBox  -->
                                 <TextBox x:Name="PART_TextBox"
+                                         Style="{x:Null}"
                                          Background="Transparent"
                                          Foreground="{TemplateBinding Foreground}"
                                          BorderThickness="0"
@@ -324,6 +325,7 @@
                                         </Border>
 
                                         <ListBox x:Name="PART_ListBox"
+                                                 Style="{StaticResource CustomListBoxStyle}"
                                                  Grid.Row="1"
                                                  Background="Transparent"
                                                  BorderThickness="0"
@@ -373,42 +375,6 @@
                                                     </Grid>
                                                 </DataTemplate>
                                             </ListBox.ItemTemplate>
-                                            <ListBox.ItemContainerStyle>
-                                                <Style TargetType="{x:Type ListBoxItem}">
-                                                    <Setter Property="Padding" Value="12,8" />
-                                                    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-                                                    <Setter Property="Background" Value="Transparent" />
-                                                    <Setter Property="BorderBrush" Value="Transparent" />
-                                                    <Setter Property="BorderThickness" Value="1" />
-                                                    <Setter Property="Template">
-                                                        <Setter.Value>
-                                                            <ControlTemplate TargetType="{x:Type ListBoxItem}">
-                                                                <Border x:Name="Border"
-                                                                        Background="{TemplateBinding Background}"
-                                                                        BorderBrush="{TemplateBinding BorderBrush}"
-                                                                        BorderThickness="{TemplateBinding BorderThickness}"
-                                                                        CornerRadius="6"
-                                                                        SnapsToDevicePixels="True">
-                                                                    <ContentPresenter Margin="{TemplateBinding Padding}"
-                                                                                      HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                                                                      VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
-                                                                                      SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" />
-                                                                </Border>
-                                                                <ControlTemplate.Triggers>
-                                                                    <Trigger Property="IsMouseOver" Value="True">
-                                                                        <Setter TargetName="Border" Property="Background" Value="#0F2B88FF" />
-                                                                        <Setter TargetName="Border" Property="BorderBrush" Value="#FF2B88FF" />
-                                                                    </Trigger>
-                                                                    <Trigger Property="IsSelected" Value="True">
-                                                                        <Setter TargetName="Border" Property="Background" Value="#1A2B88FF" />
-                                                                        <Setter TargetName="Border" Property="BorderBrush" Value="#FF2B88FF" />
-                                                                    </Trigger>
-                                                                </ControlTemplate.Triggers>
-                                                            </ControlTemplate>
-                                                        </Setter.Value>
-                                                    </Setter>
-                                                </Style>
-                                            </ListBox.ItemContainerStyle>
                                         </ListBox>
                                     </Grid>
                                 </Border>

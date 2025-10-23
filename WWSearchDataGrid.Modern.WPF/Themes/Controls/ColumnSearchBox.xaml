@@ -178,10 +178,10 @@
                                 </Button.Style>
                             </Button>
 
-                            <Button x:Name="PART_AdvancedFilterButton"
+                            <Button x:Name="PART_RuleFilterEditorButton"
                                     Grid.Column="2"
                                     Cursor="Hand"
-                                    Command="{Binding ShowFilterEditorPopup, RelativeSource={RelativeSource TemplatedParent}}"
+                                    Command="{Binding ShowRuleFilterEditorCommand, RelativeSource={RelativeSource TemplatedParent}}"
                                     Margin="2,1,5,1"
                                     Padding="4"
                                     VerticalAlignment="Center"
