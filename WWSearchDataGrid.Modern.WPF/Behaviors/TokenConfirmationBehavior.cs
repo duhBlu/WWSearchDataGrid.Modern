@@ -14,7 +14,7 @@ namespace WWSearchDataGrid.Modern.WPF.Behaviors
     /// Set <see cref="IsEnabledProperty"/> to <c>true</c> on the target element.
     /// The first click is marked handled to avoid triggering other click behaviors.
     /// </remarks>
-    public static class TokenConfirmationBehavior
+    internal static class TokenConfirmationBehavior
     {
         /// <summary>
         /// Per-element 1s timer used to exit the confirmation state after mouse leave.

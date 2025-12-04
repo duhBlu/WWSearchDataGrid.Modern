@@ -9,7 +9,7 @@ namespace WWSearchDataGrid.Modern.WPF.Behaviors
     /// <summary>
     /// Attached property behavior for handling token hover events
     /// </summary>
-    public static class TokenHoverBehavior
+    internal static class TokenHoverBehavior
     {
         private static readonly DependencyProperty TimerProperty =
             DependencyProperty.RegisterAttached("Timer", typeof(DispatcherTimer), typeof(TokenHoverBehavior));
