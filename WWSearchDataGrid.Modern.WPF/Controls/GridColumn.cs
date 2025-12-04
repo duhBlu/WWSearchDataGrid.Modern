@@ -80,7 +80,7 @@ namespace WWSearchDataGrid.Modern.WPF
                 "EnableRuleFiltering",
                 typeof(bool),
                 typeof(GridColumn),
-                new FrameworkPropertyMetadata(true, FrameworkPropertyMetadataOptions.Inherits));
+                new FrameworkPropertyMetadata(true, FrameworkPropertyMetadataOptions.Inherits, OnEnableRuleFilteringChanged));
 
         /// <summary>
         /// Gets the value indicating whether complex filtering is enabled for the specified column.
@@ -495,6 +495,28 @@ namespace WWSearchDataGrid.Modern.WPF
         #endregion
 
        #region Helper Methods
+
+        /// <summary>
+        /// Handles changes to the EnableRuleFiltering attached property
+        /// </summary>
+        private static void OnEnableRuleFilteringChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            if (d is DataGridColumn column)
+            {
+                // Find the SearchDataGrid that owns this column
+                var grid = VisualTreeHelperMethods.FindVisualParent<SearchDataGrid>(column);
+                if (grid != null)
+                {
+                    // Find the ColumnSearchBox associated with this column
+                    var columnSearchBox = grid.DataColumns.FirstOrDefault(c => c.CurrentColumn == column);
+                    if (columnSearchBox != null)
+                    {
+                        // Update the IsComplexFilteringEnabled property which will trigger binding updates
+                        columnSearchBox.UpdateIsComplexFilteringEnabled();
+                    }
+                }
+            }
+        }
 
         /// <summary>
         /// Gets the effective display name for a column, using fallback logic.

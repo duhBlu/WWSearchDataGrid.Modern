@@ -586,12 +586,13 @@
                                          ToolTip="Display name for column (Column Chooser, Filter Panel, Copy w/ Headers)" />
                             </StackPanel>
 
-                            <!--  EnableRuleFiltering  -->
+                            <!--  EnableRuleFiltering -->
                             <CheckBox Content="Enable Rule Filtering"
-                                      IsChecked="{Binding Path=(sdg:GridColumn.EnableRuleFiltering)}"
+                                      IsChecked="{Binding Path=(sdg:GridColumn.EnableRuleFiltering), Mode=OneWay}"
                                       Margin="0,5"
-                                      IsEnabled="{Binding Converter={StaticResource NullToBooleanConverter}}"
-                                      ToolTip="Enable rule filtering for this column" />
+                                      IsEnabled="False"
+                                      ToolTipService.ShowOnDisabled="True"
+                                      ToolTip="Enable rule filtering for this column. &#10;This cannot update live, as this value must be explicitly set in the XAML to override the SearchDataGrid's global version." />
 
                             <!--  UseCheckBoxInSearchBox  -->
                             <CheckBox Content="Use CheckBox In SearchBox"

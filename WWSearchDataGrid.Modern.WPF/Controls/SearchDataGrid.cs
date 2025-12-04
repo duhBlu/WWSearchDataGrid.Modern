@@ -65,7 +65,7 @@ namespace WWSearchDataGrid.Modern.WPF
         /// </summary>
         public static readonly DependencyProperty EnableRuleFilteringProperty =
             DependencyProperty.Register("EnableRuleFiltering", typeof(bool), typeof(SearchDataGrid),
-                new FrameworkPropertyMetadata(false, FrameworkPropertyMetadataOptions.Inherits));
+                new FrameworkPropertyMetadata(false, FrameworkPropertyMetadataOptions.Inherits, OnEnableRuleFilteringChanged));
 
         /// <summary>
         /// Dependency property for AutoSizeColumns
@@ -672,6 +672,16 @@ namespace WWSearchDataGrid.Modern.WPF
                 {
                     grid.DisableAutoSizeColumns();
                 }
+            }
+        }
+
+        private static void OnEnableRuleFilteringChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            if (d is SearchDataGrid grid)
+            {
+                // Notify all column search boxes to update their visual state
+                // This ensures the filter UI reflects the new EnableRuleFiltering setting
+                grid.RefreshColumnFilterStates();
             }
         }
 
@@ -1473,6 +1483,37 @@ namespace WWSearchDataGrid.Modern.WPF
             {
                 var activeFilters = GetActiveColumnFilters();
                 FilterPanel.UpdateActiveFilters(activeFilters);
+            }
+        }
+
+        /// <summary>
+        /// Refreshes the filter state for all column search boxes when grid-level EnableRuleFiltering changes.
+        /// Only updates columns that don't have explicit EnableRuleFiltering values set.
+        /// </summary>
+        private void RefreshColumnFilterStates()
+        {
+            try
+            {
+                // Only update columns that are inheriting the grid value (not explicitly set)
+                foreach (var columnSearchBox in DataColumns)
+                {
+                    if (columnSearchBox != null && columnSearchBox.CurrentColumn != null)
+                    {
+                        // Check if the column has an explicitly set local value
+                        var localValue = columnSearchBox.CurrentColumn.ReadLocalValue(GridColumn.EnableRuleFilteringProperty);
+
+                        if (localValue == DependencyProperty.UnsetValue)
+                        {
+                            // Column is inheriting - update it to reflect the new grid value
+                            columnSearchBox.UpdateIsComplexFilteringEnabled();
+                        }
+                        // If column has explicit value, don't update it (it overrides the grid setting)
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error in RefreshColumnFilterStates: {ex.Message}");
             }
         }
 
