@@ -250,7 +250,7 @@ namespace WWSearchDataGrid.Modern.WPF
         /// <summary>
         /// Sets up select-all checkboxes in column headers
         /// </summary>
-        private void SetupSelectAllColumnHeaders()
+        internal void SetupSelectAllColumnHeaders()
         {
             try
             {

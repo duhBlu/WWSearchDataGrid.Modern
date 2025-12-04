@@ -83,7 +83,7 @@ namespace WWSearchDataGrid.Modern.WPF
 
         public static readonly DependencyProperty IsCheckboxColumnProperty =
             DependencyProperty.Register("IsCheckboxColumn", typeof(bool), typeof(ColumnSearchBox),
-                new PropertyMetadata(false));
+                new PropertyMetadata(false, OnIsCheckboxColumnChanged));
 
         public static readonly DependencyProperty HasActiveFilterProperty =
             DependencyProperty.Register("HasActiveFilter", typeof(bool), typeof(ColumnSearchBox),
@@ -374,6 +374,20 @@ namespace WWSearchDataGrid.Modern.WPF
             if (d is ColumnSearchBox control)
             {
                 control.OnCheckboxFilterChanged();
+            }
+        }
+
+        private static void OnIsCheckboxColumnChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            if (d is ColumnSearchBox control)
+            {
+                // Force template to refresh by re-applying it
+                control.Dispatcher.BeginInvoke(new Action(() =>
+                {
+                    var template = control.Template;
+                    control.Template = null;
+                    control.Template = template;
+                }), System.Windows.Threading.DispatcherPriority.Loaded);
             }
         }
 
@@ -1079,7 +1093,7 @@ namespace WWSearchDataGrid.Modern.WPF
         /// <summary>
         /// Determines if checkbox filtering should be used based on GridColumn.UseCheckBoxInSearchBox property
         /// </summary>
-        private void DetermineCheckboxColumnTypeFromColumnDefinition()
+        internal void DetermineCheckboxColumnTypeFromColumnDefinition()
         {
             try
             {

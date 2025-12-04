@@ -362,6 +362,7 @@
 
                     <!--  Integer Types  -->
                     <DataGridTextColumn Width="80"
+                                        sdg:GridColumn.EnableRuleFiltering="True"
                                         sdg:GridColumn.FilterMemberPath="IntValue"
                                         sdg:GridColumn.DefaultSearchMode="EndsWith"
                                         SortMemberPath="IntValue"
@@ -588,7 +589,7 @@
 
                             <!--  EnableRuleFiltering -->
                             <CheckBox Content="Enable Rule Filtering"
-                                      IsChecked="{Binding Path=(sdg:GridColumn.EnableRuleFiltering), Mode=OneWay}"
+                                      IsChecked="{Binding Path=(sdg:GridColumn.EnableRuleFiltering)}"
                                       Margin="0,5"
                                       IsEnabled="False"
                                       ToolTipService.ShowOnDisabled="True"
