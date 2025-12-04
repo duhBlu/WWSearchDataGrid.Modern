@@ -12,6 +12,6 @@ namespace WWSearchDataGrid.Modern.SampleApp
     public class ComboBoxItem
     {
         public int Id { get; set; }
-        public string Name { get; set; }
+        public string? Name { get; set; }
     }
 }

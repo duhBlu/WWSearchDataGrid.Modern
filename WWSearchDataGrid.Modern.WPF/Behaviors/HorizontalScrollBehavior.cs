@@ -17,7 +17,7 @@ namespace WWSearchDataGrid.Modern.WPF
     /// Set <see cref="EnableShiftMouseWheelScrollProperty"/> to <c>true</c> to activate.
     /// Automatically clamps the offset within <see cref="ScrollViewer.ScrollableWidth"/>.
     /// </remarks>
-    internal static class HorizontalScrollBehavior
+    public static class HorizontalScrollBehavior
     {
         #region EnableShiftMouseWheelScroll
 

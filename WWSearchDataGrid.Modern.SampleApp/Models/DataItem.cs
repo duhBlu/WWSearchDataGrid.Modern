@@ -7,7 +7,7 @@ namespace WWSearchDataGrid.Modern.SampleApp
 {
     public class DataItem : ObservableObject
     {
-        public string CustomerName { get; set; }
+        public string? CustomerName { get; set; }
         
         // Complete .NET data type matrix - Boolean types
         public bool BoolValue { get; set; }
@@ -32,7 +32,7 @@ namespace WWSearchDataGrid.Modern.SampleApp
         public decimal? NullableDecimalValue { get; set; }
 
         // Text types
-        public string StringValue { get; set; }
+        public string? StringValue { get; set; }
         public char CharValue { get; set; }
         public char? NullableCharValue { get; set; }
 

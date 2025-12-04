@@ -29,7 +29,7 @@ namespace WWSearchDataGrid.Modern.SampleApp
         private ObservableCollection<string> _comboBoxStringValues = new();
 
         [ObservableProperty]
-        private DataItem _selectedItem;
+        private DataItem? _selectedItem;
 
         [ObservableProperty]
         private int _itemCount;
@@ -61,7 +61,7 @@ namespace WWSearchDataGrid.Modern.SampleApp
             "Ford", "Green", "Hall", "Irving", "Jones", "Kelly", "Lewis", "Moore", "Nixon", "Owen",
             "Powell", "Reed", "Stone", "Thomas", "White", "Allen", "Bell", "Carter", "Foster", "Gray"
         };
-        private static readonly string[] StringTypes =
+        private static readonly string?[] StringTypes =
         {
             "Alpha", "Beta", "Gamma", "Delta", "Epsilon", "Zeta", "Eta", "Theta",
             "Product", "Service", "Item", "Component", "Module", "System", "Process",
@@ -86,30 +86,30 @@ namespace WWSearchDataGrid.Modern.SampleApp
         private void PopulateData()
         {
             GenerateData(ItemsToGenerate);
-            ItemCount = Items.Count;
+            ItemCount = Items?.Count ?? 0;
         }
 
         [RelayCommand]
         private void AddItem()
         {
-            Items.Add(CreateComprehensiveDataItem(_random));
-            ItemCount = Items.Count;
+            Items?.Add(CreateComprehensiveDataItem(_random));
+            ItemCount = Items?.Count ?? 0;
         }
 
         [RelayCommand]
         private void RemoveItem()
         {
-            if (Items.Count > 0)
+            if (Items?.Count > 0)
             {
                 Items.RemoveAt(Items.Count - 1);
-                ItemCount = Items.Count;
+                ItemCount = Items?.Count ?? 0;
             }
         }
 
         [RelayCommand]
         private void ClearData()
         {
-            Items.Clear();
+            Items?.Clear();
             ItemCount = 0;
 
             // Clear cached data in the SearchDataGrid to prevent memory leaks
@@ -145,7 +145,7 @@ namespace WWSearchDataGrid.Modern.SampleApp
                     buffer[i] = CreateComprehensiveDataItem(rnd, baseDate);
                 });
 
-            var merged = new ObservableCollection<DataItem>(Items.Concat(buffer));
+            var merged = new ObservableCollection<DataItem>((Items ?? new ObservableCollection<DataItem>()).Concat(buffer));
             Items = null;
             Items = merged; 
             ItemCount = Items.Count;
