@@ -1,4 +1,5 @@
 using System;
+using System.ComponentModel;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
@@ -7,6 +8,37 @@ using WWSearchDataGrid.Modern.Core;
 
 namespace WWSearchDataGrid.Modern.WPF
 {
+    /// <summary>
+    /// Event arguments for the ColumnDisplayNameChanged event.
+    /// </summary>
+    public class ColumnDisplayNameChangedEventArgs : EventArgs
+    {
+        /// <summary>
+        /// Gets the column whose display name changed.
+        /// </summary>
+        public DataGridColumn Column { get; }
+
+        /// <summary>
+        /// Gets the old display name value.
+        /// </summary>
+        public string OldValue { get; }
+
+        /// <summary>
+        /// Gets the new display name value.
+        /// </summary>
+        public string NewValue { get; }
+
+        /// <summary>
+        /// Initializes a new instance of the ColumnDisplayNameChangedEventArgs class.
+        /// </summary>
+        public ColumnDisplayNameChangedEventArgs(DataGridColumn column, string oldValue, string newValue)
+        {
+            Column = column;
+            OldValue = oldValue;
+            NewValue = newValue;
+        }
+    }
+
     /// <summary>
     /// Specifies the default search mode for simple textbox searches in column filters.
     /// This enum provides a safe subset of SearchType values appropriate for temporary search templates.
@@ -263,6 +295,12 @@ namespace WWSearchDataGrid.Modern.WPF
         #region ColumnDisplayName Attached Property
 
         /// <summary>
+        /// Event raised when the ColumnDisplayName attached property changes on any column.
+        /// This allows external controls to subscribe and refresh their UI when column display names change.
+        /// </summary>
+        public static event EventHandler<ColumnDisplayNameChangedEventArgs> ColumnDisplayNameChanged;
+
+        /// <summary>
         /// Specifies the display name shown in Column Chooser, Filter Panel, and other UI components.
         ///
         /// When not explicitly set, falls back to extracting text from the column's Header property.
@@ -274,7 +312,7 @@ namespace WWSearchDataGrid.Modern.WPF
                 "ColumnDisplayName",
                 typeof(string),
                 typeof(GridColumn),
-                new FrameworkPropertyMetadata(null));
+                new FrameworkPropertyMetadata(null, OnColumnDisplayNameChanged));
 
         /// <summary>
         /// Gets the explicit column display name for the specified column.
@@ -495,6 +533,47 @@ namespace WWSearchDataGrid.Modern.WPF
         #endregion
 
        #region Helper Methods
+
+        /// <summary>
+        /// Handles changes to the ColumnDisplayName attached property
+        /// </summary>
+        private static void OnColumnDisplayNameChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            if (d is DataGridColumn column)
+            {
+                // Find the SearchDataGrid that owns this column
+                var grid = FindSearchDataGridForColumn(column);
+                if (grid != null)
+                {
+                    column.Dispatcher.BeginInvoke(new Action(() =>
+                    {
+                        //  Update the filter panel to reflect the new display name
+                        grid.UpdateFilterPanel();
+
+                        // Update the ColumnSearchBox's SearchTemplateController.ColumnName
+                        var columnSearchBox = grid.DataColumns.FirstOrDefault(c => c.CurrentColumn == column);
+                        if (columnSearchBox?.SearchTemplateController != null)
+                        {
+                            columnSearchBox.SearchTemplateController.ColumnName = GetEffectiveColumnDisplayName(column);
+                        }
+
+                        // Force refresh of any ItemsControl (like ListBox) that displays the columns collection
+                        // by invalidating the binding on the DataGrid's Columns collection
+                        if (grid.Columns != null)
+                        {
+                            var collectionView = CollectionViewSource.GetDefaultView(grid.Columns);
+                            collectionView?.Refresh();
+                        }
+                    }), System.Windows.Threading.DispatcherPriority.DataBind);
+                }
+
+                // Raise the static event to notify external subscribers (optional, for advanced scenarios)
+                ColumnDisplayNameChanged?.Invoke(null, new ColumnDisplayNameChangedEventArgs(
+                    column,
+                    e.OldValue as string,
+                    e.NewValue as string));
+            }
+        }
 
         /// <summary>
         /// Handles changes to the EnableRuleFiltering attached property

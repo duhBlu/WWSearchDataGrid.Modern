@@ -45,7 +45,7 @@ namespace WWSearchDataGrid.Modern.WPF
     {
         #region Fields
 
-        private TextBox searchTextBox;
+        private SearchTextBox searchTextBox;
         private CheckBox filterCheckBox;
         private Popup _filterPopup;
         private ColumnFilterEditor _filterContent;
@@ -221,7 +221,7 @@ namespace WWSearchDataGrid.Modern.WPF
         {
             base.OnApplyTemplate();
             
-            searchTextBox = GetTemplateChild("PART_SearchTextBox") as TextBox;
+            searchTextBox = GetTemplateChild("PART_SearchTextBox") as SearchTextBox;
             if (searchTextBox != null)
             {
                 searchTextBox.TextChanged += OnSearchTextBoxTextChanged;

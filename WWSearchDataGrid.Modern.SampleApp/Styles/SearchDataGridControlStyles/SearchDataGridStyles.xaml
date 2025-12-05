@@ -143,7 +143,18 @@
                     <MenuItem x:Name="miShowColumnChooser"
                               Command="{x:Static commands:ContextMenuCommands.ShowColumnChooserCommand}"
                               CommandParameter="{Binding Grid}"
-                              Header="Show Column Chooser" />
+                              Header="Show Column Chooser" >
+                        <MenuItem.Style>
+                            <Style TargetType="MenuItem">
+                                <Setter Property="Visibility" Value="Visible" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Grid.IsColumnChooserEnabled}" Value="False">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </MenuItem.Style>
+                    </MenuItem>
                     <MenuItem x:Name="miHideColumn"
                               Command="{x:Static commands:ContextMenuCommands.HideSelectedColumnCommand}"
                               CommandParameter="{Binding Column}"
@@ -384,7 +395,18 @@
                     <MenuItem x:Name="miShowColumnChooser"
                               Command="{x:Static commands:ContextMenuCommands.ShowColumnChooserCommand}"
                               CommandParameter="{Binding Grid}"
-                              Header="Show Column Chooser" />
+                              Header="Show Column Chooser" >
+                        <MenuItem.Style>
+                            <Style TargetType="MenuItem">
+                                <Setter Property="Visibility" Value="Visible" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Grid.IsColumnChooserEnabled}" Value="False">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </MenuItem.Style>
+                    </MenuItem>
                     <MenuItem x:Name="miResetLayout"
                               Command="{x:Static commands:ContextMenuCommands.ResetLayoutCommand}"
                               CommandParameter="{Binding Grid}"

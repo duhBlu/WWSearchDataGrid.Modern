@@ -155,7 +155,6 @@ namespace WWSearchDataGrid.Modern.WPF
             set => SetValue(ShowClearButtonProperty, value);
         }
 
-
         /// <summary>
         /// The corner radius of the control
         /// </summary>

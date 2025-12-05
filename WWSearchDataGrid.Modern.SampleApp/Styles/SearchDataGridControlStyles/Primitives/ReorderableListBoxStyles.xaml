@@ -1,0 +1,19 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sdg="clr-namespace:WWSearchDataGrid.Modern.WPF;assembly=WWSearchDataGrid.Modern.WPF">
+
+    <Style TargetType="{x:Type sdg:ReorderableListBox}" BasedOn="{StaticResource {x:Type ListBox}}">
+        <Setter Property="EnableDragDrop" Value="True" />
+        <Setter Property="AutoScrollEdge" Value="28" />
+        <Setter Property="AutoScrollMinSpeed" Value="0.5" />
+        <Setter Property="AutoScrollMaxSpeed" Value="2.0" />
+        <Setter Property="MarginAnimationDuration" Value="200" />
+        <Setter Property="AdornerOpacity" Value="0.8" />
+        <Setter Property="SelectionMode" Value="Single" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <Setter Property="BorderBrush" Value="#DEE2E6" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Background" Value="White" />
+    </Style>
+
+</ResourceDictionary>
