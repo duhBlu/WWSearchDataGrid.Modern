@@ -82,8 +82,8 @@
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type RepeatButton}">
                     <Rectangle Fill="{TemplateBinding Background}"
-                           Width="{TemplateBinding Width}"
-                           Height="{TemplateBinding Height}" />
+                               Width="{TemplateBinding Width}"
+                               Height="{TemplateBinding Height}" />
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
@@ -222,7 +222,9 @@
                                     <RepeatButton Style="{StaticResource Transparent_RepeatButton_Style}" Command="{x:Static ScrollBar.PageDownCommand}" />
                                 </Track.IncreaseRepeatButton>
                                 <Track.Thumb>
-                                    <Thumb x:Name="PART_Thumb" Style="{StaticResource VerticalThumbStyle}" Width="9" />
+                                    <Thumb x:Name="PART_Thumb"
+                                           Style="{StaticResource VerticalThumbStyle}"
+                                           Width="9" />
                                 </Track.Thumb>
                             </Track>
                         </Border>
@@ -339,7 +341,9 @@
                                             <RepeatButton Style="{StaticResource Transparent_RepeatButton_Style}" Command="{x:Static ScrollBar.PageRightCommand}" />
                                         </Track.IncreaseRepeatButton>
                                         <Track.Thumb>
-                                            <Thumb x:Name="PART_Thumb" Style="{StaticResource HorizontalThumbStyle}" Height="9" />
+                                            <Thumb x:Name="PART_Thumb"
+                                                   Style="{StaticResource HorizontalThumbStyle}"
+                                                   Height="9" />
                                         </Track.Thumb>
                                     </Track>
                                 </Border>
@@ -868,7 +872,6 @@
 
     <!--#endregion Buttons-->
 
-
     <!--#region Combobox-->
 
     <SolidColorBrush x:Key="ComboBox.BackgroundBrush" Color="White" />
@@ -1175,17 +1178,169 @@
 
     <!--#endregion TextBox-->
 
+    <!--#region Expander-->
+
+    <!--  Header ToggleButton  -->
+    <Style x:Key="CustomExpanderHeaderToggleButtonStyle" TargetType="ToggleButton">
+        <Setter Property="Background" Value="#e5e5e5" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Padding" Value="8,4" />
+        <Setter Property="MinHeight" Value="26" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ToggleButton">
+                    <Border x:Name="HeaderBackground"
+                            Background="{TemplateBinding Background}"
+                            Padding="{TemplateBinding Padding}"
+                            VerticalAlignment="Center">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <!--  Header row  -->
+                            <Grid Grid.Row="0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+
+                                <!--  Chevron  -->
+                                <TextBlock x:Name="Chevron"
+                                           Grid.Column="0"
+                                           Foreground="#606060"
+                                           Text="&#xE76C;"
+                                           Margin="0,0,8,0"
+                                           VerticalAlignment="Center"
+                                           FontFamily="Segoe MDL2 Assets"
+                                           FontSize="11" />
+
+                                <!--  Header content  -->
+                                <ContentPresenter Grid.Column="1"
+                                                  HorizontalAlignment="Left"
+                                                  VerticalAlignment="Center"
+                                                  RecognizesAccessKey="True"
+                                                  Content="{TemplateBinding Content}"
+                                                  ContentTemplate="{TemplateBinding ContentTemplate}" />
+                            </Grid>
+                        </Grid>
+                    </Border>
+
+                    <ControlTemplate.Triggers>
+
+                        <!--  Checked (expanded)  -->
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="Chevron" Property="Text" Value="&#xE70D;" />
+                            <Setter TargetName="Chevron" Property="Foreground" Value="#4F8EF7" />
+                        </Trigger>
+
+                        <!--  Unchecked (collapsed)  -->
+                        <Trigger Property="IsChecked" Value="False">
+                            <Setter TargetName="Chevron" Property="Text" Value="&#xE76C;" />
+                            <Setter TargetName="Chevron" Property="Foreground" Value="#606060" />
+                        </Trigger>
+
+                        <!--  Hover (header background only)  -->
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="HeaderBackground" Property="Background" Value="#D5D5D5" />
+                        </Trigger>
+
+                        <!--  Pressed  -->
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="HeaderBackground" Property="Background" Value="#C5C5C5" />
+                        </Trigger>
+
+                        <!--  Disabled  -->
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="Chevron" Property="Opacity" Value="0.5" />
+                            <Setter Property="Foreground" Value="#9A9A9A" />
+                        </Trigger>
+
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+
+    <!--  Expander  -->
+    <Style x:Key="CustomExpanderStyle" TargetType="{x:Type Expander}">
+        <Setter Property="Foreground" Value="#1F1F1F" />
+        <Setter Property="Background" Value="#FFFFFF" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type Expander}">
+                    <Border x:Name="OuterBorder"
+                            Background="{TemplateBinding Background}"
+                            CornerRadius="4"
+                            SnapsToDevicePixels="True">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <!--  Header  -->
+                            <ToggleButton x:Name="HeaderSite"
+                                          Style="{StaticResource CustomExpanderHeaderToggleButtonStyle}"
+                                          Grid.Row="0"
+                                          IsChecked="{Binding IsExpanded, RelativeSource={RelativeSource TemplatedParent}}"
+                                          Focusable="False"
+                                          Content="{TemplateBinding Header}"
+                                          ContentTemplate="{TemplateBinding HeaderTemplate}" />
+
+                            <!--  Content  -->
+                            <ContentPresenter x:Name="ExpandSite"
+                                              Grid.Row="1"
+                                              Visibility="Collapsed"
+                                              Focusable="False"
+                                              Margin="24,4,8,8"
+                                              ContentSource="Content" />
+                        </Grid>
+                    </Border>
+
+                    <ControlTemplate.Triggers>
+
+                        <!--  Show / hide content  -->
+                        <Trigger Property="IsExpanded" Value="True">
+                            <Setter TargetName="ExpandSite" Property="Visibility" Value="Visible" />
+                        </Trigger>
+
+                        <!--  Hover over header: change whole expander background (header + content)  -->
+                        <Trigger SourceName="HeaderSite" Property="IsMouseOver" Value="True">
+                            <Setter TargetName="OuterBorder" Property="Background" Value="#F5F5F5" />
+                        </Trigger>
+
+                        <!--  Press on header: darker background  -->
+                        <Trigger SourceName="HeaderSite" Property="IsPressed" Value="True">
+                            <Setter TargetName="OuterBorder" Property="Background" Value="#EAEAEA" />
+                        </Trigger>
+
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+
+    <Style BasedOn="{StaticResource CustomExpanderStyle}" TargetType="{x:Type Expander}" />
+
+    <!--#endregion Expander-->
+
     <!--#region ListBox-->
 
     <Style x:Key="CustomListBoxItemStyle" TargetType="{x:Type ListBoxItem}">
         <Style.Resources>
             <SolidColorBrush x:Key="ListBoxItem.ForegroundBrush" Color="#222222" />
-            <SolidColorBrush x:Key="ListBoxItem.Background.MouseOver" Color="#F2F2F6" />
-            <SolidColorBrush x:Key="ListBoxItem.BorderBrush.MouseOver" Color="#CFCFD6" />
-            <SolidColorBrush x:Key="ListBoxItem.Background.Selected" Color="#E7E1F3" />
-            <SolidColorBrush x:Key="ListBoxItem.BorderBrush.Selected" Color="#C9BDE6" />
+            <SolidColorBrush x:Key="ListBoxItem.Background.MouseOver" Color="#f6f6f6" />
+            <SolidColorBrush x:Key="ListBoxItem.BorderBrush.MouseOver" Color="#d6d6d6" />
+            <SolidColorBrush x:Key="ListBoxItem.Background.Selected" Color="#ecf1f6" />
+            <SolidColorBrush x:Key="ListBoxItem.BorderBrush.Selected" Color="#acc9df" />
             <SolidColorBrush x:Key="ListBoxItem.Foreground.Disabled" Color="#888888" />
-            <SolidColorBrush x:Key="ListBoxItem.BorderBrush.Focused" Color="#6A4C93" />
+            <SolidColorBrush x:Key="ListBoxItem.BorderBrush.Focused" Color="#5b96c3" />
         </Style.Resources>
         <Setter Property="SnapsToDevicePixels" Value="True" />
         <Setter Property="OverridesDefaultStyle" Value="True" />

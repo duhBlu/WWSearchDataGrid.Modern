@@ -89,7 +89,7 @@ namespace WWSearchDataGrid.Modern.WPF
         /// </summary>
         public static readonly DependencyProperty IsColumnChooserEnabledProperty =
             DependencyProperty.Register("IsColumnChooserEnabled", typeof(bool), typeof(SearchDataGrid),
-                new PropertyMetadata(true, OnIsColumnChooserEnabledChanged));
+                new PropertyMetadata(false, OnIsColumnChooserEnabledChanged));
 
         /// <summary>
         /// Dependency property for IsColumnChooserConfinedToGrid

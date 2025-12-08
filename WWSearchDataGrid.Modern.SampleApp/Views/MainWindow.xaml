@@ -192,6 +192,9 @@
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="300" />
             </Grid.ColumnDefinitions>
+
+            <!--#region Default Datagrid for Comparison-->
+
             <!--<DataGrid x:Name="DataGrid"
           Grid.Row="0"
           IsReadOnly="False"
@@ -316,11 +319,14 @@
                 </DataGrid.Columns>
             </DataGrid>-->
 
+            <!--#endregion Default Datagrid for Comparison-->
 
             <sdg:SearchDataGrid x:Name="SearchDataGrid"
                                 Grid.Column="0"
                                 IsReadOnly="False"
                                 Margin="10"
+                                IsColumnChooserEnabled="True"
+                                IsColumnChooserConfinedToGrid="False"
                                 EnableRuleFiltering="True"
                                 SelectionMode="Extended"
                                 SelectionUnit="CellOrRowHeader"
@@ -503,205 +509,230 @@
             <ScrollViewer Grid.Column="2"
                           Background="#F5F5F5"
                           VerticalScrollBarVisibility="Auto">
-                <StackPanel Margin="10">
+                <sdg:SimpleStackPanel Orientation="Vertical">
 
                     <!--  DataGrid Properties Section  -->
-                    <GroupBox Margin="0,0,0,10"
-                              Padding="10"
-                              Header="DataGrid Properties">
-                        <StackPanel>
+                    <Expander Header="Search Datagrid" IsExpanded="True">
+                        <sdg:SimpleStackPanel Orientation="Vertical"
+                                              Spacing="6">
 
                             <!--  AutoSizeColumns  -->
                             <CheckBox IsChecked="{Binding ElementName=SearchDataGrid, Path=AutoSizeColumns}"
-                                      Margin="0,5"
                                       Content="Auto-Size Columns"
                                       ToolTipService.ShowOnDisabled="True"
                                       ToolTip="Automatically adjusts column widths to fit visible content.&#x0a;Columns dynamically resize during scrolling to ensure data remains fully visible.&#x0a;Respects MinWidth and MaxWidth constraints." />
 
                             <!--  EnableRuleFiltering  -->
                             <CheckBox IsChecked="{Binding ElementName=SearchDataGrid, Path=EnableRuleFiltering}"
-                                      Margin="0,5"
                                       Content="Enable Rule Filtering"
                                       ToolTipService.ShowOnDisabled="True"
                                       ToolTip="Enables advanced multi-criteria filtering with custom rules and logical operators.&#x0a;When disabled, only simple text-based filtering is available per column.&#x0a;This is the grid-level setting that can be overridden per-column." />
 
-                            <!--  IsColumnChooserEnabled  -->
-                            <CheckBox IsChecked="{Binding ElementName=SearchDataGrid, Path=IsColumnChooserEnabled}"
-                                      Margin="0,5"
-                                      Content="Enable Column Chooser"
-                                      ToolTipService.ShowOnDisabled="True"
-                                      ToolTip="Enables or disables the Column Chooser feature.&#x0a;When disabled:&#x0a;• Hides 'Show Column Chooser' menu items from context menus&#x0a;• Prevents the Column Chooser window from being shown&#x0a;• Automatically closes the Column Chooser if it's open&#x0a;Default: Enabled" />
+                            <!--  Column Chooser  -->
+                            <Expander Margin="5,5,0,0" Header="Column Chooser" IsExpanded="True">
+                                <sdg:SimpleStackPanel Orientation="Vertical"
+                                                      Spacing="4">
 
-                            <!--  IsColumnChooserVisible  -->
-                            <CheckBox IsEnabled="{Binding ElementName=SearchDataGrid, Path=IsColumnChooserEnabled}"
-                                      IsChecked="{Binding ElementName=SearchDataGrid, Path=IsColumnChooserVisible}"
-                                      Margin="0,5"
-                                      Content="Show Column Chooser"
-                                      ToolTipService.ShowOnDisabled="True"
-                                      ToolTip="Shows or hides the Column Chooser window.&#x0a;The Column Chooser allows users to show/hide columns by toggling checkboxes.&#x0a;The window is non-modal, allowing interaction with the grid while the chooser is open.&#x0a;&#x0a;Note: This control is disabled when 'Enable Column Chooser' is unchecked." />
+                                    <!--  IsColumnChooserEnabled  -->
+                                    <CheckBox IsChecked="{Binding ElementName=SearchDataGrid, Path=IsColumnChooserEnabled}"
+                                              Content="Enable Column Chooser"
+                                              ToolTipService.ShowOnDisabled="True"
+                                              ToolTip="Enables or disables the Column Chooser feature.&#x0a;When disabled:&#x0a;• Hides 'Show Column Chooser' menu items from context menus&#x0a;• Prevents the Column Chooser window from being shown&#x0a;• Automatically closes the Column Chooser if it's open&#x0a;Default: Enabled" />
 
-                            <!--  IsColumnChooserConfinedToGrid  -->
-                            <CheckBox IsEnabled="{Binding ElementName=SearchDataGrid, Path=IsColumnChooserEnabled}"
-                                      IsChecked="{Binding ElementName=SearchDataGrid, Path=IsColumnChooserConfinedToGrid}"
-                                      Margin="0,5"
-                                      Content="Confine Column Chooser to Grid"
-                                      ToolTipService.ShowOnDisabled="True"
-                                      ToolTip="Confines the Column Chooser window to the grid's viewport bounds.&#x0a;When enabled:&#x0a;• The Column Chooser cannot be dragged outside the grid's visible area&#x0a;• Window position is automatically adjusted if it exceeds grid bounds&#x0a;When disabled:&#x0a;• The window can be moved freely anywhere on the screen&#x0a;Default: Disabled&#x0a;&#x0a;Note: This control is disabled when 'Enable Column Chooser' is unchecked." />
+                                    <!--  IsColumnChooserVisible  -->
+                                    <CheckBox IsEnabled="{Binding ElementName=SearchDataGrid, Path=IsColumnChooserEnabled}"
+                                              IsChecked="{Binding ElementName=SearchDataGrid, Path=IsColumnChooserVisible}"
+                                              Content="Show Column Chooser"
+                                              ToolTipService.ShowOnDisabled="True"
+                                              ToolTip="Shows or hides the Column Chooser window.&#x0a;The Column Chooser allows users to show/hide columns by toggling checkboxes.&#x0a;The window is non-modal, allowing interaction with the grid while the chooser is open.&#x0a;&#x0a;Note: This control is disabled when 'Enable Column Chooser' is unchecked." />
 
-                            <!--  SelectionMode  -->
-                            <StackPanel Margin="0,5">
-                                <TextBlock Text="Selection Mode:"
-                                           Margin="0,0,0,3"
-                                           FontWeight="Bold" />
-                                <ComboBox SelectedItem="{Binding ElementName=SearchDataGrid, Path=SelectionMode}"
-                                          ToolTipService.ShowOnDisabled="True"
-                                          ToolTip="Determines how many rows can be selected at once.&#x0a;• Single: Only one row can be selected at a time&#x0a;• Extended: Multiple rows can be selected using Ctrl/Shift">
-                                    <ComboBox.Items>
-                                        <DataGridSelectionMode>Single</DataGridSelectionMode>
-                                        <DataGridSelectionMode>Extended</DataGridSelectionMode>
-                                    </ComboBox.Items>
-                                </ComboBox>
-                            </StackPanel>
+                                    <!--  IsColumnChooserConfinedToGrid  -->
+                                    <CheckBox IsEnabled="{Binding ElementName=SearchDataGrid, Path=IsColumnChooserEnabled}"
+                                              IsChecked="{Binding ElementName=SearchDataGrid, Path=IsColumnChooserConfinedToGrid}"
+                                              Content="Confine Column Chooser to Grid"
+                                              ToolTipService.ShowOnDisabled="True"
+                                              ToolTip="Confines the Column Chooser window to the grid's viewport bounds.&#x0a;When enabled:&#x0a;• The Column Chooser cannot be dragged outside the grid's visible area&#x0a;• Window position is automatically adjusted if it exceeds grid bounds&#x0a;When disabled:&#x0a;• The window can be moved freely anywhere on the screen&#x0a;Default: Disabled&#x0a;&#x0a;Note: This control is disabled when 'Enable Column Chooser' is unchecked." />
+                                </sdg:SimpleStackPanel>
+                            </Expander>
 
-                            <!--  SelectionUnit  -->
-                            <StackPanel Margin="0,5">
-                                <TextBlock Text="Selection Unit:"
-                                           Margin="0,0,0,3"
-                                           FontWeight="Bold" />
-                                <ComboBox SelectedItem="{Binding ElementName=SearchDataGrid, Path=SelectionUnit}"
-                                          ToolTipService.ShowOnDisabled="True"
-                                          ToolTip="Defines the granularity of selection.&#x0a;• Cell: Individual cells can be selected&#x0a;• FullRow: Entire rows are selected&#x0a;• CellOrRowHeader: Cells can be selected, or entire rows via row header">
-                                    <ComboBox.Items>
-                                        <DataGridSelectionUnit>Cell</DataGridSelectionUnit>
-                                        <DataGridSelectionUnit>FullRow</DataGridSelectionUnit>
-                                        <DataGridSelectionUnit>CellOrRowHeader</DataGridSelectionUnit>
-                                    </ComboBox.Items>
-                                </ComboBox>
-                            </StackPanel>
+                            <!--  Selection / Interaction  -->
+                            <Expander Margin="5,5,0,0" Header="Selection &amp; Interaction" IsExpanded="True">
+                                <sdg:SimpleStackPanel Orientation="Vertical"
+                                                      Spacing="6">
 
-                            <CheckBox IsChecked="{Binding ElementName=SearchDataGrid, Path=CanUserReorderColumns}"
-                                      Margin="0,5"
-                                      Content="Can User Re-Order Columns" />
+                                    <!--  SelectionMode  -->
+                                    <sdg:SimpleStackPanel Orientation="Vertical" Spacing="3">
+                                        <TextBlock Text="Selection Mode:" FontWeight="Bold" />
+                                        <ComboBox SelectedItem="{Binding ElementName=SearchDataGrid, Path=SelectionMode}"
+                                                  ToolTipService.ShowOnDisabled="True"
+                                                  ToolTip="Determines how many rows can be selected at once.&#x0a;• Single: Only one row can be selected at a time&#x0a;• Extended: Multiple rows can be selected using Ctrl/Shift">
+                                            <ComboBox.Items>
+                                                <DataGridSelectionMode>Single</DataGridSelectionMode>
+                                                <DataGridSelectionMode>Extended</DataGridSelectionMode>
+                                            </ComboBox.Items>
+                                        </ComboBox>
+                                    </sdg:SimpleStackPanel>
 
-                        </StackPanel>
+                                    <!--  SelectionUnit  -->
+                                    <sdg:SimpleStackPanel Orientation="Vertical" Spacing="3">
+                                        <TextBlock Text="Selection Unit:" FontWeight="Bold" />
+                                        <ComboBox SelectedItem="{Binding ElementName=SearchDataGrid, Path=SelectionUnit}"
+                                                  ToolTipService.ShowOnDisabled="True"
+                                                  ToolTip="Defines the granularity of selection.&#x0a;• Cell: Individual cells can be selected&#x0a;• FullRow: Entire rows are selected&#x0a;• CellOrRowHeader: Cells can be selected, or entire rows via row header">
+                                            <ComboBox.Items>
+                                                <DataGridSelectionUnit>Cell</DataGridSelectionUnit>
+                                                <DataGridSelectionUnit>FullRow</DataGridSelectionUnit>
+                                                <DataGridSelectionUnit>CellOrRowHeader</DataGridSelectionUnit>
+                                            </ComboBox.Items>
+                                        </ComboBox>
+                                    </sdg:SimpleStackPanel>
 
-                    </GroupBox>
+                                    <!--  CanUserReorderColumns  -->
+                                    <CheckBox IsChecked="{Binding ElementName=SearchDataGrid, Path=CanUserReorderColumns}" Content="Can User Re-Order Columns" />
+
+                                </sdg:SimpleStackPanel>
+                            </Expander>
+
+                        </sdg:SimpleStackPanel>
+                    </Expander>
 
                     <!--  Column Properties Section  -->
-                    <GroupBox Margin="0,0,0,10"
-                              Padding="10"
-                              Header="Column Properties"
-                              DataContext="{Binding ElementName=ColumnListBox, Path=SelectedItem}">
-                        <StackPanel>
+                    <Expander Header="Grid Column" DataContext="{Binding ElementName=ColumnListBox, Path=SelectedItem}" IsExpanded="True">
+                        <sdg:SimpleStackPanel Orientation="Vertical"
+                                              Spacing="10">
 
                             <!--  Column Selector  -->
-                            <TextBlock Text="Select Column:"
-                                       Margin="0,0,0,5"
-                                       FontWeight="Bold" />
-                            <ListBox x:Name="ColumnListBox"
-                                     Height="150"
-                                     SelectedIndex="0"
-                                     ItemsSource="{Binding ElementName=SearchDataGrid, Path=Columns}"
-                                     SelectionMode="Single"
-                                     ToolTipService.ShowOnDisabled="True"
-                                     ToolTip="Select a column to view and modify its properties below.&#x0a;Changes apply immediately to the selected column.">
-                                <ListBox.ItemTemplate>
-                                    <DataTemplate>
-                                        <TextBlock Text="{Binding Converter={StaticResource ColumnDisplayNameConverter}}" />
-                                    </DataTemplate>
-                                </ListBox.ItemTemplate>
-                            </ListBox>
-
-                            <!--  FilterMemberPath  -->
-                            <StackPanel IsEnabled="{Binding Converter={StaticResource NullToBooleanConverter}}" Margin="0,10,0,5">
-                                <TextBlock Text="Filter Member Path:"
-                                           Margin="0,0,0,3"
-                                           FontWeight="Bold" />
-                                <TextBox Text="{Binding Path=(sdg:GridColumn.FilterMemberPath), UpdateSourceTrigger=PropertyChanged}"
+                            <sdg:SimpleStackPanel Orientation="Vertical" Spacing="5" >
+                                <TextBlock Text="Select Column:" FontWeight="Bold" />
+                                <ListBox x:Name="ColumnListBox"
+                                         Height="150"
+                                         SelectedIndex="0"
+                                         ScrollViewer.IsDeferredScrollingEnabled="True"
+                                         ItemsSource="{Binding ElementName=SearchDataGrid, Path=Columns}"
+                                         SelectionMode="Single"
                                          ToolTipService.ShowOnDisabled="True"
-                                         ToolTip="Specifies the property path for retrieving filter values.&#x0a;&#x0a;Resolution priority:&#x0a;1. FilterMemberPath (this property) - explicit override&#x0a;2. SortMemberPath - standard DataGrid column property&#x0a;3. Binding Path - extracted from column binding&#x0a;&#x0a;Use this to filter on a different property than what's displayed.&#x0a;Example: Display 'Department.Name' but filter on 'Department.Id'" />
-                            </StackPanel>
+                                         ToolTip="Select a column to view and modify its properties below.&#x0a;Changes apply immediately to the selected column.">
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding Converter={StaticResource ColumnDisplayNameConverter}}" />
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+                            </sdg:SimpleStackPanel>
 
-                            <!--  ColumnDisplayName  -->
-                            <StackPanel IsEnabled="{Binding Converter={StaticResource NullToBooleanConverter}}" Margin="0,5">
-                                <TextBlock Text="Column Display Name:"
-                                           Margin="0,0,0,3"
-                                           FontWeight="Bold" />
-                                <TextBox Text="{Binding Path=(sdg:GridColumn.ColumnDisplayName), UpdateSourceTrigger=PropertyChanged}"
-                                         ToolTipService.ShowOnDisabled="True"
-                                         ToolTip="User-friendly name shown in UI components.&#x0a;&#x0a;Used in:&#x0a;• Column Chooser dialog&#x0a;• Filter Panel tokens&#x0a;• Copy with Headers operations&#x0a;• Context menu operations&#x0a;&#x0a;If not set, text is extracted from the Header property.&#x0a;Supports both simple strings and complex header templates." />
-                            </StackPanel>
+                            <!--  Binding & Display  -->
+                            <Expander Header="Binding &amp; Display" IsExpanded="True">
+                                <sdg:SimpleStackPanel Orientation="Vertical"
+                                                      Spacing="6">
 
-                            <!--  EnableRuleFiltering  -->
-                            <CheckBox IsEnabled="False"
-                                      IsChecked="{Binding Path=(sdg:GridColumn.EnableRuleFiltering)}"
-                                      Margin="0,5"
-                                      Content="Enable Rule Filtering"
-                                      ToolTipService.ShowOnDisabled="True"
-                                      ToolTip="Enables complex filtering UI for this column (advanced filter button and rules editor).&#x0a;&#x0a;IMPORTANT: This property uses WPF property inheritance from SearchDataGrid.EnableRuleFiltering.&#x0a;To override per-column, you must set it explicitly in XAML - it cannot be changed at runtime.&#x0a;&#x0a;When disabled (or inherited as false):&#x0a;• Only simple text search is available&#x0a;• No advanced filter button shown&#x0a;• Single filter per column&#x0a;&#x0a;Column-level setting overrides grid-level setting when explicitly set." />
+                                    <!--  FilterMemberPath  -->
+                                    <sdg:SimpleStackPanel Orientation="Vertical"
+                                                          IsEnabled="{Binding Converter={StaticResource NullToBooleanConverter}}"
+                                                          Spacing="3">
+                                        <TextBlock Text="Filter Member Path:" FontWeight="Bold" />
+                                        <TextBox Text="{Binding Path=(sdg:GridColumn.FilterMemberPath), UpdateSourceTrigger=PropertyChanged}"
+                                                 ToolTipService.ShowOnDisabled="True"
+                                                 ToolTip="Specifies the property path for retrieving filter values.&#x0a;&#x0a;Resolution priority:&#x0a;1. FilterMemberPath (this property) - explicit override&#x0a;2. SortMemberPath - standard DataGrid column property&#x0a;3. Binding Path - extracted from column binding&#x0a;&#x0a;Use this to filter on a different property than what's displayed.&#x0a;Example: Display 'Department.Name' but filter on 'Department.Id'" />
+                                    </sdg:SimpleStackPanel>
 
-                            <!--  UseCheckBoxInSearchBox  -->
-                            <CheckBox IsEnabled="{Binding Converter={StaticResource NullToBooleanConverter}}"
-                                      IsChecked="{Binding Path=(sdg:GridColumn.UseCheckBoxInSearchBox)}"
-                                      Margin="0,5"
-                                      Content="Use CheckBox In SearchBox"
-                                      ToolTipService.ShowOnDisabled="True"
-                                      ToolTip="Forces checkbox filtering mode in the column's search box.&#x0a;&#x0a;When enabled:&#x0a;• Search box displays a tri-state checkbox instead of text input&#x0a;• Users filter for true, false, or null values&#x0a;• Checkbox cycles through states based on data (with/without nulls)&#x0a;&#x0a;Best for:&#x0a;• Boolean columns (bool, bool?)&#x0a;• Flag-based data&#x0a;• Yes/No fields&#x0a;&#x0a;Note: For DataGridCheckBoxColumn, this is detected automatically." />
+                                    <!--  ColumnDisplayName  -->
+                                    <sdg:SimpleStackPanel Orientation="Vertical"
+                                                          IsEnabled="{Binding Converter={StaticResource NullToBooleanConverter}}"
+                                                          Spacing="3">
+                                        <TextBlock Text="Column Display Name:" FontWeight="Bold" />
+                                        <TextBox Text="{Binding Path=(sdg:GridColumn.ColumnDisplayName), UpdateSourceTrigger=PropertyChanged}"
+                                                 ToolTipService.ShowOnDisabled="True"
+                                                 ToolTip="User-friendly name shown in UI components.&#x0a;&#x0a;Used in:&#x0a;• Column Chooser dialog&#x0a;• Filter Panel tokens&#x0a;• Copy with Headers operations&#x0a;• Context menu operations&#x0a;&#x0a;If not set, text is extracted from the Header property.&#x0a;Supports both simple strings and complex header templates." />
+                                    </sdg:SimpleStackPanel>
 
-                            <!--  DefaultSearchMode  -->
-                            <StackPanel IsEnabled="{Binding Converter={StaticResource NullToBooleanConverter}}" Margin="0,5">
-                                <TextBlock Text="Default Search Mode:"
-                                           Margin="0,0,0,3"
-                                           FontWeight="Bold" />
-                                <ComboBox SelectedItem="{Binding Path=(sdg:GridColumn.DefaultSearchMode)}"
-                                          ToolTipService.ShowOnDisabled="True"
-                                          ToolTip="Determines the search type for simple textbox searches (temporary filters).&#x0a;This only affects typing directly in the search box, not the advanced filter UI.&#x0a;&#x0a;• Contains: Finds matches anywhere (default) - best for general text search&#x0a;• StartsWith: Matches from the beginning - best for IDs, codes, prefixes&#x0a;• EndsWith: Matches at the end - best for suffixes, file extensions&#x0a;• Equals: Exact match only - best for status codes, enum values&#x0a;&#x0a;Example: For a CustomerID column, use StartsWith so users can type '12'&#x0a;to find 'CUST-12345' instead of needing to type the full ID.&#x0a;&#x0a;The advanced filter button still shows all valid search types.">
-                                    <ComboBox.Items>
-                                        <sdg:DefaultSearchMode>Contains</sdg:DefaultSearchMode>
-                                        <sdg:DefaultSearchMode>StartsWith</sdg:DefaultSearchMode>
-                                        <sdg:DefaultSearchMode>EndsWith</sdg:DefaultSearchMode>
-                                        <sdg:DefaultSearchMode>Equals</sdg:DefaultSearchMode>
-                                    </ComboBox.Items>
-                                </ComboBox>
-                            </StackPanel>
+                                </sdg:SimpleStackPanel>
+                            </Expander>
 
-                            <!--  IsSelectAllColumn  -->
-                            <CheckBox IsEnabled="{Binding Converter={StaticResource NullToBooleanConverter}}"
-                                      IsChecked="{Binding Path=(sdg:GridColumn.IsSelectAllColumn)}"
-                                      Margin="0,5"
-                                      Content="Is Select All Column"
-                                      ToolTipService.ShowOnDisabled="True"
-                                      ToolTip="Adds a 'Select All' checkbox to the column header for bulk boolean operations.&#x0a;&#x0a;Requirements:&#x0a;• Column must be boolean type (bool or bool?)&#x0a;• Works with DataGridCheckBoxColumn or boolean-bound columns&#x0a;&#x0a;Checkbox states:&#x0a;• Checked: All non-null values are true&#x0a;• Unchecked: All non-null values are false&#x0a;• Indeterminate: Mixed values (some true, some false)&#x0a;&#x0a;Clicking toggles all non-null values to the opposite state.&#x0a;Null values are always preserved unchanged.&#x0a;&#x0a;Scope of operation is controlled by SelectAllScope property.&#x0a;&#x0a;TIP: Disable column sorting to prevent values from 'disappearing'&#x0a;when they change and the grid reapplies filters/sort." />
+                            <!--  Filtering & Search  -->
+                            <Expander Header="Filtering &amp; Search" IsExpanded="True">
+                                <sdg:SimpleStackPanel Orientation="Vertical"
+                                                      Spacing="6">
 
-                            <!--  SelectAllScope  -->
-                            <StackPanel IsEnabled="{Binding Converter={StaticResource NullToBooleanConverter}}" Margin="0,5">
-                                <StackPanel.Style>
-                                    <Style TargetType="{x:Type StackPanel}">
-                                        <Setter Property="Visibility" Value="Collapsed" />
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding Path=(sdg:GridColumn.IsSelectAllColumn)}" Value="True">
+                                    <!--  EnableRuleFiltering (column-level, readonly)  -->
+                                    <CheckBox IsEnabled="False"
+                                              IsChecked="{Binding Path=(sdg:GridColumn.EnableRuleFiltering)}"
+                                              Content="Enable Rule Filtering"
+                                              ToolTipService.ShowOnDisabled="True"
+                                              ToolTip="Enables complex filtering UI for this column (advanced filter button and rules editor).&#x0a;&#x0a;IMPORTANT: This property uses WPF property inheritance from SearchDataGrid.EnableRuleFiltering.&#x0a;To override per-column, you must set it explicitly in XAML - it cannot be changed at runtime.&#x0a;&#x0a;When disabled (or inherited as false):&#x0a;• Only simple text search is available&#x0a;• No advanced filter button shown&#x0a;• Single filter per column&#x0a;&#x0a;Column-level setting overrides grid-level setting when explicitly set." />
+
+                                    <!--  UseCheckBoxInSearchBox  -->
+                                    <CheckBox IsEnabled="{Binding Converter={StaticResource NullToBooleanConverter}}"
+                                              IsChecked="{Binding Path=(sdg:GridColumn.UseCheckBoxInSearchBox)}"
+                                              Content="Use CheckBox In SearchBox"
+                                              ToolTipService.ShowOnDisabled="True"
+                                              ToolTip="Forces checkbox filtering mode in the column's search box.&#x0a;&#x0a;When enabled:&#x0a;• Search box displays a tri-state checkbox instead of text input&#x0a;• Users filter for true, false, or null values&#x0a;• Checkbox cycles through states based on data (with/without nulls)&#x0a;&#x0a;Best for:&#x0a;• Boolean columns (bool, bool?)&#x0a;• Flag-based data&#x0a;• Yes/No fields&#x0a;&#x0a;Note: For DataGridCheckBoxColumn, this is detected automatically." />
+
+                                    <!--  DefaultSearchMode  -->
+                                    <sdg:SimpleStackPanel Orientation="Vertical"
+                                                          IsEnabled="{Binding Converter={StaticResource NullToBooleanConverter}}"
+                                                          Spacing="3">
+                                        <TextBlock Text="Default Search Mode:" FontWeight="Bold" />
+                                        <ComboBox SelectedItem="{Binding Path=(sdg:GridColumn.DefaultSearchMode)}"
+                                                  ToolTipService.ShowOnDisabled="True"
+                                                  ToolTip="Determines the search type for simple textbox searches (temporary filters).&#x0a;This only affects typing directly in the search box, not the advanced filter UI.&#x0a;&#x0a;• Contains: Finds matches anywhere (default) - best for general text search&#x0a;• StartsWith: Matches from the beginning - best for IDs, codes, prefixes&#x0a;• EndsWith: Matches at the end - best for suffixes, file extensions&#x0a;• Equals: Exact match only - best for status codes, enum values&#x0a;&#x0a;Example: For a CustomerID column, use StartsWith so users can type '12'&#x0a;to find 'CUST-12345' instead of needing to type the full ID.&#x0a;&#x0a;The advanced filter button still shows all valid search types.">
+                                            <ComboBox.Items>
+                                                <sdg:DefaultSearchMode>Contains</sdg:DefaultSearchMode>
+                                                <sdg:DefaultSearchMode>StartsWith</sdg:DefaultSearchMode>
+                                                <sdg:DefaultSearchMode>EndsWith</sdg:DefaultSearchMode>
+                                                <sdg:DefaultSearchMode>Equals</sdg:DefaultSearchMode>
+                                            </ComboBox.Items>
+                                        </ComboBox>
+                                    </sdg:SimpleStackPanel>
+
+                                </sdg:SimpleStackPanel>
+                            </Expander>
+
+                            <!--  Select All Column  -->
+                            <Expander Header="Select All Column" IsExpanded="True">
+                                <sdg:SimpleStackPanel Orientation="Vertical"
+                                                      Spacing="6">
+
+                                    <!--  IsSelectAllColumn  -->
+                                    <CheckBox IsEnabled="{Binding Converter={StaticResource NullToBooleanConverter}}"
+                                              IsChecked="{Binding Path=(sdg:GridColumn.IsSelectAllColumn)}"
+                                              Content="Is Select All Column"
+                                              ToolTipService.ShowOnDisabled="True"
+                                              ToolTip="Adds a 'Select All' checkbox to the column header for bulk boolean operations.&#x0a;&#x0a;Requirements:&#x0a;• Column must be boolean type (bool or bool?)&#x0a;• Works with DataGridCheckBoxColumn or boolean-bound columns&#x0a;&#x0a;Checkbox states:&#x0a;• Checked: All non-null values are true&#x0a;• Unchecked: All non-null values are false&#x0a;• Indeterminate: Mixed values (some true, some false)&#x0a;&#x0a;Clicking toggles all non-null values to the opposite state.&#x0a;Null values are always preserved unchanged.&#x0a;&#x0a;Scope of operation is controlled by SelectAllScope property.&#x0a;&#x0a;TIP: Disable column sorting to prevent values from 'disappearing'&#x0a;when they change and the grid reapplies filters/sort." />
+
+                                    <!--  SelectAllScope  -->
+                                    <sdg:SimpleStackPanel Orientation="Vertical"
+                                                          IsEnabled="{Binding Converter={StaticResource NullToBooleanConverter}}"
+                                                          Spacing="3">
+                                        <sdg:SimpleStackPanel.Style>
+                                            <Style TargetType="{x:Type sdg:SimpleStackPanel}">
                                                 <Setter Property="Visibility" Value="Collapsed" />
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </StackPanel.Style>
-                                <TextBlock Text="Select All Scope:"
-                                           Margin="0,0,0,3"
-                                           FontWeight="Bold" />
-                                <ComboBox SelectedItem="{Binding Path=(sdg:GridColumn.SelectAllScope)}"
-                                          ToolTipService.ShowOnDisabled="True"
-                                          ToolTip="Determines which rows are affected by the select-all checkbox.&#x0a;&#x0a;• FilteredRows (default): Only visible rows after filtering&#x0a;  - Respects active column filters&#x0a;  - Safe choice that matches user expectations&#x0a;&#x0a;• SelectedRows: Only currently selected rows/cells&#x0a;  - Shows affected row count in header: e.g., '(5)'&#x0a;  - Useful for bulk operations on selections&#x0a;  - Works with both row and cell selection modes&#x0a;&#x0a;• AllItems: All rows in ItemsSource regardless of filters&#x0a;  - Operates on complete dataset&#x0a;  - Use with caution as it affects hidden rows&#x0a;  - Good for global enable/disable flags&#x0a;&#x0a;Example: Use SelectedRows when you want users to select specific&#x0a;rows first, then bulk-toggle them with the checkbox.">
-                                    <ComboBox.Items>
-                                        <sdg:SelectAllScope>FilteredRows</sdg:SelectAllScope>
-                                        <sdg:SelectAllScope>SelectedRows</sdg:SelectAllScope>
-                                        <sdg:SelectAllScope>AllItems</sdg:SelectAllScope>
-                                    </ComboBox.Items>
-                                </ComboBox>
-                            </StackPanel>
-                        </StackPanel>
-                    </GroupBox>
-                </StackPanel>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Path=(sdg:GridColumn.IsSelectAllColumn)}" Value="True">
+                                                        <Setter Property="Visibility" Value="Visible" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </sdg:SimpleStackPanel.Style>
+
+                                        <TextBlock Text="Select All Scope:" FontWeight="Bold" />
+                                        <ComboBox SelectedItem="{Binding Path=(sdg:GridColumn.SelectAllScope)}"
+                                                  ToolTipService.ShowOnDisabled="True"
+                                                  ToolTip="Determines which rows are affected by the select-all checkbox.&#x0a;&#x0a;• FilteredRows (default): Only visible rows after filtering&#x0a;  - Respects active column filters&#x0a;  - Safe choice that matches user expectations&#x0a;&#x0a;• SelectedRows: Only currently selected rows/cells&#x0a;  - Shows affected row count in header: e.g., '(5)'&#x0a;  - Useful for bulk operations on selections&#x0a;  - Works with both row and cell selection modes&#x0a;&#x0a;• AllItems: All rows in ItemsSource regardless of filters&#x0a;  - Operates on complete dataset&#x0a;  - Use with caution as it affects hidden rows&#x0a;  - Good for global enable/disable flags&#x0a;&#x0a;Example: Use SelectedRows when you want users to select specific&#x0a;rows first, then bulk-toggle them with the checkbox.">
+                                            <ComboBox.Items>
+                                                <sdg:SelectAllScope>FilteredRows</sdg:SelectAllScope>
+                                                <sdg:SelectAllScope>SelectedRows</sdg:SelectAllScope>
+                                                <sdg:SelectAllScope>AllItems</sdg:SelectAllScope>
+                                            </ComboBox.Items>
+                                        </ComboBox>
+                                    </sdg:SimpleStackPanel>
+                                </sdg:SimpleStackPanel>
+                            </Expander>
+
+                        </sdg:SimpleStackPanel>
+                    </Expander>
+                </sdg:SimpleStackPanel>
             </ScrollViewer>
+
         </Grid>
     </DockPanel>
 </Window>
