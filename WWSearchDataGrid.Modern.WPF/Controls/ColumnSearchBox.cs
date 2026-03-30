@@ -45,7 +45,7 @@ namespace WWSearchDataGrid.Modern.WPF
     {
         #region Fields
 
-        private TextBox searchTextBox;
+        private SearchTextBox searchTextBox;
         private CheckBox filterCheckBox;
         private Popup _filterPopup;
         private ColumnFilterEditor _filterContent;
@@ -83,11 +83,15 @@ namespace WWSearchDataGrid.Modern.WPF
 
         public static readonly DependencyProperty IsCheckboxColumnProperty =
             DependencyProperty.Register("IsCheckboxColumn", typeof(bool), typeof(ColumnSearchBox),
-                new PropertyMetadata(false));
+                new PropertyMetadata(false, OnIsCheckboxColumnChanged));
 
         public static readonly DependencyProperty HasActiveFilterProperty =
             DependencyProperty.Register("HasActiveFilter", typeof(bool), typeof(ColumnSearchBox),
                 new PropertyMetadata(false));
+
+        public static readonly DependencyProperty IsComplexFilteringEnabledProperty =
+            DependencyProperty.Register("IsComplexFilteringEnabled", typeof(bool), typeof(ColumnSearchBox),
+                new PropertyMetadata(true));
 
         #endregion
         
@@ -146,26 +150,13 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
-        /// Gets whether complex filtering is actually enabled for this column,
+        /// Gets or sets whether complex filtering is actually enabled for this column,
         /// taking into account both grid-level and column-level settings.
         /// </summary>
         public bool IsComplexFilteringEnabled
         {
-            get
-            {
-                // Grid-level setting takes precedence
-                if (SourceDataGrid != null && !SourceDataGrid.EnableRuleFiltering)
-                    return false;
-
-                // If grid allows it, check column-level setting from GridColumn attached property
-                if (CurrentColumn != null)
-                {
-                    return GridColumn.GetEnableRuleFiltering(CurrentColumn);
-                }
-
-                // Default to true if no column is set
-                return true;
-            }
+            get => (bool)GetValue(IsComplexFilteringEnabledProperty);
+            private set => SetValue(IsComplexFilteringEnabledProperty, value);
         }
 
         /// <summary>
@@ -233,7 +224,7 @@ namespace WWSearchDataGrid.Modern.WPF
         {
             base.OnApplyTemplate();
             
-            searchTextBox = GetTemplateChild("PART_SearchTextBox") as TextBox;
+            searchTextBox = GetTemplateChild("PART_SearchTextBox") as SearchTextBox;
             if (searchTextBox != null)
             {
                 searchTextBox.TextChanged += OnSearchTextBoxTextChanged;
@@ -253,7 +244,11 @@ namespace WWSearchDataGrid.Modern.WPF
 
         #region Event Handlers
 
-        private void OnControlLoaded(object sender, RoutedEventArgs e) => InitializeSearchTemplateController();
+        private void OnControlLoaded(object sender, RoutedEventArgs e)
+        {
+            InitializeSearchTemplateController();
+            UpdateIsComplexFilteringEnabled();
+        }
 
         private void OnControlUnloaded(object sender, RoutedEventArgs e)
         {
@@ -324,8 +319,9 @@ namespace WWSearchDataGrid.Modern.WPF
             {
                 control.SourceDataGrid.ItemsSourceChanged += control.OnSourceDataGridItemsSourceChanged;
             }
-            
+
             control.InitializeSearchTemplateController();
+            control.UpdateIsComplexFilteringEnabled();
         }
 
 
@@ -372,6 +368,7 @@ namespace WWSearchDataGrid.Modern.WPF
             if (d is ColumnSearchBox control && e.NewValue is DataGridColumn column)
             {
                 control.InitializeSearchTemplateController();
+                control.UpdateIsComplexFilteringEnabled();
             }
         }
 
@@ -380,6 +377,20 @@ namespace WWSearchDataGrid.Modern.WPF
             if (d is ColumnSearchBox control)
             {
                 control.OnCheckboxFilterChanged();
+            }
+        }
+
+        private static void OnIsCheckboxColumnChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            if (d is ColumnSearchBox control)
+            {
+                // Force template to refresh by re-applying it
+                control.Dispatcher.BeginInvoke(new Action(() =>
+                {
+                    var template = control.Template;
+                    control.Template = null;
+                    control.Template = template;
+                }), System.Windows.Threading.DispatcherPriority.Loaded);
             }
         }
 
@@ -667,7 +678,7 @@ namespace WWSearchDataGrid.Modern.WPF
                 if (!hasFilter)
                 {
                     hasFilter = SearchTemplateController.HasCustomExpression;
-                    
+
                     // Only consider SearchText if we have a temporary template that exists
                     if (!hasFilter && _temporarySearchTemplate != null)
                     {
@@ -677,6 +688,45 @@ namespace WWSearchDataGrid.Modern.WPF
             }
 
             HasActiveFilter = hasFilter;
+        }
+
+        /// <summary>
+        /// Updates the IsComplexFilteringEnabled property based on grid and column settings.
+        /// Column-level explicit setting takes precedence over grid-level setting to allow per-column overrides.
+        /// Uses ReadLocalValue to distinguish explicit column values from inherited grid values.
+        /// </summary>
+        internal void UpdateIsComplexFilteringEnabled()
+        {
+            bool isEnabled = true;
+
+            if (CurrentColumn != null)
+            {
+                // Check if the column has an explicitly set local value (not inherited)
+                var localValue = CurrentColumn.ReadLocalValue(GridColumn.EnableRuleFilteringProperty);
+
+                if (localValue != DependencyProperty.UnsetValue)
+                {
+                    // Column has an explicit value set - use it (this is the override)
+                    isEnabled = (bool)localValue;
+                }
+                else if (SourceDataGrid != null)
+                {
+                    // Column is using inherited value - use grid-level setting
+                    isEnabled = SourceDataGrid.EnableRuleFiltering;
+                }
+                else
+                {
+                    // No grid and no explicit column value - use default
+                    isEnabled = GridColumn.GetEnableRuleFiltering(CurrentColumn);
+                }
+            }
+            else if (SourceDataGrid != null)
+            {
+                // No column set - fall back to grid-level setting
+                isEnabled = SourceDataGrid.EnableRuleFiltering;
+            }
+
+            IsComplexFilteringEnabled = isEnabled;
         }
 
         /// <summary>
@@ -1046,7 +1096,7 @@ namespace WWSearchDataGrid.Modern.WPF
         /// <summary>
         /// Determines if checkbox filtering should be used based on GridColumn.UseCheckBoxInSearchBox property
         /// </summary>
-        private void DetermineCheckboxColumnTypeFromColumnDefinition()
+        internal void DetermineCheckboxColumnTypeFromColumnDefinition()
         {
             try
             {

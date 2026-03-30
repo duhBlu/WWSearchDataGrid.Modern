@@ -147,7 +147,18 @@
                     <MenuItem x:Name="miShowColumnChooser"
                               Header="Show Column Chooser"
                               Command="{x:Static commands:ContextMenuCommands.ShowColumnChooserCommand}"
-                              CommandParameter="{Binding Grid}" />
+                              CommandParameter="{Binding Grid}">
+                        <MenuItem.Style>
+                            <Style TargetType="MenuItem">
+                                <Setter Property="Visibility" Value="Visible" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Grid.IsColumnChooserEnabled}" Value="False">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </MenuItem.Style>
+                    </MenuItem>
                     <MenuItem x:Name="miHideColumn"
                               Header="Hide Column"
                               Command="{x:Static commands:ContextMenuCommands.HideSelectedColumnCommand}"
@@ -384,7 +395,18 @@
                     <MenuItem x:Name="miShowColumnChooser"
                               Header="Show Column Chooser"
                               Command="{x:Static commands:ContextMenuCommands.ShowColumnChooserCommand}"
-                              CommandParameter="{Binding Grid}" />
+                              CommandParameter="{Binding Grid}">
+                        <MenuItem.Style>
+                            <Style TargetType="MenuItem">
+                                <Setter Property="Visibility" Value="Visible" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Grid.IsColumnChooserEnabled}" Value="False">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </MenuItem.Style>
+                    </MenuItem>
                     <MenuItem x:Name="miResetLayout"
                               Header="Reset Layout (Not Implemented)"
                               Command="{x:Static commands:ContextMenuCommands.ResetLayoutCommand}"

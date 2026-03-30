@@ -1,4 +1,5 @@
 using System;
+using System.ComponentModel;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
@@ -7,6 +8,37 @@ using WWSearchDataGrid.Modern.Core;
 
 namespace WWSearchDataGrid.Modern.WPF
 {
+    /// <summary>
+    /// Event arguments for the ColumnDisplayNameChanged event.
+    /// </summary>
+    public class ColumnDisplayNameChangedEventArgs : EventArgs
+    {
+        /// <summary>
+        /// Gets the column whose display name changed.
+        /// </summary>
+        public DataGridColumn Column { get; }
+
+        /// <summary>
+        /// Gets the old display name value.
+        /// </summary>
+        public string OldValue { get; }
+
+        /// <summary>
+        /// Gets the new display name value.
+        /// </summary>
+        public string NewValue { get; }
+
+        /// <summary>
+        /// Initializes a new instance of the ColumnDisplayNameChangedEventArgs class.
+        /// </summary>
+        public ColumnDisplayNameChangedEventArgs(DataGridColumn column, string oldValue, string newValue)
+        {
+            Column = column;
+            OldValue = oldValue;
+            NewValue = newValue;
+        }
+    }
+
     /// <summary>
     /// Specifies the default search mode for simple textbox searches in column filters.
     /// This enum provides a safe subset of SearchType values appropriate for temporary search templates.
@@ -80,7 +112,7 @@ namespace WWSearchDataGrid.Modern.WPF
                 "EnableRuleFiltering",
                 typeof(bool),
                 typeof(GridColumn),
-                new FrameworkPropertyMetadata(true, FrameworkPropertyMetadataOptions.Inherits));
+                new FrameworkPropertyMetadata(true, FrameworkPropertyMetadataOptions.Inherits, OnEnableRuleFilteringChanged));
 
         /// <summary>
         /// Gets the value indicating whether complex filtering is enabled for the specified column.
@@ -175,7 +207,7 @@ namespace WWSearchDataGrid.Modern.WPF
                 "UseCheckBoxInSearchBox",
                 typeof(bool),
                 typeof(GridColumn),
-                new PropertyMetadata(false));
+                new PropertyMetadata(false, OnUseCheckBoxInSearchBoxChanged));
 
         /// <summary>
         /// Gets the value indicating whether checkbox filtering should be used in the search box for the specified column.
@@ -263,6 +295,12 @@ namespace WWSearchDataGrid.Modern.WPF
         #region ColumnDisplayName Attached Property
 
         /// <summary>
+        /// Event raised when the ColumnDisplayName attached property changes on any column.
+        /// This allows external controls to subscribe and refresh their UI when column display names change.
+        /// </summary>
+        public static event EventHandler<ColumnDisplayNameChangedEventArgs> ColumnDisplayNameChanged;
+
+        /// <summary>
         /// Specifies the display name shown in Column Chooser, Filter Panel, and other UI components.
         ///
         /// When not explicitly set, falls back to extracting text from the column's Header property.
@@ -274,7 +312,7 @@ namespace WWSearchDataGrid.Modern.WPF
                 "ColumnDisplayName",
                 typeof(string),
                 typeof(GridColumn),
-                new FrameworkPropertyMetadata(null));
+                new FrameworkPropertyMetadata(null, OnColumnDisplayNameChanged));
 
         /// <summary>
         /// Gets the explicit column display name for the specified column.
@@ -404,7 +442,7 @@ namespace WWSearchDataGrid.Modern.WPF
                 "IsSelectAllColumn",
                 typeof(bool),
                 typeof(GridColumn),
-                new FrameworkPropertyMetadata(false, FrameworkPropertyMetadataOptions.Inherits));
+                new FrameworkPropertyMetadata(false, FrameworkPropertyMetadataOptions.Inherits, OnIsSelectAllColumnChanged));
 
         /// <summary>
         /// Gets the value indicating whether select-all functionality is enabled for the specified column.
@@ -464,7 +502,7 @@ namespace WWSearchDataGrid.Modern.WPF
                 "SelectAllScope",
                 typeof(SelectAllScope),
                 typeof(GridColumn),
-                new FrameworkPropertyMetadata(SelectAllScope.AllItems, FrameworkPropertyMetadataOptions.Inherits));
+                new FrameworkPropertyMetadata(SelectAllScope.AllItems, FrameworkPropertyMetadataOptions.Inherits, OnSelectAllScopeChanged));
 
         /// <summary>
         /// Gets the select-all scope for the specified column.
@@ -495,6 +533,164 @@ namespace WWSearchDataGrid.Modern.WPF
         #endregion
 
        #region Helper Methods
+
+        /// <summary>
+        /// Handles changes to the ColumnDisplayName attached property
+        /// </summary>
+        private static void OnColumnDisplayNameChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            if (d is DataGridColumn column)
+            {
+                // Find the SearchDataGrid that owns this column
+                var grid = FindSearchDataGridForColumn(column);
+                if (grid != null)
+                {
+                    column.Dispatcher.BeginInvoke(new Action(() =>
+                    {
+                        //  Update the filter panel to reflect the new display name
+                        grid.UpdateFilterPanel();
+
+                        // Update the ColumnSearchBox's SearchTemplateController.ColumnName
+                        var columnSearchBox = grid.DataColumns.FirstOrDefault(c => c.CurrentColumn == column);
+                        if (columnSearchBox?.SearchTemplateController != null)
+                        {
+                            columnSearchBox.SearchTemplateController.ColumnName = GetEffectiveColumnDisplayName(column);
+                        }
+
+                        // Force refresh of any ItemsControl (like ListBox) that displays the columns collection
+                        // by invalidating the binding on the DataGrid's Columns collection
+                        if (grid.Columns != null)
+                        {
+                            var collectionView = CollectionViewSource.GetDefaultView(grid.Columns);
+                            collectionView?.Refresh();
+                        }
+                    }), System.Windows.Threading.DispatcherPriority.DataBind);
+                }
+
+                // Raise the static event to notify external subscribers (optional, for advanced scenarios)
+                ColumnDisplayNameChanged?.Invoke(null, new ColumnDisplayNameChangedEventArgs(
+                    column,
+                    e.OldValue as string,
+                    e.NewValue as string));
+            }
+        }
+
+        /// <summary>
+        /// Handles changes to the EnableRuleFiltering attached property
+        /// </summary>
+        private static void OnEnableRuleFilteringChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            if (d is DataGridColumn column)
+            {
+                // Find the SearchDataGrid that owns this column
+                var grid = FindSearchDataGridForColumn(column);
+                if (grid != null)
+                {
+                    // Find the ColumnSearchBox associated with this column
+                    var columnSearchBox = grid.DataColumns.FirstOrDefault(c => c.CurrentColumn == column);
+                    if (columnSearchBox != null)
+                    {
+                        // Update the IsComplexFilteringEnabled property which will trigger binding updates
+                        columnSearchBox.UpdateIsComplexFilteringEnabled();
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Handles changes to the IsSelectAllColumn attached property
+        /// </summary>
+        private static void OnIsSelectAllColumnChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            if (d is DataGridColumn column)
+            {
+                // Find the SearchDataGrid that owns this column
+                var grid = FindSearchDataGridForColumn(column);
+                if (grid != null)
+                {
+                    // Trigger a refresh of select-all column headers to show/hide the checkbox
+                    grid.Dispatcher.BeginInvoke(new Action(() =>
+                    {
+                        grid.SetupSelectAllColumnHeaders();
+                    }), System.Windows.Threading.DispatcherPriority.Loaded);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Handles changes to the SelectAllScope attached property
+        /// </summary>
+        private static void OnSelectAllScopeChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            if (d is DataGridColumn column)
+            {
+                // Find the SearchDataGrid that owns this column
+                var grid = FindSearchDataGridForColumn(column);
+                if (grid != null)
+                {
+                    // Trigger a refresh of select-all column headers to update row count visibility
+                    grid.Dispatcher.BeginInvoke(new Action(() =>
+                    {
+                        grid.SetupSelectAllColumnHeaders();
+                    }), System.Windows.Threading.DispatcherPriority.Loaded);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Handles changes to the UseCheckBoxInSearchBox attached property
+        /// </summary>
+        private static void OnUseCheckBoxInSearchBoxChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            if (d is DataGridColumn column)
+            {
+                // Find the SearchDataGrid that owns this column
+                var grid = FindSearchDataGridForColumn(column);
+                if (grid != null)
+                {
+                    // Find the ColumnSearchBox associated with this column
+                    var columnSearchBox = grid.DataColumns.FirstOrDefault(c => c.CurrentColumn == column);
+                    if (columnSearchBox != null)
+                    {
+                        // Re-determine the checkbox column type based on the new setting
+                        columnSearchBox.Dispatcher.BeginInvoke(new Action(() =>
+                        {
+                            columnSearchBox.DetermineCheckboxColumnTypeFromColumnDefinition();
+                        }), System.Windows.Threading.DispatcherPriority.DataBind);
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Finds the SearchDataGrid that owns the specified column using reflection.
+        /// DataGridColumn is not part of the visual tree, so we must use reflection to access DataGridOwner.
+        /// </summary>
+        private static SearchDataGrid FindSearchDataGridForColumn(DataGridColumn column)
+        {
+            try
+            {
+                if (column == null)
+                    return null;
+
+                // The DataGrid that owns the column is accessed via the internal DataGridOwner property
+                // We'll use reflection to access it since it's protected
+                var dataGridProperty = typeof(DataGridColumn).GetProperty("DataGridOwner",
+                    System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+
+                if (dataGridProperty != null)
+                {
+                    var dataGrid = dataGridProperty.GetValue(column) as DataGrid;
+                    return dataGrid as SearchDataGrid;
+                }
+
+                return null;
+            }
+            catch
+            {
+                return null;
+            }
+        }
 
         /// <summary>
         /// Gets the effective display name for a column, using fallback logic.

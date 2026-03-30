@@ -48,6 +48,9 @@ namespace WWSearchDataGrid.Modern.WPF
         private readonly Dictionary<DataGridColumn, DataGridLength> _originalColumnWidths = new Dictionary<DataGridColumn, DataGridLength>();
         private ScrollViewer _scrollViewer;
 
+        // Column Chooser support
+        private ColumnChooser _columnChooser;
+
         #endregion
 
         #region Dependency Properties
@@ -65,7 +68,7 @@ namespace WWSearchDataGrid.Modern.WPF
         /// </summary>
         public static readonly DependencyProperty EnableRuleFilteringProperty =
             DependencyProperty.Register("EnableRuleFiltering", typeof(bool), typeof(SearchDataGrid),
-                new FrameworkPropertyMetadata(false, FrameworkPropertyMetadataOptions.Inherits));
+                new FrameworkPropertyMetadata(false, FrameworkPropertyMetadataOptions.Inherits, OnEnableRuleFilteringChanged));
 
         /// <summary>
         /// Dependency property for AutoSizeColumns
@@ -73,6 +76,27 @@ namespace WWSearchDataGrid.Modern.WPF
         public static readonly DependencyProperty AutoSizeColumnsProperty =
             DependencyProperty.Register("AutoSizeColumns", typeof(bool), typeof(SearchDataGrid),
                 new PropertyMetadata(false, OnAutoSizeColumnsChanged));
+
+        /// <summary>
+        /// Dependency property for IsColumnChooserVisible
+        /// </summary>
+        public static readonly DependencyProperty IsColumnChooserVisibleProperty =
+            DependencyProperty.Register("IsColumnChooserVisible", typeof(bool), typeof(SearchDataGrid),
+                new PropertyMetadata(false, OnIsColumnChooserVisibleChanged));
+
+        /// <summary>
+        /// Dependency property for IsColumnChooserEnabled
+        /// </summary>
+        public static readonly DependencyProperty IsColumnChooserEnabledProperty =
+            DependencyProperty.Register("IsColumnChooserEnabled", typeof(bool), typeof(SearchDataGrid),
+                new PropertyMetadata(false, OnIsColumnChooserEnabledChanged));
+
+        /// <summary>
+        /// Dependency property for IsColumnChooserConfinedToGrid
+        /// </summary>
+        public static readonly DependencyProperty IsColumnChooserConfinedToGridProperty =
+            DependencyProperty.Register("IsColumnChooserConfinedToGrid", typeof(bool), typeof(SearchDataGrid),
+                new PropertyMetadata(false, OnIsColumnChooserConfinedToGridChanged));
 
         #endregion
 
@@ -135,6 +159,40 @@ namespace WWSearchDataGrid.Modern.WPF
         {
             get { return (bool)GetValue(AutoSizeColumnsProperty); }
             set { SetValue(AutoSizeColumnsProperty, value); }
+        }
+
+        /// <summary>
+        /// Gets or sets whether the Column Chooser window is visible.
+        /// When set to true, displays a non-modal window allowing users to show/hide columns.
+        /// This property is overridden by IsColumnChooserEnabled - if IsColumnChooserEnabled is false,
+        /// the column chooser cannot be shown.
+        /// </summary>
+        public bool IsColumnChooserVisible
+        {
+            get { return (bool)GetValue(IsColumnChooserVisibleProperty); }
+            set { SetValue(IsColumnChooserVisibleProperty, value); }
+        }
+
+        /// <summary>
+        /// Gets or sets whether the Column Chooser feature is enabled.
+        /// When set to false, hides Column Chooser menu items from context menus and prevents
+        /// the column chooser from being shown. Default is true.
+        /// </summary>
+        public bool IsColumnChooserEnabled
+        {
+            get { return (bool)GetValue(IsColumnChooserEnabledProperty); }
+            set { SetValue(IsColumnChooserEnabledProperty, value); }
+        }
+
+        /// <summary>
+        /// Gets or sets whether the Column Chooser window is confined to the grid's viewport bounds.
+        /// When set to true, the Column Chooser window cannot be dragged outside the grid's visible area.
+        /// When set to false, the window can be moved freely. Default is false.
+        /// </summary>
+        public bool IsColumnChooserConfinedToGrid
+        {
+            get { return (bool)GetValue(IsColumnChooserConfinedToGridProperty); }
+            set { SetValue(IsColumnChooserConfinedToGridProperty, value); }
         }
 
         /// <summary>
@@ -266,7 +324,7 @@ namespace WWSearchDataGrid.Modern.WPF
         /// <summary>
         /// Sets up select-all checkboxes in column headers
         /// </summary>
-        private void SetupSelectAllColumnHeaders()
+        internal void SetupSelectAllColumnHeaders()
         {
             try
             {
@@ -688,6 +746,61 @@ namespace WWSearchDataGrid.Modern.WPF
                 {
                     grid.DisableAutoSizeColumns();
                 }
+            }
+        }
+
+        private static void OnIsColumnChooserVisibleChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            if (d is SearchDataGrid grid)
+            {
+                bool isVisible = (bool)e.NewValue;
+
+                if (isVisible)
+                {
+                    grid.ShowColumnChooser();
+                }
+                else
+                {
+                    grid.HideColumnChooser();
+                }
+            }
+        }
+
+        private static void OnIsColumnChooserEnabledChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            if (d is SearchDataGrid grid)
+            {
+                bool isEnabled = (bool)e.NewValue;
+
+                // If disabled, hide the column chooser if it's currently visible
+                if (!isEnabled && grid.IsColumnChooserVisible)
+                {
+                    grid.IsColumnChooserVisible = false;
+                }
+            }
+        }
+
+        private static void OnIsColumnChooserConfinedToGridChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            if (d is SearchDataGrid grid)
+            {
+                bool isConfined = (bool)e.NewValue;
+
+                // Update the existing column chooser if it exists
+                if (grid._columnChooser != null)
+                {
+                    grid._columnChooser.IsConfinedToGrid = isConfined;
+                }
+            }
+        }
+
+        private static void OnEnableRuleFilteringChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            if (d is SearchDataGrid grid)
+            {
+                // Notify all column search boxes to update their visual state
+                // This ensures the filter UI reflects the new EnableRuleFiltering setting
+                grid.RefreshColumnFilterStates();
             }
         }
 
@@ -1489,6 +1602,37 @@ namespace WWSearchDataGrid.Modern.WPF
             {
                 var activeFilters = GetActiveColumnFilters();
                 FilterPanel.UpdateActiveFilters(activeFilters);
+            }
+        }
+
+        /// <summary>
+        /// Refreshes the filter state for all column search boxes when grid-level EnableRuleFiltering changes.
+        /// Only updates columns that don't have explicit EnableRuleFiltering values set.
+        /// </summary>
+        private void RefreshColumnFilterStates()
+        {
+            try
+            {
+                // Only update columns that are inheriting the grid value (not explicitly set)
+                foreach (var columnSearchBox in DataColumns)
+                {
+                    if (columnSearchBox != null && columnSearchBox.CurrentColumn != null)
+                    {
+                        // Check if the column has an explicitly set local value
+                        var localValue = columnSearchBox.CurrentColumn.ReadLocalValue(GridColumn.EnableRuleFilteringProperty);
+
+                        if (localValue == DependencyProperty.UnsetValue)
+                        {
+                            // Column is inheriting - update it to reflect the new grid value
+                            columnSearchBox.UpdateIsComplexFilteringEnabled();
+                        }
+                        // If column has explicit value, don't update it (it overrides the grid setting)
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error in RefreshColumnFilterStates: {ex.Message}");
             }
         }
 
@@ -2366,6 +2510,61 @@ namespace WWSearchDataGrid.Modern.WPF
             catch (Exception ex)
             {
                 Debug.WriteLine($"Error disabling auto-size columns: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Shows the Column Chooser window
+        /// </summary>
+        private void ShowColumnChooser()
+        {
+            try
+            {
+                // Don't show if the feature is disabled
+                if (!IsColumnChooserEnabled)
+                {
+                    IsColumnChooserVisible = false;
+                    return;
+                }
+
+                // Create the ColumnChooser instance if it doesn't exist
+                if (_columnChooser == null)
+                {
+                    _columnChooser = new ColumnChooser
+                    {
+                        SourceDataGrid = this,
+                        IsConfinedToGrid = IsColumnChooserConfinedToGrid
+                    };
+
+                    // When the column chooser window closes, update the property
+                    _columnChooser.Unloaded += (s, e) =>
+                    {
+                        IsColumnChooserVisible = false;
+                    };
+                }
+
+                // Show the non-modal window
+                _columnChooser.Show();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error showing column chooser: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Hides the Column Chooser window
+        /// </summary>
+        private void HideColumnChooser()
+        {
+            try
+            {
+                _columnChooser?.Close();
+                _columnChooser = null;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error hiding column chooser: {ex.Message}");
             }
         }
 
