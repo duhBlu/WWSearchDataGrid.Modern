@@ -1,4 +1,6 @@
-﻿# WWSearchDataGrid.Modern - Project Structure & Agent Navigation Guide
+﻿# WWSearchDataGrid.Modern - Agent Navigation Guide
+
+> **Human developers**: See [README.md](README.md) for getting started, [docs/getting-started.md](docs/getting-started.md) for usage guides, and [docs/api-reference.md](docs/api-reference.md) for the public API. This document is for AI code assistants.
 
 ## Overview
 WWSearchDataGrid.Modern is a comprehensive WPF data grid library with advanced search and filtering capabilities. This document provides a complete guide for AI agents to efficiently navigate and understand the codebase without reading the entire project.
@@ -57,31 +59,26 @@ TopN, BottomN, AboveAverage, BelowAverage, Unique, Duplicate
 
 ### 📁 **Project Structure** (WPF Best Practices)
 
-#### `/Controls/` - Custom Controls (Code-Only)
+#### `/Controls/` - Custom Controls (Code-Only, Partial Classes)
 **⚠️ NO XAML FILES - Only .cs files**
 
-- **`SearchDataGrid.cs`** - Main control extending DataGrid
-  - **Features**: Per-column filtering, global filtering, filter panel integration
-  - **Key Properties**: `FilteringMode`, `FilterPanel`, `OriginalItemsSource`
-  - **Key Methods**: `ApplyFilters()`, `UpdateFilterPanel()`, `GetActiveColumnFilters()`
+- **`SearchDataGrid.cs`** - Main control extending DataGrid (partial class, split into 5 files)
+  - `SearchDataGrid.cs` - Fields, DPs, properties, events, constructor, OnApplyTemplate, overrides, collection handlers
+  - `SearchDataGridFiltering.cs` - FilterItemsSource, expression evaluation, collection context, FilterPanel handlers
+  - `SearchDataGridSelectAll.cs` - Select-all checkbox logic, header setup, toggle/sync
+  - `SearchDataGridEditing.cs` - BeginningEdit/EndEdit handlers, cell value change detection
+  - `SearchDataGridAutoSize.cs` - Column auto-sizing, scroll handling, ColumnChooser show/hide
 
-- **`ColumnSearchBox.cs`** - Individual column filter control
-  - **Features**: Simple text search, advanced filter dialog
-  - **Key Properties**: `SearchText`, `CurrentColumn`, `SourceDataGrid`
-  - **Manages**: SearchTemplateController instances per column
+- **`ColumnSearchBox.cs`** - Individual column filter control (partial class, split into 3 files)
+  - `ColumnSearchBox.cs` - Fields, DPs, properties, constructors, event handlers, initialization
+  - `ColumnSearchBoxCheckbox.cs` - Checkbox cycling, filter application, column type detection
+  - `ColumnSearchBoxTextFilter.cs` - Text filter CRUD, temporary templates, popup management
 
 - **`ColumnFilterEditor.cs`** - Complex multi-criteria filter UI
-  - **Features**: Multiple search groups, drag-drop reordering, value selection
-  - **Key Properties**: `SearchTemplateController`, `ValueSelectionSummary`
-  - **Commands**: Add/Remove search groups and templates
-
 - **`FilterPanel.cs`** - Active filter chips display
-  - **Features**: Toggle filters, remove individual filters, edit filters
-  - **Key Properties**: `ActiveFilters`, `FiltersEnabled`, `HasActiveFilters`
-  - **Events**: Filter removal, clear all, edit requests
-
+- **`ColumnChooser.cs`** - Column visibility manager with drag-drop reordering
+- **`GridColumn.cs`** - Static attached properties for column configuration
 - **`NumericUpDown.cs`** - Custom numeric input control
-- **`DataGridFilterEditor.cs`** - Multi-column filter editing dialog
 
 #### `/Themes/Controls/` - XAML Styling (Presentation Only)
 **⚠️ Only styling XAML - No code-behind**

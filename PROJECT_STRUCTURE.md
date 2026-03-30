@@ -1,10 +1,11 @@
 # WWSearchDataGrid.Modern - Complete Project Structure & Architecture
 
-## Overview
-WWSearchDataGrid.Modern is a comprehensive WPF data grid library with advanced search and filtering capabilities. This document provides a complete architectural overview including class hierarchies, data flows, and integration patterns discovered through deep codebase analysis.
+> **For getting started quickly**, see [README.md](README.md) and [docs/getting-started.md](docs/getting-started.md). This document is a deep architectural reference.
 
-**Last Updated**: 2025-10-21
-**Analysis Method**: Multi-agent deep architecture tracing
+## Overview
+WWSearchDataGrid.Modern is a comprehensive WPF data grid library with advanced search and filtering capabilities. This document provides a complete architectural overview including class hierarchies, data flows, and integration patterns.
+
+**Last Updated**: 2026-03-30
 
 ---
 
