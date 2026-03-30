@@ -146,17 +146,6 @@ namespace WWSearchDataGrid.Modern.Core
             }
         }
 
-        private static double ConvertToDouble(object value)
-        {
-            try
-            {
-                return Convert.ToDouble(value);
-            }
-            catch
-            {
-                return double.NaN;
-            }
-        }
     }
 
     /// <summary>
@@ -196,17 +185,6 @@ namespace WWSearchDataGrid.Modern.Core
             }
         }
 
-        private static double ConvertToDouble(object value)
-        {
-            try
-            {
-                return Convert.ToDouble(value);
-            }
-            catch
-            {
-                return double.NaN;
-            }
-        }
     }
 
     /// <summary>

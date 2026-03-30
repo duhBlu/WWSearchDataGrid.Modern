@@ -11,10 +11,11 @@ namespace WWSearchDataGrid.Modern.WPF.Commands
 {
     public partial class ContextMenuCommands
     {
+        private static ICommand _showColumnChooserCommand;
         /// <summary>
         /// Opens the column management editor dialog
         /// </summary>
-        public static ICommand ShowColumnChooserCommand => new RelayCommand<SearchDataGrid>(grid =>
+        public static ICommand ShowColumnChooserCommand => _showColumnChooserCommand ??= new RelayCommand<SearchDataGrid>(grid =>
         {
             try
             {
@@ -35,7 +36,8 @@ namespace WWSearchDataGrid.Modern.WPF.Commands
         /// <summary>
         /// Toggles the visibility of the totals/summary row
         /// </summary>
-        public static ICommand ToggleTotalsRowCommand => new RelayCommand<SearchDataGrid>(grid =>
+        private static ICommand _toggleTotalsRowCommand;
+        public static ICommand ToggleTotalsRowCommand => _toggleTotalsRowCommand ??= new RelayCommand<SearchDataGrid>(grid =>
         {
             Debug.WriteLine($"[PLACEHOLDER] Toggle Totals Row - Not implemented");
             // TODO: Toggle summary row visibility
@@ -44,7 +46,8 @@ namespace WWSearchDataGrid.Modern.WPF.Commands
         /// <summary>
         /// Toggles the visibility of the filter panel
         /// </summary>
-        public static ICommand ToggleFilterPanelCommand => new RelayCommand<SearchDataGrid>(grid =>
+        private static ICommand _toggleFilterPanelCommand;
+        public static ICommand ToggleFilterPanelCommand => _toggleFilterPanelCommand ??= new RelayCommand<SearchDataGrid>(grid =>
         {
             Debug.WriteLine($"[PLACEHOLDER] Toggle Filter Panel - Not implemented");
             // TODO: Toggle FilterPanel visibility
@@ -53,7 +56,8 @@ namespace WWSearchDataGrid.Modern.WPF.Commands
         /// <summary>
         /// Toggles the visibility of search controls
         /// </summary>
-        public static ICommand ToggleSearchControlCommand => new RelayCommand<SearchDataGrid>(grid =>
+        private static ICommand _toggleSearchControlCommand;
+        public static ICommand ToggleSearchControlCommand => _toggleSearchControlCommand ??= new RelayCommand<SearchDataGrid>(grid =>
         {
             Debug.WriteLine($"[PLACEHOLDER] Toggle Search Controls - Not implemented");
             // TODO: Toggle search box visibility in column headers
@@ -62,7 +66,8 @@ namespace WWSearchDataGrid.Modern.WPF.Commands
         /// <summary>
         /// Shows the advanced filter editor for the column
         /// </summary>
-        public static ICommand ShowFilterEditorCommand => new RelayCommand<ColumnSearchBox>(columnSearchBox =>
+        private static ICommand _showFilterEditorCommand;
+        public static ICommand ShowFilterEditorCommand => _showFilterEditorCommand ??= new RelayCommand<ColumnSearchBox>(columnSearchBox =>
         {
             Debug.WriteLine($"[PLACEHOLDER] Show Filter Editor: Column '{columnSearchBox?.CurrentColumn?.Header}' - Not implemented");
             // TODO: Open existing ColumnFilterEditor for this column

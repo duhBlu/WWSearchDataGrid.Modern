@@ -17,10 +17,11 @@ namespace WWSearchDataGrid.Modern.WPF.Commands
     {
         #region Visibility & Layout Commands
 
+        private static ICommand _hideSelectedColumnCommand;
         /// <summary>
         /// Hides the selected column
         /// </summary>
-        public static ICommand HideSelectedColumnCommand => new RelayCommand<DataGridColumn>(column =>
+        public static ICommand HideSelectedColumnCommand => _hideSelectedColumnCommand ??= new RelayCommand<DataGridColumn>(column =>
         {
             try
             {
@@ -54,10 +55,11 @@ namespace WWSearchDataGrid.Modern.WPF.Commands
 
         #region Best Fit Commands
 
+        private static ICommand _bestFitColumnCommand;
         /// <summary>
         /// Auto-sizes the current column to fit content
         /// </summary>
-        public static ICommand BestFitColumnCommand => new RelayCommand<ContextMenuContext>(context =>
+        public static ICommand BestFitColumnCommand => _bestFitColumnCommand ??= new RelayCommand<ContextMenuContext>(context =>
         {
             try
             {
@@ -69,10 +71,11 @@ namespace WWSearchDataGrid.Modern.WPF.Commands
             }
         }, context => context.Grid != null && context.Column != null);
 
+        private static ICommand _bestFitAllColumnsCommand;
         /// <summary>
         /// Auto-sizes all columns to fit content
         /// </summary>
-        public static ICommand BestFitAllColumnsCommand => new RelayCommand<ContextMenuContext>(context =>
+        public static ICommand BestFitAllColumnsCommand => _bestFitAllColumnsCommand ??= new RelayCommand<ContextMenuContext>(context =>
         {
             try
             {
@@ -128,10 +131,11 @@ namespace WWSearchDataGrid.Modern.WPF.Commands
 
         #region Sorting Commands Implementation
 
+        private static ICommand _sortAscendingCommand;
         /// <summary>
         /// Sorts the column in ascending order
         /// </summary>
-        public static ICommand SortAscendingCommand => new RelayCommand<ContextMenuContext>(context =>
+        public static ICommand SortAscendingCommand => _sortAscendingCommand ??= new RelayCommand<ContextMenuContext>(context =>
         {
             try
             {
@@ -143,10 +147,11 @@ namespace WWSearchDataGrid.Modern.WPF.Commands
             }
         }, context => context.Column != null && context.Column.SortDirection != ListSortDirection.Ascending && CanSortColumn(context.Column));
 
+        private static ICommand _sortDescendingCommand;
         /// <summary>
         /// Sorts the column in descending order
         /// </summary>
-        public static ICommand SortDescendingCommand => new RelayCommand<ContextMenuContext>(context =>
+        public static ICommand SortDescendingCommand => _sortDescendingCommand ??= new RelayCommand<ContextMenuContext>(context =>
         {
             try
             {
@@ -158,10 +163,11 @@ namespace WWSearchDataGrid.Modern.WPF.Commands
             }
         }, context => context.Column != null && context.Column.SortDirection != ListSortDirection.Descending && CanSortColumn(context.Column));
         
+        private static ICommand _clearSortingCommand;
         /// <summary>
         /// Sorts the column in descending order
         /// </summary>
-        public static ICommand ClearSortingCommand => new RelayCommand<ContextMenuContext>(context =>
+        public static ICommand ClearSortingCommand => _clearSortingCommand ??= new RelayCommand<ContextMenuContext>(context =>
         {
             try
             {

@@ -137,7 +137,8 @@ namespace WWSearchDataGrid.Modern.WPF
 
         #region Commands
 
-        public ICommand CloseCommand => new RelayCommand(_ => CloseWindow());
+        private ICommand _closeCommand;
+        public ICommand CloseCommand => _closeCommand ??= new RelayCommand(_ => CloseWindow());
 
         #endregion
 

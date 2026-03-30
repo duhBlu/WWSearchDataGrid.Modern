@@ -1,16 +1,23 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace WWSearchDataGrid.Modern.Core
 {
     internal static class CommandManager
     {
-        public static event EventHandler RequerySuggested;
+        private static readonly object _eventLock = new object();
+        private static EventHandler _requerySuggested;
+
+        public static event EventHandler RequerySuggested
+        {
+            add { lock (_eventLock) { _requerySuggested += value; } }
+            remove { lock (_eventLock) { _requerySuggested -= value; } }
+        }
 
         public static void InvalidateRequerySuggested()
         {
-            RequerySuggested?.Invoke(null, EventArgs.Empty);
+            EventHandler handler;
+            lock (_eventLock) { handler = _requerySuggested; }
+            handler?.Invoke(null, EventArgs.Empty);
         }
     }
 }

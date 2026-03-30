@@ -105,45 +105,54 @@ namespace WWSearchDataGrid.Modern.WPF
 
         #region Commands
 
+        private ICommand _toggleFiltersCommand;
+        private ICommand _removeTokenFilterCommand;
+        private ICommand _clearAllFiltersCommand;
+        private ICommand _toggleExpandCommand;
+        private ICommand _setHoveredFilterCommand;
+        private ICommand _clearHoveredFilterCommand;
+        private ICommand _removeValueFromTokenCommand;
+        private ICommand _toggleOperatorCommand;
+
         /// <summary>
         /// Gets the command to toggle all filters on/off
         /// </summary>
-        public ICommand ToggleFiltersCommand => new RelayCommand(ExecuteToggleFilters);
+        public ICommand ToggleFiltersCommand => _toggleFiltersCommand ??= new RelayCommand(ExecuteToggleFilters);
 
         /// <summary>
         /// Gets the command to remove a filter by token
         /// </summary>
-        public ICommand RemoveTokenFilterCommand => new RelayCommand<IFilterToken>(ExecuteRemoveTokenFilter, CanRemoveTokenFilter);
+        public ICommand RemoveTokenFilterCommand => _removeTokenFilterCommand ??= new RelayCommand<IFilterToken>(ExecuteRemoveTokenFilter, CanRemoveTokenFilter);
 
         /// <summary>
         /// Gets the command to clear all filters
         /// </summary>
-        public ICommand ClearAllFiltersCommand => new RelayCommand(_ => ClearAllFiltersRequested?.Invoke(this, EventArgs.Empty), _ => HasActiveFilters);
+        public ICommand ClearAllFiltersCommand => _clearAllFiltersCommand ??= new RelayCommand(_ => ClearAllFiltersRequested?.Invoke(this, EventArgs.Empty), _ => HasActiveFilters);
 
         /// <summary>
         /// Gets the command to toggle the expand/collapse state
         /// </summary>
-        public ICommand ToggleExpandCommand => new RelayCommand(_ => IsExpanded = !IsExpanded);
+        public ICommand ToggleExpandCommand => _toggleExpandCommand ??= new RelayCommand(_ => IsExpanded = !IsExpanded);
 
         /// <summary>
         /// Gets the command to set the hovered filter id
         /// </summary>
-        public ICommand SetHoveredFilterCommand => new RelayCommand<string>(filterId => HoveredFilterId = filterId);
+        public ICommand SetHoveredFilterCommand => _setHoveredFilterCommand ??= new RelayCommand<string>(filterId => HoveredFilterId = filterId);
 
         /// <summary>
         /// Gets the command to clear the hovered filter id
         /// </summary>
-        public ICommand ClearHoveredFilterCommand => new RelayCommand(_ => HoveredFilterId = null);
+        public ICommand ClearHoveredFilterCommand => _clearHoveredFilterCommand ??= new RelayCommand(_ => HoveredFilterId = null);
 
         /// <summary>
         /// Gets the command to remove a specific value from a filter token
         /// </summary>
-        public ICommand RemoveValueFromTokenCommand => new RelayCommand<IRemovableToken>(ExecuteRemoveValueFromToken, CanRemoveValueFromToken);
+        public ICommand RemoveValueFromTokenCommand => _removeValueFromTokenCommand ??= new RelayCommand<IRemovableToken>(ExecuteRemoveValueFromToken, CanRemoveValueFromToken);
 
         /// <summary>
         /// Gets the command to toggle an operator token between AND and OR
         /// </summary>
-        public ICommand ToggleOperatorCommand => new RelayCommand<IFilterToken>(ExecuteToggleOperator, CanToggleOperator);
+        public ICommand ToggleOperatorCommand => _toggleOperatorCommand ??= new RelayCommand<IFilterToken>(ExecuteToggleOperator, CanToggleOperator);
 
         #endregion
 

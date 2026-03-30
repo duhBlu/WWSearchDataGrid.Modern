@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -9,11 +10,12 @@ namespace WWSearchDataGrid.Modern.Core
     /// </summary>
     internal class SearchEvaluatorFactory
     {
-        private static readonly Lazy<SearchEvaluatorFactory> _instance = 
+        private static readonly Lazy<SearchEvaluatorFactory> _instance =
             new Lazy<SearchEvaluatorFactory>(() => new SearchEvaluatorFactory());
 
-        private readonly Dictionary<SearchType, ISearchEvaluator> _evaluators;
+        private readonly ConcurrentDictionary<SearchType, ISearchEvaluator> _evaluators;
         private readonly List<ISearchEvaluator> _allEvaluators;
+        private readonly object _registrationLock = new object();
 
         /// <summary>
         /// Singleton instance of the factory
@@ -26,7 +28,7 @@ namespace WWSearchDataGrid.Modern.Core
         private SearchEvaluatorFactory()
         {
             _allEvaluators = new List<ISearchEvaluator>();
-            _evaluators = new Dictionary<SearchType, ISearchEvaluator>();
+            _evaluators = new ConcurrentDictionary<SearchType, ISearchEvaluator>();
             RegisterDefaultEvaluators();
         }
 
@@ -43,10 +45,14 @@ namespace WWSearchDataGrid.Modern.Core
             }
 
             // Try to find an evaluator that can handle this search type
-            evaluator = _allEvaluators.FirstOrDefault(e => e.CanHandle(searchType));
+            lock (_registrationLock)
+            {
+                evaluator = _allEvaluators.FirstOrDefault(e => e.CanHandle(searchType));
+            }
+
             if (evaluator != null)
             {
-                _evaluators[searchType] = evaluator; // Cache for future use
+                _evaluators.TryAdd(searchType, evaluator);
             }
 
             return evaluator;
@@ -61,11 +67,14 @@ namespace WWSearchDataGrid.Modern.Core
             if (evaluator == null)
                 throw new ArgumentNullException(nameof(evaluator));
 
-            _allEvaluators.Add(evaluator);
-            _evaluators[evaluator.SearchType] = evaluator;
+            lock (_registrationLock)
+            {
+                _allEvaluators.Add(evaluator);
+                _evaluators[evaluator.SearchType] = evaluator;
 
-            // Re-sort by priority (higher priority first)
-            _allEvaluators.Sort((x, y) => y.Priority.CompareTo(x.Priority));
+                // Re-sort by priority (higher priority first)
+                _allEvaluators.Sort((x, y) => y.Priority.CompareTo(x.Priority));
+            }
         }
 
         /// <summary>

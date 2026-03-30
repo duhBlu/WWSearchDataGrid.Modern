@@ -11,19 +11,20 @@ namespace WWSearchDataGrid.Modern.WPF.Commands
 {
     public partial class ContextMenuCommands
     {
+        private static ICommand _clearAllFiltersCommand;
         /// <summary>
         /// Clears all filters on the grid
         /// </summary>
-        public static ICommand ClearAllFiltersCommand => new RelayCommand<SearchDataGrid>(grid =>
+        public static ICommand ClearAllFiltersCommand => _clearAllFiltersCommand ??= new RelayCommand<SearchDataGrid>(grid =>
         {
             grid.ClearAllFilters();
         }, grid => grid?.DataColumns?.Any(c => c.HasActiveFilter) == true);
 
-
+        private static ICommand _clearColumnFilterCommand;
         /// <summary>
         /// Clears the filter on the current column
         /// </summary>
-        public static ICommand ClearColumnFilterCommand => new RelayCommand(
+        public static ICommand ClearColumnFilterCommand => _clearColumnFilterCommand ??= new RelayCommand(
             parameter =>
             {
                 switch (parameter)

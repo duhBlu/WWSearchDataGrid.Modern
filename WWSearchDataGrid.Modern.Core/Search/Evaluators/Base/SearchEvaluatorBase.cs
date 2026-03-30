@@ -1,3 +1,5 @@
+using System;
+
 namespace WWSearchDataGrid.Modern.Core
 {
     /// <summary>
@@ -56,6 +58,21 @@ namespace WWSearchDataGrid.Modern.Core
         protected int CompareValues(object columnValue, SearchCondition searchCondition, object comparisonValue)
         {
             return SearchEngine.CompareValues(columnValue, searchCondition, comparisonValue);
+        }
+
+        /// <summary>
+        /// Safely converts a value to double. Returns NaN if conversion fails.
+        /// </summary>
+        protected static double ConvertToDouble(object value)
+        {
+            try
+            {
+                return Convert.ToDouble(value);
+            }
+            catch
+            {
+                return double.NaN;
+            }
         }
     }
 }

@@ -12,10 +12,11 @@ namespace WWSearchDataGrid.Modern.WPF.Commands
     {
         #region Data & Export Commands
 
+        private static ICommand _copySelectedCellValuesCommand;
         /// <summary>
         /// Copies values of all selected cells to clipboard
         /// </summary>
-        public static ICommand CopySelectedCellValuesCommand => new RelayCommand<SearchDataGrid>(grid =>
+        public static ICommand CopySelectedCellValuesCommand => _copySelectedCellValuesCommand ??= new RelayCommand<SearchDataGrid>(grid =>
         {
             try
             {
@@ -67,10 +68,11 @@ namespace WWSearchDataGrid.Modern.WPF.Commands
         }, grid => grid?.SelectedCells?.Count > 0);
 
 
+        private static ICommand _copySelectedCellValuesWithHeadersCommand;
         /// <summary>
         /// Copies values of all selected cells with headers to clipboard
         /// </summary>
-        public static ICommand CopySelectedCellValuesWithHeadersCommand => new RelayCommand<SearchDataGrid>(grid =>
+        public static ICommand CopySelectedCellValuesWithHeadersCommand => _copySelectedCellValuesWithHeadersCommand ??= new RelayCommand<SearchDataGrid>(grid =>
         {
             try
             {
@@ -148,7 +150,8 @@ namespace WWSearchDataGrid.Modern.WPF.Commands
         /// <summary>
         /// Exports the grid data to CSV format
         /// </summary>
-        public static ICommand ExportToCsvCommand => new RelayCommand<SearchDataGrid>(grid =>
+        private static ICommand _exportToCsvCommand;
+        public static ICommand ExportToCsvCommand => _exportToCsvCommand ??= new RelayCommand<SearchDataGrid>(grid =>
         {
             Debug.WriteLine($"[PLACEHOLDER] Export To CSV - Not implemented");
             // TODO: Export grid data to CSV file
@@ -157,7 +160,8 @@ namespace WWSearchDataGrid.Modern.WPF.Commands
         /// <summary>
         /// Exports the grid data to Excel format
         /// </summary>
-        public static ICommand ExportToExcelCommand => new RelayCommand<SearchDataGrid>(grid =>
+        private static ICommand _exportToExcelCommand;
+        public static ICommand ExportToExcelCommand => _exportToExcelCommand ??= new RelayCommand<SearchDataGrid>(grid =>
         {
             Debug.WriteLine($"[PLACEHOLDER] Export To Excel - Not implemented");
             // TODO: Export grid data to Excel file

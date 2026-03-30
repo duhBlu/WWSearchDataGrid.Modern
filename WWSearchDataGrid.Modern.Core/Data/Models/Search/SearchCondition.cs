@@ -9,6 +9,10 @@ namespace WWSearchDataGrid.Modern.Core
     /// </summary>
     public class SearchCondition
     {
+        /// <summary>
+        /// Sentinel value used by filter UI to indicate an unset/placeholder filter value.
+        /// </summary>
+        internal const string CustomFilterPlaceholder = "custom filter";
 
         #region Properties
 
@@ -141,7 +145,7 @@ namespace WWSearchDataGrid.Modern.Core
         /// <returns>Converted value</returns>
         private object ConvertValueInternal(object value)
         {
-            if (value == null || string.IsNullOrWhiteSpace(value.ToString()) || value.ToString() == "custom filter")
+            if (value == null || string.IsNullOrWhiteSpace(value.ToString()) || value.ToString() == CustomFilterPlaceholder)
             {
                 return null;
             }

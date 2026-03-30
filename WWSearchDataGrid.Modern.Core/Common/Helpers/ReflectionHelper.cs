@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -12,31 +13,58 @@ namespace WWSearchDataGrid.Modern.Core
     /// </summary>
     public static class ReflectionHelper
     {
+        // Cache for resolved property chains: (Type, propertyPath) -> PropertyInfo[]
+        private static readonly ConcurrentDictionary<(Type, string), PropertyInfo[]> _propertyChainCache
+            = new ConcurrentDictionary<(Type, string), PropertyInfo[]>();
+
         /// <summary>
-        /// Gets property value from an object using a property path
+        /// Gets property value from an object using a property path.
+        /// Property chains are cached for performance when filtering large datasets.
         /// </summary>
         public static object GetPropValue(object obj, string propPath)
         {
             if (obj == null || string.IsNullOrEmpty(propPath))
                 return null;
 
-            // Handle nested properties
-            var props = propPath.Split('.');
-            var currentObj = obj;
+            var type = obj.GetType();
+            var chain = _propertyChainCache.GetOrAdd((type, propPath), key => ResolvePropertyChain(key.Item1, key.Item2));
 
-            foreach (var prop in props)
+            if (chain == null)
+                return null;
+
+            var currentObj = obj;
+            foreach (var propInfo in chain)
             {
                 if (currentObj == null)
-                    return null;
-
-                var propInfo = currentObj.GetType().GetProperty(prop);
-                if (propInfo == null)
                     return null;
 
                 currentObj = propInfo.GetValue(currentObj);
             }
 
             return currentObj;
+        }
+
+        /// <summary>
+        /// Resolves a property path to an array of PropertyInfo objects.
+        /// Returns null if any segment in the path is invalid.
+        /// </summary>
+        private static PropertyInfo[] ResolvePropertyChain(Type type, string propPath)
+        {
+            var props = propPath.Split('.');
+            var chain = new PropertyInfo[props.Length];
+            var currentType = type;
+
+            for (int i = 0; i < props.Length; i++)
+            {
+                var propInfo = currentType.GetProperty(props[i]);
+                if (propInfo == null)
+                    return null;
+
+                chain[i] = propInfo;
+                currentType = propInfo.PropertyType;
+            }
+
+            return chain;
         }
 
         /// <summary>

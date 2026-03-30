@@ -382,20 +382,24 @@ namespace WWSearchDataGrid.Modern.WPF
 
         #region Commands
 
+        private ICommand _clearCommand;
+        private ICommand _toggleSearchCommand;
+        private ICommand _toggleSortModeCommand;
+
         /// <summary>
         /// Command to clear the text
         /// </summary>
-        public ICommand ClearCommand => new RelayCommand(_ => ClearText());
+        public ICommand ClearCommand => _clearCommand ??= new RelayCommand(_ => ClearText());
 
         /// <summary>
         /// Command to toggle search mode
         /// </summary>
-        public ICommand ToggleSearchCommand => new RelayCommand(_ => ToggleSearchMode(), _ => CanToggleSearch());
+        public ICommand ToggleSearchCommand => _toggleSearchCommand ??= new RelayCommand(_ => ToggleSearchMode(), _ => CanToggleSearch());
 
         /// <summary>
         /// Command to toggle sort mode between ByValue and ByQuantity
         /// </summary>
-        public ICommand ToggleSortModeCommand => new RelayCommand(_ => ToggleSortMode());
+        public ICommand ToggleSortModeCommand => _toggleSortModeCommand ??= new RelayCommand(_ => ToggleSortMode());
 
         private void ClearText()
         {

@@ -531,7 +531,7 @@ namespace WWSearchDataGrid.Modern.Core.Caching
                     return ColumnDataType.Boolean;
                 }
 
-                if (IsNumericType(type))
+                if (ReflectionHelper.IsNumericType(type))
                 {
                     return ColumnDataType.Number;
                 }
@@ -543,19 +543,6 @@ namespace WWSearchDataGrid.Modern.Core.Caching
             }
 
             return ColumnDataType.String;
-        }
-
-        /// <summary>
-        /// Checks if a type is numeric (same logic as ReflectionHelper)
-        /// </summary>
-        private static bool IsNumericType(Type type)
-        {
-            return type == typeof(byte) || type == typeof(sbyte) ||
-                   type == typeof(short) || type == typeof(ushort) ||
-                   type == typeof(int) || type == typeof(uint) ||
-                   type == typeof(long) || type == typeof(ulong) ||
-                   type == typeof(float) || type == typeof(double) ||
-                   type == typeof(decimal);
         }
 
         /// <summary>

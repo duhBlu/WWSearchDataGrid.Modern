@@ -183,12 +183,13 @@ namespace WWSearchDataGrid.Modern.WPF
 
         #region Constructor
 
+        // Track template FilterPanel reference for event cleanup on re-template
+        private FilterPanel _templateFilterPanel;
+
         public SearchDataGrid() : base()
         {
-            // Add binding for DataGrid.Items attached property changes
-            DependencyPropertyDescriptor
-                .FromProperty(ItemsControl.ItemsSourceProperty, typeof(SearchDataGrid))
-                .AddValueChanged(this, (s, e) => UpdateHasItemsProperty());
+            // Note: Do not use DependencyPropertyDescriptor.AddValueChanged here - it creates a
+            // strong reference that prevents GC. OnItemsSourceChanged override handles this already.
 
             // Initialize context menu functionality
             this.InitializeContextMenu();
@@ -212,7 +213,11 @@ namespace WWSearchDataGrid.Modern.WPF
         {
             base.OnApplyTemplate();
 
-            // Wire up editing events to handle transformed data editing
+            // Unsubscribe editing events before re-subscribing to prevent duplicate handlers on re-template
+            this.BeginningEdit -= OnBeginningEdit;
+            this.RowEditEnding -= OnRowEditEnding;
+            this.CellEditEnding -= OnCellEditEnding;
+
             this.BeginningEdit += OnBeginningEdit;
             this.RowEditEnding += OnRowEditEnding;
             this.CellEditEnding += OnCellEditEnding;
@@ -222,6 +227,16 @@ namespace WWSearchDataGrid.Modern.WPF
                 FilterPanel = new FilterPanel();
             }
 
+            // Unsubscribe from previous template FilterPanel if re-templating
+            if (_templateFilterPanel != null)
+            {
+                _templateFilterPanel.FiltersEnabledChanged -= OnFiltersEnabledChanged;
+                _templateFilterPanel.FilterRemoved -= OnFilterRemoved;
+                _templateFilterPanel.ValueRemovedFromToken -= OnValueRemovedFromToken;
+                _templateFilterPanel.OperatorToggled -= OnOperatorToggled;
+                _templateFilterPanel.ClearAllFiltersRequested -= OnClearAllFiltersRequested;
+            }
+
             // Get the FilterPanel template part and connect it to our FilterPanel instance
             if (GetTemplateChild("PART_FilterPanel") is FilterPanel templateFilterPanel && templateFilterPanel != null)
             {
@@ -229,14 +244,15 @@ namespace WWSearchDataGrid.Modern.WPF
                 templateFilterPanel.FiltersEnabled = FilterPanel.FiltersEnabled;
                 templateFilterPanel.UpdateActiveFilters(FilterPanel.ActiveFilters);
 
-                // Wire up events from template FilterPanel to our FilterPanel events
-                templateFilterPanel.FiltersEnabledChanged += (s, e) => OnFiltersEnabledChanged(s, e);
-                templateFilterPanel.FilterRemoved += (s, e) => OnFilterRemoved(s, e);
-                templateFilterPanel.ValueRemovedFromToken += (s, e) => OnValueRemovedFromToken(s, e);
-                templateFilterPanel.OperatorToggled += (s, e) => OnOperatorToggled(s, e);
-                templateFilterPanel.ClearAllFiltersRequested += (s, e) => OnClearAllFiltersRequested(s, e);
+                // Wire up events from template FilterPanel using named methods (not lambdas) for cleanup
+                templateFilterPanel.FiltersEnabledChanged += OnFiltersEnabledChanged;
+                templateFilterPanel.FilterRemoved += OnFilterRemoved;
+                templateFilterPanel.ValueRemovedFromToken += OnValueRemovedFromToken;
+                templateFilterPanel.OperatorToggled += OnOperatorToggled;
+                templateFilterPanel.ClearAllFiltersRequested += OnClearAllFiltersRequested;
 
-                // Replace our FilterPanel property with the template instance so updates go to the right place
+                // Track reference for cleanup and replace FilterPanel property
+                _templateFilterPanel = templateFilterPanel;
                 FilterPanel = templateFilterPanel;
             }
 
@@ -1096,14 +1112,15 @@ namespace WWSearchDataGrid.Modern.WPF
                     }
                     else
                     {
-                        // Fallback to standard evaluation if context creation failed
-                        return filter.SearchTemplateController.FilterExpression(propertyValue);
+                        // Context creation failed - fall back to standard expression if available,
+                        // otherwise pass the item through (can't evaluate collection-context filters without context)
+                        return filter.SearchTemplateController.FilterExpression?.Invoke(propertyValue) ?? true;
                     }
                 }
                 else
                 {
                     // Standard evaluation without collection context
-                    return filter.SearchTemplateController.FilterExpression(propertyValue);
+                    return filter.SearchTemplateController.FilterExpression?.Invoke(propertyValue) ?? true;
                 }
             }
             catch (Exception ex)
@@ -1296,9 +1313,8 @@ namespace WWSearchDataGrid.Modern.WPF
             // Trigger cache manager cleanup
             ColumnValueCacheManager.Instance.Cleanup(clearAll: false);
             
-            // Force garbage collection to reclaim memory immediately
-            GC.Collect();
-            GC.WaitForPendingFinalizers();
+            // Note: Do not force GC.Collect() in library code - let the consumer application
+            // manage its own garbage collection timing.
         }
 
         /// <summary>

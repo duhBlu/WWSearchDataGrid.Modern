@@ -97,9 +97,10 @@ namespace WWSearchDataGrid.Modern.Core
                 }
                 else if (hasCollectionContextFilters)
                 {
-                    // For collection-context filters, we'll need to handle them differently
-                    // This would typically be done at the data grid level or in the UI
-                    result.FilterExpression = obj => true; // Placeholder, actual filtering done elsewhere
+                    // Collection-context filters (TopN, AboveAverage, etc.) are evaluated separately
+                    // via EvaluateWithCollectionContext at the data grid level.
+                    // No standard expression to compile here.
+                    result.FilterExpression = null;
                 }
                 else
                 {
@@ -109,18 +110,6 @@ namespace WWSearchDataGrid.Modern.Core
                 // Update the custom expression flag
                 var hasMultipleGroups = searchGroups.Count > 1;
                 var hasCustomFilterTemplates = searchGroups.Any(g => g.SearchTemplates.Any(t => t.HasCustomFilter && t.IsValidFilter));
-
-                if (searchGroups.Count > 0)
-                {
-                    for (int i = 0; i < searchGroups.Count; i++)
-                    {
-                        var group = searchGroups[i];
-                        for (int j = 0; j < group.SearchTemplates.Count; j++)
-                        {
-                            var template = group.SearchTemplates[j];
-                        }
-                    }
-                }
 
                 result.HasCustomExpression = searchGroups.Count > 0 && (hasMultipleGroups || hasCustomFilterTemplates);
 

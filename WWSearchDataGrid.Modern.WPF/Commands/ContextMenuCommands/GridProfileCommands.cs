@@ -16,7 +16,8 @@ namespace WWSearchDataGrid.Modern.WPF.Commands
         /// <summary>
         /// Resets the layout to default
         /// </summary>
-        public static ICommand ResetLayoutCommand => new RelayCommand<SearchDataGrid>(grid =>
+        private static ICommand _resetLayoutCommand;
+        public static ICommand ResetLayoutCommand => _resetLayoutCommand ??= new RelayCommand<SearchDataGrid>(grid =>
         {
             Debug.WriteLine($"[PLACEHOLDER] Reset Layout - Not implemented");
             // TODO: Reset column widths, order, and visibility to defaults
@@ -25,7 +26,8 @@ namespace WWSearchDataGrid.Modern.WPF.Commands
         /// <summary>
         /// Saves the current column layout as a named profile
         /// </summary>
-        public static ICommand SaveCurrentProfileCommand => new RelayCommand<SearchDataGrid>(grid =>
+        private static ICommand _saveCurrentProfileCommand;
+        public static ICommand SaveCurrentProfileCommand => _saveCurrentProfileCommand ??= new RelayCommand<SearchDataGrid>(grid =>
         {
             Debug.WriteLine($"[PLACEHOLDER] Save Current Profile - Not implemented");
             // TODO: Save current column layout (visibility, order, widths, filters) as named profile
@@ -34,7 +36,8 @@ namespace WWSearchDataGrid.Modern.WPF.Commands
         /// <summary>
         /// Loads a saved column profile
         /// </summary>
-        public static ICommand LoadProfileCommand => new RelayCommand<SearchDataGrid>(grid =>
+        private static ICommand _loadProfileCommand;
+        public static ICommand LoadProfileCommand => _loadProfileCommand ??= new RelayCommand<SearchDataGrid>(grid =>
         {
             Debug.WriteLine($"[PLACEHOLDER] Load Profile - Not implemented");
             // TODO: Show profile selection dialog and apply selected profile
@@ -43,7 +46,8 @@ namespace WWSearchDataGrid.Modern.WPF.Commands
         /// <summary>
         /// Opens the profile management dialog
         /// </summary>
-        public static ICommand ManageProfilesCommand => new RelayCommand<SearchDataGrid>(grid =>
+        private static ICommand _manageProfilesCommand;
+        public static ICommand ManageProfilesCommand => _manageProfilesCommand ??= new RelayCommand<SearchDataGrid>(grid =>
         {
             Debug.WriteLine($"[PLACEHOLDER] Manage Profiles - Not implemented");
             // TODO: Open dialog to rename, delete, or organize saved profiles

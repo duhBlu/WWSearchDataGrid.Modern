@@ -39,12 +39,15 @@ namespace WWSearchDataGrid.Modern.Core
     /// </summary>
     internal class IsLikeEvaluator : SearchEvaluatorBase
     {
+        // Cache compiled regex objects to avoid recompilation per-row
+        private readonly Dictionary<string, Regex> _regexCache = new Dictionary<string, Regex>();
+
         public override SearchType SearchType => SearchType.IsLike;
 
         public override bool Evaluate(object columnValue, SearchCondition searchCondition)
         {
             var columnString = GetColumnString(columnValue);
-            return searchCondition.StringValue != null && 
+            return searchCondition.StringValue != null &&
                    EvaluateLikePattern(columnString, searchCondition.StringValue);
         }
 
@@ -52,13 +55,19 @@ namespace WWSearchDataGrid.Modern.Core
         {
             if (string.IsNullOrEmpty(pattern)) return string.IsNullOrEmpty(input);
 
-            // Convert SQL LIKE pattern to regex
-            string regexPattern = "^" + Regex.Escape(pattern)
-                .Replace("%", ".*")
-                .Replace("_", ".")
-                + "$";
+            if (!_regexCache.TryGetValue(pattern, out var regex))
+            {
+                // Convert SQL LIKE pattern to regex and cache the compiled result
+                string regexPattern = "^" + Regex.Escape(pattern)
+                    .Replace("%", ".*")
+                    .Replace("_", ".")
+                    + "$";
 
-            return Regex.IsMatch(input, regexPattern, RegexOptions.IgnoreCase);
+                regex = new Regex(regexPattern, RegexOptions.IgnoreCase | RegexOptions.Compiled);
+                _regexCache[pattern] = regex;
+            }
+
+            return regex.IsMatch(input);
         }
     }
 

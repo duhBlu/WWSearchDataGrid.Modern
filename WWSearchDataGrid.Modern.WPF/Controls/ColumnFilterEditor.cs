@@ -122,20 +122,24 @@ namespace WWSearchDataGrid.Modern.WPF
 
         #region Commands
 
+        private ICommand _clearFilterCommand;
+        private ICommand _addSearchTemplateCommand;
+        private ICommand _removeSearchTemplateCommand;
+
         /// <summary>
         /// Clear filter command
         /// </summary>
-        public ICommand ClearFilterCommand => new RelayCommand(_ => ClearFilter());
+        public ICommand ClearFilterCommand => _clearFilterCommand ??= new RelayCommand(_ => ClearFilter());
 
         /// <summary>
         /// Add search template command
         /// </summary>
-        public ICommand AddSearchTemplateCommand => new RelayCommand(_ => AddSearchTemplate());
+        public ICommand AddSearchTemplateCommand => _addSearchTemplateCommand ??= new RelayCommand(_ => AddSearchTemplate());
 
         /// <summary>
         /// Remove search template command
         /// </summary>
-        public ICommand RemoveSearchTemplateCommand => new RelayCommand(template => RemoveSearchTemplate(template));
+        public ICommand RemoveSearchTemplateCommand => _removeSearchTemplateCommand ??= new RelayCommand(template => RemoveSearchTemplate(template));
 
         #endregion
 
@@ -336,7 +340,10 @@ namespace WWSearchDataGrid.Modern.WPF
                     ApplyFilterAutomatically();
                 });
             }
-            catch { }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error in OnAutoApplyFilter: {ex.Message}");
+            }
         }
 
         /// <summary>
