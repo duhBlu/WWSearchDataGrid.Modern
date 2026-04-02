@@ -1,49 +1,41 @@
 using System;
-using System.Collections.Generic;
 using CommunityToolkit.Mvvm.ComponentModel;
 using WWSearchDataGrid.Modern.SampleApp.Models;
 
 namespace WWSearchDataGrid.Modern.SampleApp
 {
+    /// <summary>
+    /// Sample data item representing a sales order line.
+    /// Designed to demonstrate all SearchDataGrid features with realistic, meaningful data.
+    /// </summary>
     public class DataItem : ObservableObject
     {
+        // Identity
+        public string? OrderNumber { get; set; }
         public string? CustomerName { get; set; }
-        
-        // Complete .NET data type matrix - Boolean types
-        public bool BoolValue { get; set; }
-        public bool? NullableBoolValue { get; set; }
+        public string? PhoneNumber { get; set; }
 
-        // Integer types
-        public int IntValue { get; set; }
-        public int? NullableIntValue { get; set; }
-        public long LongValue { get; set; }
-        public long? NullableLongValue { get; set; }
-        public short ShortValue { get; set; }
-        public short? NullableShortValue { get; set; }
-        public byte ByteValue { get; set; }
-        public byte? NullableByteValue { get; set; }
+        // Product
+        public string? ProductName { get; set; }
+        public string? Category { get; set; }
 
-        // Floating-point and decimal types
-        public float FloatValue { get; set; }
-        public float? NullableFloatValue { get; set; }
-        public double DoubleValue { get; set; }
-        public double? NullableDoubleValue { get; set; }
-        public decimal DecimalValue { get; set; }
-        public decimal? NullableDecimalValue { get; set; }
+        // Quantities & pricing
+        public int Quantity { get; set; }
+        public decimal UnitPrice { get; set; }
+        public decimal LineTotal { get; set; }
+        public decimal? Discount { get; set; }
 
-        // Text types
-        public string? StringValue { get; set; }
-        public char CharValue { get; set; }
-        public char? NullableCharValue { get; set; }
+        // Status & priority
+        public OrderStatus Status { get; set; }
+        public Priority Priority { get; set; }
+        public bool IsRush { get; set; }
+        public bool? IsApproved { get; set; }
 
-        // Date and time types
-        public DateTime DateTimeValue { get; set; }
-        public DateTime? NullableDateTimeValue { get; set; }
-        public TimeSpan TimeSpanValue { get; set; }
-        public TimeSpan? NullableTimeSpanValue { get; set; }
+        // Dates
+        public DateTime OrderDate { get; set; }
+        public DateTime? ShipDate { get; set; }
 
-        // Enum types
-        public Priority PriorityValue { get; set; }
-        public Priority? NullablePriorityValue { get; set; }
+        // Notes
+        public string? Notes { get; set; }
     }
 }

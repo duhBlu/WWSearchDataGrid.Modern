@@ -21,9 +21,10 @@
     <DataTemplate x:Key="SingleSearchTextBoxTemplate">
         <sdg:SearchTextBox Style="{StaticResource GenericSearchTextboxStyle}"
                            Text="{Binding SelectedValue, UpdateSourceTrigger=PropertyChanged}"
-                           ItemsSource="{Binding SearchTemplateController.ColumnValues}"
+                           ItemsSource="{Binding SearchTemplateController.DisplayColumnValues}"
                            SelectedItem="{Binding SelectedItem, UpdateSourceTrigger=PropertyChanged}"
                            ColumnValueCounts="{Binding SearchTemplateController.ColumnValueCounts, UpdateSourceTrigger=PropertyChanged}"
+
                            ShowToggleButton="True"
                            PreserveValueOnSourceChange="True"
                            Watermark="Enter or select value..." />
@@ -39,8 +40,9 @@
                                Text="{Binding SelectedValue, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
                                MinWidth="120"
                                ColumnValueCounts="{Binding SearchTemplateController.ColumnValueCounts, UpdateSourceTrigger=PropertyChanged}"
-                               ItemsSource="{Binding SearchTemplateController.ColumnValues}"
+                               ItemsSource="{Binding SearchTemplateController.DisplayColumnValues}"
                                SelectedItem="{Binding SelectedItem, UpdateSourceTrigger=PropertyChanged}"
+    
                                ShowToggleButton="True"
                                PreserveValueOnSourceChange="True"
                                Watermark="Enter or select..." />
@@ -51,8 +53,9 @@
                                Text="{Binding SelectedSecondaryValue, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
                                MinWidth="120"
                                ColumnValueCounts="{Binding SearchTemplateController.ColumnValueCounts, UpdateSourceTrigger=PropertyChanged}"
-                               ItemsSource="{Binding SearchTemplateController.ColumnValues}"
+                               ItemsSource="{Binding SearchTemplateController.DisplayColumnValues}"
                                SelectedItem="{Binding SelectedSecondaryItem, UpdateSourceTrigger=PropertyChanged}"
+    
                                ShowToggleButton="True"
                                PreserveValueOnSourceChange="True"
                                Watermark="Enter or select..." />
@@ -157,9 +160,10 @@
                                 <sdg:SearchTextBox Style="{StaticResource GenericSearchTextboxStyle}"
                                                    Grid.Column="0"
                                                    Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}"
-                                                   ItemsSource="{Binding DataContext.SearchTemplateController.ColumnValues, RelativeSource={RelativeSource AncestorType=ListBox}}"
+                                                   ItemsSource="{Binding DataContext.SearchTemplateController.DisplayColumnValues, RelativeSource={RelativeSource AncestorType=ListBox}}"
                                                    ColumnValueCounts="{Binding SearchTemplateController.ColumnValueCounts, UpdateSourceTrigger=PropertyChanged}"
                                                    SelectedItem="{Binding SelectedItem, UpdateSourceTrigger=PropertyChanged}"
+
                                                    ShowToggleButton="True"
                                                    PreserveValueOnSourceChange="True"
                                                    Watermark="Enter or select value..." />

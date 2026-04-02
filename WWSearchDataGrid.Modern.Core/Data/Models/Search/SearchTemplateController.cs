@@ -11,6 +11,7 @@ using System.Numerics;
 using System.Threading;
 using System.Threading.Tasks;
 using WWSearchDataGrid.Modern.Core.Caching;
+using WWSearchDataGrid.Modern.Core.Display;
 
 namespace WWSearchDataGrid.Modern.Core
 {
@@ -33,6 +34,7 @@ namespace WWSearchDataGrid.Modern.Core
         private bool hasCustomExpression;
         private Type targetColumnType;
         private ColumnDataType columnDataType = ColumnDataType.String;
+        private string _displayMaskPattern;
         
         // Service dependencies
         private readonly FilterExpressionBuilder _filterExpressionBuilder;
@@ -55,6 +57,29 @@ namespace WWSearchDataGrid.Modern.Core
         public object ColumnName { get; set; }
 
         /// <summary>
+        /// Gets or sets the display value provider for this column.
+        /// When set, text-based filtering compares against display values instead of raw values,
+        /// and filter dropdowns show formatted values.
+        /// </summary>
+        public IDisplayValueProvider DisplayValueProvider { get; set; }
+
+        /// <summary>
+        /// Whether this controller has a display value provider configured.
+        /// </summary>
+        public bool HasDisplayValueProvider => DisplayValueProvider != null;
+
+        /// <summary>
+        /// Gets or sets the mask pattern string for this column.
+        /// When set, SearchTextBox controls will use masked input.
+        /// Null/empty means no mask is applied.
+        /// </summary>
+        public string DisplayMaskPattern
+        {
+            get => _displayMaskPattern;
+            set => SetProperty(value, ref _displayMaskPattern);
+        }
+
+        /// <summary>
         /// Gets the read-only collection of column values for UI binding
         /// Uses shared cache manager to eliminate data duplication
         /// Values are loaded lazily when first accessed
@@ -66,6 +91,33 @@ namespace WWSearchDataGrid.Modern.Core
                 EnsureColumnValuesLoaded();
                 return _cachedColumnValues ?? (IReadOnlyList<object>)new List<object>();
             } 
+        }
+
+        /// <summary>
+        /// Gets column values formatted through the display value provider.
+        /// Returns raw values if no provider is configured.
+        /// </summary>
+        public IReadOnlyList<string> DisplayColumnValues
+        {
+            get
+            {
+                if (DisplayValueProvider == null)
+                    return ColumnValues.Select(v => v?.ToString() ?? string.Empty).ToList();
+
+                return ColumnValues.Select(v => DisplayValueProvider.FormatValue(v)).ToList();
+            }
+        }
+
+        /// <summary>
+        /// Converts a raw value to its display representation using the configured provider.
+        /// Returns the raw ToString() if no provider is configured.
+        /// </summary>
+        public string GetDisplayValue(object rawValue)
+        {
+            if (DisplayValueProvider != null)
+                return DisplayValueProvider.FormatValue(rawValue);
+
+            return rawValue?.ToString() ?? string.Empty;
         }
 
         /// <summary>
@@ -1020,8 +1072,48 @@ namespace WWSearchDataGrid.Modern.Core
         {
             try
             {
-                var value = template.SelectedValue?.ToString();
-                var secondaryValue = template.SelectedSecondaryValue?.ToString();
+                // Format chip display values based on provider type and search type.
+                // For mask providers, chip display depends on the search type:
+                //   StartsWith → show mask-formatted "(573) ___-____" (matches visually)
+                //   EndsWith → show end-aligned "(___)___-1234"
+                //   Contains/Equals/others → show raw value "573" (mask format would be misleading)
+                // For format/converter providers, always show formatted display value.
+                var rawValue = template.SelectedValue?.ToString();
+                var rawSecondaryValue = template.SelectedSecondaryValue?.ToString();
+                string value;
+                string secondaryValue;
+
+                if (HasDisplayValueProvider && DisplayValueProvider.UseRawComparison && DisplayValueProvider is Display.MaskDisplayProvider maskProvider)
+                {
+                    // Mask provider: choose chip format based on search type
+                    switch (template.SearchType)
+                    {
+                        case SearchType.StartsWith:
+                            value = GetDisplayValue(rawValue);
+                            secondaryValue = rawSecondaryValue;
+                            break;
+                        case SearchType.EndsWith:
+                            value = maskProvider.FormatEndAligned(rawValue ?? "");
+                            secondaryValue = rawSecondaryValue;
+                            break;
+                        default:
+                            // Contains, Equals, DoesNotContain, etc. - show raw value
+                            value = rawValue;
+                            secondaryValue = rawSecondaryValue;
+                            break;
+                    }
+                }
+                else if (HasDisplayValueProvider)
+                {
+                    // Format/converter provider: always show formatted
+                    value = GetDisplayValue(template.SelectedValue);
+                    secondaryValue = GetDisplayValue(template.SelectedSecondaryValue);
+                }
+                else
+                {
+                    value = rawValue;
+                    secondaryValue = rawSecondaryValue;
+                }
                 var components = new FilterChipComponents
                 {
                     IsDateInterval = IsDateIntervalType(template.SearchType),
@@ -1115,15 +1207,17 @@ namespace WWSearchDataGrid.Modern.Core
                         break;
                     case SearchType.IsAnyOf:
                         components.SearchTypeText = "In";
-                        // Extract actual values from SelectableValueItem wrappers
-                        var anyOfValues = template.SelectedValues?.Select(v => v?.Value).Where(v => !string.IsNullOrEmpty(v));
+                        // Extract actual values from SelectableValueItem wrappers, formatting through display provider
+                        var anyOfValues = template.SelectedValues?.Select(v =>
+                            HasDisplayValueProvider ? GetDisplayValue(v?.Value) : v?.Value).Where(v => !string.IsNullOrEmpty(v));
                         components.PrimaryValue = FormatMultiValueFilter("", anyOfValues);
                         PopulateValueItems(components, anyOfValues);
                         break;
                     case SearchType.IsNoneOf:
                         components.SearchTypeText = "Not in";
-                        // Extract actual values from SelectableValueItem wrappers
-                        var noneOfValues = template.SelectedValues?.Select(v => v?.Value).Where(v => !string.IsNullOrEmpty(v));
+                        // Extract actual values from SelectableValueItem wrappers, formatting through display provider
+                        var noneOfValues = template.SelectedValues?.Select(v =>
+                            HasDisplayValueProvider ? GetDisplayValue(v?.Value) : v?.Value).Where(v => !string.IsNullOrEmpty(v));
                         components.PrimaryValue = FormatMultiValueFilter("", noneOfValues);
                         PopulateValueItems(components, noneOfValues);
                         break;

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Text;
 
 namespace WWSearchDataGrid.Modern.Core
@@ -163,8 +164,9 @@ namespace WWSearchDataGrid.Modern.Core
                 }
                 else if (ReflectionHelper.IsNumericType(underlyingType))
                 {
-                    if (decimal.TryParse(stringValue, out decimal decimalValue))
-                        return Convert.ChangeType(value, underlyingType);
+                    // Use NumberStyles.Any to handle formatted values like "$12.35", "1,234.56", "15.0%"
+                    if (decimal.TryParse(stringValue, NumberStyles.Any, CultureInfo.CurrentCulture, out decimal decimalValue))
+                        return Convert.ChangeType(decimalValue, underlyingType);
                 }
                 else if (underlyingType == typeof(bool))
                 {

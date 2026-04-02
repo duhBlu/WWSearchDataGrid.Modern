@@ -1,4 +1,4 @@
-﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:sdg="clr-namespace:WWSearchDataGrid.Modern.WPF;assembly=WWSearchDataGrid.Modern.WPF"
                     xmlns:converters="clr-namespace:WWSearchDataGrid.Modern.WPF.Converters;assembly=WWSearchDataGrid.Modern.WPF">
@@ -12,42 +12,13 @@
     <!--  Default SearchTextBox Style  -->
     <Style x:Key="CustomSearchTextboxStyle" TargetType="{x:Type sdg:SearchTextBox}">
         <Style.Resources>
-            <!--  Surface  -->
-            <SolidColorBrush x:Key="SearchTextBox.BackgroundBrush" Color="#FFFFFFFF" />
-            <SolidColorBrush x:Key="SearchTextBox.BackgroundBrush.Hover" Color="#FFF8F9FB" />
-            <SolidColorBrush x:Key="SearchTextBox.BackgroundBrush.Readonly" Color="#FFF7F7F7" />
-
-            <!--  Border  -->
-            <SolidColorBrush x:Key="SearchTextBox.BorderBrush.Default" Color="#FFD0D5DD" />
-            <SolidColorBrush x:Key="SearchTextBox.BorderBrush.Hover" Color="#FFA8B0BB" />
-            <SolidColorBrush x:Key="SearchTextBox.BorderBrush.Focused" Color="#FF2B88FF" />
-            <SolidColorBrush x:Key="SearchTextBox.BorderBrush.Disabled" Color="#FFE5E7EB" />
-
-            <!--  Text  -->
-            <SolidColorBrush x:Key="SearchTextBox.ForegroundBrush" Color="#FF111827" />
-            <SolidColorBrush x:Key="SearchTextBox.WatermarkBrush" Color="#FF6B7280" />
-
-            <!--  Icons  -->
-            <SolidColorBrush x:Key="SearchTextBox.SearchIconBrush" Color="#FF4B5563" />
-
-            <!--  Clear button  -->
-            <SolidColorBrush x:Key="SearchTextBox.ClearButton.BackgroundBrush.Default" Color="#00FFFFFF" />
-            <SolidColorBrush x:Key="SearchTextBox.ClearButton.BackgroundBrush.Hover" Color="#FFEFF4FF" />
-            <SolidColorBrush x:Key="SearchTextBox.ClearButton.BackgroundBrush.Pressed" Color="#FFDCE9FF" />
-            <SolidColorBrush x:Key="SearchTextBox.ClearButton.ForegroundBrush.Default" Color="#FF4B5563" />
-            <SolidColorBrush x:Key="SearchTextBox.ClearButton.ForegroundBrush.Hover" Color="#FFB00020" />
-            <SolidColorBrush x:Key="SearchTextBox.ClearButton.ForegroundBrush.Pressed" Color="#FF8C0019" />
-
-            <!--  Popup  -->
-            <SolidColorBrush x:Key="SearchTextBox.Popup.Background" Color="#FFFFFFFF" />
-            <SolidColorBrush x:Key="SearchTextBox.Popup.Border" Color="#FFD0D5DD" />
             <CornerRadius x:Key="SearchTextBox.Popup.CornerRadius">10</CornerRadius>
         </Style.Resources>
 
         <!--  Defaults  -->
-        <Setter Property="Background" Value="{StaticResource SearchTextBox.BackgroundBrush}" />
-        <Setter Property="BorderBrush" Value="{StaticResource SearchTextBox.BorderBrush.Default}" />
-        <Setter Property="Foreground" Value="{StaticResource SearchTextBox.ForegroundBrush}" />
+        <Setter Property="Background" Value="{DynamicResource Theme.SearchTextBox.Background}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Theme.SearchTextBox.Border}" />
+        <Setter Property="Foreground" Value="{DynamicResource Theme.SearchTextBox.Foreground}" />
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="MinHeight" Value="32" />
         <Setter Property="HorizontalContentAlignment" Value="Left" />
@@ -92,7 +63,7 @@
                                     <Style TargetType="{x:Type Button}">
                                         <Setter Property="Background" Value="Transparent" />
                                         <Setter Property="BorderBrush" Value="Transparent" />
-                                        <Setter Property="Foreground" Value="{StaticResource SearchTextBox.SearchIconBrush}" />
+                                        <Setter Property="Foreground" Value="{DynamicResource Theme.SearchTextBox.Icon}" />
                                         <Setter Property="BorderThickness" Value="1" />
                                         <Setter Property="Cursor" Value="Hand" />
                                         <Setter Property="FontFamily" Value="Segoe Fluent Icons" />
@@ -142,7 +113,7 @@
                                 <!--  Watermark  -->
                                 <TextBlock x:Name="WatermarkText"
                                            FontStyle="Italic"
-                                           Foreground="{StaticResource SearchTextBox.WatermarkBrush}"
+                                           Foreground="{DynamicResource Theme.SearchTextBox.Watermark}"
                                            Text="{TemplateBinding Watermark}"
                                            IsHitTestVisible="False"
                                            Margin="10,6"
@@ -173,7 +144,7 @@
                                          Foreground="{TemplateBinding Foreground}"
                                          BorderThickness="0"
                                          CaretBrush="{TemplateBinding Foreground}"
-                                         SelectionBrush="#FF2B88FF"
+                                         SelectionBrush="{DynamicResource Theme.SearchTextBox.Selection}"
                                          Padding="10,6"
                                          HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
                                          VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
@@ -198,8 +169,8 @@
                                     ToolTip="Clear search">
                                 <Button.Style>
                                     <Style TargetType="Button">
-                                        <Setter Property="Background" Value="{StaticResource SearchTextBox.ClearButton.BackgroundBrush.Default}" />
-                                        <Setter Property="Foreground" Value="{StaticResource SearchTextBox.ClearButton.ForegroundBrush.Default}" />
+                                        <Setter Property="Background" Value="{DynamicResource Theme.SearchTextBox.Clear.Background}" />
+                                        <Setter Property="Foreground" Value="{DynamicResource Theme.SearchTextBox.Clear.Foreground}" />
                                         <Setter Property="BorderThickness" Value="0" />
                                         <Setter Property="Cursor" Value="Hand" />
                                         <Setter Property="FontFamily" Value="Segoe Fluent Icons" />
@@ -230,12 +201,12 @@
                                                 <Setter Property="Visibility" Value="Visible" />
                                             </MultiDataTrigger>
                                             <Trigger Property="IsMouseOver" Value="True">
-                                                <Setter Property="Background" Value="{StaticResource SearchTextBox.ClearButton.BackgroundBrush.Hover}" />
-                                                <Setter Property="Foreground" Value="{StaticResource SearchTextBox.ClearButton.ForegroundBrush.Hover}" />
+                                                <Setter Property="Background" Value="{DynamicResource Theme.SearchTextBox.Clear.Background.Hover}" />
+                                                <Setter Property="Foreground" Value="{DynamicResource Theme.SearchTextBox.Clear.Foreground.Hover}" />
                                             </Trigger>
                                             <Trigger Property="IsPressed" Value="True">
-                                                <Setter Property="Background" Value="{StaticResource SearchTextBox.ClearButton.BackgroundBrush.Pressed}" />
-                                                <Setter Property="Foreground" Value="{StaticResource SearchTextBox.ClearButton.ForegroundBrush.Pressed}" />
+                                                <Setter Property="Background" Value="{DynamicResource Theme.SearchTextBox.Clear.Background.Pressed}" />
+                                                <Setter Property="Foreground" Value="{DynamicResource Theme.SearchTextBox.Clear.Foreground.Pressed}" />
                                             </Trigger>
                                             <Trigger Property="IsKeyboardFocused" Value="True">
                                                 <Setter Property="Background" Value="#14B00020" />
@@ -256,8 +227,8 @@
                                    Placement="Bottom"
                                    PopupAnimation="Slide"
                                    StaysOpen="True">
-                                <Border Background="{StaticResource SearchTextBox.Popup.Background}"
-                                        BorderBrush="{StaticResource SearchTextBox.Popup.Border}"
+                                <Border Background="{DynamicResource Theme.SearchTextBox.Popup.Background}"
+                                        BorderBrush="{DynamicResource Theme.SearchTextBox.Popup.Border}"
                                         BorderThickness="1"
                                         MinWidth="{Binding ActualWidth, RelativeSource={RelativeSource TemplatedParent}}"
                                         MaxHeight="260"
@@ -277,8 +248,8 @@
 
                                         <!--  Header with Sort Toggle  -->
                                         <Border Grid.Row="0"
-                                                Background="#FFF5F5F5"
-                                                BorderBrush="#FFDDDDDD"
+                                                Background="{DynamicResource Theme.SearchTextBox.Popup.Header}"
+                                                BorderBrush="{DynamicResource Theme.SearchTextBox.Popup.Header.Border}"
                                                 BorderThickness="0,0,0,1"
                                                 Padding="4">
                                             <Button x:Name="PART_SortToggleButton"
@@ -291,8 +262,8 @@
                                                 <Button.Style>
                                                     <Style TargetType="Button">
                                                         <Setter Property="Background" Value="Transparent" />
-                                                        <Setter Property="Foreground" Value="#FF666666" />
-                                                        <Setter Property="BorderBrush" Value="#FFCCCCCC" />
+                                                        <Setter Property="Foreground" Value="{DynamicResource Theme.SearchTextBox.Popup.Sort.Foreground}" />
+                                                        <Setter Property="BorderBrush" Value="{DynamicResource Theme.SearchTextBox.Popup.Sort.Border}" />
                                                         <Setter Property="BorderThickness" Value="1" />
                                                         <Setter Property="Cursor" Value="Hand" />
                                                         <Setter Property="Template">
@@ -310,13 +281,13 @@
                                                         </Setter>
                                                         <Style.Triggers>
                                                             <Trigger Property="IsMouseOver" Value="True">
-                                                                <Setter Property="Background" Value="#FFF0F0F0" />
-                                                                <Setter Property="BorderBrush" Value="#FF999999" />
+                                                                <Setter Property="Background" Value="{DynamicResource Theme.SearchTextBox.Popup.Sort.Hover}" />
+                                                                <Setter Property="BorderBrush" Value="{DynamicResource Theme.SearchTextBox.Popup.Sort.Hover.Border}" />
                                                             </Trigger>
                                                             <DataTrigger Binding="{Binding IsSortByQuantity, RelativeSource={RelativeSource TemplatedParent}}" Value="True">
-                                                                <Setter Property="Background" Value="#FFE3F2FD" />
-                                                                <Setter Property="BorderBrush" Value="#FF0078D4" />
-                                                                <Setter Property="Foreground" Value="#FF0078D4" />
+                                                                <Setter Property="Background" Value="{DynamicResource Theme.SearchTextBox.Popup.SortActive.Background}" />
+                                                                <Setter Property="BorderBrush" Value="{DynamicResource Theme.SearchTextBox.Popup.SortActive.Border}" />
+                                                                <Setter Property="Foreground" Value="{DynamicResource Theme.SearchTextBox.Popup.SortActive.Foreground}" />
                                                             </DataTrigger>
                                                         </Style.Triggers>
                                                     </Style>
@@ -328,6 +299,7 @@
                                                  Style="{StaticResource CustomListBoxStyle}"
                                                  Grid.Row="1"
                                                  Background="Transparent"
+                                                 Foreground="{DynamicResource Theme.SearchTextBox.Foreground}"
                                                  BorderThickness="0"
                                                  ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                                                  ScrollViewer.VerticalScrollBarVisibility="Auto"
@@ -347,6 +319,7 @@
                                                             <ColumnDefinition Width="Auto" />
                                                         </Grid.ColumnDefinitions>
                                                         <sdg:HighlightTextBlock Grid.Column="0"
+                                                                                Foreground="{DynamicResource Theme.SearchTextBox.Foreground}"
                                                                                 HighlightTextBlockText="{Binding}"
                                                                                 HighlightText="{Binding Text, RelativeSource={RelativeSource AncestorType=sdg:SearchTextBox}}"
                                                                                 TextWrapping="NoWrap"
@@ -354,14 +327,14 @@
                                                             <sdg:HighlightTextBlock.HighlightRunStyle>
                                                                 <Style TargetType="{x:Type Run}">
                                                                     <Setter Property="FontWeight" Value="SemiBold" />
-                                                                    <Setter Property="Background" Value="#aafff000" />
+                                                                    <Setter Property="Background" Value="{DynamicResource Theme.SearchTextBox.Highlight}" />
                                                                 </Style>
                                                             </sdg:HighlightTextBlock.HighlightRunStyle>
                                                         </sdg:HighlightTextBlock>
 
                                                         <!--  Count Display  -->
                                                         <TextBlock Grid.Column="1"
-                                                                   Foreground="#FF999999"
+                                                                   Foreground="{DynamicResource Theme.SearchTextBox.Count.Foreground}"
                                                                    Margin="8,0,0,0"
                                                                    VerticalAlignment="Center"
                                                                    FontSize="10">
@@ -385,7 +358,7 @@
                     <!--  Visual states via triggers  -->
                     <ControlTemplate.Triggers>
                         <Trigger SourceName="PART_TextBox" Property="IsReadOnly" Value="True">
-                            <Setter TargetName="Border" Property="Background" Value="{StaticResource SearchTextBox.BackgroundBrush.Readonly}" />
+                            <Setter TargetName="Border" Property="Background" Value="{DynamicResource Theme.SearchTextBox.Background.Readonly}" />
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -393,14 +366,14 @@
         </Setter>
         <Style.Triggers>
             <Trigger Property="IsMouseOver" Value="True">
-                <Setter Property="BorderBrush" Value="{StaticResource SearchTextBox.BorderBrush.Hover}" />
-                <Setter Property="Background" Value="{StaticResource SearchTextBox.BackgroundBrush.Hover}" />
+                <Setter Property="BorderBrush" Value="{DynamicResource Theme.SearchTextBox.Border.Hover}" />
+                <Setter Property="Background" Value="{DynamicResource Theme.SearchTextBox.Background.Hover}" />
             </Trigger>
             <Trigger Property="IsSearchFocused" Value="True">
-                <Setter Property="BorderBrush" Value="{StaticResource SearchTextBox.BorderBrush.Focused}" />
+                <Setter Property="BorderBrush" Value="{DynamicResource Theme.SearchTextBox.Border.Focused}" />
             </Trigger>
             <Trigger Property="IsEnabled" Value="False">
-                <Setter Property="BorderBrush" Value="{StaticResource SearchTextBox.BorderBrush.Disabled}" />
+                <Setter Property="BorderBrush" Value="{DynamicResource Theme.SearchTextBox.Border.Disabled}" />
                 <Setter Property="Opacity" Value="0.6" />
             </Trigger>
         </Style.Triggers>

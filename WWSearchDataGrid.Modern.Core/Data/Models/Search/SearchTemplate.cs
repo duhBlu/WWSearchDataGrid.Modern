@@ -113,10 +113,18 @@ namespace WWSearchDataGrid.Modern.Core
         }
 
         /// <summary>
-        /// Gets available values from the parent controller (direct binding)
-        /// Note: Null/blank values are not included - users should use IsNull/IsNotNull search types
+        /// Gets available values from the parent controller (direct binding).
+        /// Returns raw values - use AvailableDisplayValues for formatted display text.
+        /// Note: Null/blank values are not included - users should use IsNull/IsNotNull search types.
         /// </summary>
         public IEnumerable<object> AvailableValues => SearchTemplateController?.ColumnValues ?? Enumerable.Empty<object>();
+
+        /// <summary>
+        /// Gets available values formatted through the display value provider.
+        /// Falls back to raw ToString() when no display provider is configured.
+        /// Bind UI dropdowns to this property to show formatted values (e.g., "$12.50" instead of "12.5").
+        /// </summary>
+        public IReadOnlyList<string> AvailableDisplayValues => SearchTemplateController?.DisplayColumnValues ?? (IReadOnlyList<string>)new List<string>();
 
         /// <summary>
         /// Gets the count of available values for display purposes

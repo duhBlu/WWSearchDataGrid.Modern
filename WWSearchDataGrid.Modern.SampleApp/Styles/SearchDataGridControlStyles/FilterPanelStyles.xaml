@@ -1,4 +1,4 @@
-﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:behaviors="clr-namespace:WWSearchDataGrid.Modern.WPF.Behaviors;assembly=WWSearchDataGrid.Modern.WPF"
                     xmlns:converters="clr-namespace:WWSearchDataGrid.Modern.WPF.Converters;assembly=WWSearchDataGrid.Modern.WPF"
@@ -23,8 +23,8 @@
                 Tag="{Binding FilterId}">
             <Border.BorderBrush>
                 <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                    <GradientStop Color="#9a9a9a" Offset="0" />
-                    <GradientStop Color="#9a9a9a" Offset="0.5" />
+                    <GradientStop Color="{DynamicResource Theme.Token.Bracket.Border.Color}" Offset="0" />
+                    <GradientStop Color="{DynamicResource Theme.Token.Bracket.Border.Color}" Offset="0.5" />
                     <GradientStop Color="Transparent" Offset="0.51" />
                     <GradientStop Color="Transparent" Offset="1" />
                 </LinearGradientBrush>
@@ -34,14 +34,14 @@
 
     <!--  Column Name Token Template  -->
     <DataTemplate x:Key="ColumnNameTokenTemplate">
-        <Border Background="#ffc69b"
+        <Border Background="{DynamicResource Theme.Token.ColumnName.Background}"
                 Margin="1,3"
                 Padding="6,3"
                 Height="24"
                 behaviors:TokenHoverBehavior.IsEnabled="True"
                 CornerRadius="6"
                 Tag="{Binding FilterId}">
-            <TextBlock Foreground="Black"
+            <TextBlock Foreground="{DynamicResource Theme.Token.ColumnName.Foreground}"
                        Text="{Binding DisplayText}"
                        VerticalAlignment="Center"
                        FontWeight="SemiBold" />
@@ -56,7 +56,7 @@
                 Height="24"
                 behaviors:TokenHoverBehavior.IsEnabled="True"
                 Tag="{Binding FilterId}">
-            <TextBlock Foreground="#666"
+            <TextBlock Foreground="{DynamicResource Theme.Token.SearchType.Foreground}"
                        Text="{Binding DisplayText}"
                        VerticalAlignment="Center"
                        FontSize="12" />
@@ -72,11 +72,11 @@
               behaviors:TokenConfirmationBehavior.IsEnabled="True"
               Tag="{Binding FilterId}">
             <Border x:Name="TokenBorder"
-                    Background="#bbe2c5"
+                    Background="{DynamicResource Theme.Token.Value.Background}"
                     Margin="1"
                     Padding="8,4"
                     CornerRadius="6">
-                <TextBlock Foreground="Black"
+                <TextBlock Foreground="{DynamicResource Theme.Token.Value.Foreground}"
                            Text="{Binding DisplayText}"
                            VerticalAlignment="Center" />
             </Border>
@@ -108,8 +108,8 @@
                 </Button.ToolTip>
                 <Button.Style>
                     <Style TargetType="Button">
-                        <Setter Property="Background" Value="#61000000" />
-                        <Setter Property="Foreground" Value="#FFFFFFFF" />
+                        <Setter Property="Background" Value="{DynamicResource Theme.Token.Confirmation.Background}" />
+                        <Setter Property="Foreground" Value="{DynamicResource Theme.Token.Confirmation.Foreground}" />
                         <Setter Property="Template">
                             <Setter.Value>
                                 <ControlTemplate TargetType="{x:Type Button}">
@@ -129,10 +129,10 @@
                                     </Border>
                                     <ControlTemplate.Triggers>
                                         <Trigger Property="IsMouseOver" Value="True">
-                                            <Setter Property="Background" Value="#7A000000" />
+                                            <Setter Property="Background" Value="{DynamicResource Theme.Token.Confirmation.Background.Hover}" />
                                         </Trigger>
                                         <Trigger Property="IsPressed" Value="True">
-                                            <Setter Property="Background" Value="#8F000000" />
+                                            <Setter Property="Background" Value="{DynamicResource Theme.Token.Confirmation.Background.Pressed}" />
                                         </Trigger>
                                     </ControlTemplate.Triggers>
                                 </ControlTemplate>
@@ -153,11 +153,11 @@
               behaviors:TokenHoverBehavior.IsEnabled="True"
               behaviors:TokenConfirmationBehavior.IsEnabled="True"
               Tag="{Binding FilterId}">
-            <Border Background="#bbe2c5"
+            <Border Background="{DynamicResource Theme.Token.Value.Background}"
                     Margin="1"
                     Padding="8,4"
                     CornerRadius="6">
-                <TextBlock Foreground="Black"
+                <TextBlock Foreground="{DynamicResource Theme.Token.Value.Foreground}"
                            Text="{Binding DisplayText}"
                            VerticalAlignment="Center" />
             </Border>
@@ -190,9 +190,9 @@
                 </Button.ToolTip>
                 <Button.Style>
                     <Style TargetType="Button">
-                        <Setter Property="Background" Value="#61000000" />
-                        <Setter Property="BorderBrush" Value="#DC3656" />
-                        <Setter Property="Foreground" Value="#FFFFFFFF" />
+                        <Setter Property="Background" Value="{DynamicResource Theme.Token.Confirmation.Background}" />
+                        <Setter Property="BorderBrush" Value="{DynamicResource Theme.Token.Confirmation.Border}" />
+                        <Setter Property="Foreground" Value="{DynamicResource Theme.Token.Confirmation.Foreground}" />
                         <Setter Property="Template">
                             <Setter.Value>
                                 <ControlTemplate TargetType="{x:Type Button}">
@@ -212,10 +212,10 @@
                                     </Border>
                                     <ControlTemplate.Triggers>
                                         <Trigger Property="IsMouseOver" Value="True">
-                                            <Setter Property="Background" Value="#7A000000" />
+                                            <Setter Property="Background" Value="{DynamicResource Theme.Token.Confirmation.Background.Hover}" />
                                         </Trigger>
                                         <Trigger Property="IsPressed" Value="True">
-                                            <Setter Property="Background" Value="#8F000000" />
+                                            <Setter Property="Background" Value="{DynamicResource Theme.Token.Confirmation.Background.Pressed}" />
                                         </Trigger>
                                     </ControlTemplate.Triggers>
                                 </ControlTemplate>
@@ -235,13 +235,13 @@
             Height="24"
             behaviors:TokenHoverBehavior.IsEnabled="True"
             Tag="{Binding FilterId}">
-            <TextBlock Foreground="#888"
+            <TextBlock Foreground="{DynamicResource Theme.Token.ValueOperator.Foreground}"
                    Text="{Binding DisplayText}"
                    VerticalAlignment="Center"
                    FontSize="11" />
         </Border>
     </DataTemplate>
-    
+
     <!--  Closing Bracket Token Template  -->
     <DataTemplate x:Key="ClosingBracketTokenTemplate">
         <Border Background="Transparent"
@@ -253,8 +253,8 @@
             Tag="{Binding FilterId}">
             <Border.BorderBrush>
                 <LinearGradientBrush StartPoint="1,0" EndPoint="0,0">
-                    <GradientStop Color="#9a9a9a" Offset="0" />
-                    <GradientStop Color="#9a9a9a" Offset="0.5" />
+                    <GradientStop Color="{DynamicResource Theme.Token.Bracket.Border.Color}" Offset="0" />
+                    <GradientStop Color="{DynamicResource Theme.Token.Bracket.Border.Color}" Offset="0.5" />
                     <GradientStop Color="Transparent" Offset="0.51" />
                     <GradientStop Color="Transparent" Offset="1" />
                 </LinearGradientBrush>
@@ -265,7 +265,7 @@
     <!--  Search Template Group logical Connector Token Template  -->
     <DataTemplate x:Key="GroupLogicalConnectorTokenTemplate">
         <Border x:Name="OperatorBorder"
-            Background="#cee8fb"
+            Background="{DynamicResource Theme.Token.Operator.Background}"
             Cursor="Hand"
             Margin="4,1,14,0"
             Padding="8,3"
@@ -279,7 +279,7 @@
                           CommandParameter="{Binding}"
                           MouseAction="LeftClick" />
             </Border.InputBindings>
-            <TextBlock Foreground="#0078D4"
+            <TextBlock Foreground="{DynamicResource Theme.Token.Operator.Foreground}"
                    Text="{Binding DisplayText}"
                    VerticalAlignment="Center"
                    FontWeight="Bold"
@@ -287,15 +287,15 @@
         </Border>
         <DataTemplate.Triggers>
             <Trigger SourceName="OperatorBorder" Property="IsMouseOver" Value="True">
-                <Setter TargetName="OperatorBorder" Property="Background" Value="#b8d8f0" />
+                <Setter TargetName="OperatorBorder" Property="Background" Value="{DynamicResource Theme.Token.Operator.Hover}" />
             </Trigger>
         </DataTemplate.Triggers>
     </DataTemplate>
-    
+
     <!--  Search Template Logical Connector Token Template  -->
     <DataTemplate x:Key="TemplateLogicalConnectorTokenTemplate">
         <Border x:Name="TemplateOperatorBorder"
-            Background="#cee8fb"
+            Background="{DynamicResource Theme.Token.Operator.Background}"
             Cursor="Hand"
             Margin="2,2,2,0"
             Padding="5,1"
@@ -309,7 +309,7 @@
                           CommandParameter="{Binding}"
                           MouseAction="LeftClick" />
             </Border.InputBindings>
-            <TextBlock Foreground="#0078D4"
+            <TextBlock Foreground="{DynamicResource Theme.Token.Operator.Foreground}"
                    Text="{Binding DisplayText}"
                    VerticalAlignment="Center"
                    FontWeight="Bold"
@@ -317,7 +317,7 @@
         </Border>
         <DataTemplate.Triggers>
             <Trigger SourceName="TemplateOperatorBorder" Property="IsMouseOver" Value="True">
-                <Setter TargetName="TemplateOperatorBorder" Property="Background" Value="#b8d8f0" />
+                <Setter TargetName="TemplateOperatorBorder" Property="Background" Value="{DynamicResource Theme.Token.Operator.Hover}" />
             </Trigger>
         </DataTemplate.Triggers>
     </DataTemplate>
@@ -341,7 +341,7 @@
             Tag="{Binding FilterId}">
             <Button.Style>
                 <Style BasedOn="{StaticResource CustomTransparentFontIconButtonStyle}" TargetType="Button">
-                    <Setter Property="Foreground" Value="#999" />
+                    <Setter Property="Foreground" Value="{DynamicResource Theme.Token.Remove.Foreground}" />
                     <Setter Property="Opacity" Value="0" />
                     <Style.Triggers>
                         <!--  Show when this token's FilterId matches HoveredFilterId  -->
@@ -356,10 +356,10 @@
                         </DataTrigger>
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter Property="Opacity" Value="1" />
-                            <Setter Property="Foreground" Value="#666" />
+                            <Setter Property="Foreground" Value="{DynamicResource Theme.Token.Remove.Foreground.Hover}" />
                         </Trigger>
                         <Trigger Property="IsPressed" Value="True">
-                            <Setter Property="Foreground" Value="#333" />
+                            <Setter Property="Foreground" Value="{DynamicResource Theme.Token.Remove.Foreground.Pressed}" />
                         </Trigger>
                     </Style.Triggers>
                 </Style>
@@ -368,7 +368,7 @@
     </DataTemplate>
 
     <!--#endregion-->
-    
+
     <!--  Token Template Selector  -->
     <sdg:FilterTokenTemplateSelector x:Key="CustomFilterTokenTemplateSelector"
                                      OpenBracketTemplate="{StaticResource OpenBracketTokenTemplate}"
@@ -389,8 +389,8 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type sdg:FilterPanel}">
-                    <Border Background="#F8F9FA"
-                            BorderBrush="#E1E5E9"
+                    <Border Background="{DynamicResource Theme.Filter.Background}"
+                            BorderBrush="{DynamicResource Theme.Filter.Border}"
                             BorderThickness="0,1,0,0"
                             Visibility="{Binding HasActiveFilters, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource BooleanToVisibilityCollapsedConverter}}">
                         <Grid>
@@ -464,7 +464,7 @@
                                 <Border.Background>
                                     <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
                                         <GradientStop Color="#00FFFFFF" Offset="0" />
-                                        <GradientStop Color="#FFF8F9FA" Offset="1" />
+                                        <GradientStop Color="{DynamicResource Theme.Filter.Background.Color}" Offset="1" />
                                     </LinearGradientBrush>
                                 </Border.Background>
                                 <Border.Style>
@@ -521,12 +521,12 @@
                                                     <Setter Property="Visibility" Value="Visible" />
                                                 </DataTrigger>
                                                 <Trigger Property="IsMouseOver" Value="True">
-                                                    <Setter Property="Background" Value="#eee" />
-                                                    <Setter Property="Foreground" Value="#1c1c1c" />
+                                                    <Setter Property="Background" Value="{DynamicResource Theme.Surface.Hover}" />
+                                                    <Setter Property="Foreground" Value="{DynamicResource Theme.Text.Primary}" />
                                                 </Trigger>
                                                 <Trigger Property="IsPressed" Value="True">
-                                                    <Setter Property="Background" Value="#ddd" />
-                                                    <Setter Property="Foreground" Value="#000000" />
+                                                    <Setter Property="Background" Value="{DynamicResource Theme.Surface.Pressed}" />
+                                                    <Setter Property="Foreground" Value="{DynamicResource Theme.Text.Primary}" />
                                                 </Trigger>
                                             </Style.Triggers>
                                         </Style>
@@ -544,12 +544,12 @@
                                         <Style BasedOn="{StaticResource CustomTransparentFontIconButtonStyle}" TargetType="{x:Type Button}">
                                             <Style.Triggers>
                                                 <Trigger Property="IsMouseOver" Value="True">
-                                                    <Setter Property="Background" Value="#eee" />
-                                                    <Setter Property="Foreground" Value="#CC0000" />
+                                                    <Setter Property="Background" Value="{DynamicResource Theme.Surface.Hover}" />
+                                                    <Setter Property="Foreground" Value="{DynamicResource Theme.Status.Error.Light}" />
                                                 </Trigger>
                                                 <Trigger Property="IsPressed" Value="True">
-                                                    <Setter Property="Background" Value="#ddd" />
-                                                    <Setter Property="Foreground" Value="#990000" />
+                                                    <Setter Property="Background" Value="{DynamicResource Theme.Surface.Pressed}" />
+                                                    <Setter Property="Foreground" Value="{DynamicResource Theme.Status.Error.Dark}" />
                                                 </Trigger>
                                             </Style.Triggers>
                                         </Style>

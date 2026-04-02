@@ -7,10 +7,13 @@
         xmlns:sdg="clr-namespace:WWSearchDataGrid.Modern.WPF;assembly=WWSearchDataGrid.Modern.WPF"
         xmlns:sdgCore="clr-namespace:WWSearchDataGrid.Modern.Core;assembly=WWSearchDataGrid.Modern.Core"
         xmlns:sampleConverters="clr-namespace:WWSearchDataGrid.Modern.SampleApp.Converters"
+        xmlns:sdgConverters="clr-namespace:WWSearchDataGrid.Modern.WPF.Converters;assembly=WWSearchDataGrid.Modern.WPF"
+        Style="{DynamicResource SampleAppWindowStyle}"
         Title="SearchDataGrid Demo"
         Width="1280"
         Height="800"
-        WindowStartupLocation="CenterOwner"
+        ResizeMode="CanResize"
+        WindowStartupLocation="CenterScreen"
         mc:Ignorable="d">
     <Window.DataContext>
         <local:MainViewModel />
@@ -22,6 +25,8 @@
         <sampleConverters:BooleanToStringConverter x:Key="BooleanToStringConverter" />
         <sampleConverters:NullToBooleanConverter x:Key="NullToBooleanConverter" />
         <sampleConverters:ColumnDisplayNameConverter x:Key="ColumnDisplayNameConverter" />
+        <sampleConverters:PriorityToTextConverter x:Key="PriorityToTextConverter" />
+        <sdgConverters:MaskFormatConverter x:Key="MaskFormatConverter" />
 
         <!--  Data  -->
         <CollectionViewSource x:Key="ComboBoxItemsSource" Source="{Binding ComboBoxItems}" />
@@ -30,9 +35,9 @@
         <!--  Non sdg Styles  -->
         <Style x:Key="DefaultButtonStyle" TargetType="Button">
             <Setter Property="Padding" Value="10,5" />
-            <Setter Property="Background" Value="#FFFFFF" />
-            <Setter Property="BorderBrush" Value="#CCCCCC" />
-            <Setter Property="Foreground" Value="#333333" />
+            <Setter Property="Background" Value="{DynamicResource Theme.Surface.Page}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource Theme.Border.Strong}" />
+            <Setter Property="Foreground" Value="{DynamicResource Theme.Text.Primary}" />
             <Setter Property="Cursor" Value="Hand" />
             <Setter Property="FontSize" Value="12" />
             <Setter Property="Template">
@@ -48,12 +53,12 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="Background" Value="#F0F0F0" />
-                                <Setter Property="BorderBrush" Value="#AAAAAA" />
+                                <Setter Property="Background" Value="{DynamicResource Theme.Surface.Hover}" />
+                                <Setter Property="BorderBrush" Value="{DynamicResource Theme.Border.Strong}" />
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
-                                <Setter Property="Background" Value="#E0E0E0" />
-                                <Setter Property="BorderBrush" Value="#999999" />
+                                <Setter Property="Background" Value="{DynamicResource Theme.Surface.Pressed}" />
+                                <Setter Property="BorderBrush" Value="{DynamicResource Theme.Border.Default}" />
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
                                 <Setter Property="Opacity" Value="0.6" />
@@ -68,7 +73,7 @@
 
     <DockPanel>
         <!--  Header with app title  -->
-        <StackPanel Background="white" Orientation="Horizontal">
+        <StackPanel Background="{DynamicResource Theme.Surface.Page}" Orientation="Horizontal">
             <StackPanel.Resources>
                 <ScaleTransform x:Key="scale" ScaleX="0.8" ScaleY="0.8" />
             </StackPanel.Resources>
@@ -113,7 +118,7 @@
         </StackPanel>
 
         <!--  Control Panel  -->
-        <Grid DockPanel.Dock="Bottom" Background="#F0F0F0">
+        <Grid DockPanel.Dock="Bottom" Background="{DynamicResource Theme.Surface.Secondary}">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
@@ -125,23 +130,27 @@
                         Margin="15,0,0,0"
                         VerticalAlignment="Center">
 
-                <TextBlock Text="Total Data Items: "
+                <TextBlock Foreground="{DynamicResource Theme.Text.Primary}"
+                           Text="Total Data Items: "
                            VerticalAlignment="Center"
                            FontWeight="Bold" />
-                <TextBlock Text="{Binding ItemCount, StringFormat={}{0:N0}}" VerticalAlignment="Center" />
+                <TextBlock Foreground="{DynamicResource Theme.Text.Secondary}"
+                           Text="{Binding ItemCount, StringFormat={}{0:N0}}" VerticalAlignment="Center" />
 
-                <TextBlock Text="Filtered Rows: "
+                <TextBlock Foreground="{DynamicResource Theme.Text.Primary}"
+                           Text="Filtered Rows: "
                            Margin="10,0,0,0"
                            VerticalAlignment="Center"
                            FontWeight="Bold" />
-                <TextBlock Text="{Binding ElementName=SearchDataGrid, Path=Items.Count, StringFormat={}{0:N0}, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center" />
+                <TextBlock Foreground="{DynamicResource Theme.Text.Secondary}"
+                           Text="{Binding ElementName=SearchDataGrid, Path=Items.Count, StringFormat={}{0:N0}, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center" />
             </StackPanel>
 
             <Button Style="{StaticResource DefaultButtonStyle}"
                     Grid.Column="0"
                     Grid.ColumnSpan="2"
-                    Background="#6A4C93"
-                    Foreground="White"
+                    Background="{DynamicResource Theme.Accent}"
+                    Foreground="{DynamicResource Theme.Text.OnAccent}"
                     Command="{Binding ToggleThemeCommand}"
                     Margin="5"
                     Padding="10,5"
@@ -156,10 +165,10 @@
 
             <!--  Buttons  -->
             <StackPanel Grid.Column="1" Orientation="Horizontal">
-                <sdg:NumericUpDown Increment="1000" Value="{Binding ItemsToGenerate, Mode=TwoWay}" />
+                <sdg:NumericUpDown Increment="1000" Value="{Binding ItemsToGenerate, Mode=TwoWay}" VerticalContentAlignment="Center" />
                 <Button Style="{StaticResource DefaultButtonStyle}"
-                        Background="#007ACC"
-                        Foreground="White"
+                        Background="{DynamicResource Theme.Accent.Blue}"
+                        Foreground="{DynamicResource Theme.Text.OnAccent}"
                         Command="{Binding PopulateDataCommand}"
                         Margin="5"
                         Padding="10,5"
@@ -334,154 +343,131 @@
                                 CanUserAddRows="False">
                 <sdg:SearchDataGrid.Columns>
 
-                    <!--  String / Customer  -->
-                    <DataGridTextColumn Width="120"
-                                        sdg:GridColumn.EnableRuleFiltering="False"
-                                        sdg:GridColumn.FilterMemberPath="CustomerName"
-                                        sdg:GridColumn.ColumnDisplayName="Customer - With Custom Display Name!!!"
+                    <!--  Order ID: simple text, starts-with search  -->
+                    <DataGridTextColumn Width="100"
+                                        sdg:GridColumn.FilterMemberPath="OrderNumber"
                                         sdg:GridColumn.DefaultSearchMode="StartsWith"
+                                        sdg:GridColumn.EnableRuleFiltering="False"
+                                        SortMemberPath="OrderNumber"
+                                        Header="Order #"
+                                        Binding="{Binding OrderNumber}" />
+
+                    <!--  Customer name: text search  -->
+                    <DataGridTextColumn Width="140"
+                                        sdg:GridColumn.FilterMemberPath="CustomerName"
                                         SortMemberPath="CustomerName"
-                                        Header="Customer Name"
+                                        Header="Customer"
                                         Binding="{Binding CustomerName}" />
 
-                    <!--  Boolean Types with Explicit Checkbox Filtering  -->
-                    <DataGridCheckBoxColumn Width="110"
-                                            sdg:GridColumn.UseCheckBoxInSearchBox="True"
-                                            sdg:GridColumn.FilterMemberPath="BoolValue"
-                                            sdg:GridColumn.IsSelectAllColumn="True"
-                                            sdg:GridColumn.SelectAllScope="SelectedRows"
-                                            SortMemberPath="BoolValue"
-                                            Binding="{Binding BoolValue}">
-                        <DataGridCheckBoxColumn.Header>
-                            <TextBlock Text="Bool Value" />
-                        </DataGridCheckBoxColumn.Header>
-                    </DataGridCheckBoxColumn>
+                    <!--  Phone: DisplayMask formats raw digits as (555) 123-4567  -->
+                    <DataGridTextColumn Width="140"
+                                        sdg:GridColumn.FilterMemberPath="PhoneNumber"
+                                        sdg:GridColumn.DisplayMask="(000) 000-0000"
+                                        SortMemberPath="PhoneNumber"
+                                        Header="Phone"
+                                        Binding="{Binding PhoneNumber, Converter={StaticResource MaskFormatConverter}, ConverterParameter='(000) 000-0000'}" />
 
-                    <DataGridCheckBoxColumn Width="100"
+                    <!--  Product and Category: basic text columns  -->
+                    <DataGridTextColumn Width="120"
+                                        sdg:GridColumn.FilterMemberPath="ProductName"
+                                        SortMemberPath="ProductName"
+                                        Header="Product"
+                                        Binding="{Binding ProductName}" />
+
+                    <DataGridTextColumn Width="100"
+                                        sdg:GridColumn.FilterMemberPath="Category"
+                                        sdg:GridColumn.DefaultSearchMode="Equals"
+                                        SortMemberPath="Category"
+                                        Header="Category"
+                                        Binding="{Binding Category}" />
+
+                    <!--  Quantity: integer with rule filtering  -->
+                    <DataGridTextColumn Width="60"
+                                        sdg:GridColumn.FilterMemberPath="Quantity"
+                                        SortMemberPath="Quantity"
+                                        Header="Qty"
+                                        Binding="{Binding Quantity}" />
+
+                    <!--  Unit Price: DisplayStringFormat shows as currency  -->
+                    <DataGridTextColumn Width="90"
+                                        sdg:GridColumn.FilterMemberPath="UnitPrice"
+                                        sdg:GridColumn.DisplayStringFormat="C2"
+                                        SortMemberPath="UnitPrice"
+                                        Header="Unit Price"
+                                        Binding="{Binding UnitPrice, StringFormat=C2}" />
+
+                    <!--  Line Total: DisplayStringFormat shows as currency  -->
+                    <DataGridTextColumn Width="100"
+                                        sdg:GridColumn.FilterMemberPath="LineTotal"
+                                        sdg:GridColumn.DisplayStringFormat="C2"
+                                        SortMemberPath="LineTotal"
+                                        Header="Line Total"
+                                        Binding="{Binding LineTotal, StringFormat=C2}" />
+
+                    <!--  Discount: nullable percentage with format  -->
+                    <DataGridTextColumn Width="80"
+                                        sdg:GridColumn.FilterMemberPath="Discount"
+                                        sdg:GridColumn.DisplayStringFormat="P1"
+                                        SortMemberPath="Discount"
+                                        Header="Discount"
+                                        Binding="{Binding Discount, StringFormat=P1}" />
+
+                    <!--  Status: enum column (raw enum display)  -->
+                    <DataGridTextColumn Width="90"
+                                        sdg:GridColumn.FilterMemberPath="Status"
+                                        SortMemberPath="Status"
+                                        Header="Status"
+                                        Binding="{Binding Status}" />
+
+                    <!--  Priority: DisplayValueConverter shows friendly text  -->
+                    <DataGridTextColumn Width="90"
+                                        sdg:GridColumn.FilterMemberPath="Priority"
+                                        sdg:GridColumn.DisplayValueConverter="{StaticResource PriorityToTextConverter}"
+                                        SortMemberPath="Priority"
+                                        Header="Priority"
+                                        Binding="{Binding Priority, Converter={StaticResource PriorityToTextConverter}}" />
+
+                    <!--  Rush: boolean checkbox with select-all  -->
+                    <DataGridCheckBoxColumn Width="60"
                                             sdg:GridColumn.UseCheckBoxInSearchBox="True"
-                                            sdg:GridColumn.FilterMemberPath="NullableBoolValue"
+                                            sdg:GridColumn.FilterMemberPath="IsRush"
                                             sdg:GridColumn.IsSelectAllColumn="True"
                                             sdg:GridColumn.SelectAllScope="FilteredRows"
-                                            SortMemberPath="NullableBoolValue"
-                                            Header="Nullable Bool"
-                                            Binding="{Binding NullableBoolValue}" />
+                                            SortMemberPath="IsRush"
+                                            Header="Rush"
+                                            Binding="{Binding IsRush}" />
 
-                    <!--  Integer Types  -->
-                    <DataGridTextColumn Width="80"
-                                        sdg:GridColumn.EnableRuleFiltering="True"
-                                        sdg:GridColumn.FilterMemberPath="IntValue"
-                                        sdg:GridColumn.DefaultSearchMode="EndsWith"
-                                        SortMemberPath="IntValue"
-                                        Header="Int"
-                                        Binding="{Binding IntValue}" />
-                    <DataGridTextColumn Width="90"
-                                        sdg:GridColumn.FilterMemberPath="NullableIntValue"
-                                        SortMemberPath="NullableIntValue"
-                                        Header="Nullable Int"
-                                        Binding="{Binding NullableIntValue}" />
-                    <DataGridTextColumn Width="90"
-                                        sdg:GridColumn.FilterMemberPath="LongValue"
-                                        SortMemberPath="LongValue"
-                                        Header="Long"
-                                        Binding="{Binding LongValue}" />
-                    <DataGridTextColumn Width="100"
-                                        sdg:GridColumn.FilterMemberPath="NullableLongValue"
-                                        SortMemberPath="NullableLongValue"
-                                        Header="Nullable Long"
-                                        Binding="{Binding NullableLongValue}" />
-                    <DataGridTextColumn Width="70"
-                                        sdg:GridColumn.FilterMemberPath="ShortValue"
-                                        SortMemberPath="ShortValue"
-                                        Header="Short"
-                                        Binding="{Binding ShortValue}" />
-                    <DataGridTextColumn Width="90"
-                                        sdg:GridColumn.FilterMemberPath="NullableShortValue"
-                                        SortMemberPath="NullableShortValue"
-                                        Header="Nullable Short"
-                                        Binding="{Binding NullableShortValue}" />
-                    <DataGridTextColumn Width="60"
-                                        sdg:GridColumn.FilterMemberPath="ByteValue"
-                                        SortMemberPath="ByteValue"
-                                        Header="Byte"
-                                        Binding="{Binding ByteValue}" />
-                    <DataGridTextColumn Width="80"
-                                        sdg:GridColumn.FilterMemberPath="NullableByteValue"
-                                        SortMemberPath="NullableByteValue"
-                                        Header="Nullable Byte"
-                                        Binding="{Binding NullableByteValue}" />
+                    <!--  Approved: nullable boolean checkbox  -->
+                    <DataGridCheckBoxColumn Width="80"
+                                            sdg:GridColumn.UseCheckBoxInSearchBox="True"
+                                            sdg:GridColumn.FilterMemberPath="IsApproved"
+                                            sdg:GridColumn.IsSelectAllColumn="True"
+                                            sdg:GridColumn.SelectAllScope="SelectedRows"
+                                            SortMemberPath="IsApproved"
+                                            Header="Approved"
+                                            Binding="{Binding IsApproved}" />
 
-                    <!--  Floating-point and Decimal Types  -->
-                    <DataGridTextColumn Width="80"
-                                        sdg:GridColumn.FilterMemberPath="FloatValue"
-                                        SortMemberPath="FloatValue"
-                                        Header="Float"
-                                        Binding="{Binding FloatValue, StringFormat=N2}" />
-                    <DataGridTextColumn Width="100"
-                                        sdg:GridColumn.FilterMemberPath="NullableFloatValue"
-                                        SortMemberPath="NullableFloatValue"
-                                        Header="Nullable Float"
-                                        Binding="{Binding NullableFloatValue, StringFormat=N2}" />
-                    <DataGridTextColumn Width="90"
-                                        sdg:GridColumn.FilterMemberPath="DoubleValue"
-                                        SortMemberPath="DoubleValue"
-                                        Header="Double"
-                                        Binding="{Binding DoubleValue, StringFormat=N2}" />
-                    <DataGridTextColumn Width="110"
-                                        sdg:GridColumn.FilterMemberPath="NullableDoubleValue"
-                                        SortMemberPath="NullableDoubleValue"
-                                        Header="Nullable Double"
-                                        Binding="{Binding NullableDoubleValue, StringFormat=N2}" />
-                    <DataGridTextColumn Width="90"
-                                        sdg:GridColumn.FilterMemberPath="DecimalValue"
-                                        SortMemberPath="DecimalValue"
-                                        Header="Decimal"
-                                        Binding="{Binding DecimalValue, StringFormat=N2}" />
-                    <DataGridTextColumn Width="110"
-                                        sdg:GridColumn.FilterMemberPath="NullableDecimalValue"
-                                        SortMemberPath="NullableDecimalValue"
-                                        Header="Nullable Decimal"
-                                        Binding="{Binding NullableDecimalValue, StringFormat=N2}" />
+                    <!--  Order Date  -->
+                    <DataGridTextColumn Width="130"
+                                        sdg:GridColumn.FilterMemberPath="OrderDate"
+                                        SortMemberPath="OrderDate"
+                                        Header="Order Date"
+                                        Binding="{Binding OrderDate, StringFormat=g}" />
 
-                    <!--  Text Types  -->
-                    <DataGridTextColumn Width="100"
-                                        sdg:GridColumn.FilterMemberPath="StringValue"
-                                        SortMemberPath="StringValue"
-                                        Header="String Value"
-                                        Binding="{Binding StringValue}" />
-                    <DataGridTextColumn Width="60"
-                                        sdg:GridColumn.FilterMemberPath="CharValue"
-                                        SortMemberPath="CharValue"
-                                        Header="Char"
-                                        Binding="{Binding CharValue}" />
-                    <DataGridTextColumn Width="80"
-                                        sdg:GridColumn.FilterMemberPath="NullableCharValue"
-                                        SortMemberPath="NullableCharValue"
-                                        Header="Nullable Char"
-                                        Binding="{Binding NullableCharValue}" />
+                    <!--  Ship Date: nullable date  -->
+                    <DataGridTextColumn Width="130"
+                                        sdg:GridColumn.FilterMemberPath="ShipDate"
+                                        SortMemberPath="ShipDate"
+                                        Header="Ship Date"
+                                        Binding="{Binding ShipDate, StringFormat=d}" />
 
-                    <!--  Date and Time Types with Precision  -->
-                    <DataGridTextColumn Width="140"
-                                        sdg:GridColumn.FilterMemberPath="DateTimeValue"
-                                        SortMemberPath="DateTimeValue"
-                                        Header="DateTime"
-                                        Binding="{Binding DateTimeValue, StringFormat=g}" />
-                    <DataGridTextColumn Width="150"
-                                        sdg:GridColumn.FilterMemberPath="NullableDateTimeValue"
-                                        SortMemberPath="NullableDateTimeValue"
-                                        Header="Nullable DateTime"
-                                        Binding="{Binding NullableDateTimeValue, StringFormat=g}" />
-
-                    <!--  Enum Types  -->
-                    <DataGridTextColumn Width="80"
-                                        sdg:GridColumn.FilterMemberPath="PriorityValue"
-                                        SortMemberPath="PriorityValue"
-                                        Header="Priority Enum"
-                                        Binding="{Binding PriorityValue}" />
-                    <DataGridTextColumn Width="100"
-                                        sdg:GridColumn.FilterMemberPath="NullablePriorityValue"
-                                        SortMemberPath="NullablePriorityValue"
-                                        Header="Nullable Priority Enum"
-                                        Binding="{Binding NullablePriorityValue}" />
+                    <!--  Notes: nullable text  -->
+                    <DataGridTextColumn Width="200"
+                                        sdg:GridColumn.FilterMemberPath="Notes"
+                                        sdg:GridColumn.EnableRuleFiltering="False"
+                                        SortMemberPath="Notes"
+                                        Header="Notes"
+                                        Binding="{Binding Notes}" />
 
                 </sdg:SearchDataGrid.Columns>
             </sdg:SearchDataGrid>
@@ -492,13 +478,13 @@
                           Width="5">
                 <GridSplitter.Style>
                     <Style TargetType="{x:Type GridSplitter}">
-                        <Setter Property="Background" Value="#CCCCCC" />
+                        <Setter Property="Background" Value="{DynamicResource Theme.Border.Strong}" />
                         <Style.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="Background" Value="#BBBBBB" />
+                                <Setter Property="Background" Value="{DynamicResource Theme.Border.Default}" />
                             </Trigger>
                             <Trigger Property="IsDragging" Value="True">
-                                <Setter Property="Background" Value="#7A7A7A" />
+                                <Setter Property="Background" Value="{DynamicResource Theme.Accent}" />
                             </Trigger>
                         </Style.Triggers>
                     </Style>
@@ -507,7 +493,7 @@
 
             <!--  Property Panel  -->
             <ScrollViewer Grid.Column="2"
-                          Background="#F5F5F5"
+                          Background="{DynamicResource Theme.Surface.Secondary}"
                           VerticalScrollBarVisibility="Auto">
                 <sdg:SimpleStackPanel Orientation="Vertical">
 
@@ -596,29 +582,12 @@
                         </sdg:SimpleStackPanel>
                     </Expander>
 
-                    <!--  Column Properties Section  -->
-                    <Expander Header="Grid Column" DataContext="{Binding ElementName=ColumnListBox, Path=SelectedItem}" IsExpanded="True">
+                    <!--  Column Properties Section - syncs to last focused cell's column  -->
+                    <Expander Header="{Binding ElementName=SearchDataGrid, Path=LastFocusedColumn, Converter={StaticResource ColumnDisplayNameConverter}, FallbackValue='Grid Column', TargetNullValue='Grid Column'}"
+                              DataContext="{Binding ElementName=SearchDataGrid, Path=LastFocusedColumn}"
+                              IsExpanded="True">
                         <sdg:SimpleStackPanel Orientation="Vertical"
                                               Spacing="10">
-
-                            <!--  Column Selector  -->
-                            <sdg:SimpleStackPanel Orientation="Vertical" Spacing="5" >
-                                <TextBlock Text="Select Column:" FontWeight="Bold" />
-                                <ListBox x:Name="ColumnListBox"
-                                         Height="150"
-                                         SelectedIndex="0"
-                                         ScrollViewer.IsDeferredScrollingEnabled="True"
-                                         ItemsSource="{Binding ElementName=SearchDataGrid, Path=Columns}"
-                                         SelectionMode="Single"
-                                         ToolTipService.ShowOnDisabled="True"
-                                         ToolTip="Select a column to view and modify its properties below.&#x0a;Changes apply immediately to the selected column.">
-                                    <ListBox.ItemTemplate>
-                                        <DataTemplate>
-                                            <TextBlock Text="{Binding Converter={StaticResource ColumnDisplayNameConverter}}" />
-                                        </DataTemplate>
-                                    </ListBox.ItemTemplate>
-                                </ListBox>
-                            </sdg:SimpleStackPanel>
 
                             <!--  Binding & Display  -->
                             <Expander Header="Binding &amp; Display" IsExpanded="True">
@@ -682,6 +651,56 @@
                                                 <sdg:DefaultSearchMode>Equals</sdg:DefaultSearchMode>
                                             </ComboBox.Items>
                                         </ComboBox>
+                                    </sdg:SimpleStackPanel>
+
+                                </sdg:SimpleStackPanel>
+                            </Expander>
+
+                            <!--  Display Value Formatting  -->
+                            <Expander Header="Display Value Formatting" IsExpanded="True">
+                                <sdg:SimpleStackPanel Orientation="Vertical"
+                                                      Spacing="6">
+
+                                    <!--  DisplayStringFormat  -->
+                                    <sdg:SimpleStackPanel Orientation="Vertical"
+                                                          IsEnabled="{Binding Converter={StaticResource NullToBooleanConverter}}"
+                                                          Spacing="3">
+                                        <TextBlock Text="Display String Format:" FontWeight="Bold" />
+                                        <TextBox Text="{Binding Path=(sdg:GridColumn.DisplayStringFormat), UpdateSourceTrigger=PropertyChanged}"
+                                                 ToolTipService.ShowOnDisabled="True"
+                                                 ToolTip="A .NET format string for display and filtering.&#x0a;Examples: C2 (currency), N2 (number), P1 (percent), MM/dd/yyyy (date).&#x0a;Priority: DisplayMask > DisplayValueConverter > DisplayStringFormat" />
+                                    </sdg:SimpleStackPanel>
+
+                                    <!--  DisplayMask  -->
+                                    <sdg:SimpleStackPanel Orientation="Vertical"
+                                                          IsEnabled="{Binding Converter={StaticResource NullToBooleanConverter}}"
+                                                          Spacing="3">
+                                        <TextBlock Text="Display Mask:" FontWeight="Bold" />
+                                        <TextBox Text="{Binding Path=(sdg:GridColumn.DisplayMask), UpdateSourceTrigger=PropertyChanged}"
+                                                 ToolTipService.ShowOnDisabled="True"
+                                                 ToolTip="Mask pattern for formatted input and filtering.&#x0a;Chars: 0=digit, L=letter, A=alphanumeric, +=one-or-more, *=zero-or-more, \=escape.&#x0a;Examples: (000) 000-0000, 0+\.00, 00/00/0000.&#x0a;Takes highest priority over other display formatters." />
+                                    </sdg:SimpleStackPanel>
+
+                                    <!--  DisplayValueConverter (read-only indicator)  -->
+                                    <sdg:SimpleStackPanel Orientation="Vertical"
+                                                          IsEnabled="{Binding Converter={StaticResource NullToBooleanConverter}}"
+                                                          Spacing="3">
+                                        <TextBlock Text="Display Value Converter:" FontWeight="Bold" />
+                                        <TextBlock Foreground="{DynamicResource Theme.Text.Tertiary}"
+                                                   ToolTipService.ShowOnDisabled="True"
+                                                   ToolTip="An IValueConverter for display and filtering. Must be set in XAML.&#x0a;Convert: raw value to display text. ConvertBack: user input to raw value.">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Text" Value="(none)" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Path=(sdg:GridColumn.DisplayValueConverter), Converter={StaticResource NullToBooleanConverter}}" Value="True">
+                                                            <Setter Property="Text" Value="(converter assigned)" />
+                                                            <Setter Property="Foreground" Value="{DynamicResource Theme.Accent.Blue}" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
                                     </sdg:SimpleStackPanel>
 
                                 </sdg:SimpleStackPanel>

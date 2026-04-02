@@ -6,17 +6,20 @@ using System.Windows;
 namespace WWSearchDataGrid.Modern.SampleApp.Services
 {
     /// <summary>
-    /// Manages runtime theme switching between Generic and Custom themes
+    /// Manages runtime theme switching between Generic (light) and Custom (dark) themes
     /// </summary>
     public class ThemeManager
     {
         private static ThemeManager? _instance;
         public static ThemeManager Instance => _instance ??= new ThemeManager();
 
-        private ThemeType _currentTheme = ThemeType.Generic; 
+        private ThemeType _currentTheme = ThemeType.Generic;
 
         /// <summary>
-        /// Theme resource URI mappings
+        /// Theme resource URI mappings.
+        /// Each theme loads a color dictionary plus its control styles.
+        /// WindowStyle.xaml is loaded once in App.xaml and never swapped — it uses
+        /// DynamicResource so it picks up color changes automatically.
         /// </summary>
         private readonly Dictionary<ThemeType, List<Uri>> _themeResourceUris = new()
         {
@@ -24,6 +27,7 @@ namespace WWSearchDataGrid.Modern.SampleApp.Services
                 ThemeType.Generic,
                 new List<Uri>
                 {
+                    new Uri("/Styles/Colors/LightColors.xaml", UriKind.Relative),
                     new Uri("/WWSearchDataGrid.Modern.WPF;component/Themes/Generic.xaml", UriKind.Relative)
                 }
             },
@@ -31,6 +35,7 @@ namespace WWSearchDataGrid.Modern.SampleApp.Services
                 ThemeType.Custom,
                 new List<Uri>
                 {
+                    new Uri("/Styles/Colors/DarkColors.xaml", UriKind.Relative),
                     new Uri("/Styles/DefaultControlStyles.xaml", UriKind.Relative),
                     new Uri("/Styles/SearchDataGridControlStyles/Primitives/NumericUpDownStyles.xaml", UriKind.Relative),
                     new Uri("/Styles/SearchDataGridControlStyles/Primitives/SearchTextBoxStyles.xaml", UriKind.Relative),
@@ -146,12 +151,12 @@ namespace WWSearchDataGrid.Modern.SampleApp.Services
     public enum ThemeType
     {
         /// <summary>
-        /// Default library styles from WWSearchDataGrid.Modern.WPF/Themes/Generic.xaml
+        /// Default library styles with light color palette
         /// </summary>
         Generic,
 
         /// <summary>
-        /// Custom overridden styles from SampleApp/Styles/SearchDataGridControlStyles/
+        /// Custom overridden styles with dark color palette
         /// </summary>
         Custom
     }

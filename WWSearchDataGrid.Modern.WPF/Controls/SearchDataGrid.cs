@@ -98,6 +98,14 @@ namespace WWSearchDataGrid.Modern.WPF
             DependencyProperty.Register("IsColumnChooserConfinedToGrid", typeof(bool), typeof(SearchDataGrid),
                 new PropertyMetadata(false, OnIsColumnChooserConfinedToGridChanged));
 
+        /// <summary>
+        /// Dependency property for LastFocusedColumn. Persists the most recently focused
+        /// column so it remains available when focus leaves the grid.
+        /// </summary>
+        public static readonly DependencyProperty LastFocusedColumnProperty =
+            DependencyProperty.Register("LastFocusedColumn", typeof(DataGridColumn), typeof(SearchDataGrid),
+                new PropertyMetadata(null));
+
         #endregion
 
         #region Properties
@@ -193,6 +201,16 @@ namespace WWSearchDataGrid.Modern.WPF
         {
             get { return (bool)GetValue(IsColumnChooserConfinedToGridProperty); }
             set { SetValue(IsColumnChooserConfinedToGridProperty, value); }
+        }
+
+        /// <summary>
+        /// Gets the last column that had focus. Persists when focus leaves the grid,
+        /// so external panels can continue displaying column properties.
+        /// </summary>
+        public DataGridColumn LastFocusedColumn
+        {
+            get => (DataGridColumn)GetValue(LastFocusedColumnProperty);
+            private set => SetValue(LastFocusedColumnProperty, value);
         }
 
         /// <summary>
@@ -328,6 +346,15 @@ namespace WWSearchDataGrid.Modern.WPF
         protected override void OnRender(DrawingContext drawingContext)
         {
             base.OnRender(drawingContext);
+        }
+
+        protected override void OnCurrentCellChanged(EventArgs e)
+        {
+            base.OnCurrentCellChanged(e);
+
+            // Persist the column so it survives focus leaving the grid
+            if (CurrentCell.Column != null)
+                LastFocusedColumn = CurrentCell.Column;
         }
 
         protected override void OnInitialized(EventArgs e)

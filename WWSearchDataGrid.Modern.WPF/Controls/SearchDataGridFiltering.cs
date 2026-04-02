@@ -169,44 +169,131 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
-        /// Evaluates a single filter against an item using cached collection contexts for optimal performance
+        /// Evaluates a single filter against an item using cached collection contexts for optimal performance.
+        /// When a display value provider is configured on the column, text-based filters compare against
+        /// the formatted display value instead of the raw value.
         /// </summary>
         private bool EvaluateFilterWithContext(object item, ColumnSearchBox filter)
         {
             try
             {
-                // Get the property value for this filter
+                // Get the raw property value for this filter
                 object propertyValue = ReflectionHelper.GetPropValue(item, filter.BindingPath);
+
+                var controller = filter.SearchTemplateController;
 
                 // Check if this filter requires collection context
                 bool needsCollectionContext = DoesFilterRequireCollectionContext(filter);
 
                 if (needsCollectionContext)
                 {
-                    // Use cached collection context for this column
                     var collectionContext = GetOrCreateCollectionContext(filter.BindingPath);
                     if (collectionContext != null)
                     {
-                        return filter.SearchTemplateController.EvaluateWithCollectionContext(propertyValue, collectionContext);
+                        return controller.EvaluateWithCollectionContext(propertyValue, collectionContext);
                     }
                     else
                     {
-                        // Context creation failed - fall back to standard expression if available,
-                        // otherwise pass the item through (can't evaluate collection-context filters without context)
-                        return filter.SearchTemplateController.FilterExpression?.Invoke(propertyValue) ?? true;
+                        return controller.FilterExpression?.Invoke(propertyValue) ?? true;
                     }
                 }
-                else
+
+                // When a display value provider is configured, use display-aware evaluation
+                // for text-based search types (Contains, StartsWith, Equals, etc.)
+                if (controller.HasDisplayValueProvider)
                 {
-                    // Standard evaluation without collection context
-                    return filter.SearchTemplateController.FilterExpression?.Invoke(propertyValue) ?? true;
+                    return EvaluateWithDisplayValues(propertyValue, controller);
                 }
+
+                // Standard evaluation without display transformation
+                return controller.FilterExpression?.Invoke(propertyValue) ?? true;
             }
             catch (Exception ex)
             {
                 Debug.WriteLine($"Error evaluating filter for column {filter.BindingPath}: {ex.Message}");
                 return false;
             }
+        }
+
+        /// <summary>
+        /// Evaluates a value against search templates using display values for text-based searches
+        /// and raw values for numeric/statistical searches.
+        /// For mask-based providers (UseRawComparison=true), compares raw string values
+        /// so structural characters (parens, dashes) don't interfere with matching.
+        /// </summary>
+        private bool EvaluateWithDisplayValues(object rawValue, SearchTemplateController controller)
+        {
+            if (controller.SearchGroups == null || controller.SearchGroups.Count == 0)
+                return true;
+
+            // For mask providers: compare raw string values (unmasked digits/letters)
+            // For format/converter providers: compare display-formatted values
+            string textComparisonValue;
+            if (controller.DisplayValueProvider.UseRawComparison)
+                textComparisonValue = rawValue?.ToString() ?? string.Empty;
+            else
+                textComparisonValue = controller.GetDisplayValue(rawValue);
+
+            bool overallResult = false;
+
+            for (int groupIndex = 0; groupIndex < controller.SearchGroups.Count; groupIndex++)
+            {
+                var group = controller.SearchGroups[groupIndex];
+                bool groupResult = EvaluateGroupWithDisplayValues(rawValue, textComparisonValue, group);
+
+                if (groupIndex == 0)
+                {
+                    overallResult = groupResult;
+                }
+                else
+                {
+                    if (group.OperatorName == "Or")
+                        overallResult = overallResult || groupResult;
+                    else
+                        overallResult = overallResult && groupResult;
+                }
+            }
+
+            return overallResult;
+        }
+
+        /// <summary>
+        /// Evaluates a search group using display values for text-based templates.
+        /// </summary>
+        private bool EvaluateGroupWithDisplayValues(object rawValue, string displayValue, SearchTemplateGroup group)
+        {
+            if (group.SearchTemplates == null || group.SearchTemplates.Count == 0)
+                return true;
+
+            bool groupResult = false;
+
+            for (int i = 0; i < group.SearchTemplates.Count; i++)
+            {
+                var template = group.SearchTemplates[i];
+
+                // Choose which value to evaluate based on the search type
+                object valueToEvaluate = SearchEngine.IsTextBasedSearchType(template.SearchType)
+                    ? displayValue   // Text searches compare against display value
+                    : rawValue;      // Numeric/date/statistical use raw value
+
+                bool templateResult = template.SearchCondition != null
+                    ? SearchEngine.EvaluateCondition(valueToEvaluate, template.SearchCondition)
+                    : true;
+
+                if (i == 0)
+                {
+                    groupResult = templateResult;
+                }
+                else
+                {
+                    if (template.OperatorName == "Or")
+                        groupResult = groupResult || templateResult;
+                    else
+                        groupResult = groupResult && templateResult;
+                }
+            }
+
+            return groupResult;
         }
 
         /// <summary>

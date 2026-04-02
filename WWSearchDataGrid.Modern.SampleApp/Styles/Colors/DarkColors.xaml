@@ -1,0 +1,323 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!--
+        ═══════════════════════════════════════════════════════════════════════
+        DARK MODE COLOR RESOURCES
+        Same keys as LightColors.xaml.  Swap at runtime to switch themes.
+        Palette inspired by Catppuccin Mocha.
+        ═══════════════════════════════════════════════════════════════════════
+    -->
+
+    <!--#region Surfaces -->
+    <SolidColorBrush x:Key="Theme.Surface.Page"          Color="#1E1E2E" />
+    <SolidColorBrush x:Key="Theme.Surface.TitleBar"       Color="#181825" />
+    <SolidColorBrush x:Key="Theme.Surface.Secondary"      Color="#313244" />
+    <SolidColorBrush x:Key="Theme.Surface.Tertiary"       Color="#2A2A3C" />
+    <SolidColorBrush x:Key="Theme.Surface.Card"           Color="#313244" />
+    <SolidColorBrush x:Key="Theme.Surface.Hover"          Color="#45475A" />
+    <SolidColorBrush x:Key="Theme.Surface.Pressed"        Color="#585B70" />
+    <SolidColorBrush x:Key="Theme.Surface.Input"          Color="#2A2A3C" />
+    <Color           x:Key="Theme.Surface.Page.Color">#1E1E2E</Color>
+    <Color           x:Key="Theme.Surface.Secondary.Color">#313244</Color>
+    <!--#endregion -->
+
+    <!--#region Text -->
+    <SolidColorBrush x:Key="Theme.Text.Primary"           Color="#CDD6F4" />
+    <SolidColorBrush x:Key="Theme.Text.Secondary"         Color="#BAC2DE" />
+    <SolidColorBrush x:Key="Theme.Text.Tertiary"          Color="#A6ADC8" />
+    <SolidColorBrush x:Key="Theme.Text.Disabled"          Color="#6C7086" />
+    <SolidColorBrush x:Key="Theme.Text.OnAccent"          Color="#1E1E2E" />
+    <!--#endregion -->
+
+    <!--#region Borders -->
+    <SolidColorBrush x:Key="Theme.Border.Default"         Color="#45475A" />
+    <SolidColorBrush x:Key="Theme.Border.Strong"          Color="#585B70" />
+    <SolidColorBrush x:Key="Theme.Border.Subtle"          Color="#313244" />
+    <!--#endregion -->
+
+    <!--#region Accent -->
+    <SolidColorBrush x:Key="Theme.Accent"                 Color="#CBA6F7" />
+    <SolidColorBrush x:Key="Theme.Accent.Hover"           Color="#DDB8FF" />
+    <SolidColorBrush x:Key="Theme.Accent.Pressed"         Color="#B68AE5" />
+    <SolidColorBrush x:Key="Theme.Accent.Blue"            Color="#89B4FA" />
+    <SolidColorBrush x:Key="Theme.Accent.Blue.Hover"      Color="#74C7EC" />
+    <SolidColorBrush x:Key="Theme.Accent.Blue.Pressed"    Color="#5BA0D9" />
+    <Color           x:Key="Theme.Accent.Color">#CBA6F7</Color>
+    <!--#endregion -->
+
+    <!--#region Status -->
+    <SolidColorBrush x:Key="Theme.Status.Error"           Color="#F38BA8" />
+    <SolidColorBrush x:Key="Theme.Status.Error.Pressed"   Color="#E06B8A" />
+    <SolidColorBrush x:Key="Theme.Status.Error.Light"     Color="#F38BA8" />
+    <SolidColorBrush x:Key="Theme.Status.Error.Dark"      Color="#E06B8A" />
+    <!--#endregion -->
+
+    <!--#region Window Chrome -->
+    <SolidColorBrush x:Key="Theme.Window.TitleBar"              Color="#181825" />
+    <SolidColorBrush x:Key="Theme.Window.Content"               Color="#1E1E2E" />
+    <SolidColorBrush x:Key="Theme.Window.Button.Background"     Color="Transparent" />
+    <SolidColorBrush x:Key="Theme.Window.Button.Background.Hover" Color="#313244" />
+    <SolidColorBrush x:Key="Theme.Window.Button.Background.Pressed" Color="#45475A" />
+    <SolidColorBrush x:Key="Theme.Window.Button.Foreground"     Color="#A6ADC8" />
+    <SolidColorBrush x:Key="Theme.Window.Button.Foreground.Hover" Color="#CDD6F4" />
+    <SolidColorBrush x:Key="Theme.Window.Button.Foreground.Pressed" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="Theme.Window.CloseButton.Hover"     Color="#F38BA8" />
+    <SolidColorBrush x:Key="Theme.Window.CloseButton.Pressed"   Color="#E06B8A" />
+    <SolidColorBrush x:Key="Theme.Window.CloseButton.Foreground.Hover" Color="#1E1E2E" />
+    <Color           x:Key="Theme.Window.Border.Color">#CBA6F7</Color>
+    <Color           x:Key="Theme.Window.Border.Inactive.Color">#45475A</Color>
+    <!--#endregion -->
+
+    <!--#region Grid -->
+    <SolidColorBrush x:Key="Theme.Grid.Background"        Color="#1E1E2E" />
+    <SolidColorBrush x:Key="Theme.Grid.Row"               Color="#1E1E2E" />
+    <SolidColorBrush x:Key="Theme.Grid.AlternatingRow"    Color="#232336" />
+    <SolidColorBrush x:Key="Theme.Grid.Lines"             Color="#45475A" />
+    <SolidColorBrush x:Key="Theme.Grid.Header.Background" Color="#2A2A3C" />
+    <SolidColorBrush x:Key="Theme.Grid.Header.Foreground" Color="#CDD6F4" />
+    <SolidColorBrush x:Key="Theme.Grid.Header.Hover"      Color="#353548" />
+    <SolidColorBrush x:Key="Theme.Grid.Header.Pressed"    Color="#404055" />
+    <SolidColorBrush x:Key="Theme.Grid.Header.Border"     Color="#45475A" />
+    <SolidColorBrush x:Key="Theme.Grid.SelectAll.Background" Color="#2A2A3C" />
+    <SolidColorBrush x:Key="Theme.Grid.SelectAll.Arrow"   Color="#A6ADC8" />
+    <SolidColorBrush x:Key="Theme.Grid.SelectAll.Hover"   Color="#353548" />
+    <SolidColorBrush x:Key="Theme.Grid.SelectAll.Pressed" Color="#404055" />
+    <SolidColorBrush x:Key="Theme.Grid.RowHeader.Background" Color="#2A2A3C" />
+    <SolidColorBrush x:Key="Theme.Grid.RowHeader.Foreground" Color="#BAC2DE" />
+    <SolidColorBrush x:Key="Theme.Grid.RowHeader.Border"  Color="#45475A" />
+    <SolidColorBrush x:Key="Theme.Grid.RowHeader.Hover"   Color="#353548" />
+    <SolidColorBrush x:Key="Theme.Grid.RowCount.Foreground" Color="#A6ADC8" />
+    <SolidColorBrush x:Key="Theme.Grid.Cell.Foreground"   Color="#CDD6F4" />
+    <SolidColorBrush x:Key="Theme.Grid.Cell.Selected.Background" Color="#89B4FA" />
+    <SolidColorBrush x:Key="Theme.Grid.Cell.Selected.Foreground" Color="#1E1E2E" />
+    <SolidColorBrush x:Key="Theme.Grid.Cell.Selected.Inactive.Background" Color="#2A3F5F" />
+    <SolidColorBrush x:Key="Theme.Grid.Cell.Selected.Inactive.Foreground" Color="#CDD6F4" />
+    <SolidColorBrush x:Key="Theme.Grid.Cell.Focus.Border"  Color="#89B4FA" />
+    <!--#endregion -->
+
+    <!--#region Filter Panel / Tokens -->
+    <SolidColorBrush x:Key="Theme.Filter.Background"      Color="#313244" />
+    <SolidColorBrush x:Key="Theme.Filter.Border"          Color="#45475A" />
+    <Color           x:Key="Theme.Filter.Background.Color">#313244</Color>
+
+    <SolidColorBrush x:Key="Theme.Token.ColumnName.Background"  Color="#6D4C2A" />
+    <SolidColorBrush x:Key="Theme.Token.ColumnName.Foreground"  Color="#FFB86C" />
+    <SolidColorBrush x:Key="Theme.Token.Value.Background"       Color="#2D4A35" />
+    <SolidColorBrush x:Key="Theme.Token.Value.Foreground"       Color="#A6E3A1" />
+    <SolidColorBrush x:Key="Theme.Token.Operator.Background"    Color="#2A3F5F" />
+    <SolidColorBrush x:Key="Theme.Token.Operator.Foreground"    Color="#89B4FA" />
+    <SolidColorBrush x:Key="Theme.Token.Operator.Hover"         Color="#344B6F" />
+    <SolidColorBrush x:Key="Theme.Token.SearchType.Foreground"  Color="#A6ADC8" />
+    <SolidColorBrush x:Key="Theme.Token.ValueOperator.Foreground" Color="#6C7086" />
+    <Color           x:Key="Theme.Token.Bracket.Border.Color">#585B70</Color>
+    <SolidColorBrush x:Key="Theme.Token.Remove.Foreground"      Color="#6C7086" />
+    <SolidColorBrush x:Key="Theme.Token.Remove.Foreground.Hover" Color="#A6ADC8" />
+    <SolidColorBrush x:Key="Theme.Token.Remove.Foreground.Pressed" Color="#CDD6F4" />
+    <SolidColorBrush x:Key="Theme.Token.Confirmation.Background" Color="#61000000" />
+    <SolidColorBrush x:Key="Theme.Token.Confirmation.Background.Hover" Color="#7A000000" />
+    <SolidColorBrush x:Key="Theme.Token.Confirmation.Background.Pressed" Color="#8F000000" />
+    <SolidColorBrush x:Key="Theme.Token.Confirmation.Foreground" Color="#CDD6F4" />
+    <SolidColorBrush x:Key="Theme.Token.Confirmation.Border"    Color="#F38BA8" />
+    <!--#endregion -->
+
+    <!--#region SearchTextBox -->
+    <SolidColorBrush x:Key="Theme.SearchTextBox.Background"          Color="#2A2A3C" />
+    <SolidColorBrush x:Key="Theme.SearchTextBox.Background.Hover"    Color="#313244" />
+    <SolidColorBrush x:Key="Theme.SearchTextBox.Background.Readonly" Color="#232336" />
+    <SolidColorBrush x:Key="Theme.SearchTextBox.Border"              Color="#45475A" />
+    <SolidColorBrush x:Key="Theme.SearchTextBox.Border.Hover"        Color="#585B70" />
+    <SolidColorBrush x:Key="Theme.SearchTextBox.Border.Focused"      Color="#89B4FA" />
+    <SolidColorBrush x:Key="Theme.SearchTextBox.Border.Disabled"     Color="#313244" />
+    <SolidColorBrush x:Key="Theme.SearchTextBox.Foreground"          Color="#CDD6F4" />
+    <SolidColorBrush x:Key="Theme.SearchTextBox.Watermark"           Color="#6C7086" />
+    <SolidColorBrush x:Key="Theme.SearchTextBox.Icon"                Color="#A6ADC8" />
+    <SolidColorBrush x:Key="Theme.SearchTextBox.Selection"           Color="#89B4FA" />
+    <SolidColorBrush x:Key="Theme.SearchTextBox.Clear.Background"    Color="#002A2A3C" />
+    <SolidColorBrush x:Key="Theme.SearchTextBox.Clear.Background.Hover" Color="#45475A" />
+    <SolidColorBrush x:Key="Theme.SearchTextBox.Clear.Background.Pressed" Color="#585B70" />
+    <SolidColorBrush x:Key="Theme.SearchTextBox.Clear.Foreground"    Color="#A6ADC8" />
+    <SolidColorBrush x:Key="Theme.SearchTextBox.Clear.Foreground.Hover" Color="#F38BA8" />
+    <SolidColorBrush x:Key="Theme.SearchTextBox.Clear.Foreground.Pressed" Color="#E06B8A" />
+    <SolidColorBrush x:Key="Theme.SearchTextBox.Popup.Background"    Color="#313244" />
+    <SolidColorBrush x:Key="Theme.SearchTextBox.Popup.Border"        Color="#45475A" />
+    <SolidColorBrush x:Key="Theme.SearchTextBox.Popup.Header"        Color="#2A2A3C" />
+    <SolidColorBrush x:Key="Theme.SearchTextBox.Popup.Header.Border" Color="#45475A" />
+    <SolidColorBrush x:Key="Theme.SearchTextBox.Popup.Sort.Foreground" Color="#A6ADC8" />
+    <SolidColorBrush x:Key="Theme.SearchTextBox.Popup.Sort.Border"   Color="#45475A" />
+    <SolidColorBrush x:Key="Theme.SearchTextBox.Popup.Sort.Hover"    Color="#45475A" />
+    <SolidColorBrush x:Key="Theme.SearchTextBox.Popup.Sort.Hover.Border" Color="#585B70" />
+    <SolidColorBrush x:Key="Theme.SearchTextBox.Popup.SortActive.Background" Color="#2A3F5F" />
+    <SolidColorBrush x:Key="Theme.SearchTextBox.Popup.SortActive.Border" Color="#89B4FA" />
+    <SolidColorBrush x:Key="Theme.SearchTextBox.Popup.SortActive.Foreground" Color="#89B4FA" />
+    <SolidColorBrush x:Key="Theme.SearchTextBox.Highlight"           Color="#887F849C" />
+    <SolidColorBrush x:Key="Theme.SearchTextBox.Count.Foreground"    Color="#6C7086" />
+    <Color           x:Key="Theme.SearchTextBox.Popup.Shadow.Color">#CC000000</Color>
+    <!--#endregion -->
+
+    <!--#region ColumnSearchBox -->
+    <SolidColorBrush x:Key="Theme.ColumnSearchBox.Background"        Color="#2A2A3C" />
+    <SolidColorBrush x:Key="Theme.ColumnSearchBox.Border"            Color="#45475A" />
+    <SolidColorBrush x:Key="Theme.ColumnSearchBox.Clear.Hover"       Color="#45475A" />
+    <SolidColorBrush x:Key="Theme.ColumnSearchBox.Clear.Foreground.Hover" Color="#F38BA8" />
+    <SolidColorBrush x:Key="Theme.ColumnSearchBox.Clear.Pressed"     Color="#585B70" />
+    <SolidColorBrush x:Key="Theme.ColumnSearchBox.Clear.Foreground.Pressed" Color="#E06B8A" />
+    <SolidColorBrush x:Key="Theme.ColumnSearchBox.Rule.Hover"        Color="#2A3F5F" />
+    <SolidColorBrush x:Key="Theme.ColumnSearchBox.Rule.Foreground.Hover" Color="#89B4FA" />
+    <SolidColorBrush x:Key="Theme.ColumnSearchBox.Rule.Pressed"      Color="#344B6F" />
+    <SolidColorBrush x:Key="Theme.ColumnSearchBox.Rule.Foreground.Pressed" Color="#74C7EC" />
+    <SolidColorBrush x:Key="Theme.ColumnSearchBox.Rule.Active"       Color="#89B4FA" />
+    <SolidColorBrush x:Key="Theme.ColumnSearchBox.Rule.Active.Foreground" Color="#1E1E2E" />
+    <!--#endregion -->
+
+    <!--#region NumericUpDown -->
+    <SolidColorBrush x:Key="Theme.NumericUpDown.Background"          Color="#2A2A3C" />
+    <SolidColorBrush x:Key="Theme.NumericUpDown.Border"              Color="#45475A" />
+    <SolidColorBrush x:Key="Theme.NumericUpDown.Button"              Color="#313244" />
+    <SolidColorBrush x:Key="Theme.NumericUpDown.Button.Hover"        Color="#45475A" />
+    <SolidColorBrush x:Key="Theme.NumericUpDown.Button.Pressed"      Color="#585B70" />
+    <SolidColorBrush x:Key="Theme.NumericUpDown.Arrow"               Color="#A6ADC8" />
+    <!--#endregion -->
+
+    <!--#region ColumnChooser -->
+    <SolidColorBrush x:Key="Theme.Chooser.Window.Background"         Color="#1E1E2E" />
+    <SolidColorBrush x:Key="Theme.Chooser.Window.Border"             Color="#45475A" />
+    <SolidColorBrush x:Key="Theme.Chooser.TitleBar.Background"       Color="#181825" />
+    <SolidColorBrush x:Key="Theme.Chooser.TitleBar.Border"           Color="#313244" />
+    <SolidColorBrush x:Key="Theme.Chooser.TitleBar.Foreground"       Color="#CDD6F4" />
+    <SolidColorBrush x:Key="Theme.Chooser.CloseButton.Foreground"    Color="#A6ADC8" />
+    <SolidColorBrush x:Key="Theme.Chooser.CloseButton.Hover"         Color="#45475A" />
+    <SolidColorBrush x:Key="Theme.Chooser.CloseButton.Foreground.Hover" Color="#CDD6F4" />
+    <SolidColorBrush x:Key="Theme.Chooser.CloseButton.Pressed"       Color="#585B70" />
+    <SolidColorBrush x:Key="Theme.Chooser.Content.Background"        Color="#1E1E2E" />
+    <SolidColorBrush x:Key="Theme.Chooser.Content.Border"            Color="#313244" />
+    <SolidColorBrush x:Key="Theme.Chooser.Header.Background"         Color="#2A2A3C" />
+    <SolidColorBrush x:Key="Theme.Chooser.Header.Foreground"         Color="#CDD6F4" />
+    <SolidColorBrush x:Key="Theme.Chooser.Item.Hover"                Color="#313244" />
+    <SolidColorBrush x:Key="Theme.Chooser.Item.Selected"             Color="#2A3F5F" />
+    <SolidColorBrush x:Key="Theme.Chooser.Item.SelectedHover"        Color="#344B6F" />
+    <SolidColorBrush x:Key="Theme.Chooser.MoveButton.Foreground"     Color="#CDD6F4" />
+    <SolidColorBrush x:Key="Theme.Chooser.MoveButton.Background"     Color="#2A2A3C" />
+    <SolidColorBrush x:Key="Theme.Chooser.MoveButton.Hover"          Color="#45475A" />
+    <SolidColorBrush x:Key="Theme.Chooser.MoveButton.Pressed"        Color="#585B70" />
+    <SolidColorBrush x:Key="Theme.Chooser.MoveButton.Border"         Color="#45475A" />
+    <SolidColorBrush x:Key="Theme.Chooser.MoveButton.Disabled.Foreground" Color="#585B70" />
+    <SolidColorBrush x:Key="Theme.Chooser.MoveButton.Disabled.Border" Color="#313244" />
+    <SolidColorBrush x:Key="Theme.Chooser.List.Background"           Color="#1E1E2E" />
+    <SolidColorBrush x:Key="Theme.Chooser.List.Border"               Color="#313244" />
+    <!--#endregion -->
+
+    <!--#region ColumnFilterEditor -->
+    <SolidColorBrush x:Key="Theme.FilterEditor.Card.Background"      Color="#313244" />
+    <SolidColorBrush x:Key="Theme.FilterEditor.Card.Border"          Color="#45475A" />
+    <Color           x:Key="Theme.FilterEditor.Shadow.Color">#40000000</Color>
+    <!--#endregion -->
+
+    <!--#region Scrollbar -->
+    <SolidColorBrush x:Key="Theme.Scroll.Track"                      Color="Transparent" />
+    <SolidColorBrush x:Key="Theme.Scroll.Thumb"                      Color="#585B70" />
+    <SolidColorBrush x:Key="Theme.Scroll.Thumb.Hover"                Color="#6C7086" />
+    <SolidColorBrush x:Key="Theme.Scroll.Thumb.Pressed"              Color="#7F849C" />
+    <SolidColorBrush x:Key="Theme.Scroll.Button.Background"          Color="#2A2A3C" />
+    <SolidColorBrush x:Key="Theme.Scroll.Button.Icon"                Color="#6C7086" />
+    <SolidColorBrush x:Key="Theme.Scroll.Button.Icon.Hover"          Color="#A6ADC8" />
+    <SolidColorBrush x:Key="Theme.Scroll.Corner"                     Color="#2A2A3C" />
+    <!--#endregion -->
+
+    <!--#region Button -->
+    <SolidColorBrush x:Key="Theme.Button.Background"                 Color="#313244" />
+    <SolidColorBrush x:Key="Theme.Button.Border"                     Color="#45475A" />
+    <SolidColorBrush x:Key="Theme.Button.Foreground"                 Color="#CDD6F4" />
+    <SolidColorBrush x:Key="Theme.Button.Hover"                      Color="#45475A" />
+    <SolidColorBrush x:Key="Theme.Button.Hover.Border"               Color="#585B70" />
+    <SolidColorBrush x:Key="Theme.Button.Pressed"                    Color="#585B70" />
+    <SolidColorBrush x:Key="Theme.Button.Pressed.Border"             Color="#6C7086" />
+    <SolidColorBrush x:Key="Theme.Button.Transparent.Foreground"     Color="#A6ADC8" />
+    <SolidColorBrush x:Key="Theme.Button.Transparent.Hover"          Color="#45475A" />
+    <SolidColorBrush x:Key="Theme.Button.Transparent.Hover.Foreground" Color="#CDD6F4" />
+    <SolidColorBrush x:Key="Theme.Button.Transparent.Pressed"        Color="#585B70" />
+    <SolidColorBrush x:Key="Theme.Button.Transparent.Pressed.Foreground" Color="#FFFFFF" />
+    <!--#endregion -->
+
+    <!--#region Checkbox -->
+    <SolidColorBrush x:Key="Theme.Checkbox.Background"               Color="#2A2A3C" />
+    <SolidColorBrush x:Key="Theme.Checkbox.Border"                   Color="#585B70" />
+    <SolidColorBrush x:Key="Theme.Checkbox.Foreground.Checked"       Color="#1E1E2E" />
+    <SolidColorBrush x:Key="Theme.Checkbox.Foreground.Unchecked"     Color="#CDD6F4" />
+    <SolidColorBrush x:Key="Theme.Checkbox.Fill.Checked"             Color="#89B4FA" />
+    <SolidColorBrush x:Key="Theme.Checkbox.Fill.Checked.Hover"       Color="#74C7EC" />
+    <SolidColorBrush x:Key="Theme.Checkbox.Fill.Checked.Pressed"     Color="#5BA0D9" />
+    <SolidColorBrush x:Key="Theme.Checkbox.Fill.Unchecked.Hover"     Color="#45475A" />
+    <SolidColorBrush x:Key="Theme.Checkbox.Border.Unchecked.Hover"   Color="#585B70" />
+    <SolidColorBrush x:Key="Theme.Checkbox.Fill.Unchecked.Pressed"   Color="#2A3F5F" />
+    <!--#endregion -->
+
+    <!--#region ComboBox -->
+    <SolidColorBrush x:Key="Theme.ComboBox.Background"               Color="#2A2A3C" />
+    <SolidColorBrush x:Key="Theme.ComboBox.Background.Hover"         Color="#313244" />
+    <SolidColorBrush x:Key="Theme.ComboBox.Foreground"               Color="#CDD6F4" />
+    <SolidColorBrush x:Key="Theme.ComboBox.Border"                   Color="#45475A" />
+    <SolidColorBrush x:Key="Theme.ComboBox.Border.Hover"             Color="#585B70" />
+    <SolidColorBrush x:Key="Theme.ComboBox.Border.Focused"           Color="#89B4FA" />
+    <SolidColorBrush x:Key="Theme.ComboBox.Placeholder"              Color="#6C7086" />
+    <SolidColorBrush x:Key="Theme.ComboBox.Arrow"                    Color="#CDD6F4" />
+    <SolidColorBrush x:Key="Theme.ComboBox.Arrow.Disabled"           Color="#6C7086" />
+    <SolidColorBrush x:Key="Theme.ComboBox.Arrow.Hover"              Color="#45475A" />
+    <SolidColorBrush x:Key="Theme.ComboBox.Arrow.Pressed"            Color="#585B70" />
+    <SolidColorBrush x:Key="Theme.ComboBox.Popup.Background"         Color="#313244" />
+    <SolidColorBrush x:Key="Theme.ComboBox.Popup.Border"             Color="#45475A" />
+    <SolidColorBrush x:Key="Theme.ComboBox.Item.Hover"               Color="#45475A" />
+    <SolidColorBrush x:Key="Theme.ComboBox.Item.Hover.Border"        Color="#89B4FA" />
+    <SolidColorBrush x:Key="Theme.ComboBox.Item.Selected"            Color="#2A3F5F" />
+    <SolidColorBrush x:Key="Theme.ComboBox.Item.Selected.Border"     Color="#89B4FA" />
+    <SolidColorBrush x:Key="Theme.ComboBox.Item.Disabled"            Color="#6C7086" />
+    <!--#endregion -->
+
+    <!--#region ContextMenu -->
+    <SolidColorBrush x:Key="Theme.ContextMenu.Background"            Color="#313244" />
+    <SolidColorBrush x:Key="Theme.ContextMenu.Border"                Color="#45475A" />
+    <SolidColorBrush x:Key="Theme.ContextMenu.Foreground"            Color="#CDD6F4" />
+    <SolidColorBrush x:Key="Theme.ContextMenu.Item.Hover"            Color="#45475A" />
+    <SolidColorBrush x:Key="Theme.ContextMenu.Item.Foreground.Hover" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="Theme.ContextMenu.Separator"             Color="#45475A" />
+    <!--#endregion -->
+
+    <!--#region ListBox -->
+    <SolidColorBrush x:Key="Theme.ListBox.Background"                Color="#1E1E2E" />
+    <SolidColorBrush x:Key="Theme.ListBox.Border"                    Color="#313244" />
+    <SolidColorBrush x:Key="Theme.ListBox.Foreground"                Color="#CDD6F4" />
+    <SolidColorBrush x:Key="Theme.ListBox.Item.Hover"                Color="#313244" />
+    <SolidColorBrush x:Key="Theme.ListBox.Item.Selected"             Color="#2A3F5F" />
+    <SolidColorBrush x:Key="Theme.ListBox.Item.SelectedHover"        Color="#344B6F" />
+    <SolidColorBrush x:Key="Theme.ListBox.Item.Foreground.Selected"  Color="#CDD6F4" />
+    <!--#endregion -->
+
+    <!--#region TextBox -->
+    <SolidColorBrush x:Key="Theme.TextBox.Background"                Color="#2A2A3C" />
+    <SolidColorBrush x:Key="Theme.TextBox.Border"                    Color="#45475A" />
+    <SolidColorBrush x:Key="Theme.TextBox.Foreground"                Color="#CDD6F4" />
+    <SolidColorBrush x:Key="Theme.TextBox.Border.Focused"            Color="#89B4FA" />
+    <SolidColorBrush x:Key="Theme.TextBox.Selection"                 Color="#89B4FA" />
+    <!--#endregion -->
+
+    <!--#region Expander -->
+    <SolidColorBrush x:Key="Theme.Expander.Header.Background"        Color="#2A2A3C" />
+    <SolidColorBrush x:Key="Theme.Expander.Header.Hover"             Color="#313244" />
+    <SolidColorBrush x:Key="Theme.Expander.Header.Foreground"        Color="#CDD6F4" />
+    <SolidColorBrush x:Key="Theme.Expander.Arrow"                    Color="#A6ADC8" />
+    <SolidColorBrush x:Key="Theme.Expander.Content.Background"       Color="#1E1E2E" />
+    <SolidColorBrush x:Key="Theme.Expander.Content.Border"           Color="#313244" />
+    <!--#endregion -->
+
+    <!--#region Search Prefix Tooltip -->
+    <SolidColorBrush x:Key="Theme.Tooltip.Background"                Color="#313244" />
+    <SolidColorBrush x:Key="Theme.Tooltip.Border"                    Color="#45475A" />
+    <SolidColorBrush x:Key="Theme.Tooltip.Header.Foreground"         Color="#CDD6F4" />
+    <SolidColorBrush x:Key="Theme.Tooltip.GroupHeader.Foreground"    Color="#F38BA8" />
+    <SolidColorBrush x:Key="Theme.Tooltip.Operator.Foreground"       Color="#89B4FA" />
+    <SolidColorBrush x:Key="Theme.Tooltip.Placeholder.Foreground"    Color="#74C7EC" />
+    <SolidColorBrush x:Key="Theme.Tooltip.Description.Foreground"    Color="#A6ADC8" />
+    <SolidColorBrush x:Key="Theme.Tooltip.Separator"                 Color="#45475A" />
+    <!--#endregion -->
+
+</ResourceDictionary>

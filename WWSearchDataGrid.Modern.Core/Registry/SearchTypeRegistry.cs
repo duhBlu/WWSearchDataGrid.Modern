@@ -36,16 +36,16 @@ namespace WWSearchDataGrid.Modern.Core
                     FilterInputTemplate.SingleSearchTextBox, ColumnDataType.Number, ColumnDataType.DateTime),
 
                 [SearchType.Contains] = new SearchTypeMetadata(SearchType.Contains, "Contains",
-                    FilterInputTemplate.SingleSearchTextBox, ColumnDataType.String, ColumnDataType.Number, ColumnDataType.Enum),
+                    FilterInputTemplate.SingleSearchTextBox, ColumnDataType.String, ColumnDataType.Number, ColumnDataType.DateTime, ColumnDataType.Enum),
 
                 [SearchType.DoesNotContain] = new SearchTypeMetadata(SearchType.DoesNotContain, "Does not contain",
-                    FilterInputTemplate.SingleSearchTextBox, ColumnDataType.String, ColumnDataType.Number, ColumnDataType.Enum),
+                    FilterInputTemplate.SingleSearchTextBox, ColumnDataType.String, ColumnDataType.Number, ColumnDataType.DateTime, ColumnDataType.Enum),
 
                 [SearchType.StartsWith] = new SearchTypeMetadata(SearchType.StartsWith, "Starts with",
-                    FilterInputTemplate.SingleSearchTextBox, ColumnDataType.String, ColumnDataType.Number, ColumnDataType.Enum),
+                    FilterInputTemplate.SingleSearchTextBox, ColumnDataType.String, ColumnDataType.Number, ColumnDataType.DateTime, ColumnDataType.Enum),
 
                 [SearchType.EndsWith] = new SearchTypeMetadata(SearchType.EndsWith, "Ends with",
-                    FilterInputTemplate.SingleSearchTextBox, ColumnDataType.String, ColumnDataType.Number, ColumnDataType.Enum),
+                    FilterInputTemplate.SingleSearchTextBox, ColumnDataType.String, ColumnDataType.Number, ColumnDataType.DateTime, ColumnDataType.Enum),
 
                 [SearchType.IsLike] = new SearchTypeMetadata(SearchType.IsLike, "Is like",
                     FilterInputTemplate.SingleSearchTextBox, ColumnDataType.String, ColumnDataType.Number, ColumnDataType.Enum),

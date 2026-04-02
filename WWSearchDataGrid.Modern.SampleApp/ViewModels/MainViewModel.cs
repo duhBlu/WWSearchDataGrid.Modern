@@ -1,10 +1,9 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using WWSearchDataGrid.Modern.WPF;
 using WWSearchDataGrid.Modern.SampleApp.Models;
@@ -12,9 +11,6 @@ using WWSearchDataGrid.Modern.SampleApp.Services;
 
 namespace WWSearchDataGrid.Modern.SampleApp
 {
-    /// <summary>
-    /// Main ViewModel for the application
-    /// </summary>
     public partial class MainViewModel : ObservableObject
     {
         #region Observable Properties
@@ -42,30 +38,48 @@ namespace WWSearchDataGrid.Modern.SampleApp
 
         #endregion
 
-        #region Static Data (Preallocated)
+        #region Static Data
 
-        private static readonly Random _random = new Random();
         private static readonly string[] FirstNames =
         {
             "Alice", "Bob", "Carol", "David", "Eve", "Frank", "Grace", "Henry", "Ivy", "Jack",
             "Kate", "Leo", "Mary", "Nick", "Olivia", "Paul", "Quinn", "Rita", "Sam", "Tina",
             "Uma", "Victor", "Wendy", "Xavier", "Yara", "Zack", "Anna", "Ben", "Chloe", "Dan",
-            "Emma", "Felix", "Gina", "Hugo", "Iris", "Jake", "Kara", "Liam", "Mia", "Noah",
-            "Ava", "Blake", "Clara", "Dean", "Ella", "Finn", "Hailey", "Ian", "Jade", "Kyle"
+            "Emma", "Felix", "Gina", "Hugo", "Iris", "Jake", "Kara", "Liam", "Mia", "Noah"
         };
+
         private static readonly string[] LastNames =
         {
             "Anderson", "Brown", "Clark", "Davis", "Evans", "Fisher", "Garcia", "Harris", "Jackson", "Johnson",
-            "King", "Lopez", "Martinez", "Nelson", "O'Connor", "Parker", "Quinn", "Rodriguez", "Smith", "Taylor",
-            "Underwood", "Valdez", "Wilson", "Young", "Zhang", "Adams", "Baker", "Cooper", "Dixon", "Edwards",
-            "Ford", "Green", "Hall", "Irving", "Jones", "Kelly", "Lewis", "Moore", "Nixon", "Owen",
-            "Powell", "Reed", "Stone", "Thomas", "White", "Allen", "Bell", "Carter", "Foster", "Gray"
+            "King", "Lopez", "Martinez", "Nelson", "Parker", "Quinn", "Rodriguez", "Smith", "Taylor", "Wilson",
+            "Adams", "Baker", "Cooper", "Dixon", "Edwards", "Ford", "Green", "Hall", "Jones", "Lewis"
         };
-        private static readonly string?[] StringTypes =
+
+        private static readonly string[] Products =
         {
-            "Alpha", "Beta", "Gamma", "Delta", "Epsilon", "Zeta", "Eta", "Theta",
-            "Product", "Service", "Item", "Component", "Module", "System", "Process",
-            null, "", " ", "test", "TEST", "Test", "123", "abc123", "test@example.com"
+            "Widget A", "Widget B", "Gadget Pro", "Gadget Lite", "Sensor Module", "Control Board",
+            "Power Supply 12V", "Power Supply 24V", "Cable Assembly", "Mounting Bracket",
+            "LED Panel", "Display Unit", "Motor 1HP", "Motor 2HP", "Relay Switch",
+            "Fuse Block", "Terminal Strip", "Connector Kit", "Enclosure Small", "Enclosure Large"
+        };
+
+        private static readonly string[] Categories =
+        {
+            "Electronics", "Mechanical", "Electrical", "Accessories", "Assemblies"
+        };
+
+        private static readonly string?[] NoteTemplates =
+        {
+            null, null, null, // weighted null for ~60% null notes
+            null, null, null,
+            "Customer requested expedited shipping",
+            "Backordered - ETA 2 weeks",
+            "Replacement for defective unit",
+            "Bulk discount applied",
+            "Hold for customer confirmation",
+            "Special packaging required",
+            "Per contract #4521",
+            "Drop ship to job site"
         };
 
         #endregion
@@ -92,7 +106,7 @@ namespace WWSearchDataGrid.Modern.SampleApp
         [RelayCommand]
         private void AddItem()
         {
-            Items?.Add(CreateComprehensiveDataItem(_random));
+            Items?.Add(CreateDataItem(new Random()));
             ItemCount = Items?.Count ?? 0;
         }
 
@@ -112,7 +126,6 @@ namespace WWSearchDataGrid.Modern.SampleApp
             Items?.Clear();
             ItemCount = 0;
 
-            // Clear cached data in the SearchDataGrid to prevent memory leaks
             GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced, blocking: true, compacting: true);
             GC.WaitForPendingFinalizers();
         }
@@ -128,68 +141,60 @@ namespace WWSearchDataGrid.Modern.SampleApp
         }
 
         #endregion
-        
+
         #region Private Methods
 
-        /// <summary>
-        /// Generates sample data for the grid (optimized & fast)
-        /// </summary>
         private void GenerateData(int count)
         {
-            var baseDate = DateTime.Today.AddYears(-2);
+            var baseDate = DateTime.Today.AddYears(-1);
             var buffer = new DataItem[count];
 
-                Parallel.For(0, count, i =>
-                {
-                    var rnd = new Random(Guid.NewGuid().GetHashCode());
-                    buffer[i] = CreateComprehensiveDataItem(rnd, baseDate);
-                });
+            Parallel.For(0, count, i =>
+            {
+                var rnd = new Random(Guid.NewGuid().GetHashCode());
+                buffer[i] = CreateDataItem(rnd, baseDate, 1000 + i);
+            });
 
             var merged = new ObservableCollection<DataItem>((Items ?? new ObservableCollection<DataItem>()).Concat(buffer));
             Items = null;
-            Items = merged; 
+            Items = merged;
             ItemCount = Items.Count;
         }
 
-
-        /// <summary>
-        /// Creates a randomized DataItem
-        /// </summary>
-        private DataItem CreateComprehensiveDataItem(Random rnd, DateTime? baseDate = null)
+        private DataItem CreateDataItem(Random rnd, DateTime? baseDate = null, int index = 0)
         {
-            baseDate ??= DateTime.Today.AddYears(-2);
-            var orderDateTime = baseDate.Value.AddDays(rnd.Next(0, 730)).AddHours(rnd.Next(8, 18)).AddMinutes(rnd.Next(0, 60));
-            var statusValue = (OrderStatus)rnd.Next(Enum.GetValues<OrderStatus>().Length);
-            var priorityValue = (Priority)rnd.Next(Enum.GetValues<Priority>().Length);
+            baseDate ??= DateTime.Today.AddYears(-1);
+            var orderDate = baseDate.Value.AddDays(rnd.Next(0, 365)).AddHours(rnd.Next(7, 18)).AddMinutes(rnd.Next(0, 60));
+            var status = (OrderStatus)rnd.Next(Enum.GetValues<OrderStatus>().Length);
+            var priority = (Priority)rnd.Next(Enum.GetValues<Priority>().Length);
+            var qty = rnd.Next(1, 200);
+            var unitPrice = Math.Round((decimal)(rnd.NextDouble() * 499.99) + 0.50m, 4);
+            var discount = rnd.NextDouble() < 0.3 ? (decimal?)Math.Round((decimal)(rnd.NextDouble() * 0.25), 4) : null;
+            var lineTotal = Math.Round(qty * unitPrice * (1m - (discount ?? 0m)), 2);
+
+            // Ship date: only for shipped/delivered/completed orders, some days after order date
+            DateTime? shipDate = null;
+            if (status == OrderStatus.Shipped || status == OrderStatus.Delivered || status == OrderStatus.Completed)
+                shipDate = orderDate.AddDays(rnd.Next(1, 14));
 
             return new DataItem
             {
+                OrderNumber = $"ORD-{(index > 0 ? index : rnd.Next(1000, 99999)):D5}",
                 CustomerName = $"{FirstNames[rnd.Next(FirstNames.Length)]} {LastNames[rnd.Next(LastNames.Length)]}",
-                BoolValue = rnd.NextDouble() < 0.7,
-                NullableBoolValue = rnd.NextDouble() < 0.1 ? null : (bool?)(rnd.NextDouble() < 0.6),
-                IntValue = rnd.Next(1, 100000),
-                NullableIntValue = rnd.NextDouble() < 0.15 ? null : rnd.Next(1, 50000),
-                LongValue = rnd.NextInt64(1000000, 9999999999),
-                NullableLongValue = rnd.NextDouble() < 0.12 ? null : rnd.NextInt64(1000, 999999),
-                ShortValue = (short)rnd.Next(1, 32767),
-                NullableShortValue = rnd.NextDouble() < 0.18 ? null : (short?)rnd.Next(1, 1000),
-                ByteValue = (byte)rnd.Next(0, 255),
-                NullableByteValue = rnd.NextDouble() < 0.20 ? null : (byte?)rnd.Next(0, 100),
-                FloatValue = (float)(rnd.NextDouble() * 10000),
-                NullableFloatValue = rnd.NextDouble() < 0.14 ? null : (float?)(rnd.NextDouble() * 1000),
-                DoubleValue = rnd.NextDouble() * 100000,
-                NullableDoubleValue = rnd.NextDouble() < 0.16 ? null : (double?)(rnd.NextDouble() * 10000),
-                DecimalValue = (decimal)(rnd.NextDouble() * 50000),
-                NullableDecimalValue = rnd.NextDouble() < 0.13 ? null : (decimal?)(rnd.NextDouble() * 5000),
-                StringValue = StringTypes[rnd.Next(StringTypes.Length)],
-                CharValue = (char)rnd.Next(65, 91),
-                NullableCharValue = rnd.NextDouble() < 0.25 ? null : (char?)((char)rnd.Next(97, 123)),
-                DateTimeValue = orderDateTime.AddDays(rnd.Next(-30, 30)),
-                NullableDateTimeValue = rnd.NextDouble() < 0.17 ? null : (DateTime?)orderDateTime.AddHours(rnd.Next(-100, 100)),
-                TimeSpanValue = TimeSpan.FromMinutes(rnd.Next(30, 480)),
-                NullableTimeSpanValue = rnd.NextDouble() < 0.19 ? null : (TimeSpan?)TimeSpan.FromHours(rnd.NextDouble() * 24),
-                PriorityValue = priorityValue,
-                NullablePriorityValue = rnd.NextDouble() < 0.23 ? null : (Priority?)priorityValue,
+                PhoneNumber = $"{rnd.Next(200, 999)}{rnd.Next(1000000, 9999999)}",
+                ProductName = Products[rnd.Next(Products.Length)],
+                Category = Categories[rnd.Next(Categories.Length)],
+                Quantity = qty,
+                UnitPrice = unitPrice,
+                LineTotal = lineTotal,
+                Discount = discount,
+                Status = status,
+                Priority = priority,
+                IsRush = priority >= Priority.Urgent || rnd.NextDouble() < 0.1,
+                IsApproved = rnd.NextDouble() < 0.15 ? null : (bool?)(rnd.NextDouble() < 0.8),
+                OrderDate = orderDate,
+                ShipDate = shipDate,
+                Notes = NoteTemplates[rnd.Next(NoteTemplates.Length)]
             };
         }
 

@@ -1,4 +1,4 @@
-﻿<Application x:Class="WWSearchDataGrid.Modern.SampleApp.App"
+<Application x:Class="WWSearchDataGrid.Modern.SampleApp.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="clr-namespace:WWSearchDataGrid.Modern.SampleApp"
@@ -6,17 +6,12 @@
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
+                <!-- Color resources (light mode default) -->
+                <ResourceDictionary Source="/Styles/Colors/LightColors.xaml"/>
+                <!-- Window style (shared across themes) -->
+                <ResourceDictionary Source="/Styles/WindowStyle.xaml"/>
+                <!-- Default generic control styles -->
                 <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF;component/Themes/Generic.xaml"/>
-
-                <!--<ResourceDictionary Source="/Styles/SearchDataGridControlStyles/ThemeResources.xaml" />
-                <ResourceDictionary Source="/Styles/SearchDataGridControlStyles/Primitives/NumericUpDownStyles.xaml" />
-                <ResourceDictionary Source="/Styles/SearchDataGridControlStyles/Primitives/SearchTextBoxStyles.xaml" />
-                <ResourceDictionary Source="/Styles/DefaultControlStyles.xaml" />
-                <ResourceDictionary Source="/Styles/SearchDataGridControlStyles/ColumnChooserStyles.xaml" />
-                <ResourceDictionary Source="/Styles/SearchDataGridControlStyles/ColumnFilterEditorStyles.xaml" />
-                <ResourceDictionary Source="/Styles/SearchDataGridControlStyles/FilterPanelStyles.xaml" />
-                <ResourceDictionary Source="/Styles/SearchDataGridControlStyles/ColumnSearchBoxStyles.xaml" />
-                <ResourceDictionary Source="/Styles/SearchDataGridControlStyles/SearchDataGridStyles.xaml" />-->
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Application.Resources>

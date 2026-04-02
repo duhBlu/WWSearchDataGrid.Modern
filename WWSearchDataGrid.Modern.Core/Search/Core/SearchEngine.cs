@@ -120,5 +120,30 @@ namespace WWSearchDataGrid.Modern.Core
             var evaluator = SearchEvaluatorFactory.Instance.GetEvaluator(searchType);
             return evaluator?.RequiresCollectionContext ?? false;
         }
+
+        /// <summary>
+        /// Determines if a search type operates on text/string values.
+        /// Text-based search types should use display values when a display provider is configured.
+        /// Non-text types (numeric comparisons, statistical) should use raw values for correctness.
+        /// </summary>
+        public static bool IsTextBasedSearchType(SearchType searchType)
+        {
+            switch (searchType)
+            {
+                case SearchType.Contains:
+                case SearchType.DoesNotContain:
+                case SearchType.StartsWith:
+                case SearchType.EndsWith:
+                case SearchType.Equals:
+                case SearchType.NotEquals:
+                case SearchType.IsLike:
+                case SearchType.IsNotLike:
+                case SearchType.IsAnyOf:
+                case SearchType.IsNoneOf:
+                    return true;
+                default:
+                    return false;
+            }
+        }
     }
 }

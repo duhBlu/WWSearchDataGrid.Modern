@@ -1,6 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
+using System.Globalization;
 
 namespace WWSearchDataGrid.Modern.Core
 {
@@ -25,8 +24,22 @@ namespace WWSearchDataGrid.Modern.Core
                 return (decimal)d;
             if (value is float f)
                 return (decimal)f;
-            if (decimal.TryParse(value?.ToString(), out decimal parsed))
+            if (value is long l)
+                return (decimal)l;
+            if (value is short s)
+                return (decimal)s;
+            if (value is byte b)
+                return (decimal)b;
+
+            string str = value?.ToString();
+            if (str == null) return null;
+
+            // Try standard parse first, then formatted parse (handles "$1,234.56", "15.0%", etc.)
+            if (decimal.TryParse(str, out decimal parsed))
                 return parsed;
+            if (decimal.TryParse(str, NumberStyles.Any, CultureInfo.CurrentCulture, out decimal formatted))
+                return formatted;
+
             return null;
         }
     }

@@ -12,6 +12,7 @@ using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Threading;
 using WWSearchDataGrid.Modern.Core;
+using WWSearchDataGrid.Modern.WPF.Behaviors;
 
 namespace WWSearchDataGrid.Modern.WPF
 {
@@ -377,6 +378,32 @@ namespace WWSearchDataGrid.Modern.WPF
             get => SortMode == SearchTextBoxSortMode.ByQuantity;
         }
 
+        /// <summary>
+        /// Mask pattern for masked input. When set, keystrokes are validated against the mask,
+        /// the caret auto-advances past literals, and Tab cycles between editable regions.
+        /// Uses the same syntax as WWFormattedTextBox (0=digit, L=letter, +=one-or-more, etc.)
+        /// </summary>
+        public static readonly DependencyProperty MaskProperty =
+            DependencyProperty.Register(
+                nameof(Mask),
+                typeof(string),
+                typeof(SearchTextBox),
+                new PropertyMetadata(null, OnMaskChanged));
+
+        public string Mask
+        {
+            get => (string)GetValue(MaskProperty);
+            set => SetValue(MaskProperty, value);
+        }
+
+        private static void OnMaskChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            if (d is SearchTextBox searchTextBox && searchTextBox._textBox != null)
+            {
+                MaskInputBehavior.SetMask(searchTextBox._textBox, e.NewValue as string);
+            }
+        }
+
         #endregion
 
         #region Commands
@@ -513,6 +540,12 @@ namespace WWSearchDataGrid.Modern.WPF
                 // Sync the text
                 _textBox.Text = Text ?? string.Empty;
                 UpdateHasText();
+
+                // Propagate mask to the internal TextBox if set
+                if (!string.IsNullOrEmpty(Mask))
+                {
+                    MaskInputBehavior.SetMask(_textBox, Mask);
+                }
             }
 
             if (_clearButton != null)

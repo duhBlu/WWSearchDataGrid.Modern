@@ -14,6 +14,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
 using WWSearchDataGrid.Modern.Core;
+using WWSearchDataGrid.Modern.WPF.Display;
 
 namespace WWSearchDataGrid.Modern.WPF
 {
@@ -93,6 +94,10 @@ namespace WWSearchDataGrid.Modern.WPF
             DependencyProperty.Register("IsComplexFilteringEnabled", typeof(bool), typeof(ColumnSearchBox),
                 new PropertyMetadata(true));
 
+        public static readonly DependencyProperty SearchTooltipStyleProperty =
+            DependencyProperty.Register("SearchTooltipStyle", typeof(Style), typeof(ColumnSearchBox),
+                new PropertyMetadata(null));
+
         #endregion
         
         #region Properties
@@ -157,6 +162,16 @@ namespace WWSearchDataGrid.Modern.WPF
         {
             get => (bool)GetValue(IsComplexFilteringEnabledProperty);
             private set => SetValue(IsComplexFilteringEnabledProperty, value);
+        }
+
+        /// <summary>
+        /// Gets or sets the Style applied to the search prefix tooltip.
+        /// Set via the ColumnSearchBox style to allow full visual customization.
+        /// </summary>
+        public Style SearchTooltipStyle
+        {
+            get => (Style)GetValue(SearchTooltipStyleProperty);
+            set => SetValue(SearchTooltipStyleProperty, value);
         }
 
         /// <summary>
@@ -229,6 +244,8 @@ namespace WWSearchDataGrid.Modern.WPF
             {
                 searchTextBox.TextChanged += OnSearchTextBoxTextChanged;
                 searchTextBox.KeyDown += OnSearchTextBoxKeyDown;
+                ToolTipService.SetInitialShowDelay(searchTextBox, 800);
+                UpdateSearchTooltip();
             }
             
             filterCheckBox = GetTemplateChild("PART_FilterCheckBox") as CheckBox;
@@ -504,6 +521,9 @@ namespace WWSearchDataGrid.Modern.WPF
 
                     // Only re-determine column type based on definition, not data
                     DetermineCheckboxColumnTypeFromColumnDefinition();
+
+                    // Update tooltip to reflect valid prefixes for this column's data type
+                    UpdateSearchTooltip();
                 }
             }
             catch (Exception ex)
@@ -744,6 +764,14 @@ namespace WWSearchDataGrid.Modern.WPF
 
                 SearchTemplateController.SetupColumnDataLazy(GridColumn.GetEffectiveColumnDisplayName(CurrentColumn), GetColumnValuesFromDataGrid, BindingPath);
 
+                // Create display value provider from column attached properties (mask > converter > format)
+                SearchTemplateController.DisplayValueProvider = DisplayValueProviderFactory.Create(CurrentColumn);
+
+                // Store the mask pattern on the controller for display formatting (dropdowns, chips).
+                // The mask is NOT applied to filter inputs - per industry standard, filter inputs
+                // are plain text and compare against raw/display values. Mask is for cell editing only.
+                SearchTemplateController.DisplayMaskPattern = GridColumn.GetDisplayMask(CurrentColumn);
+
                 if (SourceDataGrid.Items != null && SourceDataGrid.Items.Count > 0)
                 {
                     // Determine column data type from a small sample for immediate UI setup
@@ -770,6 +798,9 @@ namespace WWSearchDataGrid.Modern.WPF
                 {
                     // No items yet - just set up basic structure
                 }
+
+                // Update tooltip to reflect valid prefixes for this column's data type
+                UpdateSearchTooltip();
             }
             catch (Exception ex)
             {
@@ -802,6 +833,25 @@ namespace WWSearchDataGrid.Modern.WPF
             {
                 Debug.WriteLine($"Error in ClearFilterInternal: {ex.Message}");
             }
+        }
+
+        /// <summary>
+        /// Updates the search textbox tooltip to show only the prefix shortcuts
+        /// valid for the current column data type. Applies SearchTooltipStyle if set.
+        /// </summary>
+        private void UpdateSearchTooltip()
+        {
+            if (searchTextBox == null) return;
+
+            var dataType = SearchTemplateController?.ColumnDataType ?? Core.ColumnDataType.Unknown;
+            var groups = SearchPrefixParser.GetPrefixShortcutGroups(dataType);
+
+            var tooltip = new ToolTip { Content = groups };
+
+            if (SearchTooltipStyle != null)
+                tooltip.Style = SearchTooltipStyle;
+
+            searchTextBox.ToolTip = tooltip;
         }
 
         /// <summary>

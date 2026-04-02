@@ -532,7 +532,121 @@ namespace WWSearchDataGrid.Modern.WPF
 
         #endregion
 
-       #region Helper Methods
+        #region DisplayStringFormat Attached Property
+
+        /// <summary>
+        /// Specifies a .NET format string for transforming raw column values into display values.
+        /// When set, filtering will compare against the formatted display text rather than the raw value.
+        /// Examples: "N2" (two decimal places), "C2" (currency), "MM/dd/yyyy" (date format).
+        /// </summary>
+        public static readonly DependencyProperty DisplayStringFormatProperty =
+            DependencyProperty.RegisterAttached(
+                "DisplayStringFormat",
+                typeof(string),
+                typeof(GridColumn),
+                new FrameworkPropertyMetadata(null));
+
+        public static string GetDisplayStringFormat(DependencyObject element)
+        {
+            if (element == null) throw new ArgumentNullException(nameof(element));
+            return (string)element.GetValue(DisplayStringFormatProperty);
+        }
+
+        public static void SetDisplayStringFormat(DependencyObject element, string value)
+        {
+            if (element == null) throw new ArgumentNullException(nameof(element));
+            element.SetValue(DisplayStringFormatProperty, value);
+        }
+
+        #endregion
+
+        #region DisplayValueConverter Attached Property
+
+        /// <summary>
+        /// Specifies an IValueConverter for transforming raw column values into display values.
+        /// When set, filtering will compare against the converted display text rather than the raw value.
+        /// The converter's Convert method produces display values; ConvertBack parses user input for range filters.
+        /// </summary>
+        public static readonly DependencyProperty DisplayValueConverterProperty =
+            DependencyProperty.RegisterAttached(
+                "DisplayValueConverter",
+                typeof(System.Windows.Data.IValueConverter),
+                typeof(GridColumn),
+                new FrameworkPropertyMetadata(null));
+
+        public static System.Windows.Data.IValueConverter GetDisplayValueConverter(DependencyObject element)
+        {
+            if (element == null) throw new ArgumentNullException(nameof(element));
+            return (System.Windows.Data.IValueConverter)element.GetValue(DisplayValueConverterProperty);
+        }
+
+        public static void SetDisplayValueConverter(DependencyObject element, System.Windows.Data.IValueConverter value)
+        {
+            if (element == null) throw new ArgumentNullException(nameof(element));
+            element.SetValue(DisplayValueConverterProperty, value);
+        }
+
+        #endregion
+
+        #region DisplayConverterParameter Attached Property
+
+        /// <summary>
+        /// Parameter passed to the DisplayValueConverter's Convert and ConvertBack methods.
+        /// </summary>
+        public static readonly DependencyProperty DisplayConverterParameterProperty =
+            DependencyProperty.RegisterAttached(
+                "DisplayConverterParameter",
+                typeof(object),
+                typeof(GridColumn),
+                new FrameworkPropertyMetadata(null));
+
+        public static object GetDisplayConverterParameter(DependencyObject element)
+        {
+            if (element == null) throw new ArgumentNullException(nameof(element));
+            return element.GetValue(DisplayConverterParameterProperty);
+        }
+
+        public static void SetDisplayConverterParameter(DependencyObject element, object value)
+        {
+            if (element == null) throw new ArgumentNullException(nameof(element));
+            element.SetValue(DisplayConverterParameterProperty, value);
+        }
+
+        #endregion
+
+        #region DisplayMask Attached Property
+
+        /// <summary>
+        /// Specifies a mask pattern for formatting raw column values into display values.
+        /// Uses the same mask syntax as WWFormattedTextBox:
+        ///   0 = required digit, 9 = optional digit, L = required letter, etc.
+        ///   + = one-or-more quantifier, * = zero-or-more quantifier
+        ///   \ = escape next char as literal
+        /// Examples: "0+\.00" (decimal with 2 places), "(000) 000-0000" (phone).
+        /// When set, filtering will compare against the masked display text.
+        /// </summary>
+        public static readonly DependencyProperty DisplayMaskProperty =
+            DependencyProperty.RegisterAttached(
+                "DisplayMask",
+                typeof(string),
+                typeof(GridColumn),
+                new FrameworkPropertyMetadata(null));
+
+        public static string GetDisplayMask(DependencyObject element)
+        {
+            if (element == null) throw new ArgumentNullException(nameof(element));
+            return (string)element.GetValue(DisplayMaskProperty);
+        }
+
+        public static void SetDisplayMask(DependencyObject element, string value)
+        {
+            if (element == null) throw new ArgumentNullException(nameof(element));
+            element.SetValue(DisplayMaskProperty, value);
+        }
+
+        #endregion
+
+        #region Helper Methods
 
         /// <summary>
         /// Handles changes to the ColumnDisplayName attached property

@@ -14,7 +14,41 @@ namespace WWSearchDataGrid.Modern.WPF
 {
     public partial class ColumnSearchBox
     {
+        #region Search Prefix State
+
+        // Set by GetEffectiveSearchValue() when a prefix shortcut is detected
+        private SearchType? _prefixSearchType;
+        private string _prefixSecondaryValue;
+
+        #endregion
+
         #region Text Filter Management
+
+        /// <summary>
+        /// Gets the effective search value for filter creation.
+        /// Parses prefix shortcuts (e.g., ">100" → GreaterThan, "=john" → Equals).
+        /// For mask-based columns, also strips mask literal characters.
+        /// Sets _prefixSearchType and _prefixSecondaryValue as side effects.
+        /// </summary>
+        private string GetEffectiveSearchValue()
+        {
+            string text = SearchText;
+
+            // Strip mask literals if applicable
+            if (SearchTemplateController?.DisplayValueProvider is Core.Display.MaskDisplayProvider maskProvider
+                && !string.IsNullOrEmpty(text))
+            {
+                text = maskProvider.StripLiterals(text);
+            }
+
+            // Parse search prefix shortcuts (filtered by column data type)
+            var columnDataType = SearchTemplateController?.ColumnDataType ?? Core.ColumnDataType.Unknown;
+            var (searchType, value, secondaryValue) = SearchPrefixParser.Parse(text, columnDataType);
+            _prefixSearchType = searchType;
+            _prefixSecondaryValue = secondaryValue;
+
+            return value ?? string.Empty;
+        }
 
         private void AddIncrementalContainsFilter()
         {
@@ -57,7 +91,7 @@ namespace WWSearchDataGrid.Modern.WPF
                 // Create new confirmed template with the preserved search type
                 var newTemplate = new SearchTemplate(SearchTemplateController.ColumnDataType);
                 newTemplate.SearchType = searchType;
-                newTemplate.SelectedValue = SearchText;
+                newTemplate.SelectedValue = GetEffectiveSearchValue();
                 newTemplate.SearchTemplateController = SearchTemplateController; // Ensure template has controller reference
 
                 // Bind to property changes for auto-apply monitoring
@@ -186,27 +220,33 @@ namespace WWSearchDataGrid.Modern.WPF
                 // Remove any default empty templates before adding our Contains template
                 RemoveDefaultEmptyTemplates(firstGroup);
                 
+                // Get the effective value first (this also parses prefix shortcuts and sets _prefixSearchType)
+                string effectiveValue = GetEffectiveSearchValue();
+
+                // Determine search type: prefix shortcut overrides column default
+                var defaultMode = CurrentColumn != null
+                    ? GridColumn.GetDefaultSearchMode(CurrentColumn)
+                    : DefaultSearchMode.Contains;
+                var searchType = _prefixSearchType ?? MapDefaultSearchModeToSearchType(defaultMode);
+
                 // Update existing temporary template or create new one
                 if (_temporarySearchTemplate != null)
                 {
-                    // Update existing temporary template
-                    _temporarySearchTemplate.SelectedValue = SearchText;
+                    // Update existing temporary template with new value and possibly new search type
+                    _temporarySearchTemplate.SearchType = searchType;
+                    _temporarySearchTemplate.SelectedValue = effectiveValue;
+                    if (_prefixSecondaryValue != null)
+                        _temporarySearchTemplate.SelectedSecondaryValue = _prefixSecondaryValue;
                 }
                 else
                 {
-                    // Get search mode from column or use default Contains
-                    var defaultMode = CurrentColumn != null
-                        ? GridColumn.GetDefaultSearchMode(CurrentColumn)
-                        : DefaultSearchMode.Contains;
-
-                    // Map DefaultSearchMode to SearchType
-                    var searchType = MapDefaultSearchModeToSearchType(defaultMode);
-
                     // Create new temporary template
                     _temporarySearchTemplate = new SearchTemplate(SearchTemplateController.ColumnDataType);
                     _temporarySearchTemplate.SearchType = searchType;
-                    _temporarySearchTemplate.SelectedValue = SearchText;
-                    _temporarySearchTemplate.SearchTemplateController = SearchTemplateController; // Ensure template has controller reference
+                    _temporarySearchTemplate.SelectedValue = effectiveValue;
+                    if (_prefixSecondaryValue != null)
+                        _temporarySearchTemplate.SelectedSecondaryValue = _prefixSecondaryValue;
+                    _temporarySearchTemplate.SearchTemplateController = SearchTemplateController;
 
                     // Bind to property changes for auto-apply monitoring
                     SearchTemplateController.SubscribeToTemplateChanges(_temporarySearchTemplate);
@@ -290,8 +330,13 @@ namespace WWSearchDataGrid.Modern.WPF
                 if (!string.IsNullOrWhiteSpace(SearchText) && _temporarySearchTemplate != null)
                 {
                     // Template should already exist from immediate creation
-                    // Just ensure it has the latest search text (in case of rapid typing)
-                    _temporarySearchTemplate.SelectedValue = SearchText;
+                    // Re-parse to get the prefix-stripped value (in case of rapid typing)
+                    string effectiveValue = GetEffectiveSearchValue();
+                    _temporarySearchTemplate.SelectedValue = effectiveValue;
+                    if (_prefixSearchType.HasValue)
+                        _temporarySearchTemplate.SearchType = _prefixSearchType.Value;
+                    if (_prefixSecondaryValue != null)
+                        _temporarySearchTemplate.SelectedSecondaryValue = _prefixSecondaryValue;
 
                     // Update the filter expression
                     SearchTemplateController.UpdateFilterExpression();
