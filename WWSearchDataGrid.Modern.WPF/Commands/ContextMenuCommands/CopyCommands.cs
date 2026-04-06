@@ -1,10 +1,14 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Data;
 using System.Windows.Input;
 using WWSearchDataGrid.Modern.Core;
+using WWSearchDataGrid.Modern.Core.Display;
+using WWSearchDataGrid.Modern.WPF.Display;
 
 namespace WWSearchDataGrid.Modern.WPF.Commands
 {
@@ -14,7 +18,7 @@ namespace WWSearchDataGrid.Modern.WPF.Commands
 
         private static ICommand _copySelectedCellValuesCommand;
         /// <summary>
-        /// Copies values of all selected cells to clipboard
+        /// Copies display values of all selected cells to clipboard
         /// </summary>
         public static ICommand CopySelectedCellValuesCommand => _copySelectedCellValuesCommand ??= new RelayCommand<SearchDataGrid>(grid =>
         {
@@ -34,11 +38,12 @@ namespace WWSearchDataGrid.Modern.WPF.Commands
                                     var path = GetBindingPath(sc.Column);
                                     if (string.IsNullOrEmpty(path) || sc.Item is null) return null;
 
-                                    var val = ReflectionHelper.GetPropValue(sc.Item, path);
+                                    var rawVal = ReflectionHelper.GetPropValue(sc.Item, path);
+                                    var displayVal = FormatDisplayValue(rawVal, sc.Column);
                                     return new
                                     {
                                         DisplayIndex = sc.Column.DisplayIndex,
-                                        Value = val?.ToString() ?? "NULL"
+                                        Value = displayVal
                                     };
                                 })
                                 .Where(x => x != null)
@@ -70,7 +75,7 @@ namespace WWSearchDataGrid.Modern.WPF.Commands
 
         private static ICommand _copySelectedCellValuesWithHeadersCommand;
         /// <summary>
-        /// Copies values of all selected cells with headers to clipboard
+        /// Copies display values of all selected cells with headers to clipboard
         /// </summary>
         public static ICommand CopySelectedCellValuesWithHeadersCommand => _copySelectedCellValuesWithHeadersCommand ??= new RelayCommand<SearchDataGrid>(grid =>
         {
@@ -129,8 +134,8 @@ namespace WWSearchDataGrid.Modern.WPF.Commands
                                 continue;
                             }
 
-                            var value = ReflectionHelper.GetPropValue(rowItem, path);
-                            rowValues.Add(value?.ToString() ?? "NULL");
+                            var rawVal = ReflectionHelper.GetPropValue(rowItem, path);
+                            rowValues.Add(FormatDisplayValue(rawVal, col));
                         }
 
                         lines.Add(string.Join("\t", rowValues));
@@ -166,6 +171,44 @@ namespace WWSearchDataGrid.Modern.WPF.Commands
             Debug.WriteLine($"[PLACEHOLDER] Export To Excel - Not implemented");
             // TODO: Export grid data to Excel file
         }, grid => grid?.Items?.Count > 0);
+
+        #endregion
+
+        #region Display Value Formatting
+
+        /// <summary>
+        /// Formats a raw value using the column's display configuration.
+        /// Priority: DisplayValueProvider (mask/converter/format) > Binding.StringFormat > ToString.
+        /// </summary>
+        private static string FormatDisplayValue(object rawVal, DataGridColumn column)
+        {
+            if (rawVal is null)
+                return "NULL";
+
+            // 1) Check GridColumn display providers (DisplayMask > DisplayValueConverter > DisplayStringFormat)
+            var provider = DisplayValueProviderFactory.Create(column);
+            if (provider != null)
+                return provider.FormatValue(rawVal) ?? rawVal.ToString() ?? "NULL";
+
+            // 2) Check the WPF Binding.StringFormat
+            if (column is DataGridBoundColumn boundCol && boundCol.Binding is Binding binding)
+            {
+                if (!string.IsNullOrEmpty(binding.StringFormat))
+                {
+                    try
+                    {
+                        return string.Format(binding.StringFormat, rawVal);
+                    }
+                    catch
+                    {
+                        // Format failed, fall through to ToString
+                    }
+                }
+            }
+
+            // 3) Fallback: raw ToString
+            return rawVal.ToString() ?? "NULL";
+        }
 
         #endregion
     }

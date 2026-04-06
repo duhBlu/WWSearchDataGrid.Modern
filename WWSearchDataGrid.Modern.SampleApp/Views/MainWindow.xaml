@@ -8,6 +8,7 @@
         xmlns:sdgCore="clr-namespace:WWSearchDataGrid.Modern.Core;assembly=WWSearchDataGrid.Modern.Core"
         xmlns:sampleConverters="clr-namespace:WWSearchDataGrid.Modern.SampleApp.Converters"
         xmlns:sdgConverters="clr-namespace:WWSearchDataGrid.Modern.WPF.Converters;assembly=WWSearchDataGrid.Modern.WPF"
+        xmlns:controls="clr-namespace:WWSearchDataGrid.Modern.SampleApp.Controls"
         Style="{DynamicResource SampleAppWindowStyle}"
         Title="SearchDataGrid Demo"
         Width="1280"
@@ -27,6 +28,8 @@
         <sampleConverters:ColumnDisplayNameConverter x:Key="ColumnDisplayNameConverter" />
         <sampleConverters:PriorityToTextConverter x:Key="PriorityToTextConverter" />
         <sdgConverters:MaskFormatConverter x:Key="MaskFormatConverter" />
+        <sampleConverters:SubmittedToStringConverter x:Key="SubmittedToStringConverter" />
+        <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
 
         <!--  Data  -->
         <CollectionViewSource x:Key="ComboBoxItemsSource" Source="{Binding ComboBoxItems}" />
@@ -169,22 +172,11 @@
                 <Button Style="{StaticResource DefaultButtonStyle}"
                         Background="{DynamicResource Theme.Accent.Blue}"
                         Foreground="{DynamicResource Theme.Text.OnAccent}"
-                        Command="{Binding PopulateDataCommand}"
+                        Command="{Binding GenerateItemsCommand}"
+                        CommandParameter="{Binding ItemsToGenerate}"
                         Margin="5"
                         Padding="10,5"
                         Content="Generate Data" />
-
-                <Button Style="{StaticResource DefaultButtonStyle}"
-                        Command="{Binding AddItemCommand}"
-                        Margin="5"
-                        Padding="10,5"
-                        Content="Add Item" />
-
-                <Button Style="{StaticResource DefaultButtonStyle}"
-                        Command="{Binding RemoveItemCommand}"
-                        Margin="5"
-                        Padding="10,5"
-                        Content="Remove Item" />
 
                 <Button Style="{StaticResource DefaultButtonStyle}"
                         Command="{Binding ClearDataCommand}"
@@ -202,7 +194,7 @@
                 <ColumnDefinition Width="300" />
             </Grid.ColumnDefinitions>
 
-            <!--#region Default Datagrid for Comparison-->
+            <!--#region Legacy DataGrid for Comparison (commented out)-->
 
             <!--<DataGrid x:Name="DataGrid"
           Grid.Row="0"
@@ -339,12 +331,12 @@
                                 EnableRuleFiltering="True"
                                 SelectionMode="Extended"
                                 SelectionUnit="CellOrRowHeader"
-                                ItemsSource="{Binding Items}"
+                                ItemsSource="{Binding OrderItems}"
                                 CanUserAddRows="False">
                 <sdg:SearchDataGrid.Columns>
 
-                    <!--  Order ID: simple text, starts-with search  -->
-                    <DataGridTextColumn Width="100"
+                    <!--  Order #: starts-with search  -->
+                    <DataGridTextColumn Width="80"
                                         sdg:GridColumn.FilterMemberPath="OrderNumber"
                                         sdg:GridColumn.DefaultSearchMode="StartsWith"
                                         sdg:GridColumn.EnableRuleFiltering="False"
@@ -352,122 +344,187 @@
                                         Header="Order #"
                                         Binding="{Binding OrderNumber}" />
 
-                    <!--  Customer name: text search  -->
-                    <DataGridTextColumn Width="140"
+                    <!--  Order Status: enum-like text  -->
+                    <DataGridTextColumn Width="100"
+                                        sdg:GridColumn.FilterMemberPath="OrderStatusName"
+                                        sdg:GridColumn.DefaultSearchMode="Equals"
+                                        SortMemberPath="OrderStatusName"
+                                        Header="Status"
+                                        Binding="{Binding OrderStatusName}" />
+
+                    <!--  Order Location  -->
+                    <DataGridTextColumn Width="100"
+                                        sdg:GridColumn.FilterMemberPath="OrderLocationName"
+                                        sdg:GridColumn.DefaultSearchMode="Equals"
+                                        SortMemberPath="OrderLocationName"
+                                        Header="Location"
+                                        Binding="{Binding OrderLocationName}" />
+
+                    <!--  Order Date: date format  -->
+                    <DataGridTextColumn Width="110"
+                                        sdg:GridColumn.FilterMemberPath="OrderDate"
+                                        sdg:GridColumn.DisplayStringFormat="MM/dd/yyyy"
+                                        SortMemberPath="OrderDate"
+                                        Header="Order Date"
+                                        Binding="{Binding OrderDate, StringFormat=MM/dd/yyyy}" />
+
+                    <!--  Customer Name: text search  -->
+                    <DataGridTextColumn Width="200"
                                         sdg:GridColumn.FilterMemberPath="CustomerName"
                                         SortMemberPath="CustomerName"
                                         Header="Customer"
                                         Binding="{Binding CustomerName}" />
 
-                    <!--  Phone: DisplayMask formats raw digits as (555) 123-4567  -->
-                    <DataGridTextColumn Width="140"
-                                        sdg:GridColumn.FilterMemberPath="PhoneNumber"
-                                        sdg:GridColumn.DisplayMask="(000) 000-0000"
-                                        SortMemberPath="PhoneNumber"
-                                        Header="Phone"
-                                        Binding="{Binding PhoneNumber, Converter={StaticResource MaskFormatConverter}, ConverterParameter='(000) 000-0000'}" />
+                    <!--  Employee: text search  -->
+                    <DataGridTextColumn Width="160"
+                                        sdg:GridColumn.FilterMemberPath="EmployeeName"
+                                        SortMemberPath="EmployeeName"
+                                        Header="Employee"
+                                        Binding="{Binding EmployeeName}" />
 
-                    <!--  Product and Category: basic text columns  -->
-                    <DataGridTextColumn Width="120"
-                                        sdg:GridColumn.FilterMemberPath="ProductName"
-                                        SortMemberPath="ProductName"
-                                        Header="Product"
-                                        Binding="{Binding ProductName}" />
+                    <!--  Dealer PO  -->
+                    <DataGridTextColumn Width="110"
+                                        sdg:GridColumn.FilterMemberPath="DealerPO"
+                                        SortMemberPath="DealerPO"
+                                        Header="Dealer PO"
+                                        Binding="{Binding DealerPO}" />
 
-                    <DataGridTextColumn Width="100"
-                                        sdg:GridColumn.FilterMemberPath="Category"
+                    <!--  Job Name  -->
+                    <DataGridTextColumn Width="130"
+                                        sdg:GridColumn.FilterMemberPath="JobName"
+                                        SortMemberPath="JobName"
+                                        Header="Job Name"
+                                        Binding="{Binding JobName}" />
+
+                    <!--  Product Line: enum-like  -->
+                    <DataGridTextColumn Width="90"
+                                        sdg:GridColumn.FilterMemberPath="ProductLineName"
                                         sdg:GridColumn.DefaultSearchMode="Equals"
-                                        SortMemberPath="Category"
-                                        Header="Category"
-                                        Binding="{Binding Category}" />
+                                        SortMemberPath="ProductLineName"
+                                        Header="Product Line"
+                                        Binding="{Binding ProductLineName}" />
 
-                    <!--  Quantity: integer with rule filtering  -->
-                    <DataGridTextColumn Width="60"
-                                        sdg:GridColumn.FilterMemberPath="Quantity"
-                                        SortMemberPath="Quantity"
-                                        Header="Qty"
-                                        Binding="{Binding Quantity}" />
+                    <!--  Order Type  -->
+                    <DataGridTextColumn Width="170"
+                                        sdg:GridColumn.FilterMemberPath="OrderTypeName"
+                                        sdg:GridColumn.DefaultSearchMode="Equals"
+                                        SortMemberPath="OrderTypeName"
+                                        Header="Order Type"
+                                        Binding="{Binding OrderTypeName}" />
 
-                    <!--  Unit Price: DisplayStringFormat shows as currency  -->
-                    <DataGridTextColumn Width="90"
-                                        sdg:GridColumn.FilterMemberPath="UnitPrice"
-                                        sdg:GridColumn.DisplayStringFormat="C2"
-                                        SortMemberPath="UnitPrice"
-                                        Header="Unit Price"
-                                        Binding="{Binding UnitPrice, StringFormat=C2}" />
-
-                    <!--  Line Total: DisplayStringFormat shows as currency  -->
-                    <DataGridTextColumn Width="100"
-                                        sdg:GridColumn.FilterMemberPath="LineTotal"
-                                        sdg:GridColumn.DisplayStringFormat="C2"
-                                        SortMemberPath="LineTotal"
-                                        Header="Line Total"
-                                        Binding="{Binding LineTotal, StringFormat=C2}" />
-
-                    <!--  Discount: nullable percentage with format  -->
-                    <DataGridTextColumn Width="80"
-                                        sdg:GridColumn.FilterMemberPath="Discount"
-                                        sdg:GridColumn.DisplayStringFormat="P1"
-                                        SortMemberPath="Discount"
-                                        Header="Discount"
-                                        Binding="{Binding Discount, StringFormat=P1}" />
-
-                    <!--  Status: enum column (raw enum display)  -->
-                    <DataGridTextColumn Width="90"
-                                        sdg:GridColumn.FilterMemberPath="Status"
-                                        SortMemberPath="Status"
-                                        Header="Status"
-                                        Binding="{Binding Status}" />
-
-                    <!--  Priority: DisplayValueConverter shows friendly text  -->
-                    <DataGridTextColumn Width="90"
-                                        sdg:GridColumn.FilterMemberPath="Priority"
-                                        sdg:GridColumn.DisplayValueConverter="{StaticResource PriorityToTextConverter}"
-                                        SortMemberPath="Priority"
-                                        Header="Priority"
-                                        Binding="{Binding Priority, Converter={StaticResource PriorityToTextConverter}}" />
-
-                    <!--  Rush: boolean checkbox with select-all  -->
-                    <DataGridCheckBoxColumn Width="60"
-                                            sdg:GridColumn.UseCheckBoxInSearchBox="True"
-                                            sdg:GridColumn.FilterMemberPath="IsRush"
-                                            sdg:GridColumn.IsSelectAllColumn="True"
-                                            sdg:GridColumn.SelectAllScope="FilteredRows"
-                                            SortMemberPath="IsRush"
-                                            Header="Rush"
-                                            Binding="{Binding IsRush}" />
-
-                    <!--  Approved: nullable boolean checkbox  -->
+                    <!--  Cancelled: boolean checkbox  -->
                     <DataGridCheckBoxColumn Width="80"
                                             sdg:GridColumn.UseCheckBoxInSearchBox="True"
-                                            sdg:GridColumn.FilterMemberPath="IsApproved"
-                                            sdg:GridColumn.IsSelectAllColumn="True"
-                                            sdg:GridColumn.SelectAllScope="SelectedRows"
-                                            SortMemberPath="IsApproved"
-                                            Header="Approved"
-                                            Binding="{Binding IsApproved}" />
+                                            sdg:GridColumn.FilterMemberPath="OrderCancelled"
+                                            SortMemberPath="OrderCancelled"
+                                            Header="Cancelled"
+                                            Binding="{Binding OrderCancelled}" />
 
-                    <!--  Order Date  -->
-                    <DataGridTextColumn Width="130"
-                                        sdg:GridColumn.FilterMemberPath="OrderDate"
-                                        SortMemberPath="OrderDate"
-                                        Header="Order Date"
-                                        Binding="{Binding OrderDate, StringFormat=g}" />
+                    <!--  Quantity: integer  -->
+                    <DataGridTextColumn Width="55"
+                                        sdg:GridColumn.FilterMemberPath="OrderItemsTotalQuantity"
+                                        SortMemberPath="OrderItemsTotalQuantity"
+                                        Header="Qty"
+                                        Binding="{Binding OrderItemsTotalQuantity}" />
 
-                    <!--  Ship Date: nullable date  -->
-                    <DataGridTextColumn Width="130"
-                                        sdg:GridColumn.FilterMemberPath="ShipDate"
-                                        SortMemberPath="ShipDate"
-                                        Header="Ship Date"
-                                        Binding="{Binding ShipDate, StringFormat=d}" />
+                    <!--  Total Price: currency format  -->
+                    <DataGridTextColumn Width="100"
+                                        sdg:GridColumn.FilterMemberPath="OrderItemsTotalPrice"
+                                        sdg:GridColumn.DisplayStringFormat="C2"
+                                        SortMemberPath="OrderItemsTotalPrice"
+                                        Header="Total Price"
+                                        Binding="{Binding OrderItemsTotalPrice, StringFormat=C2}" />
 
-                    <!--  Notes: nullable text  -->
+                    <!--  Amount Due: currency format  -->
+                    <DataGridTextColumn Width="100"
+                                        sdg:GridColumn.FilterMemberPath="AmountDue"
+                                        sdg:GridColumn.DisplayStringFormat="C2"
+                                        SortMemberPath="AmountDue"
+                                        Header="Amount Due"
+                                        Binding="{Binding AmountDue, StringFormat=C2}" />
+
+                    <!--  Discount: percentage  -->
+                    <DataGridTextColumn Width="80"
+                                        sdg:GridColumn.FilterMemberPath="DiscountPercent"
+                                        sdg:GridColumn.DisplayStringFormat="P0"
+                                        SortMemberPath="DiscountPercent"
+                                        Header="Discount %"
+                                        Binding="{Binding DiscountPercent, StringFormat=P0}" />
+
+                    <!--  Sales Rep  -->
+                    <DataGridTextColumn Width="170"
+                                        sdg:GridColumn.FilterMemberPath="SalesSubRepName"
+                                        SortMemberPath="SalesSubRepName"
+                                        Header="Sales Rep"
+                                        Binding="{Binding SalesSubRepName}" />
+
+                    <!--  Ship Via: enum-like  -->
+                    <DataGridTextColumn Width="80"
+                                        sdg:GridColumn.FilterMemberPath="ShipViaTypeName"
+                                        sdg:GridColumn.DefaultSearchMode="Equals"
+                                        SortMemberPath="ShipViaTypeName"
+                                        Header="Ship Via"
+                                        Binding="{Binding ShipViaTypeName}" />
+
+                    <!--  City  -->
+                    <DataGridTextColumn Width="110"
+                                        sdg:GridColumn.FilterMemberPath="City"
+                                        SortMemberPath="City"
+                                        Header="City"
+                                        Binding="{Binding City}" />
+
+                    <!--  State  -->
+                    <DataGridTextColumn Width="50"
+                                        sdg:GridColumn.FilterMemberPath="State"
+                                        sdg:GridColumn.DefaultSearchMode="Equals"
+                                        SortMemberPath="State"
+                                        Header="State"
+                                        Binding="{Binding State}" />
+
+                    <!--  Zip Code: mask format  -->
+                    <DataGridTextColumn Width="70"
+                                        sdg:GridColumn.FilterMemberPath="ZipCode"
+                                        sdg:GridColumn.DefaultSearchMode="StartsWith"
+                                        SortMemberPath="ZipCode"
+                                        Header="Zip"
+                                        Binding="{Binding ZipCode}" />
+
+                    <!--  Schedule Date: nullable date  -->
+                    <DataGridTextColumn Width="110"
+                                        sdg:GridColumn.FilterMemberPath="ScheduleDate"
+                                        sdg:GridColumn.DisplayStringFormat="MM/dd/yyyy"
+                                        SortMemberPath="ScheduleDate"
+                                        Header="Schedule Date"
+                                        Binding="{Binding ScheduleDate, StringFormat=MM/dd/yyyy}" />
+
+                    <!--  Submitted: DisplayValueConverter shows Yes/No  -->
+                    <DataGridTextColumn Width="80"
+                                        sdg:GridColumn.FilterMemberPath="Submitted"
+                                        sdg:GridColumn.DisplayValueConverter="{StaticResource SubmittedToStringConverter}"
+                                        SortMemberPath="Submitted"
+                                        Header="Submitted"
+                                        Binding="{Binding Submitted, Converter={StaticResource SubmittedToStringConverter}}" />
+
+                    <!--  Load/Drop Numbers  -->
+                    <DataGridTextColumn Width="60"
+                                        sdg:GridColumn.FilterMemberPath="LoadNumber"
+                                        SortMemberPath="LoadNumber"
+                                        Header="Load #"
+                                        Binding="{Binding LoadNumber}" />
+
+                    <DataGridTextColumn Width="60"
+                                        sdg:GridColumn.FilterMemberPath="DropNumber"
+                                        SortMemberPath="DropNumber"
+                                        Header="Drop #"
+                                        Binding="{Binding DropNumber}" />
+
+                    <!--  Special Instructions: nullable long text  -->
                     <DataGridTextColumn Width="200"
-                                        sdg:GridColumn.FilterMemberPath="Notes"
+                                        sdg:GridColumn.FilterMemberPath="SpecialInstructionsText"
                                         sdg:GridColumn.EnableRuleFiltering="False"
-                                        SortMemberPath="Notes"
-                                        Header="Notes"
-                                        Binding="{Binding Notes}" />
+                                        SortMemberPath="SpecialInstructionsText"
+                                        Header="Special Instructions"
+                                        Binding="{Binding SpecialInstructionsText}" />
 
                 </sdg:SearchDataGrid.Columns>
             </sdg:SearchDataGrid>
@@ -751,6 +808,22 @@
                     </Expander>
                 </sdg:SimpleStackPanel>
             </ScrollViewer>
+
+            <!--  Loading Overlay  -->
+            <Border Grid.ColumnSpan="3"
+                    Background="{DynamicResource Theme.Overlay.Background}"
+                    Visibility="{Binding IsGenerating, Converter={StaticResource BoolToVisibility}}"
+                    Panel.ZIndex="50">
+                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <controls:WWSpinningWheel Width="56" Height="56" />
+                    <TextBlock Foreground="{DynamicResource Theme.Text.Primary}"
+                               Text="{Binding GeneratingStatus}"
+                               HorizontalAlignment="Center"
+                               Margin="0,12,0,0"
+                               FontSize="13"
+                               FontWeight="SemiBold" />
+                </StackPanel>
+            </Border>
 
         </Grid>
     </DockPanel>

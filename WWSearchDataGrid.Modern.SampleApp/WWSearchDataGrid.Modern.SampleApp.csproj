@@ -13,6 +13,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="Data\SampleOrders.json" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\WWSearchDataGrid.Modern.Core\WWSearchDataGrid.Modern.Core.csproj" />
     <ProjectReference Include="..\WWSearchDataGrid.Modern.WPF\WWSearchDataGrid.Modern.WPF.csproj" />
   </ItemGroup>

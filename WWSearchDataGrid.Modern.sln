@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 18
-VisualStudioVersion = 18.2.11415.280 d18.0
+VisualStudioVersion = 18.2.11415.280
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WWSearchDataGrid.Modern.Core", "WWSearchDataGrid.Modern.Core\WWSearchDataGrid.Modern.Core.csproj", "{6A9A38C2-5C45-455C-811D-89FBB693AAE1}"
 EndProject
@@ -23,6 +23,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Docs", "Docs", "{BF088895-9
 	ProjectSection(SolutionItems) = preProject
 		docs\api-reference.md = docs\api-reference.md
 		docs\getting-started.md = docs\getting-started.md
+		docs\GRIDCOLUMN-IMPLEMENTATION-PLAN.md = docs\GRIDCOLUMN-IMPLEMENTATION-PLAN.md
 	EndProjectSection
 EndProject
 Global

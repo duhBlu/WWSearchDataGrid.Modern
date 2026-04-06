@@ -309,6 +309,12 @@
     <SolidColorBrush x:Key="Theme.Expander.Content.Border"           Color="#DEE2E6" />
     <!--#endregion -->
 
+    <!--#region Progress / Spinner -->
+    <SolidColorBrush x:Key="Theme.Progress.Track"                    Color="#E0E0E0" />
+    <SolidColorBrush x:Key="Theme.Progress.Fill"                     Color="#0078D4" />
+    <SolidColorBrush x:Key="Theme.Overlay.Background"                Color="#80FFFFFF" />
+    <!--#endregion -->
+
     <!--#region Search Prefix Tooltip -->
     <SolidColorBrush x:Key="Theme.Tooltip.Background"                Color="#F8F9FA" />
     <SolidColorBrush x:Key="Theme.Tooltip.Border"                    Color="#D0D5DD" />

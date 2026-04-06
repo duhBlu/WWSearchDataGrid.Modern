@@ -1,17 +1,20 @@
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using System.Windows.Threading;
 using WWSearchDataGrid.Modern.Core;
 
 namespace WWSearchDataGrid.Modern.WPF
 {
     /// <summary>
-    /// Simplified filter control with rules-only interface and auto-apply functionality for popup usage
+    /// Filter editor with deferred-apply: changes are NOT applied to the grid while
+    /// the editor is open.  When the popup closes, invalid/incomplete rules are pruned
+    /// and the resulting filter is applied once.
     /// </summary>
     public class ColumnFilterEditor : Control, INotifyPropertyChanged
     {
@@ -27,28 +30,12 @@ namespace WWSearchDataGrid.Modern.WPF
             DependencyProperty.Register(nameof(IsOperatorVisible), typeof(bool), typeof(ColumnFilterEditor),
                 new PropertyMetadata(false));
 
-        /// <summary>
-        /// Horizontal offset to be applied to the containing Popup.
-        /// Positive values move right; negative values move left.
-        /// This property is read by the Popup owner (ColumnSearchBox) when creating/showing the Popup.
-        /// </summary>
         public static readonly DependencyProperty HorizontalOffsetProperty =
-            DependencyProperty.Register(
-                nameof(HorizontalOffset),
-                typeof(double),
-                typeof(ColumnFilterEditor),
+            DependencyProperty.Register(nameof(HorizontalOffset), typeof(double), typeof(ColumnFilterEditor),
                 new PropertyMetadata(0.0));
 
-        /// <summary>
-        /// Vertical offset to be applied to the containing Popup.
-        /// Positive values move down; negative values move up.
-        /// This property is read by the Popup owner (ColumnSearchBox) when creating/showing the Popup.
-        /// </summary>
         public static readonly DependencyProperty VerticalOffsetProperty =
-            DependencyProperty.Register(
-                nameof(VerticalOffset),
-                typeof(double),
-                typeof(ColumnFilterEditor),
+            DependencyProperty.Register(nameof(VerticalOffset), typeof(double), typeof(ColumnFilterEditor),
                 new PropertyMetadata(0.0));
 
         #endregion
@@ -63,29 +50,18 @@ namespace WWSearchDataGrid.Modern.WPF
             set => SetValue(IsOperatorVisibleProperty, value);
         }
 
-        /// <summary>
-        /// Horizontal offset (pixels) for the containing Popup.
-        /// This value is read by the Popup owner when positioning the Popup.
-        /// </summary>
         public double HorizontalOffset
         {
             get => (double)GetValue(HorizontalOffsetProperty);
             set => SetValue(HorizontalOffsetProperty, value);
         }
 
-        /// <summary>
-        /// Vertical offset (pixels) for the containing Popup.
-        /// This value is read by the Popup owner when positioning the Popup.
-        /// </summary>
         public double VerticalOffset
         {
             get => (double)GetValue(VerticalOffsetProperty);
             set => SetValue(VerticalOffsetProperty, value);
         }
 
-        /// <summary>
-        /// Gets the group operator name from the first search group
-        /// </summary>
         public string GroupOperatorName
         {
             get => SearchTemplateController?.SearchGroups?.Count > 0 ? SearchTemplateController.SearchGroups[0].OperatorName : "Or";
@@ -97,7 +73,6 @@ namespace WWSearchDataGrid.Modern.WPF
                     if (currentValue != value)
                     {
                         SearchTemplateController.SearchGroups[0].OperatorName = value;
-                        SearchTemplateController.UpdateFilterExpression();
                         OnPropertyChanged(nameof(GroupOperatorName));
                     }
                 }
@@ -108,14 +83,7 @@ namespace WWSearchDataGrid.Modern.WPF
 
         #region Events
 
-        /// <summary>
-        /// Occurs when filters are applied automatically
-        /// </summary>
         public event EventHandler FiltersApplied;
-
-        /// <summary>
-        /// Occurs when filters are cleared
-        /// </summary>
         public event EventHandler FiltersCleared;
 
         #endregion
@@ -126,19 +94,8 @@ namespace WWSearchDataGrid.Modern.WPF
         private ICommand _addSearchTemplateCommand;
         private ICommand _removeSearchTemplateCommand;
 
-        /// <summary>
-        /// Clear filter command
-        /// </summary>
         public ICommand ClearFilterCommand => _clearFilterCommand ??= new RelayCommand(_ => ClearFilter());
-
-        /// <summary>
-        /// Add search template command
-        /// </summary>
         public ICommand AddSearchTemplateCommand => _addSearchTemplateCommand ??= new RelayCommand(_ => AddSearchTemplate());
-
-        /// <summary>
-        /// Remove search template command
-        /// </summary>
         public ICommand RemoveSearchTemplateCommand => _removeSearchTemplateCommand ??= new RelayCommand(template => RemoveSearchTemplate(template));
 
         #endregion
@@ -151,8 +108,6 @@ namespace WWSearchDataGrid.Modern.WPF
             Unloaded += OnUnloaded;
             DefaultStyleKey = typeof(ColumnFilterEditor);
         }
-
-
 
         #endregion
 
@@ -178,45 +133,31 @@ namespace WWSearchDataGrid.Modern.WPF
             }
         }
 
+        /// <summary>
+        /// When the editor closes (popup closes), prune invalid rules and apply the filter once.
+        /// </summary>
         private void OnUnloaded(object sender, RoutedEventArgs e)
         {
-            _isInitialized = false;
-            CleanupEventSubscriptions();
-        }
-
-        /// <summary>
-        /// Clean up all event subscriptions
-        /// </summary>
-        private void CleanupEventSubscriptions()
-        {
-            if (SearchTemplateController != null)
+            if (_isInitialized)
             {
-                SearchTemplateController.AutoApplyFilter -= OnAutoApplyFilter;
+                PruneAndApply();
             }
+            _isInitialized = false;
         }
 
         #endregion
 
         #region Methods
 
-        /// <summary>
-        /// Initialize the rules interface
-        /// </summary>
         private void InitializeRulesInterface()
         {
             TriggerColumnValueLoading();
             UpdateOperatorVisibility();
 
-            if(SearchTemplateController != null)
-            {
-                SearchTemplateController.AutoApplyFilter += OnAutoApplyFilter;
-            }
+            // NOTE: We intentionally do NOT subscribe to AutoApplyFilter.
+            // The editor uses deferred-apply — the filter is applied once when the popup closes.
         }
 
-        /// <summary>
-        /// Triggers loading of column values when filter editor opens
-        /// PERFORMANCE: This is where cache loading happens - deferred until user explicitly opens filter
-        /// </summary>
         private void TriggerColumnValueLoading()
         {
             try
@@ -224,10 +165,7 @@ namespace WWSearchDataGrid.Modern.WPF
                 if (DataContext is ColumnSearchBox columnSearchBox &&
                     columnSearchBox.SearchTemplateController != null)
                 {
-                    // Ensure column values are loaded (this will also determine null status)
                     columnSearchBox.SearchTemplateController.EnsureColumnValuesLoadedForFiltering();
-
-                    // Explicitly ensure null status is determined and templates updated
                     columnSearchBox.SearchTemplateController.EnsureNullStatusDetermined();
                 }
             }
@@ -237,24 +175,18 @@ namespace WWSearchDataGrid.Modern.WPF
             }
         }
 
-        /// <summary>
-        /// Updates operator visibility based on whether there are active filters in preceding columns
-        /// </summary>
         private void UpdateOperatorVisibility()
         {
             IsOperatorVisible = false;
 
-            if (DataContext is ColumnSearchBox currentColumnSearchBox && 
+            if (DataContext is ColumnSearchBox currentColumnSearchBox &&
                 currentColumnSearchBox.SourceDataGrid != null)
             {
                 var dataGrid = currentColumnSearchBox.SourceDataGrid;
-                var currentColumn = currentColumnSearchBox;
-                
+
                 foreach (var column in dataGrid.DataColumns)
                 {
-                    if (column == currentColumn)
-                        break;
-                        
+                    if (column == currentColumnSearchBox) break;
                     if (column.HasActiveFilter)
                     {
                         IsOperatorVisible = true;
@@ -263,19 +195,55 @@ namespace WWSearchDataGrid.Modern.WPF
                 }
             }
         }
-        
+
         /// <summary>
-        /// Clear all filters
+        /// Removes incomplete/invalid search templates, then applies the resulting filter to the grid.
         /// </summary>
+        private void PruneAndApply()
+        {
+            if (SearchTemplateController == null) return;
+
+            try
+            {
+                // Remove invalid templates from each group
+                foreach (var group in SearchTemplateController.SearchGroups.ToList())
+                {
+                    var invalidTemplates = group.SearchTemplates
+                        .Where(t => !t.IsValidFilter)
+                        .ToList();
+
+                    foreach (var invalid in invalidTemplates)
+                    {
+                        SearchTemplateController.RemoveSearchTemplate(invalid);
+                    }
+                }
+
+                // Build and apply the filter expression
+                SearchTemplateController.UpdateFilterExpression();
+
+                if (DataContext is ColumnSearchBox columnSearchBox && columnSearchBox.SourceDataGrid != null)
+                {
+                    columnSearchBox.HasAdvancedFilter = SearchTemplateController.HasCustomExpression;
+                    columnSearchBox.SourceDataGrid.FilterItemsSource();
+                    columnSearchBox.SourceDataGrid.UpdateFilterPanel();
+                }
+
+                FiltersApplied?.Invoke(this, EventArgs.Empty);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"PruneAndApply failed: {ex.Message}");
+            }
+        }
+
         private void ClearFilter()
         {
             if (SearchTemplateController == null) return;
 
             try
             {
-                // Clear filters directly through SearchTemplateController
                 SearchTemplateController.ClearAndReset();
-                
+
                 if (DataContext is ColumnSearchBox columnSearchBox && columnSearchBox.SourceDataGrid != null)
                 {
                     columnSearchBox.HasAdvancedFilter = false;
@@ -283,7 +251,6 @@ namespace WWSearchDataGrid.Modern.WPF
                     columnSearchBox.SourceDataGrid.UpdateFilterPanel();
                 }
 
-                // Notify that filters were cleared
                 FiltersCleared?.Invoke(this, EventArgs.Empty);
             }
             catch (Exception ex)
@@ -312,10 +279,7 @@ namespace WWSearchDataGrid.Modern.WPF
 
             try
             {
-                // Delegate to SearchTemplateController - it handles all the logic
                 SearchTemplateController.RemoveSearchTemplate(searchTemplate);
-                
-                // Update UI state
                 UpdateOperatorVisibility();
             }
             catch (Exception ex)
@@ -326,57 +290,7 @@ namespace WWSearchDataGrid.Modern.WPF
 
         #endregion
 
-        #region Auto-Apply Methods
-
-        /// <summary>
-        /// Handle the unified filter should apply event from SearchTemplateController
-        /// </summary>
-        private void OnAutoApplyFilter(object sender, EventArgs e)
-        {
-            try
-            {
-                Application.Current?.Dispatcher.Invoke(() =>
-                {
-                    ApplyFilterAutomatically();
-                });
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"Error in OnAutoApplyFilter: {ex.Message}");
-            }
-        }
-
-        /// <summary>
-        /// Apply filter automatically (triggered by debounced changes)
-        /// </summary>
-        private void ApplyFilterAutomatically()
-        {
-            if (SearchTemplateController == null) return;
-
-            try
-            {
-                SearchTemplateController.UpdateFilterExpression();
-
-                // Update the UI state after successful filter application
-                if (DataContext is ColumnSearchBox columnSearchBox && columnSearchBox.SourceDataGrid != null)
-                {
-                    columnSearchBox.HasAdvancedFilter = SearchTemplateController.HasCustomExpression;
-                    columnSearchBox.SourceDataGrid.FilterItemsSource();
-                    columnSearchBox.SourceDataGrid.UpdateFilterPanel();
-                }
-
-                FiltersApplied?.Invoke(this, EventArgs.Empty);
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"Auto filter application failed: {ex.Message}");
-            }
-        }
-
-
-        #endregion
-
-        #region INotifyPropertyChanged Implementation
+        #region INotifyPropertyChanged
 
         public event PropertyChangedEventHandler PropertyChanged;
 
