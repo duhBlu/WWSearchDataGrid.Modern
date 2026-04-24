@@ -6,6 +6,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using WWSearchDataGrid.Modern.Core;
 
@@ -43,6 +44,11 @@ namespace WWSearchDataGrid.Modern.WPF
         #region Properties
 
         public SearchTemplateController SearchTemplateController { get; set; }
+
+        /// <summary>
+        /// Manages the Filter Values tab state (checkbox list, sync with rules).
+        /// </summary>
+        public FilterValueManager FilterValueManager { get; private set; }
 
         public bool IsOperatorVisible
         {
@@ -93,10 +99,25 @@ namespace WWSearchDataGrid.Modern.WPF
         private ICommand _clearFilterCommand;
         private ICommand _addSearchTemplateCommand;
         private ICommand _removeSearchTemplateCommand;
+        private ICommand _selectAllValuesCommand;
+        private ICommand _clearAllValuesCommand;
 
         public ICommand ClearFilterCommand => _clearFilterCommand ??= new RelayCommand(_ => ClearFilter());
         public ICommand AddSearchTemplateCommand => _addSearchTemplateCommand ??= new RelayCommand(_ => AddSearchTemplate());
         public ICommand RemoveSearchTemplateCommand => _removeSearchTemplateCommand ??= new RelayCommand(template => RemoveSearchTemplate(template));
+        public ICommand SelectAllValuesCommand => _selectAllValuesCommand ??= new RelayCommand(_ => ToggleSelectAllValues());
+        public ICommand ClearAllValuesCommand => _clearAllValuesCommand ??= new RelayCommand(_ => FilterValueManager?.ClearAllCommand?.Execute(null));
+
+        private void ToggleSelectAllValues()
+        {
+            if (FilterValueManager == null) return;
+
+            // If all checked → clear all. Otherwise (mixed or none) → select all.
+            if (FilterValueManager.SelectAllState == true)
+                FilterValueManager.ClearAllCommand?.Execute(null);
+            else
+                FilterValueManager.SelectAllCommand?.Execute(null);
+        }
 
         #endregion
 
@@ -116,6 +137,93 @@ namespace WWSearchDataGrid.Modern.WPF
         public override void OnApplyTemplate()
         {
             base.OnApplyTemplate();
+
+            // Unsubscribe old
+            if (_tabControl != null)
+                _tabControl.SelectionChanged -= OnTabSelectionChanged;
+            if (_resizeBottomLeft != null)
+                _resizeBottomLeft.DragDelta -= OnResizeBottomLeftDrag;
+            if (_resizeBottomRight != null)
+                _resizeBottomRight.DragDelta -= OnResizeBottomRightDrag;
+
+            // Subscribe to tab changes to sync Values tab when switching to it
+            _tabControl = GetTemplateChild("PART_TabControl") as System.Windows.Controls.TabControl;
+            if (_tabControl != null)
+            {
+                _lastTabIndex = _tabControl.SelectedIndex;
+                _tabControl.SelectionChanged += OnTabSelectionChanged;
+            }
+
+            _resizeBottomLeft = GetTemplateChild("PART_ResizeBottomLeft") as Thumb;
+            _resizeBottomRight = GetTemplateChild("PART_ResizeBottomRight") as Thumb;
+            if (_resizeBottomLeft != null)
+                _resizeBottomLeft.DragDelta += OnResizeBottomLeftDrag;
+            if (_resizeBottomRight != null)
+                _resizeBottomRight.DragDelta += OnResizeBottomRightDrag;
+        }
+
+        private System.Windows.Controls.TabControl _tabControl;
+        private int _lastTabIndex = -1;
+        private Thumb _resizeBottomLeft;
+        private Thumb _resizeBottomRight;
+
+        private void OnResizeBottomRightDrag(object sender, DragDeltaEventArgs e)
+        {
+            ApplyResize(e.HorizontalChange, e.VerticalChange, fromLeft: false);
+        }
+
+        private void OnResizeBottomLeftDrag(object sender, DragDeltaEventArgs e)
+        {
+            ApplyResize(-e.HorizontalChange, e.VerticalChange, fromLeft: true);
+        }
+
+        private void ApplyResize(double deltaWidth, double deltaHeight, bool fromLeft)
+        {
+            double currentWidth = double.IsNaN(Width) ? ActualWidth : Width;
+            double currentHeight = double.IsNaN(Height) ? ActualHeight : Height;
+
+            double minWidth = MinWidth > 0 ? MinWidth : 0;
+            double maxWidth = double.IsInfinity(MaxWidth) ? double.PositiveInfinity : MaxWidth;
+            double minHeight = MinHeight > 0 ? MinHeight : 0;
+            double maxHeight = double.IsInfinity(MaxHeight) ? double.PositiveInfinity : MaxHeight;
+
+            double newWidth = Math.Max(minWidth, Math.Min(maxWidth, currentWidth + deltaWidth));
+            double newHeight = Math.Max(minHeight, Math.Min(maxHeight, currentHeight + deltaHeight));
+
+            double actualDeltaWidth = newWidth - currentWidth;
+
+            Width = newWidth;
+            Height = newHeight;
+
+            if (fromLeft && actualDeltaWidth != 0)
+            {
+                var popup = FindParentPopup();
+                if (popup != null)
+                    popup.HorizontalOffset -= actualDeltaWidth;
+            }
+        }
+
+        private Popup FindParentPopup()
+        {
+            DependencyObject parent = LogicalTreeHelper.GetParent(this);
+            while (parent != null && parent is not Popup)
+                parent = LogicalTreeHelper.GetParent(parent);
+            return parent as Popup;
+        }
+
+        private void OnTabSelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (_tabControl == null) return;
+
+            int currentIndex = _tabControl.SelectedIndex;
+            if (currentIndex == _lastTabIndex) return; // No actual tab change
+            _lastTabIndex = currentIndex;
+
+            if (currentIndex == 1 && FilterValueManager != null)
+            {
+                // Switched to Filter Values tab — sync checkbox states from current rules
+                FilterValueManager.SyncFromRules();
+            }
         }
 
         private void OnControlLoaded(object sender, RoutedEventArgs e)
@@ -154,8 +262,65 @@ namespace WWSearchDataGrid.Modern.WPF
             TriggerColumnValueLoading();
             UpdateOperatorVisibility();
 
-            // NOTE: We intentionally do NOT subscribe to AutoApplyFilter.
-            // The editor uses deferred-apply — the filter is applied once when the popup closes.
+            if (SearchTemplateController != null)
+            {
+                // Subscribe to auto-apply for immediate filter application on non-typing changes
+                // (dropdown selections, SearchType combo changes, etc.)
+                SearchTemplateController.AutoApplyFilter -= OnAutoApplyFilter;
+                SearchTemplateController.AutoApplyFilter += OnAutoApplyFilter;
+
+                // Initialize the Filter Values tab manager
+                int totalItemCount = 0;
+                if (DataContext is ColumnSearchBox csb && csb.SourceDataGrid != null)
+                    totalItemCount = csb.SourceDataGrid.OriginalItemsCount;
+
+                FilterValueManager = new FilterValueManager();
+                FilterValueManager.Initialize(SearchTemplateController, totalItemCount, ApplyFilter);
+                FilterValueManager.FilterApplyRequested += OnFilterValueManagerApplyRequested;
+                OnPropertyChanged(nameof(FilterValueManager));
+
+                SelectInitialTab();
+            }
+        }
+
+        /// <summary>
+        /// Columns with discrete/bounded value sets (enum, datetime, or few unique values)
+        /// default to the Filter Values tab rather than Filter Rules.
+        /// </summary>
+        private const int FewUniqueValuesThreshold = 20;
+
+        private void SelectInitialTab()
+        {
+            if (_tabControl == null || SearchTemplateController == null) return;
+
+            var dataType = SearchTemplateController.ColumnDataType;
+            bool preferValuesTab =
+                dataType == ColumnDataType.Enum ||
+                dataType == ColumnDataType.DateTime ||
+                (SearchTemplateController.ColumnValueCounts?.Count ?? 0) <= FewUniqueValuesThreshold;
+
+            if (preferValuesTab && _tabControl.Items.Count > 1)
+                _tabControl.SelectedIndex = 1;
+        }
+
+        private void OnAutoApplyFilter(object sender, EventArgs e)
+        {
+            // Don't apply during FilterValueManager sync — it adds/removes templates
+            // which triggers AutoApplyFilter repeatedly. The checkbox handler applies after sync.
+            if (FilterValueManager != null && FilterValueManager.IsSyncing)
+                return;
+
+            // Also skip during initial load
+            if (!_isInitialized)
+                return;
+
+            ApplyFilter();
+        }
+
+        private void OnFilterValueManagerApplyRequested(object sender, EventArgs e)
+        {
+            if (!_isInitialized) return;
+            ApplyFilter();
         }
 
         private void TriggerColumnValueLoading()
@@ -197,11 +362,51 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
-        /// Removes incomplete/invalid search templates, then applies the resulting filter to the grid.
+        /// Applies the current filter rules to the grid immediately.
+        /// Called by: dropdown selections, checkbox changes, SearchType combo changes, etc.
+        /// </summary>
+        public void ApplyFilter()
+        {
+            if (SearchTemplateController == null) return;
+
+            try
+            {
+                SearchTemplateController.UpdateFilterExpression();
+
+                // Try DataContext first, then walk visual tree to find the grid
+                ColumnSearchBox columnSearchBox = DataContext as ColumnSearchBox;
+                SearchDataGrid grid = columnSearchBox?.SourceDataGrid;
+
+                if (grid != null)
+                {
+                    columnSearchBox.HasAdvancedFilter = SearchTemplateController.HasCustomExpression;
+                    grid.FilterItemsSource();
+                    grid.UpdateFilterPanel();
+                }
+
+                FiltersApplied?.Invoke(this, EventArgs.Empty);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"ApplyFilter failed: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Prunes incomplete/invalid templates on popup close, then applies final filter.
+        /// The filter was already applied incrementally during editing; this is a final cleanup pass.
         /// </summary>
         private void PruneAndApply()
         {
             if (SearchTemplateController == null) return;
+
+            // Unsubscribe from events
+            SearchTemplateController.AutoApplyFilter -= OnAutoApplyFilter;
+            if (FilterValueManager != null)
+            {
+                FilterValueManager.FilterApplyRequested -= OnFilterValueManagerApplyRequested;
+                FilterValueManager.UnsubscribeFromControllerChanges();
+            }
 
             try
             {
@@ -218,17 +423,8 @@ namespace WWSearchDataGrid.Modern.WPF
                     }
                 }
 
-                // Build and apply the filter expression
-                SearchTemplateController.UpdateFilterExpression();
-
-                if (DataContext is ColumnSearchBox columnSearchBox && columnSearchBox.SourceDataGrid != null)
-                {
-                    columnSearchBox.HasAdvancedFilter = SearchTemplateController.HasCustomExpression;
-                    columnSearchBox.SourceDataGrid.FilterItemsSource();
-                    columnSearchBox.SourceDataGrid.UpdateFilterPanel();
-                }
-
-                FiltersApplied?.Invoke(this, EventArgs.Empty);
+                // Final apply after pruning
+                ApplyFilter();
             }
             catch (Exception ex)
             {
@@ -250,6 +446,9 @@ namespace WWSearchDataGrid.Modern.WPF
                     columnSearchBox.SourceDataGrid.FilterItemsSource();
                     columnSearchBox.SourceDataGrid.UpdateFilterPanel();
                 }
+
+                // Reset Filter Values tab to all-checked (no filter)
+                FilterValueManager?.SyncFromRules();
 
                 FiltersCleared?.Invoke(this, EventArgs.Empty);
             }

@@ -75,9 +75,7 @@ namespace WWSearchDataGrid.Modern.WPF
                 else
                 {
                     // If no temporary template exists, get from column property
-                    var defaultMode = CurrentColumn != null
-                        ? GridColumn.GetDefaultSearchMode(CurrentColumn)
-                        : DefaultSearchMode.Contains;
+                    var defaultMode = ResolveDefaultSearchMode();
                     searchType = MapDefaultSearchModeToSearchType(defaultMode);
                 }
 
@@ -224,9 +222,7 @@ namespace WWSearchDataGrid.Modern.WPF
                 string effectiveValue = GetEffectiveSearchValue();
 
                 // Determine search type: prefix shortcut overrides column default
-                var defaultMode = CurrentColumn != null
-                    ? GridColumn.GetDefaultSearchMode(CurrentColumn)
-                    : DefaultSearchMode.Contains;
+                var defaultMode = ResolveDefaultSearchMode();
                 var searchType = _prefixSearchType ?? MapDefaultSearchModeToSearchType(defaultMode);
 
                 // Update existing temporary template or create new one
@@ -312,6 +308,38 @@ namespace WWSearchDataGrid.Modern.WPF
             catch (Exception ex)
             {
                 Debug.WriteLine($"Error in ClearTemporaryTemplate: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Commits the current search text as a live filter.
+        /// Called on Enter key (simple mode) or Tab/focus loss.
+        /// Creates the template if needed, then applies the filter to the grid.
+        /// </summary>
+        private void CommitSearchText()
+        {
+            try
+            {
+                if (SearchTemplateController == null || SourceDataGrid == null)
+                    return;
+
+                if (string.IsNullOrWhiteSpace(SearchText))
+                    return;
+
+                // Create the temporary template if it doesn't exist
+                CreateTemporaryTemplateImmediate();
+
+                // Apply the filter
+                SearchTemplateController.UpdateFilterExpression();
+                SourceDataGrid.FilterItemsSource();
+
+                HasAdvancedFilter = SearchTemplateController.HasCustomExpression;
+                UpdateHasActiveFilterState();
+                SourceDataGrid.UpdateFilterPanel();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error in CommitSearchText: {ex.Message}");
             }
         }
 
@@ -449,8 +477,6 @@ namespace WWSearchDataGrid.Modern.WPF
                         AllowsTransparency = true,
                         PopupAnimation = PopupAnimation.Fade,
                         StaysOpen = false,
-                        MaxWidth = 500,
-                        MaxHeight = 600,
                         HorizontalOffset = _filterContent.HorizontalOffset,
                         VerticalOffset = verticalOffset
                     };

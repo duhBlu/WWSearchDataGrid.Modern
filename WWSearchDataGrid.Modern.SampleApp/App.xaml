@@ -6,11 +6,10 @@
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <!-- Color resources (light mode default) -->
-                <ResourceDictionary Source="/Styles/Colors/LightColors.xaml"/>
-                <!-- Window style (shared across themes) -->
+                <!-- Window chrome style -->
                 <ResourceDictionary Source="/Styles/WindowStyle.xaml"/>
-                <!-- Default generic control styles -->
+                
+                <!-- Generic control styles from SDG library -->
                 <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF;component/Themes/Generic.xaml"/>
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>

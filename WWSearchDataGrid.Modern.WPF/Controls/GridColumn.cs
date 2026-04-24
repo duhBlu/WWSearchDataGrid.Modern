@@ -1,908 +1,742 @@
 using System;
-using System.ComponentModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
-using WWSearchDataGrid.Modern.Core;
 
 namespace WWSearchDataGrid.Modern.WPF
 {
     /// <summary>
-    /// Event arguments for the ColumnDisplayNameChanged event.
+    /// A column descriptor that defines how a column should be created and configured in a <see cref="SearchDataGrid"/>.
+    /// Instead of manually creating <see cref="DataGridColumn"/> instances and setting attached properties,
+    /// declare <see cref="GridColumn"/> descriptors inside <c>SearchDataGrid.GridColumns</c> and the grid
+    /// will generate the internal WPF columns automatically.
     /// </summary>
-    public class ColumnDisplayNameChangedEventArgs : EventArgs
+    /// <remarks>
+    /// <para>
+    /// <see cref="GridColumn"/> inherits from <see cref="FrameworkContentElement"/>, which provides
+    /// DependencyProperty support, DataContext inheritance, and XAML binding capabilities without
+    /// participating in the visual tree.
+    /// </para>
+    /// <para>
+    /// The <see cref="FieldName"/> property is the primary key: it drives <c>Binding</c>,
+    /// <c>SortMemberPath</c>, and <c>FilterMemberPath</c> unless explicitly overridden.
+    /// </para>
+    /// </remarks>
+    public class GridColumn : FrameworkContentElement
     {
-        /// <summary>
-        /// Gets the column whose display name changed.
-        /// </summary>
-        public DataGridColumn Column { get; }
+        #region Layout Properties
 
         /// <summary>
-        /// Gets the old display name value.
+        /// Gets or sets the property name on the data source that this column is bound to.
+        /// This is the primary key — it auto-generates Binding, SortMemberPath, and FilterMemberPath.
         /// </summary>
-        public string OldValue { get; }
+        public static readonly DependencyProperty FieldNameProperty =
+            DependencyProperty.Register(
+                nameof(FieldName),
+                typeof(string),
+                typeof(GridColumn),
+                new PropertyMetadata(null));
 
-        /// <summary>
-        /// Gets the new display name value.
-        /// </summary>
-        public string NewValue { get; }
-
-        /// <summary>
-        /// Initializes a new instance of the ColumnDisplayNameChangedEventArgs class.
-        /// </summary>
-        public ColumnDisplayNameChangedEventArgs(DataGridColumn column, string oldValue, string newValue)
+        public string FieldName
         {
-            Column = column;
-            OldValue = oldValue;
-            NewValue = newValue;
+            get => (string)GetValue(FieldNameProperty);
+            set => SetValue(FieldNameProperty, value);
         }
-    }
-
-    /// <summary>
-    /// Specifies the default search mode for simple textbox searches in column filters.
-    /// This enum provides a safe subset of SearchType values appropriate for temporary search templates.
-    /// </summary>
-    public enum DefaultSearchMode
-    {
-        /// <summary>
-        /// Finds matches anywhere in the value (default behavior).
-        /// Best for general text search scenarios.
-        /// </summary>
-        Contains = 0,
 
         /// <summary>
-        /// Finds matches that start with the search text.
-        /// Best for ID columns, part numbers, or customer codes where users know the prefix.
+        /// Gets or sets the column header content. Falls back to <see cref="FieldName"/> if null.
         /// </summary>
-        StartsWith = 1,
+        public static readonly DependencyProperty HeaderProperty =
+            DependencyProperty.Register(
+                nameof(Header),
+                typeof(object),
+                typeof(GridColumn),
+                new PropertyMetadata(null, OnLayoutPropertyChanged));
+
+        public object Header
+        {
+            get => GetValue(HeaderProperty);
+            set => SetValue(HeaderProperty, value);
+        }
 
         /// <summary>
-        /// Finds matches that end with the search text.
-        /// Best for file extensions, domain suffixes, or similar patterns.
+        /// Gets the resolved display text of the header. Returns <see cref="Header"/> as string,
+        /// or falls back to <see cref="FieldName"/>.
         /// </summary>
-        EndsWith = 2,
+        public string HeaderCaption
+        {
+            get
+            {
+                if (Header is string s && !string.IsNullOrEmpty(s))
+                    return s;
+                return Header?.ToString() ?? FieldName ?? string.Empty;
+            }
+        }
 
         /// <summary>
-        /// Finds exact matches only.
-        /// Best for status codes, enum values, or scenarios requiring exact matches.
+        /// Gets or sets the column width.
         /// </summary>
-        Equals = 3
-    }
+        public static readonly DependencyProperty WidthProperty =
+            DependencyProperty.Register(
+                nameof(Width),
+                typeof(DataGridLength),
+                typeof(GridColumn),
+                new PropertyMetadata(DataGridLength.Auto, OnLayoutPropertyChanged));
 
-    /// <summary>
-    /// Defines the scope of items affected by the select-all checkbox operation.
-    /// </summary>
-    public enum SelectAllScope
-    {
-        /// <summary>
-        /// Affects only the currently filtered/visible rows in the data grid.
-        /// This is the default behavior and respects any active column filters.
-        /// </summary>
-        FilteredRows = 0,
+        public DataGridLength Width
+        {
+            get => (DataGridLength)GetValue(WidthProperty);
+            set => SetValue(WidthProperty, value);
+        }
 
         /// <summary>
-        /// Affects only the currently selected rows (or rows containing selected cells when SelectionUnit is Cell).
-        /// When this scope is active, the select-all checkbox will show the count of affected rows.
+        /// Gets or sets the minimum column width.
         /// </summary>
-        SelectedRows = 1,
+        public static readonly DependencyProperty MinWidthProperty =
+            DependencyProperty.Register(
+                nameof(MinWidth),
+                typeof(double),
+                typeof(GridColumn),
+                new PropertyMetadata(20.0, OnLayoutPropertyChanged));
+
+        public double MinWidth
+        {
+            get => (double)GetValue(MinWidthProperty);
+            set => SetValue(MinWidthProperty, value);
+        }
 
         /// <summary>
-        /// Affects all items in the ItemsSource regardless of filtering or selection state.
-        /// This operates on the complete dataset, bypassing any active filters.
+        /// Gets or sets the maximum column width.
         /// </summary>
-        AllItems = 2
-    }
+        public static readonly DependencyProperty MaxWidthProperty =
+            DependencyProperty.Register(
+                nameof(MaxWidth),
+                typeof(double),
+                typeof(GridColumn),
+                new PropertyMetadata(double.PositiveInfinity, OnLayoutPropertyChanged));
 
-    /// <summary>
-    /// Provides attached properties for configuring data grid columns with search and filtering capabilities.
-    /// These properties work with all DataGridColumn types including TextColumn, CheckBoxColumn, TemplateColumn, and ComboBoxColumn.
-    /// </summary>
-    public static class GridColumn
-    {
-        #region EnableRuleFiltering Attached Property
+        public double MaxWidth
+        {
+            get => (double)GetValue(MaxWidthProperty);
+            set => SetValue(MaxWidthProperty, value);
+        }
 
         /// <summary>
-        /// Identifies the EnableRuleFiltering attached property.
-        /// Enables or disables complex filtering UI for a column.
-        /// Default value: true
+        /// Gets or sets whether the column is visible.
         /// </summary>
-        public static readonly DependencyProperty EnableRuleFilteringProperty =
-            DependencyProperty.RegisterAttached(
-                "EnableRuleFiltering",
+        public static readonly DependencyProperty VisibleProperty =
+            DependencyProperty.Register(
+                nameof(Visible),
                 typeof(bool),
                 typeof(GridColumn),
-                new FrameworkPropertyMetadata(true, FrameworkPropertyMetadataOptions.Inherits, OnEnableRuleFilteringChanged));
+                new PropertyMetadata(true, OnVisiblePropertyChanged));
 
-        /// <summary>
-        /// Gets the value indicating whether complex filtering is enabled for the specified column.
-        /// </summary>
-        /// <param name="element">The column to query</param>
-        /// <returns>True if complex filtering is enabled; otherwise, false</returns>
-        public static bool GetEnableRuleFiltering(DependencyObject element)
+        public bool Visible
         {
-            if (element == null)
-                throw new ArgumentNullException(nameof(element));
-
-            return (bool)element.GetValue(EnableRuleFilteringProperty);
+            get => (bool)GetValue(VisibleProperty);
+            set => SetValue(VisibleProperty, value);
         }
 
         /// <summary>
-        /// Sets whether complex filtering is enabled for the specified column.
+        /// Gets or sets the position among visible columns. -1 means auto (append order).
         /// </summary>
-        /// <param name="element">The column to configure</param>
-        /// <param name="value">True to enable complex filtering; false to disable</param>
-        public static void SetEnableRuleFiltering(DependencyObject element, bool value)
-        {
-            if (element == null)
-                throw new ArgumentNullException(nameof(element));
+        public static readonly DependencyProperty VisibleIndexProperty =
+            DependencyProperty.Register(
+                nameof(VisibleIndex),
+                typeof(int),
+                typeof(GridColumn),
+                new PropertyMetadata(-1));
 
-            element.SetValue(EnableRuleFilteringProperty, value);
+        public int VisibleIndex
+        {
+            get => (int)GetValue(VisibleIndexProperty);
+            set => SetValue(VisibleIndexProperty, value);
+        }
+
+        /// <summary>
+        /// Gets or sets whether the column is frozen (fixed).
+        /// </summary>
+        public static readonly DependencyProperty FixedProperty =
+            DependencyProperty.Register(
+                nameof(Fixed),
+                typeof(bool),
+                typeof(GridColumn),
+                new PropertyMetadata(false));
+
+        public bool Fixed
+        {
+            get => (bool)GetValue(FixedProperty);
+            set => SetValue(FixedProperty, value);
+        }
+
+        /// <summary>
+        /// Gets or sets whether the user can drag-reorder the column.
+        /// </summary>
+        public static readonly DependencyProperty AllowMovingProperty =
+            DependencyProperty.Register(
+                nameof(AllowMoving),
+                typeof(bool),
+                typeof(GridColumn),
+                new PropertyMetadata(true, OnLayoutPropertyChanged));
+
+        public bool AllowMoving
+        {
+            get => (bool)GetValue(AllowMovingProperty);
+            set => SetValue(AllowMovingProperty, value);
+        }
+
+        /// <summary>
+        /// Gets or sets whether the user can resize the column.
+        /// </summary>
+        public static readonly DependencyProperty AllowResizingProperty =
+            DependencyProperty.Register(
+                nameof(AllowResizing),
+                typeof(bool),
+                typeof(GridColumn),
+                new PropertyMetadata(true, OnLayoutPropertyChanged));
+
+        public bool AllowResizing
+        {
+            get => (bool)GetValue(AllowResizingProperty);
+            set => SetValue(AllowResizingProperty, value);
+        }
+
+        /// <summary>
+        /// Gets or sets whether the column appears in the column chooser.
+        /// </summary>
+        public static readonly DependencyProperty ShowInColumnChooserProperty =
+            DependencyProperty.Register(
+                nameof(ShowInColumnChooser),
+                typeof(bool),
+                typeof(GridColumn),
+                new PropertyMetadata(true));
+
+        public bool ShowInColumnChooser
+        {
+            get => (bool)GetValue(ShowInColumnChooserProperty);
+            set => SetValue(ShowInColumnChooserProperty, value);
+        }
+
+        /// <summary>
+        /// Gets or sets whether the column is read-only (prevents editing).
+        /// </summary>
+        public static readonly DependencyProperty ReadOnlyProperty =
+            DependencyProperty.Register(
+                nameof(ReadOnly),
+                typeof(bool),
+                typeof(GridColumn),
+                new PropertyMetadata(false, OnLayoutPropertyChanged));
+
+        public bool ReadOnly
+        {
+            get => (bool)GetValue(ReadOnlyProperty);
+            set => SetValue(ReadOnlyProperty, value);
         }
 
         #endregion
 
-        #region CustomSearchTemplate Attached Property
+        #region Data/Display Properties
 
         /// <summary>
-        /// Identifies the CustomSearchTemplate attached property.
-        /// Allows specifying a custom search template implementation for a column.
-        /// Default value: typeof(SearchTemplate)
+        /// Gets or sets the property path used for filtering. Overrides <see cref="FieldName"/>.
         /// </summary>
-        public static readonly DependencyProperty CustomSearchTemplateProperty =
-            DependencyProperty.RegisterAttached(
-                "CustomSearchTemplate",
+        public static readonly DependencyProperty FilterMemberPathProperty =
+            DependencyProperty.Register(
+                nameof(FilterMemberPath),
+                typeof(string),
+                typeof(GridColumn),
+                new PropertyMetadata(null));
+
+        public string FilterMemberPath
+        {
+            get => (string)GetValue(FilterMemberPathProperty);
+            set => SetValue(FilterMemberPathProperty, value);
+        }
+
+        /// <summary>
+        /// Gets or sets the property path used for sorting. Overrides <see cref="FieldName"/>.
+        /// </summary>
+        public static readonly DependencyProperty SortMemberPathProperty =
+            DependencyProperty.Register(
+                nameof(SortMemberPath),
+                typeof(string),
+                typeof(GridColumn),
+                new PropertyMetadata(null));
+
+        public string SortMemberPath
+        {
+            get => (string)GetValue(SortMemberPathProperty);
+            set => SetValue(SortMemberPathProperty, value);
+        }
+
+        /// <summary>
+        /// Gets or sets the display name shown in Column Chooser, Filter Panel, and other UI components.
+        /// Overrides <see cref="Header"/> for display purposes.
+        /// </summary>
+        public static readonly DependencyProperty ColumnDisplayNameProperty =
+            DependencyProperty.Register(
+                nameof(ColumnDisplayName),
+                typeof(string),
+                typeof(GridColumn),
+                new PropertyMetadata(null, OnColumnDisplayNameChanged));
+
+        public string ColumnDisplayName
+        {
+            get => (string)GetValue(ColumnDisplayNameProperty);
+            set => SetValue(ColumnDisplayNameProperty, value);
+        }
+
+        /// <summary>
+        /// Gets or sets a .NET format string for display values (e.g., "C2", "MM/dd/yyyy", "N0").
+        /// </summary>
+        public static readonly DependencyProperty DisplayStringFormatProperty =
+            DependencyProperty.Register(
+                nameof(DisplayStringFormat),
+                typeof(string),
+                typeof(GridColumn),
+                new PropertyMetadata(null, OnDisplayPropertyChanged));
+
+        public string DisplayStringFormat
+        {
+            get => (string)GetValue(DisplayStringFormatProperty);
+            set => SetValue(DisplayStringFormatProperty, value);
+        }
+
+        /// <summary>
+        /// Gets or sets a custom <see cref="IValueConverter"/> for transforming raw values to display values.
+        /// </summary>
+        public static readonly DependencyProperty DisplayValueConverterProperty =
+            DependencyProperty.Register(
+                nameof(DisplayValueConverter),
+                typeof(IValueConverter),
+                typeof(GridColumn),
+                new PropertyMetadata(null, OnDisplayPropertyChanged));
+
+        public IValueConverter DisplayValueConverter
+        {
+            get => (IValueConverter)GetValue(DisplayValueConverterProperty);
+            set => SetValue(DisplayValueConverterProperty, value);
+        }
+
+        /// <summary>
+        /// Gets or sets the parameter passed to <see cref="DisplayValueConverter"/>.
+        /// </summary>
+        public static readonly DependencyProperty DisplayConverterParameterProperty =
+            DependencyProperty.Register(
+                nameof(DisplayConverterParameter),
+                typeof(object),
+                typeof(GridColumn),
+                new PropertyMetadata(null));
+
+        public object DisplayConverterParameter
+        {
+            get => GetValue(DisplayConverterParameterProperty);
+            set => SetValue(DisplayConverterParameterProperty, value);
+        }
+
+        /// <summary>
+        /// Gets or sets a mask pattern for formatting raw values into display values.
+        /// </summary>
+        public static readonly DependencyProperty DisplayMaskProperty =
+            DependencyProperty.Register(
+                nameof(DisplayMask),
+                typeof(string),
+                typeof(GridColumn),
+                new PropertyMetadata(null, OnDisplayPropertyChanged));
+
+        public string DisplayMask
+        {
+            get => (string)GetValue(DisplayMaskProperty);
+            set => SetValue(DisplayMaskProperty, value);
+        }
+
+        /// <summary>
+        /// Gets or sets the data type of the field. Auto-detected from the data source if not set explicitly.
+        /// </summary>
+        public static readonly DependencyProperty FieldTypeProperty =
+            DependencyProperty.Register(
+                nameof(FieldType),
                 typeof(Type),
                 typeof(GridColumn),
-                new FrameworkPropertyMetadata(typeof(SearchTemplate)));
+                new PropertyMetadata(null));
 
-        /// <summary>
-        /// Gets the custom search template type for the specified column.
-        /// </summary>
-        /// <param name="element">The column to query</param>
-        /// <returns>The Type of the custom search template</returns>
-        public static Type GetCustomSearchTemplate(DependencyObject element)
+        public Type FieldType
         {
-            if (element == null)
-                throw new ArgumentNullException(nameof(element));
-
-            return (Type)element.GetValue(CustomSearchTemplateProperty);
-        }
-
-        /// <summary>
-        /// Sets the custom search template type for the specified column.
-        /// </summary>
-        /// <param name="element">The column to configure</param>
-        /// <param name="value">The Type of the custom search template to use</param>
-        public static void SetCustomSearchTemplate(DependencyObject element, Type value)
-        {
-            if (element == null)
-                throw new ArgumentNullException(nameof(element));
-
-            element.SetValue(CustomSearchTemplateProperty, value);
+            get => (Type)GetValue(FieldTypeProperty);
+            set => SetValue(FieldTypeProperty, value);
         }
 
         #endregion
 
-        #region UseCheckBoxInSearchBox Attached Property
+        #region Filtering/Search Properties
 
         /// <summary>
-        /// Identifies the <c>UseCheckBoxInSearchBox</c> attached property.  
-        /// Explicitly enables checkbox filtering mode within a column's search box,  
-        /// overriding the default auto-detection logic.  
+        /// Gets or sets whether complex filtering UI is enabled for this column.
         /// </summary>
-        /// <remarks>
-        /// <para>
-        /// When enabled, the search box displays a checkbox selector instead of a text box,  
-        /// allowing users to filter boolean or flag-based values more intuitively.  
-        /// This property can be applied to any column type, even when automatic type detection  
-        /// would not normally enable checkbox mode.
-        /// </para>
-        ///
-        /// <para><b>Default value:</b> <c>false</c></para>
-        /// </remarks>
-
-        public static readonly DependencyProperty UseCheckBoxInSearchBoxProperty =
-            DependencyProperty.RegisterAttached(
-                "UseCheckBoxInSearchBox",
+        public static readonly DependencyProperty EnableRuleFilteringProperty =
+            DependencyProperty.Register(
+                nameof(EnableRuleFiltering),
                 typeof(bool),
                 typeof(GridColumn),
-                new PropertyMetadata(false, OnUseCheckBoxInSearchBoxChanged));
+                new PropertyMetadata(true, OnFilterPropertyChanged));
 
-        /// <summary>
-        /// Gets the value indicating whether checkbox filtering should be used in the search box for the specified column.
-        /// </summary>
-        /// <param name="element">The column to query</param>
-        /// <returns>True if checkbox filtering should be used; otherwise, false</returns>
-        public static bool GetUseCheckBoxInSearchBox(DependencyObject element)
+        public bool EnableRuleFiltering
         {
-            if (element == null)
-                throw new ArgumentNullException(nameof(element));
-
-            return (bool)element.GetValue(UseCheckBoxInSearchBoxProperty);
+            get => (bool)GetValue(EnableRuleFilteringProperty);
+            set => SetValue(EnableRuleFilteringProperty, value);
         }
 
         /// <summary>
-        /// Sets whether checkbox filtering should be used in the search box for the specified column.
-        /// </summary>
-        /// <param name="element">The column to configure</param>
-        /// <param name="value">True to use checkbox filtering; false for text-based filtering</param>
-        public static void SetUseCheckBoxInSearchBox(DependencyObject element, bool value)
-        {
-            if (element == null)
-                throw new ArgumentNullException(nameof(element));
-
-            element.SetValue(UseCheckBoxInSearchBoxProperty, value);
-        }
-
-        #endregion
-
-        #region FilterMemberPath Attached Property
-
-        /// <summary>
-        /// Identifies the <c>FilterMemberPath</c> attached property.  
-        /// Specifies the property path used to retrieve filter values from data objects.  
-        /// This path determines which property is used to populate filter dropdown values.
-        /// </summary>
-        /// <remarks>
-        /// <para><b>Resolution priority:</b></para>
-        /// <list type="number">
-        ///   <item><description><c>FilterMemberPath</c> — if explicitly set.</description></item>
-        ///   <item><description><see cref="System.Windows.Controls.DataGridColumn.SortMemberPath"/> — if available.</description></item>
-        ///   <item><description>Binding path extracted from <see cref="System.Windows.Controls.DataGridBoundColumn.Binding"/>.</description></item>
-        /// </list>
-        ///
-        /// <para><b>Default value:</b> <c>null</c> (falls back to <see cref="System.Windows.Controls.DataGridColumn.SortMemberPath"/> or the column's binding path).</para>
-        /// </remarks>
-
-        public static readonly DependencyProperty FilterMemberPathProperty =
-            DependencyProperty.RegisterAttached(
-                "FilterMemberPath",
-                typeof(string),
-                typeof(GridColumn),
-                new FrameworkPropertyMetadata(null));
-
-        /// <summary>
-        /// Gets the filter member path for the specified column.
-        /// Returns the explicit property path to use for filtering, or null to use fallback logic.
-        /// </summary>
-        /// <param name="element">The column to query</param>
-        /// <returns>The property path for filtering, or null if not explicitly set</returns>
-        public static string GetFilterMemberPath(DependencyObject element)
-        {
-            if (element == null)
-                throw new ArgumentNullException(nameof(element));
-
-            return (string)element.GetValue(FilterMemberPathProperty);
-        }
-
-        /// <summary>
-        /// Sets the filter member path for the specified column.
-        /// Use this to explicitly control which property is used for filter value retrieval.
-        /// </summary>
-        /// <param name="element">The column to configure</param>
-        /// <param name="value">The property path to use for filtering (e.g., "Department.Name")</param>
-        public static void SetFilterMemberPath(DependencyObject element, string value)
-        {
-            if (element == null)
-                throw new ArgumentNullException(nameof(element));
-
-            element.SetValue(FilterMemberPathProperty, value);
-        }
-
-        #endregion
-
-        #region ColumnDisplayName Attached Property
-
-        /// <summary>
-        /// Event raised when the ColumnDisplayName attached property changes on any column.
-        /// This allows external controls to subscribe and refresh their UI when column display names change.
-        /// </summary>
-        public static event EventHandler<ColumnDisplayNameChangedEventArgs> ColumnDisplayNameChanged;
-
-        /// <summary>
-        /// Specifies the display name shown in Column Chooser, Filter Panel, and other UI components.
-        ///
-        /// When not explicitly set, falls back to extracting text from the column's Header property.
-        /// The fallback logic handles complex scenarios where Header may be a template or FrameworkElement.
-        ///
-        /// Default value: null (uses Header as fallback)
-        public static readonly DependencyProperty ColumnDisplayNameProperty =
-            DependencyProperty.RegisterAttached(
-                "ColumnDisplayName",
-                typeof(string),
-                typeof(GridColumn),
-                new FrameworkPropertyMetadata(null, OnColumnDisplayNameChanged));
-
-        /// <summary>
-        /// Gets the explicit column display name for the specified column.
-        /// Returns null if not explicitly set (use GetEffectiveColumnDisplayName for fallback logic).
-        /// </summary>
-        /// <param name="element">The column to query</param>
-        /// <returns>The explicit display name, or null if not set</returns>
-        public static string GetColumnDisplayName(DependencyObject element)
-        {
-            if (element == null)
-                throw new ArgumentNullException(nameof(element));
-
-            return (string)element.GetValue(ColumnDisplayNameProperty);
-        }
-
-        /// <summary>
-        /// Sets the column display name for the specified column.
-        /// This name will be shown in Column Chooser, Filter Panel, and other UI components.
-        /// </summary>
-        /// <param name="element">The column to configure</param>
-        /// <param name="value">The user-friendly display name</param>
-        public static void SetColumnDisplayName(DependencyObject element, string value)
-        {
-            if (element == null)
-                throw new ArgumentNullException(nameof(element));
-
-            element.SetValue(ColumnDisplayNameProperty, value);
-        }
-
-        #endregion
-
-        #region DefaultSearchMode Attached Property
-
-        /// <summary>
-        /// Identifies the DefaultSearchMode attached property.
-        /// Specifies the search type used when creating temporary search templates from simple textbox input.
-        /// <para>
-        /// This property controls which SearchType is used when users type directly in the column's
-        /// simple search textbox. It only affects the default behavior of temporary search templates,
-        /// not the available options in the advanced filter UI.
-        /// </para>
-        /// <para>
-        /// Default value: DefaultSearchMode.Contains (standard text search behavior)
-        /// </para>
-        /// <para>
-        /// Available modes:
-        /// </para>
-        /// <list type="bullet">
-        /// <item><description><see cref="DefaultSearchMode.Contains"/> – Finds matches anywhere in the value (default)</description></item>
-        /// <item><description><see cref="DefaultSearchMode.StartsWith"/> – For ID columns, part numbers, or customer codes where users know the prefix</description></item>
-        /// <item><description><see cref="DefaultSearchMode.EndsWith"/> – For file extensions, domain suffixes, or similar patterns</description></item>
-        /// <item><description><see cref="DefaultSearchMode.Equals"/> – For status codes, enum values, or scenarios requiring exact matches</description></item>        /// </list>
-        /// <para>
-        /// Note: This only affects simple textbox search behavior. The advanced filter button
-        /// still shows all valid search types for the column's data type.
-        /// </para>
+        /// Gets or sets the default search mode for simple textbox searches.
         /// </summary>
         public static readonly DependencyProperty DefaultSearchModeProperty =
-            DependencyProperty.RegisterAttached(
-                "DefaultSearchMode",
+            DependencyProperty.Register(
+                nameof(DefaultSearchMode),
                 typeof(DefaultSearchMode),
                 typeof(GridColumn),
                 new PropertyMetadata(DefaultSearchMode.Contains));
 
-        /// <summary>
-        /// Gets the default search mode for the specified column.
-        /// Returns the default search mode to use when creating temporary search templates from textbox input.
-        /// </summary>
-        /// <param name="element">The column to query</param>
-        /// <returns>The default search mode for simple textbox searches</returns>
-        public static DefaultSearchMode GetDefaultSearchMode(DependencyObject element)
+        public DefaultSearchMode DefaultSearchMode
         {
-            if (element == null)
-                throw new ArgumentNullException(nameof(element));
-
-            return (DefaultSearchMode)element.GetValue(DefaultSearchModeProperty);
+            get => (DefaultSearchMode)GetValue(DefaultSearchModeProperty);
+            set => SetValue(DefaultSearchModeProperty, value);
         }
 
         /// <summary>
-        /// Sets the default search mode for the specified column.
-        /// Specifies which search mode to use when users type in the simple search textbox.
+        /// Gets or sets whether to force checkbox filtering mode in the search box.
         /// </summary>
-        /// <param name="element">The column to configure</param>
-        /// <param name="value">The search mode to use for simple textbox searches</param>
-        public static void SetDefaultSearchMode(DependencyObject element, DefaultSearchMode value)
-        {
-            if (element == null)
-                throw new ArgumentNullException(nameof(element));
-
-            element.SetValue(DefaultSearchModeProperty, value);
-        }
-
-        #endregion
-
-        #region IsSelectAllColumn Attached Property
-
-        /// <summary>
-        /// Identifies the IsSelectAllColumn attached property.
-        /// Enables a "Select All" checkbox in the column header that toggles boolean values across all visible rows.
-        /// <para>
-        /// This property only functions correctly when the column's data type is boolean (bool or bool?).
-        /// If set on a non-boolean column, it will be automatically disabled.
-        /// </para>
-        /// <para>
-        /// Behavior: The select-all checkbox cycles between true and false values only.
-        /// </para>
-        /// <para>
-        /// The checkbox displays three states:
-        /// </para>
-        /// <list type="bullet">
-        /// <item><description>Checked: All non-null values in visible rows are true</description></item>
-        /// <item><description>Unchecked: All non-null values in visible rows are false</description></item>
-        /// <item><description>Indeterminate: Mixed state (some true, some false among visible rows)</description></item>
-        /// </list>
-        /// <para>
-        /// When clicked, the checkbox toggles all non-null boolean values to the opposite state:
-        /// - If currently all true → sets all to false
-        /// - If currently all false → sets all to true
-        /// - If mixed (indeterminate) → sets all to true
-        /// </para>
-        /// <para>
-        /// Default value: false
-        /// </para>
-        /// </summary>
-        public static readonly DependencyProperty IsSelectAllColumnProperty =
-            DependencyProperty.RegisterAttached(
-                "IsSelectAllColumn",
+        public static readonly DependencyProperty UseCheckBoxInSearchBoxProperty =
+            DependencyProperty.Register(
+                nameof(UseCheckBoxInSearchBox),
                 typeof(bool),
                 typeof(GridColumn),
-                new FrameworkPropertyMetadata(false, FrameworkPropertyMetadataOptions.Inherits, OnIsSelectAllColumnChanged));
+                new PropertyMetadata(false, OnFilterPropertyChanged));
 
-        /// <summary>
-        /// Gets the value indicating whether select-all functionality is enabled for the specified column.
-        /// </summary>
-        /// <param name="element">The column to query</param>
-        /// <returns>True if select-all functionality is enabled; otherwise, false</returns>
-        public static bool GetIsSelectAllColumn(DependencyObject element)
+        public bool UseCheckBoxInSearchBox
         {
-            if (element == null)
-                throw new ArgumentNullException(nameof(element));
-
-            return (bool)element.GetValue(IsSelectAllColumnProperty);
+            get => (bool)GetValue(UseCheckBoxInSearchBoxProperty);
+            set => SetValue(UseCheckBoxInSearchBoxProperty, value);
         }
 
         /// <summary>
-        /// Sets whether select-all functionality is enabled for the specified column.
-        /// Note: This only works correctly with boolean-typed columns.
+        /// Gets or sets a custom search template type for this column.
         /// </summary>
-        /// <param name="element">The column to configure</param>
-        /// <param name="value">True to enable select-all functionality; false to disable</param>
-        public static void SetIsSelectAllColumn(DependencyObject element, bool value)
-        {
-            if (element == null)
-                throw new ArgumentNullException(nameof(element));
+        public static readonly DependencyProperty CustomSearchTemplateProperty =
+            DependencyProperty.Register(
+                nameof(CustomSearchTemplate),
+                typeof(Type),
+                typeof(GridColumn),
+                new PropertyMetadata(null));
 
-            element.SetValue(IsSelectAllColumnProperty, value);
+        public Type CustomSearchTemplate
+        {
+            get => (Type)GetValue(CustomSearchTemplateProperty);
+            set => SetValue(CustomSearchTemplateProperty, value);
+        }
+
+        /// <summary>
+        /// Gets or sets whether filtering is allowed on this column.
+        /// When false, the search box is completely hidden.
+        /// </summary>
+        public static readonly DependencyProperty AllowFilteringProperty =
+            DependencyProperty.Register(
+                nameof(AllowFiltering),
+                typeof(bool),
+                typeof(GridColumn),
+                new PropertyMetadata(true, OnFilterPropertyChanged));
+
+        public bool AllowFiltering
+        {
+            get => (bool)GetValue(AllowFilteringProperty);
+            set => SetValue(AllowFilteringProperty, value);
+        }
+
+        /// <summary>
+        /// Gets or sets whether sorting is allowed on this column.
+        /// When false, clicking the header does not sort.
+        /// </summary>
+        public static readonly DependencyProperty AllowSortingProperty =
+            DependencyProperty.Register(
+                nameof(AllowSorting),
+                typeof(bool),
+                typeof(GridColumn),
+                new PropertyMetadata(true, OnLayoutPropertyChanged));
+
+        public bool AllowSorting
+        {
+            get => (bool)GetValue(AllowSortingProperty);
+            set => SetValue(AllowSortingProperty, value);
         }
 
         #endregion
 
-        #region SelectAllScope Attached Property
+        #region Select-All Properties
 
         /// <summary>
-        /// Identifies the SelectAllScope attached property.
-        /// Determines which items are affected when the select-all checkbox is toggled.
-        /// <para>
-        /// This property works in conjunction with IsSelectAllColumn and defines the scope
-        /// of rows that will be affected by the select-all checkbox operation.
-        /// </para>
-        /// <para>
-        /// Available scopes:
-        /// </para>
-        /// <list type="table">
-        /// <item><description>FilteredRows: Affects only currently visible/filtered rows</description></item>
-        /// <item><description>SelectedRows: Affects only selected rows (or rows with selected cells). Shows row count in header.</description></item>
-        /// <item><description>AllItems (default): Affects all items in ItemsSource regardless of filtering or selection</description></item>
-        /// </list>
-        /// <para>
-        /// Default value: SelectAllScope.AllItems
-        /// </para>
-        /// <para>
-        /// Recommendation: Disable column sorting on these columns. The grid reapplies the sort order/filter after the values change, causing them to 'disappear' from the grid when their values change.
-        /// </para>
+        /// Gets or sets whether this column shows a select-all checkbox in the header.
+        /// Only works with boolean-typed columns.
+        /// </summary>
+        public static readonly DependencyProperty IsSelectAllColumnProperty =
+            DependencyProperty.Register(
+                nameof(IsSelectAllColumn),
+                typeof(bool),
+                typeof(GridColumn),
+                new PropertyMetadata(false, OnSelectAllPropertyChanged));
+
+        public bool IsSelectAllColumn
+        {
+            get => (bool)GetValue(IsSelectAllColumnProperty);
+            set => SetValue(IsSelectAllColumnProperty, value);
+        }
+
+        /// <summary>
+        /// Gets or sets the scope of items affected by the select-all checkbox.
         /// </summary>
         public static readonly DependencyProperty SelectAllScopeProperty =
-            DependencyProperty.RegisterAttached(
-                "SelectAllScope",
+            DependencyProperty.Register(
+                nameof(SelectAllScope),
                 typeof(SelectAllScope),
                 typeof(GridColumn),
-                new FrameworkPropertyMetadata(SelectAllScope.AllItems, FrameworkPropertyMetadataOptions.Inherits, OnSelectAllScopeChanged));
+                new PropertyMetadata(SelectAllScope.FilteredRows, OnSelectAllPropertyChanged));
 
-        /// <summary>
-        /// Gets the select-all scope for the specified column.
-        /// </summary>
-        /// <param name="element">The column to query</param>
-        /// <returns>The SelectAllScope value determining which items are affected by select-all operations</returns>
-        public static SelectAllScope GetSelectAllScope(DependencyObject element)
+        public SelectAllScope SelectAllScope
         {
-            if (element == null)
-                throw new ArgumentNullException(nameof(element));
-
-            return (SelectAllScope)element.GetValue(SelectAllScopeProperty);
-        }
-
-        /// <summary>
-        /// Sets the select-all scope for the specified column.
-        /// </summary>
-        /// <param name="element">The column to configure</param>
-        /// <param name="value">The scope of items to affect with select-all operations</param>
-        public static void SetSelectAllScope(DependencyObject element, SelectAllScope value)
-        {
-            if (element == null)
-                throw new ArgumentNullException(nameof(element));
-
-            element.SetValue(SelectAllScopeProperty, value);
+            get => (SelectAllScope)GetValue(SelectAllScopeProperty);
+            set => SetValue(SelectAllScopeProperty, value);
         }
 
         #endregion
 
-        #region DisplayStringFormat Attached Property
+        #region Internal Properties
 
         /// <summary>
-        /// Specifies a .NET format string for transforming raw column values into display values.
-        /// When set, filtering will compare against the formatted display text rather than the raw value.
-        /// Examples: "N2" (two decimal places), "C2" (currency), "MM/dd/yyyy" (date format).
+        /// Gets the resolved rendered width of the column.
+        /// Set internally by <see cref="SearchDataGrid"/> after column generation.
         /// </summary>
-        public static readonly DependencyProperty DisplayStringFormatProperty =
-            DependencyProperty.RegisterAttached(
-                "DisplayStringFormat",
-                typeof(string),
-                typeof(GridColumn),
-                new FrameworkPropertyMetadata(null));
+        public double ActualWidth { get; internal set; }
 
-        public static string GetDisplayStringFormat(DependencyObject element)
+        /// <summary>
+        /// Gets the resolved position among visible columns.
+        /// Set internally by <see cref="SearchDataGrid"/> after column generation.
+        /// </summary>
+        public int ActualVisibleIndex { get; internal set; } = -1;
+
+        /// <summary>
+        /// Gets whether this column was auto-generated by the grid (not declared in XAML).
+        /// </summary>
+        public bool IsAutoGenerated { get; internal set; }
+
+        /// <summary>
+        /// Gets the WPF <see cref="DataGridColumn"/> that was generated from this descriptor.
+        /// Set internally after <see cref="CreateDataGridColumn"/> is called.
+        /// </summary>
+        public DataGridColumn InternalColumn { get; internal set; }
+
+        /// <summary>
+        /// Gets the parent <see cref="SearchDataGrid"/> that owns this column descriptor.
+        /// </summary>
+        public SearchDataGrid Owner { get; internal set; }
+
+        #endregion
+
+        #region Column Generation
+
+        /// <summary>
+        /// Creates the internal WPF <see cref="DataGridColumn"/> from this descriptor's properties.
+        /// The generated column is stored in <see cref="InternalColumn"/> and returned.
+        /// </summary>
+        /// <returns>The generated <see cref="DataGridColumn"/>.</returns>
+        internal DataGridColumn CreateDataGridColumn()
         {
-            if (element == null) throw new ArgumentNullException(nameof(element));
-            return (string)element.GetValue(DisplayStringFormatProperty);
+            if (string.IsNullOrEmpty(FieldName))
+            {
+                Debug.WriteLine("GridColumn.CreateDataGridColumn: FieldName is required.");
+                return null;
+            }
+
+            DataGridColumn column;
+
+            // Choose column type based on FieldType
+            if (FieldType == typeof(bool) || FieldType == typeof(bool?))
+            {
+                var checkBoxColumn = new DataGridCheckBoxColumn
+                {
+                    Binding = new Binding(FieldName)
+                };
+                column = checkBoxColumn;
+            }
+            else
+            {
+                var textColumn = new DataGridTextColumn
+                {
+                    Binding = CreateBinding()
+                };
+                column = textColumn;
+            }
+
+            // Apply layout properties
+            column.Header = Header ?? FieldName;
+            column.Width = Width;
+            column.MinWidth = MinWidth;
+            column.MaxWidth = MaxWidth;
+            column.Visibility = Visible ? Visibility.Visible : Visibility.Collapsed;
+            column.IsReadOnly = ReadOnly;
+            column.CanUserSort = AllowSorting;
+            column.CanUserResize = AllowResizing;
+            column.CanUserReorder = AllowMoving;
+            column.SortMemberPath = SortMemberPath ?? FieldName;
+
+            InternalColumn = column;
+            return column;
         }
 
-        public static void SetDisplayStringFormat(DependencyObject element, string value)
+        /// <summary>
+        /// Creates the <see cref="Binding"/> for a text column, applying <see cref="DisplayStringFormat"/>
+        /// and <see cref="DisplayValueConverter"/> if set.
+        /// </summary>
+        private Binding CreateBinding()
         {
-            if (element == null) throw new ArgumentNullException(nameof(element));
-            element.SetValue(DisplayStringFormatProperty, value);
+            var binding = new Binding(FieldName);
+
+            if (!string.IsNullOrEmpty(DisplayStringFormat))
+                binding.StringFormat = DisplayStringFormat;
+
+            if (DisplayValueConverter != null)
+            {
+                binding.Converter = DisplayValueConverter;
+                binding.ConverterParameter = DisplayConverterParameter;
+            }
+
+            return binding;
+        }
+
+        /// <summary>
+        /// Updates the internal column's properties to reflect changes to this descriptor.
+        /// </summary>
+        internal void SyncToInternalColumn()
+        {
+            if (InternalColumn == null)
+                return;
+
+            InternalColumn.Header = Header ?? FieldName;
+            InternalColumn.Width = Width;
+            InternalColumn.MinWidth = MinWidth;
+            InternalColumn.MaxWidth = MaxWidth;
+            InternalColumn.Visibility = Visible ? Visibility.Visible : Visibility.Collapsed;
+            InternalColumn.IsReadOnly = ReadOnly;
+            InternalColumn.CanUserSort = AllowSorting;
+            InternalColumn.CanUserResize = AllowResizing;
+            InternalColumn.CanUserReorder = AllowMoving;
+            InternalColumn.SortMemberPath = SortMemberPath ?? FieldName;
         }
 
         #endregion
 
-        #region DisplayValueConverter Attached Property
+        #region Property Changed Callbacks
 
         /// <summary>
-        /// Specifies an IValueConverter for transforming raw column values into display values.
-        /// When set, filtering will compare against the converted display text rather than the raw value.
-        /// The converter's Convert method produces display values; ConvertBack parses user input for range filters.
+        /// Called when any layout-related property changes. Syncs to the internal DataGridColumn.
         /// </summary>
-        public static readonly DependencyProperty DisplayValueConverterProperty =
-            DependencyProperty.RegisterAttached(
-                "DisplayValueConverter",
-                typeof(System.Windows.Data.IValueConverter),
-                typeof(GridColumn),
-                new FrameworkPropertyMetadata(null));
-
-        public static System.Windows.Data.IValueConverter GetDisplayValueConverter(DependencyObject element)
+        private static void OnLayoutPropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
-            if (element == null) throw new ArgumentNullException(nameof(element));
-            return (System.Windows.Data.IValueConverter)element.GetValue(DisplayValueConverterProperty);
+            if (d is GridColumn gc)
+                gc.SyncToInternalColumn();
         }
-
-        public static void SetDisplayValueConverter(DependencyObject element, System.Windows.Data.IValueConverter value)
-        {
-            if (element == null) throw new ArgumentNullException(nameof(element));
-            element.SetValue(DisplayValueConverterProperty, value);
-        }
-
-        #endregion
-
-        #region DisplayConverterParameter Attached Property
 
         /// <summary>
-        /// Parameter passed to the DisplayValueConverter's Convert and ConvertBack methods.
+        /// Called when the Visible property changes. Only syncs visibility to the internal column
+        /// without resetting other properties like Width, which can corrupt DataGrid scroll metrics
+        /// during bulk visibility changes (e.g., column chooser Select All).
         /// </summary>
-        public static readonly DependencyProperty DisplayConverterParameterProperty =
-            DependencyProperty.RegisterAttached(
-                "DisplayConverterParameter",
-                typeof(object),
-                typeof(GridColumn),
-                new FrameworkPropertyMetadata(null));
-
-        public static object GetDisplayConverterParameter(DependencyObject element)
+        private static void OnVisiblePropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
-            if (element == null) throw new ArgumentNullException(nameof(element));
-            return element.GetValue(DisplayConverterParameterProperty);
+            if (d is GridColumn gc && gc.InternalColumn != null)
+            {
+                gc.InternalColumn.Visibility = gc.Visible ? Visibility.Visible : Visibility.Collapsed;
+            }
         }
-
-        public static void SetDisplayConverterParameter(DependencyObject element, object value)
-        {
-            if (element == null) throw new ArgumentNullException(nameof(element));
-            element.SetValue(DisplayConverterParameterProperty, value);
-        }
-
-        #endregion
-
-        #region DisplayMask Attached Property
 
         /// <summary>
-        /// Specifies a mask pattern for formatting raw column values into display values.
-        /// Uses the same mask syntax as WWFormattedTextBox:
-        ///   0 = required digit, 9 = optional digit, L = required letter, etc.
-        ///   + = one-or-more quantifier, * = zero-or-more quantifier
-        ///   \ = escape next char as literal
-        /// Examples: "0+\.00" (decimal with 2 places), "(000) 000-0000" (phone).
-        /// When set, filtering will compare against the masked display text.
+        /// Called when a filter/search property changes. Notifies the associated ColumnSearchBox.
         /// </summary>
-        public static readonly DependencyProperty DisplayMaskProperty =
-            DependencyProperty.RegisterAttached(
-                "DisplayMask",
-                typeof(string),
-                typeof(GridColumn),
-                new FrameworkPropertyMetadata(null));
-
-        public static string GetDisplayMask(DependencyObject element)
+        private static void OnFilterPropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
-            if (element == null) throw new ArgumentNullException(nameof(element));
-            return (string)element.GetValue(DisplayMaskProperty);
+            if (d is not GridColumn gc || gc.Owner == null)
+                return;
+
+            var searchBox = gc.Owner.DataColumns.FirstOrDefault(c => c.CurrentColumn == gc.InternalColumn);
+            if (searchBox == null)
+                return;
+
+            if (e.Property == EnableRuleFilteringProperty)
+            {
+                searchBox.UpdateIsComplexFilteringEnabled();
+            }
+            else if (e.Property == UseCheckBoxInSearchBoxProperty)
+            {
+                searchBox.DetermineCheckboxColumnTypeFromColumnDefinition();
+            }
+            else if (e.Property == AllowFilteringProperty)
+            {
+                bool allow = (bool)e.NewValue;
+                searchBox.IsFilterVisible = allow;
+                searchBox.Visibility = allow ? Visibility.Visible : Visibility.Collapsed;
+            }
         }
-
-        public static void SetDisplayMask(DependencyObject element, string value)
-        {
-            if (element == null) throw new ArgumentNullException(nameof(element));
-            element.SetValue(DisplayMaskProperty, value);
-        }
-
-        #endregion
-
-        #region Helper Methods
 
         /// <summary>
-        /// Handles changes to the ColumnDisplayName attached property
+        /// Called when a display formatting property changes. Recreates the display value provider.
+        /// </summary>
+        private static void OnDisplayPropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            if (d is not GridColumn gc || gc.Owner == null)
+                return;
+
+            // Sync layout (DisplayStringFormat affects the Binding.StringFormat)
+            gc.SyncToInternalColumn();
+
+            var searchBox = gc.Owner.DataColumns.FirstOrDefault(c => c.CurrentColumn == gc.InternalColumn);
+            if (searchBox?.SearchTemplateController != null)
+            {
+                searchBox.SearchTemplateController.DisplayValueProvider =
+                    Display.DisplayValueProviderFactory.Create(gc);
+                searchBox.SearchTemplateController.DisplayMaskPattern = gc.DisplayMask;
+            }
+        }
+
+        /// <summary>
+        /// Called when ColumnDisplayName changes. Updates filter panel and column chooser.
         /// </summary>
         private static void OnColumnDisplayNameChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
-            if (d is DataGridColumn column)
+            if (d is not GridColumn gc || gc.Owner == null)
+                return;
+
+            gc.SyncToInternalColumn();
+            gc.Owner.UpdateFilterPanel();
+
+            var searchBox = gc.Owner.DataColumns.FirstOrDefault(c => c.CurrentColumn == gc.InternalColumn);
+            if (searchBox?.SearchTemplateController != null)
             {
-                // Find the SearchDataGrid that owns this column
-                var grid = FindSearchDataGridForColumn(column);
-                if (grid != null)
-                {
-                    column.Dispatcher.BeginInvoke(new Action(() =>
-                    {
-                        //  Update the filter panel to reflect the new display name
-                        grid.UpdateFilterPanel();
-
-                        // Update the ColumnSearchBox's SearchTemplateController.ColumnName
-                        var columnSearchBox = grid.DataColumns.FirstOrDefault(c => c.CurrentColumn == column);
-                        if (columnSearchBox?.SearchTemplateController != null)
-                        {
-                            columnSearchBox.SearchTemplateController.ColumnName = GetEffectiveColumnDisplayName(column);
-                        }
-
-                        // Force refresh of any ItemsControl (like ListBox) that displays the columns collection
-                        // by invalidating the binding on the DataGrid's Columns collection
-                        if (grid.Columns != null)
-                        {
-                            var collectionView = CollectionViewSource.GetDefaultView(grid.Columns);
-                            collectionView?.Refresh();
-                        }
-                    }), System.Windows.Threading.DispatcherPriority.DataBind);
-                }
-
-                // Raise the static event to notify external subscribers (optional, for advanced scenarios)
-                ColumnDisplayNameChanged?.Invoke(null, new ColumnDisplayNameChangedEventArgs(
-                    column,
-                    e.OldValue as string,
-                    e.NewValue as string));
+                searchBox.SearchTemplateController.ColumnName = searchBox.ResolveColumnDisplayName();
             }
         }
 
         /// <summary>
-        /// Handles changes to the EnableRuleFiltering attached property
+        /// Called when select-all properties change. Refreshes select-all header checkboxes.
         /// </summary>
-        private static void OnEnableRuleFilteringChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        private static void OnSelectAllPropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
-            if (d is DataGridColumn column)
+            if (d is not GridColumn gc || gc.Owner == null)
+                return;
+
+            gc.Owner.Dispatcher.BeginInvoke(new Action(() =>
             {
-                // Find the SearchDataGrid that owns this column
-                var grid = FindSearchDataGridForColumn(column);
-                if (grid != null)
-                {
-                    // Find the ColumnSearchBox associated with this column
-                    var columnSearchBox = grid.DataColumns.FirstOrDefault(c => c.CurrentColumn == column);
-                    if (columnSearchBox != null)
-                    {
-                        // Update the IsComplexFilteringEnabled property which will trigger binding updates
-                        columnSearchBox.UpdateIsComplexFilteringEnabled();
-                    }
-                }
-            }
+                gc.Owner.SetupSelectAllColumnHeaders();
+            }), System.Windows.Threading.DispatcherPriority.Loaded);
         }
-
-        /// <summary>
-        /// Handles changes to the IsSelectAllColumn attached property
-        /// </summary>
-        private static void OnIsSelectAllColumnChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
-        {
-            if (d is DataGridColumn column)
-            {
-                // Find the SearchDataGrid that owns this column
-                var grid = FindSearchDataGridForColumn(column);
-                if (grid != null)
-                {
-                    // Trigger a refresh of select-all column headers to show/hide the checkbox
-                    grid.Dispatcher.BeginInvoke(new Action(() =>
-                    {
-                        grid.SetupSelectAllColumnHeaders();
-                    }), System.Windows.Threading.DispatcherPriority.Loaded);
-                }
-            }
-        }
-
-        /// <summary>
-        /// Handles changes to the SelectAllScope attached property
-        /// </summary>
-        private static void OnSelectAllScopeChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
-        {
-            if (d is DataGridColumn column)
-            {
-                // Find the SearchDataGrid that owns this column
-                var grid = FindSearchDataGridForColumn(column);
-                if (grid != null)
-                {
-                    // Trigger a refresh of select-all column headers to update row count visibility
-                    grid.Dispatcher.BeginInvoke(new Action(() =>
-                    {
-                        grid.SetupSelectAllColumnHeaders();
-                    }), System.Windows.Threading.DispatcherPriority.Loaded);
-                }
-            }
-        }
-
-        /// <summary>
-        /// Handles changes to the UseCheckBoxInSearchBox attached property
-        /// </summary>
-        private static void OnUseCheckBoxInSearchBoxChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
-        {
-            if (d is DataGridColumn column)
-            {
-                // Find the SearchDataGrid that owns this column
-                var grid = FindSearchDataGridForColumn(column);
-                if (grid != null)
-                {
-                    // Find the ColumnSearchBox associated with this column
-                    var columnSearchBox = grid.DataColumns.FirstOrDefault(c => c.CurrentColumn == column);
-                    if (columnSearchBox != null)
-                    {
-                        // Re-determine the checkbox column type based on the new setting
-                        columnSearchBox.Dispatcher.BeginInvoke(new Action(() =>
-                        {
-                            columnSearchBox.DetermineCheckboxColumnTypeFromColumnDefinition();
-                        }), System.Windows.Threading.DispatcherPriority.DataBind);
-                    }
-                }
-            }
-        }
-
-        /// <summary>
-        /// Finds the SearchDataGrid that owns the specified column using reflection.
-        /// DataGridColumn is not part of the visual tree, so we must use reflection to access DataGridOwner.
-        /// </summary>
-        private static SearchDataGrid FindSearchDataGridForColumn(DataGridColumn column)
-        {
-            try
-            {
-                if (column == null)
-                    return null;
-
-                // The DataGrid that owns the column is accessed via the internal DataGridOwner property
-                // We'll use reflection to access it since it's protected
-                var dataGridProperty = typeof(DataGridColumn).GetProperty("DataGridOwner",
-                    System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
-
-                if (dataGridProperty != null)
-                {
-                    var dataGrid = dataGridProperty.GetValue(column) as DataGrid;
-                    return dataGrid as SearchDataGrid;
-                }
-
-                return null;
-            }
-            catch
-            {
-                return null;
-            }
-        }
-
-        /// <summary>
-        /// Gets the effective display name for a column, using fallback logic.
-        ///
-        /// Resolution priority:
-        /// 1. Explicit ColumnDisplayName attached property (if set and non-empty)
-        /// 2. Extracted text from column Header (handles templates, FrameworkElements, and strings)
-        ///
-        /// This is the recommended method for retrieving column display names across all components.
-        /// </summary>
-        /// <param name="column">The column to get the display name for</param>
-        /// <returns>The effective display name, or null if column is null</returns>
-        /// <example>
-        /// <code>
-        /// string displayName = GridColumn.GetEffectiveColumnDisplayName(column);
-        /// </code>
-        /// </example>
-        public static string GetEffectiveColumnDisplayName(DataGridColumn column)
-        {
-            if (column == null)
-                return null;
-
-            // Check for explicit ColumnDisplayName
-            string explicitName = GetColumnDisplayName(column);
-            if (!string.IsNullOrEmpty(explicitName))
-                return explicitName;
-
-            // Extract from Header using existing helper
-            return SearchDataGrid.ExtractColumnHeaderText(column);
-        }
-
-        /// <summary>
-        /// Determines if a column is a boolean type based on various detection methods.
-        /// This method is used internally by the IsSelectAllColumn functionality to validate
-        /// that the column can support select-all checkbox behavior.
-        ///
-        /// Detection priority:
-        /// 1. Checks if column is DataGridCheckBoxColumn
-        /// 2. Checks GridColumn.UseCheckBoxInSearchBox explicit property
-        /// 3. Checks SearchTemplateController.ColumnDataType (if controller is available)
-        /// 4. Uses reflection to examine binding path type
-        /// </summary>
-        /// <param name="column">The column to check</param>
-        /// <param name="grid">The SearchDataGrid that owns the column (optional, for accessing SearchTemplateController)</param>
-        /// <returns>True if the column is determined to be boolean type; otherwise, false</returns>
-        internal static bool IsColumnBooleanType(DataGridColumn column, SearchDataGrid grid = null)
-        {
-            if (column == null)
-                return false;
-
-            try
-            {
-                // Method 1: Check if it's a DataGridCheckBoxColumn
-                if (column is DataGridCheckBoxColumn)
-                    return true;
-
-                // Method 2: Check explicit UseCheckBoxInSearchBox property
-                if (GetUseCheckBoxInSearchBox(column))
-                    return true;
-
-                // Method 3: Check SearchTemplateController if grid is available
-                if (grid != null)
-                {
-                    var columnSearchBox = grid.DataColumns.FirstOrDefault(c => c.CurrentColumn == column);
-                    if (columnSearchBox?.SearchTemplateController != null)
-                    {
-                        return columnSearchBox.SearchTemplateController.ColumnDataType == ColumnDataType.Boolean;
-                    }
-                }
-
-                // Method 4: Use reflection to check binding type
-                if (column is DataGridBoundColumn boundColumn &&
-                    boundColumn.Binding is Binding binding &&
-                    !string.IsNullOrEmpty(binding.Path?.Path))
-                {
-                    // Try to get property type from binding path
-                    var propertyType = ReflectionHelper.GetPropertyType(grid?.ItemsSource, binding.Path.Path);
-                    if (propertyType != null)
-                    {
-                        // Check if it's bool or bool?
-                        if (propertyType == typeof(bool))
-                            return true;
-                        if (propertyType == typeof(bool?))
-                            return true;
-                        if (Nullable.GetUnderlyingType(propertyType) == typeof(bool))
-                            return true;
-                    }
-                }
-
-                return false;
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Error determining if column is boolean type: {ex.Message}");
-                return false;
-            }
-        }
-
 
         #endregion
     }

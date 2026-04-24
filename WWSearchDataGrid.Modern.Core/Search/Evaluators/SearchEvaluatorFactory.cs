@@ -100,6 +100,7 @@ namespace WWSearchDataGrid.Modern.Core
             RegisterEvaluator(new BetweenEvaluator());
             RegisterEvaluator(new NotBetweenEvaluator());
             RegisterEvaluator(new BetweenDatesEvaluator());
+            RegisterEvaluator(new NotBetweenDatesEvaluator());
 
             // Null evaluators
             RegisterEvaluator(new IsNullEvaluator());

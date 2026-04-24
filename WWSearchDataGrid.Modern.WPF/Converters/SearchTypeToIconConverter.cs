@@ -67,7 +67,8 @@ namespace WWSearchDataGrid.Modern.WPF.Converters
                 SearchType.Today => "Is_TodayDrawingImage",
                 SearchType.Yesterday => "Is_YesterdayDrawingImage",
                 SearchType.DateInterval => "Is_TodayDrawingImage", // Default for date interval
-                SearchType.BetweenDates => "Is_betweenDrawingImage", // Reuse between icon
+                SearchType.BetweenDates => "Is_betweenDrawingImage",
+                SearchType.NotBetweenDates => "Is_not_betweenDrawingImage",
                 _ => null
             };
         }

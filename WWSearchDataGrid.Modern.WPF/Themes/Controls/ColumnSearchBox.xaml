@@ -4,6 +4,7 @@
                     xmlns:converters="clr-namespace:WWSearchDataGrid.Modern.WPF.Converters">
 
     <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF;component/Themes/Controls/Primitives/DefaultControls.xaml" />
         <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF;component/Themes/Controls/Primitives/SearchTextBox.xaml" />
     </ResourceDictionary.MergedDictionaries>
 
@@ -53,7 +54,7 @@
                                                             <ColumnDefinition Width="Auto" SharedSizeGroup="Prefix" />
                                                             <ColumnDefinition Width="Auto" SharedSizeGroup="Desc" />
                                                         </Grid.ColumnDefinitions>
-                                                        <!--  Operator + Placeholder side by side  -->
+                                                        <!--  Operator + Placeholder side by side with spacing  -->
                                                         <StackPanel Grid.Column="0"
                                                                     Orientation="Horizontal"
                                                                     Margin="8,1,16,1"
@@ -62,11 +63,13 @@
                                                                        FontFamily="Consolas"
                                                                        FontSize="12"
                                                                        FontWeight="Bold"
+                                                                       MinWidth="24"
                                                                        Foreground="{DynamicResource PrefixTooltip.Operator.Foreground}" />
                                                             <TextBlock Text="{Binding Placeholder}"
                                                                        FontFamily="Consolas"
                                                                        FontSize="12"
                                                                        FontStyle="Italic"
+                                                                       Margin="4,0,0,0"
                                                                        Foreground="{DynamicResource PrefixTooltip.Placeholder.Foreground}" />
                                                         </StackPanel>
                                                         <TextBlock Grid.Column="1"
@@ -91,6 +94,8 @@
 
     <!--  ColumnSearchBox Style  -->
     <Style x:Key="GenericColumnSearchBoxStyle" TargetType="{x:Type sdg:ColumnSearchBox}">
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="IsTabStop" Value="False" />
         <Setter Property="SearchTooltipStyle" Value="{StaticResource GenericSearchPrefixTooltipStyle}" />
         <Setter Property="Template">
             <Setter.Value>
@@ -98,8 +103,7 @@
                     <Border Background="{TemplateBinding Background}"
                             BorderBrush="{TemplateBinding BorderBrush}"
                             BorderThickness="{TemplateBinding BorderThickness}"
-                            CornerRadius="0"
-                            SnapsToDevicePixels="True">
+                            CornerRadius="0">
                         <Grid KeyboardNavigation.TabNavigation="Local">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
@@ -141,15 +145,14 @@
                             <CheckBox x:Name="PART_FilterCheckBox"
                                       Grid.Column="0"
                                       Grid.ColumnSpan="2"
-                                      Background="Transparent"
                                       IsChecked="{Binding FilterCheckboxState, RelativeSource={RelativeSource TemplatedParent}}"
-                                      Margin="6,6,6,7"
+                                      Margin="6"
                                       HorizontalAlignment="Center"
                                       VerticalAlignment="Center"
                                       TabIndex="0"
                                       ToolTip="Filter by checkbox state">
                                 <CheckBox.Style>
-                                    <Style TargetType="{x:Type CheckBox}">
+                                    <Style BasedOn="{StaticResource SdgCheckBoxStyle}" TargetType="{x:Type CheckBox}">
                                         <Setter Property="Visibility" Value="Collapsed" />
                                         <Style.Triggers>
                                             <DataTrigger Binding="{Binding IsCheckboxColumn, RelativeSource={RelativeSource TemplatedParent}}" Value="True">
@@ -163,14 +166,11 @@
 
                             <Button x:Name="PART_ClearFilterButton"
                                     Grid.Column="1"
-                                    Focusable="true"
                                     Cursor="Hand"
                                     Command="{Binding ClearSearchTextCommand, RelativeSource={RelativeSource AncestorType=sdg:ColumnSearchBox}}"
                                     Margin="2,1,5,1"
                                     Padding="4"
                                     VerticalAlignment="Center"
-                                    TabIndex="1"
-                                    KeyboardNavigation.IsTabStop="True"
                                     ToolTip="Clear filter"
                                     FontFamily="Segoe MDL2 Assets"
                                     FontSize="10"
@@ -183,6 +183,8 @@
                                         <Setter Property="BorderThickness" Value="0" />
                                         <Setter Property="Cursor" Value="Hand" />
                                         <Setter Property="Visibility" Value="Collapsed" />
+                                        <Setter Property="Focusable" Value="False" />
+                                        <Setter Property="KeyboardNavigation.IsTabStop" Value="False" />
                                         <Setter Property="Template">
                                             <Setter.Value>
                                                 <ControlTemplate TargetType="{x:Type Button}">
@@ -197,13 +199,16 @@
                                                                           HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
                                                                           VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
                                                                           RecognizesAccessKey="True"
-                                                                          TextElement.Foreground="{TemplateBinding Foreground}"
-                                                                          SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" />
+                                                                          TextElement.Foreground="{TemplateBinding Foreground}" />
                                                     </Border>
                                                 </ControlTemplate>
                                             </Setter.Value>
                                         </Setter>
                                         <Style.Triggers>
+                                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                                <Setter Property="Background" Value="#f0f0f0" />
+                                                <Setter Property="Foreground" Value="#CC0000" />
+                                            </Trigger>
                                             <Trigger Property="IsMouseOver" Value="True">
                                                 <Setter Property="Background" Value="#FFF0F0F0" />
                                                 <Setter Property="Foreground" Value="#CC0000" />
@@ -219,6 +224,8 @@
                                             <!--  Show clear button when SearchText has content  -->
                                             <DataTrigger Binding="{Binding SearchText.Length, RelativeSource={RelativeSource AncestorType={x:Type sdg:ColumnSearchBox}}, Converter={StaticResource IntToVisibilityConverter}}" Value="{x:Static Visibility.Visible}">
                                                 <Setter Property="Visibility" Value="Visible" />
+                                                <Setter Property="Focusable" Value="True" />
+                                                <Setter Property="KeyboardNavigation.IsTabStop" Value="True" />
                                             </DataTrigger>
                                             <!--  Show clear button when checkbox has filter applied  -->
                                             <MultiDataTrigger>
@@ -227,6 +234,8 @@
                                                     <Condition Binding="{Binding HasActiveFilter, RelativeSource={RelativeSource AncestorType={x:Type sdg:ColumnSearchBox}}}" Value="True" />
                                                 </MultiDataTrigger.Conditions>
                                                 <Setter Property="Visibility" Value="Visible" />
+                                                <Setter Property="Focusable" Value="True" />
+                                                <Setter Property="KeyboardNavigation.IsTabStop" Value="True" />
                                             </MultiDataTrigger>
                                         </Style.Triggers>
                                     </Style>
@@ -240,8 +249,8 @@
                                     Margin="2,1,5,1"
                                     Padding="4"
                                     VerticalAlignment="Center"
-                                    TabIndex="2"
-                                    KeyboardNavigation.IsTabStop="True"
+                                    Focusable="False"
+                                    KeyboardNavigation.IsTabStop="False"
                                     ToolTip="FilterEditor"
                                     FontFamily="Segoe MDL2 Assets"
                                     FontSize="12"
@@ -260,15 +269,15 @@
                                                     <Border x:Name="border"
                                                             Background="{TemplateBinding Background}"
                                                             BorderBrush="{TemplateBinding BorderBrush}"
-                                                            BorderThickness="{TemplateBinding BorderThickness}">
+                                                            BorderThickness="{TemplateBinding BorderThickness}"
+                                                            CornerRadius="4">
                                                         <ContentPresenter x:Name="contentPresenter"
                                                                           Focusable="False"
                                                                           Margin="{TemplateBinding Padding}"
                                                                           HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
                                                                           VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
                                                                           RecognizesAccessKey="True"
-                                                                          TextElement.Foreground="{TemplateBinding Foreground}"
-                                                                          SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" />
+                                                                          TextElement.Foreground="{TemplateBinding Foreground}"/>
                                                     </Border>
                                                 </ControlTemplate>
                                             </Setter.Value>
@@ -307,7 +316,5 @@
         <Setter Property="Background" Value="White" />
         <Setter Property="BorderBrush" Value="#FFC8C8C8" />
         <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="SnapsToDevicePixels" Value="True" />
-        <Setter Property="UseLayoutRounding" Value="True" />
     </Style>
 </ResourceDictionary>

@@ -11,6 +11,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Interop;
+using System.Windows.Threading;
 using WWSearchDataGrid.Modern.Core;
 
 namespace WWSearchDataGrid.Modern.WPF
@@ -38,6 +39,7 @@ namespace WWSearchDataGrid.Modern.WPF
         private Window _ownerWindow;
         private Point _lastOwnerPosition;
         private bool _isDragging;
+        private DispatcherOperation _pendingScrollRefresh;
 
         #endregion
 
@@ -181,12 +183,6 @@ namespace WWSearchDataGrid.Modern.WPF
         {
             DefaultStyleKey = typeof(ColumnChooser);
             Columns = new ObservableCollection<ColumnVisibilityInfo>();
-
-            // Subscribe to column display name changes
-            GridColumn.ColumnDisplayNameChanged += OnColumnDisplayNameChanged;
-
-            // Clean up subscription when this control is unloaded
-            Unloaded += (s, e) => GridColumn.ColumnDisplayNameChanged -= OnColumnDisplayNameChanged;
 
             // Subscribe to column visibility changes to update select all state
             Columns.CollectionChanged += (s, e) =>
@@ -542,10 +538,22 @@ namespace WWSearchDataGrid.Modern.WPF
 
             foreach (DataGridColumn column in SourceDataGrid.Columns)
             {
+                var descriptor = SourceDataGrid.FindGridColumnDescriptor(column);
+                if (descriptor == null)
+                    continue;
+
+                if (!descriptor.ShowInColumnChooser)
+                    continue;
+
+                string displayName = !string.IsNullOrEmpty(descriptor.ColumnDisplayName)
+                    ? descriptor.ColumnDisplayName
+                    : descriptor.HeaderCaption;
+
                 var columnInfo = new ColumnVisibilityInfo
                 {
                     Column = column,
-                    DisplayName = GridColumn.GetEffectiveColumnDisplayName(column) ?? "Unknown Column",
+                    GridColumnDescriptor = descriptor,
+                    DisplayName = displayName ?? "Unknown Column",
                     IsVisible = column.Visibility == Visibility.Visible
                 };
 
@@ -563,26 +571,45 @@ namespace WWSearchDataGrid.Modern.WPF
             if (e.PropertyName == nameof(ColumnVisibilityInfo.IsVisible) && sender is ColumnVisibilityInfo columnInfo)
             {
                 if (columnInfo.Column != null)
-                {
                     columnInfo.Column.Visibility = columnInfo.IsVisible ? Visibility.Visible : Visibility.Collapsed;
-                }
+
+                if (columnInfo.GridColumnDescriptor != null)
+                    columnInfo.GridColumnDescriptor.Visible = columnInfo.IsVisible;
+
+                // Schedule a deferred scroll metrics refresh.
+                // During bulk operations (Select All), this coalesces into a single update.
+                ScheduleScrollMetricsRefresh();
             }
         }
 
         /// <summary>
-        /// Handles changes to column display names
+        /// Schedules a deferred refresh of the DataGrid's scroll metrics after column visibility changes.
+        /// Coalesces rapid calls (e.g., from Select All) into a single update by aborting any pending refresh.
         /// </summary>
-        private void OnColumnDisplayNameChanged(object sender, ColumnDisplayNameChangedEventArgs e)
+        private void ScheduleScrollMetricsRefresh()
         {
-            if (e?.Column == null)
+            if (SourceDataGrid == null)
                 return;
 
-            // Find the ColumnVisibilityInfo for this column and update its DisplayName
-            var columnInfo = Columns.FirstOrDefault(c => c.Column == e.Column);
-            if (columnInfo != null)
+            _pendingScrollRefresh?.Abort();
+
+            _pendingScrollRefresh = SourceDataGrid.Dispatcher.BeginInvoke(new Action(() =>
             {
-                columnInfo.DisplayName = e.NewValue ?? GridColumn.GetEffectiveColumnDisplayName(e.Column) ?? "Unknown Column";
-            }
+                try
+                {
+                    var scrollViewer = VisualTreeHelperMethods.FindVisualChild<ScrollViewer>(SourceDataGrid);
+                    if (scrollViewer != null)
+                    {
+                        scrollViewer.InvalidateScrollInfo();
+                    }
+                    SourceDataGrid.InvalidateMeasure();
+                    SourceDataGrid.UpdateLayout();
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"Error refreshing DataGrid scroll metrics: {ex.Message}");
+                }
+            }), DispatcherPriority.Input);
         }
 
         private void CloseWindow()
@@ -1246,6 +1273,12 @@ namespace WWSearchDataGrid.Modern.WPF
         private bool _isSelected;
 
         public DataGridColumn Column { get; set; }
+
+        /// <summary>
+        /// Gets or sets the <see cref="GridColumn"/> descriptor that generated
+        /// <see cref="Column"/>, or null for legacy attached-property columns.
+        /// </summary>
+        public GridColumn GridColumnDescriptor { get; set; }
 
         public string DisplayName
         {

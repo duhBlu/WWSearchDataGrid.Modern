@@ -17,20 +17,20 @@ Add project references to both `WWSearchDataGrid.Modern.Core` and `WWSearchDataG
 <Window xmlns:sdg="clr-namespace:WWSearchDataGrid.Modern.WPF;assembly=WWSearchDataGrid.Modern.WPF">
 ```
 
-### 2. Replace your DataGrid
+### 2. Define columns with GridColumn descriptors
 
 ```xml
 <sdg:SearchDataGrid ItemsSource="{Binding Items}"
                     AutoGenerateColumns="False">
-    <sdg:SearchDataGrid.Columns>
-        <DataGridTextColumn Header="Name" Binding="{Binding Name}" />
-        <DataGridTextColumn Header="City" Binding="{Binding City}" />
-        <DataGridTextColumn Header="Amount" Binding="{Binding Amount}" />
-    </sdg:SearchDataGrid.Columns>
+    <sdg:SearchDataGrid.GridColumns>
+        <sdg:GridColumn FieldName="Name" Header="Name" />
+        <sdg:GridColumn FieldName="City" Header="City" />
+        <sdg:GridColumn FieldName="Amount" Header="Amount" />
+    </sdg:SearchDataGrid.GridColumns>
 </sdg:SearchDataGrid>
 ```
 
-Every column automatically gets a search box. Users type to filter -- no additional code required.
+`FieldName` is the only required property -- it auto-generates the Binding, SortMemberPath, and FilterMemberPath. Every column automatically gets a search box. Users type to filter -- no additional code required.
 
 ---
 
@@ -42,30 +42,27 @@ By default, columns use simple text search. Enable rule filtering to let users b
 
 ```xml
 <sdg:SearchDataGrid EnableRuleFiltering="True"
-                    ItemsSource="{Binding Items}">
-    <sdg:SearchDataGrid.Columns>
+                    ItemsSource="{Binding Items}"
+                    AutoGenerateColumns="False">
+    <sdg:SearchDataGrid.GridColumns>
         <!-- This column gets the advanced filter button -->
-        <DataGridTextColumn Header="Amount"
-                            Binding="{Binding Amount}"
-                            sdg:GridColumn.EnableRuleFiltering="True" />
+        <sdg:GridColumn FieldName="Amount" Header="Amount" />
 
         <!-- Disable rule filtering on specific columns -->
-        <DataGridTextColumn Header="Name"
-                            Binding="{Binding Name}"
-                            sdg:GridColumn.EnableRuleFiltering="False" />
-    </sdg:SearchDataGrid.Columns>
+        <sdg:GridColumn FieldName="Name" Header="Name"
+                        EnableRuleFiltering="False" />
+    </sdg:SearchDataGrid.GridColumns>
 </sdg:SearchDataGrid>
 ```
 
 ### Boolean Checkbox Columns
 
-For boolean columns, use checkbox filtering instead of text search:
+For boolean columns, set `FieldType` and enable checkbox filtering:
 
 ```xml
-<DataGridCheckBoxColumn Header="Active"
-                        Binding="{Binding IsActive}"
-                        sdg:GridColumn.UseCheckBoxInSearchBox="True"
-                        sdg:GridColumn.FilterMemberPath="IsActive" />
+<sdg:GridColumn FieldName="IsActive" Header="Active"
+                FieldType="{x:Type sys:Boolean}"
+                UseCheckBoxInSearchBox="True" />
 ```
 
 The search box becomes a checkbox that cycles through: true -> false -> null (show all).
@@ -75,11 +72,11 @@ The search box becomes a checkbox that cycles through: true -> false -> null (sh
 Add a header checkbox to toggle all boolean values at once:
 
 ```xml
-<DataGridCheckBoxColumn Header="Selected"
-                        Binding="{Binding IsSelected}"
-                        sdg:GridColumn.UseCheckBoxInSearchBox="True"
-                        sdg:GridColumn.IsSelectAllColumn="True"
-                        sdg:GridColumn.SelectAllScope="FilteredRows" />
+<sdg:GridColumn FieldName="IsSelected" Header="Selected"
+                FieldType="{x:Type sys:Boolean}"
+                UseCheckBoxInSearchBox="True"
+                IsSelectAllColumn="True"
+                SelectAllScope="FilteredRows" />
 ```
 
 Available scopes:
@@ -92,25 +89,18 @@ Available scopes:
 Override the header text shown in the filter panel and column chooser:
 
 ```xml
-<DataGridTextColumn Header="Cust. Name"
-                    Binding="{Binding CustomerName}"
-                    sdg:GridColumn.ColumnDisplayName="Customer Name" />
+<sdg:GridColumn FieldName="CustomerName" Header="Cust. Name"
+                ColumnDisplayName="Customer Name" />
 ```
 
-### FilterMemberPath for Template Columns
+### FilterMemberPath Override
 
-For `DataGridTemplateColumn` or when the filter path differs from the display binding:
+When the filter path differs from the field name:
 
 ```xml
-<DataGridTemplateColumn Header="Status"
-                        sdg:GridColumn.FilterMemberPath="StatusCode"
-                        SortMemberPath="StatusCode">
-    <DataGridTemplateColumn.CellTemplate>
-        <DataTemplate>
-            <TextBlock Text="{Binding StatusDescription}" />
-        </DataTemplate>
-    </DataGridTemplateColumn.CellTemplate>
-</DataGridTemplateColumn>
+<sdg:GridColumn FieldName="StatusDescription" Header="Status"
+                FilterMemberPath="StatusCode"
+                SortMemberPath="StatusCode" />
 ```
 
 ### Default Search Mode
@@ -119,17 +109,42 @@ Change how the simple text search box matches per-column:
 
 ```xml
 <!-- Match from the beginning (good for IDs, part numbers) -->
-<DataGridTextColumn Header="Part #"
-                    Binding="{Binding PartNumber}"
-                    sdg:GridColumn.DefaultSearchMode="StartsWith" />
+<sdg:GridColumn FieldName="PartNumber" Header="Part #"
+                DefaultSearchMode="StartsWith" />
 
 <!-- Exact match only -->
-<DataGridTextColumn Header="Status"
-                    Binding="{Binding Status}"
-                    sdg:GridColumn.DefaultSearchMode="Equals" />
+<sdg:GridColumn FieldName="Status" Header="Status"
+                DefaultSearchMode="Equals" />
 ```
 
 Options: `Contains` (default), `StartsWith`, `EndsWith`, `Equals`
+
+### Display Formatting
+
+Format column values for display and filtering:
+
+```xml
+<!-- Currency -->
+<sdg:GridColumn FieldName="Amount" Header="Amount"
+                DisplayStringFormat="C2" />
+
+<!-- Date -->
+<sdg:GridColumn FieldName="OrderDate" Header="Order Date"
+                DisplayStringFormat="MM/dd/yyyy" />
+
+<!-- Custom converter -->
+<sdg:GridColumn FieldName="Submitted" Header="Submitted"
+                DisplayValueConverter="{StaticResource BoolToYesNoConverter}" />
+```
+
+### Hide Filtering or Sorting
+
+Disable filtering or sorting on specific columns:
+
+```xml
+<sdg:GridColumn FieldName="Notes" Header="Notes"
+                AllowFiltering="False" AllowSorting="False" />
+```
 
 ### Column Chooser
 

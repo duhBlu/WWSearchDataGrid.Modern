@@ -1,41 +1,34 @@
-using System.Windows.Controls;
-using System.Windows.Data;
 using WWSearchDataGrid.Modern.Core.Display;
 
 namespace WWSearchDataGrid.Modern.WPF.Display
 {
     /// <summary>
-    /// Creates the appropriate IDisplayValueProvider for a column based on its GridColumn attached properties.
+    /// Creates the appropriate IDisplayValueProvider for a column based on its GridColumn descriptor.
     /// Priority: DisplayMask > DisplayValueConverter > DisplayStringFormat.
     /// Returns null if no display transformation is configured.
     /// </summary>
     internal static class DisplayValueProviderFactory
     {
         /// <summary>
-        /// Creates a display value provider for the given column, or null if none is configured.
+        /// Creates a display value provider from a <see cref="GridColumn"/> descriptor,
+        /// or null if no display transformation is configured.
         /// </summary>
-        public static IDisplayValueProvider Create(DataGridColumn column)
+        public static IDisplayValueProvider Create(GridColumn descriptor)
         {
-            if (column == null)
+            if (descriptor == null)
                 return null;
 
             // Priority 1: Mask
-            string mask = GridColumn.GetDisplayMask(column);
-            if (!string.IsNullOrEmpty(mask))
-                return new MaskDisplayProvider(mask);
+            if (!string.IsNullOrEmpty(descriptor.DisplayMask))
+                return new MaskDisplayProvider(descriptor.DisplayMask);
 
             // Priority 2: Explicit converter
-            var converter = GridColumn.GetDisplayValueConverter(column);
-            if (converter != null)
-            {
-                var parameter = GridColumn.GetDisplayConverterParameter(column);
-                return new ConverterDisplayProvider(converter, parameter);
-            }
+            if (descriptor.DisplayValueConverter != null)
+                return new ConverterDisplayProvider(descriptor.DisplayValueConverter, descriptor.DisplayConverterParameter);
 
             // Priority 3: String format
-            string format = GridColumn.GetDisplayStringFormat(column);
-            if (!string.IsNullOrEmpty(format))
-                return new StringFormatDisplayProvider(format);
+            if (!string.IsNullOrEmpty(descriptor.DisplayStringFormat))
+                return new StringFormatDisplayProvider(descriptor.DisplayStringFormat);
 
             return null;
         }

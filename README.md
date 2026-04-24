@@ -10,17 +10,19 @@ xmlns:sdg="clr-namespace:WWSearchDataGrid.Modern.WPF;assembly=WWSearchDataGrid.M
 
 <!-- Replace <DataGrid> with <sdg:SearchDataGrid> -->
 <sdg:SearchDataGrid ItemsSource="{Binding Items}"
+                    AutoGenerateColumns="False"
                     EnableRuleFiltering="True"
                     IsColumnChooserEnabled="True">
-    <sdg:SearchDataGrid.Columns>
-        <DataGridTextColumn Header="Name"
-                            Binding="{Binding Name}"
-                            sdg:GridColumn.FilterMemberPath="Name" />
-    </sdg:SearchDataGrid.Columns>
+    <sdg:SearchDataGrid.GridColumns>
+        <sdg:GridColumn FieldName="Name" Header="Name" />
+        <sdg:GridColumn FieldName="Status" Header="Status" DefaultSearchMode="Equals" />
+        <sdg:GridColumn FieldName="Amount" Header="Amount" DisplayStringFormat="C2" />
+        <sdg:GridColumn FieldName="OrderDate" Header="Date" DisplayStringFormat="MM/dd/yyyy" />
+    </sdg:SearchDataGrid.GridColumns>
 </sdg:SearchDataGrid>
 ```
 
-That's it. Every column automatically gets a search box. Type to filter.
+That's it. `FieldName` auto-generates the Binding, SortMemberPath, and FilterMemberPath. Every column automatically gets a search box. Type to filter.
 
 ## Features
 

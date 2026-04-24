@@ -98,11 +98,11 @@ namespace WWSearchDataGrid.Modern.Core
                     // IsNotLike has no prefix shortcut — use the rule filter editor instead
                     case "s#":
                         if (IsAllowed(SearchType.StartsWith, columnDataType))
-                            return (SearchType.StartsWith, text.Substring(2), null);
+                            return (SearchType.StartsWith, text.Substring(2).TrimStart(), null);
                         break;
                     case "e#":
                         if (IsAllowed(SearchType.EndsWith, columnDataType))
-                            return (SearchType.EndsWith, text.Substring(2), null);
+                            return (SearchType.EndsWith, text.Substring(2).TrimStart(), null);
                         break;
                     case "t#":
                         if (IsAllowed(SearchType.TopN, columnDataType))
@@ -136,23 +136,25 @@ namespace WWSearchDataGrid.Modern.Core
                     break;
                 case '=':
                     if (IsAllowed(SearchType.Equals, columnDataType))
-                        return (SearchType.Equals, text.Substring(1), null);
+                        return (SearchType.Equals, text.Substring(1).TrimStart(), null);
                     break;
                 case '*':
                     if (IsAllowed(SearchType.Contains, columnDataType))
-                        return (SearchType.Contains, text.Substring(1), null);
+                        return (SearchType.Contains, text.Substring(1).TrimStart(), null);
                     break;
                 case '#':
                     if (IsAllowed(SearchType.IsNull, columnDataType))
                         return (SearchType.IsNull, null, null);
                     break;
                 case '%':
+                    // Keep the leading % as part of the value - it's a valid LIKE wildcard.
+                    // "%p%" means "contains p", "%p" means "ends with p", "p%" means "starts with p".
                     if (IsAllowed(SearchType.IsLike, columnDataType))
-                        return (SearchType.IsLike, text.Substring(1).TrimStart(), null);
+                        return (SearchType.IsLike, text, null);
                     break;
                 case '!':
                     if (IsAllowed(SearchType.DoesNotContain, columnDataType))
-                        return (SearchType.DoesNotContain, text.Substring(1), null);
+                        return (SearchType.DoesNotContain, text.Substring(1).TrimStart(), null);
                     break;
             }
 

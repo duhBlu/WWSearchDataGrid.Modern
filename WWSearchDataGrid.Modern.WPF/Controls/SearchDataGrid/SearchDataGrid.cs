@@ -17,6 +17,7 @@ using System.Collections.Generic;
 using System.Windows.Threading;
 using WWSearchDataGrid.Modern.WPF.Commands;
 using WWSearchDataGrid.Modern.Core.Caching;
+using System.Windows.Automation.Peers;
 using System.Windows.Controls.Primitives;
 
 namespace WWSearchDataGrid.Modern.WPF
@@ -44,10 +45,6 @@ namespace WWSearchDataGrid.Modern.WPF
         // Cell value change detection support
         private readonly Dictionary<string, object> _cellValueSnapshots = new Dictionary<string, object>();
 
-        // Auto-sizing support
-        private readonly Dictionary<DataGridColumn, DataGridLength> _originalColumnWidths = new Dictionary<DataGridColumn, DataGridLength>();
-        private ScrollViewer _scrollViewer;
-
         // Column Chooser support
         private ColumnChooser _columnChooser;
 
@@ -70,12 +67,6 @@ namespace WWSearchDataGrid.Modern.WPF
             DependencyProperty.Register("EnableRuleFiltering", typeof(bool), typeof(SearchDataGrid),
                 new FrameworkPropertyMetadata(false, FrameworkPropertyMetadataOptions.Inherits, OnEnableRuleFilteringChanged));
 
-        /// <summary>
-        /// Dependency property for AutoSizeColumns
-        /// </summary>
-        public static readonly DependencyProperty AutoSizeColumnsProperty =
-            DependencyProperty.Register("AutoSizeColumns", typeof(bool), typeof(SearchDataGrid),
-                new PropertyMetadata(false, OnAutoSizeColumnsChanged));
 
         /// <summary>
         /// Dependency property for IsColumnChooserVisible
@@ -99,12 +90,42 @@ namespace WWSearchDataGrid.Modern.WPF
                 new PropertyMetadata(false, OnIsColumnChooserConfinedToGridChanged));
 
         /// <summary>
+        /// Dependency property for EnableLiveScrolling. When true, the grid content updates
+        /// in real-time while dragging the scrollbar thumb instead of waiting for release.
+        /// Defaults to true. Disable for very large datasets (100k+) if scrolling feels choppy.
+        /// </summary>
+        public static readonly DependencyProperty EnableLiveScrollingProperty =
+            DependencyProperty.Register("EnableLiveScrolling", typeof(bool), typeof(SearchDataGrid),
+                new PropertyMetadata(true, OnEnableLiveScrollingChanged));
+
+        /// <summary>
         /// Dependency property for LastFocusedColumn. Persists the most recently focused
         /// column so it remains available when focus leaves the grid.
         /// </summary>
         public static readonly DependencyProperty LastFocusedColumnProperty =
             DependencyProperty.Register("LastFocusedColumn", typeof(DataGridColumn), typeof(SearchDataGrid),
                 new PropertyMetadata(null));
+
+        public static readonly DependencyProperty LastFocusedGridColumnProperty =
+            DependencyProperty.Register("LastFocusedGridColumn", typeof(GridColumn), typeof(SearchDataGrid),
+                new PropertyMetadata(null));
+
+        /// <summary>
+        /// Backing key for the <see cref="GridColumns"/> dependency property.
+        /// The collection is read-only from external code; internal logic populates it
+        /// via the CLR property or XAML collection syntax.
+        /// </summary>
+        private static readonly DependencyPropertyKey GridColumnsPropertyKey =
+            DependencyProperty.RegisterReadOnly(
+                nameof(GridColumns),
+                typeof(FreezableCollection<GridColumn>),
+                typeof(SearchDataGrid),
+                new FrameworkPropertyMetadata(null));
+
+        /// <summary>
+        /// Identifies the <see cref="GridColumns"/> dependency property.
+        /// </summary>
+        public static readonly DependencyProperty GridColumnsProperty = GridColumnsPropertyKey.DependencyProperty;
 
         #endregion
 
@@ -148,28 +169,6 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
-        /// Gets or sets whether columns should automatically size to fit their content.  
-        /// When set to <c>true</c>, column widths are dynamically adjusted to fit the visible cell content,  
-        /// ignoring any static width definitions.
-        /// </summary>
-        /// <remarks>
-        /// <para>
-        /// Column widths are recalculated during scrolling to accommodate newly visible content,  
-        /// ensuring that data remains fully visible without manual resizing.
-        /// </para>
-        /// <para>
-        /// This behavior still respects each column's <see cref="DataGridColumn.MinWidth"/>  
-        /// and <see cref="DataGridColumn.MaxWidth"/> constraints.
-        /// </para>
-        /// </remarks>
-
-        public bool AutoSizeColumns
-        {
-            get { return (bool)GetValue(AutoSizeColumnsProperty); }
-            set { SetValue(AutoSizeColumnsProperty, value); }
-        }
-
-        /// <summary>
         /// Gets or sets whether the Column Chooser window is visible.
         /// When set to true, displays a non-modal window allowing users to show/hide columns.
         /// This property is overridden by IsColumnChooserEnabled - if IsColumnChooserEnabled is false,
@@ -204,6 +203,17 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
+        /// Gets or sets whether the grid content updates in real-time while dragging the
+        /// scrollbar thumb. When false, scrolling is deferred until thumb release.
+        /// Defaults to true. Disable for very large datasets (100k+ rows) if scrolling stutters.
+        /// </summary>
+        public bool EnableLiveScrolling
+        {
+            get => (bool)GetValue(EnableLiveScrollingProperty);
+            set => SetValue(EnableLiveScrollingProperty, value);
+        }
+
+        /// <summary>
         /// Gets the last column that had focus. Persists when focus leaves the grid,
         /// so external panels can continue displaying column properties.
         /// </summary>
@@ -211,6 +221,34 @@ namespace WWSearchDataGrid.Modern.WPF
         {
             get => (DataGridColumn)GetValue(LastFocusedColumnProperty);
             private set => SetValue(LastFocusedColumnProperty, value);
+        }
+
+        /// <summary>
+        /// Gets the <see cref="GridColumn"/> descriptor for the last focused column.
+        /// Updates automatically when the focused cell changes.
+        /// </summary>
+        public GridColumn LastFocusedGridColumn
+        {
+            get => (GridColumn)GetValue(LastFocusedGridColumnProperty);
+            private set => SetValue(LastFocusedGridColumnProperty, value);
+        }
+
+        /// <summary>
+        /// Gets the collection of <see cref="GridColumn"/> descriptors.
+        /// When this collection is populated, the grid auto-generates internal
+        /// <see cref="DataGridColumn"/> instances from each descriptor.
+        /// </summary>
+        /// <example>
+        /// <code>
+        /// &lt;sdg:SearchDataGrid.GridColumns&gt;
+        ///     &lt;sdg:GridColumn FieldName="OrderNumber" Header="Order #" Width="80"
+        ///                     DefaultSearchMode="StartsWith" EnableRuleFiltering="False" /&gt;
+        /// &lt;/sdg:SearchDataGrid.GridColumns&gt;
+        /// </code>
+        /// </example>
+        public FreezableCollection<GridColumn> GridColumns
+        {
+            get => (FreezableCollection<GridColumn>)GetValue(GridColumnsProperty);
         }
 
         /// <summary>
@@ -264,8 +302,10 @@ namespace WWSearchDataGrid.Modern.WPF
 
         public SearchDataGrid() : base()
         {
-            // Note: Do not use DependencyPropertyDescriptor.AddValueChanged here - it creates a
-            // strong reference that prevents GC. OnItemsSourceChanged override handles this already.
+            // Initialize the GridColumns collection so XAML can populate it immediately
+            var gridColumns = new FreezableCollection<GridColumn>();
+            SetValue(GridColumnsPropertyKey, gridColumns);
+            SubscribeToGridColumnsChanged(gridColumns);
 
             // Initialize context menu functionality
             this.InitializeContextMenu();
@@ -276,6 +316,188 @@ namespace WWSearchDataGrid.Modern.WPF
             // Subscribe to selection change events to update row count display
             this.SelectionChanged += OnSelectionChanged;
             this.SelectedCellsChanged += OnSelectedCellsChanged;
+
+            // Generate columns from GridColumns descriptors once the control is loaded
+            Loaded += OnSearchDataGridLoaded;
+        }
+
+        #endregion
+
+        #region GridColumns Support
+
+        /// <summary>
+        /// Tracks whether columns have already been generated from <see cref="GridColumns"/>
+        /// to prevent duplicate generation on repeated Loaded events.
+        /// </summary>
+        private bool _gridColumnsGenerated;
+
+        /// <summary>
+        /// Finds the <see cref="GridColumn"/> descriptor that generated the given
+        /// <see cref="DataGridColumn"/>, or null if not found.
+        /// </summary>
+        internal GridColumn FindGridColumnDescriptor(DataGridColumn column)
+        {
+            if (column == null)
+                return null;
+
+            var descriptors = (FreezableCollection<GridColumn>)GetValue(GridColumnsProperty);
+            if (descriptors == null || descriptors.Count == 0)
+                return null;
+
+            foreach (var descriptor in descriptors)
+            {
+                if (descriptor.InternalColumn == column)
+                    return descriptor;
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// Subscribes to collection-changed notifications on the <see cref="GridColumns"/> collection
+        /// so that runtime additions/removals are reflected in the grid.
+        /// </summary>
+        private void SubscribeToGridColumnsChanged(FreezableCollection<GridColumn> collection)
+        {
+            ((INotifyCollectionChanged)collection).CollectionChanged += OnGridColumnsCollectionChanged;
+        }
+
+        /// <summary>
+        /// Handles the Loaded event to generate columns from <see cref="GridColumns"/> descriptors.
+        /// </summary>
+        private void OnSearchDataGridLoaded(object sender, RoutedEventArgs e)
+        {
+            if (!_gridColumnsGenerated)
+            {
+                GenerateColumnsFromDescriptors();
+            }
+        }
+
+        /// <summary>
+        /// Handles additions and removals in the <see cref="GridColumns"/> collection at runtime.
+        /// </summary>
+        private void OnGridColumnsCollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
+        {
+            switch (e.Action)
+            {
+                case NotifyCollectionChangedAction.Add:
+                    if (e.NewItems != null)
+                    {
+                        foreach (GridColumn descriptor in e.NewItems)
+                        {
+                            descriptor.Owner = this;
+                            var column = descriptor.CreateDataGridColumn();
+                            if (column != null)
+                            {
+                                // Insert at the correct position if possible
+                                int insertIndex = e.NewStartingIndex >= 0 && e.NewStartingIndex < Columns.Count
+                                    ? e.NewStartingIndex
+                                    : Columns.Count;
+                                Columns.Insert(insertIndex, column);
+                            }
+                        }
+                    }
+                    break;
+
+                case NotifyCollectionChangedAction.Remove:
+                    if (e.OldItems != null)
+                    {
+                        foreach (GridColumn descriptor in e.OldItems)
+                        {
+                            if (descriptor.InternalColumn != null)
+                            {
+                                Columns.Remove(descriptor.InternalColumn);
+                                descriptor.InternalColumn = null;
+                            }
+                            descriptor.Owner = null;
+                        }
+                    }
+                    break;
+
+                case NotifyCollectionChangedAction.Replace:
+                    // Remove old
+                    if (e.OldItems != null)
+                    {
+                        foreach (GridColumn descriptor in e.OldItems)
+                        {
+                            if (descriptor.InternalColumn != null)
+                            {
+                                Columns.Remove(descriptor.InternalColumn);
+                                descriptor.InternalColumn = null;
+                            }
+                            descriptor.Owner = null;
+                        }
+                    }
+                    // Add new
+                    if (e.NewItems != null)
+                    {
+                        foreach (GridColumn descriptor in e.NewItems)
+                        {
+                            descriptor.Owner = this;
+                            var column = descriptor.CreateDataGridColumn();
+                            if (column != null)
+                                Columns.Add(column);
+                        }
+                    }
+                    break;
+
+                case NotifyCollectionChangedAction.Reset:
+                    // Remove all previously generated columns
+                    RemoveGeneratedColumns();
+                    _gridColumnsGenerated = false;
+                    // Re-generate if collection still has items
+                    GenerateColumnsFromDescriptors();
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// Generates internal <see cref="DataGridColumn"/> instances from all <see cref="GridColumn"/>
+        /// descriptors in the <see cref="GridColumns"/> collection and adds them to <see cref="DataGrid.Columns"/>.
+        /// </summary>
+        private void GenerateColumnsFromDescriptors()
+        {
+            var descriptors = (FreezableCollection<GridColumn>)GetValue(GridColumnsProperty);
+            if (descriptors == null || descriptors.Count == 0)
+                return;
+
+            // If GridColumns is populated, we manage Columns. Warn if user also added manual columns.
+            if (Columns.Count > 0)
+            {
+                Debug.WriteLine(
+                    "SearchDataGrid: GridColumns is populated but Columns already contains items. " +
+                    "GridColumns will manage the Columns collection — manual columns may be overwritten.");
+                Columns.Clear();
+            }
+
+            foreach (var descriptor in descriptors)
+            {
+                descriptor.Owner = this;
+                var column = descriptor.CreateDataGridColumn();
+                if (column != null)
+                    Columns.Add(column);
+            }
+
+            _gridColumnsGenerated = true;
+        }
+
+        /// <summary>
+        /// Removes all columns that were generated from <see cref="GridColumn"/> descriptors.
+        /// </summary>
+        private void RemoveGeneratedColumns()
+        {
+            var descriptors = (FreezableCollection<GridColumn>)GetValue(GridColumnsProperty);
+            if (descriptors == null)
+                return;
+
+            foreach (var descriptor in descriptors)
+            {
+                if (descriptor.InternalColumn != null)
+                {
+                    Columns.Remove(descriptor.InternalColumn);
+                    descriptor.InternalColumn = null;
+                }
+                descriptor.Owner = null;
+            }
         }
 
         #endregion
@@ -337,11 +559,17 @@ namespace WWSearchDataGrid.Modern.WPF
             {
                 SetupSelectAllColumnHeaders();
             }), DispatcherPriority.Loaded);
+
+            // Initialize scroll velocity tracking and enhancement infrastructure
+            InitializeScrollInfrastructure();
         }
 
         #endregion
 
         #region Methods
+
+        protected override AutomationPeer OnCreateAutomationPeer()
+            => new FrameworkElementAutomationPeer(this);
 
         protected override void OnRender(DrawingContext drawingContext)
         {
@@ -354,7 +582,10 @@ namespace WWSearchDataGrid.Modern.WPF
 
             // Persist the column so it survives focus leaving the grid
             if (CurrentCell.Column != null)
+            {
                 LastFocusedColumn = CurrentCell.Column;
+                LastFocusedGridColumn = FindGridColumnDescriptor(CurrentCell.Column);
+            }
         }
 
         protected override void OnInitialized(EventArgs e)
@@ -386,6 +617,17 @@ namespace WWSearchDataGrid.Modern.WPF
         protected override void OnLoadingRow(DataGridRowEventArgs e)
         {
             base.OnLoadingRow(e);
+
+            // Hide the placeholder row used to preserve horizontal scroll extent
+            if (IsPlaceholderItem(e.Row.Item))
+            {
+                ConfigurePlaceholderRow(e.Row);
+            }
+            else
+            {
+                HandleRowAnimationOnLoadingRow(e.Row);
+            }
+
             if (!initialUpdateLayoutCompleted)
             {
                 ItemsSourceChanged?.Invoke(this, null);
@@ -460,9 +702,16 @@ namespace WWSearchDataGrid.Modern.WPF
         {
             if (d is SearchDataGrid grid)
             {
-                // Notify all column search boxes to update their visual state
-                // This ensures the filter UI reflects the new EnableRuleFiltering setting
                 grid.RefreshColumnFilterStates();
+            }
+        }
+
+        private static void OnEnableLiveScrollingChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            if (d is SearchDataGrid grid)
+            {
+                // IsDeferredScrollingEnabled is the inverse of EnableLiveScrolling
+                grid.SetValue(ScrollViewer.IsDeferredScrollingEnabledProperty, !(bool)e.NewValue);
             }
         }
 
@@ -481,8 +730,9 @@ namespace WWSearchDataGrid.Modern.WPF
                     ClearAllCachedData();
                 }
 
-                // Clear cell value snapshots when data source changes
+                // Clear cell value snapshots and placeholder state when data source changes
                 _cellValueSnapshots.Clear();
+                ClearPlaceholderState();
 
                 originalItemsSource = newValue;
                 
@@ -709,6 +959,65 @@ namespace WWSearchDataGrid.Modern.WPF
             if (ActualHasItems != hasAnyItems)
             {
                 ActualHasItems = hasAnyItems;
+            }
+        }
+
+        #endregion
+
+        #region Column Chooser
+
+        /// <summary>
+        /// Shows the Column Chooser window
+        /// </summary>
+        private void ShowColumnChooser()
+        {
+            try
+            {
+                // Don't show if the feature is disabled
+                if (!IsColumnChooserEnabled)
+                {
+                    IsColumnChooserVisible = false;
+                    return;
+                }
+
+                // Create the ColumnChooser instance if it doesn't exist
+                if (_columnChooser == null)
+                {
+                    _columnChooser = new ColumnChooser
+                    {
+                        SourceDataGrid = this,
+                        IsConfinedToGrid = IsColumnChooserConfinedToGrid
+                    };
+
+                    // When the column chooser window closes, update the property
+                    _columnChooser.Unloaded += (s, e) =>
+                    {
+                        IsColumnChooserVisible = false;
+                    };
+                }
+
+                // Show the non-modal window
+                _columnChooser.Show();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error showing column chooser: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Hides the Column Chooser window
+        /// </summary>
+        private void HideColumnChooser()
+        {
+            try
+            {
+                _columnChooser?.Close();
+                _columnChooser = null;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error hiding column chooser: {ex.Message}");
             }
         }
 

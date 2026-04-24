@@ -6,8 +6,9 @@
                     xmlns:converters="clr-namespace:WWSearchDataGrid.Modern.WPF.Converters">
 
     <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF;component/Themes/Controls/Primitives/DefaultControls.xaml" />
         <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF;component/Templates/SharedFilterRuleTemplates.xaml" />
-        <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF;component/Themes/Controls/primitives/NumericUpDown.xaml" />
+        <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF;component/Themes/Controls/Primitives/NumericUpDown.xaml" />
         <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF;component/Themes/Controls/Primitives/SearchTextBox.xaml" />
     </ResourceDictionary.MergedDictionaries>
 
@@ -19,135 +20,99 @@
     <converters:EnumToStringConverter x:Key="EnumToStringConverter" />
 
 
+    <!--  Compact remove button style (shared across rules)  -->
+    <Style x:Key="RuleRemoveButtonStyle" TargetType="{x:Type Button}">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Padding" Value="4" />
+        <Setter Property="FontFamily" Value="Segoe MDL2 Assets" />
+        <Setter Property="FontSize" Value="10" />
+        <Setter Property="Foreground" Value="#999" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="ToolTip" Value="Remove rule" />
+        <Setter Property="Content" Value="&#xE711;" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type Button}">
+                    <Border Background="{TemplateBinding Background}" CornerRadius="2">
+                        <ContentPresenter Margin="{TemplateBinding Padding}"
+                                          HorizontalAlignment="Center"
+                                          VerticalAlignment="Center"
+                                          TextElement.Foreground="{TemplateBinding Foreground}" />
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Foreground" Value="#CC0000" />
+                <Setter Property="Background" Value="#10FF0000" />
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
     <!--  ColumnFilterEditor-specific Search Group Content Template  -->
     <DataTemplate x:Key="AdvancedFilterSearchGroupContentTemplate" DataType="{x:Type sdgCore:SearchTemplateGroup}">
-        <ItemsControl ItemsSource="{Binding SearchTemplates}"
-                      VirtualizingPanel.IsVirtualizing="True"
-                      VirtualizingPanel.VirtualizationMode="Recycling"
-                      ScrollViewer.CanContentScroll="True">
-            <ItemsControl.ItemsPanel>
-                <ItemsPanelTemplate>
-                    <VirtualizingStackPanel Orientation="Vertical" />
-                </ItemsPanelTemplate>
-            </ItemsControl.ItemsPanel>
-            <ItemsControl.ItemTemplate>
-                <DataTemplate>
-                    <StackPanel Orientation="Vertical"
-                                Margin="0,4"
-                                HorizontalAlignment="Stretch">
-                        <Border x:Name="searchTemplateContainer"
-                                Background="#FAFAFA"
-                                BorderBrush="#DDD"
-                                BorderThickness="1"
-                                Padding="6">
+        <StackPanel>
+            <ItemsControl ItemsSource="{Binding SearchTemplates}"
+                          Grid.IsSharedSizeScope="True"
+                          VirtualizingPanel.IsVirtualizing="True"
+                          VirtualizingPanel.VirtualizationMode="Recycling"
+                          ScrollViewer.CanContentScroll="True">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <VirtualizingStackPanel Orientation="Vertical" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <!--  Compact single-line rule layout  -->
+                        <Border BorderBrush="#E8E8E8"
+                                BorderThickness="0,0,0,0"
+                                Padding="2,3">
                             <Grid>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="Auto" />
-                                </Grid.RowDefinitions>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" SharedSizeGroup="RuleOperator" />
+                                    <ColumnDefinition Width="Auto" SharedSizeGroup="RuleSearchType" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" SharedSizeGroup="RuleRemove" />
+                                </Grid.ColumnDefinitions>
 
-                                <!--  Filter Type Row  -->
-                                <Grid Grid.Row="0">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto" />
-                                        <ColumnDefinition Width="Auto" />
-                                        <ColumnDefinition Width="Auto" />
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="Auto" />
-                                    </Grid.ColumnDefinitions>
+                                <!--  AND/OR operator (fixed width, content hidden on first rule)  -->
+                                <ComboBox Style="{StaticResource SdgComboBoxStyle}"
+                                          Grid.Column="0"
+                                          Visibility="{Binding IsOperatorVisible, Converter={StaticResource BooleanToVisibilityCollapsedConverter}}"
+                                          Margin="0,0,4,0"
+                                          Padding="4,2"
+                                          VerticalContentAlignment="Center"
+                                          MinWidth="46"
+                                          FontSize="11"
+                                          SelectedItem="{Binding OperatorName}">
+                                    <sys:String>And</sys:String>
+                                    <sys:String>Or</sys:String>
+                                </ComboBox>
 
-                                    <ComboBox x:Name="PART_OperatorCombo"
-                                              Grid.Column="1"
-                                              Visibility="{Binding IsOperatorVisible, Converter={StaticResource BooleanToVisibilityCollapsedConverter}}"
-                                              Margin="0,0,8,0"
-                                              VerticalContentAlignment="Center"
-                                              Width="Auto"
-                                              SelectedItem="{Binding OperatorName}">
-                                        <sys:String>And</sys:String>
-                                        <sys:String>Or</sys:String>
-                                    </ComboBox>
+                                <!--  Search type dropdown (fixed width for alignment)  -->
+                                <ComboBox Style="{StaticResource SdgComboBoxStyle}"
+                                          Grid.Column="1"
+                                          Margin="0,0,4,0"
+                                          Padding="4,2"
+                                          HorizontalAlignment="Stretch"
+                                          VerticalContentAlignment="Center"
+                                          FontSize="11"
+                                          ItemsSource="{Binding ValidSearchTypes}"
+                                          SelectedItem="{Binding SearchType}">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding Converter={StaticResource EnumToStringConverter}}" VerticalAlignment="Center" />
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
 
-                                    <ComboBox x:Name="PART_SearchTypeCombo"
-                                              Grid.Column="2"
-                                              Margin="0,0,8,0"
-                                              VerticalContentAlignment="Center"
-                                              Width="Auto"
-                                              ItemsSource="{Binding ValidSearchTypes}"
-                                              SelectedItem="{Binding SearchType}">
-                                        <ComboBox.ItemTemplate>
-                                            <DataTemplate>
-                                                <StackPanel Orientation="Horizontal">
-                                                    <!--<Image Source="{Binding Converter={StaticResource SearchTypeToIconConverter}}"
-                                                           Visibility="Collapsed"
-                                                           Margin="0,0,6,0"
-                                                           VerticalAlignment="Center"
-                                                           Width="16"
-                                                           Height="16"
-                                                           UseLayoutRounding="True" />-->
-                                                    <TextBlock Text="{Binding Converter={StaticResource EnumToStringConverter}}" VerticalAlignment="Center" />
-                                                </StackPanel>
-                                            </DataTemplate>
-                                        </ComboBox.ItemTemplate>
-                                    </ComboBox>
-
-                                    <!--  ColumnFilterEditor Remove/Clear SearchTemplate button  -->
-                                    <Button x:Name="PART_ClearTemplateButton"
-                                            Grid.Column="4"
-                                            BorderThickness="0"
-                                            Cursor="Hand"
-                                            Command="{Binding RemoveSearchTemplateCommand, RelativeSource={RelativeSource AncestorType=sdg:ColumnFilterEditor}}"
-                                            CommandParameter="{Binding}"
-                                            Margin="0,0,0,0"
-                                            Padding="4"
-                                            Height="{Binding ActualWidth, RelativeSource={RelativeSource Self}}"
-                                            ToolTip="Remove"
-                                            FontFamily="Segoe MDL2 Assets"
-                                            Content="&#xE10A;">
-                                        <Button.Style>
-                                            <Style TargetType="{x:Type Button}">
-                                                <Setter Property="Background" Value="Transparent" />
-                                                <Setter Property="Template">
-                                                    <Setter.Value>
-                                                        <ControlTemplate TargetType="{x:Type Button}">
-                                                            <Border x:Name="border"
-                                                                    Background="{TemplateBinding Background}"
-                                                                    BorderBrush="{TemplateBinding BorderBrush}"
-                                                                    BorderThickness="{TemplateBinding BorderThickness}">
-                                                                <ContentPresenter x:Name="contentPresenter"
-                                                                                  Focusable="False"
-                                                                                  Margin="{TemplateBinding Padding}"
-                                                                                  HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                                                                  VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
-                                                                                  RecognizesAccessKey="True"
-                                                                                  TextElement.Foreground="{TemplateBinding Foreground}"
-                                                                                  SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" />
-                                                            </Border>
-                                                        </ControlTemplate>
-                                                    </Setter.Value>
-                                                </Setter>
-                                                <Style.Triggers>
-                                                    <Trigger Property="IsMouseOver" Value="True">
-                                                        <Setter Property="Background" Value="#FFF0F0F0" />
-                                                        <Setter Property="Foreground" Value="#1c1c1c" />
-                                                    </Trigger>
-                                                    <Trigger Property="IsPressed" Value="True">
-                                                        <Setter Property="Background" Value="#FFE0E0E0" />
-                                                        <Setter Property="Foreground" Value="#000000" />
-                                                    </Trigger>
-                                                    <Trigger Property="IsEnabled" Value="False">
-                                                        <Setter Property="Opacity" Value="0.5" />
-                                                        <Setter Property="Cursor" Value="Arrow" />
-                                                    </Trigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </Button.Style>
-                                    </Button>
-                                </Grid>
-
-                                <!--  Value Input Row  -->
-                                <ContentControl x:Name="PART_ValueInput"
-                                                Grid.Row="1"
-                                                Margin="0,8,0,0"
+                                <!--  Value input (inline, fills remaining space)  -->
+                                <ContentControl Grid.Column="2"
+                                                VerticalAlignment="Center"
                                                 Content="{Binding}">
                                     <ContentControl.Style>
                                         <Style TargetType="ContentControl">
@@ -180,66 +145,93 @@
                                         </Style>
                                     </ContentControl.Style>
                                 </ContentControl>
+
+                                <!--  Remove button  -->
+                                <Button Style="{StaticResource RuleRemoveButtonStyle}"
+                                        Grid.Column="3"
+                                        VerticalAlignment="Top"
+                                        Command="{Binding RemoveSearchTemplateCommand, RelativeSource={RelativeSource AncestorType=sdg:ColumnFilterEditor}}"
+                                        CommandParameter="{Binding}"
+                                        Margin="4,4,0,0" />
                             </Grid>
                         </Border>
-                    </StackPanel>
-                </DataTemplate>
-            </ItemsControl.ItemTemplate>
-        </ItemsControl>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <!--  Inline "Add Rule" button — sits after the last rule like a placeholder  -->
+            <Button Style="{StaticResource SdgButtonStyle}"
+                    Background="Transparent"
+                    BorderBrush="{StaticResource Sdg.Border.Subtle}"
+                    BorderThickness="1"
+                    Cursor="Hand"
+                    Command="{Binding AddSearchTemplateCommand, RelativeSource={RelativeSource AncestorType=sdg:ColumnFilterEditor}}"
+                    Margin="0,4,0,0"
+                    Padding="6,3"
+                    HorizontalAlignment="Center"
+                    FontSize="11"
+                    Content="Add Rule" />
+
+        </StackPanel>
     </DataTemplate>
 
     <!--  ColumnFilterEditor Style  -->
     <Style x:Key="GenericColumnFilterEditorStyle" TargetType="{x:Type sdg:ColumnFilterEditor}">
         <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.WindowBrushKey}}" />
-        <Setter Property="BorderBrush" Value="Gray" />
+        <Setter Property="BorderBrush" Value="DarkGray" />
         <Setter Property="VerticalOffset" Value="-12" />
         <Setter Property="HorizontalOffset" Value="-12" />
+        <Setter Property="MinWidth" Value="300" />
+        <Setter Property="MinHeight" Value="300" />
+        <Setter Property="MaxHeight" Value="500" />
         <Setter Property="Margin" Value="12" />
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type sdg:ColumnFilterEditor}">
-                    <Border Background="{TemplateBinding Background}"
+                    <Grid Margin="{TemplateBinding Margin}">
+                        <Border Background="{TemplateBinding Background}"
                                 BorderBrush="{TemplateBinding BorderBrush}"
                                 BorderThickness="{TemplateBinding BorderThickness}"
-                                Margin="{TemplateBinding Margin}">
+                                CornerRadius="4">
                             <Border.Effect>
                                 <DropShadowEffect Color="#02000000"
                                                   Opacity="0.25"
                                                   BlurRadius="8"
                                                   ShadowDepth="2" />
                             </Border.Effect>
-                            <Grid Margin="8">
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="*" />
-                                </Grid.RowDefinitions>
+                            <Grid Margin="4">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
 
-                                <!--  Operator ComboBox  -->
-                                <ComboBox x:Name="PART_OperatorComboBox"
-                                          Grid.Row="0"
-                                          Visibility="{Binding IsOperatorVisible, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource BooleanToVisibilityCollapsedConverter}}"
-                                          HorizontalAlignment="Left"
-                                          VerticalAlignment="Top"
-                                          VerticalContentAlignment="Center"
-                                          Panel.ZIndex="1"
-                                          Width="80"
-                                          ToolTip="Combine with previous filters"
-                                          SelectedItem="{Binding GroupOperatorName, RelativeSource={RelativeSource TemplatedParent}}">
-                                    <sys:String>And</sys:String>
-                                    <sys:String>Or</sys:String>
-                                </ComboBox>
+                            <!--  Operator ComboBox  -->
+                            <ComboBox x:Name="PART_OperatorComboBox"
+                                      Style="{StaticResource SdgComboBoxStyle}"
+                                      Grid.Row="0"
+                                      Visibility="{Binding IsOperatorVisible, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource BooleanToVisibilityCollapsedConverter}}"
+                                      HorizontalAlignment="Left"
+                                      VerticalAlignment="Top"
+                                      VerticalContentAlignment="Center"
+                                      Panel.ZIndex="1"
+                                      Width="80"
+                                      ToolTip="Combine with previous filters"
+                                      SelectedItem="{Binding GroupOperatorName, RelativeSource={RelativeSource TemplatedParent}}">
+                                <sys:String>And</sys:String>
+                                <sys:String>Or</sys:String>
+                            </ComboBox>
 
-                                <!--  Rules Interface  -->
-                                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
-                                    <Grid>
-                                        <Grid.RowDefinitions>
-                                            <RowDefinition Height="Auto" />
-                                            <RowDefinition Height="Auto" />
-                                        </Grid.RowDefinitions>
+                            <!--  Tabbed Interface: Filter Rules + Filter Values  -->
+                            <TabControl x:Name="PART_TabControl"
+                                        Style="{StaticResource SdgTabControlStyle}"
+                                        Grid.Row="1">
 
-                                        <!--  Existing search groups  -->
-                                        <ContentControl Grid.Row="0" Content="{Binding SearchTemplateController, RelativeSource={RelativeSource TemplatedParent}}">
+                                <!--  TAB 1: Filter Rules (existing functionality)  -->
+                                <TabItem Style="{StaticResource SdgTabItemStyle}" Header="Filter Rules">
+                                    <ScrollViewer Margin="0,4,0,0" VerticalScrollBarVisibility="Auto">
+                                        <ContentControl Content="{Binding SearchTemplateController, RelativeSource={RelativeSource TemplatedParent}}">
                                             <ContentControl.Style>
                                                 <Style TargetType="ContentControl">
                                                     <Setter Property="ContentTemplate">
@@ -263,43 +255,186 @@
                                                 </Style>
                                             </ContentControl.Style>
                                         </ContentControl>
+                                    </ScrollViewer>
+                                </TabItem>
 
-                                        <!--  Action Buttons  -->
-                                        <StackPanel Grid.Row="1"
-                                                    Orientation="Horizontal"
-                                                    Margin="0,8,0,0"
-                                                    HorizontalAlignment="Center">
-                                            <Button Command="{Binding AddSearchTemplateCommand, RelativeSource={RelativeSource TemplatedParent}}"
-                                                    Margin="0,0,8,0"
-                                                    Padding="8,4"
-                                                    MinWidth="100">
-                                                <StackPanel Orientation="Horizontal">
-                                                    <TextBlock Text="&#xE109;"
-                                                               Margin="0,0,4,0"
-                                                               VerticalAlignment="Center"
-                                                               FontFamily="Segoe MDL2 Assets"
-                                                               FontSize="12" />
-                                                    <TextBlock Text="Add Rule" VerticalAlignment="Center" />
-                                                </StackPanel>
-                                            </Button>
+                                <!--  TAB 2: Filter Values (checkbox list)  -->
+                                <TabItem Style="{StaticResource SdgTabItemStyle}" Header="Filter Values">
+                                    <DockPanel Margin="0,4,0,0">
 
-                                            <Button Command="{Binding ClearFilterCommand, RelativeSource={RelativeSource TemplatedParent}}"
-                                                    Padding="8,4"
-                                                    MinWidth="80">
-                                                <StackPanel Orientation="Horizontal">
-                                                    <TextBlock Text="&#xE10A;"
-                                                               Margin="0,0,4,0"
-                                                               VerticalAlignment="Center"
-                                                               FontFamily="Segoe MDL2 Assets"
-                                                               FontSize="12" />
-                                                    <TextBlock Text="Clear All" VerticalAlignment="Center" />
-                                                </StackPanel>
-                                            </Button>
-                                        </StackPanel>
-                                    </Grid>
-                                </ScrollViewer>
+                                        <!--  Top: Select All checkbox + Search  -->
+                                        <Grid DockPanel.Dock="Top" Margin="0,0,0,4">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
+
+                                            <CheckBox Grid.Column="0"
+                                                      IsChecked="{Binding FilterValueManager.SelectAllState, RelativeSource={RelativeSource AncestorType=sdg:ColumnFilterEditor}, Mode=OneWay}"
+                                                      Command="{Binding SelectAllValuesCommand, RelativeSource={RelativeSource AncestorType=sdg:ColumnFilterEditor}}"
+                                                      Margin="0,0,8,0"
+                                                      Style="{StaticResource SdgCheckBoxStyle}"
+                                                      IsThreeState="True"
+                                                      Content="Select All"
+                                                      FontSize="11" />
+                                            <TextBox Grid.Column="1"
+                                                     Text="{Binding FilterValueManager.SearchText, RelativeSource={RelativeSource AncestorType=sdg:ColumnFilterEditor}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                                                     Padding="4,2"
+                                                     VerticalContentAlignment="Center"
+                                                     FontSize="11" />
+                                        </Grid>
+
+                                        <!--  Bottom: Status  -->
+                                        <TextBlock DockPanel.Dock="Bottom"
+                                                   Foreground="Gray"
+                                                   Margin="0,4,0,2"
+                                                   HorizontalAlignment="Right"
+                                                   FontSize="11">
+                                            <TextBlock.Text>
+                                                <MultiBinding StringFormat="{}{0} / {1} selected">
+                                                    <Binding RelativeSource="{RelativeSource AncestorType=sdg:ColumnFilterEditor}" Path="FilterValueManager.CheckedCount" />
+                                                    <Binding RelativeSource="{RelativeSource AncestorType=sdg:ColumnFilterEditor}" Path="FilterValueManager.TotalCount" />
+                                                </MultiBinding>
+                                            </TextBlock.Text>
+                                        </TextBlock>
+
+                                        <!--  Center: Flat list for non-DateTime, TreeView for DateTime.
+                                             Wrapped in a Grid so whichever is visible fills the DockPanel's remaining space.  -->
+                                        <Grid>
+
+                                        <!--  Flat checkbox list (hidden when DateTime)  -->
+                                        <ListBox Background="Transparent"
+                                                 BorderThickness="0"
+                                                 ItemsSource="{Binding FilterValueManager.ValueItems, RelativeSource={RelativeSource AncestorType=sdg:ColumnFilterEditor}}"
+                                                 ScrollViewer.CanContentScroll="True"
+                                                 VirtualizingPanel.IsVirtualizing="True"
+                                                 VirtualizingPanel.VirtualizationMode="Recycling">
+                                            <ListBox.Style>
+                                                <Style TargetType="ListBox">
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding FilterValueManager.IsDateTimeColumn, RelativeSource={RelativeSource AncestorType=sdg:ColumnFilterEditor}}" Value="True">
+                                                            <Setter Property="Visibility" Value="Collapsed" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </ListBox.Style>
+                                            <ListBox.ItemContainerStyle>
+                                                <Style TargetType="ListBoxItem">
+                                                    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                                    <Setter Property="Padding" Value="0" />
+                                                    <Setter Property="Background" Value="Transparent" />
+                                                    <Setter Property="Visibility" Value="{Binding IsVisible, Converter={StaticResource BooleanToVisibilityCollapsedConverter}}" />
+                                                    <Style.Triggers>
+                                                        <Trigger Property="IsSelected" Value="True">
+                                                            <Setter Property="Background" Value="Transparent" />
+                                                        </Trigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </ListBox.ItemContainerStyle>
+                                            <ListBox.ItemTemplate>
+                                                <DataTemplate>
+                                                    <CheckBox IsChecked="{Binding IsChecked}"
+                                                              Margin="2,1"
+                                                              Style="{StaticResource SdgCheckBoxStyle}"
+                                                              VerticalContentAlignment="Center">
+                                                        <CheckBox.Content>
+                                                            <Grid>
+                                                                <Grid.ColumnDefinitions>
+                                                                    <ColumnDefinition Width="*" />
+                                                                    <ColumnDefinition Width="Auto" />
+                                                                </Grid.ColumnDefinitions>
+                                                                <TextBlock Grid.Column="0"
+                                                                           Text="{Binding DisplayValue}"
+                                                                           VerticalAlignment="Center" />
+                                                                <TextBlock Grid.Column="1"
+                                                                           Foreground="Gray"
+                                                                           Text="{Binding Count, StringFormat='({0})'}"
+                                                                           Margin="8,0,0,0"
+                                                                           VerticalAlignment="Center"
+                                                                           FontSize="10" />
+                                                            </Grid>
+                                                        </CheckBox.Content>
+                                                    </CheckBox>
+                                                </DataTemplate>
+                                            </ListBox.ItemTemplate>
+                                        </ListBox>
+
+                                        <!--  DateTime TreeView (hidden when NOT DateTime)  -->
+                                        <TreeView Background="Transparent"
+                                                  BorderThickness="0"
+                                                  ItemsSource="{Binding FilterValueManager.DateTreeRoots, RelativeSource={RelativeSource AncestorType=sdg:ColumnFilterEditor}}">
+                                            <TreeView.Style>
+                                                <Style TargetType="TreeView">
+                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding FilterValueManager.IsDateTimeColumn, RelativeSource={RelativeSource AncestorType=sdg:ColumnFilterEditor}}" Value="True">
+                                                            <Setter Property="Visibility" Value="Visible" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TreeView.Style>
+                                            <TreeView.ItemContainerStyle>
+                                                <Style TargetType="TreeViewItem">
+                                                    <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
+                                                </Style>
+                                            </TreeView.ItemContainerStyle>
+                                            <TreeView.ItemTemplate>
+                                                <HierarchicalDataTemplate ItemsSource="{Binding Children}">
+                                                    <CheckBox IsChecked="{Binding IsChecked}"
+                                                              Margin="2,1"
+                                                              Style="{StaticResource SdgCheckBoxStyle}"
+                                                              IsThreeState="False">
+                                                        <CheckBox.Content>
+                                                            <StackPanel Orientation="Horizontal">
+                                                                <TextBlock Text="{Binding DisplayName}" VerticalAlignment="Center" />
+                                                                <TextBlock Foreground="Gray"
+                                                                           Text="{Binding TotalCount, StringFormat=' ({0})'}"
+                                                                           VerticalAlignment="Center"
+                                                                           FontSize="10" />
+                                                            </StackPanel>
+                                                        </CheckBox.Content>
+                                                    </CheckBox>
+                                                </HierarchicalDataTemplate>
+                                            </TreeView.ItemTemplate>
+                                        </TreeView>
+                                        </Grid>
+                                    </DockPanel>
+                                </TabItem>
+                            </TabControl>
+
+                            <!--  Clear Filter pinned to the bottom of the popup (visible from both tabs)  -->
+                                <Border Grid.Row="2" Background="{StaticResource Sdg.Surface.Tertiary}" BorderBrush="{StaticResource Sdg.Border.Strong}" CornerRadius="0,0,4,4" Margin="-4,0,-4,-4" Padding="4"  BorderThickness="0,1,0,0">
+                                    
+                            <Button 
+                                    Style="{StaticResource SdgButtonStyle}"
+                                    Command="{Binding ClearFilterCommand, RelativeSource={RelativeSource TemplatedParent}}"
+                                    Margin="0,0,0,0"
+                                    HorizontalAlignment="Left"
+                                    Content="Clear Filter" />
+                                </Border>
                             </Grid>
                         </Border>
+
+                        <!--  Bottom-left resize grip  -->
+                        <Thumb x:Name="PART_ResizeBottomLeft"
+                               Width="14"
+                               Height="14"
+                               HorizontalAlignment="Left"
+                               VerticalAlignment="Bottom"
+                               Cursor="SizeNESW"
+                               Style="{StaticResource SdgResizeThumbStyle}"
+                               Panel.ZIndex="10" />
+
+                        <!--  Bottom-right resize grip  -->
+                        <Thumb x:Name="PART_ResizeBottomRight"
+                               Width="14"
+                               Height="14"
+                               HorizontalAlignment="Right"
+                               VerticalAlignment="Bottom"
+                               Cursor="SizeNWSE"
+                               Style="{StaticResource SdgResizeThumbStyle}"
+                               Panel.ZIndex="10" />
+                    </Grid>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>

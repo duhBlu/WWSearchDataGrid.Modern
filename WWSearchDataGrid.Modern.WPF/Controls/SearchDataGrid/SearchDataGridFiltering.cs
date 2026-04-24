@@ -90,6 +90,9 @@ namespace WWSearchDataGrid.Modern.WPF
 
                 UpdateFilterPanel();
 
+                // Ensure horizontal scrollbar stays usable when filter produces zero rows
+                InjectPlaceholderRowIfEmpty();
+
                 // Update select-all checkbox states after filtering
                 Dispatcher.BeginInvoke(new Action(() =>
                 {
@@ -442,6 +445,9 @@ namespace WWSearchDataGrid.Modern.WPF
 
             Items.Filter = null;
             SearchFilter = null;
+
+            // Restore normal scrollbar if empty-state override was active
+            InjectPlaceholderRowIfEmpty();
         }
         
         /// <summary>
@@ -591,7 +597,7 @@ namespace WWSearchDataGrid.Modern.WPF
 
                 var filterInfo = new ColumnFilterInfo
                 {
-                    ColumnName = GridColumn.GetEffectiveColumnDisplayName(column.CurrentColumn) ?? "Unknown",
+                    ColumnName = column.ResolveColumnDisplayName() ?? "Unknown",
                     BindingPath = column.BindingPath,
                     IsActive = true,
                     FilterData = column,
@@ -669,17 +675,15 @@ namespace WWSearchDataGrid.Modern.WPF
                 // Only update columns that are inheriting the grid value (not explicitly set)
                 foreach (var columnSearchBox in DataColumns)
                 {
-                    if (columnSearchBox != null && columnSearchBox.CurrentColumn != null)
-                    {
-                        // Check if the column has an explicitly set local value
-                        var localValue = columnSearchBox.CurrentColumn.ReadLocalValue(GridColumn.EnableRuleFilteringProperty);
+                    if (columnSearchBox?.GridColumn == null)
+                        continue;
 
-                        if (localValue == DependencyProperty.UnsetValue)
-                        {
-                            // Column is inheriting - update it to reflect the new grid value
-                            columnSearchBox.UpdateIsComplexFilteringEnabled();
-                        }
-                        // If column has explicit value, don't update it (it overrides the grid setting)
+                    // Check if EnableRuleFiltering was explicitly set on the descriptor
+                    var localValue = columnSearchBox.GridColumn.ReadLocalValue(GridColumn.EnableRuleFilteringProperty);
+                    if (localValue == DependencyProperty.UnsetValue)
+                    {
+                        // Column is inheriting — update it to reflect the new grid value
+                        columnSearchBox.UpdateIsComplexFilteringEnabled();
                     }
                 }
             }
@@ -709,6 +713,7 @@ namespace WWSearchDataGrid.Modern.WPF
                 {
                     Items.Filter = null;
                     SearchFilter = null;
+                    ClearPlaceholderState();
                 }
             }
             catch (Exception ex)
@@ -751,19 +756,27 @@ namespace WWSearchDataGrid.Modern.WPF
 
                     if (controller != null && template != null)
                     {
-                        // Check if this is the last template in the controller and if removing the value would make it invalid
-                        var totalTemplates = controller.SearchGroups.SelectMany(g => g.SearchTemplates).Count();
+                        // Count only templates that have actual filters, not default empty ones
+                        var activeTemplateCount = controller.SearchGroups
+                            .SelectMany(g => g.SearchTemplates)
+                            .Count(t => t.HasCustomFilter);
                         var wouldBeInvalid = !template.WouldBeValidAfterValueRemoval(e.RemovableToken.RemovalContext);
 
-                        if (totalTemplates <= 1 && wouldBeInvalid)
+                        if (activeTemplateCount <= 1 && wouldBeInvalid)
                         {
-                            // If this is the last template and it would become invalid, clear the entire filter
+                            // If this is the last active template and it would become invalid, clear the entire filter
                             columnSearchBox.ClearFilter();
                         }
                         else
                         {
                             // Otherwise, handle the value removal normally
                             controller.HandleValueRemoval(template, e.RemovableToken.RemovalContext);
+
+                            // Sync the column's HasActiveFilter state after the controller update.
+                            // HandleValueRemoval may remove the template entirely, setting
+                            // HasCustomExpression = false, but that doesn't propagate to
+                            // the ColumnSearchBox's HasActiveFilter on its own.
+                            columnSearchBox.UpdateHasActiveFilterState();
                         }
                     }
 

@@ -6,6 +6,7 @@
                     xmlns:converters="clr-namespace:WWSearchDataGrid.Modern.WPF.Converters">
 
     <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF;component/Themes/Controls/Primitives/DefaultControls.xaml" />
         <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF;component/Themes/Controls/Primitives/SearchTextBox.xaml" />
     </ResourceDictionary.MergedDictionaries>
 
@@ -20,11 +21,11 @@
     <!--  Single SearchTextBox Template  -->
     <DataTemplate x:Key="SingleSearchTextBoxTemplate">
         <sdg:SearchTextBox Style="{StaticResource GenericSearchTextboxStyle}"
-                           Text="{Binding SelectedValue, UpdateSourceTrigger=PropertyChanged}"
+                           Text="{Binding SelectedValue, UpdateSourceTrigger=LostFocus}"
                            ItemsSource="{Binding SearchTemplateController.DisplayColumnValues}"
                            SelectedItem="{Binding SelectedItem, UpdateSourceTrigger=PropertyChanged}"
-                           ColumnValueCounts="{Binding SearchTemplateController.ColumnValueCounts, UpdateSourceTrigger=PropertyChanged}"
-
+                           ColumnValueCounts="{Binding SearchTemplateController.DisplayColumnValueCounts, UpdateSourceTrigger=PropertyChanged}"
+                           ShowClearButton="False"
                            ShowToggleButton="True"
                            PreserveValueOnSourceChange="True"
                            Watermark="Enter or select value..." />
@@ -37,12 +38,12 @@
                        Margin="0,0,5,0"
                        VerticalAlignment="Center" />
             <sdg:SearchTextBox Style="{StaticResource GenericSearchTextboxStyle}"
-                               Text="{Binding SelectedValue, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
+                               Text="{Binding SelectedValue, UpdateSourceTrigger=LostFocus, ValidatesOnDataErrors=True}"
                                MinWidth="120"
-                               ColumnValueCounts="{Binding SearchTemplateController.ColumnValueCounts, UpdateSourceTrigger=PropertyChanged}"
+                               ColumnValueCounts="{Binding SearchTemplateController.DisplayColumnValueCounts, UpdateSourceTrigger=PropertyChanged}"
                                ItemsSource="{Binding SearchTemplateController.DisplayColumnValues}"
                                SelectedItem="{Binding SelectedItem, UpdateSourceTrigger=PropertyChanged}"
-    
+    ShowClearButton="False"
                                ShowToggleButton="True"
                                PreserveValueOnSourceChange="True"
                                Watermark="Enter or select..." />
@@ -50,12 +51,12 @@
                        Margin="10,0,5,0"
                        VerticalAlignment="Center" />
             <sdg:SearchTextBox Style="{StaticResource GenericSearchTextboxStyle}"
-                               Text="{Binding SelectedSecondaryValue, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
+                               Text="{Binding SelectedSecondaryValue, UpdateSourceTrigger=LostFocus, ValidatesOnDataErrors=True}"
                                MinWidth="120"
-                               ColumnValueCounts="{Binding SearchTemplateController.ColumnValueCounts, UpdateSourceTrigger=PropertyChanged}"
+                               ColumnValueCounts="{Binding SearchTemplateController.DisplayColumnValueCounts, UpdateSourceTrigger=PropertyChanged}"
                                ItemsSource="{Binding SearchTemplateController.DisplayColumnValues}"
                                SelectedItem="{Binding SelectedSecondaryItem, UpdateSourceTrigger=PropertyChanged}"
-    
+    ShowClearButton="False"
                                ShowToggleButton="True"
                                PreserveValueOnSourceChange="True"
                                Watermark="Enter or select..." />
@@ -112,6 +113,7 @@
             </Grid.RowDefinitions>
 
             <Button Grid.Row="0"
+                    Style="{StaticResource SdgButtonStyle}"
                     Command="{Binding AddValueCommand}"
                     Margin="0,0,0,5"
                     HorizontalAlignment="Left"
@@ -159,11 +161,11 @@
                                 </Grid.ColumnDefinitions>
                                 <sdg:SearchTextBox Style="{StaticResource GenericSearchTextboxStyle}"
                                                    Grid.Column="0"
-                                                   Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}"
+                                                   Text="{Binding Value, UpdateSourceTrigger=LostFocus}"
                                                    ItemsSource="{Binding DataContext.SearchTemplateController.DisplayColumnValues, RelativeSource={RelativeSource AncestorType=ListBox}}"
-                                                   ColumnValueCounts="{Binding SearchTemplateController.ColumnValueCounts, UpdateSourceTrigger=PropertyChanged}"
+                                                   ColumnValueCounts="{Binding SearchTemplateController.DisplayColumnValueCounts, UpdateSourceTrigger=PropertyChanged}"
                                                    SelectedItem="{Binding SelectedItem, UpdateSourceTrigger=PropertyChanged}"
-
+                                                   ShowClearButton="False"
                                                    ShowToggleButton="True"
                                                    PreserveValueOnSourceChange="True"
                                                    Watermark="Enter or select value..." />
@@ -195,8 +197,7 @@
                                                                               HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
                                                                               VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
                                                                               RecognizesAccessKey="True"
-                                                                              TextElement.Foreground="{TemplateBinding Foreground}"
-                                                                              SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" />
+                                                                              TextElement.Foreground="{TemplateBinding Foreground}" />
                                                         </Border>
                                                     </ControlTemplate>
                                                 </Setter.Value>
@@ -235,6 +236,7 @@
             </Grid.RowDefinitions>
 
             <Button Grid.Row="0"
+                    Style="{StaticResource SdgButtonStyle}"
                     Command="{Binding AddDateCommand}"
                     Margin="0,0,0,5"
                     HorizontalAlignment="Left"
@@ -298,8 +300,7 @@
                                                                               HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
                                                                               VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
                                                                               RecognizesAccessKey="True"
-                                                                              TextElement.Foreground="{TemplateBinding Foreground}"
-                                                                              SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" />
+                                                                              TextElement.Foreground="{TemplateBinding Foreground}" />
                                                         </Border>
                                                     </ControlTemplate>
                                                 </Setter.Value>
@@ -331,7 +332,7 @@
 
     <!--  Date Interval CheckList Template  -->
     <DataTemplate x:Key="DateIntervalCheckListTemplate">
-        <ScrollViewer MaxHeight="200">
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
             <ItemsControl ItemsSource="{Binding DateIntervals}">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>

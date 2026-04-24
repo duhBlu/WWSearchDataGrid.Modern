@@ -104,6 +104,25 @@ namespace WWSearchDataGrid.Modern.Core
     }
 
     /// <summary>
+    /// Evaluator for NotBetweenDates search type
+    /// </summary>
+    internal class NotBetweenDatesEvaluator : SearchEvaluatorBase
+    {
+        public override SearchType SearchType => SearchType.NotBetweenDates;
+
+        public override bool Evaluate(object columnValue, SearchCondition searchCondition)
+        {
+            if (columnValue is DateTime dateValue &&
+                searchCondition.PrimaryValue is DateTime fromDate &&
+                searchCondition.SecondaryValue is DateTime toDate)
+            {
+                return dateValue.Date < fromDate.Date || dateValue.Date > toDate.Date;
+            }
+            return true;
+        }
+    }
+
+    /// <summary>
     /// Evaluator for Yesterday search type
     /// </summary>
     internal class YesterdayEvaluator : SearchEvaluatorBase

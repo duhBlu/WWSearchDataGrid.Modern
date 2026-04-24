@@ -323,7 +323,7 @@ namespace WWSearchDataGrid.Modern.WPF
 
         /// <summary>
         /// Internal handler for cell value changes that updates caches and raises events.
-        /// NOTE: When a column uses GridColumn.FilterMemberPath that differs from its Binding.Path,
+        /// NOTE: When a column uses a FilterMemberPath that differs from its Binding.Path,
         /// this method prioritizes finding the ColumnSearchBox by column reference to ensure
         /// cache updates work correctly even when the paths differ.
         /// </summary>

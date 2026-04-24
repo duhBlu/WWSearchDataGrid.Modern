@@ -202,15 +202,13 @@ namespace WWSearchDataGrid.Modern.Core
 
         public override bool Evaluate(object columnValue, SearchCondition searchCondition, CollectionContext collectionContext)
         {
-            if (collectionContext == null)
+            if (collectionContext == null || columnValue == null)
                 return false;
 
             try
             {
                 var valueGroups = collectionContext.GetValueGroups();
-                string columnValueString = columnValue?.ToString() ?? string.Empty;
-                
-                return valueGroups.TryGetValue(columnValueString, out var items) && items.Count == 1;
+                return valueGroups.TryGetValue(columnValue, out var items) && items.Count == 1;
             }
             catch (Exception ex)
             {
@@ -235,15 +233,13 @@ namespace WWSearchDataGrid.Modern.Core
 
         public override bool Evaluate(object columnValue, SearchCondition searchCondition, CollectionContext collectionContext)
         {
-            if (collectionContext == null)
+            if (collectionContext == null || columnValue == null)
                 return false;
 
             try
             {
                 var valueGroups = collectionContext.GetValueGroups();
-                string columnValueString = columnValue?.ToString() ?? string.Empty;
-                
-                return valueGroups.TryGetValue(columnValueString, out var items) && items.Count > 1;
+                return valueGroups.TryGetValue(columnValue, out var items) && items.Count > 1;
             }
             catch (Exception ex)
             {

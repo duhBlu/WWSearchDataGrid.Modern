@@ -98,6 +98,10 @@ namespace WWSearchDataGrid.Modern.WPF
             DependencyProperty.Register("SearchTooltipStyle", typeof(Style), typeof(ColumnSearchBox),
                 new PropertyMetadata(null));
 
+        public static readonly DependencyProperty IsFilterVisibleProperty =
+            DependencyProperty.Register("IsFilterVisible", typeof(bool), typeof(ColumnSearchBox),
+                new PropertyMetadata(true));
+
         #endregion
         
         #region Properties
@@ -192,6 +196,22 @@ namespace WWSearchDataGrid.Modern.WPF
             private set => SetValue(IsCheckboxColumnProperty, value);
         }
 
+
+        /// <summary>
+        /// Gets or sets whether the filter UI is visible for this column.
+        /// Bound to <see cref="GridColumn.AllowFiltering"/> when a descriptor is present.
+        /// </summary>
+        public bool IsFilterVisible
+        {
+            get => (bool)GetValue(IsFilterVisibleProperty);
+            set => SetValue(IsFilterVisibleProperty, value);
+        }
+
+        /// <summary>
+        /// Gets the <see cref="WPF.GridColumn"/> descriptor that generated the internal
+        /// <see cref="DataGridColumn"/> this search box is filtering.
+        /// </summary>
+        public GridColumn GridColumn { get; internal set; }
 
         /// <summary>
         /// Gets the search template controller
@@ -415,17 +435,11 @@ namespace WWSearchDataGrid.Modern.WPF
         {
             if (d is ColumnSearchBox control && (control._filterPopup?.IsOpen != true))
             {
-                // If text is empty, clear only the temporary template
+                // Filter is only applied on Enter key or focus loss, not while typing.
+                // If text is cleared, remove the temporary template immediately.
                 if (string.IsNullOrWhiteSpace((string)e.NewValue))
                 {
                     control.ClearTemporaryTemplate();
-                }
-                else
-                {
-                    control.CreateTemporaryTemplateImmediate();
-                    
-                    // Still use timer for debounced filter application
-                    control.StartOrResetChangeTimer();
                 }
             }
         }
@@ -442,20 +456,29 @@ namespace WWSearchDataGrid.Modern.WPF
                 ClearSearchTextAndTemporaryFilter();
             else if (e.Key == Key.Enter)
             {
-                // Only create permanent filters if complex filtering is enabled
                 if (IsComplexFilteringEnabled)
                 {
-                    // Ctrl+Enter creates permanent filter and refocuses textbox
+                    // Complex mode: Enter creates a permanent filter chip and refocuses
                     CreatePermanentFilterAndRefocus();
                 }
-                // In simple mode, Enter key does nothing - text persists and filters continue
+                else
+                {
+                    // Simple mode: Enter commits the text as a live filter
+                    CommitSearchText();
+                }
             }
-            else if (e.Key == Key.Tab && (Keyboard.Modifiers & ModifierKeys.Shift) == ModifierKeys.Shift)
+            else if (e.Key == Key.Tab)
             {
-                e.Handled = true; // stop DataGrid from stealing it
-                var req = new TraversalRequest(FocusNavigationDirection.Previous);
-                // move focus the ColumnSearchBox to its previous peer
-                (this as UIElement).MoveFocus(req);
+                // Commit the filter when tabbing away
+                if (!string.IsNullOrWhiteSpace(SearchText))
+                    CommitSearchText();
+
+                if ((Keyboard.Modifiers & ModifierKeys.Shift) == ModifierKeys.Shift)
+                {
+                    e.Handled = true;
+                    var req = new TraversalRequest(FocusNavigationDirection.Previous);
+                    (this as UIElement).MoveFocus(req);
+                }
             }
         }
 
@@ -486,7 +509,7 @@ namespace WWSearchDataGrid.Modern.WPF
                     if (SourceDataGrid.Items != null && SourceDataGrid.Items.Count > 0)
                     {
                         // Re-setup the lazy loading provider
-                        SearchTemplateController.SetupColumnDataLazy(GridColumn.GetEffectiveColumnDisplayName(CurrentColumn), GetColumnValuesFromDataGrid, BindingPath);
+                        SearchTemplateController.SetupColumnDataLazy(ResolveColumnDisplayName(), GetColumnValuesFromDataGrid, BindingPath);
 
                         SearchTemplateController.RefreshColumnValues();
 
@@ -513,7 +536,7 @@ namespace WWSearchDataGrid.Modern.WPF
                     else
                     {
                         // No items yet - just set up basic structure
-                        SearchTemplateController.SetupColumnDataLazy(GridColumn.GetEffectiveColumnDisplayName(CurrentColumn), GetColumnValuesFromDataGrid, BindingPath);
+                        SearchTemplateController.SetupColumnDataLazy(ResolveColumnDisplayName(), GetColumnValuesFromDataGrid, BindingPath);
 
                         // Only refresh if cache exists - keep lazy loading for empty sources
                         //SearchTemplateController.RefreshColumnValues();
@@ -534,20 +557,20 @@ namespace WWSearchDataGrid.Modern.WPF
 
         private void OnColumnSearchBoxLostFocus(object sender, RoutedEventArgs e)
         {
-            // Only track focus changes for within-container checks
             // Use a small delay to allow focus to settle before checking
             Dispatcher.BeginInvoke(new Action(() =>
             {
                 var focusedElement = Keyboard.FocusedElement as DependencyObject;
-                if (focusedElement != null)
+                if (focusedElement != null && IsWithinSearchBox(focusedElement))
                 {
-                    // Check if the newly focused element is within this ColumnSearchBox
-                    var isWithinSearchBox = IsWithinSearchBox(focusedElement);
-                    if (isWithinSearchBox)
-                    {
-                        // Focus is still within this ColumnSearchBox, no action needed
-                        return;
-                    }
+                    // Focus is still within this ColumnSearchBox, no action needed
+                    return;
+                }
+
+                // Focus left the search box - commit any pending search text as a filter
+                if (!string.IsNullOrWhiteSpace(SearchText) && _temporarySearchTemplate == null)
+                {
+                    CommitSearchText();
                 }
             }), DispatcherPriority.Background);
         }
@@ -585,13 +608,79 @@ namespace WWSearchDataGrid.Modern.WPF
 
         #endregion
 
+        #region Descriptor Resolution
+
+        /// <summary>
+        /// Resolves the effective column display name from the descriptor.
+        /// </summary>
+        internal string ResolveColumnDisplayName()
+        {
+            if (GridColumn == null)
+                return null;
+
+            if (!string.IsNullOrEmpty(GridColumn.ColumnDisplayName))
+                return GridColumn.ColumnDisplayName;
+
+            return GridColumn.HeaderCaption;
+        }
+
+        /// <summary>
+        /// Resolves the effective filter member path from the descriptor.
+        /// </summary>
+        internal string ResolveFilterMemberPath()
+        {
+            return GridColumn?.FilterMemberPath ?? GridColumn?.FieldName;
+        }
+
+        /// <summary>
+        /// Resolves the default search mode from the descriptor.
+        /// </summary>
+        internal DefaultSearchMode ResolveDefaultSearchMode()
+        {
+            return GridColumn?.DefaultSearchMode ?? DefaultSearchMode.Contains;
+        }
+
+        /// <summary>
+        /// Resolves whether checkbox filtering should be used from the descriptor.
+        /// </summary>
+        internal bool ResolveUseCheckBoxInSearchBox()
+        {
+            return GridColumn?.UseCheckBoxInSearchBox ?? false;
+        }
+
+        /// <summary>
+        /// Resolves the display mask pattern from the descriptor.
+        /// </summary>
+        internal string ResolveDisplayMask()
+        {
+            return GridColumn?.DisplayMask;
+        }
+
+        /// <summary>
+        /// Resolves whether complex (rule) filtering is enabled for this column.
+        /// Checks if the user explicitly set it on the descriptor, otherwise
+        /// falls through to the grid-level default.
+        /// </summary>
+        internal bool ResolveEnableRuleFiltering()
+        {
+            if (GridColumn != null)
+            {
+                var localValue = GridColumn.ReadLocalValue(GridColumn.EnableRuleFilteringProperty);
+                if (localValue != DependencyProperty.UnsetValue)
+                    return (bool)localValue;
+            }
+
+            return SourceDataGrid?.EnableRuleFiltering ?? true;
+        }
+
+        #endregion
 
         #region Private Methods
 
         /// <summary>
         /// Updates the HasActiveFilter property based on current filter state
         /// </summary>
-        private void UpdateHasActiveFilterState()
+        internal void UpdateHasActiveFilterState()
         {
             bool hasFilter = false;
 
@@ -636,36 +725,7 @@ namespace WWSearchDataGrid.Modern.WPF
         /// </summary>
         internal void UpdateIsComplexFilteringEnabled()
         {
-            bool isEnabled = true;
-
-            if (CurrentColumn != null)
-            {
-                // Check if the column has an explicitly set local value (not inherited)
-                var localValue = CurrentColumn.ReadLocalValue(GridColumn.EnableRuleFilteringProperty);
-
-                if (localValue != DependencyProperty.UnsetValue)
-                {
-                    // Column has an explicit value set - use it (this is the override)
-                    isEnabled = (bool)localValue;
-                }
-                else if (SourceDataGrid != null)
-                {
-                    // Column is using inherited value - use grid-level setting
-                    isEnabled = SourceDataGrid.EnableRuleFiltering;
-                }
-                else
-                {
-                    // No grid and no explicit column value - use default
-                    isEnabled = GridColumn.GetEnableRuleFiltering(CurrentColumn);
-                }
-            }
-            else if (SourceDataGrid != null)
-            {
-                // No column set - fall back to grid-level setting
-                isEnabled = SourceDataGrid.EnableRuleFiltering;
-            }
-
-            IsComplexFilteringEnabled = isEnabled;
+            IsComplexFilteringEnabled = ResolveEnableRuleFiltering();
         }
 
         /// <summary>
@@ -684,12 +744,17 @@ namespace WWSearchDataGrid.Modern.WPF
                 {
                     // Create permanent filter
                     AddIncrementalContainsFilter();
-                    
+
                     // Clear search text
                     ClearSearchTextOnly();
-                    
-                    // Refocus the textbox for seamless workflow
-                    searchTextBox?.Focus();
+
+                    // Refocus the textbox after layout/filter updates complete,
+                    // otherwise the DataGrid may steal focus during FilterItemsSource
+                    Dispatcher.BeginInvoke(new Action(() =>
+                    {
+                        searchTextBox?.Focus();
+                        Keyboard.Focus(searchTextBox);
+                    }), DispatcherPriority.Input);
                 }
             }
             catch (Exception ex)
@@ -726,17 +791,26 @@ namespace WWSearchDataGrid.Modern.WPF
                 if (SourceDataGrid == null || CurrentColumn == null)
                     return;
 
+                // Look up the GridColumn descriptor if this column was generated from one
+                if (GridColumn == null)
+                    GridColumn = SourceDataGrid.FindGridColumnDescriptor(CurrentColumn);
+
+                // If the descriptor says filtering is disabled, hide this search box
+                if (GridColumn != null && !GridColumn.AllowFiltering)
+                {
+                    IsFilterVisible = false;
+                    Visibility = Visibility.Collapsed;
+                    return;
+                }
+
                 if (SearchTemplateController == null)
                 {
                     SearchTemplateController = new SearchTemplateController();
                 }
-                SearchTemplateController.ColumnName = GridColumn.GetEffectiveColumnDisplayName(CurrentColumn);
+                SearchTemplateController.ColumnName = ResolveColumnDisplayName();
 
-                // Three-tier fallback logic for determining the binding path:
-                // 1. FilterMemberPath (explicit override via GridColumn attached property)
-                // 2. SortMemberPath (standard DataGrid column property)
-                // 3. Binding path (extracted from DataGridBoundColumn.Binding)
-                string resolvedPath = GridColumn.GetFilterMemberPath(CurrentColumn);
+                // Resolve binding/filter path: descriptor → attached property → SortMemberPath → Binding.Path
+                string resolvedPath = ResolveFilterMemberPath();
 
                 if (string.IsNullOrEmpty(resolvedPath))
                 {
@@ -750,7 +824,6 @@ namespace WWSearchDataGrid.Modern.WPF
 
                 BindingPath = resolvedPath;
 
-                // Debug logging when FilterMemberPath is explicitly used
                 DetermineCheckboxColumnTypeFromColumnDefinition();
 
                 if (!SourceDataGrid.DataColumns.Contains(this))
@@ -762,15 +835,13 @@ namespace WWSearchDataGrid.Modern.WPF
                 SourceDataGrid.ItemsSourceChanged -= OnSourceDataGridItemsSourceChanged;
                 SourceDataGrid.ItemsSourceChanged += OnSourceDataGridItemsSourceChanged;
 
-                SearchTemplateController.SetupColumnDataLazy(GridColumn.GetEffectiveColumnDisplayName(CurrentColumn), GetColumnValuesFromDataGrid, BindingPath);
+                SearchTemplateController.SetupColumnDataLazy(ResolveColumnDisplayName(), GetColumnValuesFromDataGrid, BindingPath);
 
-                // Create display value provider from column attached properties (mask > converter > format)
-                SearchTemplateController.DisplayValueProvider = DisplayValueProviderFactory.Create(CurrentColumn);
+                // Create display value provider from descriptor (mask > converter > format)
+                SearchTemplateController.DisplayValueProvider = DisplayValueProviderFactory.Create(GridColumn);
 
                 // Store the mask pattern on the controller for display formatting (dropdowns, chips).
-                // The mask is NOT applied to filter inputs - per industry standard, filter inputs
-                // are plain text and compare against raw/display values. Mask is for cell editing only.
-                SearchTemplateController.DisplayMaskPattern = GridColumn.GetDisplayMask(CurrentColumn);
+                SearchTemplateController.DisplayMaskPattern = ResolveDisplayMask();
 
                 if (SourceDataGrid.Items != null && SourceDataGrid.Items.Count > 0)
                 {
@@ -809,7 +880,7 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
-        /// Determines if checkbox filtering should be used based on GridColumn.UseCheckBoxInSearchBox property
+        /// Clears the current filter state
         /// </summary>
         private void ClearFilterInternal()
         {

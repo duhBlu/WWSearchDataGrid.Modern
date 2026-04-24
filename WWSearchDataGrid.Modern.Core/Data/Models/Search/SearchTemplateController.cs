@@ -56,12 +56,24 @@ namespace WWSearchDataGrid.Modern.Core
         /// </summary>
         public object ColumnName { get; set; }
 
+        private IDisplayValueProvider _displayValueProvider;
+
         /// <summary>
         /// Gets or sets the display value provider for this column.
         /// When set, text-based filtering compares against display values instead of raw values,
         /// and filter dropdowns show formatted values.
         /// </summary>
-        public IDisplayValueProvider DisplayValueProvider { get; set; }
+        public IDisplayValueProvider DisplayValueProvider
+        {
+            get => _displayValueProvider;
+            set
+            {
+                _displayValueProvider = value;
+                OnPropertyChanged(nameof(DisplayValueProvider));
+                OnPropertyChanged(nameof(HasDisplayValueProvider));
+                OnPropertyChanged(nameof(DisplayColumnValues));
+            }
+        }
 
         /// <summary>
         /// Whether this controller has a display value provider configured.
@@ -105,6 +117,32 @@ namespace WWSearchDataGrid.Modern.Core
                     return ColumnValues.Select(v => v?.ToString() ?? string.Empty).ToList();
 
                 return ColumnValues.Select(v => DisplayValueProvider.FormatValue(v)).ToList();
+            }
+        }
+
+        /// <summary>
+        /// Gets occurrence counts mapped to display values.
+        /// When a display provider is configured, maps formatted display strings to their counts.
+        /// Falls back to raw value string keys when no provider is set.
+        /// </summary>
+        public IReadOnlyDictionary<object, int> DisplayColumnValueCounts
+        {
+            get
+            {
+                var rawCounts = ColumnValueCounts;
+                if (DisplayValueProvider == null || rawCounts == null)
+                    return rawCounts;
+
+                var displayCounts = new Dictionary<object, int>();
+                foreach (var kvp in rawCounts)
+                {
+                    string displayKey = DisplayValueProvider.FormatValue(kvp.Key);
+                    if (displayCounts.ContainsKey(displayKey))
+                        displayCounts[displayKey] += kvp.Value;
+                    else
+                        displayCounts[displayKey] = kvp.Value;
+                }
+                return displayCounts;
             }
         }
 
@@ -434,6 +472,8 @@ namespace WWSearchDataGrid.Modern.Core
                 // Values will be reloaded on next access
             }
             OnPropertyChanged(nameof(ColumnValues));
+            OnPropertyChanged(nameof(DisplayColumnValues));
+            OnPropertyChanged(nameof(DisplayColumnValueCounts));
         }
 
         /// <summary>
@@ -581,6 +621,7 @@ namespace WWSearchDataGrid.Modern.Core
 
                     // Notify bindings that related properties have changed
                     OnPropertyChanged(nameof(ColumnValueCounts));
+                    OnPropertyChanged(nameof(DisplayColumnValues));
                 }
                 catch (Exception ex)
                 {
@@ -864,17 +905,33 @@ namespace WWSearchDataGrid.Modern.Core
             if (template == null || context == null)
                 return;
 
-            // Apply business rules for template transformation before removal
+            // Apply business rules for template transformation before removal.
+            // TransformBetweenSearchType rearranges SelectedValue/SelectedSecondaryValue
+            // and changes the SearchType (e.g., Between → LessThanOrEqualTo).
+            // When it runs, the value shift IS the removal — skip HandleValueRemoval
+            // so RemovePrimaryValue doesn't null out the surviving value.
+            bool transformedBetween = false;
             if ((template.SearchType == SearchType.Between ||
                  template.SearchType == SearchType.NotBetween ||
                  template.SearchType == SearchType.BetweenDates) &&
                 (context.ValueType == ValueType.Primary || context.ValueType == ValueType.Secondary))
             {
                 template.TransformBetweenSearchType(context.ValueType);
+                transformedBetween = true;
             }
 
-            // Execute value removal on template
-            bool isTemplateStillValid = template.HandleValueRemoval(context);
+            bool isTemplateStillValid;
+            if (transformedBetween)
+            {
+                // Transformation already handled the value rearrangement.
+                // Just check if the template is still valid after the transformation.
+                isTemplateStillValid = template.IsValidFilter;
+            }
+            else
+            {
+                // Execute value removal on template
+                isTemplateStillValid = template.HandleValueRemoval(context);
+            }
 
             // Clean up template if it becomes invalid
             if (!isTemplateStillValid)
@@ -1009,7 +1066,14 @@ namespace WWSearchDataGrid.Modern.Core
         {
             if (DateTime.TryParse(value, out DateTime date))
             {
-                return date.ToString("yyyy-MM-dd");
+                // Use the column's display provider if available for consistent formatting
+                if (HasDisplayValueProvider)
+                    return GetDisplayValue(date);
+
+                // Default: show date + time if time is non-midnight, otherwise date only
+                return date.TimeOfDay != TimeSpan.Zero
+                    ? date.ToString("yyyy-MM-dd h:mm tt")
+                    : date.ToString("yyyy-MM-dd");
             }
             return value;
         }
@@ -1105,9 +1169,19 @@ namespace WWSearchDataGrid.Modern.Core
                 }
                 else if (HasDisplayValueProvider)
                 {
-                    // Format/converter provider: always show formatted
-                    value = GetDisplayValue(template.SelectedValue);
-                    secondaryValue = GetDisplayValue(template.SelectedSecondaryValue);
+                    // For converter/format providers: the user's typed text IS the display value.
+                    // Don't re-format it through the provider (e.g., passing "yes" through a bool→Yes/No
+                    // converter would incorrectly produce "No" since "yes" is not a boolean true).
+                    // Only format if the value is a non-string raw type (e.g., selected from dropdown as typed object).
+                    if (template.SelectedValue != null && !(template.SelectedValue is string))
+                        value = GetDisplayValue(template.SelectedValue);
+                    else
+                        value = rawValue;
+
+                    if (template.SelectedSecondaryValue != null && !(template.SelectedSecondaryValue is string))
+                        secondaryValue = GetDisplayValue(template.SelectedSecondaryValue);
+                    else
+                        secondaryValue = rawSecondaryValue;
                 }
                 else
                 {
@@ -1169,6 +1243,12 @@ namespace WWSearchDataGrid.Modern.Core
                         break;
                     case SearchType.BetweenDates:
                         components.SearchTypeText = "Between dates";
+                        components.PrimaryValue = FormatDateValue(value);
+                        components.SecondaryValue = FormatDateValue(secondaryValue);
+                        components.ValueOperatorText = "and";
+                        break;
+                    case SearchType.NotBetweenDates:
+                        components.SearchTypeText = "Not between dates";
                         components.PrimaryValue = FormatDateValue(value);
                         components.SecondaryValue = FormatDateValue(secondaryValue);
                         components.ValueOperatorText = "and";

@@ -30,10 +30,7 @@ namespace WWSearchDataGrid.Modern.SampleApp
         private int _itemCount;
 
         [ObservableProperty]
-        private int _itemsToGenerate = 5000;
-
-        [ObservableProperty]
-        private string _currentThemeName = "Generic";
+        private int _itemsToGenerate = 50000;
 
         [ObservableProperty]
         private bool _isGenerating;
@@ -72,7 +69,7 @@ namespace WWSearchDataGrid.Modern.SampleApp
             "Great Lakes Distribution", "Southwest Marketing Group", "Northern Alliance Sales", "Coastal Rep Network"
         };
 
-        private static readonly string[] ProductLines = { "Eclipse", "Aspect", "Horizon", "Summit" };
+        private static readonly string[] ProductLines = { "Eclipse", "Aspect", "Vistora", "Shiloh", "Nevara", "Test ProductLine 1" };
         private static readonly string?[] OrderStatuses = { "Submitted", "In Production", "Shipped", "Delivered", null };
         private static readonly string[] OrderLocations = { "Order Entry", "Production", "Shipping", "Complete" };
         private static readonly string[] OrderTypes = { "Standard", "Replacement Door/Drawer Front", "ASAP", "Sample", "Warranty" };
@@ -209,16 +206,6 @@ namespace WWSearchDataGrid.Modern.SampleApp
 
             GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced, blocking: true, compacting: true);
             GC.WaitForPendingFinalizers();
-        }
-
-        [RelayCommand]
-        private void ToggleTheme()
-        {
-            var currentTheme = ThemeManager.Instance.CurrentTheme;
-            var newTheme = currentTheme == ThemeType.Custom ? ThemeType.Generic : ThemeType.Custom;
-
-            ThemeManager.Instance.SwitchTheme(newTheme);
-            CurrentThemeName = newTheme.ToString();
         }
 
         [RelayCommand]

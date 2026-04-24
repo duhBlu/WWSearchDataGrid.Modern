@@ -44,9 +44,7 @@
         <Setter Property="VerticalContentAlignment" Value="Center" />
         <Setter Property="FontSize" Value="12" />
         <Setter Property="FontFamily" Value="Segoe UI" />
-        <Setter Property="SnapsToDevicePixels" Value="True" />
-        <Setter Property="UseLayoutRounding" Value="True" />
-        <Setter Property="KeyboardNavigation.TabNavigation" Value="Local" />
+        <Setter Property="KeyboardNavigation.TabNavigation" Value="Once" />
         <Setter Property="KeyboardNavigation.DirectionalNavigation" Value="Contained" />
         <Setter Property="IsTabStop" Value="False" />
         <Setter Property="FocusVisualStyle" Value="{x:Null}" />
@@ -59,7 +57,7 @@
                             BorderBrush="{TemplateBinding BorderBrush}"
                             BorderThickness="{TemplateBinding BorderThickness}"
                             KeyboardNavigation.TabNavigation="Local"
-                            SnapsToDevicePixels="True">
+                            CornerRadius="4">
                         <Grid KeyboardNavigation.TabNavigation="Local">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto" />
@@ -70,19 +68,19 @@
                             <!--  Search Button  -->
                             <Button x:Name="PART_SearchButton"
                                     Grid.Column="0"
-                                    Focusable="True"
-                                    Margin="3,0,0,0"
-                                    VerticalAlignment="Center"
-                                    Width="16"
-                                    Height="16"
-                                    IsTabStop="True"
+                                    Focusable="False"
+                                    Margin="0,0,0,0"
+                                    VerticalAlignment="Stretch"
+                                    Width="Auto"
+                                    IsTabStop="False"
                                     ToolTip="Toggle search dropdown">
                                 <Button.Style>
                                     <Style TargetType="{x:Type Button}">
                                         <Setter Property="Background" Value="Transparent" />
                                         <Setter Property="BorderBrush" Value="Transparent" />
                                         <Setter Property="Foreground" Value="{StaticResource SearchTextBox.SearchIconBrush}" />
-                                        <Setter Property="BorderThickness" Value="1" />
+                                        <Setter Property="BorderThickness" Value="0" />
+                                        <Setter Property="Padding" Value="4,0" />
                                         <Setter Property="Cursor" Value="Hand" />
                                         <Setter Property="FontFamily" Value="Segoe MDL2 Assets" />
                                         <Setter Property="FontSize" Value="10" />
@@ -92,8 +90,8 @@
                                                     <Border Background="{TemplateBinding Background}"
                                                             BorderBrush="{TemplateBinding BorderBrush}"
                                                             BorderThickness="{TemplateBinding BorderThickness}"
-                                                            CornerRadius="0"
-                                                            SnapsToDevicePixels="True">
+                                                            Padding="{TemplateBinding Padding}"
+                                                            CornerRadius="4,0,0,4">
                                                         <TextBlock Foreground="{TemplateBinding Foreground}"
                                                                    Text="&#xE721;"
                                                                    HorizontalAlignment="Center"
@@ -113,12 +111,10 @@
                                                 <Setter Property="Visibility" Value="Collapsed" />
                                             </DataTrigger>
                                             <Trigger Property="IsMouseOver" Value="True">
-                                                <Setter Property="Background" Value="#FFF0F0F0" />
-                                                <Setter Property="BorderBrush" Value="#FFAAAAAA" />
+                                                <Setter Property="Background" Value="#FFE0E0E0" />
                                             </Trigger>
                                             <Trigger Property="IsPressed" Value="True">
-                                                <Setter Property="Background" Value="#FFE0E0E0" />
-                                                <Setter Property="BorderBrush" Value="#FF999999" />
+                                                <Setter Property="Background" Value="#FFE8E8E8" />
                                             </Trigger>
                                         </Style.Triggers>
                                     </Style>
@@ -174,13 +170,13 @@
                             <!--  Clear Button  -->
                             <Button x:Name="PART_ClearButton"
                                     Grid.Column="2"
-                                    Focusable="True"
+                                    Focusable="False"
                                     Command="{Binding ClearCommand, RelativeSource={RelativeSource TemplatedParent}}"
                                     Margin="0,0,6,0"
                                     VerticalAlignment="Center"
                                     Width="16"
                                     Height="16"
-                                    IsTabStop="True"
+                                    IsTabStop="False"
                                     ToolTip="Clear search">
                                 <Button.Style>
                                     <Style TargetType="Button">
@@ -194,8 +190,7 @@
                                             <Setter.Value>
                                                 <ControlTemplate TargetType="Button">
                                                     <Border Background="{TemplateBinding Background}"
-                                                            CornerRadius="0"
-                                                            SnapsToDevicePixels="True">
+                                                            CornerRadius="0">
                                                         <TextBlock Foreground="{TemplateBinding Foreground}"
                                                                    Text="&#xE711;"
                                                                    HorizontalAlignment="Center"

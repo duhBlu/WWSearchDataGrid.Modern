@@ -39,7 +39,7 @@ namespace WWSearchDataGrid.Modern.WPF.Commands
                                     if (string.IsNullOrEmpty(path) || sc.Item is null) return null;
 
                                     var rawVal = ReflectionHelper.GetPropValue(sc.Item, path);
-                                    var displayVal = FormatDisplayValue(rawVal, sc.Column);
+                                    var displayVal = FormatDisplayValue(rawVal, sc.Column, grid);
                                     return new
                                     {
                                         DisplayIndex = sc.Column.DisplayIndex,
@@ -135,7 +135,7 @@ namespace WWSearchDataGrid.Modern.WPF.Commands
                             }
 
                             var rawVal = ReflectionHelper.GetPropValue(rowItem, path);
-                            rowValues.Add(FormatDisplayValue(rawVal, col));
+                            rowValues.Add(FormatDisplayValue(rawVal, col, grid));
                         }
 
                         lines.Add(string.Join("\t", rowValues));
@@ -180,13 +180,14 @@ namespace WWSearchDataGrid.Modern.WPF.Commands
         /// Formats a raw value using the column's display configuration.
         /// Priority: DisplayValueProvider (mask/converter/format) > Binding.StringFormat > ToString.
         /// </summary>
-        private static string FormatDisplayValue(object rawVal, DataGridColumn column)
+        private static string FormatDisplayValue(object rawVal, DataGridColumn column, SearchDataGrid grid)
         {
             if (rawVal is null)
                 return "NULL";
 
-            // 1) Check GridColumn display providers (DisplayMask > DisplayValueConverter > DisplayStringFormat)
-            var provider = DisplayValueProviderFactory.Create(column);
+            // 1) Check GridColumn descriptor for display providers (DisplayMask > DisplayValueConverter > DisplayStringFormat)
+            var descriptor = grid?.FindGridColumnDescriptor(column);
+            var provider = DisplayValueProviderFactory.Create(descriptor);
             if (provider != null)
                 return provider.FormatValue(rawVal) ?? rawVal.ToString() ?? "NULL";
 

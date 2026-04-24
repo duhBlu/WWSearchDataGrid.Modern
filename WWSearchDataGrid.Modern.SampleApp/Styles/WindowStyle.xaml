@@ -3,19 +3,10 @@
                     xmlns:helpers="clr-namespace:WWSearchDataGrid.Modern.SampleApp.Helpers"
                     xmlns:controls="clr-namespace:WWSearchDataGrid.Modern.SampleApp.Controls">
 
-    <!--
-        ═══════════════════════════════════════════════════════════════════════
-        WINDOW CHROME STYLES
-        Adapted from wpfCabinetDesigner Default_Window_Style.
-        Uses Theme.* DynamicResource keys — no dependency on ThemeBrushes.
-        Uses DwmWindowHelper for proper maximize/shadow/border/corners.
-        ═══════════════════════════════════════════════════════════════════════
-    -->
-
     <!--  Spinning Wheel Style  -->
     <Style TargetType="{x:Type controls:WWSpinningWheel}">
-        <Setter Property="Fill" Value="{DynamicResource Theme.Progress.Track}" />
-        <Setter Property="Stroke" Value="{DynamicResource Theme.Progress.Fill}" />
+        <Setter Property="Fill" Value="#E0E0E0" />
+        <Setter Property="Stroke" Value="#0078D4" />
         <Setter Property="Width" Value="48" />
         <Setter Property="Height" Value="48" />
         <Setter Property="StrokeThickness" Value="3.5" />
@@ -28,21 +19,21 @@
                     <Grid>
                         <Ellipse Fill="Transparent"
                                  Stroke="{TemplateBinding Fill}"
-                                 StrokeThickness="{TemplateBinding StrokeThickness}"
                                  Opacity="0.2"
+                                 HorizontalAlignment="Center"
+                                 VerticalAlignment="Center"
                                  Width="{TemplateBinding Width}"
                                  Height="{TemplateBinding Height}"
-                                 HorizontalAlignment="Center"
-                                 VerticalAlignment="Center" />
+                                 StrokeThickness="{TemplateBinding StrokeThickness}" />
                         <Path x:Name="PART_Arc"
                               Stroke="{TemplateBinding Stroke}"
-                              StrokeThickness="{TemplateBinding StrokeThickness}"
-                              StrokeStartLineCap="Round"
-                              StrokeEndLineCap="Round"
                               HorizontalAlignment="Center"
                               VerticalAlignment="Center"
                               Width="{TemplateBinding Width}"
-                              Height="{TemplateBinding Height}" />
+                              Height="{TemplateBinding Height}"
+                              StrokeThickness="{TemplateBinding StrokeThickness}"
+                              StrokeStartLineCap="Round"
+                              StrokeEndLineCap="Round" />
                     </Grid>
                 </ControlTemplate>
             </Setter.Value>
@@ -52,8 +43,8 @@
     <!--  Window Chrome Button  -->
     <Style x:Key="SampleWindowChromeButtonStyle" TargetType="Button">
         <Setter Property="Cursor" Value="Hand" />
-        <Setter Property="Background" Value="{DynamicResource Theme.Window.Button.Background}" />
-        <Setter Property="Foreground" Value="{DynamicResource Theme.Window.Button.Foreground}" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Foreground" Value="#666666" />
         <Setter Property="BorderThickness" Value="0" />
         <Setter Property="IsTabStop" Value="False" />
         <Setter Property="WindowChrome.IsHitTestVisibleInChrome" Value="True" />
@@ -68,12 +59,12 @@
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter Property="Background" Value="{DynamicResource Theme.Window.Button.Background.Hover}" />
-                            <Setter Property="Foreground" Value="{DynamicResource Theme.Window.Button.Foreground.Hover}" />
+                            <Setter Property="Background" Value="#E5E5E5" />
+                            <Setter Property="Foreground" Value="#333333" />
                         </Trigger>
                         <Trigger Property="IsPressed" Value="True">
-                            <Setter Property="Background" Value="{DynamicResource Theme.Window.Button.Background.Pressed}" />
-                            <Setter Property="Foreground" Value="{DynamicResource Theme.Window.Button.Foreground.Pressed}" />
+                            <Setter Property="Background" Value="#CCCCCC" />
+                            <Setter Property="Foreground" Value="#000000" />
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -96,12 +87,12 @@
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter Property="Background" Value="{DynamicResource Theme.Window.CloseButton.Hover}" />
-                            <Setter Property="Foreground" Value="{DynamicResource Theme.Window.CloseButton.Foreground.Hover}" />
+                            <Setter Property="Background" Value="#E81123" />
+                            <Setter Property="Foreground" Value="#FFFFFF" />
                         </Trigger>
                         <Trigger Property="IsPressed" Value="True">
-                            <Setter Property="Background" Value="{DynamicResource Theme.Window.CloseButton.Pressed}" />
-                            <Setter Property="Foreground" Value="{DynamicResource Theme.Window.CloseButton.Foreground.Hover}" />
+                            <Setter Property="Background" Value="#C50F1F" />
+                            <Setter Property="Foreground" Value="#FFFFFF" />
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -115,6 +106,7 @@
         <Setter Property="BorderThickness" Value="0" />
         <Setter Property="WindowStyle" Value="None" />
         <Setter Property="SnapsToDevicePixels" Value="True" />
+        <Setter Property="UseLayoutRounding" Value="True" />
         <Setter Property="FontFamily" Value="Segoe UI Variable Text, Segoe UI, sans-serif" />
         <Setter Property="MinHeight" Value="30" />
         <Setter Property="MinWidth" Value="150" />
@@ -122,8 +114,16 @@
         <!--  DWM Window Helper  -->
         <Setter Property="helpers:DwmWindowHelper.IsEnabled" Value="True" />
         <Setter Property="helpers:DwmWindowHelper.EnableDropShadow" Value="True" />
-        <Setter Property="helpers:DwmWindowHelper.BorderColor" Value="{DynamicResource Theme.Window.Border.Color}" />
-        <Setter Property="helpers:DwmWindowHelper.BorderColorInactive" Value="{DynamicResource Theme.Window.Border.Inactive.Color}" />
+        <Setter Property="helpers:DwmWindowHelper.BorderColor">
+            <Setter.Value>
+                <Color>#6A4C93</Color>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="helpers:DwmWindowHelper.BorderColorInactive">
+            <Setter.Value>
+                <Color>#DDDDDD</Color>
+            </Setter.Value>
+        </Setter>
         <Setter Property="helpers:DwmWindowHelper.CornerPreference" Value="Round" />
         <Setter Property="helpers:DwmWindowHelper.RespectTaskbar" Value="True" />
 
@@ -133,7 +133,7 @@
                               GlassFrameThickness="0"
                               UseAeroCaptionButtons="False"
                               CornerRadius="0"
-                              ResizeBorderThickness="8" />
+                              ResizeBorderThickness="4" />
             </Setter.Value>
         </Setter>
 
@@ -149,10 +149,8 @@
                         <!--  TITLE BAR  -->
                         <Border x:Name="TitleBarBorder"
                                 Grid.Row="0"
-                                BorderThickness="0"
-                                SnapsToDevicePixels="True">
-                            <DockPanel x:Name="TitleBar"
-                                       Background="{DynamicResource Theme.Window.TitleBar}">
+                                BorderThickness="0">
+                            <DockPanel x:Name="TitleBar" Background="#F8F9FA">
 
                                 <!--  CLOSE  -->
                                 <Button x:Name="CloseButton"
@@ -194,13 +192,12 @@
 
                                 <!--  Icon + Title  -->
                                 <Image Source="{TemplateBinding Icon}"
-                                       RenderOptions.BitmapScalingMode="HighQuality"
                                        Margin="10,0,0,0"
                                        Width="16"
                                        Height="16"
-                                       SnapsToDevicePixels="True"/>
+                                       RenderOptions.BitmapScalingMode="HighQuality" />
 
-                                <TextBlock Foreground="{DynamicResource Theme.Text.Primary}"
+                                <TextBlock Foreground="#1C1C1C"
                                            Text="{TemplateBinding Title}"
                                            Margin="10,0,0,0"
                                            VerticalAlignment="Center"
@@ -215,7 +212,7 @@
                         <!--  CONTENT  -->
                         <Border x:Name="ContentBorder"
                                 Grid.Row="1"
-                                Background="{DynamicResource Theme.Window.Content}"
+                                Background="#FFFFFF"
                                 ClipToBounds="True">
                             <ContentPresenter />
                         </Border>
@@ -254,5 +251,217 @@
             </Setter.Value>
         </Setter>
     </Style>
+
+    <!--
+        ═══════════════════════════════════════════════════════════════
+        PROPERTY PANEL CONTROLS — RadioButton, GroupBox, Slider
+        ═══════════════════════════════════════════════════════════════
+    -->
+
+    <!--#region RadioButton-->
+
+    <Style x:Key="SdgRadioButtonStyle" TargetType="{x:Type RadioButton}">
+        <Setter Property="Foreground" Value="#1C1C1C" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderBrush" Value="#AAAAAA" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Padding" Value="6,0,0,0" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type RadioButton}">
+                    <Grid Background="Transparent">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <Border x:Name="Outer"
+                                Grid.Column="0"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="1.5"
+                                VerticalAlignment="Center"
+                                Width="16"
+                                Height="16"
+                                CornerRadius="8">
+                            <Ellipse x:Name="Dot"
+                                     Fill="#0078D4"
+                                     Opacity="0"
+                                     HorizontalAlignment="Center"
+                                     VerticalAlignment="Center"
+                                     Width="8"
+                                     Height="8" />
+                        </Border>
+
+                        <ContentPresenter Grid.Column="1"
+                                          Margin="{TemplateBinding Padding}"
+                                          VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                          RecognizesAccessKey="True" />
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="Outer" Property="BorderBrush" Value="#0078D4" />
+                            <Setter TargetName="Dot" Property="Opacity" Value="1" />
+                        </Trigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Outer" Property="Background" Value="#F0F0F0" />
+                        </Trigger>
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="IsMouseOver" Value="True" />
+                                <Condition Property="IsChecked" Value="True" />
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="Outer" Property="Background" Value="#E0EEF9" />
+                        </MultiTrigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="Outer" Property="BorderBrush" Value="#CCCCCC" />
+                            <Setter TargetName="Dot" Property="Fill" Value="#999999" />
+                            <Setter Property="Foreground" Value="#999999" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!--#endregion-->
+
+
+
+    <!--#region Slider-->
+
+    <Style x:Key="SdgSliderThumbStyle" TargetType="{x:Type Thumb}">
+        <Setter Property="Width" Value="16" />
+        <Setter Property="Height" Value="16" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type Thumb}">
+                    <Border x:Name="thumb"
+                            Background="White"
+                            BorderBrush="#0078D4"
+                            BorderThickness="2"
+                            Width="16"
+                            Height="16"
+                            CornerRadius="8">
+                        <Ellipse x:Name="dot"
+                                 Fill="#0078D4"
+                                 HorizontalAlignment="Center"
+                                 VerticalAlignment="Center"
+                                 Width="6"
+                                 Height="6" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="thumb" Property="Background" Value="#E0EEF9" />
+                        </Trigger>
+                        <Trigger Property="IsDragging" Value="True">
+                            <Setter TargetName="thumb" Property="BorderBrush" Value="#005A9E" />
+                            <Setter TargetName="dot" Property="Fill" Value="#005A9E" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="SdgSliderStyle" TargetType="{x:Type Slider}">
+        <Setter Property="Height" Value="24" />
+        <Setter Property="MinWidth" Value="80" />
+        <Setter Property="Focusable" Value="True" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type Slider}">
+                    <Grid VerticalAlignment="Center">
+                        <Border x:Name="TrackBackground"
+                                Background="#E0E0E0"
+                                VerticalAlignment="Center"
+                                Height="4"
+                                CornerRadius="2" />
+
+                        <Track x:Name="PART_Track">
+                            <Track.Thumb>
+                                <Thumb Style="{StaticResource SdgSliderThumbStyle}" />
+                            </Track.Thumb>
+                        </Track>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!--#endregion-->
+
+    <!--#region Expander (matches GroupBox look, collapsible on header click, no glyph)-->
+
+    <Style x:Key="SdgExpanderStyle" TargetType="{x:Type Expander}">
+        <Setter Property="Foreground" Value="#1C1C1C" />
+        <Setter Property="BorderBrush" Value="#DDDDDD" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Padding" Value="8,6" />
+        <Setter Property="IsExpanded" Value="True" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type Expander}">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+
+                        <ToggleButton x:Name="HeaderToggle"
+                                      Grid.Row="0"
+                                      IsChecked="{Binding IsExpanded, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"
+                                      Cursor="Hand">
+                            <ToggleButton.Template>
+                                <ControlTemplate TargetType="{x:Type ToggleButton}">
+                                    <Border x:Name="HeaderBorder"
+                                            Background="#F0F0F0"
+                                            BorderBrush="{Binding BorderBrush, RelativeSource={RelativeSource AncestorType=Expander}}"
+                                            BorderThickness="1,1,1,0"
+                                            Padding="10,5"
+                                            CornerRadius="4,4,0,0">
+                                        <ContentPresenter TextBlock.FontWeight="SemiBold"
+                                                          TextBlock.FontSize="11.5"
+                                                          TextBlock.Foreground="#444444"
+                                                          ContentSource="Content" />
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="HeaderBorder" Property="Background" Value="#E8E8E8" />
+                                        </Trigger>
+                                        <DataTrigger Binding="{Binding IsExpanded, RelativeSource={RelativeSource AncestorType=Expander}}" Value="False">
+                                            <Setter TargetName="HeaderBorder" Property="CornerRadius" Value="4" />
+                                            <Setter TargetName="HeaderBorder" Property="BorderThickness" Value="1" />
+                                        </DataTrigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </ToggleButton.Template>
+                            <ContentPresenter RecognizesAccessKey="True" ContentSource="Header" />
+                        </ToggleButton>
+
+                        <Border x:Name="ContentBorder"
+                                Grid.Row="1"
+                                Background="White"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="1,0,1,1"
+                                Visibility="Collapsed"
+                                Padding="{TemplateBinding Padding}"
+                                CornerRadius="0,0,4,4">
+                            <ContentPresenter />
+                        </Border>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsExpanded" Value="True">
+                            <Setter TargetName="ContentBorder" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!--#endregion-->
 
 </ResourceDictionary>

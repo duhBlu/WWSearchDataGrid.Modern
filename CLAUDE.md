@@ -77,7 +77,8 @@ TopN, BottomN, AboveAverage, BelowAverage, Unique, Duplicate
 - **`ColumnFilterEditor.cs`** - Complex multi-criteria filter UI
 - **`FilterPanel.cs`** - Active filter chips display
 - **`ColumnChooser.cs`** - Column visibility manager with drag-drop reordering
-- **`GridColumn.cs`** - Static attached properties for column configuration
+- **`GridColumn.cs`** - Column descriptor class (`FrameworkContentElement`). Declared inside `SearchDataGrid.GridColumns`; the grid generates internal `DataGridColumn` instances from each descriptor.
+- **`GridColumnSettings.cs`** - Legacy static attached properties for column configuration (used internally as a bridge and for backwards compatibility)
 - **`NumericUpDown.cs`** - Custom numeric input control
 
 #### `/Themes/Controls/` - XAML Styling (Presentation Only)
@@ -99,10 +100,16 @@ TopN, BottomN, AboveAverage, BelowAverage, Unique, Duplicate
 ### 🔄 **Data Flow Architecture**
 
 ```
-User Input → columnSearchBox → SearchTemplateController → SearchEngine → FilterExpression → SearchDataGrid
+XAML GridColumn descriptors
+      ↓
+SearchDataGrid.GridColumns  →  generates internal DataGridColumns  →  Columns collection
+      ↓
+User Input → ColumnSearchBox → SearchTemplateController → SearchEngine → FilterExpression → SearchDataGrid
      ↓              ↓                    ↓                    ↓              ↓              ↓
 SearchText    Manages State     Builds Expressions    Evaluates Items   Compiles Logic   Filters Data
 ```
+
+**Column Descriptor Pattern:** `GridColumn` is a `FrameworkContentElement` that *describes* a column. `SearchDataGrid` reads descriptors from its `GridColumns` collection and generates the real WPF `DataGridColumn` instances internally. `ColumnSearchBox` resolves its configuration from the `GridColumnDescriptor` first, then falls back to `GridColumnSettings` attached properties for legacy columns.
 
 ## Sample Application (WWSearchDataGrid.Modern.SampleApp)
 

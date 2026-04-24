@@ -36,8 +36,8 @@ namespace WWSearchDataGrid.Modern.WPF
                         continue;
 
                     // Check if this column has IsSelectAllColumn enabled and is boolean type
-                    bool isSelectAllColumn = GridColumn.GetIsSelectAllColumn(column);
-                    bool isBooleanColumn = GridColumn.IsColumnBooleanType(column, this);
+                    bool isSelectAllColumn = (FindGridColumnDescriptor(column)?.IsSelectAllColumn ?? false);
+                    bool isBooleanColumn = IsColumnBooleanType(column);
 
                     // Find the select-all checkbox in the header
                     var checkbox = VisualTreeHelperMethods.FindVisualChild<CheckBox>(header, "PART_SelectAllCheckBox");
@@ -60,7 +60,7 @@ namespace WWSearchDataGrid.Modern.WPF
                         checkbox.IsChecked = CalculateSelectAllCheckboxState(column);
 
                         // Show/hide row count based on scope
-                        var scope = GridColumn.GetSelectAllScope(column);
+                        var scope = (FindGridColumnDescriptor(column)?.SelectAllScope ?? SelectAllScope.FilteredRows);
                         if (rowCountTextBlock != null)
                         {
                             if (scope == SelectAllScope.SelectedRows)
@@ -195,12 +195,12 @@ namespace WWSearchDataGrid.Modern.WPF
                         continue;
 
                     // Check if this column has IsSelectAllColumn enabled
-                    bool isSelectAllColumn = GridColumn.GetIsSelectAllColumn(column);
+                    bool isSelectAllColumn = (FindGridColumnDescriptor(column)?.IsSelectAllColumn ?? false);
                     if (!isSelectAllColumn)
                         continue;
 
                     // Get the scope for this column
-                    var scope = GridColumn.GetSelectAllScope(column);
+                    var scope = (FindGridColumnDescriptor(column)?.SelectAllScope ?? SelectAllScope.FilteredRows);
 
                     // Update row count display if using SelectedRows scope
                     if (scope == SelectAllScope.SelectedRows)
@@ -237,6 +237,32 @@ namespace WWSearchDataGrid.Modern.WPF
 
 
         /// <summary>
+        /// Determines if a column is a boolean type by checking the descriptor's FieldType,
+        /// the column type (DataGridCheckBoxColumn), or the UseCheckBoxInSearchBox property.
+        /// </summary>
+        private bool IsColumnBooleanType(DataGridColumn column)
+        {
+            if (column is DataGridCheckBoxColumn)
+                return true;
+
+            var descriptor = FindGridColumnDescriptor(column);
+            if (descriptor != null)
+            {
+                if (descriptor.FieldType == typeof(bool) || descriptor.FieldType == typeof(bool?))
+                    return true;
+                if (descriptor.UseCheckBoxInSearchBox)
+                    return true;
+            }
+
+            // Check SearchTemplateController for data-detected type
+            var columnSearchBox = DataColumns.FirstOrDefault(c => c.CurrentColumn == column);
+            if (columnSearchBox?.SearchTemplateController != null)
+                return columnSearchBox.SearchTemplateController.ColumnDataType == Core.ColumnDataType.Boolean;
+
+            return false;
+        }
+
+        /// <summary>
         /// Gets the binding path for a column, respecting FilterMemberPath, SortMemberPath, and Binding.Path priority
         /// </summary>
         /// <param name="column">The column to get the binding path for</param>
@@ -247,7 +273,7 @@ namespace WWSearchDataGrid.Modern.WPF
                 return null;
 
             // Priority 1: FilterMemberPath
-            string bindingPath = GridColumn.GetFilterMemberPath(column);
+            string bindingPath = FindGridColumnDescriptor(column)?.FilterMemberPath;
 
             // Priority 2: SortMemberPath
             if (string.IsNullOrEmpty(bindingPath))
@@ -281,7 +307,7 @@ namespace WWSearchDataGrid.Modern.WPF
                     return null;
 
                 // Get the scope for this column to determine which items to evaluate
-                SelectAllScope scope = GridColumn.GetSelectAllScope(column);
+                SelectAllScope scope = (FindGridColumnDescriptor(column)?.SelectAllScope ?? SelectAllScope.FilteredRows);
 
                 // Get items based on scope
                 var itemsToCheck = GetItemsForSelectAllScope(scope);
@@ -316,7 +342,7 @@ namespace WWSearchDataGrid.Modern.WPF
                     return;
 
                 // Get the scope for this column
-                SelectAllScope scope = GridColumn.GetSelectAllScope(column);
+                SelectAllScope scope = (FindGridColumnDescriptor(column)?.SelectAllScope ?? SelectAllScope.FilteredRows);
 
                 // Get the items to operate on based on scope
                 var itemsToToggle = GetItemsForSelectAllScope(scope);
@@ -544,7 +570,7 @@ namespace WWSearchDataGrid.Modern.WPF
             try
             {
                 // Check if UseCheckBoxInSearchBox is enabled for this column
-                if (!GridColumn.GetUseCheckBoxInSearchBox(column))
+                if (!(FindGridColumnDescriptor(column)?.UseCheckBoxInSearchBox ?? false))
                     return;
 
                 // Find the ColumnSearchBox for this column
@@ -616,7 +642,7 @@ namespace WWSearchDataGrid.Modern.WPF
                         continue;
 
                     // Check if this column has IsSelectAllColumn enabled
-                    bool isSelectAllColumn = GridColumn.GetIsSelectAllColumn(column);
+                    bool isSelectAllColumn = (FindGridColumnDescriptor(column)?.IsSelectAllColumn ?? false);
                     if (!isSelectAllColumn)
                         continue;
 

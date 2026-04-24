@@ -4,6 +4,7 @@
                     xmlns:commands="clr-namespace:WWSearchDataGrid.Modern.WPF.Commands"
                     xmlns:converters="clr-namespace:WWSearchDataGrid.Modern.WPF.Converters">
     <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF;component/Themes/Controls/Primitives/DefaultControls.xaml" />
         <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF;component/Themes/Controls/ColumnSearchBox.xaml" />
         <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF;component/Themes/Controls/FilterPanel.xaml" />
     </ResourceDictionary.MergedDictionaries>
@@ -21,7 +22,7 @@
                                 Background="#F0F0F0"
                                 BorderBrush="#DDDDDD"
                                 BorderThickness="0,0,1,1"
-                                SnapsToDevicePixels="True" />
+                                Margin="0,0,0,0" />
                         <Polygon x:Name="Arrow"
                                  Fill="#666"
                                  Opacity="0.5"
@@ -56,18 +57,20 @@
         <Setter Property="Foreground" Value="#FF444444" />
         <Setter Property="Background" Value="#F9F9F9" />
         <Setter Property="BorderBrush" Value="#FFDDDDDD" />
-        <Setter Property="BorderThickness" Value="0,0,1,1" />
+        <Setter Property="BorderThickness" Value="1,0,1,1" />
+
+
         <Setter Property="ContextMenu">
             <Setter.Value>
                 <ContextMenu AutomationProperties.AutomationId="cmuRowHeader">
                     <MenuItem x:Name="miCopy"
-                              Header="Copy"
                               Command="{x:Static commands:ContextMenuCommands.CopySelectedCellValuesCommand}"
-                              CommandParameter="{Binding Grid}" />
+                              CommandParameter="{Binding Grid}"
+                              Header="Copy" />
                     <MenuItem x:Name="miCopyWithHeaders"
-                              Header="Copy With Headers"
                               Command="{x:Static commands:ContextMenuCommands.CopySelectedCellValuesWithHeadersCommand}"
-                              CommandParameter="{Binding Grid}" />
+                              CommandParameter="{Binding Grid}"
+                              Header="Copy With Headers" />
                 </ContextMenu>
             </Setter.Value>
         </Setter>
@@ -75,13 +78,12 @@
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type DataGridRowHeader}">
                     <Border x:Name="HeaderBorder"
-                            Padding="0,0,20,0"
                             Background="{TemplateBinding Background}"
                             BorderBrush="{TemplateBinding BorderBrush}"
-                            BorderThickness="{TemplateBinding BorderThickness}">
-                        <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                          VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
-                                          SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" />
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            Margin="-1,0,0,0"
+                            Padding="0,0,20,0">
+                        <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
                     </Border>
 
                     <ControlTemplate.Triggers>
@@ -106,48 +108,48 @@
         <Setter Property="ContextMenu">
             <Setter.Value>
                 <ContextMenu AutomationProperties.AutomationId="cmuColumnHeader">
-                    <!-- Column-specific Copy Operations -->
+                    <!--  Column-specific Copy Operations  -->
                     <MenuItem x:Name="miCopy"
-                              Header="Copy"
                               Command="{x:Static commands:ContextMenuCommands.CopySelectedCellValuesCommand}"
-                              CommandParameter="{Binding Grid}" />
+                              CommandParameter="{Binding Grid}"
+                              Header="Copy" />
                     <MenuItem x:Name="miCopyWithHeaders"
-                              Header="Copy With Headers"
                               Command="{x:Static commands:ContextMenuCommands.CopySelectedCellValuesWithHeadersCommand}"
-                              CommandParameter="{Binding Grid}" />
+                              CommandParameter="{Binding Grid}"
+                              Header="Copy With Headers" />
                     <Separator />
 
-                    <!-- Sorting -->
+                    <!--  Sorting  -->
                     <MenuItem x:Name="miSortAscending"
-                              Header="Sort Ascending"
                               Command="{x:Static commands:ContextMenuCommands.SortAscendingCommand}"
-                              CommandParameter="{Binding}" />
+                              CommandParameter="{Binding}"
+                              Header="Sort Ascending" />
                     <MenuItem x:Name="miSortDescending"
-                              Header="Sort Descending"
                               Command="{x:Static commands:ContextMenuCommands.SortDescendingCommand}"
-                              CommandParameter="{Binding}" />
+                              CommandParameter="{Binding}"
+                              Header="Sort Descending" />
                     <MenuItem x:Name="miClearSorting"
-                              Header="Clear Sorting"
                               Command="{x:Static commands:ContextMenuCommands.ClearSortingCommand}"
-                              CommandParameter="{Binding}" />
+                              CommandParameter="{Binding}"
+                              Header="Clear Sorting" />
                     <Separator />
 
-                    <!-- Column Operations -->
+                    <!--  Column Operations  -->
                     <MenuItem x:Name="miBestFitColumn"
-                              Header="Best Fit Column"
                               Command="{x:Static commands:ContextMenuCommands.BestFitColumnCommand}"
-                              CommandParameter="{Binding}" />
+                              CommandParameter="{Binding}"
+                              Header="Best Fit Column" />
                     <MenuItem x:Name="miBestFitAllColumns"
-                              Header="Best Fit All Columns"
                               Command="{x:Static commands:ContextMenuCommands.BestFitAllColumnsCommand}"
-                              CommandParameter="{Binding}" />
+                              CommandParameter="{Binding}"
+                              Header="Best Fit All Columns" />
                     <Separator />
 
-                    <!-- Visibility and Layout -->
+                    <!--  Visibility and Layout  -->
                     <MenuItem x:Name="miShowColumnChooser"
-                              Header="Show Column Chooser"
                               Command="{x:Static commands:ContextMenuCommands.ShowColumnChooserCommand}"
-                              CommandParameter="{Binding Grid}">
+                              CommandParameter="{Binding Grid}"
+                              Header="Show Column Chooser">
                         <MenuItem.Style>
                             <Style TargetType="MenuItem">
                                 <Setter Property="Visibility" Value="Visible" />
@@ -160,11 +162,11 @@
                         </MenuItem.Style>
                     </MenuItem>
                     <MenuItem x:Name="miHideColumn"
-                              Header="Hide Column"
                               Command="{x:Static commands:ContextMenuCommands.HideSelectedColumnCommand}"
-                              CommandParameter="{Binding Column}" />
+                              CommandParameter="{Binding Column}"
+                              Header="Hide Column" />
 
-                    <!-- Conditional Filtering (only shows when there's an active filter) -->
+                    <!--  Conditional Filtering (only shows when there's an active filter)  -->
                     <Separator>
                         <Separator.Style>
                             <Style TargetType="Separator">
@@ -178,9 +180,9 @@
                         </Separator.Style>
                     </Separator>
                     <MenuItem x:Name="miClearColumnFilter"
-                              Header="Clear Column Filter (Not Implemented)"
                               Command="{x:Static commands:ContextMenuCommands.ClearColumnFilterCommand}"
-                              CommandParameter="{Binding ColumnSearchBox}">
+                              CommandParameter="{Binding ColumnSearchBox}"
+                              Header="Clear Column Filter (Not Implemented)">
                         <MenuItem.Style>
                             <Style TargetType="MenuItem">
                                 <Setter Property="Visibility" Value="Collapsed" />
@@ -198,7 +200,7 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type DataGridColumnHeader}">
-                    <Grid ClipToBounds="True">
+                    <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="*" />
@@ -213,12 +215,13 @@
                                              CurrentColumn="{Binding Column, RelativeSource={RelativeSource TemplatedParent}}"
                                              SourceDataGrid="{Binding Mode=OneWay, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type sdg:SearchDataGrid}}}" />
 
-                        <!--  Header Content  -->
                         <Border x:Name="HeaderBorder"
                                 Grid.Row="1"
                                 Background="{TemplateBinding Background}"
                                 BorderBrush="{TemplateBinding BorderBrush}"
+                               
                                 BorderThickness="0,1,1,1"
+                                Margin="0,0,0,0"
                                 Padding="{TemplateBinding Padding}">
                             <Grid>
                                 <Grid.ColumnDefinitions>
@@ -228,27 +231,30 @@
                                 </Grid.ColumnDefinitions>
 
                                 <!--  Select All Checkbox (visible only when IsSelectAllColumn is true AND column is boolean)  -->
-                                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,4,0">
-                                    
+                                <StackPanel Grid.Column="0"
+                                            Orientation="Horizontal"
+                                            Margin="0,0,4,0"
+                                            VerticalAlignment="Center">
+
                                     <CheckBox x:Name="PART_SelectAllCheckBox"
+                                              Style="{StaticResource SdgCheckBoxStyle}"
+                                              Visibility="Collapsed"
                                               VerticalAlignment="Center"
-                                              IsThreeState="True"
-                                              Visibility="Collapsed" />
+                                              IsThreeState="True" />
 
                                     <!--  Row Count Display (visible only when using SelectedRows scope)  -->
                                     <TextBlock x:Name="PART_SelectAllRowCount"
+                                               Foreground="#666666"
+                                               Visibility="Collapsed"
                                                Margin="0,0,0,2"
                                                VerticalAlignment="Center"
-                                               FontSize="10"
-                                               Foreground="#666666"
-                                               Visibility="Collapsed" />
+                                               FontSize="10" />
                                 </StackPanel>
 
                                 <!--  Header Content  -->
                                 <ContentPresenter Grid.Column="1"
                                                   HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                                  VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
-                                                  SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" />
+                                                  VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
 
                                 <!--  Sort Arrow  -->
                                 <TextBlock x:Name="SortArrow"
@@ -264,6 +270,7 @@
                         <Thumb x:Name="PART_LeftHeaderGripper"
                                Grid.RowSpan="2"
                                Background="Transparent"
+                               Panel.ZIndex="55"
                                BorderBrush="Transparent"
                                BorderThickness="0,0,1,0"
                                Cursor="SizeWE"
@@ -316,22 +323,185 @@
         <Setter Property="Padding" Value="8,4" />
         <Setter Property="HorizontalContentAlignment" Value="Center" />
         <Setter Property="VerticalContentAlignment" Value="Center" />
+
+
     </Style>
 
-    <!--  Default Cell Style with Context Menu  -->
+    <!--
+        Default Cell Style — mirrors the default WPF DataGridCell look (Border + ContentPresenter)
+        with selection / inactive-selection / disabled states using the Sdg palette.
+    -->
     <Style x:Key="GenericSearchDataGridCellStyle" TargetType="{x:Type DataGridCell}">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Padding" Value="4,2" />
+        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+
         <Setter Property="ContextMenu">
             <Setter.Value>
                 <ContextMenu AutomationProperties.AutomationId="cmuCell">
                     <MenuItem x:Name="miCopy"
-                              Header="Copy"
                               Command="{x:Static commands:ContextMenuCommands.CopySelectedCellValuesCommand}"
-                              CommandParameter="{Binding Grid}" />
+                              CommandParameter="{Binding Grid}"
+                              Header="Copy" />
                     <MenuItem x:Name="miCopyWithHeaders"
-                              Header="Copy With Headers"
                               Command="{x:Static commands:ContextMenuCommands.CopySelectedCellValuesWithHeadersCommand}"
-                              CommandParameter="{Binding Grid}" />
+                              CommandParameter="{Binding Grid}"
+                              Header="Copy With Headers" />
                 </ContextMenu>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type DataGridCell}">
+                    <Border Background="{TemplateBinding Background}"
+                            Padding="{TemplateBinding Padding}">
+                        <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                          VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+        <Style.Triggers>
+            <!--  Hover (non-selected)  -->
+            <MultiTrigger>
+                <MultiTrigger.Conditions>
+                    <Condition Property="IsMouseOver" Value="True" />
+                    <Condition Property="IsSelected" Value="False" />
+                </MultiTrigger.Conditions>
+                <Setter Property="Background" Value="{StaticResource Sdg.Surface.Hover}" />
+            </MultiTrigger>
+
+            <!--  Selected (grid has active selection)  -->
+            <Trigger Property="IsSelected" Value="True">
+                <Setter Property="Background" Value="{StaticResource Sdg.Selection.Background}" />
+                <Setter Property="Foreground" Value="{StaticResource Sdg.Text.Primary}" />
+            </Trigger>
+
+            <!--  Selected + hovered  -->
+            <MultiTrigger>
+                <MultiTrigger.Conditions>
+                    <Condition Property="IsSelected" Value="True" />
+                    <Condition Property="IsMouseOver" Value="True" />
+                </MultiTrigger.Conditions>
+                <Setter Property="Background" Value="{StaticResource Sdg.Selection.Background.Hover}" />
+            </MultiTrigger>
+
+            <!--  Selected but grid is not the active selection target — show a neutral muted highlight  -->
+            <MultiTrigger>
+                <MultiTrigger.Conditions>
+                    <Condition Property="IsSelected" Value="True" />
+                    <Condition Property="Selector.IsSelectionActive" Value="False" />
+                </MultiTrigger.Conditions>
+                <Setter Property="Background" Value="{StaticResource Sdg.Selection.Background.Inactive}" />
+                <Setter Property="Foreground" Value="{StaticResource Sdg.Text.Primary}" />
+            </MultiTrigger>
+
+            <Trigger Property="IsEnabled" Value="False">
+                <Setter Property="Foreground" Value="{StaticResource Sdg.Text.Disabled}" />
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <!--
+        Default Row Style — mirrors the default WPF DataGridRow template,
+        but paints the horizontal gridline as a filled 1-px Border so the line stays
+        a constant color (no sub-pixel blending) at any scroll offset.
+    -->
+    <Style x:Key="GenericSearchDataGridRowStyle" TargetType="{x:Type DataGridRow}">
+        <Setter Property="Background" Value="{Binding RowBackground, RelativeSource={RelativeSource AncestorType={x:Type DataGrid}}}" />
+
+
+        <Setter Property="ValidationErrorTemplate" Value="{x:Null}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type DataGridRow}">
+                    <Border x:Name="DGR_Border"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}">
+                        <SelectiveScrollingGrid>
+                            <SelectiveScrollingGrid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </SelectiveScrollingGrid.ColumnDefinitions>
+                            <SelectiveScrollingGrid.RowDefinitions>
+                                <RowDefinition Height="*" />
+                                <RowDefinition Height="Auto" />
+                            </SelectiveScrollingGrid.RowDefinitions>
+
+                            <DataGridCellsPresenter Grid.Column="1" ItemsPanel="{TemplateBinding ItemsPanel}" />
+
+                            <!--
+                                Vertical gridline overlay: sits on top of the CellsPresenter
+                                at the same grid position. Not a child of CellsPresenter, so
+                                row animations (which target CellsPresenter.Opacity) don't affect it.
+                                Each column renders a 1px right-aligned line using its ActualWidth.
+                                IsHitTestVisible=False so clicks pass through to the cells beneath.
+                            -->
+                            <ItemsControl Grid.Column="1"
+                                          IsHitTestVisible="False"
+                                          ItemsSource="{Binding Columns, RelativeSource={RelativeSource AncestorType={x:Type DataGrid}}}">
+                                <ItemsControl.Style>
+                                    <Style TargetType="ItemsControl">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding ShowVerticalGridLines, RelativeSource={RelativeSource AncestorType={x:Type sdg:SearchDataGrid}}}" Value="True">
+                                                <Setter Property="Visibility" Value="Visible" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </ItemsControl.Style>
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <StackPanel Orientation="Horizontal" />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Width="{Binding ActualWidth}"
+                                                BorderBrush="{Binding VerticalGridLinesBrush, RelativeSource={RelativeSource AncestorType={x:Type DataGrid}}}"
+                                                BorderThickness="0,0,1,0" />
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+
+                            <DataGridDetailsPresenter Grid.Row="1"
+                                                      Grid.Column="1"
+                                                      Visibility="{TemplateBinding DetailsVisibility}"
+                                                      SelectiveScrollingGrid.SelectiveScrollingOrientation="{Binding AreRowDetailsFrozen, ConverterParameter={x:Static SelectiveScrollingOrientation.Vertical}, Converter={x:Static DataGrid.RowDetailsScrollingConverter}, RelativeSource={RelativeSource AncestorType={x:Type DataGrid}}}" />
+
+                            <DataGridRowHeader Grid.RowSpan="2"
+                                               Visibility="{Binding HeadersVisibility, ConverterParameter={x:Static DataGridHeadersVisibility.Row}, Converter={x:Static DataGrid.HeadersVisibilityConverter}, RelativeSource={RelativeSource AncestorType={x:Type DataGrid}}}"
+                                               SelectiveScrollingGrid.SelectiveScrollingOrientation="Vertical" />
+
+                            <!--
+                                Pixel-aligned horizontal gridline (filled 1-px Border, not a stroke)
+                                so the color stays exact regardless of scroll offset.
+                                Rendered outside the CellsPresenter so row animations don't affect it.
+                            -->
+                            <Border x:Name="RowBottomLine"
+                                    Grid.Row="0"
+                                    Grid.Column="0"
+                                    Grid.ColumnSpan="2"
+                                    Background="{Binding HorizontalGridLinesBrush, RelativeSource={RelativeSource AncestorType={x:Type DataGrid}}}"
+                                    VerticalAlignment="Bottom"
+                                    Height="1">
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding ShowHorizontalGridLines, RelativeSource={RelativeSource AncestorType={x:Type sdg:SearchDataGrid}}}" Value="True">
+                                                <Setter Property="Visibility" Value="Visible" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                            </Border>
+                        </SelectiveScrollingGrid>
+                    </Border>
+                </ControlTemplate>
             </Setter.Value>
         </Setter>
     </Style>
@@ -339,63 +509,64 @@
     <!--  Modern Search DataGrid Style  -->
     <Style x:Key="GenericSearchDataGridStyle" TargetType="{x:Type sdg:SearchDataGrid}">
         <Setter Property="CellStyle" Value="{StaticResource GenericSearchDataGridCellStyle}" />
+        <Setter Property="RowStyle" Value="{StaticResource GenericSearchDataGridRowStyle}" />
         <Setter Property="ContextMenu">
             <Setter.Value>
                 <ContextMenu AutomationProperties.AutomationId="cmuGridBody">
-                    <!-- Filter operations -->
+                    <!--  Filter operations  -->
                     <MenuItem x:Name="miClearAllFilters"
-                              Header="Clear All Filters (Not Implemented)"
                               Command="{x:Static commands:ContextMenuCommands.ClearAllFiltersCommand}"
-                              CommandParameter="{Binding Grid}" />
+                              CommandParameter="{Binding Grid}"
+                              Header="Clear All Filters (Not Implemented)" />
                     <MenuItem x:Name="miToggleFilterPanel"
-                              Header="Toggle Filter Panel (Not Implemented)"
                               Command="{x:Static commands:ContextMenuCommands.ToggleFilterPanelCommand}"
-                              CommandParameter="{Binding Grid}" />
+                              CommandParameter="{Binding Grid}"
+                              Header="Toggle Filter Panel (Not Implemented)" />
                     <MenuItem x:Name="miSaveFilterPreset"
-                              Header="Save Filter Preset (Not Implemented)"
                               Command="{x:Static commands:ContextMenuCommands.SaveFilterPresetCommand}"
-                              CommandParameter="{Binding Grid}" />
+                              CommandParameter="{Binding Grid}"
+                              Header="Save Filter Preset (Not Implemented)" />
                     <MenuItem x:Name="miLoadFilterPreset"
-                              Header="Load Filter Preset (Not Implemented)"
                               Command="{x:Static commands:ContextMenuCommands.LoadFilterPresetCommand}"
-                              CommandParameter="{Binding Grid}" />
+                              CommandParameter="{Binding Grid}"
+                              Header="Load Filter Preset (Not Implemented)" />
                     <Separator />
 
-                    <!-- Column Profiles submenu -->
+                    <!--  Column Profiles submenu  -->
                     <MenuItem x:Name="miColumnProfiles" Header="Column Profiles">
                         <MenuItem x:Name="miSaveCurrentProfile"
-                                  Header="Save Current Profile (Not Implemented)"
                                   Command="{x:Static commands:ContextMenuCommands.SaveCurrentProfileCommand}"
-                                  CommandParameter="{Binding Grid}" />
+                                  CommandParameter="{Binding Grid}"
+                                  Header="Save Current Profile (Not Implemented)" />
                         <MenuItem x:Name="miLoadProfile"
-                                  Header="Load Profile... (Not Implemented)"
                                   Command="{x:Static commands:ContextMenuCommands.LoadProfileCommand}"
-                                  CommandParameter="{Binding Grid}" />
+                                  CommandParameter="{Binding Grid}"
+                                  Header="Load Profile... (Not Implemented)" />
                         <MenuItem x:Name="miManageProfiles"
-                                  Header="Manage Profiles... (Not Implemented)"
                                   Command="{x:Static commands:ContextMenuCommands.ManageProfilesCommand}"
-                                  CommandParameter="{Binding Grid}" />
+                                  CommandParameter="{Binding Grid}"
+                                  Header="Manage Profiles... (Not Implemented)" />
                     </MenuItem>
 
                     <Separator />
 
-                    <!-- Export operations -->
+                    <!--  Export operations  -->
                     <MenuItem x:Name="miExportToCsv"
-                              Header="Export to CSV (Not Implemented)"
                               Command="{x:Static commands:ContextMenuCommands.ExportToCsvCommand}"
-                              CommandParameter="{Binding Grid}" />
+                              CommandParameter="{Binding Grid}"
+                              Header="Export to CSV (Not Implemented)" />
                     <MenuItem x:Name="miExportToExcel"
-                              Header="Export to Excel (Not Implemented)"
                               Command="{x:Static commands:ContextMenuCommands.ExportToExcelCommand}"
-                              CommandParameter="{Binding Grid}" />
+                              CommandParameter="{Binding Grid}"
+                              Header="Export to Excel (Not Implemented)" />
 
                     <Separator />
 
-                    <!-- Layout operations -->
+                    <!--  Layout operations  -->
                     <MenuItem x:Name="miShowColumnChooser"
-                              Header="Show Column Chooser"
                               Command="{x:Static commands:ContextMenuCommands.ShowColumnChooserCommand}"
-                              CommandParameter="{Binding Grid}">
+                              CommandParameter="{Binding Grid}"
+                              Header="Show Column Chooser">
                         <MenuItem.Style>
                             <Style TargetType="MenuItem">
                                 <Setter Property="Visibility" Value="Visible" />
@@ -408,9 +579,9 @@
                         </MenuItem.Style>
                     </MenuItem>
                     <MenuItem x:Name="miResetLayout"
-                              Header="Reset Layout (Not Implemented)"
                               Command="{x:Static commands:ContextMenuCommands.ResetLayoutCommand}"
-                              CommandParameter="{Binding Grid}" />
+                              CommandParameter="{Binding Grid}"
+                              Header="Reset Layout (Not Implemented)" />
                 </ContextMenu>
             </Setter.Value>
         </Setter>
@@ -419,13 +590,10 @@
                 <ControlTemplate TargetType="{x:Type sdg:SearchDataGrid}">
                     <Border Background="{TemplateBinding Background}"
                             BorderBrush="{TemplateBinding BorderBrush}"
-                            BorderThickness="{TemplateBinding BorderThickness}"
-                            SnapsToDevicePixels="True">
+                            BorderThickness="{TemplateBinding BorderThickness}">
                         <Grid>
                             <Grid.RowDefinitions>
-                                <!--  DataGrid  -->
                                 <RowDefinition Height="*" />
-                                <!--  FilterPanel  -->
                                 <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
 
@@ -449,19 +617,51 @@
                                                 <RowDefinition Height="Auto" />
                                             </Grid.RowDefinitions>
 
+
                                             <!--  Per-Column Select All  -->
                                             <Button Style="{StaticResource GenericSelectAllButtonStyle}"
                                                     Focusable="false"
-                                                    Command="{x:Static DataGrid.SelectAllCommand}" />
+                                                    Command="{x:Static DataGrid.SelectAllCommand}"
+                                                    Panel.ZIndex="2" />
 
                                             <!--  Column Headers  -->
-                                            <DataGridColumnHeadersPresenter x:Name="PART_ColumnHeadersPresenter" Grid.Column="1" />
+                                            <DataGridColumnHeadersPresenter x:Name="PART_ColumnHeadersPresenter"
+                                                                            Grid.Column="1"
+                                                                            Margin="0,0,0,0" />
+
+                                            <Border x:Name="PART_ColumnHeaderBottomBorder" Grid.Column="1" Grid.Row="1" Background="#dddddd" VerticalAlignment="Top" Panel.ZIndex="2" Height="1" Margin="0,-1,0,0" />
 
                                             <!--  Rows  -->
                                             <ScrollContentPresenter x:Name="PART_ScrollContentPresenter"
                                                                     Grid.Row="1"
                                                                     Grid.ColumnSpan="2"
                                                                     CanContentScroll="{TemplateBinding CanContentScroll}" />
+
+                                            <!--
+                                                Placeholder: top-right gap (above the vertical scrollbar).
+                                                Matches column search box (top strip, white) + column header (bottom).
+                                                Visibility follows the vertical scrollbar so it collapses when the scrollbar does.
+                                            -->
+                                            <Grid Grid.Row="0"
+                                                  Grid.Column="2"
+                                                  Visibility="{TemplateBinding ComputedVerticalScrollBarVisibility}">
+                                                <Grid.RowDefinitions>
+                                                    <RowDefinition Height="Auto" />
+                                                    <RowDefinition Height="*" />
+                                                </Grid.RowDefinitions>
+                                                <Border Grid.Row="0"
+                                                        Background="White"
+                                                        BorderBrush="#FFDDDDDD"
+                                                        BorderThickness="1,0,0,0"
+                                                        Margin="-1,1,0,0"
+                                                        Height="28" />
+                                                <Border Grid.Row="1"
+                                                        Background="#F9F9F9"
+                                                        BorderBrush="#FFDDDDDD"
+                                                        BorderThickness="1,1,0,1"
+                                                        Margin="-1,0,0,0" />
+                                            </Grid>
+
 
                                             <!--  Scrollbars  -->
                                             <ScrollBar x:Name="PART_VerticalScrollBar"
@@ -485,10 +685,44 @@
                                                            ViewportSize="{TemplateBinding ViewportWidth}"
                                                            Value="{Binding HorizontalOffset, Mode=OneWay, RelativeSource={RelativeSource TemplatedParent}}" />
                                             </Grid>
+
+                                            <!--
+                                                Placeholder: bottom-left gap (below row header area, left of horizontal scrollbar).
+                                                Matches row header background.
+                                            -->
+                                            <Border Grid.Row="2"
+                                                    Grid.Column="0"
+                                                    Background="#F9F9F9"
+                                                    BorderBrush="#FFDDDDDD"
+                                                    BorderThickness="0,1,1,0"
+                                                    Visibility="{TemplateBinding ComputedHorizontalScrollBarVisibility}"
+                                                    Margin="0,-1,0,0" />
+                                            <!--  Placeholder: bottom-right corner (intersection of both scrollbars).  -->
+                                            <Border Grid.Row="2"
+                                                    Grid.Column="2"
+                                                    Background="#F9F9F9"
+                                                    BorderBrush="#FFDDDDDD"
+                                                    BorderThickness="1,1,0,0"
+                                                    Margin="-1,0,0,0">
+                                                <Border.Style>
+                                                    <Style TargetType="Border">
+                                                        <Setter Property="Visibility" Value="Collapsed" />
+                                                        <Style.Triggers>
+                                                            <MultiDataTrigger>
+                                                                <MultiDataTrigger.Conditions>
+                                                                    <Condition Binding="{Binding ComputedVerticalScrollBarVisibility, RelativeSource={RelativeSource TemplatedParent}}" Value="Visible" />
+                                                                    <Condition Binding="{Binding ComputedHorizontalScrollBarVisibility, RelativeSource={RelativeSource TemplatedParent}}" Value="Visible" />
+                                                                </MultiDataTrigger.Conditions>
+                                                                <Setter Property="Visibility" Value="Visible" />
+                                                            </MultiDataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Border.Style>
+                                            </Border>
                                         </Grid>
                                     </ControlTemplate>
                                 </ScrollViewer.Template>
-                                <ItemsPresenter SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" />
+                                <ItemsPresenter />
                             </ScrollViewer>
 
                             <!--  FilterPanel  -->
@@ -509,8 +743,10 @@
         <Setter Property="AlternatingRowBackground" Value="#FFF9F9F9" />
         <Setter Property="HorizontalGridLinesBrush" Value="#FFDDDDDD" />
         <Setter Property="VerticalGridLinesBrush" Value="#FFDDDDDD" />
+
+
         <Setter Property="HeadersVisibility" Value="All" />
-        <Setter Property="GridLinesVisibility" Value="All" />
+        <Setter Property="GridLinesVisibility" Value="None" />
         <Setter Property="CanUserAddRows" Value="False" />
         <Setter Property="CanUserDeleteRows" Value="False" />
         <Setter Property="CanUserResizeRows" Value="False" />
@@ -518,18 +754,18 @@
         <Setter Property="CanUserResizeColumns" Value="True" />
         <Setter Property="CanUserSortColumns" Value="True" />
         <Setter Property="IsSynchronizedWithCurrentItem" Value="True" />
-        <Setter Property="SnapsToDevicePixels" Value="True" />
-        <Setter Property="UseLayoutRounding" Value="True" />
+
+
         <Setter Property="AutoGenerateColumns" Value="False" />
         <Setter Property="SelectionMode" Value="Extended" />
         <Setter Property="SelectionUnit" Value="FullRow" />
         <Setter Property="EnableRowVirtualization" Value="True" />
-        <Setter Property="EnableColumnVirtualization" Value="False" />
+        <Setter Property="EnableColumnVirtualization" Value="True" />
         <Setter Property="VirtualizingPanel.IsVirtualizing" Value="True" />
         <Setter Property="VirtualizingPanel.IsVirtualizingWhenGrouping" Value="True" />
         <Setter Property="VirtualizingPanel.VirtualizationMode" Value="Recycling" />
         <Setter Property="VirtualizingPanel.ScrollUnit" Value="Item" />
-        <Setter Property="ScrollViewer.IsDeferredScrollingEnabled" Value="True" />
+        <Setter Property="ScrollViewer.IsDeferredScrollingEnabled" Value="False" />
         <Setter Property="ScrollViewer.CanContentScroll" Value="True" />
     </Style>
 

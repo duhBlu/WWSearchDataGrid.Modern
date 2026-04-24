@@ -36,16 +36,16 @@ namespace WWSearchDataGrid.Modern.Core
                     FilterInputTemplate.SingleSearchTextBox, ColumnDataType.Number, ColumnDataType.DateTime),
 
                 [SearchType.Contains] = new SearchTypeMetadata(SearchType.Contains, "Contains",
-                    FilterInputTemplate.SingleSearchTextBox, ColumnDataType.String, ColumnDataType.Number, ColumnDataType.DateTime, ColumnDataType.Enum),
+                    FilterInputTemplate.SingleSearchTextBox, ColumnDataType.String, ColumnDataType.Number, ColumnDataType.DateTime, ColumnDataType.Boolean, ColumnDataType.Enum),
 
                 [SearchType.DoesNotContain] = new SearchTypeMetadata(SearchType.DoesNotContain, "Does not contain",
-                    FilterInputTemplate.SingleSearchTextBox, ColumnDataType.String, ColumnDataType.Number, ColumnDataType.DateTime, ColumnDataType.Enum),
+                    FilterInputTemplate.SingleSearchTextBox, ColumnDataType.String, ColumnDataType.Number, ColumnDataType.DateTime, ColumnDataType.Boolean, ColumnDataType.Enum),
 
                 [SearchType.StartsWith] = new SearchTypeMetadata(SearchType.StartsWith, "Starts with",
-                    FilterInputTemplate.SingleSearchTextBox, ColumnDataType.String, ColumnDataType.Number, ColumnDataType.DateTime, ColumnDataType.Enum),
+                    FilterInputTemplate.SingleSearchTextBox, ColumnDataType.String, ColumnDataType.Number, ColumnDataType.DateTime, ColumnDataType.Boolean, ColumnDataType.Enum),
 
                 [SearchType.EndsWith] = new SearchTypeMetadata(SearchType.EndsWith, "Ends with",
-                    FilterInputTemplate.SingleSearchTextBox, ColumnDataType.String, ColumnDataType.Number, ColumnDataType.DateTime, ColumnDataType.Enum),
+                    FilterInputTemplate.SingleSearchTextBox, ColumnDataType.String, ColumnDataType.Number, ColumnDataType.DateTime, ColumnDataType.Boolean, ColumnDataType.Enum),
 
                 [SearchType.IsLike] = new SearchTypeMetadata(SearchType.IsLike, "Is like",
                     FilterInputTemplate.SingleSearchTextBox, ColumnDataType.String, ColumnDataType.Number, ColumnDataType.Enum),
@@ -62,6 +62,9 @@ namespace WWSearchDataGrid.Modern.Core
 
                 // Dual DateTime filters
                 [SearchType.BetweenDates] = new SearchTypeMetadata(SearchType.BetweenDates, "Is between dates",
+                    FilterInputTemplate.DualDateTimePicker, ColumnDataType.DateTime),
+
+                [SearchType.NotBetweenDates] = new SearchTypeMetadata(SearchType.NotBetweenDates, "Is not between dates",
                     FilterInputTemplate.DualDateTimePicker, ColumnDataType.DateTime),
 
                 // Numeric UpDown filters
@@ -102,16 +105,16 @@ namespace WWSearchDataGrid.Modern.Core
                 [SearchType.Today] = new SearchTypeMetadata(SearchType.Today, "Is today",
                     FilterInputTemplate.NoInput, ColumnDataType.DateTime),
 
-                // List-based filters
+                // List-based filters (used by Filter Values tab and available in rule editor)
                 [SearchType.IsAnyOf] = new SearchTypeMetadata(
                     SearchType.IsAnyOf, "Is any of",
-                    FilterInputTemplate.SearchTextBoxList, ColumnDataType.String, ColumnDataType.Number, ColumnDataType.Enum),
+                    FilterInputTemplate.SearchTextBoxList, ColumnDataType.String, ColumnDataType.Number, ColumnDataType.DateTime, ColumnDataType.Boolean, ColumnDataType.Enum),
 
                 [SearchType.IsNoneOf] = new SearchTypeMetadata(SearchType.IsNoneOf, "Is none of",
                     FilterInputTemplate.SearchTextBoxList, ColumnDataType.String, ColumnDataType.Number, ColumnDataType.DateTime, ColumnDataType.Boolean, ColumnDataType.Enum),
 
-                [SearchType.IsOnAnyOfDates] = new SearchTypeMetadata(SearchType.IsOnAnyOfDates, "Is on any of the following",
-                    FilterInputTemplate.DateTimePickerList, ColumnDataType.DateTime),
+                // [SearchType.IsOnAnyOfDates] = new SearchTypeMetadata(SearchType.IsOnAnyOfDates, "Is on any of the following",
+                //     FilterInputTemplate.DateTimePickerList, ColumnDataType.DateTime),
 
                 // Date interval filter
                 [SearchType.DateInterval] = new SearchTypeMetadata(SearchType.DateInterval, "Date intervals",

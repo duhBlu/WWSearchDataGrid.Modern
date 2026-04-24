@@ -40,6 +40,7 @@ namespace WWSearchDataGrid.Modern.Core
         Today,
         Yesterday,
         BetweenDates,
+        NotBetweenDates,
         DateInterval,
 
         // Statistical

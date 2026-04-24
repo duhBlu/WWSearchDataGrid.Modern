@@ -346,8 +346,8 @@ namespace WWSearchDataGrid.Modern.WPF
                     return;
                 }
 
-                // Check the explicit property on GridColumn
-                bool isCheckboxType = GridColumn.GetUseCheckBoxInSearchBox(CurrentColumn);
+                // Resolve from descriptor first, then attached properties
+                bool isCheckboxType = ResolveUseCheckBoxInSearchBox();
 
                 // Set the UI state immediately
                 SetCheckboxColumnState(isCheckboxType);

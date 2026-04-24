@@ -24,6 +24,7 @@ namespace WWSearchDataGrid.Modern.Core
 
         private ColumnDataType columnDataType;
         private FilterInputTemplate inputTemplate;
+        private bool isValueFilterTemplate;
         private ObservableCollection<SelectableValueItem> selectedValues;
         private ObservableCollection<DateTime> selectedDates;
         private ObservableCollection<DateIntervalItem> dateIntervals;
@@ -166,12 +167,23 @@ namespace WWSearchDataGrid.Modern.Core
             set { SetProperty(value, ref searchTemplateController); }
         }
 
+        /// <summary>
+        /// When true, this template was created by the Filter Values tab and is
+        /// kept in sync with checkbox selections. The FilterValueManager manages its lifecycle.
+        /// </summary>
+        public bool IsValueFilterTemplate
+        {
+            get => isValueFilterTemplate;
+            set => SetProperty(value, ref isValueFilterTemplate);
+        }
+
+
         public bool HasCustomFilter
         {
             get
             {
                 var hasSelectedValue = SelectedValue != null && !string.IsNullOrEmpty(SelectedValue.ToString());
-                var hasSelectedSecondaryValue = SelectedSecondaryValue != null && !string.IsNullOrEmpty(SelectedValue.ToString());
+                var hasSelectedSecondaryValue = SelectedSecondaryValue != null && !string.IsNullOrEmpty(SelectedSecondaryValue.ToString());
 
                 var isNonDefaultSearchType = SearchType != SearchType.Contains;
 
@@ -233,7 +245,7 @@ namespace WWSearchDataGrid.Modern.Core
                 }
 
                 // Search types that require two values (Between, NotBetween, BetweenDates)
-                if (SearchType == SearchType.Between || SearchType == SearchType.NotBetween || SearchType == SearchType.BetweenDates)
+                if (SearchType == SearchType.Between || SearchType == SearchType.NotBetween || SearchType == SearchType.BetweenDates || SearchType == SearchType.NotBetweenDates)
                 {
                     return SelectedValue != null && SelectedSecondaryValue != null &&
                            !string.IsNullOrWhiteSpace(SelectedValue?.ToString()) &&
@@ -491,11 +503,39 @@ namespace WWSearchDataGrid.Modern.Core
         /// <returns>True if the template is still valid after removal, false if it should be removed</returns>
         public bool RemovePrimaryValue()
         {
-            SelectedValue = null;
             HasChanges = true;
 
-            // Check if template is still valid
-            return IsValidFilter;
+            // TransformBetweenSearchType may have already run (called by SearchTemplateController
+            // before HandleValueRemoval). If so, the SearchType is no longer Between and the values
+            // have been rearranged. Check if the template is already valid after pre-transformation.
+            // Only null the value if no pre-transformation left it in a valid state.
+            switch (SearchType)
+            {
+                case SearchType.Between:
+                case SearchType.NotBetween:
+                case SearchType.BetweenDates:
+                case SearchType.NotBetweenDates:
+                    // Pre-transformation didn't run (direct call, not via controller).
+                    // Handle inline.
+                    if (SelectedSecondaryValue != null)
+                    {
+                        SelectedValue = SelectedSecondaryValue;
+                        SelectedSecondaryValue = null;
+                        SearchType = (SearchType == SearchType.NotBetween || SearchType == SearchType.NotBetweenDates)
+                            ? SearchType.LessThan
+                            : SearchType.LessThanOrEqualTo;
+                        return true;
+                    }
+                    SelectedValue = null;
+                    return IsValidFilter;
+
+                default:
+                    // Non-range type: remove the primary value unconditionally.
+                    // (Between pre-transformation is now handled by the controller
+                    // skipping HandleValueRemoval after TransformBetweenSearchType.)
+                    SelectedValue = null;
+                    return IsValidFilter;
+            }
         }
 
         /// <summary>
@@ -507,29 +547,49 @@ namespace WWSearchDataGrid.Modern.Core
             SelectedSecondaryValue = null;
             HasChanges = true;
 
-            // For Between/Range templates, transform to single value template
-            if (SearchType == SearchType.Between && SelectedValue != null)
+            // Transform search type: keep primary value with appropriate single-value type
+            switch (SearchType)
             {
-                SearchType = SearchType.GreaterThanOrEqualTo;
-                return true;
-            }
-            else if (SearchType == SearchType.NotBetween && SelectedValue != null)
-            {
-                SearchType = SearchType.NotEquals;
-                return true;
-            }
-            else if (SearchType == SearchType.BetweenDates && SelectedValue != null)
-            {
-                SearchType = SearchType.GreaterThanOrEqualTo;
-                return true;
+                case SearchType.Between:
+                    if (SelectedValue != null)
+                    {
+                        SearchType = SearchType.GreaterThanOrEqualTo;
+                        return true;
+                    }
+                    break;
+
+                case SearchType.NotBetween:
+                    if (SelectedValue != null)
+                    {
+                        SearchType = SearchType.GreaterThan;
+                        return true;
+                    }
+                    break;
+
+                case SearchType.BetweenDates:
+                    if (SelectedValue != null)
+                    {
+                        SearchType = SearchType.GreaterThanOrEqualTo;
+                        return true;
+                    }
+                    break;
+
+                case SearchType.NotBetweenDates:
+                    if (SelectedValue != null)
+                    {
+                        SearchType = SearchType.GreaterThan;
+                        return true;
+                    }
+                    break;
             }
 
-            // Check if template is still valid
             return IsValidFilter;
         }
 
         /// <summary>
-        /// Removes a specific value from the SelectedValues collection
+        /// Removes a specific value from the SelectedValues collection.
+        /// When a multi-value filter (IsAnyOf/IsNoneOf) drops to a single value,
+        /// transforms to the simpler equivalent (Equals/NotEquals).
         /// </summary>
         /// <param name="value">The value to remove</param>
         /// <returns>True if the template is still valid after removal, false if it should be removed</returns>
@@ -537,7 +597,6 @@ namespace WWSearchDataGrid.Modern.Core
         {
             if (SelectedValues != null && value != null)
             {
-                // Find the SelectableValueItem that contains this value
                 var valueString = value.ToString();
                 var itemToRemove = SelectedValues.FirstOrDefault(v => v?.Value == valueString);
 
@@ -545,10 +604,35 @@ namespace WWSearchDataGrid.Modern.Core
                 {
                     SelectedValues.Remove(itemToRemove);
                     HasChanges = true;
+
+                    // Transform to simpler type when down to 1 value
+                    if (SelectedValues.Count == 1)
+                    {
+                        var remaining = SelectedValues[0];
+                        switch (SearchType)
+                        {
+                            case SearchType.IsAnyOf:
+                                SearchType = SearchType.Equals;
+                                SelectedValue = remaining?.Value;
+                                SelectedValues.Clear();
+                                return true;
+
+                            case SearchType.IsNoneOf:
+                                SearchType = SearchType.NotEquals;
+                                SelectedValue = remaining?.Value;
+                                SelectedValues.Clear();
+                                return true;
+                        }
+                    }
+
+                    // Transform to removal when down to 0 values
+                    if (SelectedValues.Count == 0)
+                    {
+                        return false; // Template should be removed entirely
+                    }
                 }
             }
 
-            // Check if template is still valid
             return IsValidFilter;
         }
 
@@ -651,48 +735,29 @@ namespace WWSearchDataGrid.Modern.Core
         /// <param name="removedValueType">The type of value that was removed</param>
         public void TransformBetweenSearchType(ValueType removedValueType)
         {
-            // Cache current values
-            var v1 = SelectedValue;
-            var v2 = SelectedSecondaryValue;
+            var v1 = SelectedValue;       // Primary = "from" / lower bound
+            var v2 = SelectedSecondaryValue; // Secondary = "to" / upper bound
 
-            // If we don't have the "other" value to pivot to, there's nothing to transform into.
             bool hasV1 = v1 != null;
             bool hasV2 = v2 != null;
             if (!hasV1 && !hasV2) return;
-
-            // Compute min/max (works for IComparable or numeric/date types via Comparer.Default)
-            object min = v1;
-            object max = v2;
-
-            if (hasV1 && hasV2)
-            {
-                int cmp = Comparer.Default.Compare(v1, v2);
-                if (cmp <= 0) { min = v1; max = v2; }
-                else { min = v2; max = v1; }
-            }
-            else
-            {
-                // Only one value present; treat it as both min/max
-                min = max = hasV1 ? v1 : v2;
-            }
 
             switch (SearchType)
             {
                 case SearchType.Between:
                 case SearchType.BetweenDates:
+                case SearchType.NotBetweenDates:  // Treat removal same as BetweenDates (degrade to >= / <=)
                 {
                     if (removedValueType == ValueType.Primary && hasV2)
                     {
-                        // Removed the "primary" bound -> become <= larger of the two
                         SearchType = SearchType.LessThanOrEqualTo;
-                        SelectedValue = max;
+                        SelectedValue = v2;
                         SelectedSecondaryValue = null;
                     }
                     else if (removedValueType == ValueType.Secondary && hasV1)
                     {
-                        // Removed the "secondary" bound -> become >= smaller of the two
                         SearchType = SearchType.GreaterThanOrEqualTo;
-                        SelectedValue = min;
+                        SelectedValue = v1;
                         SelectedSecondaryValue = null;
                     }
                     break;
@@ -701,16 +766,18 @@ namespace WWSearchDataGrid.Modern.Core
                 {
                     if (removedValueType == ValueType.Primary && hasV2)
                     {
-                        // Inverse of Between: removing the lower bound -> > larger
+                        // Removed the lower bound → keep upper bound: "not between X and Y"
+                        // minus X means "> Y" (values above upper bound)
                         SearchType = SearchType.GreaterThan;
-                        SelectedValue = max;
+                        SelectedValue = v2;
                         SelectedSecondaryValue = null;
                     }
                     else if (removedValueType == ValueType.Secondary && hasV1)
                     {
-                        // Removing the upper bound -> < smaller
+                        // Removed the upper bound → keep lower bound: "not between X and Y"
+                        // minus Y means "< X" (values below lower bound)
                         SearchType = SearchType.LessThan;
-                        SelectedValue = min;
+                        SelectedValue = v1;
                         SelectedSecondaryValue = null;
                     }
                     break;

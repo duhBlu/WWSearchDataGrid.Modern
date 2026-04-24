@@ -4,6 +4,7 @@
                     xmlns:i="interactivity">
 
     <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF;component/Themes/Controls/Primitives/DefaultControls.xaml" />
         <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF;component/Themes/Controls/Primitives/ReorderableListBox.xaml" />
     </ResourceDictionary.MergedDictionaries>
 
@@ -19,7 +20,6 @@
         <Setter Property="ShowInTaskbar" Value="False" />
         <Setter Property="WindowStyle" Value="None" />
         <Setter Property="AllowsTransparency" Value="False" />
-        <Setter Property="UseLayoutRounding" Value="True" />
         <Setter Property="TextOptions.TextFormattingMode" Value="Display" />
         <Setter Property="WindowChrome.WindowChrome">
             <Setter.Value>
@@ -45,7 +45,7 @@
                             <Border Grid.Row="0"
                                     Background="#F8F9FA"
                                     BorderBrush="#DEE2E6"
-                                    BorderThickness="0,0,0,1">
+                                    BorderThickness="0,0,0,0">
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*" />
@@ -149,7 +149,7 @@
                 <ControlTemplate TargetType="{x:Type sdg:ColumnChooser}">
                     <Border Background="White"
                             BorderBrush="#DEE2E6"
-                            BorderThickness="1"
+                            BorderThickness="0,1,0,0"
                             CornerRadius="0">
                         <Grid>
                             <Grid.RowDefinitions>
@@ -170,10 +170,11 @@
                                     </Grid.ColumnDefinitions>
 
                                     <CheckBox x:Name="PART_SelectAllCheckBox"
+                                              Style="{StaticResource SdgCheckBoxStyle}"
                                               Grid.Column="0"
                                               Content="Select All"
                                               IsThreeState="True"
-                                              FontWeight="SemiBold"
+                                              FontWeight="Normal"
                                               Foreground="#495057"
                                               VerticalAlignment="Center" />
 
@@ -300,6 +301,7 @@
 
                                                             <CheckBox Grid.Column="0"
                                                                       IsChecked="{Binding IsVisible}"
+                                                                      Style="{StaticResource SdgCheckBoxStyle}"
                                                                       VerticalAlignment="Center"
                                                                       Margin="0,0,8,0"
                                                                       Focusable="False" />

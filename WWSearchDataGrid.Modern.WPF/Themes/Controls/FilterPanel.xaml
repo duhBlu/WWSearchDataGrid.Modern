@@ -154,8 +154,7 @@
                                                                               HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
                                                                               VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
                                                                               RecognizesAccessKey="True"
-                                                                              TextElement.Foreground="{TemplateBinding Foreground}"
-                                                                              SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" />
+                                                                              TextElement.Foreground="{TemplateBinding Foreground}" />
                                                         </Border>
                                                     </ControlTemplate>
                                                 </Setter.Value>
@@ -210,8 +209,7 @@
                                                                               HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
                                                                               VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
                                                                               RecognizesAccessKey="True"
-                                                                              TextElement.Foreground="{TemplateBinding Foreground}"
-                                                                              SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" />
+                                                                              TextElement.Foreground="{TemplateBinding Foreground}" />
                                                         </Border>
                                                     </ControlTemplate>
                                                 </Setter.Value>
