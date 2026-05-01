@@ -462,6 +462,14 @@ namespace WWSearchDataGrid.Modern.WPF
                     _filterContent.FiltersApplied += OnFiltersApplied;
                     _filterContent.FiltersCleared += OnFiltersCleared;
                 }
+                else if (_filterContent.SearchTemplateController != SearchTemplateController)
+                {
+                    // The popup was created when this ColumnSearchBox was bound to a different
+                    // DataGridColumn (header recycling retargets the box). Re-sync the editor's
+                    // controller so it edits the column we currently represent, not the one
+                    // we represented when the popup was first instantiated.
+                    _filterContent.SearchTemplateController = SearchTemplateController;
+                }
 
                 // Calculate the vertical offset to position below the column header
                 double verticalOffset = CalculateVerticalOffsetForColumnHeader();
@@ -476,7 +484,7 @@ namespace WWSearchDataGrid.Modern.WPF
                         Placement = PlacementMode.Bottom,
                         AllowsTransparency = true,
                         PopupAnimation = PopupAnimation.Fade,
-                        StaysOpen = false,
+                        StaysOpen = true,
                         HorizontalOffset = _filterContent.HorizontalOffset,
                         VerticalOffset = verticalOffset
                     };

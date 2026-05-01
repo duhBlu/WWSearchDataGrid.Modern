@@ -791,9 +791,13 @@ namespace WWSearchDataGrid.Modern.WPF
                 if (SourceDataGrid == null || CurrentColumn == null)
                     return;
 
-                // Look up the GridColumn descriptor if this column was generated from one
-                if (GridColumn == null)
-                    GridColumn = SourceDataGrid.FindGridColumnDescriptor(CurrentColumn);
+                // ALWAYS re-resolve the descriptor against the current DataGridColumn. WPF
+                // column-header virtualization recycles ColumnSearchBox instances by retargeting
+                // them at different DataGridColumns (firing OnCurrentColumnChanged → this method).
+                // If we kept the previous descriptor, the box would visually present the new
+                // column while its descriptor/controller still pointed at the previous one —
+                // every filter operation would silently mutate the wrong column's state.
+                GridColumn = SourceDataGrid.FindGridColumnDescriptor(CurrentColumn);
 
                 // If the descriptor says filtering is disabled, hide this search box
                 if (GridColumn != null && !GridColumn.AllowFiltering)
@@ -803,8 +807,19 @@ namespace WWSearchDataGrid.Modern.WPF
                     return;
                 }
 
-                if (SearchTemplateController == null)
+                // Always re-resolve the controller from the (possibly newly-resolved) descriptor.
+                // The descriptor owns the persistent controller across virtualization cycles —
+                // attaching to it both restores filter state when the column scrolls back into
+                // view and prevents stale controller references after recycling retargets us.
+                if (GridColumn != null)
                 {
+                    if (GridColumn.SearchTemplateController == null)
+                        GridColumn.SearchTemplateController = new SearchTemplateController();
+                    SearchTemplateController = GridColumn.SearchTemplateController;
+                }
+                else if (SearchTemplateController == null)
+                {
+                    // Fallback: column has no GridColumn descriptor (legacy/transitional state).
                     SearchTemplateController = new SearchTemplateController();
                 }
                 SearchTemplateController.ColumnName = ResolveColumnDisplayName();
@@ -825,6 +840,17 @@ namespace WWSearchDataGrid.Modern.WPF
                 BindingPath = resolvedPath;
 
                 DetermineCheckboxColumnTypeFromColumnDefinition();
+
+                // Replace any stale ColumnSearchBox entries for the same DataGridColumn
+                // (left over from a previous virtualization cycle) with this fresh instance.
+                // Otherwise stale boxes accumulate in DataColumns and the grid's filter pipeline
+                // evaluates duplicate filters.
+                for (int i = SourceDataGrid.DataColumns.Count - 1; i >= 0; i--)
+                {
+                    var existing = SourceDataGrid.DataColumns[i];
+                    if (existing != this && existing.CurrentColumn == CurrentColumn)
+                        SourceDataGrid.DataColumns.RemoveAt(i);
+                }
 
                 if (!SourceDataGrid.DataColumns.Contains(this))
                     SourceDataGrid.DataColumns.Add(this);
@@ -872,6 +898,14 @@ namespace WWSearchDataGrid.Modern.WPF
 
                 // Update tooltip to reflect valid prefixes for this column's data type
                 UpdateSearchTooltip();
+
+                // Sync the visual filter-state flags from the persisted controller.
+                // After header virtualization the new ColumnSearchBox starts with the default
+                // DP values (HasAdvancedFilter=false, HasActiveFilter=false). The reused
+                // controller already knows whether a filter is active — copy that across so
+                // the column header indicator stays correct when the column scrolls back in.
+                HasAdvancedFilter = SearchTemplateController.HasCustomExpression;
+                UpdateHasActiveFilterState();
             }
             catch (Exception ex)
             {

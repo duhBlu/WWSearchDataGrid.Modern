@@ -1,5 +1,6 @@
 ﻿using System;
 using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Windows.Controls;
 using System.Windows;
@@ -19,6 +20,7 @@ using WWSearchDataGrid.Modern.WPF.Commands;
 using WWSearchDataGrid.Modern.Core.Caching;
 using System.Windows.Automation.Peers;
 using System.Windows.Controls.Primitives;
+using System.Reflection;
 
 namespace WWSearchDataGrid.Modern.WPF
 {
@@ -127,6 +129,21 @@ namespace WWSearchDataGrid.Modern.WPF
         /// </summary>
         public static readonly DependencyProperty GridColumnsProperty = GridColumnsPropertyKey.DependencyProperty;
 
+        /// <summary>
+        /// Backing key for <see cref="VisualOrderedColumns"/>. Kept in sync with
+        /// <see cref="DataGrid.Columns"/> but always sorted by <see cref="DataGridColumn.DisplayIndex"/>.
+        /// Used by the vertical-gridline overlay so gridlines move with the visual column order
+        /// when the user reorders columns.
+        /// </summary>
+        private static readonly DependencyPropertyKey VisualOrderedColumnsPropertyKey =
+            DependencyProperty.RegisterReadOnly(
+                nameof(VisualOrderedColumns),
+                typeof(ObservableCollection<DataGridColumn>),
+                typeof(SearchDataGrid),
+                new FrameworkPropertyMetadata(null));
+
+        public static readonly DependencyProperty VisualOrderedColumnsProperty = VisualOrderedColumnsPropertyKey.DependencyProperty;
+
         #endregion
 
         #region Properties
@@ -137,6 +154,16 @@ namespace WWSearchDataGrid.Modern.WPF
         public ObservableCollection<ColumnSearchBox> DataColumns
         {
             get { return dataColumns; }
+        }
+
+        /// <summary>
+        /// Gets the columns ordered by <see cref="DataGridColumn.DisplayIndex"/>. Maintained in
+        /// response to <c>Columns</c> changes and column reordering. The vertical gridline overlay
+        /// binds to this so gridlines track the visual column order rather than the raw collection.
+        /// </summary>
+        public ObservableCollection<DataGridColumn> VisualOrderedColumns
+        {
+            get { return (ObservableCollection<DataGridColumn>)GetValue(VisualOrderedColumnsProperty); }
         }
 
         /// <summary>
@@ -307,6 +334,11 @@ namespace WWSearchDataGrid.Modern.WPF
             SetValue(GridColumnsPropertyKey, gridColumns);
             SubscribeToGridColumnsChanged(gridColumns);
 
+            // Maintain a DisplayIndex-ordered mirror of Columns for the gridline overlay.
+            SetValue(VisualOrderedColumnsPropertyKey, new ObservableCollection<DataGridColumn>());
+            ((INotifyCollectionChanged)Columns).CollectionChanged += (_, __) => RebuildVisualOrderedColumns();
+            ColumnDisplayIndexChanged += (_, __) => RebuildVisualOrderedColumns();
+
             // Initialize context menu functionality
             this.InitializeContextMenu();
 
@@ -330,6 +362,37 @@ namespace WWSearchDataGrid.Modern.WPF
         /// to prevent duplicate generation on repeated Loaded events.
         /// </summary>
         private bool _gridColumnsGenerated;
+
+        /// <summary>
+        /// Suppresses <see cref="OnGridColumnsCollectionChanged"/> while auto-generation populates
+        /// the descriptor collection — the subsequent <see cref="GenerateColumnsFromDescriptors"/>
+        /// pass will build the WPF columns in one shot.
+        /// </summary>
+        private bool _suppressGridColumnsChanged;
+
+        /// <summary>
+        /// Re-entry guard for the DataView → <see cref="ListCollectionView"/> wrapping path in
+        /// <see cref="OnItemsSourceChanged"/>. Prevents infinite recursion when the wrapper assignment
+        /// triggers another <see cref="OnItemsSourceChanged"/> notification.
+        /// </summary>
+        private bool _isRewrappingItemsSource;
+
+        /// <summary>
+        /// True when the supplied source's default view will not support predicate-style filtering
+        /// (i.e. assigning <c>Items.Filter = ...</c> would throw <see cref="NotSupportedException"/>).
+        /// Currently catches DataView / IBindingListView shapes and DataTable (via IListSource).
+        /// </summary>
+        private static bool RequiresPredicateWrap(IEnumerable source)
+        {
+            // Already a ListCollectionView (or compatible) — predicate filter works.
+            if (source is ListCollectionView) return false;
+            // DataView and other IBindingListView sources go through BindingListCollectionView,
+            // which only supports string-based filters.
+            if (source is System.ComponentModel.IBindingListView) return true;
+            // DataTable resolves to its DefaultView (a DataView) via IListSource.
+            if (source is IListSource) return true;
+            return false;
+        }
 
         /// <summary>
         /// Finds the <see cref="GridColumn"/> descriptor that generated the given
@@ -362,14 +425,174 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
+        /// Rebuilds <see cref="VisualOrderedColumns"/> from <see cref="DataGrid.Columns"/> using the
+        /// current <see cref="DataGridColumn.DisplayIndex"/> values. Called when the column set
+        /// changes or any column is reordered. Edits the existing collection in place so the bound
+        /// gridline ItemsControl observes per-item moves rather than a full reset.
+        /// </summary>
+        private void RebuildVisualOrderedColumns()
+        {
+            var target = VisualOrderedColumns;
+            if (target == null) return;
+
+            var ordered = Columns
+                .OrderBy(c => c.DisplayIndex >= 0 ? c.DisplayIndex : int.MaxValue)
+                .ToList();
+
+            // Diff in place: remove stale columns, then place each ordered column at its index.
+            for (int i = target.Count - 1; i >= 0; i--)
+            {
+                if (!ordered.Contains(target[i]))
+                    target.RemoveAt(i);
+            }
+
+            for (int i = 0; i < ordered.Count; i++)
+            {
+                var col = ordered[i];
+                int existing = target.IndexOf(col);
+                if (existing < 0)
+                    target.Insert(i, col);
+                else if (existing != i)
+                    target.Move(existing, i);
+            }
+        }
+
+        /// <summary>
         /// Handles the Loaded event to generate columns from <see cref="GridColumns"/> descriptors.
+        /// If <see cref="DataGrid.AutoGenerateColumns"/> is true and no descriptors were declared,
+        /// auto-generates them from the data source first.
         /// </summary>
         private void OnSearchDataGridLoaded(object sender, RoutedEventArgs e)
         {
             if (!_gridColumnsGenerated)
             {
+                EnsureAutoGeneratedDescriptors();
                 GenerateColumnsFromDescriptors();
             }
+        }
+
+        /// <summary>
+        /// We manage column generation ourselves through the <see cref="GridColumns"/> descriptors.
+        /// Cancel the WPF DataGrid's built-in auto-generation pipeline so it does not produce
+        /// duplicate columns when <see cref="DataGrid.AutoGenerateColumns"/> is true.
+        /// </summary>
+        protected override void OnAutoGeneratingColumn(DataGridAutoGeneratingColumnEventArgs e)
+        {
+            e.Cancel = true;
+            base.OnAutoGeneratingColumn(e);
+        }
+
+        /// <summary>
+        /// Populates <see cref="GridColumns"/> from the data source's property descriptors when
+        /// <see cref="DataGrid.AutoGenerateColumns"/> is true and the user did not declare any.
+        /// Honors <see cref="BrowsableAttribute"/> and <see cref="DisplayAttribute"/>.
+        /// </summary>
+        private void EnsureAutoGeneratedDescriptors()
+        {
+            if (!AutoGenerateColumns) return;
+            if (ItemsSource == null) return;
+
+            var descriptors = (FreezableCollection<GridColumn>)GetValue(GridColumnsProperty);
+            if (descriptors == null || descriptors.Count > 0) return;
+
+            var props = GetItemPropertyDescriptors();
+            if (props == null || props.Count == 0) return;
+
+            var orderedProps = props
+                .Cast<PropertyDescriptor>()
+                .Where(IsAutoGenerable)
+                .Select(pd => new { Pd = pd, Order = GetDisplayOrder(pd) })
+                .OrderBy(x => x.Order)
+                .Select(x => x.Pd)
+                .ToList();
+
+            _suppressGridColumnsChanged = true;
+            try
+            {
+                foreach (var pd in orderedProps)
+                {
+                    var gc = new GridColumn
+                    {
+                        FieldName = pd.Name,
+                        Header = ResolveHeaderText(pd) ?? pd.Name,
+                        IsAutoGenerated = true
+                    };
+                    // Set FieldType directly from the descriptor — no further reflection needed.
+                    gc.SetAutoFieldType(Nullable.GetUnderlyingType(pd.PropertyType) ?? pd.PropertyType);
+                    descriptors.Add(gc);
+                }
+            }
+            finally
+            {
+                _suppressGridColumnsChanged = false;
+            }
+        }
+
+        /// <summary>
+        /// Resolves the property descriptors for the current <see cref="ItemsSource"/>. Tries
+        /// <see cref="ITypedList"/> first (DataView/DataTable), then <see cref="IItemProperties"/>
+        /// from the default view, then <see cref="TypeDescriptor"/> against a sample item, and
+        /// finally reflection on the generic item type.
+        /// </summary>
+        private PropertyDescriptorCollection GetItemPropertyDescriptors()
+        {
+            var source = ItemsSource;
+            if (source == null) return null;
+
+            // 1. ITypedList — direct access. Works on empty DataViews.
+            if (source is ITypedList typedList)
+            {
+                var pds = typedList.GetItemProperties(null);
+                if (pds != null && pds.Count > 0)
+                    return pds;
+            }
+
+            // 2. IItemProperties via the default CollectionView.
+            var itemProps = GetItemPropertiesFromSource();
+            if (itemProps?.ItemProperties != null && itemProps.ItemProperties.Count > 0)
+            {
+                var pds = itemProps.ItemProperties
+                    .Select(ip => ip.Descriptor as PropertyDescriptor)
+                    .Where(pd => pd != null)
+                    .ToArray();
+                if (pds.Length > 0)
+                    return new PropertyDescriptorCollection(pds);
+            }
+
+            // 3. Sample item — TypeDescriptor handles ICustomTypeDescriptor and POCOs.
+            Type itemType = GetItemTypeFromSource(out object sampleItem);
+            if (sampleItem != null)
+                return TypeDescriptor.GetProperties(sampleItem);
+
+            // 4. Empty source with a known generic type.
+            if (itemType != null)
+                return TypeDescriptor.GetProperties(itemType);
+
+            return null;
+        }
+
+        private static bool IsAutoGenerable(PropertyDescriptor pd)
+        {
+            if (!pd.IsBrowsable) return false;
+            var display = pd.Attributes.OfType<DisplayAttribute>().FirstOrDefault();
+            if (display?.GetAutoGenerateField() == false) return false;
+            return true;
+        }
+
+        private static string ResolveHeaderText(PropertyDescriptor pd)
+        {
+            var display = pd.Attributes.OfType<DisplayAttribute>().FirstOrDefault();
+            var name = display?.GetName();
+            if (!string.IsNullOrEmpty(name)) return name;
+            if (!string.Equals(pd.DisplayName, pd.Name, StringComparison.Ordinal))
+                return pd.DisplayName;
+            return null;
+        }
+
+        private static int GetDisplayOrder(PropertyDescriptor pd)
+        {
+            var display = pd.Attributes.OfType<DisplayAttribute>().FirstOrDefault();
+            return display?.GetOrder() ?? int.MaxValue;
         }
 
         /// <summary>
@@ -377,6 +600,9 @@ namespace WWSearchDataGrid.Modern.WPF
         /// </summary>
         private void OnGridColumnsCollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
         {
+            if (_suppressGridColumnsChanged)
+                return;
+
             switch (e.Action)
             {
                 case NotifyCollectionChangedAction.Add:
@@ -385,6 +611,7 @@ namespace WWSearchDataGrid.Modern.WPF
                         foreach (GridColumn descriptor in e.NewItems)
                         {
                             descriptor.Owner = this;
+                            ResolveFieldTypeForDescriptor(descriptor);
                             var column = descriptor.CreateDataGridColumn();
                             if (column != null)
                             {
@@ -433,6 +660,7 @@ namespace WWSearchDataGrid.Modern.WPF
                         foreach (GridColumn descriptor in e.NewItems)
                         {
                             descriptor.Owner = this;
+                            ResolveFieldTypeForDescriptor(descriptor);
                             var column = descriptor.CreateDataGridColumn();
                             if (column != null)
                                 Columns.Add(column);
@@ -469,6 +697,10 @@ namespace WWSearchDataGrid.Modern.WPF
                 Columns.Clear();
             }
 
+            // Resolve FieldType from the data source before generating WPF columns so the right
+            // column type (e.g. DataGridCheckBoxColumn for bool) is chosen.
+            ResolveFieldTypesFromItemsSource();
+
             foreach (var descriptor in descriptors)
             {
                 descriptor.Owner = this;
@@ -498,6 +730,137 @@ namespace WWSearchDataGrid.Modern.WPF
                 }
                 descriptor.Owner = null;
             }
+        }
+
+        #endregion
+
+        #region Field Type Resolution
+
+        /// <summary>
+        /// Walks every descriptor in <see cref="GridColumns"/> and assigns <see cref="GridColumn.FieldType"/>
+        /// from the data source where it has not been set explicitly. No-op if there is no data source.
+        /// </summary>
+        private void ResolveFieldTypesFromItemsSource()
+        {
+            if (ItemsSource == null)
+                return;
+
+            var descriptors = (FreezableCollection<GridColumn>)GetValue(GridColumnsProperty);
+            if (descriptors == null || descriptors.Count == 0)
+                return;
+
+            // Resolve item type and a sample instance once per pass; reuse across all descriptors.
+            Type itemType = GetItemTypeFromSource(out object sampleItem);
+            IItemProperties itemProps = GetItemPropertiesFromSource();
+
+            foreach (var descriptor in descriptors)
+                ResolveFieldTypeForDescriptor(descriptor, itemType, itemProps, sampleItem);
+        }
+
+        /// <summary>
+        /// Resolves <see cref="GridColumn.FieldType"/> for a single descriptor against the current
+        /// <see cref="ItemsSource"/>. Skips descriptors with an explicit FieldType or empty FieldName.
+        /// </summary>
+        private void ResolveFieldTypeForDescriptor(GridColumn descriptor)
+        {
+            if (descriptor == null) return;
+            if (ItemsSource == null) return;
+            Type itemType = GetItemTypeFromSource(out object sampleItem);
+            ResolveFieldTypeForDescriptor(descriptor, itemType, GetItemPropertiesFromSource(), sampleItem);
+        }
+
+        private void ResolveFieldTypeForDescriptor(GridColumn descriptor, Type itemType, IItemProperties itemProps, object sampleItem)
+        {
+            if (descriptor == null || descriptor.IsFieldTypeExplicit)
+                return;
+            if (string.IsNullOrEmpty(descriptor.FieldName))
+                return;
+
+            Type resolved = ResolveTypeForField(descriptor.FieldName, itemType, itemProps, sampleItem);
+            if (resolved != null)
+                descriptor.SetAutoFieldType(resolved);
+        }
+
+        private static Type ResolveTypeForField(string fieldName, Type itemType, IItemProperties itemProps, object sampleItem)
+        {
+            // 1. IItemProperties — works on empty collections, handles ITypedList/DataView descriptors.
+            if (itemProps?.ItemProperties != null)
+            {
+                foreach (var prop in itemProps.ItemProperties)
+                {
+                    if (string.Equals(prop.Name, fieldName, StringComparison.Ordinal))
+                        return prop.PropertyType;
+                }
+            }
+
+            // 2. TypeDescriptor on a sample instance — picks up ITypedList (DataRowView columns)
+            //    and ICustomTypeDescriptor uniformly. Last-resort coverage when no CollectionView
+            //    wrapped the source.
+            if (sampleItem != null)
+            {
+                PropertyDescriptor pd = TypeDescriptor.GetProperties(sampleItem)?[fieldName];
+                if (pd != null)
+                    return pd.PropertyType;
+            }
+
+            // 3. Reflection on item type — supports dotted property paths for nested CLR objects.
+            if (itemType != null)
+                return ResolvePropertyTypeByPath(itemType, fieldName);
+
+            return null;
+        }
+
+        private static Type ResolvePropertyTypeByPath(Type rootType, string path)
+        {
+            Type currentType = rootType;
+            foreach (var segment in path.Split('.'))
+            {
+                if (currentType == null) return null;
+                var prop = currentType.GetProperty(segment, BindingFlags.Public | BindingFlags.Instance);
+                if (prop == null) return null;
+                currentType = prop.PropertyType;
+            }
+            return currentType;
+        }
+
+        private Type GetItemTypeFromSource() => GetItemTypeFromSource(out _);
+
+        private Type GetItemTypeFromSource(out object sampleItem)
+        {
+            sampleItem = null;
+            var source = ItemsSource;
+            if (source == null) return null;
+
+            // Try IEnumerable<T> first — works without enumerating.
+            Type genericType = null;
+            var enumerableInterface = source.GetType().GetInterfaces()
+                .FirstOrDefault(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IEnumerable<>));
+            if (enumerableInterface != null)
+            {
+                var arg = enumerableInterface.GetGenericArguments()[0];
+                if (arg != typeof(object))
+                    genericType = arg;
+            }
+
+            // Capture the first non-null item for TypeDescriptor-based resolution (DataRowView, etc.).
+            // Falls back to that item's runtime type if the generic type wasn't useful.
+            foreach (var item in source)
+            {
+                if (item != null)
+                {
+                    sampleItem = item;
+                    return genericType ?? item.GetType();
+                }
+            }
+            return genericType;
+        }
+
+        private IItemProperties GetItemPropertiesFromSource()
+        {
+            var source = ItemsSource;
+            if (source == null) return null;
+            var view = source as ICollectionView ?? CollectionViewSource.GetDefaultView(source);
+            return view as IItemProperties;
         }
 
         #endregion
@@ -638,18 +1001,12 @@ namespace WWSearchDataGrid.Modern.WPF
 
         private static void OnActualHasItemsChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
+            // The DataTrigger bound to ActualHasItems in the column-header template re-evaluates
+            // automatically when this property changes. Calling UpdateLayout here is unnecessary
+            // and triggers measure/arrange side effects that can re-enter our CollectionChanged
+            // handlers, so we deliberately do not force layout here.
             if (d is SearchDataGrid grid)
-            {
-                // Force column headers to update
                 grid.InvalidateVisual();
-
-                // If we now have items and didn't before, we may need to adjust layout
-                if ((bool)e.NewValue && !(bool)e.OldValue)
-                {
-                    // Ensure column headers update their layout
-                    grid.UpdateLayout();
-                }
-            }
         }
 
 
@@ -720,6 +1077,28 @@ namespace WWSearchDataGrid.Modern.WPF
         /// </summary>
         protected override void OnItemsSourceChanged(IEnumerable oldValue, IEnumerable newValue)
         {
+            // BindingListCollectionView (the default view for DataView / IBindingListView) does not
+            // support predicate-based Items.Filter — it throws NotSupportedException. Our filter
+            // pipeline assigns predicates, so re-wrap the source in a ListCollectionView, which does.
+            // Guard against re-entry: if we're already wrapping, the inner re-set will skip this.
+            if (!_isRewrappingItemsSource && newValue != null && RequiresPredicateWrap(newValue))
+            {
+                _isRewrappingItemsSource = true;
+                try
+                {
+                    var list = newValue as IList ?? (newValue is IListSource ils ? ils.GetList() : null);
+                    if (list != null)
+                    {
+                        SetCurrentValue(ItemsSourceProperty, new ListCollectionView(list));
+                        return;
+                    }
+                }
+                finally
+                {
+                    _isRewrappingItemsSource = false;
+                }
+            }
+
             try
             {
                 base.OnItemsSourceChanged(oldValue, newValue);
@@ -747,6 +1126,15 @@ namespace WWSearchDataGrid.Modern.WPF
                 {
                     // Update ActualHasItems property
                     UpdateHasItemsProperty();
+
+                    // If AutoGenerateColumns is on and no descriptors were declared, populate
+                    // GridColumns from the data source. Only meaningful before the first
+                    // GenerateColumnsFromDescriptors pass — after that, the column set is established.
+                    if (!_gridColumnsGenerated)
+                        EnsureAutoGeneratedDescriptors();
+
+                    // Auto-resolve FieldType on descriptors that don't have one set explicitly.
+                    ResolveFieldTypesFromItemsSource();
 
                     // Notify controls that items source has changed
                     ItemsSourceChanged?.Invoke(this, EventArgs.Empty);
@@ -927,39 +1315,17 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
-        /// Updates the ActualHasItems property based on the original items source
+        /// Updates the ActualHasItems property. Intentionally simple: this drives a UI cosmetic
+        /// (hiding search boxes when no source is assigned), and any attempt to inspect the
+        /// actual count has historically created CollectionChanged feedback loops with views
+        /// like <see cref="ListCollectionView"/> over IBindingListView sources. Treating
+        /// "source assigned" as "has items" is good enough for the cosmetic and is loop-free.
         /// </summary>
         private void UpdateHasItemsProperty()
         {
-            bool hasAnyItems = false;
-
-            // Check if the original items source has any items
-            if (originalItemsSource != null)
-            {
-                // Different ways to check if collection has items
-                if (originalItemsSource is ICollection collection)
-                {
-                    hasAnyItems = collection.Count > 0;
-                }
-                else
-                {
-                    // For other enumerable types, check if there's at least one item
-                    var enumerator = originalItemsSource.GetEnumerator();
-                    hasAnyItems = enumerator.MoveNext();
-
-                    // Dispose the enumerator if it's disposable
-                    if (enumerator is IDisposable disposable)
-                    {
-                        disposable.Dispose();
-                    }
-                }
-            }
-
-            // Update property if it changed
+            bool hasAnyItems = originalItemsSource != null;
             if (ActualHasItems != hasAnyItems)
-            {
                 ActualHasItems = hasAnyItems;
-            }
         }
 
         #endregion

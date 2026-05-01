@@ -281,8 +281,23 @@ namespace WWSearchDataGrid.Modern.Core
                 if (checkedNonBlank.Count == 0 && (!blankExists || !blankChecked))
                     return;
 
+                // Predict which non-blank template will be generated below so we can decide
+                // whether a leading IsNull is needed. NotEquals and IsNoneOf both treat null
+                // values as matching (the engine's CompareValues returns -1 for null vs non-null,
+                // and IsNoneOf.Contains(null) is false → !contains is true), so pairing them
+                // with IsNull produces a verbose rule list — "IsNull Or != X" — that matches
+                // exactly the same rows as "!= X" alone.
+                bool nonBlankBranchMatchesNulls = false;
+                if (!IsDateTimeColumn && checkedNonBlank.Count > 0 && checkedNonBlank.Count != totalNonBlank)
+                {
+                    bool willBeNotEquals = checkedNonBlank.Count != 1 && uncheckedNonBlank.Count == 1;
+                    bool willBeIsNoneOf = checkedNonBlank.Count > 1 && uncheckedNonBlank.Count > 1
+                                          && checkedNonBlank.Count > uncheckedNonBlank.Count;
+                    nonBlankBranchMatchesNulls = willBeNotEquals || willBeIsNoneOf;
+                }
+
                 // ── Handle blank (null) ──
-                if (blankChecked && checkedNonBlank.Count < totalNonBlank)
+                if (blankChecked && checkedNonBlank.Count < totalNonBlank && !nonBlankBranchMatchesNulls)
                     AddValueFilterTemplate(SearchType.IsNull, null, null);
 
                 // ── Handle non-blank values ──
@@ -296,8 +311,10 @@ namespace WWSearchDataGrid.Modern.Core
                     return;
                 }
 
-                // Some non-blank values checked: pick shortest representation
-                bool isFirst = !blankChecked;
+                // Some non-blank values checked: pick shortest representation.
+                // If we skipped the IsNull above (non-blank branch already matches nulls),
+                // this template is the first in the group — drop the "Or" operator.
+                bool isFirst = !blankChecked || nonBlankBranchMatchesNulls;
                 string operatorName = isFirst ? null : "Or";
 
                 if (IsDateTimeColumn)
@@ -340,6 +357,12 @@ namespace WWSearchDataGrid.Modern.Core
             finally
             {
                 _isSyncing = false;
+
+                // Templates are added via direct collection inserts (bypassing AddSearchTemplate),
+                // so SearchTemplate.IsOperatorVisible — which defaults to true — never gets reset
+                // for the first template in a group. Mirror what AddSearchTemplate would have done.
+                _controller.UpdateOperatorVisibility();
+
                 UpdateSelectAllState();
                 OnPropertyChanged(nameof(CheckedCount));
             }

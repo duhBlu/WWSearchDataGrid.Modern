@@ -439,10 +439,19 @@
                                 row animations (which target CellsPresenter.Opacity) don't affect it.
                                 Each column renders a 1px right-aligned line using its ActualWidth.
                                 IsHitTestVisible=False so clicks pass through to the cells beneath.
+                                Bound to VisualOrderedColumns (sorted by DisplayIndex) rather than
+                                Columns directly, so gridlines move with the visual order when the
+                                user reorders columns.
+
+                                Known limitation: because this overlay's StackPanel positions
+                                Borders independently from how DataGridCellsPanel positions cells,
+                                fractional column widths can produce a sub-pixel drift between
+                                the gridlines and cell edges. Acceptable trade-off for keeping
+                                gridlines visible during the cascade row-reveal animation.
                             -->
                             <ItemsControl Grid.Column="1"
                                           IsHitTestVisible="False"
-                                          ItemsSource="{Binding Columns, RelativeSource={RelativeSource AncestorType={x:Type DataGrid}}}">
+                                          ItemsSource="{Binding VisualOrderedColumns, RelativeSource={RelativeSource AncestorType={x:Type sdg:SearchDataGrid}}}">
                                 <ItemsControl.Style>
                                     <Style TargetType="ItemsControl">
                                         <Setter Property="Visibility" Value="Collapsed" />

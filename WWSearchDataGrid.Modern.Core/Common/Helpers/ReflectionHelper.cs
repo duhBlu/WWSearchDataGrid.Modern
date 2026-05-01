@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
@@ -13,13 +14,17 @@ namespace WWSearchDataGrid.Modern.Core
     /// </summary>
     public static class ReflectionHelper
     {
-        // Cache for resolved property chains: (Type, propertyPath) -> PropertyInfo[]
-        private static readonly ConcurrentDictionary<(Type, string), PropertyInfo[]> _propertyChainCache
-            = new ConcurrentDictionary<(Type, string), PropertyInfo[]>();
+        // Cache for resolved property chains: (Type, propertyPath) -> PropertyDescriptor[].
+        // Using PropertyDescriptor (not PropertyInfo) lets the same code path serve POCOs,
+        // ITypedList sources like DataRowView (DataTable rows), and ICustomTypeDescriptor types.
+        private static readonly ConcurrentDictionary<(Type, string), PropertyDescriptor[]> _propertyChainCache
+            = new ConcurrentDictionary<(Type, string), PropertyDescriptor[]>();
 
         /// <summary>
         /// Gets property value from an object using a property path.
         /// Property chains are cached for performance when filtering large datasets.
+        /// Uses <see cref="TypeDescriptor"/> so it handles POCOs, DataRowView (via ITypedList),
+        /// and ICustomTypeDescriptor uniformly.
         /// </summary>
         public static object GetPropValue(object obj, string propPath)
         {
@@ -27,79 +32,89 @@ namespace WWSearchDataGrid.Modern.Core
                 return null;
 
             var type = obj.GetType();
-            var chain = _propertyChainCache.GetOrAdd((type, propPath), key => ResolvePropertyChain(key.Item1, key.Item2));
+            // The cache is keyed by Type, but ITypedList sources resolve descriptors per-instance.
+            // Pass `obj` to the resolver so the first lookup for a given type uses real metadata
+            // (e.g. the DataTable's columns); subsequent items of the same type reuse the chain.
+            var chain = _propertyChainCache.GetOrAdd((type, propPath), key => ResolvePropertyChain(obj, key.Item2));
 
             if (chain == null)
                 return null;
 
-            var currentObj = obj;
-            foreach (var propInfo in chain)
+            object currentObj = obj;
+            foreach (var pd in chain)
             {
                 if (currentObj == null)
                     return null;
 
-                currentObj = propInfo.GetValue(currentObj);
+                currentObj = pd.GetValue(currentObj);
             }
+
+            // Normalize DBNull → null so downstream evaluators (IsNull/IsNotNull, equality)
+            // see the same shape regardless of whether the source is a POCO or a DataRowView.
+            if (currentObj == DBNull.Value)
+                return null;
 
             return currentObj;
         }
 
         /// <summary>
-        /// Resolves a property path to an array of PropertyInfo objects.
-        /// Returns null if any segment in the path is invalid.
+        /// Resolves a property path to an array of <see cref="PropertyDescriptor"/> objects.
+        /// Walks the path against a sample instance so ITypedList sources (DataRowView) resolve
+        /// correctly. Returns null if any segment in the path is invalid.
         /// </summary>
-        private static PropertyInfo[] ResolvePropertyChain(Type type, string propPath)
+        private static PropertyDescriptor[] ResolvePropertyChain(object instance, string propPath)
         {
             var props = propPath.Split('.');
-            var chain = new PropertyInfo[props.Length];
-            var currentType = type;
+            var chain = new PropertyDescriptor[props.Length];
+            object current = instance;
 
             for (int i = 0; i < props.Length; i++)
             {
-                var propInfo = currentType.GetProperty(props[i]);
-                if (propInfo == null)
+                if (current == null)
                     return null;
 
-                chain[i] = propInfo;
-                currentType = propInfo.PropertyType;
+                var pds = TypeDescriptor.GetProperties(current);
+                var pd = pds[props[i]];
+                if (pd == null)
+                    return null;
+
+                chain[i] = pd;
+                if (i < props.Length - 1)
+                    current = pd.GetValue(current);
             }
 
             return chain;
         }
 
         /// <summary>
-        /// Sets property value on an object using a property path
+        /// Sets property value on an object using a property path. Uses <see cref="TypeDescriptor"/>
+        /// so it works on POCOs and DataRowView (DataTable rows) alike.
         /// </summary>
         public static void SetPropValue(object obj, string propPath, object value)
         {
             if (obj == null || string.IsNullOrEmpty(propPath))
                 return;
 
-            // Handle nested properties
             var props = propPath.Split('.');
-            var currentObj = obj;
+            object currentObj = obj;
 
-            // Navigate to the parent object for nested properties
+            // Navigate to the parent object for nested properties.
             for (int i = 0; i < props.Length - 1; i++)
             {
-                if (currentObj == null)
-                    return;
-
-                var propInfo = currentObj.GetType().GetProperty(props[i]);
-                if (propInfo == null)
-                    return;
-
-                currentObj = propInfo.GetValue(currentObj);
+                if (currentObj == null) return;
+                var pd = TypeDescriptor.GetProperties(currentObj)[props[i]];
+                if (pd == null) return;
+                currentObj = pd.GetValue(currentObj);
             }
 
-            if (currentObj == null)
-                return;
+            if (currentObj == null) return;
 
-            // Set the final property
-            var finalPropInfo = currentObj.GetType().GetProperty(props[props.Length - 1]);
-            if (finalPropInfo != null && finalPropInfo.CanWrite)
+            var finalPd = TypeDescriptor.GetProperties(currentObj)[props[props.Length - 1]];
+            if (finalPd != null && !finalPd.IsReadOnly)
             {
-                finalPropInfo.SetValue(currentObj, value);
+                // Round-trip null back to DBNull when the descriptor sits on a DataRowView column,
+                // since DataTable cells reject CLR null.
+                finalPd.SetValue(currentObj, value ?? (currentObj is System.Data.DataRowView ? DBNull.Value : null));
             }
         }
 

@@ -345,17 +345,36 @@ namespace WWSearchDataGrid.Modern.WPF
             IsOperatorVisible = false;
 
             if (DataContext is ColumnSearchBox currentColumnSearchBox &&
-                currentColumnSearchBox.SourceDataGrid != null)
+                currentColumnSearchBox.SourceDataGrid != null
+                && currentColumnSearchBox.GridColumn != null)
             {
                 var dataGrid = currentColumnSearchBox.SourceDataGrid;
+                var currentDescriptor = currentColumnSearchBox.GridColumn;
+                int currentIndex = currentDescriptor.InternalColumn?.DisplayIndex >= 0
+                    ? currentDescriptor.InternalColumn.DisplayIndex
+                    : int.MaxValue;
 
-                foreach (var column in dataGrid.DataColumns)
+                // Iterate GridColumn descriptors (the persistent state holders) rather than
+                // DataColumns. DataColumns contains only the live, on-screen ColumnSearchBox
+                // instances — a column with a filter that has been scrolled off the viewport
+                // won't appear there, so the previous version mis-decided visibility whenever
+                // a preceding column with a filter happened to be virtualized out.
+                if (dataGrid.GridColumns != null)
                 {
-                    if (column == currentColumnSearchBox) break;
-                    if (column.HasActiveFilter)
+                    foreach (var descriptor in dataGrid.GridColumns)
                     {
-                        IsOperatorVisible = true;
-                        break;
+                        if (descriptor == currentDescriptor) continue;
+
+                        int otherIndex = descriptor.InternalColumn?.DisplayIndex >= 0
+                            ? descriptor.InternalColumn.DisplayIndex
+                            : int.MaxValue;
+
+                        if (otherIndex < currentIndex
+                            && descriptor.SearchTemplateController?.HasCustomExpression == true)
+                        {
+                            IsOperatorVisible = true;
+                            break;
+                        }
                     }
                 }
             }

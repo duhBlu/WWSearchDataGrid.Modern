@@ -57,7 +57,17 @@ namespace WWSearchDataGrid.Modern.WPF
                 // Check if filters are enabled before applying - respects FilterPanel checkbox
                 if (FilterPanel?.FiltersEnabled == true)
                 {
-                    var activeFilters = DataColumns.Where(d => d.SearchTemplateController?.HasCustomExpression == true).ToList();
+                    // Iterate GridColumn descriptors (the persistent state holders) rather than
+                    // ColumnSearchBox instances (recyclable UI presenters). Header virtualization
+                    // recycles ColumnSearchBoxes between columns, so DataColumns cannot reliably
+                    // tell us "what columns currently have an active filter" — but the descriptor
+                    // collection always can. Each descriptor owns its SearchTemplateController and
+                    // its InternalColumn (with the authoritative DisplayIndex), giving a stable
+                    // foundation for both filter evaluation and chip ordering.
+                    var activeFilters = (GridColumns ?? Enumerable.Empty<GridColumn>())
+                        .Where(d => d.SearchTemplateController?.HasCustomExpression == true)
+                        .OrderBy(d => d.InternalColumn?.DisplayIndex >= 0 ? d.InternalColumn.DisplayIndex : int.MaxValue)
+                        .ToList();
                     
                     if (activeFilters.Count > 0)
                     {
@@ -114,9 +124,9 @@ namespace WWSearchDataGrid.Modern.WPF
         /// Performance optimized with cached collection contexts
         /// </summary>
         /// <param name="item">The item to evaluate</param>
-        /// <param name="activeFilters">List of all active column filters</param>
+        /// <param name="activeFilters">Descriptors for columns with active filters, in evaluation order.</param>
         /// <returns>True if the item passes all filters according to their logical operators</returns>
-        private bool EvaluateUnifiedFilter(object item, List<ColumnSearchBox> activeFilters)
+        private bool EvaluateUnifiedFilter(object item, List<GridColumn> activeFilters)
         {
             if (activeFilters.Count == 0)
                 return true;
@@ -151,7 +161,7 @@ namespace WWSearchDataGrid.Modern.WPF
 
                     // Short-circuit optimization: if result is false and next operator is AND, we can stop
                     string nextOperator = "And";
-                    if (i + 1 < activeFilters.Count && 
+                    if (i + 1 < activeFilters.Count &&
                         activeFilters[i + 1].SearchTemplateController?.SearchGroups?.Count > 0)
                     {
                         nextOperator = activeFilters[i + 1].SearchTemplateController.SearchGroups[0].OperatorName ?? "And";
@@ -172,16 +182,41 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
+        /// Returns the column-binding path for a descriptor — used to read the row's value
+        /// for the column being filtered. Mirrors the resolution that
+        /// <see cref="ColumnSearchBox.ResolveFilterMemberPath"/> performs at the UI layer.
+        /// </summary>
+        private static string ResolveBindingPath(GridColumn descriptor)
+        {
+            if (descriptor == null) return null;
+            if (!string.IsNullOrEmpty(descriptor.FilterMemberPath)) return descriptor.FilterMemberPath;
+            if (!string.IsNullOrEmpty(descriptor.FieldName)) return descriptor.FieldName;
+
+            // Fallback to the generated DataGridColumn's SortMemberPath / Binding.Path,
+            // matching the legacy resolution chain in ColumnSearchBox.
+            var col = descriptor.InternalColumn;
+            if (col != null)
+            {
+                if (!string.IsNullOrEmpty(col.SortMemberPath)) return col.SortMemberPath;
+                if (col is DataGridBoundColumn boundColumn)
+                    return (boundColumn.Binding as Binding)?.Path?.Path;
+            }
+            return null;
+        }
+
+        /// <summary>
         /// Evaluates a single filter against an item using cached collection contexts for optimal performance.
         /// When a display value provider is configured on the column, text-based filters compare against
         /// the formatted display value instead of the raw value.
         /// </summary>
-        private bool EvaluateFilterWithContext(object item, ColumnSearchBox filter)
+        private bool EvaluateFilterWithContext(object item, GridColumn filter)
         {
             try
             {
+                string bindingPath = ResolveBindingPath(filter);
+
                 // Get the raw property value for this filter
-                object propertyValue = ReflectionHelper.GetPropValue(item, filter.BindingPath);
+                object propertyValue = ReflectionHelper.GetPropValue(item, bindingPath);
 
                 var controller = filter.SearchTemplateController;
 
@@ -190,7 +225,7 @@ namespace WWSearchDataGrid.Modern.WPF
 
                 if (needsCollectionContext)
                 {
-                    var collectionContext = GetOrCreateCollectionContext(filter.BindingPath);
+                    var collectionContext = GetOrCreateCollectionContext(bindingPath);
                     if (collectionContext != null)
                     {
                         return controller.EvaluateWithCollectionContext(propertyValue, collectionContext);
@@ -213,7 +248,7 @@ namespace WWSearchDataGrid.Modern.WPF
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Error evaluating filter for column {filter.BindingPath}: {ex.Message}");
+                Debug.WriteLine($"Error evaluating filter for column {ResolveBindingPath(filter)}: {ex.Message}");
                 return false;
             }
         }
@@ -261,7 +296,8 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
-        /// Evaluates a search group using display values for text-based templates.
+        /// Evaluates a search group, choosing display- or raw-value comparison per template
+        /// based on the search type AND the type of the stored selected values.
         /// </summary>
         private bool EvaluateGroupWithDisplayValues(object rawValue, string displayValue, SearchTemplateGroup group)
         {
@@ -274,10 +310,19 @@ namespace WWSearchDataGrid.Modern.WPF
             {
                 var template = group.SearchTemplates[i];
 
-                // Choose which value to evaluate based on the search type
-                object valueToEvaluate = SearchEngine.IsTextBasedSearchType(template.SearchType)
-                    ? displayValue   // Text searches compare against display value
-                    : rawValue;      // Numeric/date/statistical use raw value
+                // Pick raw vs display per template:
+                //   - Non-text-based search types always use raw (numeric/date/statistical).
+                //   - Text-based search types use display IF the stored value(s) are strings
+                //     (typed by the user in the search box → already display strings).
+                //   - Text-based search types use raw IF the stored value(s) are typed objects
+                //     (FilterValues tab or rule-editor picker stores raw values like bool/int/Date).
+                //     Without this, a "Yes/No" converter column's IsAnyOf list of [true,false] would
+                //     be compared against the transformed "Yes"/"No" string and never match.
+                object valueToEvaluate;
+                if (SearchEngine.IsTextBasedSearchType(template.SearchType) && !TemplateStoresRawValues(template))
+                    valueToEvaluate = displayValue;
+                else
+                    valueToEvaluate = rawValue;
 
                 bool templateResult = template.SearchCondition != null
                     ? SearchEngine.EvaluateCondition(valueToEvaluate, template.SearchCondition)
@@ -300,9 +345,32 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
+        /// Returns true when the template's stored selected values are typed (non-string) objects,
+        /// indicating they came from a value picker (FilterValues tab, rule-editor dropdown) rather
+        /// than from the user typing into the search textbox. Mirrors the chip-display heuristic
+        /// in <c>SearchTemplateController</c>.
+        /// </summary>
+        private static bool TemplateStoresRawValues(WWSearchDataGrid.Modern.Core.SearchTemplate template)
+        {
+            if (template == null) return false;
+
+            if (template.SelectedValues != null && template.SelectedValues.Count > 0)
+            {
+                foreach (var item in template.SelectedValues)
+                {
+                    if (item?.Value != null && !(item.Value is string))
+                        return true;
+                }
+                return false;
+            }
+
+            return template.SelectedValue != null && !(template.SelectedValue is string);
+        }
+
+        /// <summary>
         /// Determines if a filter requires collection context for evaluation
         /// </summary>
-        private bool DoesFilterRequireCollectionContext(ColumnSearchBox filter)
+        private bool DoesFilterRequireCollectionContext(GridColumn filter)
         {
             if (filter?.SearchTemplateController?.SearchGroups == null)
                 return false;
@@ -376,7 +444,7 @@ namespace WWSearchDataGrid.Modern.WPF
         /// <summary>
         /// Determines if asynchronous filtering should be used based on dataset size and filter complexity
         /// </summary>
-        private bool ShouldUseAsyncFiltering(List<ColumnSearchBox> activeFilters)
+        private bool ShouldUseAsyncFiltering(List<GridColumn> activeFilters)
         {
             try
             {
@@ -403,7 +471,7 @@ namespace WWSearchDataGrid.Modern.WPF
         /// Applies filters asynchronously with progress reporting and cancellation support
         /// </summary>
         private async Task ApplyFiltersAsync(
-            List<ColumnSearchBox> activeFilters, 
+            List<GridColumn> activeFilters,
             CancellationToken cancellationToken)
         {
             try
@@ -415,7 +483,7 @@ namespace WWSearchDataGrid.Modern.WPF
                     foreach (var filter in activeFilters.Where(f => DoesFilterRequireCollectionContext(f)))
                     {
                         cancellationToken.ThrowIfCancellationRequested();
-                        GetOrCreateCollectionContext(filter.BindingPath);
+                        GetOrCreateCollectionContext(ResolveBindingPath(filter));
                     }
                 }, cancellationToken);
 
@@ -478,15 +546,17 @@ namespace WWSearchDataGrid.Modern.WPF
                 }
             }
             
-            // Clear filters to release any remaining references
-            Items.Filter = null;
+            // Release the SearchFilter dependency property reference, but do NOT touch
+            // Items.Filter here. Setting Items.Filter = null on a ListCollectionView raises
+            // CollectionChanged.Reset, which our own OnCollectionChanged handler responds to
+            // by calling ClearAllCachedData — that's an infinite cycle (caused intermittent
+            // stack overflows when ItemsSource was a ListCollectionView over a DataView).
+            // Items.Filter is reassigned by FilterItemsSource when filter state changes; if
+            // ItemsSource itself changes, the old delegate becomes unreachable on its own.
             SearchFilter = null;
-            
+
             // Trigger cache manager cleanup
             ColumnValueCacheManager.Instance.Cleanup(clearAll: false);
-            
-            // Note: Do not force GC.Collect() in library code - let the consumer application
-            // manage its own garbage collection timing.
         }
 
         /// <summary>
@@ -577,67 +647,91 @@ namespace WWSearchDataGrid.Modern.WPF
             var activeFilters = new List<ColumnFilterInfo>();
             bool isFirstFilter = true;
 
-            foreach (var column in DataColumns.Where(c => c.HasActiveFilter))
+            // Iterate descriptors so chip generation isn't affected by ColumnSearchBox
+            // recycling. For the temporary-template chip case (user typed text but hasn't
+            // committed) we fall back to looking up a live box per descriptor, since that
+            // state is per-instance UI state, not descriptor state.
+            var descriptors = (GridColumns ?? Enumerable.Empty<GridColumn>()).ToList();
+            var orderedActive = descriptors
+                .Select(desc => new
+                {
+                    Descriptor = desc,
+                    Box = DataColumns.FirstOrDefault(b => b.GridColumn == desc)
+                })
+                .Where(x =>
+                    x.Descriptor.SearchTemplateController?.HasCustomExpression == true
+                    || (x.Box != null && x.Box.HasTemporaryTemplate
+                        && !string.IsNullOrWhiteSpace(x.Box.SearchText)))
+                .OrderBy(x => x.Descriptor.InternalColumn?.DisplayIndex >= 0
+                    ? x.Descriptor.InternalColumn.DisplayIndex
+                    : int.MaxValue);
+
+            foreach (var entry in orderedActive)
             {
+                var descriptor = entry.Descriptor;
+                var box = entry.Box;
+                var controller = descriptor.SearchTemplateController;
+
                 // Extract the actual operator from the SearchTemplateController
                 string logicalOperator = string.Empty;
                 if (!isFirstFilter)
                 {
-                    // Use the first SearchTemplateGroup's OperatorName as the operator for this column
-                    if (column.SearchTemplateController?.SearchGroups?.Count > 0)
+                    if (controller?.SearchGroups?.Count > 0)
                     {
-                        logicalOperator = column.SearchTemplateController.SearchGroups[0].OperatorName?.ToUpper() ?? "AND";
+                        logicalOperator = controller.SearchGroups[0].OperatorName?.ToUpper() ?? "AND";
                     }
                     else
                     {
-                        // Default to "AND" if no groups exist
                         logicalOperator = "AND";
                     }
                 }
 
                 var filterInfo = new ColumnFilterInfo
                 {
-                    ColumnName = column.ResolveColumnDisplayName() ?? "Unknown",
-                    BindingPath = column.BindingPath,
+                    ColumnName = box?.ResolveColumnDisplayName()
+                        ?? descriptor.ColumnDisplayName
+                        ?? descriptor.HeaderCaption
+                        ?? "Unknown",
+                    BindingPath = ResolveBindingPath(descriptor),
                     IsActive = true,
-                    FilterData = column,
+                    FilterData = (object)box ?? descriptor,
                     Operator = logicalOperator
                 };
 
                 // Determine filter type and display text
                 // PRIORITY: Always check SearchTemplateController first (handles incremental Contains filters)
-                if (column.SearchTemplateController?.HasCustomExpression == true)
+                if (controller?.HasCustomExpression == true)
                 {
                     // Get structured components from SearchTemplateController
-                    var components = column.SearchTemplateController.GetTokenizedFilterComponents();
+                    var components = controller.GetTokenizedFilterComponents();
                     filterInfo.SearchTypeText = components.SearchTypeText;
                     filterInfo.PrimaryValue = components.PrimaryValue;
                     filterInfo.SecondaryValue = components.SecondaryValue;
                     filterInfo.ValueOperatorText = components.ValueOperatorText;
                     filterInfo.IsDateInterval = components.IsDateInterval;
                     filterInfo.HasNoInputValues = components.HasNoInputValues;
-                    
+
                     // Get all components for complex filters (including multiple Contains templates)
-                    var allComponents = column.SearchTemplateController.GetAllTokenizedFilterComponents();
+                    var allComponents = controller.GetAllTokenizedFilterComponents();
                     filterInfo.FilterComponents.Clear();
                     foreach (var component in allComponents)
                     {
                         filterInfo.FilterComponents.Add(component);
                     }
                 }
-                else if (!string.IsNullOrWhiteSpace(column.SearchText) && column.HasTemporaryTemplate)
+                else if (box != null && !string.IsNullOrWhiteSpace(box.SearchText) && box.HasTemporaryTemplate)
                 {
                     // Set component properties for simple filters
                     filterInfo.SearchTypeText = "Contains";
-                    filterInfo.PrimaryValue = column.SearchText;
+                    filterInfo.PrimaryValue = box.SearchText;
                     filterInfo.HasNoInputValues = false;
                     filterInfo.IsDateInterval = false;
-                    
+
                     // Add single component to collection
                     var simpleComponent = new FilterChipComponents
                     {
                         SearchTypeText = "Contains",
-                        PrimaryValue = column.SearchText,
+                        PrimaryValue = box.SearchText,
                         HasNoInputValues = false,
                         IsDateInterval = false
                     };

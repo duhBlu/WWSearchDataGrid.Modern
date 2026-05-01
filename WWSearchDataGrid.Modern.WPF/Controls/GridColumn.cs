@@ -360,12 +360,100 @@ namespace WWSearchDataGrid.Modern.WPF
                 nameof(FieldType),
                 typeof(Type),
                 typeof(GridColumn),
-                new PropertyMetadata(null));
+                new PropertyMetadata(null, OnFieldTypePropertyChanged));
 
         public Type FieldType
         {
             get => (Type)GetValue(FieldTypeProperty);
             set => SetValue(FieldTypeProperty, value);
+        }
+
+        // True while the current FieldType value came from SetAutoFieldType. Cleared by the
+        // PropertyChangedCallback whenever a foreign write changes the value.
+        private bool _isAutoFieldType;
+
+        /// <summary>
+        /// Gets whether <see cref="FieldType"/> was set explicitly (by XAML or user code) rather
+        /// than resolved from the data source. Uses <see cref="DependencyPropertyHelper.GetValueSource"/>
+        /// so explicit assignments equal to the registered default are still detected.
+        /// </summary>
+        internal bool IsFieldTypeExplicit => IsExplicitlySet(FieldTypeProperty, _isAutoFieldType);
+
+        /// <summary>
+        /// Sets <see cref="FieldType"/> from auto-resolution.
+        /// The PropertyChangedCallback clears the auto flag at the start of every write — we restore
+        /// it after <see cref="SetValue"/> returns so a subsequent <see cref="IsFieldTypeExplicit"/>
+        /// check correctly reports the value as auto.
+        /// </summary>
+        internal void SetAutoFieldType(Type type)
+        {
+            SetValue(FieldTypeProperty, type);
+            _isAutoFieldType = true;
+        }
+
+        private static void OnFieldTypePropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            if (d is not GridColumn gc) return;
+
+            // Any write clears the auto flag. SetAutoFieldType restores it after SetValue returns.
+            gc._isAutoFieldType = false;
+
+            // Apply type-based defaults whenever FieldType changes — covers both auto-resolution
+            // from the data source and explicit XAML/code values. Properties already set by the
+            // user are preserved (each Set... helper checks Is...Explicit).
+            gc.ApplyTypeBasedDefaults();
+        }
+
+        /// <summary>
+        /// Returns true if the property was assigned explicitly (XAML, code, binding, style — anything
+        /// other than the registered default) AND the assignment was not from our auto-config helpers.
+        /// </summary>
+        private bool IsExplicitlySet(DependencyProperty dp, bool isAutoFlag)
+        {
+            if (isAutoFlag) return false;
+            var source = DependencyPropertyHelper.GetValueSource(this, dp);
+            return source.BaseValueSource != BaseValueSource.Default;
+        }
+
+        /// <summary>
+        /// Applies sensible defaults to filter/search properties based on <see cref="FieldType"/>.
+        /// Skips properties the user has already set explicitly.
+        /// </summary>
+        /// <remarks>
+        /// Mapping:
+        /// <list type="bullet">
+        /// <item><c>bool</c> / <c>bool?</c> → <see cref="UseCheckBoxInSearchBox"/> = <c>true</c></item>
+        /// <item><c>DateTime</c> / <c>DateTime?</c> → <see cref="DefaultSearchMode"/> = <see cref="DefaultSearchMode.Equals"/></item>
+        /// <item>Enum types → <see cref="DefaultSearchMode"/> = <see cref="DefaultSearchMode.Equals"/></item>
+        /// </list>
+        /// </remarks>
+        internal void ApplyTypeBasedDefaults()
+        {
+            var type = FieldType;
+            if (type == null) return;
+
+            var underlying = Nullable.GetUnderlyingType(type) ?? type;
+
+            if (underlying == typeof(bool))
+            {
+                if (!IsUseCheckBoxInSearchBoxExplicit)
+                    SetAutoUseCheckBoxInSearchBox(true);
+            }
+            else if (underlying == typeof(DateTime))
+            {
+                if (!IsDefaultSearchModeExplicit)
+                    SetAutoDefaultSearchMode(DefaultSearchMode.Equals);
+            }
+            else if (underlying.IsEnum)
+            {
+                if (!IsDefaultSearchModeExplicit)
+                    SetAutoDefaultSearchMode(DefaultSearchMode.Equals);
+                // TODO: populate the search dropdown from Enum.GetValues(underlying).
+                // The current dropdown is data-driven via SetupColumnDataLazy; injecting a
+                // static enum source needs a separate code path on SearchTemplateController.
+            }
+            // string defaults to Contains (already the registered default).
+            // decimal/double: no auto-format — DisplayStringFormat stays user-controlled.
         }
 
         #endregion
@@ -396,12 +484,35 @@ namespace WWSearchDataGrid.Modern.WPF
                 nameof(DefaultSearchMode),
                 typeof(DefaultSearchMode),
                 typeof(GridColumn),
-                new PropertyMetadata(DefaultSearchMode.Contains));
+                new PropertyMetadata(DefaultSearchMode.Contains, OnDefaultSearchModePropertyChanged));
 
         public DefaultSearchMode DefaultSearchMode
         {
             get => (DefaultSearchMode)GetValue(DefaultSearchModeProperty);
             set => SetValue(DefaultSearchModeProperty, value);
+        }
+
+        private bool _isAutoDefaultSearchMode;
+
+        /// <summary>
+        /// Gets whether <see cref="DefaultSearchMode"/> was set explicitly. Auto-configuration
+        /// from <see cref="FieldType"/> skips columns where this is true.
+        /// </summary>
+        internal bool IsDefaultSearchModeExplicit => IsExplicitlySet(DefaultSearchModeProperty, _isAutoDefaultSearchMode);
+
+        /// <summary>
+        /// Sets <see cref="DefaultSearchMode"/> from auto-configuration.
+        /// </summary>
+        internal void SetAutoDefaultSearchMode(DefaultSearchMode mode)
+        {
+            SetValue(DefaultSearchModeProperty, mode);
+            _isAutoDefaultSearchMode = true;
+        }
+
+        private static void OnDefaultSearchModePropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            if (d is GridColumn gc)
+                gc._isAutoDefaultSearchMode = false;
         }
 
         /// <summary>
@@ -412,12 +523,41 @@ namespace WWSearchDataGrid.Modern.WPF
                 nameof(UseCheckBoxInSearchBox),
                 typeof(bool),
                 typeof(GridColumn),
-                new PropertyMetadata(false, OnFilterPropertyChanged));
+                new PropertyMetadata(false, OnUseCheckBoxInSearchBoxPropertyChanged));
 
         public bool UseCheckBoxInSearchBox
         {
             get => (bool)GetValue(UseCheckBoxInSearchBoxProperty);
             set => SetValue(UseCheckBoxInSearchBoxProperty, value);
+        }
+
+        private bool _isAutoUseCheckBoxInSearchBox;
+
+        /// <summary>
+        /// Gets whether <see cref="UseCheckBoxInSearchBox"/> was set explicitly. Auto-configuration
+        /// from <see cref="FieldType"/> skips columns where this is true.
+        /// </summary>
+        internal bool IsUseCheckBoxInSearchBoxExplicit => IsExplicitlySet(UseCheckBoxInSearchBoxProperty, _isAutoUseCheckBoxInSearchBox);
+
+        /// <summary>
+        /// Sets <see cref="UseCheckBoxInSearchBox"/> from auto-configuration.
+        /// </summary>
+        internal void SetAutoUseCheckBoxInSearchBox(bool value)
+        {
+            SetValue(UseCheckBoxInSearchBoxProperty, value);
+            _isAutoUseCheckBoxInSearchBox = true;
+        }
+
+        private static void OnUseCheckBoxInSearchBoxPropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            if (d is not GridColumn gc) return;
+
+            // Any write clears the auto flag. SetAutoUseCheckBoxInSearchBox restores it after SetValue.
+            gc._isAutoUseCheckBoxInSearchBox = false;
+
+            if (gc.Owner == null) return;
+            var searchBox = gc.Owner.DataColumns.FirstOrDefault(c => c.CurrentColumn == gc.InternalColumn);
+            searchBox?.DetermineCheckboxColumnTypeFromColumnDefinition();
         }
 
         /// <summary>
@@ -539,6 +679,14 @@ namespace WWSearchDataGrid.Modern.WPF
         /// </summary>
         public SearchDataGrid Owner { get; internal set; }
 
+        /// <summary>
+        /// The persistent <see cref="WWSearchDataGrid.Modern.Core.SearchTemplateController"/> for this column.
+        /// Stored on the descriptor (not the <see cref="ColumnSearchBox"/>) so that filter state survives
+        /// horizontal column virtualization — when the header scrolls out and back, the new
+        /// <see cref="ColumnSearchBox"/> instance reconnects to the same controller instead of starting empty.
+        /// </summary>
+        internal WWSearchDataGrid.Modern.Core.SearchTemplateController SearchTemplateController { get; set; }
+
         #endregion
 
         #region Column Generation
@@ -558,22 +706,29 @@ namespace WWSearchDataGrid.Modern.WPF
 
             DataGridColumn column;
 
-            // Choose column type based on FieldType
-            if (FieldType == typeof(bool) || FieldType == typeof(bool?))
+            // A user-supplied display setting (converter / format string / mask) signals "render
+            // as text using my custom display." Honor that even for bool — DataGridCheckBoxColumn
+            // ignores Binding.Converter/StringFormat, so we'd silently drop the user's intent.
+            bool wantsCustomDisplay =
+                DisplayValueConverter != null
+                || !string.IsNullOrEmpty(DisplayStringFormat)
+                || !string.IsNullOrEmpty(DisplayMask);
+
+            bool isBoolField = FieldType == typeof(bool) || FieldType == typeof(bool?);
+
+            if (isBoolField && !wantsCustomDisplay)
             {
-                var checkBoxColumn = new DataGridCheckBoxColumn
+                column = new DataGridCheckBoxColumn
                 {
                     Binding = new Binding(FieldName)
                 };
-                column = checkBoxColumn;
             }
             else
             {
-                var textColumn = new DataGridTextColumn
+                column = new DataGridTextColumn
                 {
                     Binding = CreateBinding()
                 };
-                column = textColumn;
             }
 
             // Apply layout properties
@@ -673,10 +828,6 @@ namespace WWSearchDataGrid.Modern.WPF
             if (e.Property == EnableRuleFilteringProperty)
             {
                 searchBox.UpdateIsComplexFilteringEnabled();
-            }
-            else if (e.Property == UseCheckBoxInSearchBoxProperty)
-            {
-                searchBox.DetermineCheckboxColumnTypeFromColumnDefinition();
             }
             else if (e.Property == AllowFilteringProperty)
             {

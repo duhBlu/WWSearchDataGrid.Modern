@@ -200,9 +200,8 @@
                                                   BlurRadius="8"
                                                   ShadowDepth="2" />
                             </Border.Effect>
-                            <Grid Margin="4">
+                            <Grid Margin="0,0,0,0">
                             <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto" />
                                 <RowDefinition Height="*" />
                                 <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
@@ -216,7 +215,11 @@
                                       VerticalAlignment="Top"
                                       VerticalContentAlignment="Center"
                                       Panel.ZIndex="1"
-                                      Width="80"
+                                      Margin="2,2,0,0"
+                                      Width="50"
+                                      Height="22"
+                                      MinHeight="20"
+                                      MinWidth="0"
                                       ToolTip="Combine with previous filters"
                                       SelectedItem="{Binding GroupOperatorName, RelativeSource={RelativeSource TemplatedParent}}">
                                 <sys:String>And</sys:String>
@@ -226,11 +229,11 @@
                             <!--  Tabbed Interface: Filter Rules + Filter Values  -->
                             <TabControl x:Name="PART_TabControl"
                                         Style="{StaticResource SdgTabControlStyle}"
-                                        Grid.Row="1">
+                                        Grid.Row="0">
 
                                 <!--  TAB 1: Filter Rules (existing functionality)  -->
-                                <TabItem Style="{StaticResource SdgTabItemStyle}" Header="Filter Rules">
-                                    <ScrollViewer Margin="0,4,0,0" VerticalScrollBarVisibility="Auto">
+                                    <TabItem Style="{StaticResource SdgTabItemStyle}" Header="Filter Rules">
+                                        <ScrollViewer Margin="4,4,4,0" VerticalScrollBarVisibility="Auto">
                                         <ContentControl Content="{Binding SearchTemplateController, RelativeSource={RelativeSource TemplatedParent}}">
                                             <ContentControl.Style>
                                                 <Style TargetType="ContentControl">
@@ -260,7 +263,7 @@
 
                                 <!--  TAB 2: Filter Values (checkbox list)  -->
                                 <TabItem Style="{StaticResource SdgTabItemStyle}" Header="Filter Values">
-                                    <DockPanel Margin="0,4,0,0">
+                                    <DockPanel Margin="4,4,4,0">
 
                                         <!--  Top: Select All checkbox + Search  -->
                                         <Grid DockPanel.Dock="Top" Margin="0,0,0,4">
@@ -403,7 +406,7 @@
                             </TabControl>
 
                             <!--  Clear Filter pinned to the bottom of the popup (visible from both tabs)  -->
-                                <Border Grid.Row="2" Background="{StaticResource Sdg.Surface.Tertiary}" BorderBrush="{StaticResource Sdg.Border.Strong}" CornerRadius="0,0,4,4" Margin="-4,0,-4,-4" Padding="4"  BorderThickness="0,1,0,0">
+                            <Border Grid.Row="1" Background="{StaticResource Sdg.Surface.Tertiary}" BorderBrush="{StaticResource Sdg.Border.Strong}" CornerRadius="0,0,4,4" Margin="0" Padding="4"  BorderThickness="0,1,0,0">
                                     
                             <Button 
                                     Style="{StaticResource SdgButtonStyle}"

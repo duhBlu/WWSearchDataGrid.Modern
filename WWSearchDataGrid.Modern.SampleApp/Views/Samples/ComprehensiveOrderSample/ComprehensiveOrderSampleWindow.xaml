@@ -1,4 +1,4 @@
-<Window x:Class="WWSearchDataGrid.Modern.SampleApp.MainWindow"
+<Window x:Class="WWSearchDataGrid.Modern.SampleApp.Views.Samples.ComprehensiveOrderSample.ComprehensiveOrderSampleWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -179,12 +179,11 @@
                                     Header="Order Type"
                                     DefaultSearchMode="Equals" />
 
-                    <!--  Cancelled: boolean checkbox  -->
+                    <!--  Cancelled: boolean — auto-detected as bool, cell renders as
+                         DataGridCheckBoxColumn and search box defaults to checkbox mode.  -->
                     <sdg:GridColumn Width="80"
                                     FieldName="OrderCancelled"
-                                    Header="Cancelled"
-                                    FieldType="{x:Type sys:Boolean}"
-                                    UseCheckBoxInSearchBox="True" />
+                                    Header="Cancelled" />
 
                     <!--  Quantity: integer  -->
                     <sdg:GridColumn Width="55"
@@ -243,10 +242,13 @@
                                     Header="Schedule Date"
                                     DisplayStringFormat="MM/dd/yyyy" />
 
-                    <!--  Submitted: DisplayValueConverter shows Yes/No  -->
+                    <!--  Submitted: bool cell (auto-detected) but text-style search box,
+                         so filtering runs against the converter's "Yes"/"No" output.
+                         UseCheckBoxInSearchBox="False" overrides the bool→checkbox-search default.  -->
                     <sdg:GridColumn Width="80"
                                     FieldName="Submitted"
                                     Header="Submitted"
+                                    UseCheckBoxInSearchBox="False"
                                     DisplayValueConverter="{StaticResource SubmittedToStringConverter}" />
 
                     <!--  Load/Drop Numbers  -->

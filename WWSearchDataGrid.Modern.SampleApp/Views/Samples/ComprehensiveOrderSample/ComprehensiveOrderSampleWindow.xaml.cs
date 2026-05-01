@@ -8,18 +8,15 @@ using System.Windows.Threading;
 using WWSearchDataGrid.Modern.SampleApp.Services;
 using WWSearchDataGrid.Modern.WPF;
 
-namespace WWSearchDataGrid.Modern.SampleApp
+namespace WWSearchDataGrid.Modern.SampleApp.Views.Samples.ComprehensiveOrderSample
 {
-    /// <summary>
-    /// Interaction logic for MainWindow.xaml
-    /// </summary>
-    public partial class MainWindow : Window
+    public partial class ComprehensiveOrderSampleWindow : Window
     {
         private readonly UserSettings _userSettings;
         private readonly DispatcherTimer _saveDebounceTimer;
         private bool _positionTrackingEnabled;
 
-        public MainWindow()
+        public ComprehensiveOrderSampleWindow()
         {
             InitializeComponent();
 
