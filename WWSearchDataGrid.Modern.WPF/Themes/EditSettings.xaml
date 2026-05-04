@@ -1,0 +1,233 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- Brings in the Sdg.* brush palette these styles reference. Mirrors the merge
+         pattern used by every other themed control file in this project. -->
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF;component/Themes/Controls/Primitives/DefaultControls.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+
+    <!--
+        ═══════════════════════════════════════════════════════════════════════
+        EditSettings — Default Display & Edit Element Styles
+        ═══════════════════════════════════════════════════════════════════════
+        Each editor type (Text / ComboBox / Numeric / Date / Masked / CheckBox) builds
+        its cell template via FrameworkElementFactory and applies one of these styles
+        as a DynamicResource. Consumers override at three levels:
+
+          1. Per-column EditorStyle / DisplayStyle DPs on the EditSettings instance
+             — applied as a local Style value, beats DynamicResource lookup.
+          2. App-level resource override — replace the keyed Style in App.xaml /
+             Window.Resources to retheme everything globally.
+          3. Full template replacement via EditTemplate / DisplayTemplate DPs —
+             skips the default style and any per-control override.
+
+        Color tokens (Sdg.Surface.*, Sdg.Border.*, Sdg.Accent, etc.) live in
+        Themes/Controls/Primitives/DefaultControls.xaml.
+    -->
+
+    <!--#region Display element styles-->
+
+    <!--
+        Read-only TextBlock used inside display templates of Text / ComboBox / Numeric /
+        Date / Masked editors. Single inset, vertical centering, ellipsis on overflow.
+    -->
+    <Style x:Key="SdgDisplayTextBlockStyle" TargetType="{x:Type TextBlock}">
+        <Setter Property="Padding" Value="6,2,6,2" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="HorizontalAlignment" Value="Center" />
+        <Setter Property="Foreground" Value="{StaticResource Sdg.Text.Primary}" />
+        <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+        <Setter Property="Background" Value="Transparent" />
+    </Style>
+
+    <!--
+        Right-aligned variant for numeric display. Spreadsheet convention: numbers
+        line up at the decimal on the right edge so columns of money / counts read cleanly.
+    -->
+    <Style x:Key="SdgDisplayNumericTextBlockStyle"
+           TargetType="{x:Type TextBlock}"
+           BasedOn="{StaticResource SdgDisplayTextBlockStyle}">
+        <Setter Property="HorizontalAlignment" Value="Right" />
+        <Setter Property="TextAlignment" Value="Right" />
+    </Style>
+
+    <!--
+        CheckBox shown in display mode (CheckBoxEditSettings's read-only template).
+        Centered, hit-test-disabled so the cell receives clicks for selection / focus
+        instead of toggling on the way to edit mode.
+    -->
+    <Style x:Key="SdgDisplayCheckBoxStyle" TargetType="{x:Type CheckBox}">
+        <Setter Property="HorizontalAlignment" Value="Center" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="IsHitTestVisible" Value="False" />
+        <Setter Property="Focusable" Value="False" />
+    </Style>
+
+    <!--#endregion-->
+
+    <!--#region Edit element styles-->
+
+    <!--
+        Flat TextBox used inside edit templates of Text / Masked editors. Borderless
+        until focus, accent border on focus, fills the cell. The trigger toggles
+        BorderThickness on focus rather than swapping brushes — keeps the default
+        WPF TextBox template intact, just changes its visible chrome.
+    -->
+    <Style x:Key="SdgEditTextBoxStyle" TargetType="{x:Type TextBox}">
+        <Setter Property="Background" Value="{StaticResource Sdg.Surface.Input}" />
+        <Setter Property="Foreground" Value="{StaticResource Sdg.Text.Primary}" />
+        <Setter Property="BorderBrush" Value="{StaticResource Sdg.Border.Focused}" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Padding" Value="4,2,4,2" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="VerticalAlignment" Value="Stretch" />
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+        <Style.Triggers>
+            <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                <Setter Property="BorderThickness" Value="1" />
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <!--  Right-aligned numeric edit variant.  -->
+    <Style x:Key="SdgEditNumericTextBoxStyle"
+           TargetType="{x:Type TextBox}"
+           BasedOn="{StaticResource SdgEditTextBoxStyle}">
+        <Setter Property="TextAlignment" Value="Right" />
+    </Style>
+
+    <!--
+        Custom ControlTemplate for the in-cell ComboBox. The default WPF template's chrome
+        (the inner ToggleButton's border, the chevron background) ignores the outer
+        ComboBox.Background / BorderThickness, so property-only styling can't get a flat
+        look. This template paints the whole control through one Border that respects
+        TemplateBinding, plus a minimal chevron and a clean dropdown popup.
+    -->
+    <ControlTemplate x:Key="SdgComboBoxControlTemplate" TargetType="{x:Type ComboBox}">
+        <Border x:Name="MainBorder"
+                Background="{TemplateBinding Background}"
+                BorderBrush="{TemplateBinding BorderBrush}"
+                BorderThickness="{TemplateBinding BorderThickness}"
+                SnapsToDevicePixels="True">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <!-- The whole control acts as the open/close toggle. Custom inner template so
+                     the ToggleButton itself contributes no chrome of its own. -->
+                <ToggleButton x:Name="DropDownToggle"
+                              Grid.ColumnSpan="2"
+                              Focusable="False"
+                              ClickMode="Press"
+                              IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}">
+                    <ToggleButton.Template>
+                        <ControlTemplate TargetType="ToggleButton">
+                            <Border Background="Transparent" BorderThickness="0" />
+                        </ControlTemplate>
+                    </ToggleButton.Template>
+                </ToggleButton>
+
+                <!-- Selected-item display sits above the toggle, hit-test invisible so clicks
+                     pass through to the toggle. -->
+                <ContentPresenter Grid.Column="0"
+                                  IsHitTestVisible="False"
+                                  Margin="{TemplateBinding Padding}"
+                                  VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                  HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                  Content="{TemplateBinding SelectionBoxItem}"
+                                  ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                                  ContentStringFormat="{TemplateBinding SelectionBoxItemStringFormat}"
+                                  TextElement.Foreground="{TemplateBinding Foreground}"
+                                  TextElement.FontWeight="{TemplateBinding FontWeight}" />
+
+                <Path Grid.Column="1"
+                      x:Name="Chevron"
+                      Width="8"
+                      Height="4"
+                      Stretch="Fill"
+                      Margin="0,0,8,0"
+                      VerticalAlignment="Center"
+                      IsHitTestVisible="False"
+                      Data="M0,0 L4,4 L8,0 Z"
+                      Fill="{TemplateBinding Foreground}" />
+
+                <Popup x:Name="PART_Popup"
+                       Grid.ColumnSpan="2"
+                       Placement="Bottom"
+                       AllowsTransparency="True"
+                       Focusable="False"
+                       PopupAnimation="None"
+                       IsOpen="{TemplateBinding IsDropDownOpen}">
+                    <Border MinWidth="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType={x:Type ComboBox}}}"
+                            MaxHeight="{TemplateBinding MaxDropDownHeight}"
+                            Background="{StaticResource Sdg.Surface.Primary}"
+                            BorderBrush="{StaticResource Sdg.Border.Default}"
+                            BorderThickness="1"
+                            SnapsToDevicePixels="True">
+                        <ScrollViewer>
+                            <ItemsPresenter KeyboardNavigation.DirectionalNavigation="Contained" />
+                        </ScrollViewer>
+                    </Border>
+                </Popup>
+            </Grid>
+        </Border>
+        <ControlTemplate.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="MainBorder" Property="Background" Value="{StaticResource Sdg.Surface.Hover}" />
+            </Trigger>
+        </ControlTemplate.Triggers>
+    </ControlTemplate>
+
+    <!--
+        Flat ComboBox for ComboBoxEditSettings edit mode. Uses the custom ControlTemplate
+        above so Background / BorderBrush / BorderThickness actually take effect. Borderless
+        until focus, accent border on focus.
+    -->
+    <Style x:Key="SdgEditComboBoxStyle" TargetType="{x:Type ComboBox}">
+        <Setter Property="Background" Value="{StaticResource Sdg.Surface.Input}" />
+        <Setter Property="Foreground" Value="{StaticResource Sdg.Text.Primary}" />
+        <Setter Property="BorderBrush" Value="{StaticResource Sdg.Border.Focused}" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Padding" Value="4,2,4,2" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="VerticalAlignment" Value="Stretch" />
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+        <Setter Property="Template" Value="{StaticResource SdgComboBoxControlTemplate}" />
+        <Style.Triggers>
+            <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                <Setter Property="BorderThickness" Value="1" />
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <!--  Flat DatePicker for DateEditSettings edit mode.  -->
+    <Style x:Key="SdgEditDatePickerStyle" TargetType="{x:Type DatePicker}">
+        <Setter Property="Background" Value="{StaticResource Sdg.Surface.Input}" />
+        <Setter Property="Foreground" Value="{StaticResource Sdg.Text.Primary}" />
+        <Setter Property="BorderBrush" Value="{StaticResource Sdg.Border.Focused}" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="VerticalAlignment" Value="Stretch" />
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+        <Style.Triggers>
+            <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                <Setter Property="BorderThickness" Value="1" />
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <!--
+        Editable CheckBox for CheckBoxEditSettings edit mode. Same centered layout
+        as the display version, but interactive.
+    -->
+    <Style x:Key="SdgEditCheckBoxStyle" TargetType="{x:Type CheckBox}">
+        <Setter Property="HorizontalAlignment" Value="Center" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+
+    <!--#endregion-->
+
+</ResourceDictionary>

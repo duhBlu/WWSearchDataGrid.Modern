@@ -484,7 +484,7 @@ namespace WWSearchDataGrid.Modern.WPF
                         Placement = PlacementMode.Bottom,
                         AllowsTransparency = true,
                         PopupAnimation = PopupAnimation.Fade,
-                        StaysOpen = true,
+                        StaysOpen = false,
                         HorizontalOffset = _filterContent.HorizontalOffset,
                         VerticalOffset = verticalOffset
                     };

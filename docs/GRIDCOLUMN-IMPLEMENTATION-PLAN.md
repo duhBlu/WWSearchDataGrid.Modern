@@ -417,25 +417,25 @@ FrameworkContentElement
 ```
 
 **Classes to create:**
-- `BaseEditSettings` (abstract) — `CreateDisplayTemplate()`, `CreateEditTemplate()`
-- `TextEditSettings` — Plain text editor (default)
-- `ComboBoxEditSettings` — Dropdown editor with `ItemsSource`, `DisplayMember`, `ValueMember`
-- `CheckBoxEditSettings` — Checkbox editor
-- `DateEditSettings` — Date picker
-- `NumericEditSettings` — NumericUpDown with min/max/increment
-- `MaskedEditSettings` — Masked text input
+- [x] `BaseEditSettings` (abstract) — `CreateDisplayTemplate()`, `CreateEditTemplate()`
+- [x] `TextEditSettings` — Plain text editor (default)
+- [x] `ComboBoxEditSettings` — Dropdown editor with `ItemsSource`, `DisplayMember`, `SelectedValuePath`
+- [x] `CheckBoxEditSettings` — Checkbox editor
+- [x] `DateEditSettings` — Date picker (with optional MinDate/MaxDate)
+- [x] `NumericEditSettings` — TextBox-based with Up/Down arrow increments, min/max/increment
+- [x] `MaskedEditSettings` — Masked display via `MaskFormatConverter`; plain TextBox edit (full keystroke-masked input deferred)
 
 ### 4.2 Cell Template Generation
 
 **Description:** When `GridColumn.EditSettings` is set, use it to generate `CellTemplate` (display) and `CellEditingTemplate` (editing) on the internal `DataGridColumn`.
 
 **Acceptance criteria:**
-- [ ] `ComboBoxEditSettings` produces a working dropdown in edit mode, text display in view mode
-- [ ] `DateEditSettings` produces a DatePicker in edit mode
-- [ ] `NumericEditSettings` produces a NumericUpDown with validation
-- [ ] Tab/Enter navigation works through editor cells
-- [ ] Escape cancels editing and reverts value
-- [ ] Cell value changes propagate to the bound data source
+- [x] `ComboBoxEditSettings` produces a working dropdown in edit mode, text display in view mode
+- [x] `DateEditSettings` produces a DatePicker in edit mode
+- [x] `NumericEditSettings` produces a numeric editor with Up/Down increments and Min/Max enforcement
+- [x] Tab/Enter navigation works through editor cells
+- [x] Escape cancels editing and reverts value
+- [x] Cell value changes propagate to the bound data source
 
 ### 4.3 Default EditSettings by Type
 

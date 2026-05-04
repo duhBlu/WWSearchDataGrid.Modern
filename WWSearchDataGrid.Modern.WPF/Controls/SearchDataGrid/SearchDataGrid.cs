@@ -113,6 +113,16 @@ namespace WWSearchDataGrid.Modern.WPF
                 new PropertyMetadata(null));
 
         /// <summary>
+        /// When true, focusing any cell whose column is editable immediately enters edit mode.
+        /// Individual columns can override this via <see cref="GridColumn.EditOnFocus"/> (set to
+        /// true or false to opt in or out per column). Defaults to false — preserving the WPF
+        /// "click to select, click again to edit" convention.
+        /// </summary>
+        public static readonly DependencyProperty EditOnFocusProperty =
+            DependencyProperty.Register("EditOnFocus", typeof(bool), typeof(SearchDataGrid),
+                new PropertyMetadata(false));
+
+        /// <summary>
         /// Backing key for the <see cref="GridColumns"/> dependency property.
         /// The collection is read-only from external code; internal logic populates it
         /// via the CLR property or XAML collection syntax.
@@ -164,6 +174,16 @@ namespace WWSearchDataGrid.Modern.WPF
         public ObservableCollection<DataGridColumn> VisualOrderedColumns
         {
             get { return (ObservableCollection<DataGridColumn>)GetValue(VisualOrderedColumnsProperty); }
+        }
+
+        /// <summary>
+        /// Grid-wide default for <see cref="GridColumn.EditOnFocus"/>. When a column doesn't set
+        /// its own <c>EditOnFocus</c>, this value is used. See <see cref="EditOnFocusProperty"/>.
+        /// </summary>
+        public bool EditOnFocus
+        {
+            get => (bool)GetValue(EditOnFocusProperty);
+            set => SetValue(EditOnFocusProperty, value);
         }
 
         /// <summary>
@@ -334,6 +354,13 @@ namespace WWSearchDataGrid.Modern.WPF
             SetValue(GridColumnsPropertyKey, gridColumns);
             SubscribeToGridColumnsChanged(gridColumns);
 
+            // Make the library's editor element styles (SdgEditTextBoxStyle / SdgEditComboBoxStyle /
+            // SdgDisplayTextBlockStyle / etc.) findable from cell templates. Theme dictionaries
+            // (Themes/Generic.xaml) feed the default-style system but don't participate in keyed
+            // DynamicResource / FindResource lookups, so we explicitly merge the dictionary into
+            // Application.Resources on first SearchDataGrid creation. Idempotent across instances.
+            EnsureEditSettingsResourcesMerged();
+
             // Maintain a DisplayIndex-ordered mirror of Columns for the gridline overlay.
             SetValue(VisualOrderedColumnsPropertyKey, new ObservableCollection<DataGridColumn>());
             ((INotifyCollectionChanged)Columns).CollectionChanged += (_, __) => RebuildVisualOrderedColumns();
@@ -351,11 +378,102 @@ namespace WWSearchDataGrid.Modern.WPF
 
             // Generate columns from GridColumns descriptors once the control is loaded
             Loaded += OnSearchDataGridLoaded;
+
+            // Edit-on-focus support: when a DataGridCell in a column with GridColumn.EditOnFocus=true
+            // gets focus and is editable, enter edit mode immediately. AddHandler with handledEventsToo
+            // because GotFocus is often marked handled by upstream selection logic before reaching us.
+            AddHandler(GotFocusEvent, new RoutedEventHandler(OnAnyDescendantGotFocus), handledEventsToo: true);
+
+            // Push DataContext through to GridColumn descriptors so XAML bindings on them (and on
+            // their EditSettings) resolve. Descriptors live outside the logical tree, so they don't
+            // inherit DataContext on their own.
+            DataContextChanged += (_, e) =>
+            {
+                var descriptors = (FreezableCollection<GridColumn>)GetValue(GridColumnsProperty);
+                if (descriptors == null) return;
+                foreach (var descriptor in descriptors)
+                    descriptor.DataContext = e.NewValue;
+            };
         }
 
         #endregion
 
         #region GridColumns Support
+
+        /// <summary>
+        /// Tracks whether <see cref="EnsureEditSettingsResourcesMerged"/> has already merged the
+        /// editor-styles dictionary into <see cref="Application.Resources"/> for this process.
+        /// </summary>
+        private static bool _editSettingsResourcesMerged;
+
+        /// <summary>
+        /// On first call, merges <c>Themes/EditSettings.xaml</c> into <see cref="Application"/>'s
+        /// resources so the keyed editor styles (<c>SdgEditTextBoxStyle</c>, <c>SdgEditComboBoxStyle</c>,
+        /// etc.) are findable via <see cref="FrameworkElement.FindResource"/> and the
+        /// DynamicResource references that the editor templates set up. Theme dictionaries alone
+        /// don't feed those keyed lookups — they only contribute to the default-style system —
+        /// so an explicit merge is required for cross-cell resource resolution.
+        /// </summary>
+        private static void EnsureEditSettingsResourcesMerged()
+        {
+            if (_editSettingsResourcesMerged) return;
+            var app = Application.Current;
+            if (app == null) return; // design-time / no app — bail out, runtime will retry on next ctor
+
+            try
+            {
+                var dict = new ResourceDictionary
+                {
+                    Source = new Uri(
+                        "pack://application:,,,/WWSearchDataGrid.Modern.WPF;component/Themes/EditSettings.xaml",
+                        UriKind.Absolute)
+                };
+                app.Resources.MergedDictionaries.Add(dict);
+                _editSettingsResourcesMerged = true;
+                Debug.WriteLine("SearchDataGrid: merged EditSettings.xaml into Application.Resources.");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"SearchDataGrid: failed to merge EditSettings.xaml — {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Handles GotFocus on any descendant. When the focused element is inside a
+        /// <see cref="DataGridCell"/> whose column resolves to <c>EditOnFocus=true</c>, transitions
+        /// the cell into edit mode. The resolution falls through column → grid → false, so a
+        /// column without its own setting inherits the grid-wide <see cref="EditOnFocus"/>.
+        /// Skips read-only cells and cells already editing.
+        /// </summary>
+        private void OnAnyDescendantGotFocus(object sender, RoutedEventArgs e)
+        {
+            var cell = e.OriginalSource as DataGridCell ?? FindAncestor<DataGridCell>(e.OriginalSource as DependencyObject);
+            if (cell == null || cell.IsEditing || cell.IsReadOnly) return;
+
+            var descriptor = FindGridColumnDescriptor(cell.Column);
+            // Resolve in priority order: explicit column setting → grid-wide default → false.
+            bool shouldEdit = descriptor?.EditOnFocus ?? EditOnFocus;
+            if (!shouldEdit) return;
+
+            // Defer BeginEdit one dispatcher tick — calling it directly inside GotFocus can
+            // race the focus pipeline and leave the editor un-focusable.
+            Dispatcher.BeginInvoke(new Action(() =>
+            {
+                if (!cell.IsEditing && cell.IsKeyboardFocusWithin)
+                    BeginEdit();
+            }), DispatcherPriority.Input);
+        }
+
+        private static T FindAncestor<T>(DependencyObject start) where T : DependencyObject
+        {
+            var current = start;
+            while (current != null)
+            {
+                if (current is T match) return match;
+                current = System.Windows.Media.VisualTreeHelper.GetParent(current);
+            }
+            return null;
+        }
 
         /// <summary>
         /// Tracks whether columns have already been generated from <see cref="GridColumns"/>
@@ -611,6 +729,7 @@ namespace WWSearchDataGrid.Modern.WPF
                         foreach (GridColumn descriptor in e.NewItems)
                         {
                             descriptor.Owner = this;
+                            descriptor.DataContext = DataContext;
                             ResolveFieldTypeForDescriptor(descriptor);
                             var column = descriptor.CreateDataGridColumn();
                             if (column != null)
@@ -660,6 +779,7 @@ namespace WWSearchDataGrid.Modern.WPF
                         foreach (GridColumn descriptor in e.NewItems)
                         {
                             descriptor.Owner = this;
+                            descriptor.DataContext = DataContext;
                             ResolveFieldTypeForDescriptor(descriptor);
                             var column = descriptor.CreateDataGridColumn();
                             if (column != null)
@@ -704,6 +824,7 @@ namespace WWSearchDataGrid.Modern.WPF
             foreach (var descriptor in descriptors)
             {
                 descriptor.Owner = this;
+                descriptor.DataContext = DataContext;
                 var column = descriptor.CreateDataGridColumn();
                 if (column != null)
                     Columns.Add(column);

@@ -26,6 +26,17 @@ namespace WWSearchDataGrid.Modern.WPF
     /// </remarks>
     public class GridColumn : FrameworkContentElement
     {
+        public GridColumn()
+        {
+            // Forward DataContext changes to EditSettings so its bindings stay in sync. EditSettings
+            // is not in the logical/visual tree and doesn't inherit DataContext on its own.
+            DataContextChanged += (_, e) =>
+            {
+                if (EditSettings != null)
+                    EditSettings.DataContext = e.NewValue;
+            };
+        }
+
         #region Layout Properties
 
         /// <summary>
@@ -612,6 +623,62 @@ namespace WWSearchDataGrid.Modern.WPF
 
         #endregion
 
+        #region Editor Properties
+
+        /// <summary>
+        /// Gets or sets the editor configuration for this column. When set, the grid generates a
+        /// <see cref="DataGridTemplateColumn"/> using <see cref="BaseEditSettings.CreateDisplayTemplate"/>
+        /// and <see cref="BaseEditSettings.CreateEditTemplate"/> instead of the default text/checkbox
+        /// column. Leave null to use the default column type chosen from <see cref="FieldType"/>.
+        /// </summary>
+        public static readonly DependencyProperty EditSettingsProperty =
+            DependencyProperty.Register(
+                nameof(EditSettings),
+                typeof(BaseEditSettings),
+                typeof(GridColumn),
+                new PropertyMetadata(null, OnEditSettingsChanged));
+
+        public BaseEditSettings EditSettings
+        {
+            get => (BaseEditSettings)GetValue(EditSettingsProperty);
+            set => SetValue(EditSettingsProperty, value);
+        }
+
+        /// <summary>
+        /// When true, focusing a cell in this column (via mouse or keyboard navigation) immediately
+        /// enters edit mode. When null (the default), the column inherits
+        /// <see cref="SearchDataGrid.EditOnFocus"/> from the parent grid; setting an explicit
+        /// true / false overrides the grid-level setting for this one column.
+        /// </summary>
+        /// <remarks>
+        /// Read-only cells ignore this setting. The grid-level handler in <see cref="SearchDataGrid"/>
+        /// only calls <c>BeginEdit</c> when the cell is editable.
+        /// </remarks>
+        public static readonly DependencyProperty EditOnFocusProperty =
+            DependencyProperty.Register(
+                nameof(EditOnFocus),
+                typeof(bool?),
+                typeof(GridColumn),
+                new PropertyMetadata(null));
+
+        public bool? EditOnFocus
+        {
+            get => (bool?)GetValue(EditOnFocusProperty);
+            set => SetValue(EditOnFocusProperty, value);
+        }
+
+        private static void OnEditSettingsChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            // EditSettings is a FrameworkContentElement but isn't part of the visual / logical tree,
+            // so it doesn't automatically inherit DataContext. Push the column's current DataContext
+            // down so XAML bindings on EditSettings (e.g. ComboBoxEditSettings.ItemsSource) resolve
+            // against the same source as bindings elsewhere on the grid.
+            if (d is GridColumn col && e.NewValue is BaseEditSettings settings)
+                settings.DataContext = col.DataContext;
+        }
+
+        #endregion
+
         #region Select-All Properties
 
         /// <summary>
@@ -716,7 +783,25 @@ namespace WWSearchDataGrid.Modern.WPF
 
             bool isBoolField = FieldType == typeof(bool) || FieldType == typeof(bool?);
 
-            if (isBoolField && !wantsCustomDisplay)
+            // EditSettings, when present, drives template generation — produces a DataGridTemplateColumn
+            // with display + edit templates from the editor configuration. Takes precedence over the
+            // default text/checkbox selection so consumers can opt into a richer editor.
+            if (EditSettings != null)
+            {
+                column = new DataGridTemplateColumn
+                {
+                    // Resolve* prefers a user-supplied EditTemplate / DisplayTemplate over the
+                    // editor's code-built default, so consumers can take over the layout entirely.
+                    CellTemplate = EditSettings.ResolveDisplayTemplate(this),
+                    CellEditingTemplate = EditSettings.ResolveEditTemplate(this),
+                    ClipboardContentBinding = CreateBinding(),
+                    // Override the default cell style alignments (Center) so the editor template
+                    // stretches to fill the cell. Without this, controls like ComboBox/DatePicker
+                    // shrink to their content size and float in the middle of the cell.
+                    CellStyle = BuildStretchingCellStyle(Owner?.CellStyle)
+                };
+            }
+            else if (isBoolField && !wantsCustomDisplay)
             {
                 column = new DataGridCheckBoxColumn
                 {
@@ -745,6 +830,25 @@ namespace WWSearchDataGrid.Modern.WPF
 
             InternalColumn = column;
             return column;
+        }
+
+        /// <summary>
+        /// Builds a <see cref="DataGridCell"/> style that stretches its content to fill the cell,
+        /// based on the grid's currently-configured cell style. Used for template columns
+        /// generated from <see cref="EditSettings"/> so editors like ComboBox / DatePicker / TextBox
+        /// span the full cell rather than shrinking to content size.
+        /// </summary>
+        /// <param name="basedOn">
+        /// The cell style currently in use on the parent grid. The result inherits everything
+        /// from this style (background, padding, selection brushes) and just overrides the
+        /// content alignments.
+        /// </param>
+        private static Style BuildStretchingCellStyle(Style basedOn)
+        {
+            var style = new Style(typeof(DataGridCell), basedOn);
+            style.Setters.Add(new Setter(Control.HorizontalContentAlignmentProperty, HorizontalAlignment.Stretch));
+            style.Setters.Add(new Setter(Control.VerticalContentAlignmentProperty, VerticalAlignment.Stretch));
+            return style;
         }
 
         /// <summary>

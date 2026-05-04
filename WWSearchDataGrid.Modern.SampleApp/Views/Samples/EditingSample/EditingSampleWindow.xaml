@@ -1,0 +1,164 @@
+<Window x:Class="WWSearchDataGrid.Modern.SampleApp.Views.Samples.EditingSample.EditingSampleWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:sdg="clr-namespace:WWSearchDataGrid.Modern.WPF;assembly=WWSearchDataGrid.Modern.WPF"
+        xmlns:local="clr-namespace:WWSearchDataGrid.Modern.SampleApp.Views.Samples.EditingSample"
+        x:Name="Root"
+        Title="Cell Editing — SearchDataGrid"
+        Style="{DynamicResource SampleAppWindowStyle}"
+        Width="1400"
+        Height="640"
+        ResizeMode="CanResize"
+        WindowStartupLocation="CenterScreen"
+        mc:Ignorable="d">
+    <Window.DataContext>
+        <local:EditingSampleViewModel />
+    </Window.DataContext>
+
+    <Window.Resources>
+        <!-- Layer 1 demo: a custom ComboBox style applied via EditorStyle -->
+        <Style x:Key="HighlightComboStyle" TargetType="ComboBox">
+            <Setter Property="Background" Value="red" />
+            <Setter Property="BorderBrush" Value="#FFE0A800" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Padding" Value="6,2" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
+    </Window.Resources>
+
+    <DockPanel>
+        <TextBlock DockPanel.Dock="Top"
+                   Margin="16,12,16,0"
+                   FontSize="13"
+                   Foreground="#444"
+                   TextWrapping="Wrap">
+            <Run FontWeight="SemiBold" Text="Tasks — every editor + customization layers" />
+            <LineBreak />
+            <Run Text="Standard editors: Title (Text), Assigned (ComboBox), Hours (Numeric), Priority (ComboBox id-based), Phone (Masked), Done (CheckBox), Due (Date)." />
+            <LineBreak />
+            <Run FontWeight="SemiBold" Text="Display vs edit:" />
+            <Run Text=" ComboBox columns show plain text in display mode (no chrome). The grid sets EditOnFocus=True so any cell jumps into edit mode on focus. Title overrides this with EditOnFocus=False so users can read titles without accidentally editing." />
+            <LineBreak />
+            <Run FontWeight="SemiBold" Text="Layer 1 (EditorStyle):" />
+            <Run Text=" Status column applies a custom ComboBox style — yellow chrome, bold text — without replacing the template." />
+            <LineBreak />
+            <Run FontWeight="SemiBold" Text="Layer 2 (EditTemplate):" />
+            <Run Text=" Department column provides a fully custom DataTemplate (icon + ComboBox in a horizontal layout) that binds directly to the window's ViewModel." />
+        </TextBlock>
+
+        <sdg:SearchDataGrid Margin="8"
+                            ItemsSource="{Binding Tasks}"
+                            AutoGenerateColumns="False"
+                            CanUserAddRows="False"
+                            CanUserDeleteRows="False"
+                            EditOnFocus="True">
+            <sdg:SearchDataGrid.GridColumns>
+                <sdg:GridColumn FieldName="Id" Header="#" Width="50" ReadOnly="True" />
+
+                <!-- Override: Title opts OUT of the grid-wide EditOnFocus so users can read titles
+                     without accidentally editing them. -->
+                <sdg:GridColumn FieldName="Title" Header="Title" Width="2*" EditOnFocus="False">
+                    <sdg:GridColumn.EditSettings>
+                        <sdg:TextEditSettings />
+                    </sdg:GridColumn.EditSettings>
+                </sdg:GridColumn>
+
+                <sdg:GridColumn FieldName="AssignedTo" Header="Assigned" Width="100">
+                    <sdg:GridColumn.EditSettings>
+                        <sdg:ComboBoxEditSettings ItemsSource="{Binding Assignees}" />
+                    </sdg:GridColumn.EditSettings>
+                </sdg:GridColumn>
+
+                <sdg:GridColumn FieldName="HoursEstimate" Header="Hours" Width="80"
+                                DisplayStringFormat="N1">
+                    <sdg:GridColumn.EditSettings>
+                        <sdg:NumericEditSettings Minimum="0" Maximum="80" Increment="0.5" />
+                    </sdg:GridColumn.EditSettings>
+                </sdg:GridColumn>
+
+                <sdg:GridColumn FieldName="PriorityId" Header="Priority" Width="100">
+                    <sdg:GridColumn.EditSettings>
+                        <sdg:ComboBoxEditSettings ItemsSource="{Binding Priorities}"
+                                                  DisplayMemberPath="Name"
+                                                  SelectedValuePath="Id" />
+                    </sdg:GridColumn.EditSettings>
+                </sdg:GridColumn>
+
+                <sdg:GridColumn FieldName="ContactPhone" Header="Phone" Width="130">
+                    <sdg:GridColumn.EditSettings>
+                        <sdg:MaskedEditSettings Mask="(000) 000-0000" />
+                    </sdg:GridColumn.EditSettings>
+                </sdg:GridColumn>
+
+                <!-- Layer 1 — Status column. EditorStyle restyles the ComboBox; default template kept. -->
+                <sdg:GridColumn FieldName="Status" Header="Status (styled)" Width="140">
+                    <sdg:GridColumn.EditSettings>
+                        <sdg:ComboBoxEditSettings ItemsSource="{Binding Statuses}"
+                                                  EditorStyle="{StaticResource HighlightComboStyle}" />
+                    </sdg:GridColumn.EditSettings>
+                </sdg:GridColumn>
+
+                <!-- Layer 2 — Department column. Fully custom EditTemplate / DisplayTemplate.
+                     Bindings reach the window ViewModel via RelativeSource AncestorType=Window. -->
+                <sdg:GridColumn FieldName="Department" Header="Department (custom)" Width="180">
+                    <sdg:GridColumn.EditSettings>
+                        <sdg:ComboBoxEditSettings>
+                            <sdg:ComboBoxEditSettings.DisplayTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="6,0,0,0">
+                                        <TextBlock Text="&#xE716;"
+                                                   FontFamily="Segoe Fluent Icons"
+                                                   FontSize="14"
+                                                   Foreground="#0078D4"
+                                                   Margin="0,0,6,0"
+                                                   VerticalAlignment="Center" />
+                                        <TextBlock Text="{Binding Department}"
+                                                   VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </sdg:ComboBoxEditSettings.DisplayTemplate>
+                            <sdg:ComboBoxEditSettings.EditTemplate>
+                                <DataTemplate>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0"
+                                                   Text="&#xE716;"
+                                                   FontFamily="Segoe Fluent Icons"
+                                                   FontSize="14"
+                                                   Foreground="#0078D4"
+                                                   Margin="6,0,4,0"
+                                                   VerticalAlignment="Center" />
+                                        <ComboBox Grid.Column="1"
+                                                  SelectedItem="{Binding Department, Mode=TwoWay}"
+                                                  ItemsSource="{Binding DataContext.Departments,
+                                                                        RelativeSource={RelativeSource AncestorType=Window}}"
+                                                  BorderThickness="0"
+                                                  VerticalContentAlignment="Center" />
+                                    </Grid>
+                                </DataTemplate>
+                            </sdg:ComboBoxEditSettings.EditTemplate>
+                        </sdg:ComboBoxEditSettings>
+                    </sdg:GridColumn.EditSettings>
+                </sdg:GridColumn>
+
+                <sdg:GridColumn FieldName="IsComplete" Header="Done" Width="60">
+                    <sdg:GridColumn.EditSettings>
+                        <sdg:CheckBoxEditSettings />
+                    </sdg:GridColumn.EditSettings>
+                </sdg:GridColumn>
+
+                <sdg:GridColumn FieldName="DueDate" Header="Due" Width="120">
+                    <sdg:GridColumn.EditSettings>
+                        <sdg:DateEditSettings />
+                    </sdg:GridColumn.EditSettings>
+                </sdg:GridColumn>
+            </sdg:SearchDataGrid.GridColumns>
+        </sdg:SearchDataGrid>
+    </DockPanel>
+</Window>

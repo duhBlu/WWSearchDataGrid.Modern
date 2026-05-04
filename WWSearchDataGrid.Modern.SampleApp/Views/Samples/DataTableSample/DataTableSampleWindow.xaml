@@ -48,6 +48,7 @@
                             AutoGenerateColumns="False"
                             CanUserAddRows="False"
                             CanUserDeleteRows="False"
+                            EnableRuleFiltering="True"
                             IsReadOnly="True">
             <sdg:SearchDataGrid.GridColumns>
                 <sdg:GridColumn FieldName="ProductId" Header="Product #" Width="90" />

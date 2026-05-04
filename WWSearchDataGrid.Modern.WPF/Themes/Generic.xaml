@@ -6,6 +6,7 @@
         <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF;component/Themes/Controls/ColumnFilterEditor.xaml" />
         <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF;component/Themes/Controls/ColumnChooser.xaml" />
         <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF;component/Themes/Controls/SearchDataGrid.xaml" />
+        <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF;component/Themes/EditSettings.xaml" />
     </ResourceDictionary.MergedDictionaries>
 
 </ResourceDictionary>
