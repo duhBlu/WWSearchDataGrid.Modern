@@ -9,7 +9,7 @@
     <converters:ValueToCountConverter x:Key="ValueToCountConverter" />
 
     <!--  Default SearchTextBox Style  -->
-    <Style x:Key="GenericSearchTextboxStyle" TargetType="{x:Type sdg:SearchTextBox}">
+    <Style x:Key="{x:Static sdg:SdgThemeKeys.SearchTextBox}" TargetType="{x:Type sdg:SearchTextBox}">
         <Style.Resources>
             <!--  SearchTextBox brushes  -->
             <SolidColorBrush x:Key="SearchTextBox.BackgroundBrush" Color="#FFFFFFFF" />

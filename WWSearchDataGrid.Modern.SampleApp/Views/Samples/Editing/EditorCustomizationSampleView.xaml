@@ -1,0 +1,101 @@
+<UserControl x:Class="WWSearchDataGrid.Modern.SampleApp.Views.Samples.Editing.EditorCustomizationSampleView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:sdg="clr-namespace:WWSearchDataGrid.Modern.WPF;assembly=WWSearchDataGrid.Modern.WPF"
+             xmlns:sampleControls="clr-namespace:WWSearchDataGrid.Modern.SampleApp.Controls"
+             xmlns:local="clr-namespace:WWSearchDataGrid.Modern.SampleApp.Views.Samples.Editing"
+             mc:Ignorable="d">
+    <UserControl.DataContext>
+        <local:EditorCustomizationSampleViewModel />
+    </UserControl.DataContext>
+
+    <UserControl.Resources>
+        <!-- Layer 1: a custom ComboBox style applied via EditorStyle. Re-styles without replacing the template. -->
+        <Style x:Key="HighlightComboStyle" BasedOn="{StaticResource {x:Static sdg:EditSettingsThemeKeys.EditComboBox}}" TargetType="ComboBox">
+            <Setter Property="Background" Value="LightPink" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="VerticalContentAlignment" Value="Top" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+        </Style>
+    </UserControl.Resources>
+
+    <sampleControls:SampleHostControl Sources="{x:Static sampleControls:SampleSources.EditorCustomization}">
+        <DockPanel>
+            <TextBlock DockPanel.Dock="Top"
+                       Margin="16,12,16,4"
+                       FontSize="13"
+                       Foreground="#444"
+                       TextWrapping="Wrap">
+                <Run FontWeight="SemiBold" Text="Editor customization — two layers" />
+                <LineBreak />
+                <Run FontWeight="SemiBold" Text="Layer 1 (EditorStyle):" />
+                <Run Text="Status column applies a custom ComboBox style — pink chrome, bold text — without replacing the template. Useful when you just want to recolor or restyle." />
+                <LineBreak />
+                <Run FontWeight="SemiBold" Text="Layer 2 (EditTemplate / DisplayTemplate):" />
+                <Run Text="Department column provides a fully custom DataTemplate (icon + ComboBox laid out in a Grid) that takes over the entire cell." />
+            </TextBlock>
+
+            <sdg:SearchDataGrid x:Name="Grid"
+                                Margin="8"
+                                ItemsSource="{Binding Tasks}"
+                                AutoGenerateColumns="False"
+                                CanUserAddRows="False"
+                                CanUserDeleteRows="False"
+                                EnableRuleFiltering="True"
+                                EditorShowMode="MouseDown">
+                <sdg:SearchDataGrid.GridColumns>
+                    <sdg:GridColumn Width="50" FieldName="Id" Header="#" ReadOnly="True" />
+                    <sdg:GridColumn Width="2*" FieldName="Title" Header="Title">
+                        <sdg:GridColumn.EditSettings>
+                            <sdg:TextEditSettings EditorShowMode="None" />
+                        </sdg:GridColumn.EditSettings>
+                    </sdg:GridColumn>
+
+                    <!-- Layer 1: EditorStyle re-styles the ComboBox; default template kept. -->
+                    <sdg:GridColumn Width="160" FieldName="Status" Header="Status (styled)">
+                        <sdg:GridColumn.EditSettings>
+                            <sdg:ComboBoxEditSettings ItemsSource="{Binding Statuses}"
+                                                      EditorStyle="{StaticResource HighlightComboStyle}" />
+                        </sdg:GridColumn.EditSettings>
+                    </sdg:GridColumn>
+
+                    <!-- Layer 2: fully custom DisplayTemplate + EditTemplate. -->
+                    <sdg:GridColumn Width="220" FieldName="Department" Header="Department (custom)">
+                        <sdg:GridColumn.EditSettings>
+                            <sdg:ComboBoxEditSettings>
+                                <sdg:ComboBoxEditSettings.DisplayTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal" Margin="6,0,0,0" VerticalAlignment="Center">
+                                            <TextBlock Foreground="#0078D4" Text="&#xE716;" Margin="0,0,6,0"
+                                                       VerticalAlignment="Center" FontFamily="Segoe Fluent Icons" FontSize="14" />
+                                            <TextBlock Text="{Binding Department}" VerticalAlignment="Center" />
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </sdg:ComboBoxEditSettings.DisplayTemplate>
+                                <sdg:ComboBoxEditSettings.EditTemplate>
+                                    <DataTemplate>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0" Foreground="#0078D4" Text="&#xE716;" Margin="6,0,4,0"
+                                                       VerticalAlignment="Center" FontFamily="Segoe Fluent Icons" FontSize="14" />
+                                            <ComboBox Grid.Column="1"
+                                                      BorderThickness="0"
+                                                      VerticalContentAlignment="Center"
+                                                      SelectedItem="{Binding Department, Mode=TwoWay}"
+                                                      ItemsSource="{Binding DataContext.Departments, RelativeSource={RelativeSource AncestorType=UserControl}}" />
+                                        </Grid>
+                                    </DataTemplate>
+                                </sdg:ComboBoxEditSettings.EditTemplate>
+                            </sdg:ComboBoxEditSettings>
+                        </sdg:GridColumn.EditSettings>
+                    </sdg:GridColumn>
+                </sdg:SearchDataGrid.GridColumns>
+            </sdg:SearchDataGrid>
+        </DockPanel>
+    </sampleControls:SampleHostControl>
+</UserControl>

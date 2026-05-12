@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
@@ -10,15 +10,87 @@
 
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <EmbeddedResource Include="Data\SampleOrders.json" />
+    <PackageReference Include="AvalonEdit" Version="6.3.1.120" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\WWSearchDataGrid.Modern.Core\WWSearchDataGrid.Modern.Core.csproj" />
     <ProjectReference Include="..\WWSearchDataGrid.Modern.WPF\WWSearchDataGrid.Modern.WPF.csproj" />
+  </ItemGroup>
+
+  <!-- Embed each sample's source files so SampleHostControl can show XAML / C# tabs alongside the live grid. -->
+  <ItemGroup>
+    <!-- Data Binding -->
+    <EmbeddedResource Include="Views\Samples\DataBinding\PocoAttributesSampleView.xaml" />
+    <EmbeddedResource Include="Views\Samples\DataBinding\PocoAttributesSampleView.xaml.cs" />
+    <EmbeddedResource Include="Views\Samples\DataBinding\PocoAttributesSampleViewModel.cs" />
+    <EmbeddedResource Include="Views\Samples\DataBinding\DataTableManualSampleView.xaml" />
+    <EmbeddedResource Include="Views\Samples\DataBinding\DataTableManualSampleView.xaml.cs" />
+    <EmbeddedResource Include="Views\Samples\DataBinding\DataTableManualSampleViewModel.cs" />
+    <EmbeddedResource Include="Views\Samples\DataBinding\DataTableAutoGenSampleView.xaml" />
+    <EmbeddedResource Include="Views\Samples\DataBinding\DataTableAutoGenSampleView.xaml.cs" />
+    <EmbeddedResource Include="Views\Samples\DataBinding\DataTableAutoGenSampleViewModel.cs" />
+
+    <!-- Columns -->
+    <EmbeddedResource Include="Views\Samples\Columns\ColumnConfigurationSampleView.xaml" />
+    <EmbeddedResource Include="Views\Samples\Columns\ColumnConfigurationSampleView.xaml.cs" />
+    <EmbeddedResource Include="Views\Samples\Columns\ColumnConfigurationSampleViewModel.cs" />
+    <EmbeddedResource Include="Views\Samples\Columns\DisplayFormattingSampleView.xaml" />
+    <EmbeddedResource Include="Views\Samples\Columns\DisplayFormattingSampleView.xaml.cs" />
+    <EmbeddedResource Include="Views\Samples\Columns\DisplayFormattingSampleViewModel.cs" />
+    <EmbeddedResource Include="Views\Samples\Columns\ColumnChooserSampleView.xaml" />
+    <EmbeddedResource Include="Views\Samples\Columns\ColumnChooserSampleView.xaml.cs" />
+    <EmbeddedResource Include="Views\Samples\Columns\ColumnChooserSampleViewModel.cs" />
+
+    <!-- Filtering -->
+    <EmbeddedResource Include="Views\Samples\Filtering\SearchModesSampleView.xaml" />
+    <EmbeddedResource Include="Views\Samples\Filtering\SearchModesSampleView.xaml.cs" />
+    <EmbeddedResource Include="Views\Samples\Filtering\SearchModesSampleViewModel.cs" />
+    <EmbeddedResource Include="Views\Samples\Filtering\CustomPredicateSampleView.xaml" />
+    <EmbeddedResource Include="Views\Samples\Filtering\CustomPredicateSampleView.xaml.cs" />
+    <EmbeddedResource Include="Views\Samples\Filtering\CustomPredicateSampleViewModel.cs" />
+    <EmbeddedResource Include="Views\Samples\Filtering\RuleFilterPopupSampleView.xaml" />
+    <EmbeddedResource Include="Views\Samples\Filtering\RuleFilterPopupSampleView.xaml.cs" />
+    <EmbeddedResource Include="Views\Samples\Filtering\RuleFilterPopupSampleViewModel.cs" />
+
+    <!-- Editing -->
+    <EmbeddedResource Include="Views\Samples\Editing\EditorTypesSampleView.xaml" />
+    <EmbeddedResource Include="Views\Samples\Editing\EditorTypesSampleView.xaml.cs" />
+    <EmbeddedResource Include="Views\Samples\Editing\EditorTypesSampleViewModel.cs" />
+    <EmbeddedResource Include="Views\Samples\Editing\EditorCustomizationSampleView.xaml" />
+    <EmbeddedResource Include="Views\Samples\Editing\EditorCustomizationSampleView.xaml.cs" />
+    <EmbeddedResource Include="Views\Samples\Editing\EditorCustomizationSampleViewModel.cs" />
+    <EmbeddedResource Include="Views\Samples\Editing\SelectAllSampleView.xaml" />
+    <EmbeddedResource Include="Views\Samples\Editing\SelectAllSampleView.xaml.cs" />
+    <EmbeddedResource Include="Views\Samples\Editing\SelectAllSampleViewModel.cs" />
+    <EmbeddedResource Include="Views\Samples\Editing\InputMaskingSampleView.xaml" />
+    <EmbeddedResource Include="Views\Samples\Editing\InputMaskingSampleView.xaml.cs" />
+    <EmbeddedResource Include="Views\Samples\Editing\InputMaskingSampleViewModel.cs" />
+
+    <!-- Animation & Performance -->
+    <EmbeddedResource Include="Views\Samples\AnimationPerformance\ScrollingAnimationSampleView.xaml" />
+    <EmbeddedResource Include="Views\Samples\AnimationPerformance\ScrollingAnimationSampleView.xaml.cs" />
+    <EmbeddedResource Include="Views\Samples\AnimationPerformance\ScrollingAnimationSampleViewModel.cs" />
+    <EmbeddedResource Include="Views\Samples\AnimationPerformance\LargeDatasetsSampleView.xaml" />
+    <EmbeddedResource Include="Views\Samples\AnimationPerformance\LargeDatasetsSampleView.xaml.cs" />
+    <EmbeddedResource Include="Views\Samples\AnimationPerformance\LargeDatasetsSampleViewModel.cs" />
+
+    <!-- Models + generators referenced from C# tabs -->
+    <EmbeddedResource Include="Models\Customer.cs" />
+    <EmbeddedResource Include="Models\OrderItem.cs" />
+    <EmbeddedResource Include="Models\TaskItem.cs" />
+    <EmbeddedResource Include="Models\Contact.cs" />
+    <EmbeddedResource Include="SampleData\SampleViewModelBase.cs" />
+    <EmbeddedResource Include="SampleData\GeneratableSampleViewModel.cs" />
+    <EmbeddedResource Include="SampleData\Generators\CustomerGenerator.cs" />
+    <EmbeddedResource Include="SampleData\Generators\VendorTableGenerator.cs" />
+    <EmbeddedResource Include="SampleData\Generators\OrderGenerator.cs" />
+    <EmbeddedResource Include="SampleData\Generators\TaskGenerator.cs" />
+    <EmbeddedResource Include="SampleData\Generators\ContactGenerator.cs" />
+
+    <!-- Custom AvalonEdit syntax highlighting registered at startup; replaces the bundled XML / C# defaults. -->
+    <EmbeddedResource Include="Themes\SyntaxHighlighting\CSharp.xshd" />
+    <EmbeddedResource Include="Themes\SyntaxHighlighting\Xaml.xshd" />
   </ItemGroup>
 
 </Project>

@@ -28,6 +28,7 @@ namespace WWSearchDataGrid.Modern.Core
         #region Fields
 
         private SearchTemplateController _controller;
+        private int _lastTotalItemCount;
         private bool _isSyncing;
         private Action _applyFilterAction;
 
@@ -116,27 +117,53 @@ namespace WWSearchDataGrid.Modern.Core
 
             _controller = controller ?? throw new ArgumentNullException(nameof(controller));
             _applyFilterAction = applyFilterAction;
-
-            // Unsubscribe from old items
-            foreach (var item in ValueItems)
-                item.PropertyChanged -= OnValueItemCheckedChanged;
-
-            ValueItems.Clear();
-            DateTreeRoots.Clear();
+            _lastTotalItemCount = totalItemCount;
 
             // Ensure values are loaded
             controller.EnsureColumnValuesLoadedForFiltering();
 
             IsDateTimeColumn = controller.ColumnDataType == ColumnDataType.DateTime;
 
-            // Build flat checkable items from column values
-            var rawValues = controller.ColumnValues;
-            var counts = controller.ColumnValueCounts;
+            // Build flat (and tree, if DateTime) value items from current controller cache.
+            RebuildValueItemsFromController();
+
+            // Sync initial state from any existing rules
+            SyncFromRules();
+
+            // Watch for external template removals (filter panel chip X, context menu, etc.)
+            // and for cell-edit-driven cache mutations (ColumnValuesChanged).
+            SubscribeToControllerChanges();
+
+            UpdateSelectAllState();
+            OnPropertyChanged(nameof(TotalCount));
+            OnPropertyChanged(nameof(CheckedCount));
+            OnPropertyChanged(nameof(IsDateTimeColumn));
+        }
+
+        /// <summary>
+        /// Rebuilds <see cref="ValueItems"/> (and <see cref="DateTreeRoots"/> when applicable)
+        /// from the controller's current <c>ColumnValues</c> / <c>ColumnValueCounts</c>. Called
+        /// from <see cref="Initialize"/> and from the <c>ColumnValuesChanged</c> handler so a
+        /// cell edit committed elsewhere immediately refreshes the rule editor's value list.
+        /// </summary>
+        private void RebuildValueItemsFromController()
+        {
+            if (_controller == null) return;
+
+            // Detach handlers from the old items before clearing.
+            foreach (var item in ValueItems)
+                item.PropertyChanged -= OnValueItemCheckedChanged;
+
+            ValueItems.Clear();
+            DateTreeRoots.Clear();
+
+            var rawValues = _controller.ColumnValues;
+            var counts = _controller.ColumnValueCounts;
 
             for (int i = 0; i < rawValues.Count; i++)
             {
                 var raw = rawValues[i];
-                string display = controller.GetDisplayValue(raw);
+                string display = _controller.GetDisplayValue(raw);
                 int count = 0;
                 if (counts != null && counts.ContainsKey(raw))
                     count = counts[raw];
@@ -146,20 +173,17 @@ namespace WWSearchDataGrid.Modern.Core
                     RawValue = raw,
                     DisplayValue = display,
                     Count = count,
-                    IsChecked = true, // default: all checked = no filter
+                    IsChecked = true,
                     IsBlank = false
                 };
-
                 item.PropertyChanged += OnValueItemCheckedChanged;
                 ValueItems.Add(item);
             }
 
-            // Add blank item at the TOP if column has nulls
-            if (controller.ContainsNullValues)
+            if (_controller.ContainsNullValues)
             {
-                // Null count = total rows - sum of all non-null value counts
                 int nonNullCount = counts != null ? counts.Values.Sum() : 0;
-                int nullCount = Math.Max(0, totalItemCount - nonNullCount);
+                int nullCount = Math.Max(0, _lastTotalItemCount - nonNullCount);
 
                 var blankItem = new CheckableValueItem
                 {
@@ -173,20 +197,8 @@ namespace WWSearchDataGrid.Modern.Core
                 ValueItems.Insert(0, blankItem);
             }
 
-            // Build DateTime tree if applicable
             if (IsDateTimeColumn)
                 BuildDateTree();
-
-            // Sync initial state from any existing rules
-            SyncFromRules();
-
-            // Watch for external template removals (filter panel chip X, context menu, etc.)
-            SubscribeToControllerChanges();
-
-            UpdateSelectAllState();
-            OnPropertyChanged(nameof(TotalCount));
-            OnPropertyChanged(nameof(CheckedCount));
-            OnPropertyChanged(nameof(IsDateTimeColumn));
         }
 
         /// <summary>
@@ -195,8 +207,11 @@ namespace WWSearchDataGrid.Modern.Core
         /// </summary>
         public void UnsubscribeFromControllerChanges()
         {
-            if (_controller?.SearchGroups == null) return;
+            if (_controller == null) return;
 
+            _controller.ColumnValuesChanged -= OnControllerColumnValuesChanged;
+
+            if (_controller.SearchGroups == null) return;
             _controller.SearchGroups.CollectionChanged -= OnSearchGroupsCollectionChanged;
             foreach (var group in _controller.SearchGroups)
                 group.SearchTemplates.CollectionChanged -= OnTemplatesCollectionChanged;
@@ -204,11 +219,35 @@ namespace WWSearchDataGrid.Modern.Core
 
         private void SubscribeToControllerChanges()
         {
-            if (_controller?.SearchGroups == null) return;
+            if (_controller == null) return;
 
+            _controller.ColumnValuesChanged += OnControllerColumnValuesChanged;
+
+            if (_controller.SearchGroups == null) return;
             _controller.SearchGroups.CollectionChanged += OnSearchGroupsCollectionChanged;
             foreach (var group in _controller.SearchGroups)
                 group.SearchTemplates.CollectionChanged += OnTemplatesCollectionChanged;
+        }
+
+        private void OnControllerColumnValuesChanged(object sender, EventArgs e)
+        {
+            // Cell edit elsewhere mutated the column's distinct-value set. Re-evaluate
+            // IsDateTimeColumn (ColumnDataType may have firmed up only after first load),
+            // then rebuild the flat value list (and DateTree if DateTime) so the rule
+            // editor's "Filter Values" tab immediately reflects the new value + count.
+            if (_controller != null)
+            {
+                bool wasDateTime = IsDateTimeColumn;
+                IsDateTimeColumn = _controller.ColumnDataType == ColumnDataType.DateTime;
+                if (wasDateTime != IsDateTimeColumn)
+                    OnPropertyChanged(nameof(IsDateTimeColumn));
+            }
+
+            RebuildValueItemsFromController();
+            SyncFromRules();
+            UpdateSelectAllState();
+            OnPropertyChanged(nameof(TotalCount));
+            OnPropertyChanged(nameof(CheckedCount));
         }
 
         private void OnSearchGroupsCollectionChanged(object sender, NotifyCollectionChangedEventArgs e)

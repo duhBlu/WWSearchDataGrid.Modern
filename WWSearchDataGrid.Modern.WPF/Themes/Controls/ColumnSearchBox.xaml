@@ -12,7 +12,7 @@
     <converters:HasValueToVisibilityConverter x:Key="HasValueToVisibilityConverter" />
 
     <!--  Search Prefix Tooltip Style  -->
-    <Style x:Key="GenericSearchPrefixTooltipStyle" TargetType="ToolTip">
+    <Style x:Key="{x:Static sdg:SdgThemeKeys.SearchPrefixTooltip}" TargetType="ToolTip">
         <Style.Resources>
             <SolidColorBrush x:Key="PrefixTooltip.Header.Foreground" Color="#FF1A1A1A" />
             <SolidColorBrush x:Key="PrefixTooltip.GroupHeader.Foreground" Color="#FF444444" />
@@ -93,10 +93,10 @@
     </Style>
 
     <!--  ColumnSearchBox Style  -->
-    <Style x:Key="GenericColumnSearchBoxStyle" TargetType="{x:Type sdg:ColumnSearchBox}">
+    <Style x:Key="{x:Static sdg:SdgThemeKeys.ColumnSearchBox}" TargetType="{x:Type sdg:ColumnSearchBox}">
         <Setter Property="Focusable" Value="False" />
         <Setter Property="IsTabStop" Value="False" />
-        <Setter Property="SearchTooltipStyle" Value="{StaticResource GenericSearchPrefixTooltipStyle}" />
+        <Setter Property="SearchTooltipStyle" Value="{StaticResource {x:Static sdg:SdgThemeKeys.SearchPrefixTooltip}}" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type sdg:ColumnSearchBox}">
@@ -127,7 +127,7 @@
                                                TabIndex="0"
                                                FontSize="12">
                                 <sdg:SearchTextBox.Style>
-                                    <Style BasedOn="{StaticResource GenericSearchTextboxStyle}" TargetType="{x:Type sdg:SearchTextBox}">
+                                    <Style BasedOn="{StaticResource {x:Static sdg:SdgThemeKeys.SearchTextBox}}" TargetType="{x:Type sdg:SearchTextBox}">
                                         <Setter Property="Visibility" Value="Visible" />
                                         <Style.Triggers>
                                             <DataTrigger Binding="{Binding IsCheckboxColumn, RelativeSource={RelativeSource TemplatedParent}}" Value="True">
@@ -152,7 +152,7 @@
                                       TabIndex="0"
                                       ToolTip="Filter by checkbox state">
                                 <CheckBox.Style>
-                                    <Style BasedOn="{StaticResource SdgCheckBoxStyle}" TargetType="{x:Type CheckBox}">
+                                    <Style BasedOn="{StaticResource {x:Static sdg:SdgThemeKeys.CheckBox}}" TargetType="{x:Type CheckBox}">
                                         <Setter Property="Visibility" Value="Collapsed" />
                                         <Style.Triggers>
                                             <DataTrigger Binding="{Binding IsCheckboxColumn, RelativeSource={RelativeSource TemplatedParent}}" Value="True">
@@ -170,6 +170,7 @@
                                     Command="{Binding ClearSearchTextCommand, RelativeSource={RelativeSource AncestorType=sdg:ColumnSearchBox}}"
                                     Margin="2,1,5,1"
                                     Padding="4"
+                                    IsTabStop="False"
                                     VerticalAlignment="Center"
                                     ToolTip="Clear filter"
                                     FontFamily="Segoe MDL2 Assets"
@@ -184,7 +185,6 @@
                                         <Setter Property="Cursor" Value="Hand" />
                                         <Setter Property="Visibility" Value="Collapsed" />
                                         <Setter Property="Focusable" Value="False" />
-                                        <Setter Property="KeyboardNavigation.IsTabStop" Value="False" />
                                         <Setter Property="Template">
                                             <Setter.Value>
                                                 <ControlTemplate TargetType="{x:Type Button}">

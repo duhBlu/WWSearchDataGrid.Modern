@@ -1,0 +1,98 @@
+<UserControl x:Class="WWSearchDataGrid.Modern.SampleApp.Views.Samples.Editing.EditorTypesSampleView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:sdg="clr-namespace:WWSearchDataGrid.Modern.WPF;assembly=WWSearchDataGrid.Modern.WPF"
+             xmlns:sampleControls="clr-namespace:WWSearchDataGrid.Modern.SampleApp.Controls"
+             xmlns:local="clr-namespace:WWSearchDataGrid.Modern.SampleApp.Views.Samples.Editing"
+             mc:Ignorable="d">
+    <UserControl.DataContext>
+        <local:EditorTypesSampleViewModel />
+    </UserControl.DataContext>
+
+    <sampleControls:SampleHostControl Sources="{x:Static sampleControls:SampleSources.EditorTypes}">
+        <DockPanel>
+            <TextBlock DockPanel.Dock="Top"
+                       Margin="16,12,16,4"
+                       FontSize="13"
+                       Foreground="#444"
+                       TextWrapping="Wrap">
+                <Run FontWeight="SemiBold" Text="Editor types — every EditSettings" />
+                <LineBreak />
+                <Run Text="One column per editor type. Use the dropdowns to flip the grid's EditorShowMode (when click-to-edit triggers), EditorButtonShowMode (when combo/date/spin buttons appear), and the BooleanEditor for the Done column (CheckBox vs. Text vs. ComboBox)." />
+            </TextBlock>
+
+            <sdg:SimpleStackPanel DockPanel.Dock="Right" Margin="16,4,16,8">
+
+                <GroupBox Header="Editor Show Mode">
+                <ComboBox Grid.Row="1"
+                          ItemsSource="{Binding EditorShowModeChoices}"
+                          SelectedItem="{Binding EditorShowMode, Mode=TwoWay}" />
+                </GroupBox>
+
+                <GroupBox Header="Editor Button Show Mode">
+                    <ComboBox Grid.Row="3"
+                          ItemsSource="{Binding EditorButtonShowModeChoices}"
+                          SelectedItem="{Binding EditorButtonShowMode, Mode=TwoWay}" />
+                </GroupBox>
+
+                <GroupBox Header="Boolean Edit Type">
+                    
+                <ComboBox Grid.Row="5"
+                          ItemsSource="{Binding BooleanEditorChoices}"
+                          SelectedItem="{Binding BooleanEditor, Mode=TwoWay}" />
+                </GroupBox>
+            </sdg:SimpleStackPanel>
+
+            <sdg:SearchDataGrid x:Name="Grid"
+                                Margin="8"
+                                ItemsSource="{Binding Tasks}"
+                                AutoGenerateColumns="False"
+                                CanUserAddRows="False"
+                                CanUserDeleteRows="False"
+                                EnableRuleFiltering="True"
+                                EditorShowMode="{Binding EditorShowMode}"
+                                EditorButtonShowMode="{Binding EditorButtonShowMode}">
+                <sdg:SearchDataGrid.GridColumns>
+                    <sdg:GridColumn Width="50" FieldName="Id" Header="#" ReadOnly="True" />
+
+                    <sdg:GridColumn Width="2*" FieldName="Title" Header="Title" />
+
+                    <sdg:GridColumn Width="100" FieldName="AssignedTo" Header="Assigned">
+                        <sdg:GridColumn.EditSettings>
+                            <sdg:ComboBoxEditSettings ItemsSource="{Binding Assignees}" />
+                        </sdg:GridColumn.EditSettings>
+                    </sdg:GridColumn>
+
+                    <sdg:GridColumn Width="80" FieldName="HoursEstimate" Header="Hours" DisplayStringFormat="N2">
+                        <sdg:GridColumn.EditSettings>
+                            <sdg:SpinEditSettings Minimum="0" Maximum="80" LargeIncrement="1" Increment="0.25" />
+                        </sdg:GridColumn.EditSettings>
+                    </sdg:GridColumn>
+
+                    <sdg:GridColumn Width="100" FieldName="PriorityId" Header="Priority">
+                        <sdg:GridColumn.EditSettings>
+                            <sdg:ComboBoxEditSettings ItemsSource="{Binding Priorities}"
+                                                      DisplayMemberPath="Name"
+                                                      SelectedValuePath="Id" />
+                        </sdg:GridColumn.EditSettings>
+                    </sdg:GridColumn>
+
+                    <!-- IsComplete column's EditSettings is swapped at runtime by the code-behind based on BooleanEditor. -->
+                    <sdg:GridColumn x:Name="DoneColumn" Width="80" FieldName="IsComplete" Header="Done">
+                        <sdg:GridColumn.EditSettings>
+                            <sdg:CheckBoxEditSettings />
+                        </sdg:GridColumn.EditSettings>
+                    </sdg:GridColumn>
+
+                    <sdg:GridColumn Width="120" FieldName="DueDate" Header="Due">
+                        <sdg:GridColumn.EditSettings>
+                            <sdg:DateEditSettings />
+                        </sdg:GridColumn.EditSettings>
+                    </sdg:GridColumn>
+                </sdg:SearchDataGrid.GridColumns>
+            </sdg:SearchDataGrid>
+        </DockPanel>
+    </sampleControls:SampleHostControl>
+</UserControl>

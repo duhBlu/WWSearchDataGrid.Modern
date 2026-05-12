@@ -1,0 +1,131 @@
+<UserControl x:Class="WWSearchDataGrid.Modern.SampleApp.Views.Samples.Editing.InputMaskingSampleView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:sdg="clr-namespace:WWSearchDataGrid.Modern.WPF;assembly=WWSearchDataGrid.Modern.WPF"
+             xmlns:sampleControls="clr-namespace:WWSearchDataGrid.Modern.SampleApp.Controls"
+             xmlns:local="clr-namespace:WWSearchDataGrid.Modern.SampleApp.Views.Samples.Editing"
+             mc:Ignorable="d">
+    <UserControl.DataContext>
+        <local:InputMaskingSampleViewModel />
+    </UserControl.DataContext>
+
+    <sampleControls:SampleHostControl Sources="{x:Static sampleControls:SampleSources.InputMasking}">
+        <DockPanel>
+            <TextBlock DockPanel.Dock="Top"
+                       Margin="16,12,16,4"
+                       FontSize="13"
+                       Foreground="#444"
+                       TextWrapping="Wrap">
+                <Run FontWeight="SemiBold" Text="Input masking" />
+                <LineBreak />
+                <Run Text="Each column declares a Mask pattern interpreted by MaskType (Simple / Numeric / DateTime / TimeSpan). UseMaskAsDisplayFormat=True applies the mask to display too. Tab cycles between regions, paste is mask-aware, Backspace / Delete respect literals." />
+                <LineBreak />
+                <Run FontWeight="SemiBold" Text="Grammar:" />
+                <Run Text="0=required digit, 9=optional digit, L=required letter, ?=optional letter, A=required alphanumeric, a=optional alphanumeric, +=one-or-more, *=zero-or-more, \=escape-as-literal." />
+            </TextBlock>
+
+            <sdg:SearchDataGrid x:Name="Grid"
+                                Margin="8"
+                                ItemsSource="{Binding Contacts}"
+                                AutoGenerateColumns="False"
+                                CanUserAddRows="False"
+                                CanUserDeleteRows="False"
+                                EnableRuleFiltering="True"
+                                EditorShowMode="MouseDown">
+                <sdg:SearchDataGrid.GridColumns>
+                    <sdg:GridColumn Width="40" FieldName="Id" Header="#" ReadOnly="True" />
+                    <sdg:GridColumn Width="140" FieldName="FullName" Header="Name" />
+
+                    <sdg:GridColumn Width="140" FieldName="Phone" Header="Phone">
+                        <sdg:GridColumn.EditSettings>
+                            <sdg:TextEditSettings Mask="(000) 000-0000" UseMaskAsDisplayFormat="True" />
+                        </sdg:GridColumn.EditSettings>
+                    </sdg:GridColumn>
+
+                    <sdg:GridColumn Width="120" FieldName="Ssn" Header="SSN">
+                        <sdg:GridColumn.EditSettings>
+                            <sdg:TextEditSettings Mask="000-00-0000" UseMaskAsDisplayFormat="True" />
+                        </sdg:GridColumn.EditSettings>
+                    </sdg:GridColumn>
+
+                    <sdg:GridColumn Width="120" FieldName="ZipPlus4" Header="ZIP+4">
+                        <sdg:GridColumn.EditSettings>
+                            <sdg:TextEditSettings Mask="00000-9999" UseMaskAsDisplayFormat="True" />
+                        </sdg:GridColumn.EditSettings>
+                    </sdg:GridColumn>
+
+                    <sdg:GridColumn Width="100" FieldName="LicensePlate" Header="Plate">
+                        <sdg:GridColumn.EditSettings>
+                            <sdg:TextEditSettings Mask="LLL-000" UseMaskAsDisplayFormat="True" />
+                        </sdg:GridColumn.EditSettings>
+                    </sdg:GridColumn>
+
+                    <sdg:GridColumn Width="180" FieldName="AccountNumber" Header="Account #">
+                        <sdg:GridColumn.EditSettings>
+                            <sdg:TextEditSettings Mask="0000-0000-0000-0000" UseMaskAsDisplayFormat="True" />
+                        </sdg:GridColumn.EditSettings>
+                    </sdg:GridColumn>
+
+                    <sdg:GridColumn Width="120" FieldName="Birthday" Header="Birthday" />
+
+                    <sdg:GridColumn Width="180" FieldName="LastSeen" Header="Last Seen">
+                        <sdg:GridColumn.EditSettings>
+                            <sdg:DateEditSettings Mask="G" UseMaskAsDisplayFormat="True" />
+                        </sdg:GridColumn.EditSettings>
+                    </sdg:GridColumn>
+
+                    <!-- Editable month-name + AM/PM. Press a letter on the month segment to jump
+                         to the next month starting with that letter (J→Jan, J→Jun, J→Jul). Press
+                         A/P on the AM/PM segment to toggle. -->
+                    <sdg:GridColumn Width="200" FieldName="Logged" Header="Logged">
+                        <sdg:GridColumn.EditSettings>
+                            <sdg:DateEditSettings Mask="MMM d, yyyy h:mm tt" UseMaskAsDisplayFormat="True" />
+                        </sdg:GridColumn.EditSettings>
+                    </sdg:GridColumn>
+
+                    <!-- Computed day-name + editable full month-name + day digit. The "Tuesday"
+                         segment is skipped by Tab and auto-updates when the date changes. -->
+                    <sdg:GridColumn Width="240" FieldName="Day" Header="Day">
+                        <sdg:GridColumn.EditSettings>
+                            <sdg:DateEditSettings Mask="dddd, MMMM d, yyyy" UseMaskAsDisplayFormat="True" />
+                        </sdg:GridColumn.EditSettings>
+                    </sdg:GridColumn>
+
+                    <!-- Computed timezone (zzz) — rendered as fixed text from the system-local
+                         offset, skipped by Tab. All digit segments edit normally. -->
+                    <sdg:GridColumn Width="200" FieldName="Iso" Header="ISO">
+                        <sdg:GridColumn.EditSettings>
+                            <sdg:DateEditSettings Mask="yyyy-MM-ddTHH:mm:sszzz" UseMaskAsDisplayFormat="True" />
+                        </sdg:GridColumn.EditSettings>
+                    </sdg:GridColumn>
+
+                    <sdg:GridColumn Width="120" FieldName="Balance" Header="Balance">
+                        <sdg:GridColumn.EditSettings>
+                            <sdg:TextEditSettings Mask="C" MaskType="Numeric" UseMaskAsDisplayFormat="True" />
+                        </sdg:GridColumn.EditSettings>
+                    </sdg:GridColumn>
+
+                    <sdg:GridColumn Width="100" FieldName="Discount" Header="Discount">
+                        <sdg:GridColumn.EditSettings>
+                            <sdg:TextEditSettings Mask="P2" MaskType="Numeric" UseMaskAsDisplayFormat="True" />
+                        </sdg:GridColumn.EditSettings>
+                    </sdg:GridColumn>
+
+                    <sdg:GridColumn Width="100" FieldName="Margin" Header="Margin">
+                        <sdg:GridColumn.EditSettings>
+                            <sdg:TextEditSettings Mask="F2" MaskType="Numeric" UseMaskAsDisplayFormat="True" />
+                        </sdg:GridColumn.EditSettings>
+                    </sdg:GridColumn>
+
+                    <sdg:GridColumn Width="120" FieldName="CallDuration" Header="Duration">
+                        <sdg:GridColumn.EditSettings>
+                            <sdg:TextEditSettings Mask="c" MaskType="TimeSpan" UseMaskAsDisplayFormat="True" />
+                        </sdg:GridColumn.EditSettings>
+                    </sdg:GridColumn>
+                </sdg:SearchDataGrid.GridColumns>
+            </sdg:SearchDataGrid>
+        </DockPanel>
+    </sampleControls:SampleHostControl>
+</UserControl>

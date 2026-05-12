@@ -32,7 +32,7 @@ namespace WWSearchDataGrid.Modern.WPF.Converters
 
             if (countsDict.TryGetValue(value, out var count))
             {
-                return $" ({count})";
+                return $" ({count.ToString("N0", culture)})";
             }
 
             return string.Empty;

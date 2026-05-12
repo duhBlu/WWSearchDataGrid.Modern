@@ -422,8 +422,7 @@ FrameworkContentElement
 - [x] `ComboBoxEditSettings` — Dropdown editor with `ItemsSource`, `DisplayMember`, `SelectedValuePath`
 - [x] `CheckBoxEditSettings` — Checkbox editor
 - [x] `DateEditSettings` — Date picker (with optional MinDate/MaxDate)
-- [x] `NumericEditSettings` — TextBox-based with Up/Down arrow increments, min/max/increment
-- [x] `MaskedEditSettings` — Masked display via `MaskFormatConverter`; plain TextBox edit (full keystroke-masked input deferred)
+- [x] `SpinEditSettings` — TextBox-based with Up/Down arrow increments, min/max/increment
 
 ### 4.2 Cell Template Generation
 
@@ -432,7 +431,7 @@ FrameworkContentElement
 **Acceptance criteria:**
 - [x] `ComboBoxEditSettings` produces a working dropdown in edit mode, text display in view mode
 - [x] `DateEditSettings` produces a DatePicker in edit mode
-- [x] `NumericEditSettings` produces a numeric editor with Up/Down increments and Min/Max enforcement
+- [x] `SpinEditSettings` produces a numeric editor with Up/Down increments and Min/Max enforcement
 - [x] Tab/Enter navigation works through editor cells
 - [x] Escape cancels editing and reverts value
 - [x] Cell value changes propagate to the bound data source
@@ -446,7 +445,7 @@ FrameworkContentElement
 | `string` | `TextEditSettings` |
 | `bool` | `CheckBoxEditSettings` |
 | `DateTime` | `DateEditSettings` |
-| `int`/`decimal`/`double` | `NumericEditSettings` |
+| `int`/`decimal`/`double` | `SpinEditSettings` |
 | `enum` | `ComboBoxEditSettings` (auto-populated from enum values) |
 
 ---

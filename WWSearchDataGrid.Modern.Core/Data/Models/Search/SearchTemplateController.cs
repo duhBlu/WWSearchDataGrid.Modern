@@ -507,6 +507,15 @@ namespace WWSearchDataGrid.Modern.Core
         }
 
         /// <summary>
+        /// Raised after the column's distinct value set has been mutated (incremental add /
+        /// remove or full refresh) so dependent UIs — most notably the rule editor's
+        /// <c>FilterValueManager</c> — can rebuild their materialized value lists without
+        /// polling. Fires on the thread that triggered the mutation; subscribers should
+        /// dispatcher-marshal if they touch UI.
+        /// </summary>
+        public event EventHandler ColumnValuesChanged;
+
+        /// <summary>
         /// Attempts to add column values incrementally to avoid full cache refresh
         /// </summary>
         /// <param name="valuesToAdd">Values to add to the column cache</param>
@@ -533,6 +542,7 @@ namespace WWSearchDataGrid.Modern.Core
                     OnPropertyChanged(nameof(ColumnValues));
                     OnPropertyChanged(nameof(ContainsNullValues));
 
+                    ColumnValuesChanged?.Invoke(this, EventArgs.Empty);
                     return true;
                 }
 
@@ -572,6 +582,7 @@ namespace WWSearchDataGrid.Modern.Core
                     OnPropertyChanged(nameof(ColumnValues));
                     OnPropertyChanged(nameof(ContainsNullValues));
 
+                    ColumnValuesChanged?.Invoke(this, EventArgs.Empty);
                     return true;
                 }
 

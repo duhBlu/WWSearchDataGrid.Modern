@@ -39,6 +39,44 @@ namespace WWSearchDataGrid.Modern.WPF
             DependencyProperty.Register(nameof(VerticalOffset), typeof(double), typeof(ColumnFilterEditor),
                 new PropertyMetadata(0.0));
 
+        /// <summary>
+        /// Whether changes made inside the editor (dropdown selections, value-tab checkbox
+        /// toggles, SearchType combo swaps, etc.) apply to the grid immediately or are deferred
+        /// until the popup closes. Defaults to <c>true</c>; <see cref="ColumnSearchBox"/>
+        /// overwrites this on popup creation with its row-count-driven auto value, and the
+        /// "Live filter" checkbox in the editor footer lets the user override mid-session.
+        /// <para>
+        /// When <c>false</c>, the editor still calls <c>UpdateFilterExpression</c> internally
+        /// so the controller state and "active filter" indicator stay in sync — only the
+        /// expensive <c>grid.FilterItemsSource()</c> pass is skipped. <c>PruneAndApply</c> on
+        /// unload guarantees the final filter is applied once the editor closes.
+        /// </para>
+        /// </summary>
+        public static readonly DependencyProperty IsLiveApplyEnabledProperty =
+            DependencyProperty.Register(nameof(IsLiveApplyEnabled), typeof(bool), typeof(ColumnFilterEditor),
+                new PropertyMetadata(true, OnIsLiveApplyEnabledChanged));
+
+        public bool IsLiveApplyEnabled
+        {
+            get => (bool)GetValue(IsLiveApplyEnabledProperty);
+            set => SetValue(IsLiveApplyEnabledProperty, value);
+        }
+
+        private static void OnIsLiveApplyEnabledChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            // Propagate the user's footer-checkbox toggle back up to the owning ColumnSearchBox.
+            // The override on ColumnSearchBox is the persistent home for this preference (the
+            // editor instance lives on the ColumnSearchBox but the override outlives popup
+            // open/close cycles within a session). Persisting the choice also keeps the in-
+            // header SearchTextBox's LiveUpdate mode in sync with the user's preference.
+            if (d is ColumnFilterEditor editor && editor.DataContext is ColumnSearchBox csb)
+            {
+                bool newValue = (bool)e.NewValue;
+                if (csb.IsLiveFilteringOverride != newValue)
+                    csb.IsLiveFilteringOverride = newValue;
+            }
+        }
+
         #endregion
 
         #region Properties
@@ -314,13 +352,26 @@ namespace WWSearchDataGrid.Modern.WPF
             if (!_isInitialized)
                 return;
 
-            ApplyFilter();
+            if (IsLiveApplyEnabled)
+            {
+                ApplyFilter();
+            }
+            else
+            {
+                // Deferred mode — keep the controller's expression current (so HasCustomExpression
+                // / "active filter" indicators stay honest) but skip the grid filter pass. The
+                // popup-close PruneAndApply path will run ApplyFilter once when the user finishes.
+                SearchTemplateController?.UpdateFilterExpression();
+            }
         }
 
         private void OnFilterValueManagerApplyRequested(object sender, EventArgs e)
         {
             if (!_isInitialized) return;
-            ApplyFilter();
+            if (IsLiveApplyEnabled)
+                ApplyFilter();
+            else
+                SearchTemplateController?.UpdateFilterExpression();
         }
 
         private void TriggerColumnValueLoading()

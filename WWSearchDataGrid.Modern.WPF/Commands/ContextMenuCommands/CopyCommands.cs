@@ -35,7 +35,7 @@ namespace WWSearchDataGrid.Modern.WPF.Commands
                             var cellsForRow = rowGroup
                                 .Select(sc =>
                                 {
-                                    var path = GetBindingPath(sc.Column);
+                                    var path = GetBindingPath(sc.Column, grid);
                                     if (string.IsNullOrEmpty(path) || sc.Item is null) return null;
 
                                     var rawVal = ReflectionHelper.GetPropValue(sc.Item, path);
@@ -127,7 +127,7 @@ namespace WWSearchDataGrid.Modern.WPF.Commands
                                 continue;
                             }
 
-                            var path = GetBindingPath(col);
+                            var path = GetBindingPath(col, grid);
                             if (string.IsNullOrEmpty(path) || rowItem is null)
                             {
                                 rowValues.Add(string.Empty);

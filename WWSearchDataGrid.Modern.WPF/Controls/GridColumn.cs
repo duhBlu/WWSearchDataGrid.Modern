@@ -1,9 +1,12 @@
 using System;
+using System.Collections;
 using System.Diagnostics;
 using System.Linq;
+using System.Reflection;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
+using WWSearchDataGrid.Modern.Core.Display;
 
 namespace WWSearchDataGrid.Modern.WPF
 {
@@ -364,6 +367,59 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
+        /// Gets or sets how cell content aligns horizontally within its editor element. Routes to
+        /// the inner control's text-alignment property — <see cref="TextBlock.TextAlignmentProperty"/>
+        /// / <see cref="TextBox.TextAlignmentProperty"/> for text editors,
+        /// <see cref="Control.HorizontalContentAlignmentProperty"/> for ComboBox, and the
+        /// <see cref="FrameworkElement.HorizontalAlignmentProperty"/> of the CheckBox itself for
+        /// boolean cells. Editors continue to fill their cell — this only controls where the
+        /// content sits inside the editor.
+        /// <para>
+        /// Auto-derived from <see cref="FieldType"/> when not set explicitly: <c>string</c> →
+        /// <see cref="System.Windows.TextAlignment.Left"/>, numeric types →
+        /// <see cref="System.Windows.TextAlignment.Right"/>, <c>bool</c> →
+        /// <see cref="System.Windows.TextAlignment.Center"/>.
+        /// </para>
+        /// </summary>
+        public static readonly DependencyProperty TextAlignmentProperty =
+            DependencyProperty.Register(
+                nameof(TextAlignment),
+                typeof(TextAlignment),
+                typeof(GridColumn),
+                new PropertyMetadata(TextAlignment.Left, OnTextAlignmentPropertyChanged));
+
+        public TextAlignment TextAlignment
+        {
+            get => (TextAlignment)GetValue(TextAlignmentProperty);
+            set => SetValue(TextAlignmentProperty, value);
+        }
+
+        private bool _isAutoTextAlignment;
+
+        /// <summary>
+        /// Gets whether <see cref="TextAlignment"/> was set explicitly. Type-based auto-defaults
+        /// skip columns where this is true.
+        /// </summary>
+        internal bool IsTextAlignmentExplicit => IsExplicitlySet(TextAlignmentProperty, _isAutoTextAlignment);
+
+        /// <summary>
+        /// Sets <see cref="TextAlignment"/> from auto-configuration. The PropertyChangedCallback
+        /// clears the auto flag at the start of every write — this restores it after
+        /// <see cref="DependencyObject.SetValue(DependencyProperty, object)"/> returns.
+        /// </summary>
+        internal void SetAutoTextAlignment(TextAlignment value)
+        {
+            SetValue(TextAlignmentProperty, value);
+            _isAutoTextAlignment = true;
+        }
+
+        private static void OnTextAlignmentPropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            if (d is GridColumn gc)
+                gc._isAutoTextAlignment = false;
+        }
+
+        /// <summary>
         /// Gets or sets the data type of the field. Auto-detected from the data source if not set explicitly.
         /// </summary>
         public static readonly DependencyProperty FieldTypeProperty =
@@ -449,6 +505,8 @@ namespace WWSearchDataGrid.Modern.WPF
             {
                 if (!IsUseCheckBoxInSearchBoxExplicit)
                     SetAutoUseCheckBoxInSearchBox(true);
+                if (!IsTextAlignmentExplicit)
+                    SetAutoTextAlignment(TextAlignment.Center);
             }
             else if (underlying == typeof(DateTime))
             {
@@ -463,7 +521,15 @@ namespace WWSearchDataGrid.Modern.WPF
                 // The current dropdown is data-driven via SetupColumnDataLazy; injecting a
                 // static enum source needs a separate code path on SearchTemplateController.
             }
-            // string defaults to Contains (already the registered default).
+            else if (IsNumericType(underlying))
+            {
+                // Spreadsheet convention: numbers right-align so decimal points line up across
+                // a column.
+                if (!IsTextAlignmentExplicit)
+                    SetAutoTextAlignment(TextAlignment.Right);
+            }
+            // string defaults to Contains (already the registered default) and TextAlignment.Left
+            // (the registered default of the property).
             // decimal/double: no auto-format — DisplayStringFormat stays user-controlled.
         }
 
@@ -644,37 +710,26 @@ namespace WWSearchDataGrid.Modern.WPF
             set => SetValue(EditSettingsProperty, value);
         }
 
-        /// <summary>
-        /// When true, focusing a cell in this column (via mouse or keyboard navigation) immediately
-        /// enters edit mode. When null (the default), the column inherits
-        /// <see cref="SearchDataGrid.EditOnFocus"/> from the parent grid; setting an explicit
-        /// true / false overrides the grid-level setting for this one column.
-        /// </summary>
-        /// <remarks>
-        /// Read-only cells ignore this setting. The grid-level handler in <see cref="SearchDataGrid"/>
-        /// only calls <c>BeginEdit</c> when the cell is editable.
-        /// </remarks>
-        public static readonly DependencyProperty EditOnFocusProperty =
-            DependencyProperty.Register(
-                nameof(EditOnFocus),
-                typeof(bool?),
-                typeof(GridColumn),
-                new PropertyMetadata(null));
-
-        public bool? EditOnFocus
-        {
-            get => (bool?)GetValue(EditOnFocusProperty);
-            set => SetValue(EditOnFocusProperty, value);
-        }
-
         private static void OnEditSettingsChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
+            if (d is not GridColumn col) return;
+
             // EditSettings is a FrameworkContentElement but isn't part of the visual / logical tree,
             // so it doesn't automatically inherit DataContext. Push the column's current DataContext
             // down so XAML bindings on EditSettings (e.g. ComboBoxEditSettings.ItemsSource) resolve
             // against the same source as bindings elsewhere on the grid.
-            if (d is GridColumn col && e.NewValue is BaseEditSettings settings)
+            if (e.NewValue is BaseEditSettings settings)
                 settings.DataContext = col.DataContext;
+
+            // Rebuild the generated cell templates against the new editor configuration so a
+            // runtime swap (e.g. CheckBox → ComboBox for a bool column) actually re-renders the
+            // existing cells. Only valid when the column has already been generated and is a
+            // DataGridTemplateColumn (the EditSettings code path always produces one).
+            if (col.InternalColumn is DataGridTemplateColumn templateColumn && e.NewValue is BaseEditSettings newSettings)
+            {
+                templateColumn.CellTemplate = newSettings.ResolveDisplayTemplate(col);
+                templateColumn.CellEditingTemplate = newSettings.ResolveEditTemplate(col);
+            }
         }
 
         #endregion
@@ -767,7 +822,7 @@ namespace WWSearchDataGrid.Modern.WPF
         {
             if (string.IsNullOrEmpty(FieldName))
             {
-                Debug.WriteLine("GridColumn.CreateDataGridColumn: FieldName is required.");
+                //Debug.WriteLine("GridColumn.CreateDataGridColumn: FieldName is required.");
                 return null;
             }
 
@@ -783,17 +838,25 @@ namespace WWSearchDataGrid.Modern.WPF
 
             bool isBoolField = FieldType == typeof(bool) || FieldType == typeof(bool?);
 
+            // Auto-fill an EditSettings for fields that would otherwise fall through to plain
+            // DataGridTextColumn / DataGridCheckBoxColumn so consumers get a styled, keyboard-aware
+            // editor regardless of CLR type. Suppressed when the column has a user-supplied display
+            // hint (converter / string format / mask) so the existing text-column path keeps the
+            // formatted output. DateTime auto-pick ignores wantsCustomDisplay because the masked
+            // date editor integrates display formatting natively.
+            BaseEditSettings effectiveEditSettings = EditSettings ?? AutoCreateEditSettings(wantsCustomDisplay);
+
             // EditSettings, when present, drives template generation — produces a DataGridTemplateColumn
             // with display + edit templates from the editor configuration. Takes precedence over the
             // default text/checkbox selection so consumers can opt into a richer editor.
-            if (EditSettings != null)
+            if (effectiveEditSettings != null)
             {
                 column = new DataGridTemplateColumn
                 {
                     // Resolve* prefers a user-supplied EditTemplate / DisplayTemplate over the
                     // editor's code-built default, so consumers can take over the layout entirely.
-                    CellTemplate = EditSettings.ResolveDisplayTemplate(this),
-                    CellEditingTemplate = EditSettings.ResolveEditTemplate(this),
+                    CellTemplate = effectiveEditSettings.ResolveDisplayTemplate(this),
+                    CellEditingTemplate = effectiveEditSettings.ResolveEditTemplate(this),
                     ClipboardContentBinding = CreateBinding(),
                     // Override the default cell style alignments (Center) so the editor template
                     // stretches to fill the cell. Without this, controls like ComboBox/DatePicker
@@ -803,17 +866,21 @@ namespace WWSearchDataGrid.Modern.WPF
             }
             else if (isBoolField && !wantsCustomDisplay)
             {
-                column = new DataGridCheckBoxColumn
+                var checkBoxColumn = new DataGridCheckBoxColumn
                 {
                     Binding = new Binding(FieldName)
                 };
+                ApplyAlignmentToCheckBoxColumn(checkBoxColumn);
+                column = checkBoxColumn;
             }
             else
             {
-                column = new DataGridTextColumn
+                var textColumn = new DataGridTextColumn
                 {
                     Binding = CreateBinding()
                 };
+                ApplyAlignmentToTextColumn(textColumn);
+                column = textColumn;
             }
 
             // Apply layout properties
@@ -822,7 +889,7 @@ namespace WWSearchDataGrid.Modern.WPF
             column.MinWidth = MinWidth;
             column.MaxWidth = MaxWidth;
             column.Visibility = Visible ? Visibility.Visible : Visibility.Collapsed;
-            column.IsReadOnly = ReadOnly;
+            column.IsReadOnly = GetEffectiveReadOnly();
             column.CanUserSort = AllowSorting;
             column.CanUserResize = AllowResizing;
             column.CanUserReorder = AllowMoving;
@@ -830,6 +897,110 @@ namespace WWSearchDataGrid.Modern.WPF
 
             InternalColumn = column;
             return column;
+        }
+
+        /// <summary>
+        /// Picks a sensible default <see cref="BaseEditSettings"/> by CLR type so columns without
+        /// an explicit <see cref="EditSettings"/> still get a styled editor:
+        /// <list type="bullet">
+        ///   <item>DateTime / DateTime? → <see cref="DateEditSettings"/> (masked date editor).
+        ///   Data with time-of-day uses <c>"MM/dd/yyyy HH:mm:ss"</c>; date-only uses the default
+        ///   short-date mask. Always applied — display formatting is integrated into the editor.</item>
+        ///   <item>bool / bool? → <see cref="CheckBoxEditSettings"/>.</item>
+        ///   <item>string → <see cref="TextEditSettings"/> (no mask).</item>
+        ///   <item>Numeric (int, long, decimal, double, etc.) → <see cref="SpinEditSettings"/>
+        ///   with a per-type-appropriate <c>Increment</c> (<c>1</c> for integers, <c>0.5</c> for
+        ///   floating-point / decimal).</item>
+        /// </list>
+        /// Returns <c>null</c> when <paramref name="wantsCustomDisplay"/> is <c>true</c> for
+        /// non-DateTime types — the consumer's converter / string format / mask is a signal that
+        /// they want plain text rendering, so the existing text-column fallback runs instead.
+        /// </summary>
+        private BaseEditSettings AutoCreateEditSettings(bool wantsCustomDisplay)
+        {
+            if (FieldType == typeof(DateTime) || FieldType == typeof(DateTime?))
+                return BuildAutoDateTimeEditSettings();
+
+            if (wantsCustomDisplay) return null;
+
+            if (FieldType == typeof(bool) || FieldType == typeof(bool?))
+                return new CheckBoxEditSettings();
+
+            if (FieldType == typeof(string))
+                return new TextEditSettings();
+
+            if (IsNumericType(FieldType))
+                return BuildAutoNumericEditSettings(FieldType);
+
+            return null;
+        }
+
+        private static bool IsNumericType(Type t)
+        {
+            if (t == null) return false;
+            var inner = Nullable.GetUnderlyingType(t) ?? t;
+            return inner == typeof(int) || inner == typeof(long) || inner == typeof(short)
+                || inner == typeof(byte) || inner == typeof(sbyte) || inner == typeof(ushort)
+                || inner == typeof(uint) || inner == typeof(ulong)
+                || inner == typeof(double) || inner == typeof(float) || inner == typeof(decimal);
+        }
+
+        private static BaseEditSettings BuildAutoNumericEditSettings(Type fieldType)
+        {
+            var inner = Nullable.GetUnderlyingType(fieldType) ?? fieldType;
+            bool isInteger = inner == typeof(int) || inner == typeof(long) || inner == typeof(short)
+                || inner == typeof(byte) || inner == typeof(sbyte) || inner == typeof(ushort)
+                || inner == typeof(uint) || inner == typeof(ulong);
+            return new SpinEditSettings { Increment = isInteger ? 1.0 : 0.5 };
+        }
+
+        private BaseEditSettings BuildAutoDateTimeEditSettings()
+        {
+            if (AnyBoundValueHasTimeOfDay(maxSamples: 200))
+            {
+                return new DateEditSettings
+                {
+                    Mask = "MM/dd/yyyy HH:mm:ss",
+                    MaskType = MaskType.DateTime,
+                };
+            }
+            return new DateEditSettings();
+        }
+
+        /// <summary>
+        /// Walks the parent grid's <c>ItemsSource</c> (up to <paramref name="maxSamples"/> items)
+        /// looking for any DateTime value at <see cref="FieldName"/> with a non-zero time
+        /// component. Bounded sampling keeps the cost stable on large collections; if items
+        /// haven't been bound yet at column-generation time, returns <c>false</c> and the caller
+        /// falls back to the date-only default.
+        /// </summary>
+        private bool AnyBoundValueHasTimeOfDay(int maxSamples)
+        {
+            IEnumerable source = Owner?.ItemsSource;
+            if (source == null || string.IsNullOrEmpty(FieldName)) return false;
+
+            PropertyInfo prop = null;
+            int sampled = 0;
+            foreach (var item in source)
+            {
+                if (sampled++ >= maxSamples) break;
+                if (item == null) continue;
+                if (prop == null)
+                {
+                    prop = item.GetType().GetProperty(FieldName,
+                        BindingFlags.Public | BindingFlags.Instance);
+                    if (prop == null) return false;
+                }
+                var value = prop.GetValue(item);
+                DateTime? dt = value switch
+                {
+                    DateTime d => d,
+                    _ => null,
+                };
+                if (dt.HasValue && dt.Value.TimeOfDay != TimeSpan.Zero)
+                    return true;
+            }
+            return false;
         }
 
         /// <summary>
@@ -849,6 +1020,62 @@ namespace WWSearchDataGrid.Modern.WPF
             style.Setters.Add(new Setter(Control.HorizontalContentAlignmentProperty, HorizontalAlignment.Stretch));
             style.Setters.Add(new Setter(Control.VerticalContentAlignmentProperty, VerticalAlignment.Stretch));
             return style;
+        }
+
+        /// <summary>
+        /// Routes <see cref="TextAlignment"/> into a <see cref="DataGridTextColumn"/>'s
+        /// <c>ElementStyle</c> (read-only TextBlock) and <c>EditingElementStyle</c> (edit TextBox).
+        /// Synthesizes new styles based on whatever the column already has so user-supplied
+        /// styles are preserved.
+        /// </summary>
+        private void ApplyAlignmentToTextColumn(DataGridTextColumn column)
+        {
+            column.ElementStyle = BuildStyleWithSetter(typeof(TextBlock), column.ElementStyle,
+                TextBlock.TextAlignmentProperty, TextAlignment);
+            column.EditingElementStyle = BuildStyleWithSetter(typeof(TextBox), column.EditingElementStyle,
+                TextBox.TextAlignmentProperty, TextAlignment);
+        }
+
+        /// <summary>
+        /// Routes <see cref="TextAlignment"/> into a <see cref="DataGridCheckBoxColumn"/>'s
+        /// element styles by setting the CheckBox's <see cref="FrameworkElement.HorizontalAlignment"/>
+        /// — TextAlignment doesn't apply to a checkbox glyph, so the box itself shifts left /
+        /// center / right within the cell instead.
+        /// </summary>
+        private void ApplyAlignmentToCheckBoxColumn(DataGridCheckBoxColumn column)
+        {
+            HorizontalAlignment hAlign = TextAlignment switch
+            {
+                TextAlignment.Center => HorizontalAlignment.Center,
+                TextAlignment.Right => HorizontalAlignment.Right,
+                TextAlignment.Justify => HorizontalAlignment.Stretch,
+                _ => HorizontalAlignment.Left,
+            };
+            column.ElementStyle = BuildStyleWithSetter(typeof(CheckBox), column.ElementStyle,
+                FrameworkElement.HorizontalAlignmentProperty, hAlign);
+            column.EditingElementStyle = BuildStyleWithSetter(typeof(CheckBox), column.EditingElementStyle,
+                FrameworkElement.HorizontalAlignmentProperty, hAlign);
+        }
+
+        private static Style BuildStyleWithSetter(Type targetType, Style basedOn, DependencyProperty property, object value)
+        {
+            var style = new Style(targetType, basedOn);
+            style.Setters.Add(new Setter(property, value));
+            return style;
+        }
+
+        /// <summary>
+        /// Resolves the effective read-only state. Returns true when the descriptor itself is
+        /// marked <see cref="ReadOnly"/>, or when the source data exposes <see cref="FieldName"/>
+        /// as a read-only column (e.g. a computed <see cref="System.Data.DataColumn"/> with
+        /// <c>ReadOnly = true</c>). Setting <see cref="DataGridColumn.IsReadOnly"/> from this value
+        /// keeps the WPF DataGrid from beginning an edit on a target the binding cannot write back
+        /// to, which would otherwise raise a TwoWay binding error against the source property.
+        /// </summary>
+        internal bool GetEffectiveReadOnly()
+        {
+            if (ReadOnly) return true;
+            return Owner?.IsSourceFieldReadOnly(FieldName) ?? false;
         }
 
         /// <summary>
@@ -884,7 +1111,7 @@ namespace WWSearchDataGrid.Modern.WPF
             InternalColumn.MinWidth = MinWidth;
             InternalColumn.MaxWidth = MaxWidth;
             InternalColumn.Visibility = Visible ? Visibility.Visible : Visibility.Collapsed;
-            InternalColumn.IsReadOnly = ReadOnly;
+            InternalColumn.IsReadOnly = GetEffectiveReadOnly();
             InternalColumn.CanUserSort = AllowSorting;
             InternalColumn.CanUserResize = AllowResizing;
             InternalColumn.CanUserReorder = AllowMoving;

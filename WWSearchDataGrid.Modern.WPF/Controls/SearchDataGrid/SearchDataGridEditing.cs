@@ -6,6 +6,8 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Data;
+using System.Windows.Input;
+using System.Windows.Media;
 using System.Windows.Threading;
 using WWSearchDataGrid.Modern.Core;
 
@@ -23,6 +25,37 @@ namespace WWSearchDataGrid.Modern.WPF
         {
             try
             {
+                // Stock DataGridCell.OnMouseLeftButtonDown unconditionally calls BeginEdit when a
+                // mouse-down lands on a non-readonly cell that becomes current + keyboard-focused.
+                // That collides with our EditorShowMode policies: MouseUp / MouseUpFocused want
+                // edit deferred until the mouse-up handler runs, MouseDownFocused wants edit only
+                // on the second click of an already-focused cell (gated on the captured pre-click
+                // focus state), and Default / None want no auto-edit at all. Cancel the stock
+                // mouse-down-driven edit here for those modes; OnPreviewMouseLeftButtonUp_BeginEdit
+                // still drives the *Up* modes from mouse-up. Keyboard (Enter / F2) and programmatic
+                // BeginEdit calls fall through unchanged — those are explicit edit-intent gestures.
+                if (e.EditingEventArgs is MouseButtonEventArgs me
+                    && me.ChangedButton == MouseButton.Left
+                    && me.ButtonState == MouseButtonState.Pressed)
+                {
+                    var cell = FindAncestor<DataGridCell>(me.OriginalSource as DependencyObject);
+                    if (cell != null)
+                    {
+                        var mode = ResolveEditorShowMode(cell);
+                        bool allowMouseDownEdit = mode == EditorShowMode.MouseDown
+                            || (mode == EditorShowMode.MouseDownFocused && _wasCellFocusedAtMouseDown);
+                        if (!allowMouseDownEdit)
+                        {
+                            e.Cancel = true;
+                            return;
+                        }
+                        // Allowed mouse-down-driven edit — stash the click point so the editor
+                        // that materializes for this cell can place its caret at the click index
+                        // on first focus rather than selecting all text.
+                        StashMouseEditPoint(cell, me.GetPosition(cell));
+                    }
+                }
+
                 // Capture original value for change detection
                 if (e.Row?.Item != null && e.Column != null)
                 {
@@ -149,18 +182,26 @@ namespace WWSearchDataGrid.Modern.WPF
 
 
         /// <summary>
-        /// Gets the binding path for a DataGrid column
+        /// Resolves the property path used to look up the underlying value for a column. Same
+        /// resolution chain as <see cref="GetColumnBindingPathForSelectAll"/>: descriptor's
+        /// FilterMemberPath, then descriptor's FieldName, then SortMemberPath, then the
+        /// generated WPF column's Binding path. The descriptor-first ordering is what makes
+        /// custom-template columns (DataGridTemplateColumn — no Binding property) resolve
+        /// correctly through their GridColumn descriptor.
         /// </summary>
         private string GetColumnBindingPath(DataGridColumn column)
         {
-            if (column is DataGridBoundColumn boundColumn)
+            if (column == null) return null;
+
+            var descriptor = FindGridColumnDescriptor(column);
+            string bindingPath = descriptor?.FilterMemberPath;
+            if (string.IsNullOrEmpty(bindingPath)) bindingPath = descriptor?.FieldName;
+            if (string.IsNullOrEmpty(bindingPath)) bindingPath = column.SortMemberPath;
+            if (string.IsNullOrEmpty(bindingPath) && column is DataGridBoundColumn boundColumn)
             {
-                if (boundColumn.Binding is Binding binding)
-                {
-                    return binding.Path.Path;
-                }
+                bindingPath = (boundColumn.Binding as Binding)?.Path?.Path;
             }
-            return null;
+            return bindingPath;
         }
 
         /// <summary>
@@ -176,12 +217,54 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
+        /// If <paramref name="editingElement"/> is the ContentPresenter wrapper WPF generates for
+        /// <see cref="System.Windows.Controls.DataGridTemplateColumn"/>, walks its visual subtree
+        /// to find the real editor (TextBox / CheckBox / ComboBox / DatePicker). Otherwise returns
+        /// the element unchanged. The walk is breadth-first and stops at the first known editor —
+        /// composite editors (e.g. a ComboBox nested inside a Grid) resolve to the outer
+        /// recognized type.
+        /// </summary>
+        private static FrameworkElement UnwrapEditingElement(FrameworkElement editingElement)
+        {
+            if (editingElement is TextBox || editingElement is CheckBox
+                || editingElement is ComboBox || editingElement is DatePicker)
+                return editingElement;
+
+            var queue = new Queue<DependencyObject>();
+            queue.Enqueue(editingElement);
+            while (queue.Count > 0)
+            {
+                var node = queue.Dequeue();
+                int count = VisualTreeHelper.GetChildrenCount(node);
+                for (int i = 0; i < count; i++)
+                {
+                    var child = VisualTreeHelper.GetChild(node, i);
+                    if (child is TextBox || child is CheckBox || child is ComboBox || child is DatePicker)
+                        return (FrameworkElement)child;
+                    queue.Enqueue(child);
+                }
+            }
+
+            return editingElement;
+        }
+
+        /// <summary>
         /// Extracts the edited value from the editing element and converts it to the correct type
         /// </summary>
         private object GetEditedValueFromElement(FrameworkElement editingElement, object originalValue)
         {
             if (editingElement == null)
                 return null;
+
+            // For DataGridTemplateColumn (every editor in this library generates one), WPF wraps
+            // the edit template in a ContentPresenter whose Content is bound to the row item via
+            // DataContext. That makes e.EditingElement a ContentPresenter, not the TextBox /
+            // ComboBox / CheckBox / DatePicker we built. Without this unwrap the type checks below
+            // all miss, the reflection fallback picks up ContentPresenter.Content, and the row
+            // item itself (e.g. a TaskItem with no ToString override) lands in the column-values
+            // cache via OnCellValueChangedInternal — surfacing as the row's full CLR type name
+            // in the filter popup.
+            editingElement = UnwrapEditingElement(editingElement);
 
             object rawValue = null;
 
@@ -286,6 +369,8 @@ namespace WWSearchDataGrid.Modern.WPF
         private void ForceBindingUpdate(FrameworkElement editingElement)
         {
             if (editingElement == null) return;
+
+            editingElement = UnwrapEditingElement(editingElement);
 
             try
             {

@@ -518,6 +518,10 @@ namespace WWSearchDataGrid.Modern.Core.Caching
             {
                 var value = values[i];
 
+                // Skip nulls — caller should already strip them but be defensive so a single
+                // stray null doesn't NRE and silently fall back to ColumnDataType.String.
+                if (value == null) continue;
+
                 var type = value.GetType();
 
                 // Check in priority order: DateTime > Boolean > Number > Enum > String

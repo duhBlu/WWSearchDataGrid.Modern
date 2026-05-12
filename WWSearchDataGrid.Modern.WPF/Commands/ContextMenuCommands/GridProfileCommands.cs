@@ -14,6 +14,8 @@ namespace WWSearchDataGrid.Modern.WPF.Commands
         #region Visibility & Layout Commands
 
         /// <summary>
+        /// 
+        /// 
         /// Resets the layout to default
         /// </summary>
         private static ICommand _resetLayoutCommand;

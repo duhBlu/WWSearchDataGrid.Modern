@@ -306,6 +306,36 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
+        /// Controls whether typed text is auto-committed to the <see cref="Text"/> DP via the
+        /// internal 250ms debounce timer. Default <c>true</c> preserves the legacy "filter as you
+        /// type" behavior. Set to <c>false</c> for grids where live filtering would be too
+        /// expensive (very large row counts) — typed characters then accumulate in the internal
+        /// buffer and only commit when the user presses Enter, Tab, loses focus, or an external
+        /// caller invokes <see cref="FlushPendingText"/>.
+        /// </summary>
+        public static readonly DependencyProperty LiveUpdateProperty =
+            DependencyProperty.Register(
+                nameof(LiveUpdate),
+                typeof(bool),
+                typeof(SearchTextBox),
+                new PropertyMetadata(true, OnLiveUpdateChanged));
+
+        public bool LiveUpdate
+        {
+            get => (bool)GetValue(LiveUpdateProperty);
+            set => SetValue(LiveUpdateProperty, value);
+        }
+
+        private static void OnLiveUpdateChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            // Switching from live → deferred mid-typing: stop the in-flight debounce so the
+            // pending text doesn't auto-commit. The text stays buffered until the next explicit
+            // flush (Enter / focus loss / FlushPendingText).
+            if (d is SearchTextBox stb && !(bool)e.NewValue)
+                stb._textChangeTimer?.Stop();
+        }
+
+        /// <summary>
         /// Whether the popup is currently open
         /// </summary>
         public static readonly DependencyProperty IsPopupOpenProperty =
@@ -671,6 +701,11 @@ namespace WWSearchDataGrid.Modern.WPF
         private void OnTextBoxLostFocus(object sender, RoutedEventArgs e)
         {
             IsSearchFocused = false;
+            // Flush buffered typing on focus loss so external "commit on lost focus" handlers
+            // see the final string. Particularly important when LiveUpdate=false (deferred
+            // mode) — there's no debounce timer to eventually commit, so the only paths to
+            // get text out are an explicit flush or this focus-loss flush.
+            FlushPendingText();
             if (IsPopupOpen)
             {
                 // Don't close popup if the sort toggle button was clicked
@@ -754,6 +789,11 @@ namespace WWSearchDataGrid.Modern.WPF
             switch (e.Key)
             {
                 case Key.Enter:
+                    // Always flush buffered typing first — otherwise a fast typist who hits Enter
+                    // before the 250ms debounce expires loses the trailing characters, since
+                    // downstream "commit on Enter" handlers read the Text DP (still stale until
+                    // the timer fires).
+                    FlushPendingText();
                     if (IsPopupOpen && _listBox?.SelectedItem != null)
                     {
                         SelectItem(_listBox.SelectedItem);
@@ -772,6 +812,9 @@ namespace WWSearchDataGrid.Modern.WPF
                     break;
 
                 case Key.Tab:
+                    // Same rationale as Enter — outer Tab handlers (e.g. ColumnSearchBox's
+                    // CommitSearchText-on-Tab) need to see the full typed text.
+                    FlushPendingText();
                     if (IsPopupOpen)
                     {
                         IsPopupOpen = false;
@@ -989,13 +1032,21 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
-        /// Starts or restarts the debounce timer for text changes
+        /// Starts or restarts the debounce timer for text changes. When <see cref="LiveUpdate"/>
+        /// is false the timer is not started — the buffered text stays uncommitted until an
+        /// explicit flush trigger (Enter / focus loss / <see cref="FlushPendingText"/>).
         /// </summary>
         private void StartOrResetTextChangeTimer()
         {
+            if (!LiveUpdate)
+            {
+                _textChangeTimer?.Stop();
+                return;
+            }
+
             if (_textChangeTimer == null)
             {
-                _textChangeTimer = new Timer(250) // 250ms delay matching ColumnSearchBox
+                _textChangeTimer = new Timer(250)
                 {
                     AutoReset = false
                 };
@@ -1004,6 +1055,26 @@ namespace WWSearchDataGrid.Modern.WPF
 
             _textChangeTimer.Stop();
             _textChangeTimer.Start();
+        }
+
+        /// <summary>
+        /// Immediately commits any buffered keystrokes from the internal TextBox into the
+        /// <see cref="Text"/> DP, bypassing the debounce. Called on Enter, on focus loss, and
+        /// available to external consumers that need to read the live typed text (e.g. a
+        /// "commit filter on Enter" handler that wants the full string the user just typed,
+        /// not whatever the timer last captured).
+        /// </summary>
+        public void FlushPendingText()
+        {
+            _textChangeTimer?.Stop();
+
+            // Prefer the live TextBox content over the cached _pendingText — _pendingText is
+            // only updated on TextChanged, but a paste / IME composition followed instantly by
+            // Enter could in principle reach here before the TextChanged has been processed.
+            string current = _textBox?.Text ?? _pendingText ?? string.Empty;
+            _pendingText = current;
+            if (current != Text)
+                Text = current;
         }
 
         /// <summary>

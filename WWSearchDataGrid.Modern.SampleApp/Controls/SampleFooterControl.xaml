@@ -1,0 +1,49 @@
+<UserControl x:Class="WWSearchDataGrid.Modern.SampleApp.Controls.SampleFooterControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:sdg="clr-namespace:WWSearchDataGrid.Modern.WPF;assembly=WWSearchDataGrid.Modern.WPF"
+             x:Name="Root">
+    <Grid Background="#F0F0F0">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="Auto" />
+        </Grid.ColumnDefinitions>
+
+        <StackPanel Grid.Column="0"
+                    Orientation="Horizontal"
+                    Margin="15,0,0,0"
+                    VerticalAlignment="Center">
+            <TextBlock Foreground="#1C1C1C"
+                       Text="Total: "
+                       VerticalAlignment="Center"
+                       FontWeight="Bold" />
+            <TextBlock Foreground="#444444"
+                       Text="{Binding TotalCount, ElementName=Root, StringFormat={}{0:N0}}"
+                       VerticalAlignment="Center" />
+
+            <TextBlock Foreground="#1C1C1C"
+                       Text="Filtered: "
+                       Margin="10,0,0,0"
+                       VerticalAlignment="Center"
+                       FontWeight="Bold" />
+            <TextBlock Foreground="#444444"
+                       Text="{Binding FilteredCount, ElementName=Root, StringFormat={}{0:N0}}"
+                       VerticalAlignment="Center" />
+        </StackPanel>
+
+        <StackPanel Grid.Column="1" Orientation="Horizontal">
+            <sdg:NumericUpDown VerticalContentAlignment="Center"
+                               Increment="1000"
+                               Value="{Binding RowCount, ElementName=Root, Mode=TwoWay}" />
+            <Button Command="{Binding GenerateCommand, ElementName=Root}"
+                    CommandParameter="{Binding RowCount, ElementName=Root}"
+                    Margin="5"
+                    Padding="10,5"
+                    Content="Generate" />
+            <Button Command="{Binding ClearCommand, ElementName=Root}"
+                    Margin="5"
+                    Padding="10,5"
+                    Content="Clear" />
+        </StackPanel>
+    </Grid>
+</UserControl>

@@ -102,6 +102,18 @@ namespace WWSearchDataGrid.Modern.WPF
             DependencyProperty.Register("IsFilterVisible", typeof(bool), typeof(ColumnSearchBox),
                 new PropertyMetadata(true));
 
+        /// <summary>
+        /// Optional user override for live vs. deferred filter application. <c>null</c> (default)
+        /// means "auto-decide from <see cref="SearchDataGrid.OriginalItemsCount"/> against
+        /// <see cref="SearchDataGrid.LiveFilteringRowCountThreshold"/>". Setting <c>true</c> /
+        /// <c>false</c> pins the mode regardless of row count — used by the "Live filter"
+        /// checkbox in the <see cref="ColumnFilterEditor"/> footer.
+        /// </summary>
+        public static readonly DependencyProperty IsLiveFilteringOverrideProperty =
+            DependencyProperty.Register(nameof(IsLiveFilteringOverride), typeof(bool?),
+                typeof(ColumnSearchBox),
+                new PropertyMetadata(null, OnIsLiveFilteringOverrideChanged));
+
         #endregion
         
         #region Properties
@@ -213,6 +225,31 @@ namespace WWSearchDataGrid.Modern.WPF
         /// </summary>
         public GridColumn GridColumn { get; internal set; }
 
+        /// <inheritdoc cref="IsLiveFilteringOverrideProperty"/>
+        public bool? IsLiveFilteringOverride
+        {
+            get => (bool?)GetValue(IsLiveFilteringOverrideProperty);
+            set => SetValue(IsLiveFilteringOverrideProperty, value);
+        }
+
+        /// <summary>
+        /// Effective live-filtering state for this column. Resolves to
+        /// <see cref="IsLiveFilteringOverride"/> when set; otherwise auto-decides from the
+        /// source grid's <see cref="SearchDataGrid.OriginalItemsCount"/> against
+        /// <see cref="SearchDataGrid.LiveFilteringRowCountThreshold"/>. Default (no grid) is
+        /// <c>true</c> to preserve legacy behavior for unhosted instances.
+        /// </summary>
+        public bool EffectiveIsLiveFilteringEnabled
+        {
+            get
+            {
+                if (IsLiveFilteringOverride.HasValue)
+                    return IsLiveFilteringOverride.Value;
+                int rowCount = SourceDataGrid?.OriginalItemsCount ?? 0;
+                return rowCount < SearchDataGrid.LiveFilteringRowCountThreshold;
+            }
+        }
+
         /// <summary>
         /// Gets the search template controller
         /// </summary>
@@ -266,6 +303,7 @@ namespace WWSearchDataGrid.Modern.WPF
                 searchTextBox.KeyDown += OnSearchTextBoxKeyDown;
                 ToolTipService.SetInitialShowDelay(searchTextBox, 800);
                 UpdateSearchTooltip();
+                ApplyLiveFilteringMode();
             }
             
             filterCheckBox = GetTemplateChild("PART_FilterCheckBox") as CheckBox;
@@ -359,6 +397,7 @@ namespace WWSearchDataGrid.Modern.WPF
 
             control.InitializeSearchTemplateController();
             control.UpdateIsComplexFilteringEnabled();
+            control.ApplyLiveFilteringMode();
         }
 
 
@@ -379,6 +418,9 @@ namespace WWSearchDataGrid.Modern.WPF
                     case NotifyCollectionChangedAction.Reset:
                         // Only handle Reset - full refresh is required
                         SearchTemplateController.RefreshColumnValues();
+                        // Row count could have crossed LiveFilteringRowCountThreshold —
+                        // re-evaluate live/deferred so debounce behavior matches reality.
+                        ApplyLiveFilteringMode();
                         break;
 
                     // For Add/Remove/Replace actions, do nothing - SearchDataGrid already handled
@@ -433,15 +475,47 @@ namespace WWSearchDataGrid.Modern.WPF
 
         private static void OnSearchTextChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
-            if (d is ColumnSearchBox control && (control._filterPopup?.IsOpen != true))
+            if (d is not ColumnSearchBox control || control._filterPopup?.IsOpen == true) return;
+
+            // If text is cleared, remove the temporary template immediately regardless of mode.
+            if (string.IsNullOrWhiteSpace((string)e.NewValue))
             {
-                // Filter is only applied on Enter key or focus loss, not while typing.
-                // If text is cleared, remove the temporary template immediately.
-                if (string.IsNullOrWhiteSpace((string)e.NewValue))
-                {
-                    control.ClearTemporaryTemplate();
-                }
+                control.ClearTemporaryTemplate();
+                return;
             }
+
+            // Live mode: the SearchTextBox already debounced its 250ms timer before raising the
+            // SearchText DP change that brought us here, so each tick of this handler corresponds
+            // to a "coalesced" user pause. Apply the filter now. Deferred mode does nothing —
+            // CommitSearchText runs from Enter / Tab / focus-loss instead.
+            if (control.EffectiveIsLiveFilteringEnabled)
+            {
+                control.CreateTemporaryTemplateImmediate();
+                control.UpdateSimpleFilter();
+            }
+        }
+
+        private static void OnIsLiveFilteringOverrideChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            if (d is ColumnSearchBox control)
+                control.ApplyLiveFilteringMode();
+        }
+
+        /// <summary>
+        /// Pushes the current <see cref="EffectiveIsLiveFilteringEnabled"/> down into the inner
+        /// <see cref="SearchTextBox"/> (so its debounce stays / disappears appropriately) and
+        /// into the open <see cref="ColumnFilterEditor"/>, if any. Called whenever the override
+        /// changes, the source grid is set, or the source row count crosses the threshold.
+        /// </summary>
+        private void ApplyLiveFilteringMode()
+        {
+            bool live = EffectiveIsLiveFilteringEnabled;
+
+            if (searchTextBox != null)
+                searchTextBox.LiveUpdate = live;
+
+            if (_filterContent != null)
+                _filterContent.IsLiveApplyEnabled = live;
         }
 
         private void OnSearchTextBoxTextChanged(object sender, TextChangedEventArgs e)
@@ -548,6 +622,9 @@ namespace WWSearchDataGrid.Modern.WPF
                     // Update tooltip to reflect valid prefixes for this column's data type
                     UpdateSearchTooltip();
                 }
+
+                // ItemsSource swap can change row count significantly — re-check live mode.
+                ApplyLiveFilteringMode();
             }
             catch (Exception ex)
             {

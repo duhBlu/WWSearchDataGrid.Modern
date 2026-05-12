@@ -20,7 +20,7 @@
 
     <!--  Single SearchTextBox Template  -->
     <DataTemplate x:Key="SingleSearchTextBoxTemplate">
-        <sdg:SearchTextBox Style="{StaticResource GenericSearchTextboxStyle}"
+        <sdg:SearchTextBox Style="{StaticResource {x:Static sdg:SdgThemeKeys.SearchTextBox}}"
                            Text="{Binding SelectedValue, UpdateSourceTrigger=LostFocus}"
                            ItemsSource="{Binding SearchTemplateController.DisplayColumnValues}"
                            SelectedItem="{Binding SelectedItem, UpdateSourceTrigger=PropertyChanged}"
@@ -37,7 +37,7 @@
             <TextBlock Text="From:"
                        Margin="0,0,5,0"
                        VerticalAlignment="Center" />
-            <sdg:SearchTextBox Style="{StaticResource GenericSearchTextboxStyle}"
+            <sdg:SearchTextBox Style="{StaticResource {x:Static sdg:SdgThemeKeys.SearchTextBox}}"
                                Text="{Binding SelectedValue, UpdateSourceTrigger=LostFocus, ValidatesOnDataErrors=True}"
                                MinWidth="120"
                                ColumnValueCounts="{Binding SearchTemplateController.DisplayColumnValueCounts, UpdateSourceTrigger=PropertyChanged}"
@@ -50,7 +50,7 @@
             <TextBlock Text="To:"
                        Margin="10,0,5,0"
                        VerticalAlignment="Center" />
-            <sdg:SearchTextBox Style="{StaticResource GenericSearchTextboxStyle}"
+            <sdg:SearchTextBox Style="{StaticResource {x:Static sdg:SdgThemeKeys.SearchTextBox}}"
                                Text="{Binding SelectedSecondaryValue, UpdateSourceTrigger=LostFocus, ValidatesOnDataErrors=True}"
                                MinWidth="120"
                                ColumnValueCounts="{Binding SearchTemplateController.DisplayColumnValueCounts, UpdateSourceTrigger=PropertyChanged}"
@@ -113,7 +113,7 @@
             </Grid.RowDefinitions>
 
             <Button Grid.Row="0"
-                    Style="{StaticResource SdgButtonStyle}"
+                    Style="{StaticResource {x:Static sdg:SdgThemeKeys.Button}}"
                     Command="{Binding AddValueCommand}"
                     Margin="0,0,0,5"
                     HorizontalAlignment="Left"
@@ -159,7 +159,7 @@
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
-                                <sdg:SearchTextBox Style="{StaticResource GenericSearchTextboxStyle}"
+                                <sdg:SearchTextBox Style="{StaticResource {x:Static sdg:SdgThemeKeys.SearchTextBox}}"
                                                    Grid.Column="0"
                                                    Text="{Binding Value, UpdateSourceTrigger=LostFocus}"
                                                    ItemsSource="{Binding DataContext.SearchTemplateController.DisplayColumnValues, RelativeSource={RelativeSource AncestorType=ListBox}}"
@@ -236,7 +236,7 @@
             </Grid.RowDefinitions>
 
             <Button Grid.Row="0"
-                    Style="{StaticResource SdgButtonStyle}"
+                    Style="{StaticResource {x:Static sdg:SdgThemeKeys.Button}}"
                     Command="{Binding AddDateCommand}"
                     Margin="0,0,0,5"
                     HorizontalAlignment="Left"

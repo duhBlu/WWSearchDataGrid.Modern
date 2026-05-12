@@ -8,7 +8,7 @@ namespace WWSearchDataGrid.Modern.Core.Display
     /// </summary>
     public class MaskDisplayProvider : IDisplayValueProvider
     {
-        private readonly MaskFormatter _formatter;
+        private readonly IMaskFormatter _formatter;
 
         /// <summary>
         /// Creates a new MaskDisplayProvider with the specified mask pattern.
@@ -17,7 +17,7 @@ namespace WWSearchDataGrid.Modern.Core.Display
         /// <param name="promptChar">Character for empty required slots (default: '_')</param>
         public MaskDisplayProvider(string mask, char promptChar = '_')
         {
-            _formatter = new MaskFormatter(mask, promptChar);
+            _formatter = new SimpleMaskFormatter(mask, promptChar);
         }
 
         /// <summary>

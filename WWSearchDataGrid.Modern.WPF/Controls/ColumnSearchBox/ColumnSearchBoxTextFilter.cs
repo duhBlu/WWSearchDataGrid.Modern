@@ -455,7 +455,8 @@ namespace WWSearchDataGrid.Modern.WPF
                     _filterContent = new ColumnFilterEditor
                     {
                         SearchTemplateController = SearchTemplateController,
-                        DataContext = this
+                        DataContext = this,
+                        IsLiveApplyEnabled = EffectiveIsLiveFilteringEnabled
                     };
 
                     // Subscribe to filter events
@@ -469,6 +470,7 @@ namespace WWSearchDataGrid.Modern.WPF
                     // controller so it edits the column we currently represent, not the one
                     // we represented when the popup was first instantiated.
                     _filterContent.SearchTemplateController = SearchTemplateController;
+                    _filterContent.IsLiveApplyEnabled = EffectiveIsLiveFilteringEnabled;
                 }
 
                 // Calculate the vertical offset to position below the column header

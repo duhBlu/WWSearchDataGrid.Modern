@@ -80,7 +80,7 @@
                                 </Grid.ColumnDefinitions>
 
                                 <!--  AND/OR operator (fixed width, content hidden on first rule)  -->
-                                <ComboBox Style="{StaticResource SdgComboBoxStyle}"
+                                <ComboBox Style="{StaticResource {x:Static sdg:SdgThemeKeys.ComboBox}}"
                                           Grid.Column="0"
                                           Visibility="{Binding IsOperatorVisible, Converter={StaticResource BooleanToVisibilityCollapsedConverter}}"
                                           Margin="0,0,4,0"
@@ -94,7 +94,7 @@
                                 </ComboBox>
 
                                 <!--  Search type dropdown (fixed width for alignment)  -->
-                                <ComboBox Style="{StaticResource SdgComboBoxStyle}"
+                                <ComboBox Style="{StaticResource {x:Static sdg:SdgThemeKeys.ComboBox}}"
                                           Grid.Column="1"
                                           Margin="0,0,4,0"
                                           Padding="4,2"
@@ -160,7 +160,7 @@
             </ItemsControl>
 
             <!--  Inline "Add Rule" button — sits after the last rule like a placeholder  -->
-            <Button Style="{StaticResource SdgButtonStyle}"
+            <Button Style="{StaticResource {x:Static sdg:SdgThemeKeys.Button}}"
                     Background="Transparent"
                     BorderBrush="{StaticResource Sdg.Border.Subtle}"
                     BorderThickness="1"
@@ -176,7 +176,7 @@
     </DataTemplate>
 
     <!--  ColumnFilterEditor Style  -->
-    <Style x:Key="GenericColumnFilterEditorStyle" TargetType="{x:Type sdg:ColumnFilterEditor}">
+    <Style x:Key="{x:Static sdg:SdgThemeKeys.ColumnFilterEditor}" TargetType="{x:Type sdg:ColumnFilterEditor}">
         <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.WindowBrushKey}}" />
         <Setter Property="BorderBrush" Value="DarkGray" />
         <Setter Property="VerticalOffset" Value="-12" />
@@ -208,7 +208,7 @@
 
                             <!--  Operator ComboBox  -->
                             <ComboBox x:Name="PART_OperatorComboBox"
-                                      Style="{StaticResource SdgComboBoxStyle}"
+                                      Style="{StaticResource {x:Static sdg:SdgThemeKeys.ComboBox}}"
                                       Grid.Row="0"
                                       Visibility="{Binding IsOperatorVisible, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource BooleanToVisibilityCollapsedConverter}}"
                                       HorizontalAlignment="Left"
@@ -228,11 +228,11 @@
 
                             <!--  Tabbed Interface: Filter Rules + Filter Values  -->
                             <TabControl x:Name="PART_TabControl"
-                                        Style="{StaticResource SdgTabControlStyle}"
+                                        Style="{StaticResource {x:Static sdg:SdgThemeKeys.TabControl}}"
                                         Grid.Row="0">
 
                                 <!--  TAB 1: Filter Rules (existing functionality)  -->
-                                    <TabItem Style="{StaticResource SdgTabItemStyle}" Header="Filter Rules">
+                                    <TabItem Style="{StaticResource {x:Static sdg:SdgThemeKeys.TabItem}}" Header="Filter Rules">
                                         <ScrollViewer Margin="4,4,4,0" VerticalScrollBarVisibility="Auto">
                                         <ContentControl Content="{Binding SearchTemplateController, RelativeSource={RelativeSource TemplatedParent}}">
                                             <ContentControl.Style>
@@ -262,7 +262,7 @@
                                 </TabItem>
 
                                 <!--  TAB 2: Filter Values (checkbox list)  -->
-                                <TabItem Style="{StaticResource SdgTabItemStyle}" Header="Filter Values">
+                                <TabItem Style="{StaticResource {x:Static sdg:SdgThemeKeys.TabItem}}" Header="Filter Values">
                                     <DockPanel Margin="4,4,4,0">
 
                                         <!--  Top: Select All checkbox + Search  -->
@@ -276,7 +276,7 @@
                                                       IsChecked="{Binding FilterValueManager.SelectAllState, RelativeSource={RelativeSource AncestorType=sdg:ColumnFilterEditor}, Mode=OneWay}"
                                                       Command="{Binding SelectAllValuesCommand, RelativeSource={RelativeSource AncestorType=sdg:ColumnFilterEditor}}"
                                                       Margin="0,0,8,0"
-                                                      Style="{StaticResource SdgCheckBoxStyle}"
+                                                      Style="{StaticResource {x:Static sdg:SdgThemeKeys.CheckBox}}"
                                                       IsThreeState="True"
                                                       Content="Select All"
                                                       FontSize="11" />
@@ -294,7 +294,7 @@
                                                    HorizontalAlignment="Right"
                                                    FontSize="11">
                                             <TextBlock.Text>
-                                                <MultiBinding StringFormat="{}{0} / {1} selected">
+                                                <MultiBinding StringFormat="{}{0:N0} / {1:N0} selected">
                                                     <Binding RelativeSource="{RelativeSource AncestorType=sdg:ColumnFilterEditor}" Path="FilterValueManager.CheckedCount" />
                                                     <Binding RelativeSource="{RelativeSource AncestorType=sdg:ColumnFilterEditor}" Path="FilterValueManager.TotalCount" />
                                                 </MultiBinding>
@@ -338,7 +338,7 @@
                                                 <DataTemplate>
                                                     <CheckBox IsChecked="{Binding IsChecked}"
                                                               Margin="2,1"
-                                                              Style="{StaticResource SdgCheckBoxStyle}"
+                                                              Style="{StaticResource {x:Static sdg:SdgThemeKeys.CheckBox}}"
                                                               VerticalContentAlignment="Center">
                                                         <CheckBox.Content>
                                                             <Grid>
@@ -351,7 +351,7 @@
                                                                            VerticalAlignment="Center" />
                                                                 <TextBlock Grid.Column="1"
                                                                            Foreground="Gray"
-                                                                           Text="{Binding Count, StringFormat='({0})'}"
+                                                                           Text="{Binding Count, StringFormat='({0:N0})'}"
                                                                            Margin="8,0,0,0"
                                                                            VerticalAlignment="Center"
                                                                            FontSize="10" />
@@ -385,13 +385,13 @@
                                                 <HierarchicalDataTemplate ItemsSource="{Binding Children}">
                                                     <CheckBox IsChecked="{Binding IsChecked}"
                                                               Margin="2,1"
-                                                              Style="{StaticResource SdgCheckBoxStyle}"
+                                                              Style="{StaticResource {x:Static sdg:SdgThemeKeys.CheckBox}}"
                                                               IsThreeState="False">
                                                         <CheckBox.Content>
                                                             <StackPanel Orientation="Horizontal">
                                                                 <TextBlock Text="{Binding DisplayName}" VerticalAlignment="Center" />
                                                                 <TextBlock Foreground="Gray"
-                                                                           Text="{Binding TotalCount, StringFormat=' ({0})'}"
+                                                                           Text="{Binding TotalCount, StringFormat=' ({0:N0})'}"
                                                                            VerticalAlignment="Center"
                                                                            FontSize="10" />
                                                             </StackPanel>
@@ -405,16 +405,36 @@
                                 </TabItem>
                             </TabControl>
 
-                            <!--  Clear Filter pinned to the bottom of the popup (visible from both tabs)  -->
-                            <Border Grid.Row="1" Background="{StaticResource Sdg.Surface.Tertiary}" BorderBrush="{StaticResource Sdg.Border.Strong}" CornerRadius="0,0,4,4" Margin="0" Padding="4"  BorderThickness="0,1,0,0">
-                                    
-                            <Button 
-                                    Style="{StaticResource SdgButtonStyle}"
-                                    Command="{Binding ClearFilterCommand, RelativeSource={RelativeSource TemplatedParent}}"
-                                    Margin="0,0,0,0"
-                                    HorizontalAlignment="Left"
-                                    Content="Clear Filter" />
-                                </Border>
+                            <!--  Footer pinned to the bottom of the popup (visible from both tabs).
+                                  Layout: Clear Filter button on the left, Live filter override
+                                  checkbox on the right. The checkbox is two-way bound to the
+                                  editor's IsLiveApplyEnabled DP, which the editor's static change
+                                  handler propagates up to the owning ColumnSearchBox's
+                                  IsLiveFilteringOverride so the choice persists across popup
+                                  open/close and also drives the in-header SearchTextBox's
+                                  debounce mode.  -->
+                            <Border Grid.Row="1" Background="{StaticResource Sdg.Surface.Tertiary}" BorderBrush="{StaticResource Sdg.Border.Strong}" CornerRadius="0,0,4,4" Margin="0" Padding="4" BorderThickness="0,1,0,0">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <Button Grid.Column="0"
+                                            Style="{StaticResource {x:Static sdg:SdgThemeKeys.Button}}"
+                                            Command="{Binding ClearFilterCommand, RelativeSource={RelativeSource TemplatedParent}}"
+                                            HorizontalAlignment="Left"
+                                            Content="Clear Filter" />
+
+                                    <CheckBox Grid.Column="2"
+                                              IsChecked="{Binding IsLiveApplyEnabled, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}"
+                                              VerticalAlignment="Center"
+                                              Margin="8,0,4,0"
+                                              Content="Live filter"
+                                              ToolTip="When checked, filter changes apply to the grid as you make them. When unchecked, changes are deferred until the editor closes — useful for very large grids. Auto-defaults to off when the grid has 100,000+ rows." />
+                                </Grid>
+                            </Border>
                             </Grid>
                         </Border>
 
@@ -425,7 +445,7 @@
                                HorizontalAlignment="Left"
                                VerticalAlignment="Bottom"
                                Cursor="SizeNESW"
-                               Style="{StaticResource SdgResizeThumbStyle}"
+                               Style="{StaticResource {x:Static sdg:SdgThemeKeys.ResizeThumb}}"
                                Panel.ZIndex="10" />
 
                         <!--  Bottom-right resize grip  -->
@@ -435,7 +455,7 @@
                                HorizontalAlignment="Right"
                                VerticalAlignment="Bottom"
                                Cursor="SizeNWSE"
-                               Style="{StaticResource SdgResizeThumbStyle}"
+                               Style="{StaticResource {x:Static sdg:SdgThemeKeys.ResizeThumb}}"
                                Panel.ZIndex="10" />
                     </Grid>
                 </ControlTemplate>
@@ -443,6 +463,6 @@
         </Setter>
     </Style>
 
-    <Style BasedOn="{StaticResource GenericColumnFilterEditorStyle}" TargetType="{x:Type sdg:ColumnFilterEditor}" />
+    <Style BasedOn="{StaticResource {x:Static sdg:SdgThemeKeys.ColumnFilterEditor}}" TargetType="{x:Type sdg:ColumnFilterEditor}" />
 
 </ResourceDictionary>

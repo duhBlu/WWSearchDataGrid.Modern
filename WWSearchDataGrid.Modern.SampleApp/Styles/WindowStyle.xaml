@@ -159,6 +159,7 @@
                                         Command="{x:Static SystemCommands.CloseWindowCommand}"
                                         Padding="15,0"
                                         Content="&#xE711;"
+                                        WindowChrome.IsHitTestVisibleInChrome="True"
                                         FontWeight="Normal"
                                         RenderOptions.BitmapScalingMode="NearestNeighbor"
                                         FontSize="14"
@@ -210,11 +211,18 @@
                         </Border>
 
                         <!--  CONTENT  -->
+                        <!--  AdornerDecorator: the default Window template includes one, but this
+                              custom chrome template replaces the whole tree. Without it,
+                              AdornerLayer.GetAdornerLayer(child) returns null for anything inside
+                              ContentBorder, which makes GridSplitter (ShowsPreview=True), Popup
+                              positioning, and validation adorners throw NREs.  -->
                         <Border x:Name="ContentBorder"
                                 Grid.Row="1"
                                 Background="#FFFFFF"
                                 ClipToBounds="True">
-                            <ContentPresenter />
+                            <AdornerDecorator>
+                                <ContentPresenter />
+                            </AdornerDecorator>
                         </Border>
                     </Grid>
 
@@ -260,7 +268,7 @@
 
     <!--#region RadioButton-->
 
-    <Style x:Key="SdgRadioButtonStyle" TargetType="{x:Type RadioButton}">
+    <Style x:Key="SampleRadioButtonStyle" TargetType="{x:Type RadioButton}">
         <Setter Property="Foreground" Value="#1C1C1C" />
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderBrush" Value="#AAAAAA" />
@@ -332,7 +340,7 @@
 
     <!--#region Slider-->
 
-    <Style x:Key="SdgSliderThumbStyle" TargetType="{x:Type Thumb}">
+    <Style x:Key="SampleSliderThumbStyle" TargetType="{x:Type Thumb}">
         <Setter Property="Width" Value="16" />
         <Setter Property="Height" Value="16" />
         <Setter Property="Template">
@@ -366,7 +374,7 @@
         </Setter>
     </Style>
 
-    <Style x:Key="SdgSliderStyle" TargetType="{x:Type Slider}">
+    <Style x:Key="SampleSliderStyle" TargetType="{x:Type Slider}">
         <Setter Property="Height" Value="24" />
         <Setter Property="MinWidth" Value="80" />
         <Setter Property="Focusable" Value="True" />
@@ -382,7 +390,7 @@
 
                         <Track x:Name="PART_Track">
                             <Track.Thumb>
-                                <Thumb Style="{StaticResource SdgSliderThumbStyle}" />
+                                <Thumb Style="{StaticResource SampleSliderThumbStyle}" />
                             </Track.Thumb>
                         </Track>
                     </Grid>
@@ -395,7 +403,7 @@
 
     <!--#region Expander (matches GroupBox look, collapsible on header click, no glyph)-->
 
-    <Style x:Key="SdgExpanderStyle" TargetType="{x:Type Expander}">
+    <Style x:Key="SampleExpanderStyle" TargetType="{x:Type Expander}">
         <Setter Property="Foreground" Value="#1C1C1C" />
         <Setter Property="BorderBrush" Value="#DDDDDD" />
         <Setter Property="BorderThickness" Value="1" />

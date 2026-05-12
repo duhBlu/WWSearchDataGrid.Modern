@@ -14,7 +14,7 @@
     <converters:GreaterThanConverter x:Key="GreaterThanConverter" />
 
     <!--  Default FilterPanel Style  -->
-    <Style x:Key="GenericFilterPanelStyle" TargetType="{x:Type sdg:FilterPanel}">
+    <Style x:Key="{x:Static sdg:SdgThemeKeys.FilterPanel}" TargetType="{x:Type sdg:FilterPanel}">
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type sdg:FilterPanel}">

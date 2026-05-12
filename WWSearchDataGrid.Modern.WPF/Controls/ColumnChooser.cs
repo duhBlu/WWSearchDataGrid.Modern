@@ -314,8 +314,10 @@ namespace WWSearchDataGrid.Modern.WPF
             }
             else
             {
-                // Try to find a default style for ColumnChooserWindow
-                var defaultStyle = TryFindResource(typeof(Window), "GenericColumnChooserWindowStyle") as Style;
+                // Resolve the library default Window style by ComponentResourceKey. The lookup
+                // walks element scope → app scope → the assembly's Themes/Generic.xaml courtesy
+                // of [ThemeInfo], so consumers get the default with no manual merge.
+                var defaultStyle = TryFindResource(SdgThemeKeys.ColumnChooserWindow) as Style;
                 if (defaultStyle != null)
                 {
                     _parentWindow.Style = defaultStyle;
@@ -465,31 +467,6 @@ namespace WWSearchDataGrid.Modern.WPF
 
             if (_parentWindow.Top < 0)
                 _parentWindow.Top = 10;
-        }
-
-        /// <summary>
-        /// Tries to find a resource in the current application
-        /// </summary>
-        private object TryFindResource(Type targetType, string resourceKey)
-        {
-            try
-            {
-                // Try to find in the current element's resources first
-                if (Resources.Contains(resourceKey))
-                    return Resources[resourceKey];
-
-                if (Application.Current?.Resources.Contains(resourceKey) == true)
-                    return Application.Current.Resources[resourceKey];
-
-                if (Application.Current?.Resources.Contains(targetType) == true)
-                    return Application.Current.Resources[targetType];
-
-                return null;
-            }
-            catch
-            {
-                return null;
-            }
         }
 
         /// <summary>

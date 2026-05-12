@@ -12,7 +12,7 @@
     <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
 
     <!--  Default Window Style for ColumnChooser  -->
-    <Style x:Key="GenericColumnChooserWindowStyle" TargetType="Window">
+    <Style x:Key="{x:Static sdg:SdgThemeKeys.ColumnChooserWindow}" TargetType="Window">
         <Setter Property="Background" Value="White" />
         <Setter Property="BorderBrush" Value="#ADB5BD" />
         <Setter Property="BorderThickness" Value="1" />
@@ -170,7 +170,7 @@
                                     </Grid.ColumnDefinitions>
 
                                     <CheckBox x:Name="PART_SelectAllCheckBox"
-                                              Style="{StaticResource SdgCheckBoxStyle}"
+                                              Style="{StaticResource {x:Static sdg:SdgThemeKeys.CheckBox}}"
                                               Grid.Column="0"
                                               Content="Select All"
                                               IsThreeState="True"
@@ -301,7 +301,7 @@
 
                                                             <CheckBox Grid.Column="0"
                                                                       IsChecked="{Binding IsVisible}"
-                                                                      Style="{StaticResource SdgCheckBoxStyle}"
+                                                                      Style="{StaticResource {x:Static sdg:SdgThemeKeys.CheckBox}}"
                                                                       VerticalAlignment="Center"
                                                                       Margin="0,0,8,0"
                                                                       Focusable="False" />
