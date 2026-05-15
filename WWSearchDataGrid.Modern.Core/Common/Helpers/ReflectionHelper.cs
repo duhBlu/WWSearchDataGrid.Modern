@@ -14,9 +14,6 @@ namespace WWSearchDataGrid.Modern.Core
     /// </summary>
     public static class ReflectionHelper
     {
-        // Cache for resolved property chains: (Type, propertyPath) -> PropertyDescriptor[].
-        // Using PropertyDescriptor (not PropertyInfo) lets the same code path serve POCOs,
-        // ITypedList sources like DataRowView (DataTable rows), and ICustomTypeDescriptor types.
         private static readonly ConcurrentDictionary<(Type, string), PropertyDescriptor[]> _propertyChainCache
             = new ConcurrentDictionary<(Type, string), PropertyDescriptor[]>();
 
@@ -32,9 +29,6 @@ namespace WWSearchDataGrid.Modern.Core
                 return null;
 
             var type = obj.GetType();
-            // The cache is keyed by Type, but ITypedList sources resolve descriptors per-instance.
-            // Pass `obj` to the resolver so the first lookup for a given type uses real metadata
-            // (e.g. the DataTable's columns); subsequent items of the same type reuse the chain.
             var chain = _propertyChainCache.GetOrAdd((type, propPath), key => ResolvePropertyChain(obj, key.Item2));
 
             if (chain == null)

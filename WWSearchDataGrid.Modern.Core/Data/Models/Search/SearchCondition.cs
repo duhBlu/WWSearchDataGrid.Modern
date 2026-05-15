@@ -82,6 +82,15 @@ namespace WWSearchDataGrid.Modern.Core
         /// </summary>
         public object RawSecondaryValue { get; set; }
 
+        /// <summary>
+        /// Gets or sets whether DateTime comparisons should be rounded to date-only (ignoring
+        /// time-of-day). Defaults to <c>true</c> — preserves the historic behavior of date
+        /// predicates that compare via <c>.Date</c>. Set to <c>false</c> when the column
+        /// carries meaningful time-of-day data and the filter must match exact instants. Only
+        /// consulted by DateTime-typed evaluators; other types ignore the flag.
+        /// </summary>
+        public bool RoundDateTime { get; set; } = true;
+
         #endregion
 
         #region Constructors

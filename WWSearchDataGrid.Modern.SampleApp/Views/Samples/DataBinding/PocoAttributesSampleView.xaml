@@ -29,7 +29,10 @@
                                 AutoGenerateColumns="True"
                                 EnableRuleFiltering="True"
                                 CanUserAddRows="False"
+                                AutoFilterRowPosition="Cell"
+                                ShowAutoFilterRow="True"
                                 CanUserDeleteRows="False"
+                                ShowCriteriaInAutoFilterRow="True"
                                 IsReadOnly="True" />
         </DockPanel>
     </sampleControls:SampleHostControl>

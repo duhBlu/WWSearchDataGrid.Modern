@@ -105,7 +105,14 @@
                                           SelectedItem="{Binding SearchType}">
                                     <ComboBox.ItemTemplate>
                                         <DataTemplate>
-                                            <TextBlock Text="{Binding Converter={StaticResource EnumToStringConverter}}" VerticalAlignment="Center" />
+                                            <StackPanel Orientation="Horizontal">
+                                                <Image Source="{Binding Converter={StaticResource SearchTypeToIconConverter}}"
+                                                       Width="14"
+                                                       Height="14"
+                                                       Margin="0,0,6,0"
+                                                       VerticalAlignment="Center" />
+                                                <TextBlock Text="{Binding Converter={StaticResource EnumToStringConverter}}" VerticalAlignment="Center" />
+                                            </StackPanel>
                                         </DataTemplate>
                                     </ComboBox.ItemTemplate>
                                 </ComboBox>
@@ -179,8 +186,8 @@
     <Style x:Key="{x:Static sdg:SdgThemeKeys.ColumnFilterEditor}" TargetType="{x:Type sdg:ColumnFilterEditor}">
         <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.WindowBrushKey}}" />
         <Setter Property="BorderBrush" Value="DarkGray" />
-        <Setter Property="VerticalOffset" Value="-12" />
-        <Setter Property="HorizontalOffset" Value="-12" />
+        <Setter Property="VerticalOffset" Value="-24" />
+        <Setter Property="HorizontalOffset" Value="-24" />
         <Setter Property="MinWidth" Value="300" />
         <Setter Property="MinHeight" Value="300" />
         <Setter Property="MaxHeight" Value="500" />
@@ -406,13 +413,12 @@
                             </TabControl>
 
                             <!--  Footer pinned to the bottom of the popup (visible from both tabs).
-                                  Layout: Clear Filter button on the left, Live filter override
-                                  checkbox on the right. The checkbox is two-way bound to the
-                                  editor's IsLiveApplyEnabled DP, which the editor's static change
-                                  handler propagates up to the owning ColumnSearchBox's
-                                  IsLiveFilteringOverride so the choice persists across popup
-                                  open/close and also drives the in-header SearchTextBox's
-                                  debounce mode.  -->
+                                  Layout: Clear Filter button on the left, Live filter checkbox
+                                  on the right. The checkbox is two-way bound to the editor's
+                                  IsLiveApplyEnabled DP, which the editor's static change handler
+                                  propagates up to GridColumn.ImmediateUpdateAutoFilter so the
+                                  choice persists across popup open/close and also drives the
+                                  in-header SearchTextBox's debounce mode.  -->
                             <Border Grid.Row="1" Background="{StaticResource Sdg.Surface.Tertiary}" BorderBrush="{StaticResource Sdg.Border.Strong}" CornerRadius="0,0,4,4" Margin="0" Padding="4" BorderThickness="0,1,0,0">
                                 <Grid>
                                     <Grid.ColumnDefinitions>

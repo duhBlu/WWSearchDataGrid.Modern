@@ -1,10 +1,13 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
+using WWSearchDataGrid.Modern.Core;
 
 namespace WWSearchDataGrid.Modern.WPF
 {
@@ -199,6 +202,154 @@ namespace WWSearchDataGrid.Modern.WPF
         public abstract DataTemplate CreateEditTemplate(GridColumn column);
 
         /// <summary>
+        /// Builds the editor element placed in the per-column cell of the
+        /// <see cref="AutoFilterRowPresenter"/>. Mirrors <see cref="CreateEditTemplate"/> in shape
+        /// (same editor type, same keyed style, same theming) but binds the editor's value DP to
+        /// the supplied <paramref name="host"/>'s filter DPs (<c>SearchText</c> for text editors,
+        /// <c>SearchValue</c> for typed editors, <c>FilterCheckboxState</c> for checkboxes)
+        /// instead of a row-item property path.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// Override per subtype so the filter row reuses the cell editor's look without
+        /// duplicating template XAML in the filter-row resource dictionary.
+        /// </para>
+        /// <para>
+        /// Default implementation returns a styled <see cref="TextBox"/> bound to
+        /// <see cref="IColumnFilterHost.SearchText"/>, which is the correct behavior for
+        /// <c>TextEditSettings</c> and any consumer-defined subtype that hasn't customized the
+        /// filter-row editor.
+        /// </para>
+        /// </remarks>
+        public virtual UIElement CreateFilterEditor(IColumnFilterHost host)
+        {
+            return BuildDefaultTextEditor(host);
+        }
+
+        /// <summary>
+        /// Builds the read-only display surface placed in the per-column cell of the
+        /// <see cref="AutoFilterRowPresenter"/> when the filter cell is NOT in keyboard focus.
+        /// Mirrors <see cref="CreateFilterEditor"/> but renders a <see cref="TextBlock"/>-shaped
+        /// presentation of the filter value rather than an editable control — same display /
+        /// edit split that <see cref="CreateDisplayTemplate"/> / <see cref="CreateEditTemplate"/>
+        /// use for the row's actual data cell.
+        /// </summary>
+        /// <remarks>
+        /// Decoration buttons (combo toggle, calendar dropdown, spinner arrows) are intentionally
+        /// omitted from the display surface — the user enters the cell to edit, which swaps the
+        /// editor to the full <see cref="CreateFilterEditor"/> surface where the decorations live.
+        /// Default implementation returns a <see cref="TextBlock"/> bound to
+        /// <see cref="IColumnFilterHost.SearchText"/>; subclasses override to bind to
+        /// <see cref="IColumnFilterHost.SearchValue"/> with type-appropriate formatting.
+        /// </remarks>
+        public virtual UIElement CreateFilterDisplay(IColumnFilterHost host)
+        {
+            return BuildDefaultTextDisplay(host);
+        }
+
+        /// <summary>
+        /// Helper shared with the default <see cref="CreateFilterDisplay"/> and any subclass that
+        /// wants to fall back to a plain <see cref="TextBlock"/> rendering of
+        /// <see cref="IColumnFilterHost.SearchText"/>. Wears the library's
+        /// <see cref="EditSettingsThemeKeys.DisplayTextBlock"/> style so colors / margins match
+        /// the cell editor's display mode.
+        /// </summary>
+        protected static TextBlock BuildDefaultTextDisplay(IColumnFilterHost host)
+        {
+            var tb = new TextBlock
+            {
+                VerticalAlignment = VerticalAlignment.Center,
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                TextTrimming = TextTrimming.CharacterEllipsis,
+                Margin = new Thickness(4, 0, 4, 0),
+            };
+            var style = Application.Current?.TryFindResource(EditSettingsThemeKeys.DisplayTextBlock) as Style;
+            if (style != null) tb.Style = style;
+
+            BindingOperations.SetBinding(tb, TextBlock.TextProperty, new Binding(nameof(IColumnFilterHost.SearchText))
+            {
+                Source = host,
+                Mode = BindingMode.OneWay,
+            });
+            return tb;
+        }
+
+        /// <summary>
+        /// Returns the set of <see cref="SearchType"/>s this editor exposes in the
+        /// <see cref="SearchTypeSelector"/> dropdown for filter-row use. Each subtype scopes
+        /// the list to the operators that make sense given the editor's value shape —
+        /// e.g. a <see cref="ComboBoxEditSettings"/> only exposes <c>Equals</c> / <c>NotEquals</c>
+        /// (the user picks a discrete value, so <c>Contains</c> / <c>StartsWith</c> don't apply),
+        /// while a <see cref="DateEditSettings"/> exposes equality + range comparison and skips
+        /// the text-shape operators.
+        /// </summary>
+        /// <param name="columnDataType">Data type detected from the column's sampled values.</param>
+        /// <param name="isNullable">Whether the column's CLR type / observed values include null. When true the returned set may include <see cref="SearchType.IsNull"/> / <see cref="SearchType.IsNotNull"/>.</param>
+        /// <remarks>
+        /// Default returns every type valid for the data type per
+        /// <see cref="SearchTypeRegistry.GetFiltersForDataType(ColumnDataType, bool)"/> — preserves
+        /// the pre-EditSettings-aware behavior for callers that don't override.
+        /// </remarks>
+        public virtual IEnumerable<SearchType> GetSupportedFilterSearchTypes(ColumnDataType columnDataType, bool isNullable)
+        {
+            return SearchTypeRegistry.GetFiltersForDataType(columnDataType, isNullable)
+                .Select(m => m.SearchType);
+        }
+
+        /// <summary>
+        /// Editor-specific preference for the column's <see cref="GridColumn.DefaultSearchType"/>.
+        /// Returns non-null when the editor shape constrains the allowed operator set so tightly
+        /// that the CLR-type-based default (set by <see cref="GridColumn.ApplyTypeBasedDefaults"/>)
+        /// can fall outside <see cref="GetSupportedFilterSearchTypes"/> — e.g. a
+        /// <see cref="ComboBoxEditSettings"/> on a string-typed field would otherwise inherit
+        /// <see cref="WPF.DefaultSearchType.StartsWith"/> and disable the AutoFilterRow cell.
+        /// Default returns <c>null</c> (no preference; type-based default wins). Honored by
+        /// <see cref="GridColumn"/> only when the user hasn't set
+        /// <see cref="GridColumn.DefaultSearchType"/> explicitly.
+        /// </summary>
+        public virtual DefaultSearchType? GetPreferredDefaultSearchType() => null;
+
+        /// <summary>
+        /// Helper for subclass overrides that want to declare a fixed base set and let the
+        /// nullability suffix flow in automatically. Appends <see cref="SearchType.IsNull"/> /
+        /// <see cref="SearchType.IsNotNull"/> when <paramref name="isNullable"/> is <c>true</c>.
+        /// </summary>
+        protected static IEnumerable<SearchType> WithNullability(IEnumerable<SearchType> baseSet, bool isNullable)
+        {
+            foreach (var t in baseSet) yield return t;
+            if (isNullable)
+            {
+                yield return SearchType.IsNull;
+                yield return SearchType.IsNotNull;
+            }
+        }
+
+        /// <summary>
+        /// Helper shared with the default <see cref="CreateFilterEditor"/> and any subclass that
+        /// wants to fall back to the text-editor shape. Produces a <see cref="TextBox"/> wearing
+        /// the library's <see cref="EditSettingsThemeKeys.EditTextBox"/> style, with its
+        /// <see cref="TextBox.Text"/> DP two-way bound to <see cref="IColumnFilterHost.SearchText"/>
+        /// updating on every keystroke so the filter pipeline's debounce hooks fire correctly.
+        /// </summary>
+        protected static TextBox BuildDefaultTextEditor(IColumnFilterHost host)
+        {
+            var tb = new TextBox
+            {
+                VerticalContentAlignment = VerticalAlignment.Center,
+            };
+            var style = Application.Current?.TryFindResource(EditSettingsThemeKeys.EditTextBox) as Style;
+            if (style != null) tb.Style = style;
+
+            BindingOperations.SetBinding(tb, TextBox.TextProperty, new Binding(nameof(IColumnFilterHost.SearchText))
+            {
+                Source = host,
+                Mode = BindingMode.TwoWay,
+                UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged,
+            });
+            return tb;
+        }
+
+        /// <summary>
         /// Helper for subclasses: ensures the editor element grabs keyboard focus the moment it
         /// materializes in the cell, so the user can interact with it (type, pick a date, toggle)
         /// on the same click that triggered edit mode. Without this, focus stays on the
@@ -298,8 +449,25 @@ namespace WWSearchDataGrid.Modern.WPF
         internal static void ExitCellViaArrow(DependencyObject source, KeyEventArgs e)
         {
             var cell = VisualTreeHelperMethods.FindVisualParent<DataGridCell>(source);
+            if (cell == null)
+            {
+                // Filter-row hosting: the editor isn't inside a DataGridCell, it's inside a
+                // ColumnFilterControl in the AutoFilterRow. Same intent (caret-at-boundary
+                // wants to step to the adjacent cell), different host plumbing — route the
+                // request through FilterRowNavigator which knows how to walk the filter row
+                // in DisplayIndex order and hand off Down / end-of-row Tab to the data area.
+                // Editors that own this path (SegmentedDateTimeEditor, ComboBoxEditSettings,
+                // CheckBoxEditSettings) mark the event Handled after the call regardless of
+                // whether navigation actually moved, which matches data-cell semantics: at
+                // the filter row's outer edge the key is consumed and focus stays put.
+                var filter = VisualTreeHelperMethods.FindVisualParent<ColumnFilterControl>(source);
+                if (filter != null)
+                    FilterRowNavigator.TryNavigate(filter, e);
+                return;
+            }
+
             var grid = VisualTreeHelperMethods.FindVisualParent<DataGrid>(cell);
-            if (grid == null || cell == null) return;
+            if (grid == null) return;
 
             grid.CommitEdit();
             cell.Focus();

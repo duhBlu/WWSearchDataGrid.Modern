@@ -29,9 +29,14 @@ namespace WWSearchDataGrid.Modern.WPF.Commands
         public DataGridColumn Column { get; set; }
 
         /// <summary>
-        /// The ColumnSearchBox associated with the column (for ColumnHeader and Cell contexts)
+        /// The filter host associated with the column (for ColumnHeader and Cell contexts).
+        /// Typed as <see cref="IColumnFilterHost"/> so context-menu commands work against any
+        /// filter-host implementation. Phase 5 generalized this from the legacy
+        /// <c>ColumnSearchBox</c> direct type. The XAML property name remains
+        /// <c>ColumnSearchBox</c> for binding compatibility with any consumer-authored menu
+        /// templates that named the property explicitly.
         /// </summary>
-        public ColumnSearchBox ColumnSearchBox { get; set; }
+        public IColumnFilterHost ColumnSearchBox { get; set; }
 
         /// <summary>
         /// The data item for the row (for Cell and Row contexts)

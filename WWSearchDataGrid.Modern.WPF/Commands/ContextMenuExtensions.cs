@@ -201,9 +201,11 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
-        /// Finds the ColumnSearchBox associated with a DataGridColumn
+        /// Finds the <see cref="IColumnFilterHost"/> associated with a <see cref="DataGridColumn"/>.
+        /// Name preserved (<c>FindColumnSearchBox</c>) so call sites read consistently against
+        /// the existing context-menu surface; return type generalized in Phase 5.
         /// </summary>
-        private static ColumnSearchBox FindColumnSearchBox(SearchDataGrid grid, DataGridColumn column)
+        private static IColumnFilterHost FindColumnSearchBox(SearchDataGrid grid, DataGridColumn column)
         {
             if (column == null) return null;
 

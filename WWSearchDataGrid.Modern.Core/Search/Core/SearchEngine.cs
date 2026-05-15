@@ -35,7 +35,16 @@ namespace WWSearchDataGrid.Modern.Core
                     var comparisonDate = TypeTranslatorHelper.ConvertToDateTime(comparisonValue);
 
                     if (columnDate.HasValue && comparisonDate.HasValue)
+                    {
+                        // RoundDateTime drops the time-of-day on both sides so date-only
+                        // filter inputs (e.g. the auto-filter row's DatePicker, which always
+                        // commits midnight) match column values that carry meaningful times.
+                        // Honored uniformly across Equals / NotEquals / LessThan / GreaterThan
+                        // / Between so the operator the user picks doesn't change the rounding.
+                        if (searchCondition.RoundDateTime)
+                            return columnDate.Value.Date.CompareTo(comparisonDate.Value.Date);
                         return columnDate.Value.CompareTo(comparisonDate.Value);
+                    }
                 }
                 else if (searchCondition.IsNumeric)
                 {

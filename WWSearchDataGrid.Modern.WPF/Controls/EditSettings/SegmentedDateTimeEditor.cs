@@ -154,6 +154,34 @@ namespace WWSearchDataGrid.Modern.WPF
         /// </summary>
         private bool _seedInputApplied;
 
+        /// <summary>
+        /// Tracks whether the inner TextBox currently holds keyboard focus. Drives the
+        /// placeholder-suppression rule in <see cref="RefreshTextBox"/>: when unfocused
+        /// AND no editable segment has user input, the TextBox renders an empty string
+        /// instead of the literals-only skeleton (e.g. <c>"//"</c> for a <c>MM/dd/yyyy</c>
+        /// mask). Matters most for the auto-filter-row placement of this editor, where the
+        /// control is always materialized but most cells start unfocused with a null value
+        /// — without this, every date filter cell would show <c>"//"</c> as visual noise.
+        /// </summary>
+        private bool _textBoxIsFocused;
+
+        /// <summary>
+        /// Filter-row only. Set by <see cref="TryActivatePrefill"/> when the user focuses an
+        /// empty editor under <see cref="IsFilterRowEditor"/>: each editable segment is
+        /// populated from <see cref="DateTime.Today"/> so the focused editor renders a
+        /// concrete date instead of bare separators (<c>"//"</c>). The pre-filled segments
+        /// are <em>display only</em> — <see cref="Value"/> stays at its prior (null) state
+        /// so no filter is silently applied just because the cell received focus. The flag
+        /// is cleared (and segments are reset to empty) on the first user-driven mutation
+        /// (<see cref="OnTextBoxPreviewTextInput"/>, Backspace, Delete) so subsequent input
+        /// applies to clean segments. <see cref="IncrementActiveSegment"/> keeps the pre-fill
+        /// values but flips the flag — spinning is an explicit edit, so the result should
+        /// commit on LostFocus. <see cref="OnTextBoxLostFocus"/> with the flag still set
+        /// reverts segments and skips <see cref="SyncValueFromSegments"/> so a focus-and-tab
+        /// drive-by leaves the filter untouched.
+        /// </summary>
+        private bool _prefillActive;
+
         static SegmentedDateTimeEditor()
         {
             DefaultStyleKeyProperty.OverrideMetadata(typeof(SegmentedDateTimeEditor),
@@ -182,6 +210,26 @@ namespace WWSearchDataGrid.Modern.WPF
         public static readonly DependencyProperty MaxDateProperty =
             DependencyProperty.Register(nameof(MaxDate), typeof(DateTime?), typeof(SegmentedDateTimeEditor),
                 new PropertyMetadata(null));
+
+        /// <summary>
+        /// Marks this editor as the filter-row instance produced by
+        /// <see cref="DateEditSettings.CreateFilterEditor"/>. Two behaviors flip on:
+        /// <list type="bullet">
+        ///   <item><see cref="OnTextBoxLoaded"/> skips its <c>Keyboard.Focus</c> hop — the cell-edit
+        ///   path needs it to bypass WPF's "focus stays on the cell" quirk, but the filter row
+        ///   has no <see cref="DataGridCell"/> wrapper, so grabbing focus on load would steal
+        ///   focus from whatever the user was doing and immediately render the empty-segment
+        ///   literal skeleton (<c>//</c>) before any user intent to filter.</item>
+        ///   <item><see cref="OnTextBoxGotKeyboardFocus"/> activates pre-fill mode: when the
+        ///   editor receives focus with no value and no user input yet, segments are populated
+        ///   from <see cref="DateTime.Today"/> so the user sees a concrete starting value rather
+        ///   than literal separators. The pre-fill is non-binding (doesn't push to
+        ///   <see cref="Value"/>) and clears on the first typed digit / Backspace / Delete.</item>
+        /// </list>
+        /// </summary>
+        public static readonly DependencyProperty IsFilterRowEditorProperty =
+            DependencyProperty.Register(nameof(IsFilterRowEditor), typeof(bool), typeof(SegmentedDateTimeEditor),
+                new PropertyMetadata(false));
 
         /// <summary>
         /// Aligns the editor's typed text inside the inner <c>PART_TextBox</c>. Routed from
@@ -232,6 +280,13 @@ namespace WWSearchDataGrid.Modern.WPF
         {
             get => (DateTime?)GetValue(MaxDateProperty);
             set => SetValue(MaxDateProperty, value);
+        }
+
+        /// <inheritdoc cref="IsFilterRowEditorProperty"/>
+        public bool IsFilterRowEditor
+        {
+            get => (bool)GetValue(IsFilterRowEditorProperty);
+            set => SetValue(IsFilterRowEditorProperty, value);
         }
 
         #endregion
@@ -288,9 +343,17 @@ namespace WWSearchDataGrid.Modern.WPF
         /// dispatch reliably runs once per session — and the Input-priority defer lets WPF's
         /// own focus pipeline finish before we move focus, avoiding races with the cell's
         /// edit-mode setup.
+        ///
+        /// Skipped in <see cref="IsFilterRowEditor"/> mode: the filter cell isn't a
+        /// <see cref="DataGridCell"/> entering edit mode — it's a persistent host materialized
+        /// when the auto-filter row builds. Grabbing focus on load there would steal focus from
+        /// wherever the user actually was and trigger <see cref="OnTextBoxGotKeyboardFocus"/>,
+        /// which flips <c>_textBoxIsFocused</c> and unmasks the empty-segment literal skeleton
+        /// (<c>//</c>) before any intent to filter.
         /// </summary>
         private void OnTextBoxLoaded(object sender, RoutedEventArgs e)
         {
+            if (IsFilterRowEditor) return;
             Dispatcher.BeginInvoke(new Action(() =>
             {
                 if (_textBox == null) return;
@@ -619,14 +682,44 @@ namespace WWSearchDataGrid.Modern.WPF
             _suppressValueSync = true;
             try
             {
-                _textBox.Text = ComputeDisplayText();
-                if (_activeSegmentIndex >= 0 && _activeSegmentIndex < _segments.Count)
+                // Placeholder suppression: when the user hasn't typed anything yet and
+                // the textbox doesn't have focus, render an empty string instead of the
+                // literals-only skeleton. Otherwise (focused, OR any segment has user
+                // input) render the full segment composition. See _textBoxIsFocused docs
+                // for the auto-filter-row motivation.
+                string text = (!_textBoxIsFocused && AllEditableSegmentsEmpty())
+                    ? string.Empty
+                    : ComputeDisplayText();
+                _textBox.Text = text;
+                if (text.Length > 0
+                    && _activeSegmentIndex >= 0
+                    && _activeSegmentIndex < _segments.Count)
                 {
                     _textBox.CaretIndex = SegmentEndPosition(_activeSegmentIndex);
                     _textBox.SelectionLength = 0;
                 }
             }
             finally { _suppressValueSync = false; }
+        }
+
+        /// <summary>
+        /// True when no editable segment carries user-supplied content — every
+        /// <see cref="DigitSegment"/> has an empty <see cref="Segment.Display"/> and every
+        /// <see cref="EnumSegment"/> still sits at <c>Index = -1</c>. Literal and computed
+        /// segments are ignored: they're not user-driven, so them having "content" doesn't
+        /// count as input.
+        /// </summary>
+        private bool AllEditableSegmentsEmpty()
+        {
+            foreach (var seg in _segments)
+            {
+                switch (seg)
+                {
+                    case DigitSegment d when d.Display.Length > 0: return false;
+                    case EnumSegment en when en.Index >= 0: return false;
+                }
+            }
+            return true;
         }
 
         #endregion
@@ -642,6 +735,12 @@ namespace WWSearchDataGrid.Modern.WPF
 
             if (string.IsNullOrEmpty(e.Text)) return;
             char c = e.Text[0];
+
+            // Filter-row pre-fill: today's date is sitting in the segments as a hint, not as
+            // user input. The first typed character should start a fresh value rather than
+            // appending to / cycling within the hint — clear the segments before the input
+            // handler below applies its digit/letter to the active segment.
+            DeactivatePrefill(clearSegments: true);
 
             // _activeSegmentIndex is the source of truth — set explicitly by arrow nav,
             // mouse click, SelectAll, or initial template apply. Don't re-derive from caret
@@ -753,6 +852,10 @@ namespace WWSearchDataGrid.Modern.WPF
             {
                 if ((modifiers & ModifierKeys.Control) != 0)
                 {
+                    // Spinning is an explicit edit on the pre-filled value — keep the segments
+                    // populated so the spin starts from today's date (rather than empty / min)
+                    // and just flip the flag so the result commits on LostFocus.
+                    DeactivatePrefill(clearSegments: false);
                     IncrementActiveSegment(e.Key == Key.Up ? +1 : -1);
                 }
                 else
@@ -822,6 +925,18 @@ namespace WWSearchDataGrid.Modern.WPF
                 case Key.Back:
                 {
                     if (!_segments[_activeSegmentIndex].IsEditable) break;
+
+                    // Filter-row pre-fill: Back means "drop the suggestion, I want to start
+                    // clean". Wipe every segment in one shot and consume the key so the user
+                    // doesn't see one digit pop off the active segment of today's date.
+                    if (_prefillActive)
+                    {
+                        DeactivatePrefill(clearSegments: true);
+                        RefreshTextBox();
+                        e.Handled = true;
+                        break;
+                    }
+
                     var seg = _segments[_activeSegmentIndex];
 
                     // Enum segments clear whole — partial-substring on "Mar" → "Ma" isn't a
@@ -857,6 +972,18 @@ namespace WWSearchDataGrid.Modern.WPF
                 case Key.Delete:
                 {
                     if (!_segments[_activeSegmentIndex].IsEditable) break;
+
+                    // Filter-row pre-fill: same intent as Backspace — Delete means "drop the
+                    // suggestion". Clear every segment rather than just the active one so the
+                    // user doesn't end up looking at "12//2025" after one keystroke.
+                    if (_prefillActive)
+                    {
+                        DeactivatePrefill(clearSegments: true);
+                        RefreshTextBox();
+                        e.Handled = true;
+                        break;
+                    }
+
                     var seg = _segments[_activeSegmentIndex];
                     if (seg is EnumSegment en) { en.Index = -1; en.Display = string.Empty; }
                     else seg.Display = string.Empty;
@@ -908,6 +1035,16 @@ namespace WWSearchDataGrid.Modern.WPF
 
         private void OnTextBoxGotKeyboardFocus(object sender, KeyboardFocusChangedEventArgs e)
         {
+            // Flip the focus-tracking flag and re-render synchronously so the user sees the
+            // mask skeleton (literals + any digits) the moment focus arrives — matters for
+            // the filter-row case where the textbox was rendering empty while unfocused.
+            _textBoxIsFocused = true;
+            // Filter-row pre-fill: replace the bare "//" focused-empty state with today's
+            // date so the user has a concrete, editable starting value. No-op when not in
+            // filter-row mode or when segments already carry user input.
+            TryActivatePrefill();
+            RefreshTextBox();
+
             // SelectAll on focus, deferred so the seed-char path (from SearchDataGrid) — which
             // queues a Background dispatcher action to inject a typed digit — has already run
             // and set _seedInputApplied. Skipping SelectAll in that case preserves the seed
@@ -922,8 +1059,25 @@ namespace WWSearchDataGrid.Modern.WPF
 
         private void OnTextBoxLostFocus(object sender, RoutedEventArgs e)
         {
-            SyncValueFromSegments();
+            // Filter-row pre-fill still active means the user focused + tabbed away without
+            // touching anything. Revert segments to empty and skip SyncValueFromSegments so
+            // today's date doesn't quietly become an active filter just because the cell
+            // received and lost focus.
+            if (_prefillActive)
+            {
+                DeactivatePrefill(clearSegments: true);
+            }
+            else
+            {
+                SyncValueFromSegments();
+            }
             _seedInputApplied = false;
+            // Drop focus flag and re-render. If the user didn't type anything (and Value
+            // is still null after SyncValueFromSegments), AllEditableSegmentsEmpty() is
+            // true and the textbox collapses back to empty — the auto-filter-row "no
+            // placeholder noise when idle" rule.
+            _textBoxIsFocused = false;
+            RefreshTextBox();
         }
 
         /// <summary>
@@ -1061,6 +1215,10 @@ namespace WWSearchDataGrid.Modern.WPF
         {
             var self = (SegmentedDateTimeEditor)d;
             if (self._suppressValueSync) return;
+            // External Value write (calendar popup pick, programmatic set) supersedes any
+            // pending filter-row pre-fill — the segments will be overwritten by the new
+            // Value and shouldn't be treated as "untouched suggestion" on LostFocus.
+            self._prefillActive = false;
             self.PopulateSegmentsFromValue();
             self.RefreshTextBox();
         }
@@ -1154,6 +1312,87 @@ namespace WWSearchDataGrid.Modern.WPF
             for (int i = 0; i < _segments.Count; i++)
             {
                 if (_segments[i].IsEditable) { _activeSegmentIndex = i; break; }
+            }
+        }
+
+        /// <summary>
+        /// Filter-row pre-fill entry point. Runs from <see cref="OnTextBoxGotKeyboardFocus"/>
+        /// when <see cref="IsFilterRowEditor"/> is true and every editable segment is empty:
+        /// populates the segments from <see cref="DateTime.Today"/> using the same
+        /// segment-by-kind mapping as <see cref="PopulateSegmentsFromValue"/>, but without
+        /// touching <see cref="Value"/>. The result is a focused editor showing a concrete,
+        /// editable date instead of bare separators — the user can spin / type to refine, or
+        /// just tab away (which reverts to empty without committing a filter).
+        /// </summary>
+        private void TryActivatePrefill()
+        {
+            if (!IsFilterRowEditor) return;
+            if (!_textBoxIsFocused) return;
+            if (_prefillActive) return;
+            if (!AllEditableSegmentsEmpty()) return;
+            if (_segments.Count == 0) return;
+
+            var today = DateTime.Today;
+            var culture = CultureInfo.CurrentCulture;
+            var dtfi = culture.DateTimeFormat;
+
+            foreach (var seg in _segments)
+            {
+                switch (seg)
+                {
+                    case DigitSegment d:
+                    {
+                        int v = ValueForKind(d.Kind, today);
+                        string text = v.ToString(CultureInfo.InvariantCulture).PadLeft(d.MaxDigits, '0');
+                        if (text.Length > d.MaxDigits) text = text.Substring(text.Length - d.MaxDigits);
+                        d.Display = text;
+                        break;
+                    }
+                    case EnumSegment e when e.Kind == EnumKind.AmPm:
+                        e.Index = today.Hour < 12 ? 0 : 1;
+                        e.Display = e.Index == 0 ? dtfi.AMDesignator : dtfi.PMDesignator;
+                        break;
+                    case EnumSegment e when e.Kind == EnumKind.MonthAbbr:
+                        e.Index = today.Month - 1;
+                        e.Display = dtfi.AbbreviatedMonthNames[e.Index];
+                        break;
+                    case EnumSegment e when e.Kind == EnumKind.MonthFull:
+                        e.Index = today.Month - 1;
+                        e.Display = dtfi.MonthNames[e.Index];
+                        break;
+                    case ComputedSegment cs:
+                        cs.Display = today.ToString(cs.FormatToken, culture);
+                        break;
+                }
+            }
+
+            _prefillActive = true;
+        }
+
+        /// <summary>
+        /// Called from input handlers that should drop the pre-fill before applying the
+        /// user's keystroke. When <paramref name="clearSegments"/> is true (typed digit,
+        /// Backspace, Delete), every editable segment is reset to empty so the input lands
+        /// on a clean slate rather than appending to / cycling within the pre-filled value.
+        /// When false (spin via Ctrl+↑/↓), the segments are kept as-is and only the flag
+        /// flips — spinning is an explicit edit on the pre-filled value, so its result
+        /// should commit on LostFocus.
+        /// </summary>
+        private void DeactivatePrefill(bool clearSegments)
+        {
+            if (!_prefillActive) return;
+            _prefillActive = false;
+
+            if (!clearSegments) return;
+            foreach (var seg in _segments)
+            {
+                switch (seg)
+                {
+                    case DigitSegment d: d.Display = string.Empty; break;
+                    case EnumSegment e: e.Index = -1; e.Display = string.Empty; break;
+                    // ComputedSegment intentionally left as-is — it gets refreshed by
+                    // TryRefreshComputedSegments once the user-driven segments form a valid date.
+                }
             }
         }
 

@@ -92,6 +92,17 @@ namespace WWSearchDataGrid.Modern.Core
         }
 
         /// <summary>
+        /// Gets or sets whether DateTime filter values are compared rounded-to-date.
+        /// Defaults to <c>true</c>. Propagated into each newly-built <see cref="SearchCondition"/>
+        /// so the date evaluators (BetweenDates, NotBetweenDates) can switch between rounded
+        /// and full-DateTime comparison. Reserved for programmatic consumers — there is no
+        /// public DP exposing this on the WPF column surface (the rule popup's BetweenDates
+        /// editor only accepts dates without time-of-day, so date-rounded comparison is
+        /// always desired from the UI).
+        /// </summary>
+        public bool RoundDateTime { get; set; } = true;
+
+        /// <summary>
         /// Gets the read-only collection of column values for UI binding
         /// Uses shared cache manager to eliminate data duplication
         /// Values are loaded lazily when first accessed

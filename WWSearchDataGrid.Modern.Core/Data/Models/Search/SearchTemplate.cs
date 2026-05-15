@@ -796,7 +796,10 @@ namespace WWSearchDataGrid.Modern.Core
             if (SearchType == SearchType.IsOnAnyOfDates) return BuildIsOnAnyOfDatesExpression();
             if (SearchType == SearchType.DateInterval) return BuildDateIntervalExpression();
 
-            var searchCondition = new SearchCondition(targetType, SearchType, SelectedValue, SelectedSecondaryValue);
+            var searchCondition = new SearchCondition(targetType, SearchType, SelectedValue, SelectedSecondaryValue)
+            {
+                RoundDateTime = SearchTemplateController?.RoundDateTime ?? true,
+            };
             return obj => SearchEngine.EvaluateCondition(obj, searchCondition);
         }
 

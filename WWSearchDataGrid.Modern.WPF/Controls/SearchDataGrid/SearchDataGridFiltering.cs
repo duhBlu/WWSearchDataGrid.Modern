@@ -823,7 +823,7 @@ namespace WWSearchDataGrid.Modern.WPF
         {
             try
             {
-                if (e.FilterInfo?.FilterData is ColumnSearchBox columnSearchBox)
+                if (e.FilterInfo?.FilterData is IColumnFilterHost columnSearchBox)
                 {
                     columnSearchBox.ClearFilter();
                     FilterItemsSource();
@@ -843,7 +843,7 @@ namespace WWSearchDataGrid.Modern.WPF
         {
             try
             {
-                if (e.RemovableToken?.RemovalContext != null && e.RemovableToken.SourceFilter?.FilterData is ColumnSearchBox columnSearchBox)
+                if (e.RemovableToken?.RemovalContext != null && e.RemovableToken.SourceFilter?.FilterData is IColumnFilterHost columnSearchBox)
                 {
                     var template = e.RemovableToken.RemovalContext.ParentTemplate;
                     var controller = columnSearchBox.SearchTemplateController;
@@ -892,7 +892,7 @@ namespace WWSearchDataGrid.Modern.WPF
         {
             try
             {
-                if (e.OperatorToken?.SourceFilter?.FilterData is ColumnSearchBox columnSearchBox)
+                if (e.OperatorToken?.SourceFilter?.FilterData is IColumnFilterHost columnSearchBox)
                 {
                     var controller = columnSearchBox.SearchTemplateController;
                     if (controller == null)

@@ -103,21 +103,21 @@ When the filter path differs from the field name:
                 SortMemberPath="StatusCode" />
 ```
 
-### Default Search Mode
+### Default Search Type
 
 Change how the simple text search box matches per-column:
 
 ```xml
 <!-- Match from the beginning (good for IDs, part numbers) -->
 <sdg:GridColumn FieldName="PartNumber" Header="Part #"
-                DefaultSearchMode="StartsWith" />
+                DefaultSearchType="StartsWith" />
 
 <!-- Exact match only -->
 <sdg:GridColumn FieldName="Status" Header="Status"
-                DefaultSearchMode="Equals" />
+                DefaultSearchType="Equals" />
 ```
 
-Options: `Contains` (default), `StartsWith`, `EndsWith`, `Equals`
+Options: `Contains`, `StartsWith` (default for string columns), `EndsWith`, `Equals`
 
 ### Display Formatting
 

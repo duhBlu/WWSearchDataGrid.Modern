@@ -8,7 +8,7 @@ namespace WWSearchDataGrid.Modern.Core
     /// <summary>
     /// Registry of all filter types and their metadata
     /// </summary>
-    internal static class SearchTypeRegistry
+    public static class SearchTypeRegistry
     {
         private static readonly Dictionary<SearchType, SearchTypeMetadata> Registry;
 

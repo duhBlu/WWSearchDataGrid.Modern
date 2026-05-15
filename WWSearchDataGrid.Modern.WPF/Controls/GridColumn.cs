@@ -489,9 +489,11 @@ namespace WWSearchDataGrid.Modern.WPF
         /// <remarks>
         /// Mapping:
         /// <list type="bullet">
-        /// <item><c>bool</c> / <c>bool?</c> → <see cref="UseCheckBoxInSearchBox"/> = <c>true</c></item>
-        /// <item><c>DateTime</c> / <c>DateTime?</c> → <see cref="DefaultSearchMode"/> = <see cref="DefaultSearchMode.Equals"/></item>
-        /// <item>Enum types → <see cref="DefaultSearchMode"/> = <see cref="DefaultSearchMode.Equals"/></item>
+        /// <item><c>bool</c> / <c>bool?</c> → <see cref="UseCheckBoxInSearchBox"/> = <c>true</c>, <see cref="TextAlignment"/> = <see cref="System.Windows.TextAlignment.Center"/></item>
+        /// <item><c>DateTime</c> / <c>DateTime?</c> → <see cref="DefaultSearchType"/> = <see cref="DefaultSearchType.Equals"/></item>
+        /// <item>Enum types → <see cref="DefaultSearchType"/> = <see cref="DefaultSearchType.Equals"/></item>
+        /// <item><c>string</c> → <see cref="DefaultSearchType"/> = <see cref="DefaultSearchType.StartsWith"/> (spec-aligned)</item>
+        /// <item>Numeric types → <see cref="TextAlignment"/> = <see cref="System.Windows.TextAlignment.Right"/>, <see cref="DefaultSearchType"/> = <see cref="DefaultSearchType.Equals"/></item>
         /// </list>
         /// </remarks>
         internal void ApplyTypeBasedDefaults()
@@ -507,19 +509,37 @@ namespace WWSearchDataGrid.Modern.WPF
                     SetAutoUseCheckBoxInSearchBox(true);
                 if (!IsTextAlignmentExplicit)
                     SetAutoTextAlignment(TextAlignment.Center);
+                // CheckBoxEditSettings.GetSupportedFilterSearchTypes whitelists only Equals
+                // (+ IsNull/IsNotNull when nullable). Without an Equals default,
+                // ColumnFilterControl.UpdateEffectiveIsCellEnabled sees the registered
+                // StartsWith default fall outside the whitelist and disables the entire
+                // filter cell — which then propagates IsEnabled=false through the visual
+                // tree to PART_FilterCheckBox, making the cycle checkbox look greyed-out
+                // and uninteractive even though the grid / column is editable.
+                if (!IsDefaultSearchTypeExplicit)
+                    SetAutoDefaultSearchType(DefaultSearchType.Equals);
             }
             else if (underlying == typeof(DateTime))
             {
-                if (!IsDefaultSearchModeExplicit)
-                    SetAutoDefaultSearchMode(DefaultSearchMode.Equals);
+                if (!IsDefaultSearchTypeExplicit)
+                    SetAutoDefaultSearchType(DefaultSearchType.Equals);
             }
             else if (underlying.IsEnum)
             {
-                if (!IsDefaultSearchModeExplicit)
-                    SetAutoDefaultSearchMode(DefaultSearchMode.Equals);
+                if (!IsDefaultSearchTypeExplicit)
+                    SetAutoDefaultSearchType(DefaultSearchType.Equals);
                 // TODO: populate the search dropdown from Enum.GetValues(underlying).
                 // The current dropdown is data-driven via SetupColumnDataLazy; injecting a
                 // static enum source needs a separate code path on SearchTemplateController.
+            }
+            else if (underlying == typeof(string))
+            {
+                // Spec-aligned: string columns default to StartsWith (prefix match), which
+                // matches user expectations for free-text searches in a tabular UI. Redundant
+                // with the registered default for now, but the explicit branch protects
+                // against future default changes.
+                if (!IsDefaultSearchTypeExplicit)
+                    SetAutoDefaultSearchType(DefaultSearchType.StartsWith);
             }
             else if (IsNumericType(underlying))
             {
@@ -527,10 +547,37 @@ namespace WWSearchDataGrid.Modern.WPF
                 // a column.
                 if (!IsTextAlignmentExplicit)
                     SetAutoTextAlignment(TextAlignment.Right);
+                // Numeric columns can't meaningfully StartsWith / Contains, and the matching
+                // EditSettings (auto-created TextEditSettings with MaskType=Numeric, or an
+                // explicit SpinEditSettings) exposes only numeric operators. Without an Equals
+                // default, ColumnFilterControl.UpdateEffectiveIsCellEnabled greys the
+                // AutoFilterRow cell because the registered StartsWith default isn't in the
+                // numeric whitelist.
+                if (!IsDefaultSearchTypeExplicit)
+                    SetAutoDefaultSearchType(DefaultSearchType.Equals);
             }
-            // string defaults to Contains (already the registered default) and TextAlignment.Left
-            // (the registered default of the property).
             // decimal/double: no auto-format — DisplayStringFormat stays user-controlled.
+
+            // Editor-shape override wins over CLR-type default. Runs after the type branches so
+            // a ComboBoxEditSettings on a string-typed column ends up at Equals (whitelist-
+            // compatible) instead of the StartsWith the string branch would otherwise pick.
+            ApplyEditSettingsPreferredDefaults();
+        }
+
+        /// <summary>
+        /// Applies <see cref="BaseEditSettings.GetPreferredDefaultSearchType"/> as the column's
+        /// auto-default when the editor shape constrains the allowed operator set tighter than
+        /// the CLR-type default. Skipped when the user has explicitly set
+        /// <see cref="DefaultSearchType"/>. Called from both <see cref="ApplyTypeBasedDefaults"/>
+        /// (covers FieldType-resolves-after-EditSettings) and <see cref="OnEditSettingsChanged"/>
+        /// (covers EditSettings-set-after-FieldType).
+        /// </summary>
+        private void ApplyEditSettingsPreferredDefaults()
+        {
+            if (IsDefaultSearchTypeExplicit) return;
+            var preferred = EditSettings?.GetPreferredDefaultSearchType();
+            if (preferred.HasValue && preferred.Value != DefaultSearchType)
+                SetAutoDefaultSearchType(preferred.Value);
         }
 
         #endregion
@@ -554,42 +601,56 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
-        /// Gets or sets the default search mode for simple textbox searches.
+        /// Gets or sets the default search type for this column's auto-filter row quick search.
         /// </summary>
-        public static readonly DependencyProperty DefaultSearchModeProperty =
+        /// <remarks>
+        /// String columns default to <see cref="WPF.DefaultSearchType.StartsWith"/> (set in
+        /// <see cref="ApplyTypeBasedDefaults"/>). Other CLR types use the registered default
+        /// (<see cref="WPF.DefaultSearchType.StartsWith"/>) unless overridden by
+        /// <see cref="ApplyTypeBasedDefaults"/> (e.g. <c>DateTime</c> / enums → <c>Equals</c>).
+        /// </remarks>
+        public static readonly DependencyProperty DefaultSearchTypeProperty =
             DependencyProperty.Register(
-                nameof(DefaultSearchMode),
-                typeof(DefaultSearchMode),
+                nameof(DefaultSearchType),
+                typeof(DefaultSearchType),
                 typeof(GridColumn),
-                new PropertyMetadata(DefaultSearchMode.Contains, OnDefaultSearchModePropertyChanged));
+                new PropertyMetadata(WWSearchDataGrid.Modern.WPF.DefaultSearchType.StartsWith, OnDefaultSearchTypePropertyChanged));
 
-        public DefaultSearchMode DefaultSearchMode
+        public DefaultSearchType DefaultSearchType
         {
-            get => (DefaultSearchMode)GetValue(DefaultSearchModeProperty);
-            set => SetValue(DefaultSearchModeProperty, value);
+            get => (DefaultSearchType)GetValue(DefaultSearchTypeProperty);
+            set => SetValue(DefaultSearchTypeProperty, value);
         }
 
-        private bool _isAutoDefaultSearchMode;
+        private bool _isAutoDefaultSearchType;
 
         /// <summary>
-        /// Gets whether <see cref="DefaultSearchMode"/> was set explicitly. Auto-configuration
+        /// Gets whether <see cref="DefaultSearchType"/> was set explicitly. Auto-configuration
         /// from <see cref="FieldType"/> skips columns where this is true.
         /// </summary>
-        internal bool IsDefaultSearchModeExplicit => IsExplicitlySet(DefaultSearchModeProperty, _isAutoDefaultSearchMode);
+        internal bool IsDefaultSearchTypeExplicit => IsExplicitlySet(DefaultSearchTypeProperty, _isAutoDefaultSearchType);
 
         /// <summary>
-        /// Sets <see cref="DefaultSearchMode"/> from auto-configuration.
+        /// Sets <see cref="DefaultSearchType"/> from auto-configuration.
         /// </summary>
-        internal void SetAutoDefaultSearchMode(DefaultSearchMode mode)
+        internal void SetAutoDefaultSearchType(DefaultSearchType type)
         {
-            SetValue(DefaultSearchModeProperty, mode);
-            _isAutoDefaultSearchMode = true;
+            SetValue(DefaultSearchTypeProperty, type);
+            _isAutoDefaultSearchType = true;
         }
 
-        private static void OnDefaultSearchModePropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        private static void OnDefaultSearchTypePropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
-            if (d is GridColumn gc)
-                gc._isAutoDefaultSearchMode = false;
+            if (d is not GridColumn gc) return;
+            gc._isAutoDefaultSearchType = false;
+
+            // Spec rule (§1.8 of the plan): when the column's default search criteria is excluded
+            // from the matching host's SupportedSearchTypes whitelist, the cell disables. The
+            // resolved DefaultSearchType is one of the inputs to that check — re-evaluate on the
+            // host whenever this value changes.
+            if (gc.Owner == null) return;
+            var host = gc.Owner.DataColumns.FirstOrDefault(c => c.CurrentColumn == gc.InternalColumn) as ColumnFilterControl;
+            host?.UpdateEffectiveIsCellEnabled();
         }
 
         /// <summary>
@@ -687,6 +748,153 @@ namespace WWSearchDataGrid.Modern.WPF
             set => SetValue(AllowSortingProperty, value);
         }
 
+        /// <summary>
+        /// Gets or sets a column-level override for the grid's
+        /// <see cref="SearchDataGrid.ShowCriteriaInAutoFilterRow"/>. <c>null</c> (the default)
+        /// inherits the grid value; <c>true</c> / <c>false</c> overrides it for this column.
+        /// </summary>
+        public static readonly DependencyProperty ShowCriteriaInAutoFilterRowProperty =
+            DependencyProperty.Register(
+                nameof(ShowCriteriaInAutoFilterRow),
+                typeof(bool?),
+                typeof(GridColumn),
+                new PropertyMetadata(null, OnShowCriteriaInAutoFilterRowChanged));
+
+        public bool? ShowCriteriaInAutoFilterRow
+        {
+            get => (bool?)GetValue(ShowCriteriaInAutoFilterRowProperty);
+            set => SetValue(ShowCriteriaInAutoFilterRowProperty, value);
+        }
+
+        /// <summary>
+        /// Gets or sets whether the auto-filter row cell for this column is enabled.
+        /// <c>false</c> disables (greys) the cell while preserving its space — distinct
+        /// from <see cref="AllowFiltering"/>, which hides the cell entirely. The spec
+        /// names this property <c>AllowAutoFilter</c>; both remain on the column with
+        /// complementary semantics.
+        /// </summary>
+        public static readonly DependencyProperty AllowAutoFilterProperty =
+            DependencyProperty.Register(
+                nameof(AllowAutoFilter),
+                typeof(bool),
+                typeof(GridColumn),
+                new PropertyMetadata(true, OnAllowAutoFilterChanged));
+
+        public bool AllowAutoFilter
+        {
+            get => (bool)GetValue(AllowAutoFilterProperty);
+            set => SetValue(AllowAutoFilterProperty, value);
+        }
+
+        /// <summary>
+        /// Column-level override for date-only filter comparison on DateTime columns.
+        /// <c>null</c> (default) auto-detects: the column samples its bound values, and the
+        /// resolved value is <c>true</c> when no value carries a non-zero time-of-day (the
+        /// auto editor is a date-only DatePicker, so filtering by date is the only sensible
+        /// comparison) and <c>false</c> when at least one value has a time component (the
+        /// auto editor exposes a time segment, so the user's typed time is honored). Set to
+        /// <c>true</c> / <c>false</c> to override the auto-detection.
+        /// Surfaced as <see cref="SearchCondition.RoundDateTime"/> on every condition the
+        /// column's filter row produces.
+        /// </summary>
+        public static readonly DependencyProperty RoundDateTimeProperty =
+            DependencyProperty.Register(
+                nameof(RoundDateTime),
+                typeof(bool?),
+                typeof(GridColumn),
+                new PropertyMetadata(null, OnRoundDateTimeChanged));
+
+        public bool? RoundDateTime
+        {
+            get => (bool?)GetValue(RoundDateTimeProperty);
+            set => SetValue(RoundDateTimeProperty, value);
+        }
+
+        /// <summary>
+        /// Gets or sets a column-level override for the grid's
+        /// <see cref="SearchDataGrid.AutoFilterRowCellStyle"/>. <c>null</c> (default)
+        /// inherits the grid setting; any non-null <see cref="Style"/> wins over the grid
+        /// value for this column. When both are null, the keyed theme style
+        /// (<see cref="SdgThemeKeys.ColumnFilterControl"/>) is used.
+        /// </summary>
+        public static readonly DependencyProperty AutoFilterRowCellStyleProperty =
+            DependencyProperty.Register(
+                nameof(AutoFilterRowCellStyle),
+                typeof(Style),
+                typeof(GridColumn),
+                new PropertyMetadata(null, OnAutoFilterRowCellStyleChanged));
+
+        public Style AutoFilterRowCellStyle
+        {
+            get => (Style)GetValue(AutoFilterRowCellStyleProperty);
+            set => SetValue(AutoFilterRowCellStyleProperty, value);
+        }
+
+        /// <summary>
+        /// Gets or sets whether the auto-filter cell applies the filter as the user types
+        /// (or interacts with the editor) versus waiting until they commit explicitly via
+        /// Enter / Tab / lost-focus. Defaults to <c>true</c> (immediate apply). When
+        /// <c>false</c>, keystrokes do not rebuild the filter expression — the user must
+        /// commit to apply.
+        /// </summary>
+        public static readonly DependencyProperty ImmediateUpdateAutoFilterProperty =
+            DependencyProperty.Register(
+                nameof(ImmediateUpdateAutoFilter),
+                typeof(bool),
+                typeof(GridColumn),
+                new PropertyMetadata(true, OnImmediateUpdateAutoFilterChanged));
+
+        public bool ImmediateUpdateAutoFilter
+        {
+            get => (bool)GetValue(ImmediateUpdateAutoFilterProperty);
+            set => SetValue(ImmediateUpdateAutoFilterProperty, value);
+        }
+
+        /// <summary>
+        /// Gets or sets the <see cref="DataTemplate"/> used as the display surface for the
+        /// auto-filter row cell on this column. When set, it replaces the default editor
+        /// produced by <see cref="BaseEditSettings.CreateFilterEditor"/>. The template's
+        /// <see cref="FrameworkElement.DataContext"/> is an <see cref="EditGridCellData"/>
+        /// instance with <c>Value</c> two-way-bound to the column's filter value; templates
+        /// that don't bind <c>{Binding Value}</c> simply won't drive the filter — matching
+        /// DevExpress's behavior. Used as the fallback when
+        /// <see cref="AutoFilterRowEditTemplate"/> is also <c>null</c>; the filter row is
+        /// always-edit, so the spec's display/edit distinction collapses here.
+        /// </summary>
+        public static readonly DependencyProperty AutoFilterRowDisplayTemplateProperty =
+            DependencyProperty.Register(
+                nameof(AutoFilterRowDisplayTemplate),
+                typeof(DataTemplate),
+                typeof(GridColumn),
+                new PropertyMetadata(null, OnAutoFilterRowTemplateChanged));
+
+        public DataTemplate AutoFilterRowDisplayTemplate
+        {
+            get => (DataTemplate)GetValue(AutoFilterRowDisplayTemplateProperty);
+            set => SetValue(AutoFilterRowDisplayTemplateProperty, value);
+        }
+
+        /// <summary>
+        /// Gets or sets the <see cref="DataTemplate"/> used as the edit surface for the
+        /// auto-filter row cell on this column. Takes precedence over
+        /// <see cref="AutoFilterRowDisplayTemplate"/> — when both are set, the edit template
+        /// wins; when only the display template is set, it serves both display and edit roles
+        /// (the filter row is always-edit). Same <see cref="EditGridCellData"/> context shape
+        /// as <see cref="AutoFilterRowDisplayTemplate"/>.
+        /// </summary>
+        public static readonly DependencyProperty AutoFilterRowEditTemplateProperty =
+            DependencyProperty.Register(
+                nameof(AutoFilterRowEditTemplate),
+                typeof(DataTemplate),
+                typeof(GridColumn),
+                new PropertyMetadata(null, OnAutoFilterRowTemplateChanged));
+
+        public DataTemplate AutoFilterRowEditTemplate
+        {
+            get => (DataTemplate)GetValue(AutoFilterRowEditTemplateProperty);
+            set => SetValue(AutoFilterRowEditTemplateProperty, value);
+        }
+
         #endregion
 
         #region Editor Properties
@@ -730,6 +938,11 @@ namespace WWSearchDataGrid.Modern.WPF
                 templateColumn.CellTemplate = newSettings.ResolveDisplayTemplate(col);
                 templateColumn.CellEditingTemplate = newSettings.ResolveEditTemplate(col);
             }
+
+            // Editor-shape preference may differ from the CLR-type default applied earlier.
+            // ApplyTypeBasedDefaults also calls this, but that runs on FieldType change — when
+            // EditSettings is set or swapped after FieldType has settled, we still need to clamp.
+            col.ApplyEditSettingsPreferredDefaults();
         }
 
         #endregion
@@ -846,6 +1059,17 @@ namespace WWSearchDataGrid.Modern.WPF
             // date editor integrates display formatting natively.
             BaseEditSettings effectiveEditSettings = EditSettings ?? AutoCreateEditSettings(wantsCustomDisplay);
 
+            // Surface auto-created settings on the descriptor so downstream readers — most
+            // importantly ColumnFilterControl, which reads GridColumn.EditSettings to pick the
+            // filter-row editor shape and the SearchTypeSelector operator whitelist — see the
+            // same instance that's driving the cell templates. Without this, auto-created
+            // settings remain invisible to the filter row and it defaults to a string-only
+            // TextEditSettings whitelist. The assignment fires OnEditSettingsChanged, but its
+            // template-rebuild branch is guarded by a non-null InternalColumn (still null at
+            // this point), so the only side effect is DataContext propagation — desirable.
+            if (EditSettings == null && effectiveEditSettings != null)
+                EditSettings = effectiveEditSettings;
+
             // EditSettings, when present, drives template generation — produces a DataGridTemplateColumn
             // with display + edit templates from the editor configuration. Takes precedence over the
             // default text/checkbox selection so consumers can opt into a richer editor.
@@ -906,20 +1130,47 @@ namespace WWSearchDataGrid.Modern.WPF
         ///   <item>DateTime / DateTime? → <see cref="DateEditSettings"/> (masked date editor).
         ///   Data with time-of-day uses <c>"MM/dd/yyyy HH:mm:ss"</c>; date-only uses the default
         ///   short-date mask. Always applied — display formatting is integrated into the editor.</item>
+        ///   <item>Numeric (int, long, decimal, double, etc.) with a numeric
+        ///   <see cref="DisplayStringFormat"/> (<c>C</c>/<c>N</c>/<c>F</c>/<c>P</c> with optional
+        ///   precision) → <see cref="TextEditSettings"/> with <see cref="TextEditSettings.Mask"/>
+        ///   set to the format string and <see cref="TextEditSettings.MaskType"/> =
+        ///   <see cref="MaskType.Numeric"/>. The read-only TextBlock keeps the user's format via
+        ///   <c>Binding.StringFormat</c>; the edit TextBox routes through <c>NumericMaskFormatter</c>
+        ///   for keystroke validation and chrome stripping; the filter row picks up the numeric
+        ///   operator whitelist via <see cref="TextEditSettings.GetSupportedFilterSearchTypes"/>.</item>
         ///   <item>bool / bool? → <see cref="CheckBoxEditSettings"/>.</item>
         ///   <item>string → <see cref="TextEditSettings"/> (no mask).</item>
-        ///   <item>Numeric (int, long, decimal, double, etc.) → <see cref="SpinEditSettings"/>
-        ///   with a per-type-appropriate <c>Increment</c> (<c>1</c> for integers, <c>0.5</c> for
-        ///   floating-point / decimal).</item>
+        ///   <item>Numeric (int, long, decimal, double, etc.) without a custom display →
+        ///   <see cref="TextEditSettings"/> with <see cref="TextEditSettings.MaskType"/> =
+        ///   <see cref="MaskType.Numeric"/> and no <see cref="TextEditSettings.Mask"/>. Behaves
+        ///   like a plain TextBox in edit mode while still routing the filter row through the
+        ///   numeric operator whitelist (Equals, GreaterThan, Between, …). Consumers who want
+        ///   up/down spinner UX assign <see cref="SpinEditSettings"/> explicitly.</item>
         /// </list>
         /// Returns <c>null</c> when <paramref name="wantsCustomDisplay"/> is <c>true</c> for
-        /// non-DateTime types — the consumer's converter / string format / mask is a signal that
-        /// they want plain text rendering, so the existing text-column fallback runs instead.
+        /// non-DateTime, non-numeric-format types — the consumer's converter / mask is a signal
+        /// that they want plain text rendering, so the existing text-column fallback runs instead.
         /// </summary>
         private BaseEditSettings AutoCreateEditSettings(bool wantsCustomDisplay)
         {
             if (FieldType == typeof(DateTime) || FieldType == typeof(DateTime?))
                 return BuildAutoDateTimeEditSettings();
+
+            // Numeric column with a numeric DisplayStringFormat: skip the spinner editor (the
+            // user opted into custom display, so spinner chrome is unwanted) and instead wire a
+            // mask-aware TextEditSettings. The Numeric mask engine accepts the same C/N/F/P
+            // grammar the format string uses, so DisplayStringFormat doubles as the edit-time
+            // mask without extra configuration on the consumer's side.
+            if (wantsCustomDisplay
+                && IsNumericType(FieldType)
+                && IsNumericFormatString(DisplayStringFormat))
+            {
+                return new TextEditSettings
+                {
+                    Mask = DisplayStringFormat,
+                    MaskType = MaskType.Numeric,
+                };
+            }
 
             if (wantsCustomDisplay) return null;
 
@@ -930,9 +1181,23 @@ namespace WWSearchDataGrid.Modern.WPF
                 return new TextEditSettings();
 
             if (IsNumericType(FieldType))
-                return BuildAutoNumericEditSettings(FieldType);
+                return BuildAutoNumericEditSettings();
 
             return null;
+        }
+
+        /// <summary>
+        /// True when <paramref name="format"/> is a standard .NET numeric format the
+        /// <c>NumericMaskFormatter</c> can interpret — currency (<c>C</c>), number (<c>N</c>),
+        /// fixed-point (<c>F</c>), or percent (<c>P</c>), with optional precision. Other format
+        /// strings (custom <c>#,##0.00</c>, hex <c>X</c>, exponential <c>E</c>, date patterns)
+        /// fall through to the plain text-column path.
+        /// </summary>
+        private static bool IsNumericFormatString(string format)
+        {
+            if (string.IsNullOrEmpty(format)) return false;
+            char first = char.ToUpperInvariant(format[0]);
+            return first == 'C' || first == 'N' || first == 'F' || first == 'P';
         }
 
         private static bool IsNumericType(Type t)
@@ -945,17 +1210,36 @@ namespace WWSearchDataGrid.Modern.WPF
                 || inner == typeof(double) || inner == typeof(float) || inner == typeof(decimal);
         }
 
-        private static BaseEditSettings BuildAutoNumericEditSettings(Type fieldType)
-        {
-            var inner = Nullable.GetUnderlyingType(fieldType) ?? fieldType;
-            bool isInteger = inner == typeof(int) || inner == typeof(long) || inner == typeof(short)
-                || inner == typeof(byte) || inner == typeof(sbyte) || inner == typeof(ushort)
-                || inner == typeof(uint) || inner == typeof(ulong);
-            return new SpinEditSettings { Increment = isInteger ? 1.0 : 0.5 };
-        }
+        // Numeric default. MaskType=Numeric (without an explicit Mask) keeps the filter row's
+        // operator whitelist on the numeric set (Equals, GreaterThan, Between, …) per
+        // TextEditSettings.GetSupportedFilterSearchTypes, while the empty Mask leaves
+        // MaskInputBehavior unwired — the edit TextBox behaves like a plain text editor.
+        // Spinner UX is opt-in via explicit SpinEditSettings.
+        private static BaseEditSettings BuildAutoNumericEditSettings()
+            => new TextEditSettings { MaskType = MaskType.Numeric };
 
         private BaseEditSettings BuildAutoDateTimeEditSettings()
         {
+            // Date-only DisplayStringFormat: adopt it as the editor Mask with
+            // UseMaskAsDisplayFormat=true so the filter editor has no time segments, the cell
+            // continues to render the same date-only text via MaskFormatConverter, and
+            // ResolveEffectiveRoundDateTime forces .Date comparison. Without this, the auto
+            // editor falls through to "MM/dd/yyyy HH:mm:ss", lets the user commit a midnight
+            // DateTime, and then exact-DateTime comparison against row values carrying
+            // hours/minutes never matches. Time-bearing DisplayStringFormat is intentionally
+            // left to the existing path: routing it through MaskFormatConverter would
+            // normalize single 'h'/'m' tokens to fixed-width 'hh'/'mm' and silently change
+            // the displayed hour from "8:30 AM" to "08:30 AM".
+            if (!string.IsNullOrEmpty(DisplayStringFormat) && !DateTimeFormatHasTimeTokens(DisplayStringFormat))
+            {
+                return new DateEditSettings
+                {
+                    Mask = DisplayStringFormat,
+                    MaskType = MaskType.DateTime,
+                    UseMaskAsDisplayFormat = true,
+                };
+            }
+
             if (AnyBoundValueHasTimeOfDay(maxSamples: 200))
             {
                 return new DateEditSettings
@@ -968,13 +1252,125 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
+        /// Resolves the effective <see cref="RoundDateTime"/> for this column. Resolution order:
+        /// <list type="number">
+        ///   <item>Explicit <see cref="RoundDateTimeProperty"/> wins.</item>
+        ///   <item>Effective display format strips time-of-day (no <c>H</c>/<c>h</c>/<c>m</c>/
+        ///   <c>s</c>/<c>f</c>/<c>F</c>/<c>t</c>/<c>K</c>/<c>z</c> tokens) → <c>true</c>. A
+        ///   column that visually shows just a date must filter on dates only; otherwise the
+        ///   filter editor's midnight commit can't match rows whose backing timestamps carry
+        ///   times the user can't see.</item>
+        ///   <item>Fall back to data sampling — when no sampled value carries a non-zero time,
+        ///   the editor is a date-only DatePicker and the filter rounds to <c>.Date</c>;
+        ///   otherwise the editor exposes a time segment and the filter keeps the full instant.</item>
+        /// </list>
+        /// Called from <c>ColumnFilterControl</c> when it pushes the value into the column's
+        /// <c>SearchTemplateController</c>.
+        /// </summary>
+        internal bool ResolveEffectiveRoundDateTime()
+        {
+            if (RoundDateTime.HasValue)
+                return RoundDateTime.Value;
+
+            string effectiveDisplay = ResolveEffectiveDisplayFormat();
+            if (!string.IsNullOrEmpty(effectiveDisplay) && !DateTimeFormatHasTimeTokens(effectiveDisplay))
+                return true;
+
+            return !AnyBoundValueHasTimeOfDay(maxSamples: 200);
+        }
+
+        /// <summary>
+        /// Returns the format string the cell uses to render its value, mirroring
+        /// <see cref="Display.DisplayValueProviderFactory"/>'s priority chain so this
+        /// resolver and the chip-display pipeline agree. Returns <c>null</c> when the column
+        /// doesn't carry an opinion (display falls back to the editor's default short date).
+        /// </summary>
+        private string ResolveEffectiveDisplayFormat()
+        {
+            if (EditSettings is DateEditSettings dateSettings
+                && dateSettings.UseMaskAsDisplayFormat
+                && !string.IsNullOrEmpty(dateSettings.Mask))
+                return dateSettings.Mask;
+            if (EditSettings is TextEditSettings textSettings
+                && textSettings.UseMaskAsDisplayFormat
+                && !string.IsNullOrEmpty(textSettings.Mask))
+                return textSettings.Mask;
+            if (!string.IsNullOrEmpty(DisplayMask)) return DisplayMask;
+            if (!string.IsNullOrEmpty(DisplayStringFormat)) return DisplayStringFormat;
+            return null;
+        }
+
+        /// <summary>
+        /// Returns <c>true</c> when <paramref name="format"/> contains tokens that render
+        /// time-of-day content — hour (<c>H</c>/<c>h</c>), minute (<c>m</c>), second (<c>s</c>),
+        /// fractional seconds (<c>f</c>/<c>F</c>), AM/PM (<c>t</c>), or timezone offset
+        /// (<c>K</c>/<c>z</c>). Recognizes standard single-char codes ('t'/'T'/'f'/'F'/'g'/
+        /// 'G'/'s'/'u'/'U'/'r'/'R'/'o'/'O') as time-bearing; everything else is treated as
+        /// date-only. Quoted literals (<c>'text'</c>) and backslash-escaped chars are skipped.
+        /// </summary>
+        private static bool DateTimeFormatHasTimeTokens(string format)
+        {
+            if (string.IsNullOrEmpty(format)) return false;
+
+            // Standard single-letter format codes resolve through culture patterns; classify
+            // them up-front rather than running each one through DateTimeFormatInfo just to
+            // re-scan the result.
+            if (format.Length == 1)
+            {
+                switch (format[0])
+                {
+                    case 't':
+                    case 'T':
+                    case 'f':
+                    case 'F':
+                    case 'g':
+                    case 'G':
+                    case 's':
+                    case 'u':
+                    case 'U':
+                    case 'r':
+                    case 'R':
+                    case 'o':
+                    case 'O':
+                        return true;
+                    default:
+                        return false;
+                }
+            }
+
+            int i = 0;
+            while (i < format.Length)
+            {
+                char c = format[i];
+
+                if (c == '\\' && i + 1 < format.Length) { i += 2; continue; }
+                if (c == '\'' || c == '"')
+                {
+                    int end = format.IndexOf(c, i + 1);
+                    if (end < 0) return false;
+                    i = end + 1;
+                    continue;
+                }
+
+                // 'M' (uppercase) is month, NOT time — exclude. 'm' (lowercase) is minute.
+                // 'F' (uppercase) as a custom specifier is fractional seconds (time-bearing).
+                if (c == 'H' || c == 'h' || c == 'm' || c == 's' || c == 'f' || c == 'F'
+                    || c == 't' || c == 'K' || c == 'z')
+                    return true;
+
+                i++;
+            }
+            return false;
+        }
+
+        /// <summary>
         /// Walks the parent grid's <c>ItemsSource</c> (up to <paramref name="maxSamples"/> items)
         /// looking for any DateTime value at <see cref="FieldName"/> with a non-zero time
         /// component. Bounded sampling keeps the cost stable on large collections; if items
         /// haven't been bound yet at column-generation time, returns <c>false</c> and the caller
         /// falls back to the date-only default.
         /// </summary>
-        private bool AnyBoundValueHasTimeOfDay(int maxSamples)
+        internal bool AnyBoundValueHasTimeOfDay(int maxSamples)
         {
             IEnumerable source = Owner?.ItemsSource;
             if (source == null || string.IsNullOrEmpty(FieldName)) return false;
@@ -1218,6 +1614,80 @@ namespace WWSearchDataGrid.Modern.WPF
             {
                 gc.Owner.SetupSelectAllColumnHeaders();
             }), System.Windows.Threading.DispatcherPriority.Loaded);
+        }
+
+        /// <summary>
+        /// Called when the column-level <see cref="ShowCriteriaInAutoFilterRow"/> override
+        /// changes. Re-resolves the effective value on the matching
+        /// <see cref="ColumnFilterControl"/> so the inline selector visibility updates.
+        /// </summary>
+        private static void OnShowCriteriaInAutoFilterRowChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            if (d is not GridColumn gc || gc.Owner == null) return;
+            var host = gc.Owner.DataColumns.FirstOrDefault(c => c.CurrentColumn == gc.InternalColumn) as ColumnFilterControl;
+            host?.RefreshEffectiveShowCriteria();
+        }
+
+        /// <summary>
+        /// Called when <see cref="AllowAutoFilter"/> changes. Pushes the new value into the
+        /// matching <see cref="IColumnFilterHost.IsFilterEnabled"/> so the cell greys / re-enables.
+        /// </summary>
+        private static void OnAllowAutoFilterChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            if (d is not GridColumn gc || gc.Owner == null) return;
+            var host = gc.Owner.DataColumns.FirstOrDefault(c => c.CurrentColumn == gc.InternalColumn);
+            if (host == null) return;
+            host.IsFilterEnabled = (bool)e.NewValue;
+        }
+
+        /// <summary>
+        /// Called when <see cref="RoundDateTime"/> changes. Re-resolves the effective value on the
+        /// matching <see cref="ColumnFilterControl"/>'s <see cref="SearchTemplateController"/> so
+        /// in-flight filters pick up the new comparison mode without waiting for the cell to
+        /// re-initialize.
+        /// </summary>
+        private static void OnRoundDateTimeChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            if (d is not GridColumn gc) return;
+            if (gc.SearchTemplateController != null)
+                gc.SearchTemplateController.RoundDateTime = gc.ResolveEffectiveRoundDateTime();
+        }
+
+        /// <summary>
+        /// Called when <see cref="AutoFilterRowCellStyle"/> changes. Re-resolves the style on the
+        /// matching <see cref="ColumnFilterControl"/> (column override > grid setting > theme key).
+        /// </summary>
+        private static void OnAutoFilterRowCellStyleChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            if (d is not GridColumn gc || gc.Owner == null) return;
+            var host = gc.Owner.DataColumns.FirstOrDefault(c => c.CurrentColumn == gc.InternalColumn) as ColumnFilterControl;
+            host?.RefreshAutoFilterRowCellStyle();
+        }
+
+        /// <summary>
+        /// Called when <see cref="ImmediateUpdateAutoFilter"/> changes. Pushes the new effective
+        /// value into the matching host so the rule-filter popup's live-apply checkbox and the
+        /// debounce path (<see cref="SearchDataGrid.FilterRowDelay"/>) stay coherent.
+        /// </summary>
+        private static void OnImmediateUpdateAutoFilterChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            if (d is not GridColumn gc || gc.Owner == null) return;
+            var host = gc.Owner.DataColumns.FirstOrDefault(c => c.CurrentColumn == gc.InternalColumn) as ColumnFilterControl;
+            host?.ApplyLiveFilteringMode();
+        }
+
+        /// <summary>
+        /// Called when <see cref="AutoFilterRowDisplayTemplate"/> or
+        /// <see cref="AutoFilterRowEditTemplate"/> changes. Triggers the matching
+        /// <see cref="ColumnFilterControl"/> to rebuild its editor host via
+        /// <see cref="ColumnFilterControl.RefreshTemplate"/>, which swaps between the
+        /// template-driven and EditSettings-driven editor surfaces.
+        /// </summary>
+        private static void OnAutoFilterRowTemplateChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            if (d is not GridColumn gc || gc.Owner == null) return;
+            var host = gc.Owner.DataColumns.FirstOrDefault(c => c.CurrentColumn == gc.InternalColumn) as ColumnFilterControl;
+            host?.RefreshTemplate();
         }
 
         #endregion

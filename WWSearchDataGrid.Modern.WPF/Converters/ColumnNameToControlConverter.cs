@@ -9,7 +9,10 @@ using System.Windows.Data;
 namespace WWSearchDataGrid.Modern.WPF.Converters
 {
     /// <summary>
-    /// Converter that finds the ColumnSearchBox matching a column name
+    /// Converter that finds the <see cref="ColumnFilterControl"/> matching a column name +
+    /// binding path tuple. Operates against any <see cref="IColumnFilterHost"/> collection;
+    /// only <see cref="ColumnFilterControl"/> exposes a public <c>BindingPath</c>, so
+    /// non-matching hosts are skipped.
     /// </summary>
     public class ColumnNameToControlConverter : IMultiValueConverter
     {
@@ -21,23 +24,24 @@ namespace WWSearchDataGrid.Modern.WPF.Converters
             string columnName = values[0] as string;
             string bindingPath = values[1] as string;
 
-            if (string.IsNullOrEmpty(columnName) || values[2] is not IEnumerable<ColumnSearchBox> dataColumns)
+            if (string.IsNullOrEmpty(columnName) || values[2] is not IEnumerable<IColumnFilterHost> dataColumns)
                 return null;
 
-            // Find the matching column control
-            return dataColumns.FirstOrDefault(c =>
-                c.CurrentColumn?.Header?.ToString() == columnName &&
-                c.BindingPath == bindingPath);
+            return dataColumns
+                .OfType<ColumnFilterControl>()
+                .FirstOrDefault(c =>
+                    c.CurrentColumn?.Header?.ToString() == columnName &&
+                    c.BindingPath == bindingPath);
         }
 
         public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)
         {
-            if (value is ColumnSearchBox columnSearchBox)
+            if (value is ColumnFilterControl host)
             {
                 return new object[]
                 {
-                    columnSearchBox.CurrentColumn?.Header?.ToString(),
-                    columnSearchBox.BindingPath,
+                    host.CurrentColumn?.Header?.ToString(),
+                    host.BindingPath,
                     null
                 };
             }

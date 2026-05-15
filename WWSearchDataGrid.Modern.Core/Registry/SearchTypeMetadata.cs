@@ -7,7 +7,7 @@ namespace WWSearchDataGrid.Modern.Core
     /// <summary>
     /// Metadata for a filter type including which data types it supports
     /// </summary>
-    internal class SearchTypeMetadata
+    public class SearchTypeMetadata
     {
         public SearchType SearchType { get; set; }
         public string DisplayName { get; set; }

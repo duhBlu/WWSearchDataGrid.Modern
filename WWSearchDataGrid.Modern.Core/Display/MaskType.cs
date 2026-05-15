@@ -2,9 +2,11 @@ namespace WWSearchDataGrid.Modern.Core.Display
 {
     /// <summary>
     /// Categorizes how a mask pattern is interpreted. Mirrors the conceptual model used by
-    /// DevExpress editors and similar mask-input frameworks. Currently only
-    /// <see cref="Simple"/> is fully implemented end-to-end; the others are reserved for
-    /// forward compatibility and throw <see cref="System.NotSupportedException"/> when applied.
+    /// DevExpress editors and similar mask-input frameworks. Implemented engines:
+    /// <see cref="Simple"/>, <see cref="Numeric"/>, <see cref="DateTime"/> /
+    /// <see cref="DateOnly"/> / <see cref="TimeOnly"/> (single engine), and
+    /// <see cref="TimeSpan"/>. The remaining types are reserved for forward compatibility and
+    /// throw <see cref="System.NotSupportedException"/> when applied.
     /// </summary>
     /// <remarks>
     /// The active mask type controls which engine validates keystrokes, formats display text,
@@ -34,30 +36,34 @@ namespace WWSearchDataGrid.Modern.Core.Display
         Simple = 0,
 
         /// <summary>
-        /// <em>[Not yet implemented]</em> Numeric mask with culture-aware separators and
-        /// currency / percent support. Uses standard .NET numeric format strings (e.g. <c>C</c>,
-        /// <c>N2</c>, <c>P0</c>). For now, use the column's <c>DisplayStringFormat</c> for
-        /// numeric formatting.
+        /// Numeric mask with culture-aware separators and currency / percent support — the
+        /// engine implemented in <c>NumericMaskFormatter</c>. Accepts standard .NET numeric
+        /// format strings: <c>C</c>, <c>C&lt;n&gt;</c>, <c>N</c>, <c>N&lt;n&gt;</c>,
+        /// <c>F</c>, <c>F&lt;n&gt;</c>, <c>P</c>, <c>P&lt;n&gt;</c> (the optional integer is
+        /// the fractional digit count). Custom format strings (<c>#,##0.00</c>) and
+        /// exponential / general formats are out of scope.
         /// </summary>
         Numeric,
 
         /// <summary>
-        /// <em>[Not yet implemented]</em> Date / time mask using standard .NET date format
-        /// strings (e.g. <c>MM/dd/yyyy</c>, <c>g</c>, <c>F</c>). For now, configure
-        /// <c>DateEditSettings.Mask</c> with a <see cref="Simple"/>-grammar pattern (default
-        /// <c>00/00/0000</c>) plus the column's <c>DisplayStringFormat</c> for the read-only view.
+        /// Date / time mask using standard .NET date format strings (e.g. <c>MM/dd/yyyy</c>,
+        /// <c>g</c>, <c>F</c>) — the engine implemented in <c>DateTimeMaskFormatter</c>, shared
+        /// with <see cref="DateOnly"/> and <see cref="TimeOnly"/>. Per-type validation
+        /// (rejecting time specifiers in DateOnly, etc.) is a future refinement.
         /// </summary>
         DateTime,
 
         /// <summary>
-        /// <em>[Not yet implemented]</em> .NET 6+ <c>DateOnly</c> mask using standard .NET
-        /// date format strings.
+        /// .NET 6+ <c>DateOnly</c> mask using standard .NET date format strings. Shares the
+        /// <c>DateTimeMaskFormatter</c> engine with <see cref="DateTime"/> and
+        /// <see cref="TimeOnly"/>.
         /// </summary>
         DateOnly,
 
         /// <summary>
-        /// <em>[Not yet implemented]</em> .NET 6+ <c>TimeOnly</c> mask using standard .NET
-        /// time format strings.
+        /// .NET 6+ <c>TimeOnly</c> mask using standard .NET time format strings. Shares the
+        /// <c>DateTimeMaskFormatter</c> engine with <see cref="DateTime"/> and
+        /// <see cref="DateOnly"/>.
         /// </summary>
         TimeOnly,
 
@@ -68,8 +74,8 @@ namespace WWSearchDataGrid.Modern.Core.Display
         DateTimeOffset,
 
         /// <summary>
-        /// <em>[Not yet implemented]</em> Time-interval mask supporting day / hour / minute /
-        /// second / fractional-second specifiers.
+        /// Time-interval mask supporting day / hour / minute / second / fractional-second
+        /// specifiers — the engine implemented in <c>TimeSpanMaskFormatter</c>.
         /// </summary>
         TimeSpan,
 

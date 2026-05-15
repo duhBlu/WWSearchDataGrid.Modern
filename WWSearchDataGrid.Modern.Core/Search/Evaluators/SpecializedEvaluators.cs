@@ -97,7 +97,9 @@ namespace WWSearchDataGrid.Modern.Core
                 searchCondition.PrimaryValue is DateTime fromDate &&
                 searchCondition.SecondaryValue is DateTime toDate)
             {
-                return dateValue.Date >= fromDate.Date && dateValue.Date <= toDate.Date;
+                if (searchCondition.RoundDateTime)
+                    return dateValue.Date >= fromDate.Date && dateValue.Date <= toDate.Date;
+                return dateValue >= fromDate && dateValue <= toDate;
             }
             return false;
         }
@@ -116,7 +118,9 @@ namespace WWSearchDataGrid.Modern.Core
                 searchCondition.PrimaryValue is DateTime fromDate &&
                 searchCondition.SecondaryValue is DateTime toDate)
             {
-                return dateValue.Date < fromDate.Date || dateValue.Date > toDate.Date;
+                if (searchCondition.RoundDateTime)
+                    return dateValue.Date < fromDate.Date || dateValue.Date > toDate.Date;
+                return dateValue < fromDate || dateValue > toDate;
             }
             return true;
         }

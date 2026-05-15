@@ -58,14 +58,6 @@ namespace WWSearchDataGrid.Modern.WPF
         public static ComponentResourceKey SelectAllButton { get; } =
             new ComponentResourceKey(typeof(SdgThemeKeys), nameof(SelectAllButton));
 
-        /// <summary>Default style for the per-column <see cref="ColumnSearchBox"/>.</summary>
-        public static ComponentResourceKey ColumnSearchBox { get; } =
-            new ComponentResourceKey(typeof(SdgThemeKeys), nameof(ColumnSearchBox));
-
-        /// <summary>Default style for the prefix-help <see cref="System.Windows.Controls.ToolTip"/> shown over a ColumnSearchBox.</summary>
-        public static ComponentResourceKey SearchPrefixTooltip { get; } =
-            new ComponentResourceKey(typeof(SdgThemeKeys), nameof(SearchPrefixTooltip));
-
         /// <summary>Default style for the <see cref="ColumnFilterEditor"/> popup.</summary>
         public static ComponentResourceKey ColumnFilterEditor { get; } =
             new ComponentResourceKey(typeof(SdgThemeKeys), nameof(ColumnFilterEditor));
@@ -85,6 +77,24 @@ namespace WWSearchDataGrid.Modern.WPF
         /// <summary>Default style for the custom <see cref="NumericUpDown"/> primitive.</summary>
         public static ComponentResourceKey NumericUpDown { get; } =
             new ComponentResourceKey(typeof(SdgThemeKeys), nameof(NumericUpDown));
+
+        // ─── Auto-filter row controls ──────────────────────────────────────────────────
+        // Per-column editor elements are produced by BaseEditSettings.CreateFilterEditor
+        // (one override per EditSettings subtype) rather than keyed DataTemplate resources.
+        // The cell editor's keyed styles (EditTextBox / EditComboBox / DisplayCheckBox / etc.,
+        // in EditSettingsThemeKeys) are reused directly.
+
+        /// <summary>Default style for the <see cref="WWSearchDataGrid.Modern.WPF.SearchTypeSelector"/> per-column mode picker.</summary>
+        public static ComponentResourceKey SearchTypeSelector { get; } =
+            new ComponentResourceKey(typeof(SdgThemeKeys), nameof(SearchTypeSelector));
+
+        /// <summary>Default style for the <see cref="WWSearchDataGrid.Modern.WPF.AutoFilterRowPresenter"/> pinned filter row.</summary>
+        public static ComponentResourceKey AutoFilterRowPresenter { get; } =
+            new ComponentResourceKey(typeof(SdgThemeKeys), nameof(AutoFilterRowPresenter));
+
+        /// <summary>Default style for the per-column <see cref="WWSearchDataGrid.Modern.WPF.ColumnFilterControl"/>.</summary>
+        public static ComponentResourceKey ColumnFilterControl { get; } =
+            new ComponentResourceKey(typeof(SdgThemeKeys), nameof(ColumnFilterControl));
 
         // ─── Built-in primitives, themed for the SDG look ──────────────────────────────
 

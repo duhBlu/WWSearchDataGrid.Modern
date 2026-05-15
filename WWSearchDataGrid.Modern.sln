@@ -22,6 +22,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Docs", "Docs", "{BF088895-998D-4D7F-82CC-D4CE4B8BA7A5}"
 	ProjectSection(SolutionItems) = preProject
 		docs\api-reference.md = docs\api-reference.md
+		docs\AUTOFILTERROW-IMPLEMENTATION-PLAN.md = docs\AUTOFILTERROW-IMPLEMENTATION-PLAN.md
 		docs\getting-started.md = docs\getting-started.md
 		docs\GRIDCOLUMN-IMPLEMENTATION-PLAN.md = docs\GRIDCOLUMN-IMPLEMENTATION-PLAN.md
 		docs\INPUT-MASKING-IMPLEMENTATION-PLAN.md = docs\INPUT-MASKING-IMPLEMENTATION-PLAN.md

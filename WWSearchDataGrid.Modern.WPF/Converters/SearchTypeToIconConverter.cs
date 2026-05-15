@@ -8,7 +8,10 @@ using WWSearchDataGrid.Modern.Core;
 namespace WWSearchDataGrid.Modern.WPF.Converters
 {
     /// <summary>
-    /// Converts SearchType enum values to their corresponding DrawingImage icons
+    /// Converts a <see cref="SearchType"/> to the matching <see cref="DrawingImage"/> declared
+    /// in <c>Resources/Icons/SearchTypeIcons.xaml</c>. Resolves via the typed
+    /// <see cref="SearchTypeIconKeys"/> <see cref="ComponentResourceKey"/>s so the icon set
+    /// stays out of the consumer's loose-string namespace.
     /// </summary>
     public class SearchTypeToIconConverter : IValueConverter
     {
@@ -16,15 +19,10 @@ namespace WWSearchDataGrid.Modern.WPF.Converters
         {
             if (value is SearchType searchType)
             {
-                var resourceKey = GetIconResourceKey(searchType);
-                if (!string.IsNullOrEmpty(resourceKey))
+                var key = GetIconKey(searchType);
+                if (key != null && Application.Current?.TryFindResource(key) is DrawingImage drawingImage)
                 {
-                    // Try to find the resource in the current application resources
-                    var resource = Application.Current?.FindResource(resourceKey);
-                    if (resource is DrawingImage drawingImage)
-                    {
-                        return drawingImage;
-                    }
+                    return drawingImage;
                 }
             }
 
@@ -36,41 +34,36 @@ namespace WWSearchDataGrid.Modern.WPF.Converters
             throw new NotImplementedException("SearchTypeToIconConverter is one-way only");
         }
 
-        private string GetIconResourceKey(SearchType searchType)
+        private static ComponentResourceKey GetIconKey(SearchType searchType) => searchType switch
         {
-            return searchType switch
-            {
-                SearchType.Equals => "EqualsDrawingImage",
-                SearchType.NotEquals => "Does_not_equalDrawingImage",
-                SearchType.GreaterThan => "Is_greater_thanDrawingImage",
-                SearchType.GreaterThanOrEqualTo => "Is_greater_than_or_equal_toDrawingImage",
-                SearchType.LessThan => "Is_less_thanDrawingImage",
-                SearchType.LessThanOrEqualTo => "Is_less_than_or_equal_toDrawingImage",
-                SearchType.Between => "Is_betweenDrawingImage",
-                SearchType.NotBetween => "Is_not_betweenDrawingImage",
-                SearchType.Contains => "ContainsDrawingImage",
-                SearchType.DoesNotContain => "Does_not_containDrawingImage",
-                SearchType.StartsWith => "Starts_withDrawingImage",
-                SearchType.EndsWith => "Ends_withDrawingImage",
-                SearchType.IsLike => "Is_likeDrawingImage",
-                SearchType.IsNotLike => "Is_not_likeDrawingImage",
-                SearchType.IsAnyOf => "Is_any_ofDrawingImage",
-                SearchType.IsNoneOf => "Is_none_ofDrawingImage",
-                SearchType.TopN => "Top_NDrawingImage",
-                SearchType.BottomN => "Bottom_NDrawingImage",
-                SearchType.AboveAverage => "Above_averageDrawingImage",
-                SearchType.BelowAverage => "Below_AverageDrawingImage",
-                SearchType.IsNull => "Is_null_or_blankDrawingImage",
-                SearchType.IsNotNull => "Is_not_null_or_blankDrawingImage",
-                SearchType.Unique => "UniqueDrawingImage",
-                SearchType.Duplicate => "DuplicateDrawingImage",
-                SearchType.Today => "Is_TodayDrawingImage",
-                SearchType.Yesterday => "Is_YesterdayDrawingImage",
-                SearchType.DateInterval => "Is_TodayDrawingImage", // Default for date interval
-                SearchType.BetweenDates => "Is_betweenDrawingImage",
-                SearchType.NotBetweenDates => "Is_not_betweenDrawingImage",
-                _ => null
-            };
-        }
+            SearchType.Equals => SearchTypeIconKeys.Equals,
+            SearchType.NotEquals => SearchTypeIconKeys.NotEquals,
+            SearchType.GreaterThan => SearchTypeIconKeys.GreaterThan,
+            SearchType.GreaterThanOrEqualTo => SearchTypeIconKeys.GreaterThanOrEqualTo,
+            SearchType.LessThan => SearchTypeIconKeys.LessThan,
+            SearchType.LessThanOrEqualTo => SearchTypeIconKeys.LessThanOrEqualTo,
+            SearchType.Between => SearchTypeIconKeys.Between,
+            SearchType.NotBetween => SearchTypeIconKeys.NotBetween,
+            SearchType.Contains => SearchTypeIconKeys.Contains,
+            SearchType.DoesNotContain => SearchTypeIconKeys.DoesNotContain,
+            SearchType.StartsWith => SearchTypeIconKeys.StartsWith,
+            SearchType.EndsWith => SearchTypeIconKeys.EndsWith,
+            SearchType.IsLike => SearchTypeIconKeys.IsLike,
+            SearchType.IsNotLike => SearchTypeIconKeys.IsNotLike,
+            SearchType.IsAnyOf => SearchTypeIconKeys.IsAnyOf,
+            SearchType.IsNoneOf => SearchTypeIconKeys.IsNoneOf,
+            SearchType.TopN => SearchTypeIconKeys.TopN,
+            SearchType.BottomN => SearchTypeIconKeys.BottomN,
+            SearchType.AboveAverage => SearchTypeIconKeys.AboveAverage,
+            SearchType.BelowAverage => SearchTypeIconKeys.BelowAverage,
+            SearchType.IsNull => SearchTypeIconKeys.IsNull,
+            SearchType.IsNotNull => SearchTypeIconKeys.IsNotNull,
+            SearchType.Today => SearchTypeIconKeys.Today,
+            SearchType.Yesterday => SearchTypeIconKeys.Yesterday,
+            SearchType.DateInterval => SearchTypeIconKeys.Today,
+            SearchType.BetweenDates => SearchTypeIconKeys.Between,
+            SearchType.NotBetweenDates => SearchTypeIconKeys.NotBetween,
+            _ => null
+        };
     }
 }

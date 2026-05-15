@@ -64,16 +64,15 @@ namespace WWSearchDataGrid.Modern.WPF
 
         private static void OnIsLiveApplyEnabledChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
-            // Propagate the user's footer-checkbox toggle back up to the owning ColumnSearchBox.
-            // The override on ColumnSearchBox is the persistent home for this preference (the
-            // editor instance lives on the ColumnSearchBox but the override outlives popup
-            // open/close cycles within a session). Persisting the choice also keeps the in-
-            // header SearchTextBox's LiveUpdate mode in sync with the user's preference.
-            if (d is ColumnFilterEditor editor && editor.DataContext is ColumnSearchBox csb)
+            // Propagate the user's footer-checkbox toggle back up to the column descriptor.
+            // GridColumn.ImmediateUpdateAutoFilter is the persistent home for this preference —
+            // setting it here keeps the in-header SearchTextBox's LiveUpdate mode in sync with
+            // the user's popup choice and outlives popup open/close cycles within a session.
+            if (d is ColumnFilterEditor editor && editor.DataContext is ColumnFilterControl csb)
             {
                 bool newValue = (bool)e.NewValue;
-                if (csb.IsLiveFilteringOverride != newValue)
-                    csb.IsLiveFilteringOverride = newValue;
+                if (csb.GridColumn != null && csb.GridColumn.ImmediateUpdateAutoFilter != newValue)
+                    csb.GridColumn.ImmediateUpdateAutoFilter = newValue;
             }
         }
 
@@ -309,7 +308,7 @@ namespace WWSearchDataGrid.Modern.WPF
 
                 // Initialize the Filter Values tab manager
                 int totalItemCount = 0;
-                if (DataContext is ColumnSearchBox csb && csb.SourceDataGrid != null)
+                if (DataContext is ColumnFilterControl csb && csb.SourceDataGrid != null)
                     totalItemCount = csb.SourceDataGrid.OriginalItemsCount;
 
                 FilterValueManager = new FilterValueManager();
@@ -378,7 +377,7 @@ namespace WWSearchDataGrid.Modern.WPF
         {
             try
             {
-                if (DataContext is ColumnSearchBox columnSearchBox &&
+                if (DataContext is ColumnFilterControl columnSearchBox &&
                     columnSearchBox.SearchTemplateController != null)
                 {
                     columnSearchBox.SearchTemplateController.EnsureColumnValuesLoadedForFiltering();
@@ -395,7 +394,7 @@ namespace WWSearchDataGrid.Modern.WPF
         {
             IsOperatorVisible = false;
 
-            if (DataContext is ColumnSearchBox currentColumnSearchBox &&
+            if (DataContext is ColumnFilterControl currentColumnSearchBox &&
                 currentColumnSearchBox.SourceDataGrid != null
                 && currentColumnSearchBox.GridColumn != null)
             {
@@ -444,7 +443,7 @@ namespace WWSearchDataGrid.Modern.WPF
                 SearchTemplateController.UpdateFilterExpression();
 
                 // Try DataContext first, then walk visual tree to find the grid
-                ColumnSearchBox columnSearchBox = DataContext as ColumnSearchBox;
+                ColumnFilterControl columnSearchBox = DataContext as ColumnFilterControl;
                 SearchDataGrid grid = columnSearchBox?.SourceDataGrid;
 
                 if (grid != null)
@@ -510,7 +509,7 @@ namespace WWSearchDataGrid.Modern.WPF
             {
                 SearchTemplateController.ClearAndReset();
 
-                if (DataContext is ColumnSearchBox columnSearchBox && columnSearchBox.SourceDataGrid != null)
+                if (DataContext is ColumnFilterControl columnSearchBox && columnSearchBox.SourceDataGrid != null)
                 {
                     columnSearchBox.HasAdvancedFilter = false;
                     columnSearchBox.SourceDataGrid.FilterItemsSource();

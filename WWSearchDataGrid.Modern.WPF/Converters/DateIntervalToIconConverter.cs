@@ -8,7 +8,10 @@ using WWSearchDataGrid.Modern.Core;
 namespace WWSearchDataGrid.Modern.WPF.Converters
 {
     /// <summary>
-    /// Converts DateInterval enum values to their corresponding DrawingImage icons
+    /// Converts a <see cref="DateInterval"/> to the matching <see cref="DrawingImage"/> declared
+    /// in <c>Resources/Icons/SearchTypeIcons.xaml</c>. Resolves via the typed
+    /// <see cref="SearchTypeIconKeys"/> <see cref="ComponentResourceKey"/>s so the icon set
+    /// stays out of the consumer's loose-string namespace.
     /// </summary>
     public class DateIntervalToIconConverter : IValueConverter
     {
@@ -16,15 +19,10 @@ namespace WWSearchDataGrid.Modern.WPF.Converters
         {
             if (value is DateInterval dateInterval)
             {
-                var resourceKey = GetIconResourceKey(dateInterval);
-                if (!string.IsNullOrEmpty(resourceKey))
+                var key = GetIconKey(dateInterval);
+                if (key != null && Application.Current?.TryFindResource(key) is DrawingImage drawingImage)
                 {
-                    // Try to find the resource in the current application resources
-                    var resource = Application.Current?.FindResource(resourceKey);
-                    if (resource is DrawingImage drawingImage)
-                    {
-                        return drawingImage;
-                    }
+                    return drawingImage;
                 }
             }
 
@@ -36,25 +34,22 @@ namespace WWSearchDataGrid.Modern.WPF.Converters
             throw new NotImplementedException("DateIntervalToIconConverter is one-way only");
         }
 
-        private string GetIconResourceKey(DateInterval dateInterval)
+        private static ComponentResourceKey GetIconKey(DateInterval dateInterval) => dateInterval switch
         {
-            return dateInterval switch
-            {
-                DateInterval.PriorThisYear => "Is_Prior_This_YearDrawingImage",
-                DateInterval.EarlierThisYear => "Is_Earlier_This_YearDrawingImage",
-                DateInterval.LaterThisYear => "Is_Later_This_YearDrawingImage",
-                DateInterval.BeyondThisYear => "Is_Beyond_This_YearDrawingImage",
-                DateInterval.EarlierThisMonth => "Is_Earlier_This_MonthDrawingImage",
-                DateInterval.LaterThisMonth => "Is_Later_This_MonthDrawingImage",
-                DateInterval.EarlierThisWeek => "Is_Earlier_This_WeekDrawingImage",
-                DateInterval.LaterThisWeek => "Is_Later_This_WeekDrawingImage",
-                DateInterval.LastWeek => "Is_Last_WeekDrawingImage",
-                DateInterval.NextWeek => "Is_Next_WeekDrawingImage",
-                DateInterval.Yesterday => "Is_YesterdayDrawingImage",
-                DateInterval.Today => "Is_TodayDrawingImage",
-                DateInterval.Tomorrow => "Is_TomorrowDrawingImage",
-                _ => null
-            };
-        }
+            DateInterval.PriorThisYear => SearchTypeIconKeys.PriorThisYear,
+            DateInterval.EarlierThisYear => SearchTypeIconKeys.EarlierThisYear,
+            DateInterval.LaterThisYear => SearchTypeIconKeys.LaterThisYear,
+            DateInterval.BeyondThisYear => SearchTypeIconKeys.BeyondThisYear,
+            DateInterval.EarlierThisMonth => SearchTypeIconKeys.EarlierThisMonth,
+            DateInterval.LaterThisMonth => SearchTypeIconKeys.LaterThisMonth,
+            DateInterval.EarlierThisWeek => SearchTypeIconKeys.EarlierThisWeek,
+            DateInterval.LaterThisWeek => SearchTypeIconKeys.LaterThisWeek,
+            DateInterval.LastWeek => SearchTypeIconKeys.LastWeek,
+            DateInterval.NextWeek => SearchTypeIconKeys.NextWeek,
+            DateInterval.Yesterday => SearchTypeIconKeys.Yesterday,
+            DateInterval.Today => SearchTypeIconKeys.Today,
+            DateInterval.Tomorrow => SearchTypeIconKeys.Tomorrow,
+            _ => null
+        };
     }
 }

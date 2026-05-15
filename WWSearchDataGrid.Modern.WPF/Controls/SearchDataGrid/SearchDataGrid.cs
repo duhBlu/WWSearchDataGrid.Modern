@@ -33,7 +33,7 @@ namespace WWSearchDataGrid.Modern.WPF
     {
         #region Fields
 
-        private readonly ObservableCollection<ColumnSearchBox> dataColumns = new ObservableCollection<ColumnSearchBox>();
+        private readonly ObservableCollection<IColumnFilterHost> dataColumns = new ObservableCollection<IColumnFilterHost>();
         private IEnumerable originalItemsSource;
         private bool initialUpdateLayoutCompleted;
 
@@ -149,6 +149,106 @@ namespace WWSearchDataGrid.Modern.WPF
         /// </summary>
         public static readonly DependencyProperty GridColumnsProperty = GridColumnsPropertyKey.DependencyProperty;
 
+        /// <summary>
+        /// Dependency property for <see cref="ShowAutoFilterRow"/>. Defaults to <c>true</c>.
+        /// Gates the auto-filter UI as a whole. Combined with
+        /// <see cref="AutoFilterRowPositionProperty"/> to decide whether filter editors live
+        /// in a pinned row below the headers or inside the column headers themselves.
+        /// </summary>
+        public static readonly DependencyProperty ShowAutoFilterRowProperty =
+            DependencyProperty.Register(nameof(ShowAutoFilterRow), typeof(bool), typeof(SearchDataGrid),
+                new FrameworkPropertyMetadata(true));
+
+        /// <summary>
+        /// Dependency property for <see cref="AutoFilterRowPosition"/>. Defaults to
+        /// <see cref="WPF.AutoFilterRowPosition.Cell"/>.
+        /// </summary>
+        public static readonly DependencyProperty AutoFilterRowPositionProperty =
+            DependencyProperty.Register(nameof(AutoFilterRowPosition), typeof(AutoFilterRowPosition), typeof(SearchDataGrid),
+                new FrameworkPropertyMetadata(AutoFilterRowPosition.Cell));
+
+        /// <summary>
+        /// Grid-wide default for <see cref="ShowCriteriaInAutoFilterRow"/>. When <c>true</c>,
+        /// every column's filter cell renders the leading <see cref="SearchTypeSelector"/>
+        /// glyph so the user can pick the active operator (Contains / StartsWith / Equals / ...)
+        /// inline. When <c>false</c> (the default), the selector is hidden and the column's
+        /// default search type is used implicitly. Individual columns can override via
+        /// <see cref="GridColumn.ShowCriteriaInAutoFilterRow"/> — column override wins when set.
+        /// </summary>
+        /// <remarks>
+        /// <see cref="FrameworkPropertyMetadataOptions.Inherits"/> is set for cross-tree
+        /// composition scenarios, but the per-cell effective value is resolved explicitly by
+        /// <see cref="ColumnFilterControl"/> against this grid's CLR property, so runtime
+        /// changes always reach the hosts via <see cref="OnShowCriteriaInAutoFilterRowChanged"/>.
+        /// </remarks>
+        public static readonly DependencyProperty ShowCriteriaInAutoFilterRowProperty =
+            DependencyProperty.Register(nameof(ShowCriteriaInAutoFilterRow), typeof(bool), typeof(SearchDataGrid),
+                new FrameworkPropertyMetadata(false, FrameworkPropertyMetadataOptions.Inherits, OnShowCriteriaInAutoFilterRowChanged));
+
+        /// <summary>
+        /// Grid-wide default <see cref="Style"/> applied to every <see cref="ColumnFilterControl"/>
+        /// hosted inside the auto-filter row. A column can override via
+        /// <see cref="GridColumn.AutoFilterRowCellStyle"/> — column override wins when set.
+        /// When both are <c>null</c> the control resolves the keyed theme style under
+        /// <see cref="SdgThemeKeys.ColumnFilterControl"/>.
+        /// </summary>
+        public static readonly DependencyProperty AutoFilterRowCellStyleProperty =
+            DependencyProperty.Register(nameof(AutoFilterRowCellStyle), typeof(Style), typeof(SearchDataGrid),
+                new FrameworkPropertyMetadata(null, OnAutoFilterRowCellStyleChanged));
+
+        /// <summary>
+        /// Debounce window (in milliseconds) before keystroke-driven filter updates fire.
+        /// Defaults to <c>0</c> — every keystroke applies the filter immediately. A positive
+        /// value buffers rapid typing so the filter expression is rebuilt only after the user
+        /// pauses for the specified interval. Only takes effect when live filtering is enabled
+        /// for the column (see <see cref="GridColumn.ImmediateUpdateAutoFilter"/>); when live
+        /// filtering is off, the delay is irrelevant — filters fire on Enter / Tab / lost-focus
+        /// regardless. <see cref="FrameworkPropertyMetadataOptions.Inherits"/> lets per-cell
+        /// <see cref="ColumnFilterControl"/> read the grid value without explicit wiring.
+        /// </summary>
+        public static readonly DependencyProperty FilterRowDelayProperty =
+            DependencyProperty.Register(nameof(FilterRowDelay), typeof(int), typeof(SearchDataGrid),
+                new FrameworkPropertyMetadata(0, FrameworkPropertyMetadataOptions.Inherits));
+
+        /// <summary>
+        /// Grid-wide policy for when the per-cell clear (X) button appears in the auto-filter
+        /// row. Defaults to <see cref="WPF.AutoFilterRowClearButtonMode.Always"/> — the button
+        /// is shown whenever a cell has an active filter, regardless of which editor surface
+        /// is rendering. <see cref="FrameworkPropertyMetadataOptions.Inherits"/> propagates
+        /// the value into the per-cell control without manual wiring.
+        /// </summary>
+        public static readonly DependencyProperty AutoFilterRowClearButtonModeProperty =
+            DependencyProperty.Register(nameof(AutoFilterRowClearButtonMode), typeof(AutoFilterRowClearButtonMode), typeof(SearchDataGrid),
+                new FrameworkPropertyMetadata(AutoFilterRowClearButtonMode.Always, FrameworkPropertyMetadataOptions.Inherits));
+
+        /// <summary>
+        /// Walks <see cref="DataColumns"/> and asks each <see cref="ColumnFilterControl"/> to
+        /// re-resolve its effective ShowCriteria value when the grid-level DP changes.
+        /// </summary>
+        private static void OnShowCriteriaInAutoFilterRowChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            if (d is not SearchDataGrid grid) return;
+            foreach (var host in grid.DataColumns)
+            {
+                if (host is ColumnFilterControl ctl)
+                    ctl.RefreshEffectiveShowCriteria();
+            }
+        }
+
+        /// <summary>
+        /// Walks <see cref="DataColumns"/> and re-resolves the cell style on each
+        /// <see cref="ColumnFilterControl"/> when the grid-level style DP changes.
+        /// </summary>
+        private static void OnAutoFilterRowCellStyleChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            if (d is not SearchDataGrid grid) return;
+            foreach (var host in grid.DataColumns)
+            {
+                if (host is ColumnFilterControl ctl)
+                    ctl.RefreshAutoFilterRowCellStyle();
+            }
+        }
+
         #endregion
 
         #region Properties
@@ -156,7 +256,7 @@ namespace WWSearchDataGrid.Modern.WPF
         /// <summary>
         /// Gets the data columns collection
         /// </summary>
-        public ObservableCollection<ColumnSearchBox> DataColumns
+        public ObservableCollection<IColumnFilterHost> DataColumns
         {
             get { return dataColumns; }
         }
@@ -278,13 +378,77 @@ namespace WWSearchDataGrid.Modern.WPF
         /// <code>
         /// &lt;sdg:SearchDataGrid.GridColumns&gt;
         ///     &lt;sdg:GridColumn FieldName="OrderNumber" Header="Order #" Width="80"
-        ///                     DefaultSearchMode="StartsWith" EnableRuleFiltering="False" /&gt;
+        ///                     DefaultSearchType="StartsWith" EnableRuleFiltering="False" /&gt;
         /// &lt;/sdg:SearchDataGrid.GridColumns&gt;
         /// </code>
         /// </example>
         public FreezableCollection<GridColumn> GridColumns
         {
             get => (FreezableCollection<GridColumn>)GetValue(GridColumnsProperty);
+        }
+
+        /// <summary>
+        /// Gets or sets whether the auto-filter UI is shown. When <c>true</c>, filter editors
+        /// are surfaced for each filterable column (placement controlled by
+        /// <see cref="AutoFilterRowPosition"/>). When <c>false</c>, no per-column filter UI is
+        /// rendered. Defaults to <c>true</c>.
+        /// </summary>
+        public bool ShowAutoFilterRow
+        {
+            get => (bool)GetValue(ShowAutoFilterRowProperty);
+            set => SetValue(ShowAutoFilterRowProperty, value);
+        }
+
+        /// <summary>
+        /// Gets or sets where the auto-filter UI is placed. <see cref="WPF.AutoFilterRowPosition.Cell"/>
+        /// (default) renders a dedicated pinned row beneath the column headers;
+        /// <see cref="WPF.AutoFilterRowPosition.Header"/> embeds filter editors inside each
+        /// column header (expand-on-click).
+        /// </summary>
+        public AutoFilterRowPosition AutoFilterRowPosition
+        {
+            get => (AutoFilterRowPosition)GetValue(AutoFilterRowPositionProperty);
+            set => SetValue(AutoFilterRowPositionProperty, value);
+        }
+
+        /// <summary>
+        /// Gets or sets whether each column's filter cell renders the inline search-type
+        /// selector. See <see cref="ShowCriteriaInAutoFilterRowProperty"/>.
+        /// </summary>
+        public bool ShowCriteriaInAutoFilterRow
+        {
+            get => (bool)GetValue(ShowCriteriaInAutoFilterRowProperty);
+            set => SetValue(ShowCriteriaInAutoFilterRowProperty, value);
+        }
+
+        /// <summary>
+        /// Gets or sets the grid-wide default <see cref="Style"/> for the per-column
+        /// <see cref="ColumnFilterControl"/>. See <see cref="AutoFilterRowCellStyleProperty"/>.
+        /// </summary>
+        public Style AutoFilterRowCellStyle
+        {
+            get => (Style)GetValue(AutoFilterRowCellStyleProperty);
+            set => SetValue(AutoFilterRowCellStyleProperty, value);
+        }
+
+        /// <summary>
+        /// Gets or sets the debounce window in milliseconds for keystroke-driven filter updates.
+        /// See <see cref="FilterRowDelayProperty"/>.
+        /// </summary>
+        public int FilterRowDelay
+        {
+            get => (int)GetValue(FilterRowDelayProperty);
+            set => SetValue(FilterRowDelayProperty, value);
+        }
+
+        /// <summary>
+        /// Gets or sets the visibility policy for the per-cell clear (X) button in the
+        /// auto-filter row. See <see cref="AutoFilterRowClearButtonModeProperty"/>.
+        /// </summary>
+        public AutoFilterRowClearButtonMode AutoFilterRowClearButtonMode
+        {
+            get => (AutoFilterRowClearButtonMode)GetValue(AutoFilterRowClearButtonModeProperty);
+            set => SetValue(AutoFilterRowClearButtonModeProperty, value);
         }
 
         /// <summary>
@@ -666,7 +830,23 @@ namespace WWSearchDataGrid.Modern.WPF
 
                 // Up / Down: no flag manipulation. Native DataGrid arrow handler navigates
                 // between rows. (In edit mode, the editor's own PreviewKeyDown handles these.)
+                // Up additionally hands off from the first data row to the filter row when
+                // ShowAutoFilterRow is on — symmetric with the filter row's Down handoff
+                // implemented in FilterRowNavigator. The handoff only fires when focus is
+                // on the cell shell itself; an editor descendant gets to interpret Up first
+                // (multiline TextBox caret-up, ComboBox selection, DatePicker calendar) so
+                // we don't hijack arrow keys from editors that have a real use for them.
                 case Key.Up:
+                {
+                    if (!ShowAutoFilterRow) break;
+                    if (!ReferenceEquals(focused, cell)) break;
+                    var rowContainer = FindAncestor<DataGridRow>(cell);
+                    if (rowContainer == null) break;
+                    if (ItemContainerGenerator.IndexFromContainer(rowContainer) != 0) break;
+                    if (TryFocusFilterCellForColumn(cell.Column))
+                        e.Handled = true;
+                    break;
+                }
                 case Key.Down:
                     break;
 

@@ -5,12 +5,12 @@
                     xmlns:converters="clr-namespace:WWSearchDataGrid.Modern.WPF.Converters">
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF;component/Themes/Controls/Primitives/DefaultControls.xaml" />
-        <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF;component/Themes/Controls/ColumnSearchBox.xaml" />
         <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF;component/Themes/Controls/FilterPanel.xaml" />
     </ResourceDictionary.MergedDictionaries>
 
     <converters:NullOrEmptyToBooleanConverter x:Key="NullOrEmptyToBooleanConverter" />
     <converters:BooleanToVisibilityCollapsedConverter x:Key="BooleanToVisibilityCollapsedConverter" />
+    <converters:AutoFilterRowVisibilityConverter x:Key="AutoFilterRowVisibilityConverter" />
 
     <Style x:Key="{x:Static sdg:SdgThemeKeys.SelectAllButton}" TargetType="{x:Type Button}">
         <Setter Property="Cursor" Value="Hand" />
@@ -78,13 +78,6 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type DataGridRowHeader}">
-                    <!--
-                        Outer Grid wraps the original padded Border AND the row-state indicator.
-                        The indicator lives outside the Border so it centers in the full row-header
-                        width (RowHeaderWidth=24) instead of inside the Border's 20px right-padding
-                        inset (which leaves a 4px content slot — too small to render a 12pt glyph
-                        centered). The Border keeps its existing inset for any header content.
-                    -->
                     <Grid>
                         <Border x:Name="HeaderBorder"
                                 Background="{TemplateBinding Background}"
@@ -95,15 +88,6 @@
                             <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
                         </Border>
 
-                        <!--
-                            Row-state indicator. Hidden by default; the ControlTemplate triggers
-                            below show the chevron when the parent DataGridRow has keyboard focus,
-                            and swap it for the pencil when the row is in edit mode. Foreground is
-                            hardcoded so the IsSelected→White trigger above (which targets the
-                            header's own Foreground) doesn't clobber the indicator's color when
-                            the row is selected — a white glyph on the light-gray header is
-                            invisible.
-                        -->
                         <TextBlock x:Name="RowStateIndicator"
                                    FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
                                    FontSize="12"
@@ -115,28 +99,16 @@
                     </Grid>
 
                     <ControlTemplate.Triggers>
-                        <!--  Hover  -->
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter TargetName="HeaderBorder" Property="Background" Value="#FFF0F0F0" />
                         </Trigger>
-
-                        <!--  Selected Row  -->
                         <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType={x:Type DataGridRow}}}" Value="True">
                             <Setter Property="Foreground" Value="White" />
                         </DataTrigger>
-
-                        <!--  Row focused (no cell editing) → chevron-right indicator  -->
                         <DataTrigger Binding="{Binding IsKeyboardFocusWithin, RelativeSource={RelativeSource AncestorType={x:Type DataGridRow}}}" Value="True">
                             <Setter TargetName="RowStateIndicator" Property="Visibility" Value="Visible" />
                             <Setter TargetName="RowStateIndicator" Property="Text" Value="&#xE76C;" />
                         </DataTrigger>
-
-                        <!--
-                            Row in edit mode → pencil indicator. DataGridRow.IsEditing is set when any cell in
-                            the row begins editing, so this trigger overrides the focused-only chevron above
-                            (last-trigger-wins for matching properties). The condition order matters: a cell
-                            in edit always has keyboard focus, so without this override the chevron would win.
-                        -->
                         <DataTrigger Binding="{Binding IsEditing, RelativeSource={RelativeSource AncestorType={x:Type DataGridRow}}}" Value="True">
                             <Setter TargetName="RowStateIndicator" Property="Visibility" Value="Visible" />
                             <Setter TargetName="RowStateIndicator" Property="Text" Value="&#xE70F;" />
@@ -147,8 +119,33 @@
         </Setter>
     </Style>
 
-    <!--  Search Grid Column Header Style  -->
-    <Style x:Key="{x:Static sdg:SdgThemeKeys.SearchDataGridColumnHeader}" TargetType="{x:Type DataGridColumnHeader}">
+    <!--
+        Default (implicit, TargetType-only) style for the custom headers presenter. The
+        presenter calls DefaultStyleKeyProperty.OverrideMetadata(typeof(SearchDataGridColumnHeadersPresenter)),
+        so WPF looks up a Style under the type key in this theme dictionary; without this
+        entry the presenter has no Template, the column-headers band renders empty, and
+        no SearchDataGridColumnHeader instances are produced.
+
+        The control template retargets PART_FillerColumnHeader to SearchDataGridColumnHeader.
+        The DataGrid pushes its ColumnHeaderStyle setter to the filler header at
+        ApplyTemplate time; that setter's TargetType is SearchDataGridColumnHeader, so the
+        stock DataGridColumnHeader filler would fail the strict TargetType check.
+    -->
+    <Style TargetType="{x:Type sdg:SearchDataGridColumnHeadersPresenter}">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type sdg:SearchDataGridColumnHeadersPresenter}">
+                    <Grid>
+                        <sdg:SearchDataGridColumnHeader x:Name="PART_FillerColumnHeader"
+                                                       IsHitTestVisible="False" />
+                        <ItemsPresenter />
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="{x:Static sdg:SdgThemeKeys.SearchDataGridColumnHeader}" TargetType="{x:Type sdg:SearchDataGridColumnHeader}">
         <Setter Property="AllowDrop" Value="True" />
         <Setter Property="ContextMenu">
             <Setter.Value>
@@ -244,32 +241,35 @@
         </Setter>
         <Setter Property="Template">
             <Setter.Value>
-                <ControlTemplate TargetType="{x:Type DataGridColumnHeader}">
+                <ControlTemplate TargetType="{x:Type sdg:SearchDataGridColumnHeader}">
+                    <!--
+                        Phase 5: the embedded ColumnSearchBox is removed entirely. The
+                        DataGridColumnHeader template now hosts only the header chrome
+                        (select-all checkbox, header text, sort arrow, gripper). The
+                        per-column filter editor lives in the pinned AutoFilterRowPresenter
+                        below the headers.
+                    -->
                     <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="*" />
-                        </Grid.RowDefinitions>
-
-                        <!--  Search Control  -->
-                        <sdg:ColumnSearchBox x:Name="PART_ColumnSearchBox"
-                                             Style="{Binding Mode=OneWay, Source={StaticResource {x:Static sdg:SdgThemeKeys.ColumnSearchBox}}}"
-                                             Grid.Row="0"
-                                             BorderThickness="0"
-                                             Margin="0,1,1,0"
-                                             CurrentColumn="{Binding Column, RelativeSource={RelativeSource TemplatedParent}}"
-                                             SourceDataGrid="{Binding Mode=OneWay, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type sdg:SearchDataGrid}}}" />
-
                         <Border x:Name="HeaderBorder"
-                                Grid.Row="1"
                                 Background="{TemplateBinding Background}"
                                 BorderBrush="{TemplateBinding BorderBrush}"
                                
-                                BorderThickness="0,1,1,1"
+                                BorderThickness="0,0,1,1"
                                 Margin="0,0,0,0"
                                 Padding="{TemplateBinding Padding}">
+                            <!--
+                                Layout: [select-all][header text Auto][filter button Auto][spacer *][sort arrow Auto].
+                                Header text sizes to its content (Auto), filter button sits
+                                immediately to its right at a fixed width, the * spacer absorbs
+                                remaining horizontal space, and the sort arrow stays at the far
+                                right. Whether the button is Opacity 0 or 1, the Auto column
+                                still reserves its 22px slot — header text and sort arrow stay
+                                put across hover transitions.
+                            -->
                             <Grid>
                                 <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="Auto" />
                                     <ColumnDefinition Width="Auto" />
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="Auto" />
@@ -301,9 +301,64 @@
                                                   HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
                                                   VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
 
-                                <!--  Sort Arrow  -->
+                                <Button x:Name="PART_RuleFilterEditorButton"
+                                        Grid.Column="2"
+                                        Cursor="Hand"
+                                        Command="{x:Static commands:ContextMenuCommands.ShowFilterEditorCommand}"
+                                        CommandParameter="{Binding RelativeSource={RelativeSource TemplatedParent}}"
+                                        Margin="-1,0,2,0"
+                                        Padding="0"
+                                        VerticalAlignment="Center"
+                                        IsHitTestVisible="True"
+                                        Width="22"
+                                        Focusable="False"
+                                        KeyboardNavigation.IsTabStop="False"
+                                        ToolTip="Open rule-filter editor"
+                                        FontFamily="Segoe Fluent Icons"
+                                        FontSize="12"
+                                        Content="&#xE71C;">
+                                    <Button.Style>
+                                        <Style TargetType="Button">
+                                            <Setter Property="Opacity" Value="0" />
+                                            <Setter Property="Foreground" Value="#BFBFBF" />
+                                            <Setter Property="Background" Value="Transparent" />
+                                            <Setter Property="BorderBrush" Value="Transparent" />
+                                            <Setter Property="BorderThickness" Value="0" />
+                                            <Setter Property="Template">
+                                                <Setter.Value>
+                                                    <ControlTemplate TargetType="Button">
+                                                        <Border Background="{TemplateBinding Background}"
+                                                                BorderBrush="{TemplateBinding BorderBrush}"
+                                                                BorderThickness="{TemplateBinding BorderThickness}"
+                                                                CornerRadius="3">
+                                                            <ContentPresenter Focusable="False"
+                                                                              Margin="{TemplateBinding Padding}"
+                                                                              HorizontalAlignment="Center"
+                                                                              VerticalAlignment="Center"
+                                                                              RecognizesAccessKey="True"
+                                                                              TextElement.Foreground="{TemplateBinding Foreground}" />
+                                                        </Border>
+                                                    </ControlTemplate>
+                                                </Setter.Value>
+                                            </Setter>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType={x:Type sdg:SearchDataGridColumnHeader}}}" Value="True">
+                                                    <Setter Property="Opacity" Value="1" />
+                                                </DataTrigger>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter Property="Foreground" Value="#141414" />
+                                                </Trigger>
+                                                <Trigger Property="IsPressed" Value="True">
+                                                    <Setter Property="Foreground" Value="#000000" />
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                </Button>
+
+                                <!--  Sort Arrow (Grid.Column=4, with the *-spacer at Column=3 pushing it right)  -->
                                 <TextBlock x:Name="SortArrow"
-                                           Grid.Column="2"
+                                           Grid.Column="4"
                                            Foreground="{TemplateBinding Foreground}"
                                            Visibility="Collapsed"
                                            VerticalAlignment="Center"
@@ -313,7 +368,6 @@
 
                         <!--  Column Resizers  -->
                         <Thumb x:Name="PART_LeftHeaderGripper"
-                               Grid.RowSpan="2"
                                Background="Transparent"
                                Panel.ZIndex="55"
                                BorderBrush="Transparent"
@@ -324,7 +378,6 @@
 
 
                         <Thumb x:Name="PART_RightHeaderGripper"
-                               Grid.RowSpan="2"
                                BorderBrush="{Binding VerticalGridLinesBrush, RelativeSource={RelativeSource AncestorType={x:Type sdg:SearchDataGrid}}}"
                                BorderThickness="1,0,0,0"
                                Cursor="SizeWE"
@@ -334,7 +387,6 @@
 
                     <ControlTemplate.Triggers>
                         <DataTrigger Binding="{Binding ActualHasItems, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type sdg:SearchDataGrid}}}" Value="False">
-                            <Setter TargetName="PART_ColumnSearchBox" Property="Visibility" Value="Collapsed" />
                             <Setter TargetName="HeaderBorder" Property="BorderThickness" Value="0,0,0,1" />
                         </DataTrigger>
 
@@ -366,25 +418,15 @@
         <Setter Property="BorderBrush" Value="#FFd0d0d0" />
         <Setter Property="BorderThickness" Value="0,0,1,1" />
         <Setter Property="Padding" Value="8,4" />
-        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="HorizontalContentAlignment" Value="Left" />
         <Setter Property="VerticalContentAlignment" Value="Center" />
-
-
     </Style>
-
-    <!--
-        Default Cell Style — each cell paints its own right (vertical) and bottom (horizontal)
-        gridline borders. Visibility is gated by ShowVerticalGridLines / ShowHorizontalGridLines
-        on the parent SearchDataGrid; brushes come from VerticalGridLinesBrush / HorizontalGridLinesBrush
-        on the DataGrid base class.
-    -->
     <Style x:Key="{x:Static sdg:SdgThemeKeys.SearchDataGridCell}" TargetType="{x:Type DataGridCell}">
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderBrush" Value="Transparent" />
         <Setter Property="BorderThickness" Value="0" />
         <Setter Property="Padding" Value="0" />
         <Setter Property="FocusVisualStyle" Value="{x:Null}" />
-
         <Setter Property="ContextMenu">
             <Setter.Value>
                 <ContextMenu AutomationProperties.AutomationId="cmuCell">
@@ -408,12 +450,10 @@
                             <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
                                               VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
                         </Border>
-                        <!-- Vertical gridline (right edge). -->
                         <Border BorderBrush="{Binding VerticalGridLinesBrush, RelativeSource={RelativeSource AncestorType={x:Type DataGrid}}}"
                                 BorderThickness="0,0,1,0"
                                 IsHitTestVisible="False"
                                 Visibility="{Binding ShowVerticalGridLines, RelativeSource={RelativeSource AncestorType={x:Type sdg:SearchDataGrid}}, Converter={StaticResource BooleanToVisibilityCollapsedConverter}}" />
-                        <!-- Horizontal gridline (bottom edge). -->
                         <Border BorderBrush="{Binding HorizontalGridLinesBrush, RelativeSource={RelativeSource AncestorType={x:Type DataGrid}}}"
                                 BorderThickness="0,0,0,1"
                                 IsHitTestVisible="False"
@@ -434,7 +474,6 @@
             </Setter.Value>
         </Setter>
         <Style.Triggers>
-            <!--  Hover (non-selected)  -->
             <MultiTrigger>
                 <MultiTrigger.Conditions>
                     <Condition Property="IsMouseOver" Value="True" />
@@ -442,14 +481,10 @@
                 </MultiTrigger.Conditions>
                 <Setter Property="Background" Value="{StaticResource Sdg.Surface.Hover}" />
             </MultiTrigger>
-
-            <!--  Selected (grid has active selection)  -->
             <Trigger Property="IsSelected" Value="True">
                 <Setter Property="Background" Value="{StaticResource Sdg.Selection.Background}" />
                 <Setter Property="Foreground" Value="{StaticResource Sdg.Text.Primary}" />
             </Trigger>
-
-            <!--  Selected + hovered  -->
             <MultiTrigger>
                 <MultiTrigger.Conditions>
                     <Condition Property="IsSelected" Value="True" />
@@ -457,8 +492,6 @@
                 </MultiTrigger.Conditions>
                 <Setter Property="Background" Value="{StaticResource Sdg.Selection.Background.Hover}" />
             </MultiTrigger>
-
-            <!--  Selected but grid is not the active selection target — show a neutral muted highlight  -->
             <MultiTrigger>
                 <MultiTrigger.Conditions>
                     <Condition Property="IsSelected" Value="True" />
@@ -467,18 +500,12 @@
                 <Setter Property="Background" Value="{StaticResource Sdg.Selection.Background.Inactive}" />
                 <Setter Property="Foreground" Value="{StaticResource Sdg.Text.Primary}" />
             </MultiTrigger>
-
             <Trigger Property="IsEnabled" Value="False">
                 <Setter Property="Foreground" Value="{StaticResource Sdg.Text.Disabled}" />
             </Trigger>
         </Style.Triggers>
     </Style>
 
-    <!--
-        Default Row Style — minimal DataGridRow template. Gridlines are rendered per-cell
-        (see the cell style above), so the row template just hosts the cells presenter,
-        details presenter, and row header.
-    -->
     <Style x:Key="{x:Static sdg:SdgThemeKeys.SearchDataGridRow}" TargetType="{x:Type DataGridRow}">
         <Setter Property="Background" Value="{Binding RowBackground, RelativeSource={RelativeSource AncestorType={x:Type DataGrid}}}" />
         <Setter Property="ValidationErrorTemplate" Value="{x:Null}" />
@@ -601,23 +628,11 @@
                     <Border Background="{TemplateBinding Background}"
                             BorderBrush="{TemplateBinding BorderBrush}"
                             BorderThickness="{TemplateBinding BorderThickness}">
-                        <!--
-                            ClipToBounds=True on the inner Grid (not the outer Border) so the
-                            Border's own edge lines render normally while everything inside is
-                            clipped at the Border's inner edge. Required because
-                            VirtualizingPanel.ScrollUnit="Item" (logical scrolling) realizes the
-                            last partial row at its full pixel height, and ScrollContentPresenter
-                            doesn't reliably clip overflow in that mode — without this the last
-                            row paints over the DataGrid's bottom border and bleeds past the
-                            viewport.
-                        -->
                         <Grid ClipToBounds="True">
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="*" />
                                 <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
-
-                            <!--  Main DataGrid  -->
                             <ScrollViewer x:Name="DG_ScrollViewer"
                                           Grid.Row="0"
                                           Focusable="false"
@@ -633,6 +648,7 @@
                                             </Grid.ColumnDefinitions>
                                             <Grid.RowDefinitions>
                                                 <RowDefinition Height="Auto" />
+                                                <RowDefinition Height="Auto" />
                                                 <RowDefinition Height="*" />
                                                 <RowDefinition Height="Auto" />
                                             </Grid.RowDefinitions>
@@ -644,28 +660,88 @@
                                                     Command="{x:Static DataGrid.SelectAllCommand}"
                                                     Panel.ZIndex="2" />
 
-                                            <!--  Column Headers  -->
-                                            <DataGridColumnHeadersPresenter x:Name="PART_ColumnHeadersPresenter"
-                                                                            Grid.Column="1"
-                                                                            Margin="0,0,0,0" />
+                                            <!--
+                                                Filler under the SelectAllButton, aligned with the pinned
+                                                AutoFilterRowPresenter. Without this, Row 1 / Column 0
+                                                renders empty (SearchDataGrid Background bleeds through),
+                                                leaving a visible gap to the left of the filter row at the
+                                                row-header column. Visibility mirrors the filter row so the
+                                                gap is only filled when the filter row is showing.
+                                            -->
+                                            <Border Grid.Row="1"
+                                                    Grid.Column="0"
+                                                    Background="#FFf9f9f9"
+                                                    BorderBrush="#FFd0d0d0"
+                                                    BorderThickness="0,0,1,1"
+                                                    SnapsToDevicePixels="True"
+                                                    UseLayoutRounding="True">
+                                                <Border.Visibility>
+                                                    <MultiBinding Converter="{StaticResource AutoFilterRowVisibilityConverter}">
+                                                        <Binding Path="ShowAutoFilterRow" RelativeSource="{RelativeSource AncestorType={x:Type sdg:SearchDataGrid}}" />
+                                                        <Binding Path="AutoFilterRowPosition" RelativeSource="{RelativeSource AncestorType={x:Type sdg:SearchDataGrid}}" />
+                                                    </MultiBinding>
+                                                </Border.Visibility>
+                                                <TextBlock Text="&#xE71C;" FontFamily="Segoe Fluent Icons" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Border>
 
-                                            <Border x:Name="PART_ColumnHeaderBottomBorder" Grid.Column="1" Grid.Row="1" Background="#d0d0d0" VerticalAlignment="Top" Panel.ZIndex="2" Height="1" Margin="0,-1,0,0" />
+                                            <!--
+                                                Column Headers. Use the custom presenter so the
+                                                column header containers are SearchDataGridColumnHeader
+                                                instances rather than stock DataGridColumnHeader. The
+                                                custom header type carries the OnClick override that
+                                                suppresses sort when the click originated on an
+                                                interactive child (the filter-popup button).
+                                            -->
+                                            <sdg:SearchDataGridColumnHeadersPresenter x:Name="PART_ColumnHeadersPresenter"
+                                                                                      Grid.Column="1"
+                                                                                      Margin="0,0,0,0" />
+
+                                            <!--
+                                                Pinned filter row. Lives in the same template grid-column
+                                                as PART_ColumnHeadersPresenter so the horizontal scroll
+                                                view applied by the ScrollViewer's clip and the
+                                                FilterRowPanel's own offset binding stay aligned at the
+                                                frozen-column boundary. Phase 2 hosts placeholder borders;
+                                                Phase 3 swaps in ColumnFilterControl instances.
+                                            -->
+                                            <sdg:AutoFilterRowPresenter Grid.Row="1"
+                                                                        Grid.Column="1"
+                                                                        Style="{StaticResource {x:Static sdg:SdgThemeKeys.AutoFilterRowPresenter}}">
+                                                <sdg:AutoFilterRowPresenter.Visibility>
+                                                    <MultiBinding Converter="{StaticResource AutoFilterRowVisibilityConverter}">
+                                                        <Binding Path="ShowAutoFilterRow" RelativeSource="{RelativeSource AncestorType={x:Type sdg:SearchDataGrid}}" />
+                                                        <Binding Path="AutoFilterRowPosition" RelativeSource="{RelativeSource AncestorType={x:Type sdg:SearchDataGrid}}" />
+                                                    </MultiBinding>
+                                                </sdg:AutoFilterRowPresenter.Visibility>
+                                            </sdg:AutoFilterRowPresenter>
+
+                                            <!--
+                                                Header-bottom separator. Shifted to row 2 (top edge of
+                                                content) so it sits BELOW the filter row, not between the
+                                                headers and the filter row. The negative top margin keeps
+                                                it overlapping the header / filter-row gridline at the
+                                                content seam.
+                                            -->
+                                            <Border x:Name="PART_ColumnHeaderBottomBorder" Grid.Column="1" Grid.Row="2" Background="#d0d0d0" VerticalAlignment="Top" Panel.ZIndex="2" Height="1" Margin="0,-1,0,0" />
 
                                             <!--  Rows  -->
                                             <ScrollContentPresenter x:Name="PART_ScrollContentPresenter"
-                                                                    Grid.Row="1"
+                                                                    Grid.Row="2"
                                                                     Grid.ColumnSpan="2"
                                                                     Margin="0,0,1,1"
                                                                     CanContentScroll="{TemplateBinding CanContentScroll}" />
 
                                             <!--
                                                 Placeholder: top-right gap (above the vertical scrollbar).
-                                                Matches column search box (top strip, white) + column header (bottom).
-                                                Visibility follows the vertical scrollbar so it collapses when the scrollbar does.
-                                                Left edge is provided by ContentRightSeparator below — no left
-                                                BorderThickness here, so removing the historical -1 margin hack.
+                                                Spans header + filter rows so the gap covers both bands
+                                                visually. Matches column search box (top strip, white) +
+                                                column header (bottom). Visibility follows the vertical
+                                                scrollbar so it collapses when the scrollbar does. Left
+                                                edge is provided by ContentRightSeparator below — no left
+                                                BorderThickness here.
                                             -->
                                             <Grid Grid.Row="0"
+                                                  Grid.RowSpan="2"
                                                   Grid.Column="2"
                                                   Visibility="{TemplateBinding ComputedVerticalScrollBarVisibility}">
                                                 <Grid.RowDefinitions>
@@ -673,9 +749,10 @@
                                                     <RowDefinition Height="*" />
                                                 </Grid.RowDefinitions>
                                                 <Border Grid.Row="0"
-                                                        Background="White"
+                                                        Background="#F9F9F9"
                                                         Height="29" />
                                                 <Border Grid.Row="1"
+                                                        Margin="0,-2,0,0"
                                                         Background="#F9F9F9"
                                                         BorderBrush="#FFd0d0d0"
                                                         BorderThickness="0,1,0,1" />
@@ -684,14 +761,14 @@
 
                                             <!--  Scrollbars  -->
                                             <ScrollBar x:Name="PART_VerticalScrollBar"
-                                                       Grid.Row="1"
+                                                       Grid.Row="2"
                                                        Grid.Column="2"
                                                        Orientation="Vertical"
                                                        Visibility="{TemplateBinding ComputedVerticalScrollBarVisibility}"
                                                        Maximum="{TemplateBinding ScrollableHeight}"
                                                        ViewportSize="{TemplateBinding ViewportHeight}"
                                                        Value="{Binding VerticalOffset, Mode=OneWay, RelativeSource={RelativeSource TemplatedParent}}" />
-                                            <Grid Grid.Row="2" Grid.Column="1">
+                                            <Grid Grid.Row="3" Grid.Column="1">
                                                 <Grid.ColumnDefinitions>
                                                     <ColumnDefinition Width="{Binding NonFrozenColumnsViewportHorizontalOffset, RelativeSource={RelativeSource AncestorType={x:Type DataGrid}}}" />
                                                     <ColumnDefinition Width="*" />
@@ -711,7 +788,7 @@
                                                 ContentBottomSeparator below — only the col0/col1 internal
                                                 separator stays (right BorderThickness=1).
                                             -->
-                                            <Border Grid.Row="2"
+                                            <Border Grid.Row="3"
                                                     Grid.Column="0"
                                                     Background="#F9F9F9"
                                                     BorderBrush="#FFd0d0d0"
@@ -723,7 +800,7 @@
                                                 at the col1/col2 and row1/row2 boundaries — those edges of the corner
                                                 live entirely inside col 2 / row 2 where the separators don't reach.
                                             -->
-                                            <Border Grid.Row="2"
+                                            <Border Grid.Row="3"
                                                     Grid.Column="2"
                                                     Background="#F9F9F9"
                                                     BorderBrush="#FFd0d0d0"
@@ -746,7 +823,7 @@
                                             </Border>
 
                                             <Border x:Name="ContentRightSeparator"
-                                                    Grid.Row="0" Grid.RowSpan="2"
+                                                    Grid.Row="0" Grid.RowSpan="3"
                                                     Grid.Column="0" Grid.ColumnSpan="2"
                                                     BorderBrush="#FFd0d0d0"
                                                     BorderThickness="0,0,1,0"
@@ -756,7 +833,7 @@
                                                     SnapsToDevicePixels="True"
                                                     UseLayoutRounding="True" />
                                             <Border x:Name="ContentBottomSeparator"
-                                                    Grid.Row="0" Grid.RowSpan="2"
+                                                    Grid.Row="0" Grid.RowSpan="3"
                                                     Grid.Column="0" Grid.ColumnSpan="2"
                                                     BorderBrush="#FFd0d0d0"
                                                     BorderThickness="0,0,0,1"

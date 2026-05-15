@@ -19,9 +19,18 @@ namespace WWSearchDataGrid.Modern.WPF
     /// The mask API mirrors the conceptual model used by DevExpress and similar editor
     /// frameworks: a <see cref="Mask"/> pattern, a <see cref="MaskType"/> to interpret it,
     /// and <see cref="UseMaskAsDisplayFormat"/> to choose whether the mask formats the
-    /// display TextBlock as well as the editing TextBox. Currently only
-    /// <see cref="Core.Display.MaskType.Simple"/> is implemented; other types throw
-    /// <see cref="NotSupportedException"/>.
+    /// display TextBlock as well as the editing TextBox. See <see cref="Core.Display.MaskType"/>
+    /// for the implemented engines (<c>Simple</c>, <c>Numeric</c>, <c>DateTime</c> /
+    /// <c>DateOnly</c> / <c>TimeOnly</c>, <c>TimeSpan</c>). Types without an engine yet throw
+    /// <see cref="NotSupportedException"/> at template-build time.
+    /// <para>
+    /// When <see cref="Mask"/> isn't set explicitly, the templates fall through to the
+    /// column's <c>DisplayMask</c>; failing that, a <c>DisplayStringFormat</c> that names a
+    /// supported Numeric format (<c>C</c>/<c>N</c>/<c>F</c>/<c>P</c>, optional precision) is
+    /// adopted as the mask with <see cref="Core.Display.MaskType.Numeric"/>. So a column with
+    /// just <c>DisplayStringFormat="C2"</c> and no explicit <see cref="Mask"/> still gets
+    /// keystroke-validated currency input.
+    /// </para>
     /// </remarks>
     public class TextEditSettings : BaseEditSettings
     {
@@ -37,9 +46,9 @@ namespace WWSearchDataGrid.Modern.WPF
 
         /// <summary>
         /// How the <see cref="Mask"/> pattern is interpreted. Default
-        /// <see cref="Core.Display.MaskType.Simple"/>. Other types throw
-        /// <see cref="NotSupportedException"/> at template-build time until their respective
-        /// engines are implemented.
+        /// <see cref="Core.Display.MaskType.Simple"/>. See <see cref="Core.Display.MaskType"/>
+        /// for the implemented engines; types without an engine throw
+        /// <see cref="NotSupportedException"/> at template-build time.
         /// </summary>
         public static readonly DependencyProperty MaskTypeProperty =
             DependencyProperty.Register(nameof(MaskType), typeof(MaskType), typeof(TextEditSettings),
@@ -77,6 +86,32 @@ namespace WWSearchDataGrid.Modern.WPF
             set => SetValue(UseMaskAsDisplayFormatProperty, value);
         }
 
+        public override System.Collections.Generic.IEnumerable<Core.SearchType> GetSupportedFilterSearchTypes(Core.ColumnDataType columnDataType, bool isNullable)
+        {
+            // Numeric mask → numeric operators. The mask configuration is the authoritative
+            // signal: ColumnDataType detection runs from sampled values at filter-row init
+            // time and can lag the items-source binding or default to String, so we can't
+            // rely on it. Mask is set at column-generation time and is reliable.
+            if (MaskType == Core.Display.MaskType.Numeric)
+            {
+                return WithNullability(new[]
+                {
+                    Core.SearchType.Equals, Core.SearchType.NotEquals,
+                    Core.SearchType.GreaterThan, Core.SearchType.LessThan,
+                    Core.SearchType.GreaterThanOrEqualTo, Core.SearchType.LessThanOrEqualTo,
+                    Core.SearchType.Between, Core.SearchType.NotBetween,
+                }, isNullable);
+            }
+
+            return WithNullability(new[]
+            {
+                Core.SearchType.Contains, Core.SearchType.DoesNotContain,
+                Core.SearchType.StartsWith, Core.SearchType.EndsWith,
+                Core.SearchType.IsLike, Core.SearchType.IsNotLike,
+                Core.SearchType.Equals, Core.SearchType.NotEquals,
+            }, isNullable);
+        }
+
         public override DataTemplate CreateDisplayTemplate(GridColumn column)
         {
             var factory = new FrameworkElementFactory(typeof(TextBlock));
@@ -86,15 +121,15 @@ namespace WWSearchDataGrid.Modern.WPF
 
             var binding = new Binding(column.FieldName) { Mode = BindingMode.OneWay };
 
-            string effectiveMask = !string.IsNullOrEmpty(Mask) ? Mask : column.DisplayMask;
+            var (effectiveMask, effectiveMaskType) = ResolveEffectiveMask(column);
 
             if (UseMaskAsDisplayFormat && !string.IsNullOrEmpty(effectiveMask))
             {
                 // Mask-as-display: route through MaskFormatConverter so the display string is
                 // identical to what the user sees while editing. Suppresses StringFormat and
                 // DisplayValueConverter — the mask wins.
-                MaskFormatterFactory.EnsureSupported(MaskType);
-                binding.Converter = new MaskFormatConverter(MaskType);
+                MaskFormatterFactory.EnsureSupported(effectiveMaskType);
+                binding.Converter = new MaskFormatConverter(effectiveMaskType);
                 binding.ConverterParameter = effectiveMask;
             }
             else
@@ -121,22 +156,23 @@ namespace WWSearchDataGrid.Modern.WPF
             ApplyEditorStyle(factory, EditSettingsThemeKeys.EditTextBox);
             ApplyTextAlignment(factory, column);
 
-            // Wire MaskInputBehavior when a Mask is configured. Falls back to the column-level
-            // DisplayMask so a single declaration on the column can cover both display formatting
-            // (via Mask + UseMaskAsDisplayFormat or the legacy DisplayMask path) and edit-time
-            // keystroke validation.
-            string effectiveMask = !string.IsNullOrEmpty(Mask) ? Mask : column.DisplayMask;
+            // Wire MaskInputBehavior when a mask resolves. Resolution order: explicit Mask >
+            // column.DisplayMask > column.DisplayStringFormat (auto-adopted with Numeric type
+            // when the format is C/N/F/P). The third hop lets a single DisplayStringFormat
+            // declaration cover both the read-only display (via Binding.StringFormat) and the
+            // edit-time mask, without the consumer having to also configure Mask.
+            var (effectiveMask, effectiveMaskType) = ResolveEffectiveMask(column);
             var editBinding = CreateValueBinding(column);
             if (!string.IsNullOrEmpty(effectiveMask))
             {
-                MaskFormatterFactory.EnsureSupported(MaskType);
+                MaskFormatterFactory.EnsureSupported(effectiveMaskType);
                 // Numeric masks render chrome (currency symbol, group separators, percent sign)
                 // that the default string→decimal binding parser can't handle. Route the edit
                 // binding through MaskFormatConverter so ConvertBack strips chrome and returns
                 // the underlying value before WPF converts to the target property type.
-                if (MaskType == Core.Display.MaskType.Numeric)
+                if (effectiveMaskType == Core.Display.MaskType.Numeric)
                 {
-                    editBinding.Converter = new MaskFormatConverter(MaskType);
+                    editBinding.Converter = new MaskFormatConverter(effectiveMaskType);
                     editBinding.ConverterParameter = effectiveMask;
                 }
                 // Set MaskType BEFORE Mask so the MaskInputBehavior.OnMaskChanged callback
@@ -144,7 +180,7 @@ namespace WWSearchDataGrid.Modern.WPF
                 // Reversing this order means OnMaskChanged sees the default Simple type and
                 // builds a SimpleMaskFormatter against (e.g.) "C" or "P2" — the literal collapses
                 // the textbox display to the bare format-string character on focus enter.
-                factory.SetValue(MaskInputBehavior.MaskTypeProperty, MaskType);
+                factory.SetValue(MaskInputBehavior.MaskTypeProperty, effectiveMaskType);
                 factory.SetValue(MaskInputBehavior.MaskProperty, effectiveMask);
             }
             factory.SetBinding(TextBox.TextProperty, editBinding);
@@ -186,9 +222,9 @@ namespace WWSearchDataGrid.Modern.WPF
         /// </summary>
         private static bool TryApplyMouseClickCaret(TextBox tb)
         {
-            var cell = FindVisualAncestor<System.Windows.Controls.DataGridCell>(tb);
+            var cell = VisualTreeHelperMethods.FindVisualParent<DataGridCell>(tb);
             if (cell == null) return false;
-            var grid = FindVisualAncestor<SearchDataGrid>(cell);
+            var grid = VisualTreeHelperMethods.FindVisualParent<SearchDataGrid>(cell);
             if (grid == null) return false;
             if (!grid.TryConsumeMouseEditPoint(cell, out var cellPoint)) return false;
 
@@ -233,6 +269,44 @@ namespace WWSearchDataGrid.Modern.WPF
                 current = System.Windows.Media.VisualTreeHelper.GetParent(current);
             }
             return null;
+        }
+
+        /// <summary>
+        /// Resolves the effective mask pattern + engine type for a column. Order:
+        /// <list type="number">
+        /// <item>Explicit <see cref="Mask"/> — uses the instance's <see cref="MaskType"/>.</item>
+        /// <item><see cref="GridColumn.DisplayMask"/> — uses the instance's <see cref="MaskType"/>
+        /// (defaults to <see cref="Core.Display.MaskType.Simple"/>).</item>
+        /// <item><see cref="GridColumn.DisplayStringFormat"/> when it names a supported numeric
+        /// format (<c>C</c>/<c>N</c>/<c>F</c>/<c>P</c>, optional precision) — adopted as the
+        /// mask with <see cref="Core.Display.MaskType.Numeric"/>.</item>
+        /// </list>
+        /// Returns <c>(null, MaskType)</c> when nothing applies — the caller leaves
+        /// <see cref="MaskInputBehavior"/> unwired and the TextBox behaves like a plain editor.
+        /// </summary>
+        private (string mask, MaskType maskType) ResolveEffectiveMask(GridColumn column)
+        {
+            if (!string.IsNullOrEmpty(Mask))
+                return (Mask, MaskType);
+            if (column != null && !string.IsNullOrEmpty(column.DisplayMask))
+                return (column.DisplayMask, MaskType);
+            if (column != null && IsNumericMaskFormat(column.DisplayStringFormat))
+                return (column.DisplayStringFormat, Core.Display.MaskType.Numeric);
+            return (null, MaskType);
+        }
+
+        /// <summary>
+        /// True when <paramref name="format"/> is a standard .NET numeric format the
+        /// <c>NumericMaskFormatter</c> can interpret — currency (<c>C</c>), number (<c>N</c>),
+        /// fixed-point (<c>F</c>), or percent (<c>P</c>), with optional precision. Other format
+        /// strings (custom <c>#,##0.00</c>, hex <c>X</c>, exponential <c>E</c>, date patterns)
+        /// don't round-trip through the engine and stay on the StringFormat-only display path.
+        /// </summary>
+        private static bool IsNumericMaskFormat(string format)
+        {
+            if (string.IsNullOrEmpty(format)) return false;
+            char first = char.ToUpperInvariant(format[0]);
+            return first == 'C' || first == 'N' || first == 'F' || first == 'P';
         }
     }
 }

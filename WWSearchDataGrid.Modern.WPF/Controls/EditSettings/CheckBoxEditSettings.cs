@@ -1,6 +1,7 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
+using System.Windows.Data;
 using System.Windows.Input;
 
 namespace WWSearchDataGrid.Modern.WPF
@@ -19,6 +20,36 @@ namespace WWSearchDataGrid.Modern.WPF
 
         public override DataTemplate CreateEditTemplate(GridColumn column)
             => BuildCheckBoxTemplate(column, isDisplay: false);
+
+        public override System.Collections.Generic.IEnumerable<Core.SearchType> GetSupportedFilterSearchTypes(Core.ColumnDataType columnDataType, bool isNullable)
+            // Boolean columns only have two distinct values plus optional null — Equals is
+            // the only meaningful operator. The selector is collapsed in the ColumnFilterControl
+            // template for checkbox columns anyway (the cycle button drives the filter
+            // implicitly), so this set is only consulted when a consumer surfaces the selector
+            // explicitly. IsNull / IsNotNull flow in automatically when isNullable.
+            => WithNullability(new[] { Core.SearchType.Equals }, isNullable);
+
+        public override UIElement CreateFilterEditor(IColumnFilterHost host)
+        {
+            // Tri-state checkbox bound to FilterCheckboxState. The control's checkbox-cycle
+            // logic handles the IsChecked transitions (null ↔ true ↔ false); the editor
+            // itself just publishes the current state.
+            var cb = new CheckBox
+            {
+                IsThreeState = true,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center,
+            };
+            var style = Application.Current?.TryFindResource(EditSettingsThemeKeys.DisplayCheckBox) as Style;
+            if (style != null) cb.Style = style;
+
+            BindingOperations.SetBinding(cb, ToggleButton.IsCheckedProperty, new Binding(nameof(IColumnFilterHost.FilterCheckboxState))
+            {
+                Source = host,
+                Mode = BindingMode.TwoWay,
+            });
+            return cb;
+        }
 
         private DataTemplate BuildCheckBoxTemplate(GridColumn column, bool isDisplay)
         {

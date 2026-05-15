@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using WWSearchDataGrid.Modern.SampleApp.Views.Samples.AnimationPerformance;
+using WWSearchDataGrid.Modern.SampleApp.Views.Samples.AutoFilterRow;
 using WWSearchDataGrid.Modern.SampleApp.Views.Samples.Columns;
 using WWSearchDataGrid.Modern.SampleApp.Views.Samples.DataBinding;
 using WWSearchDataGrid.Modern.SampleApp.Views.Samples.Editing;
@@ -59,7 +60,7 @@ namespace WWSearchDataGrid.Modern.SampleApp.Views.Launcher
                 new SampleDefinition[]
                 {
                     new("Search Modes",
-                        "DefaultSearchMode (Contains / StartsWith / EndsWith / Equals), AllowFiltering=False, EnableRuleFiltering toggle.",
+                        "DefaultSearchType (StartsWith / EndsWith / Contains / Equals — string columns default to StartsWith), AllowFiltering=False, EnableRuleFiltering toggle.",
                         new[] { "Search", "Modes" },
                         () => new SearchModesSampleView()),
 
@@ -72,6 +73,27 @@ namespace WWSearchDataGrid.Modern.SampleApp.Views.Launcher
                         "ColumnFilterEditor — multi-criteria rules joined with AND / OR plus a Filter Values tab.",
                         new[] { "Rules", "Popup" },
                         () => new RuleFilterPopupSampleView()),
+                }),
+
+            new SampleCategory(
+                "Auto Filter Row",
+                "Per-column quick-search row across the top of the grid. Grid- and column-level DPs control its behavior.",
+                new SampleDefinition[]
+                {
+                    new("Options Playground",
+                        "Every grid-level and column-level auto-filter-row DP exposed as runtime toggles — pick a column, tweak its settings, watch the grid react.",
+                        new[] { "Playground", "DPs" },
+                        () => new OptionsPlaygroundSampleView()),
+
+                    new("Custom Templates",
+                        "Replace the default filter editor per column: numeric Slider, DatePicker, and a RadioButton group via GridColumn.AutoFilterRowEditTemplate + EditGridCellData.",
+                        new[] { "Templates", "EditGridCellData" },
+                        () => new CustomTemplatesSampleView()),
+
+                    new("Debounce & Live Filter",
+                        "FilterRowDelay × ImmediateUpdateAutoFilter × LiveFilteringRowCountThreshold (100k). Switch between 1k / 100k / 1M rows and feel each setting interact.",
+                        new[] { "Debounce", "Live filtering", "Threshold" },
+                        () => new DebounceBehaviorSampleView()),
                 }),
 
             new SampleCategory(

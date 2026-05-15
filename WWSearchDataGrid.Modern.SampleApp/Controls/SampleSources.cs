@@ -75,6 +75,30 @@ namespace WWSearchDataGrid.Modern.SampleApp.Controls
             "Models/OrderItem.cs",
             "SampleData/Generators/OrderGenerator.cs");
 
+        // ── Auto Filter Row ──────────────────────────────────────────────────
+        public static IReadOnlyList<SampleSourceFile> OptionsPlayground { get; } = SampleSourceLoader.LoadFiles(
+            "Views/Samples/AutoFilterRow/OptionsPlaygroundSampleView.xaml",
+            "Views/Samples/AutoFilterRow/OptionsPlaygroundSampleView.xaml.cs",
+            "Views/Samples/AutoFilterRow/OptionsPlaygroundSampleViewModel.cs",
+            "Views/Samples/AutoFilterRow/ColumnPlaygroundConfig.cs",
+            "Models/OrderItem.cs",
+            "SampleData/Generators/OrderGenerator.cs");
+
+        public static IReadOnlyList<SampleSourceFile> CustomTemplates { get; } = SampleSourceLoader.LoadFiles(
+            "Views/Samples/AutoFilterRow/CustomTemplatesSampleView.xaml",
+            "Views/Samples/AutoFilterRow/CustomTemplatesSampleView.xaml.cs",
+            "Views/Samples/AutoFilterRow/CustomTemplatesSampleViewModel.cs",
+            "Models/OrderItem.cs",
+            "SampleData/Generators/OrderGenerator.cs");
+
+        public static IReadOnlyList<SampleSourceFile> DebounceBehavior { get; } = SampleSourceLoader.LoadFiles(
+            "Views/Samples/AutoFilterRow/DebounceBehaviorSampleView.xaml",
+            "Views/Samples/AutoFilterRow/DebounceBehaviorSampleView.xaml.cs",
+            "Views/Samples/AutoFilterRow/DebounceBehaviorSampleViewModel.cs",
+            "SampleData/SampleDataGenerator.cs",
+            "Models/OrderItem.cs",
+            "SampleData/Generators/OrderGenerator.cs");
+
         // ── Editing ──────────────────────────────────────────────────────────
         public static IReadOnlyList<SampleSourceFile> EditorTypes { get; } = SampleSourceLoader.LoadFiles(
             "Views/Samples/Editing/EditorTypesSampleView.xaml",

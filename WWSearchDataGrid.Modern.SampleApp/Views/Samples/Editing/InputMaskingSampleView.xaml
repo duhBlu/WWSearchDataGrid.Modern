@@ -95,7 +95,7 @@
 
                     <!-- Computed timezone (zzz) — rendered as fixed text from the system-local
                          offset, skipped by Tab. All digit segments edit normally. -->
-                    <sdg:GridColumn Width="200" FieldName="Iso" Header="ISO">
+                    <sdg:GridColumn Width="200" FieldName="Iso" Header="ISO" >
                         <sdg:GridColumn.EditSettings>
                             <sdg:DateEditSettings Mask="yyyy-MM-ddTHH:mm:sszzz" UseMaskAsDisplayFormat="True" />
                         </sdg:GridColumn.EditSettings>

@@ -73,42 +73,29 @@ namespace WWSearchDataGrid.Modern.Core
         public bool HasMultipleValues => ValueItems?.Count > 0;
 
         /// <summary>
-        /// Attempts to parse the PrimaryValue as a comma-delimited list and populate ValueItems
+        /// Populates <see cref="ValueItems"/> from a bracketed list embedded in
+        /// <see cref="PrimaryValue"/> — the shape <c>FormatMultiValueFilter</c> /
+        /// <c>FormatDateListFilter</c> emit for <c>IsAnyOf</c> / <c>IsNoneOf</c> /
+        /// <c>IsOnAnyOfDates</c>. Bracket delimiters are the authoritative signal that the
+        /// value is a list; bare comma-containing single values (e.g. a date formatted as
+        /// "Friday, December 19, 2025") are intentionally left alone so the chip renders one
+        /// token instead of splitting on prose commas.
         /// </summary>
         public void ParsePrimaryValueAsMultipleValues()
         {
             if (string.IsNullOrEmpty(PrimaryValue) || ValueItems.Count > 0) return;
 
-            // Look for patterns like [value1, value2, value3] or similar bracketed lists
             var bracketMatch = Regex.Match(PrimaryValue, @"\[([^\]]+)\]");
-            if (bracketMatch.Success)
+            if (!bracketMatch.Success) return;
+
+            var listContent = bracketMatch.Groups[1].Value;
+            var items = listContent.Split(new[] { ", " }, StringSplitOptions.RemoveEmptyEntries);
+            foreach (var item in items)
             {
-                var listContent = bracketMatch.Groups[1].Value;
-                var items = listContent.Split(new[] { ", " }, StringSplitOptions.RemoveEmptyEntries);
-                foreach (var item in items)
+                var cleanItem = item.Trim().Trim('\'', '"');
+                if (!string.IsNullOrEmpty(cleanItem))
                 {
-                    // Remove quotes if present
-                    var cleanItem = item.Trim().Trim('\'', '"');
-                    if (!string.IsNullOrEmpty(cleanItem))
-                    {
-                        ValueItems.Add(cleanItem);
-                    }
-                }
-            }
-            else if (PrimaryValue.Contains(",") && !PrimaryValue.StartsWith("Date intervals"))
-            {
-                // Simple comma-separated list
-                var items = PrimaryValue.Split(new[] { ", " }, StringSplitOptions.RemoveEmptyEntries);
-                if (items.Length > 1)
-                {
-                    foreach (var item in items)
-                    {
-                        var cleanItem = item.Trim().Trim('\'', '"');
-                        if (!string.IsNullOrEmpty(cleanItem))
-                        {
-                            ValueItems.Add(cleanItem);
-                        }
-                    }
+                    ValueItems.Add(cleanItem);
                 }
             }
         }

@@ -91,6 +91,68 @@ namespace WWSearchDataGrid.Modern.WPF
             return new DataTemplate { VisualTree = grid };
         }
 
+        public override System.Collections.Generic.IEnumerable<Core.SearchType> GetSupportedFilterSearchTypes(Core.ColumnDataType columnDataType, bool isNullable)
+            => WithNullability(new[]
+            {
+                Core.SearchType.Equals, Core.SearchType.NotEquals,
+                Core.SearchType.GreaterThan, Core.SearchType.LessThan,
+                Core.SearchType.GreaterThanOrEqualTo, Core.SearchType.LessThanOrEqualTo,
+            }, isNullable);
+
+        public override UIElement CreateFilterDisplay(IColumnFilterHost host)
+        {
+            // Read-only display: TextBlock with the column's DisplayStringFormat (e.g. "C2", "N0"),
+            // mirroring the cell display template. No spinner buttons in display mode — they
+            // appear when the cell enters edit.
+            var tb = new TextBlock
+            {
+                VerticalAlignment = VerticalAlignment.Center,
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                TextTrimming = TextTrimming.CharacterEllipsis,
+                Margin = new Thickness(4, 0, 4, 0),
+            };
+            var style = Application.Current?.TryFindResource(EditSettingsThemeKeys.DisplayNumericTextBlock) as Style;
+            if (style != null) tb.Style = style;
+
+            var binding = new Binding("SearchValue")
+            {
+                Source = host,
+                Mode = BindingMode.OneWay,
+            };
+            var column = host?.GridColumn;
+            if (column?.DisplayValueConverter != null)
+            {
+                binding.Converter = column.DisplayValueConverter;
+                binding.ConverterParameter = column.DisplayConverterParameter;
+            }
+            if (!string.IsNullOrEmpty(column?.DisplayStringFormat))
+                binding.StringFormat = column.DisplayStringFormat;
+
+            BindingOperations.SetBinding(tb, TextBlock.TextProperty, binding);
+            return tb;
+        }
+
+        public override UIElement CreateFilterEditor(IColumnFilterHost host)
+        {
+            // NumericUpDown matches the cell editor's spinner UX. Value is object-typed on
+            // NumericUpDown; the filter pipeline's engine coerces to the column's runtime
+            // type when applying the filter.
+            var spin = new NumericUpDown
+            {
+                VerticalContentAlignment = VerticalAlignment.Center,
+            };
+            if (Minimum.HasValue) spin.Minimum = (int)Minimum.Value;
+            if (Maximum.HasValue) spin.Maximum = (int)Maximum.Value;
+            spin.Increment = (int)Math.Max(1, Increment);
+
+            BindingOperations.SetBinding(spin, NumericUpDown.ValueProperty, new Binding("SearchValue")
+            {
+                Source = host,
+                Mode = BindingMode.TwoWay,
+            });
+            return spin;
+        }
+
         public override DataTemplate CreateEditTemplate(GridColumn column)
         {
             var grid = BuildSpinHostGrid();

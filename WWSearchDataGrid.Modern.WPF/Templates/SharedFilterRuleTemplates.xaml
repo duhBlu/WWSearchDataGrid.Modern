@@ -69,15 +69,19 @@
             <TextBlock Text="From:"
                        Margin="0,0,5,0"
                        VerticalAlignment="Center" />
-            <DatePicker VerticalContentAlignment="Center"
-                        MinWidth="120"
-                        SelectedDate="{Binding SelectedValue}" />
+            <sdg:SegmentedDateTimeEditor MinWidth="120"
+                                         IsFilterRowEditor="True"
+                                         MaskType="DateTime"
+                                         Mask="{Binding SearchTemplateController.DisplayMaskPattern, TargetNullValue=d, FallbackValue=d}"
+                                         Value="{Binding SelectedValue}" />
             <TextBlock Text="To:"
                        Margin="10,0,5,0"
                        VerticalAlignment="Center" />
-            <DatePicker VerticalContentAlignment="Center"
-                        MinWidth="120"
-                        SelectedDate="{Binding SelectedSecondaryValue}" />
+            <sdg:SegmentedDateTimeEditor MinWidth="120"
+                                         IsFilterRowEditor="True"
+                                         MaskType="DateTime"
+                                         Mask="{Binding SearchTemplateController.DisplayMaskPattern, TargetNullValue=d, FallbackValue=d}"
+                                         Value="{Binding SelectedSecondaryValue}" />
         </StackPanel>
     </DataTemplate>
 
@@ -274,7 +278,11 @@
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
-                                <DatePicker Grid.Column="0" SelectedDate="{Binding DateValue}" />
+                                <sdg:SegmentedDateTimeEditor Grid.Column="0"
+                                                             IsFilterRowEditor="True"
+                                                             MaskType="DateTime"
+                                                             Mask="{Binding DataContext.SearchTemplateController.DisplayMaskPattern, RelativeSource={RelativeSource AncestorType=ListBox}, TargetNullValue=d, FallbackValue=d}"
+                                                             Value="{Binding DateValue}" />
                                 <Button Grid.Column="1"
                                         BorderThickness="0"
                                         Cursor="Hand"

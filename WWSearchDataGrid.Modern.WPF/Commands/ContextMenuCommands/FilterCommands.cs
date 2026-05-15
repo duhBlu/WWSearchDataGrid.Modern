@@ -29,7 +29,7 @@ namespace WWSearchDataGrid.Modern.WPF.Commands
             {
                 switch (parameter)
                 {
-                    case ColumnSearchBox columnSearchBox:
+                    case IColumnFilterHost columnSearchBox:
                         columnSearchBox.ClearFilter();
                         break;
                     case ContextMenuContext context when context.ColumnSearchBox != null:
@@ -41,7 +41,7 @@ namespace WWSearchDataGrid.Modern.WPF.Commands
             {
                 return parameter switch
                 {
-                    ColumnSearchBox columnSearchBox => columnSearchBox?.HasActiveFilter == true,
+                    IColumnFilterHost columnSearchBox => columnSearchBox?.HasActiveFilter == true,
                     ContextMenuContext context => context?.ColumnSearchBox?.HasActiveFilter == true,
                     _ => false
                 };

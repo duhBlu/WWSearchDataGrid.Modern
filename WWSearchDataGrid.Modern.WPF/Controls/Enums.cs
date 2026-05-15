@@ -1,17 +1,18 @@
 namespace WWSearchDataGrid.Modern.WPF
 {
     /// <summary>
-    /// Specifies the default search mode for simple textbox searches in column filters.
+    /// Default search type for the auto-filter row's per-column quick search.
     /// </summary>
-    public enum DefaultSearchMode
+    public enum DefaultSearchType
     {
         /// <summary>
-        /// Finds matches anywhere in the value (default behavior).
+        /// Finds matches anywhere in the value.
         /// </summary>
         Contains = 0,
 
         /// <summary>
-        /// Finds matches that start with the search text.
+        /// Finds matches that start with the search text (the default for string columns).
+        /// Spec synonym: <c>BeginsWith</c>.
         /// </summary>
         StartsWith = 1,
 

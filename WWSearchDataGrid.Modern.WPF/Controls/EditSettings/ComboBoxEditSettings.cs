@@ -122,6 +122,96 @@ namespace WWSearchDataGrid.Modern.WPF
             return new DataTemplate { VisualTree = grid };
         }
 
+        public override System.Collections.Generic.IEnumerable<Core.SearchType> GetSupportedFilterSearchTypes(Core.ColumnDataType columnDataType, bool isNullable)
+            // ComboBox selects a discrete value from a known set — Contains / StartsWith etc.
+            // don't make sense. Equals / NotEquals are the only operators that map cleanly to
+            // a chosen value. IsAnyOf / IsNoneOf would map cleanly to a multi-select ComboBox
+            // but that's a future feature; not added here.
+            => WithNullability(new[] { Core.SearchType.Equals, Core.SearchType.NotEquals }, isNullable);
+
+        // Pair with the whitelist above: string-typed fields would otherwise inherit
+        // DefaultSearchType.StartsWith from GridColumn.ApplyTypeBasedDefaults, which is not in
+        // the ComboBox whitelist and would disable the AutoFilterRow cell.
+        public override DefaultSearchType? GetPreferredDefaultSearchType() => DefaultSearchType.Equals;
+
+        public override UIElement CreateFilterDisplay(IColumnFilterHost host)
+        {
+            // Read-only display: TextBlock that resolves SearchValue through the same
+            // ItemsSource / DisplayMemberPath / SelectedValuePath lookup the cell display
+            // template uses. SelectedValuePath mode (foreign-key) finds the matching item and
+            // shows its DisplayMemberPath property; item-bound mode reads the property off the
+            // item directly. Empty SearchValue → empty text.
+            var tb = new TextBlock
+            {
+                VerticalAlignment = VerticalAlignment.Center,
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                TextTrimming = TextTrimming.CharacterEllipsis,
+                Margin = new Thickness(4, 0, 4, 0),
+            };
+            var style = Application.Current?.TryFindResource(EditSettingsThemeKeys.DisplayTextBlock) as Style;
+            if (style != null) tb.Style = style;
+
+            BindingOperations.SetBinding(tb, TextBlock.TextProperty, new Binding("SearchValue")
+            {
+                Source = host,
+                Mode = BindingMode.OneWay,
+                Converter = new ComboBoxValueLookupConverter(ItemsSource, DisplayMemberPath, SelectedValuePath),
+            });
+            return tb;
+        }
+
+        public override UIElement CreateFilterEditor(IColumnFilterHost host)
+        {
+            // ComboBox with the same ItemsSource / DisplayMemberPath / SelectedValuePath as
+            // the cell editor — the dropdown options for filtering match what the cell editor
+            // offers for the column. Selection writes through to ColumnFilterControl.SearchValue.
+            var cb = new ComboBox();
+
+            // Style FIRST — mirror the cell-editor's FrameworkElementFactory ordering
+            // (StyleProperty before other writes). The EditComboBox template's chevron
+            // sub-element references EditComboBoxDropDownButton via StaticResource — moving
+            // the style application ahead of ItemsSource / ItemTemplate keeps the chevron
+            // template materialization deterministic across hosts.
+            var style = Application.Current?.TryFindResource(EditSettingsThemeKeys.EditComboBox) as Style;
+            if (style != null) cb.Style = style;
+
+            cb.VerticalContentAlignment = VerticalAlignment.Center;
+            cb.HorizontalContentAlignment = HorizontalAlignment.Left;
+            cb.ItemsSource = ItemsSource;
+
+            if (!string.IsNullOrEmpty(DisplayMemberPath))
+            {
+                // Same ItemTemplate trick CreateEditTemplate uses: the custom ControlTemplate
+                // hand-places its selection-box ContentPresenter, so DisplayMemberPath alone
+                // doesn't render selection text correctly. Setting ItemTemplate gives both the
+                // dropdown items and the closed-state display the right rendering.
+                var itemTemplate = new DataTemplate();
+                var textFactory = new FrameworkElementFactory(typeof(TextBlock));
+                textFactory.SetBinding(TextBlock.TextProperty, new Binding(DisplayMemberPath));
+                itemTemplate.VisualTree = textFactory;
+                cb.ItemTemplate = itemTemplate;
+            }
+
+            if (!string.IsNullOrEmpty(SelectedValuePath))
+            {
+                cb.SelectedValuePath = SelectedValuePath;
+                BindingOperations.SetBinding(cb, Selector.SelectedValueProperty, new Binding("SearchValue")
+                {
+                    Source = host,
+                    Mode = BindingMode.TwoWay,
+                });
+            }
+            else
+            {
+                BindingOperations.SetBinding(cb, Selector.SelectedItemProperty, new Binding("SearchValue")
+                {
+                    Source = host,
+                    Mode = BindingMode.TwoWay,
+                });
+            }
+            return cb;
+        }
+
         public override DataTemplate CreateEditTemplate(GridColumn column)
         {
             var factory = new FrameworkElementFactory(typeof(ComboBox));

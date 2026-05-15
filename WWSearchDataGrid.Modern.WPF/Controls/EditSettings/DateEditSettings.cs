@@ -155,6 +155,84 @@ namespace WWSearchDataGrid.Modern.WPF
             return new DataTemplate { VisualTree = grid };
         }
 
+        public override System.Collections.Generic.IEnumerable<Core.SearchType> GetSupportedFilterSearchTypes(Core.ColumnDataType columnDataType, bool isNullable)
+            => WithNullability(new[]
+            {
+                Core.SearchType.Equals, Core.SearchType.NotEquals,
+                Core.SearchType.GreaterThan, Core.SearchType.LessThan,
+                Core.SearchType.GreaterThanOrEqualTo, Core.SearchType.LessThanOrEqualTo,
+            }, isNullable);
+
+        public override UIElement CreateFilterDisplay(IColumnFilterHost host)
+        {
+            // Read-only display: TextBlock with the same mask / format resolution rules the cell
+            // display template uses. UseMaskAsDisplayFormat routes through MaskFormatConverter for
+            // display==edit text parity; otherwise the column's DisplayStringFormat (or short date)
+            // formats the value.
+            var tb = new TextBlock
+            {
+                VerticalAlignment = VerticalAlignment.Center,
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                TextTrimming = TextTrimming.CharacterEllipsis,
+                Margin = new Thickness(4, 0, 4, 0),
+            };
+            var style = Application.Current?.TryFindResource(EditSettingsThemeKeys.DisplayTextBlock) as Style;
+            if (style != null) tb.Style = style;
+
+            var binding = new Binding("SearchValue")
+            {
+                Source = host,
+                Mode = BindingMode.OneWay,
+            };
+
+            string effectiveMask = !string.IsNullOrEmpty(Mask) ? Mask : host?.GridColumn?.DisplayMask;
+            string displayFormat = host?.GridColumn?.DisplayStringFormat;
+            if (UseMaskAsDisplayFormat && !string.IsNullOrEmpty(effectiveMask))
+            {
+                MaskFormatterFactory.EnsureSupported(MaskType);
+                binding.Converter = new MaskFormatConverter(MaskType);
+                binding.ConverterParameter = effectiveMask;
+            }
+            else
+            {
+                binding.StringFormat = string.IsNullOrEmpty(displayFormat) ? "d" : displayFormat;
+            }
+
+            BindingOperations.SetBinding(tb, TextBlock.TextProperty, binding);
+            return tb;
+        }
+
+        public override UIElement CreateFilterEditor(IColumnFilterHost host)
+        {
+            // Reuse the same SegmentedDateTimeEditor the cell-edit template uses — same
+            // masked TextBox + calendar popup, same theme styles. The only difference is
+            // that Value is bound to the filter host's SearchValue (object-typed) instead
+            // of a row-item field path. WPF coerces object↔DateTime? through the standard
+            // binding type-converter, so picking a date in the popup pushes a DateTime
+            // into SearchValue and clearing the editor pushes null.
+            string effectiveMask = !string.IsNullOrEmpty(Mask) ? Mask : host?.GridColumn?.DisplayMask;
+            if (!string.IsNullOrEmpty(effectiveMask))
+                MaskFormatterFactory.EnsureSupported(MaskType);
+
+            var editor = new SegmentedDateTimeEditor
+            {
+                Mask = effectiveMask,
+                MaskType = MaskType,
+                // Filter-row marker: enables today's-date pre-fill on focus and suppresses the
+                // cell-edit Loaded-time focus grab. See SegmentedDateTimeEditor.IsFilterRowEditor.
+                IsFilterRowEditor = true,
+            };
+            if (MinDate.HasValue) editor.MinDate = MinDate.Value;
+            if (MaxDate.HasValue) editor.MaxDate = MaxDate.Value;
+
+            BindingOperations.SetBinding(editor, SegmentedDateTimeEditor.ValueProperty, new Binding("SearchValue")
+            {
+                Source = host,
+                Mode = BindingMode.TwoWay,
+            });
+            return editor;
+        }
+
         public override DataTemplate CreateEditTemplate(GridColumn column)
         {
             string effectiveMask = !string.IsNullOrEmpty(Mask) ? Mask : column.DisplayMask;

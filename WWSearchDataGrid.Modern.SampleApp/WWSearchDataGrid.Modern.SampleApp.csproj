@@ -53,6 +53,18 @@
     <EmbeddedResource Include="Views\Samples\Filtering\RuleFilterPopupSampleView.xaml.cs" />
     <EmbeddedResource Include="Views\Samples\Filtering\RuleFilterPopupSampleViewModel.cs" />
 
+    <!-- Auto Filter Row -->
+    <EmbeddedResource Include="Views\Samples\AutoFilterRow\OptionsPlaygroundSampleView.xaml" />
+    <EmbeddedResource Include="Views\Samples\AutoFilterRow\OptionsPlaygroundSampleView.xaml.cs" />
+    <EmbeddedResource Include="Views\Samples\AutoFilterRow\OptionsPlaygroundSampleViewModel.cs" />
+    <EmbeddedResource Include="Views\Samples\AutoFilterRow\ColumnPlaygroundConfig.cs" />
+    <EmbeddedResource Include="Views\Samples\AutoFilterRow\CustomTemplatesSampleView.xaml" />
+    <EmbeddedResource Include="Views\Samples\AutoFilterRow\CustomTemplatesSampleView.xaml.cs" />
+    <EmbeddedResource Include="Views\Samples\AutoFilterRow\CustomTemplatesSampleViewModel.cs" />
+    <EmbeddedResource Include="Views\Samples\AutoFilterRow\DebounceBehaviorSampleView.xaml" />
+    <EmbeddedResource Include="Views\Samples\AutoFilterRow\DebounceBehaviorSampleView.xaml.cs" />
+    <EmbeddedResource Include="Views\Samples\AutoFilterRow\DebounceBehaviorSampleViewModel.cs" />
+
     <!-- Editing -->
     <EmbeddedResource Include="Views\Samples\Editing\EditorTypesSampleView.xaml" />
     <EmbeddedResource Include="Views\Samples\Editing\EditorTypesSampleView.xaml.cs" />
@@ -82,6 +94,7 @@
     <EmbeddedResource Include="Models\Contact.cs" />
     <EmbeddedResource Include="SampleData\SampleViewModelBase.cs" />
     <EmbeddedResource Include="SampleData\GeneratableSampleViewModel.cs" />
+    <EmbeddedResource Include="SampleData\SampleDataGenerator.cs" />
     <EmbeddedResource Include="SampleData\Generators\CustomerGenerator.cs" />
     <EmbeddedResource Include="SampleData\Generators\VendorTableGenerator.cs" />
     <EmbeddedResource Include="SampleData\Generators\OrderGenerator.cs" />

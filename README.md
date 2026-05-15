@@ -15,7 +15,7 @@ xmlns:sdg="clr-namespace:WWSearchDataGrid.Modern.WPF;assembly=WWSearchDataGrid.M
                     IsColumnChooserEnabled="True">
     <sdg:SearchDataGrid.GridColumns>
         <sdg:GridColumn FieldName="Name" Header="Name" />
-        <sdg:GridColumn FieldName="Status" Header="Status" DefaultSearchMode="Equals" />
+        <sdg:GridColumn FieldName="Status" Header="Status" DefaultSearchType="Equals" />
         <sdg:GridColumn FieldName="Amount" Header="Amount" DisplayStringFormat="C2" />
         <sdg:GridColumn FieldName="OrderDate" Header="Date" DisplayStringFormat="MM/dd/yyyy" />
     </sdg:SearchDataGrid.GridColumns>

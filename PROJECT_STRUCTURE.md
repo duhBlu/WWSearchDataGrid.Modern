@@ -457,7 +457,7 @@ EnableRuleFiltering              // Enable/disable complex filtering (default: t
 UseCheckBoxInSearchBox           // Force checkbox filtering mode (default: false)
 FilterMemberPath                 // Explicit property path for filtering
 ColumnDisplayName                // Display name for UI (falls back to Header)
-DefaultSearchMode                // Default search type (Contains/StartsWith/EndsWith/Equals)
+DefaultSearchType                // Default search type (Contains/StartsWith/EndsWith/Equals)
 IsSelectAllColumn                // Enable select-all checkbox in header (default: false)
 SelectAllScope                   // Scope for select-all (FilteredRows/SelectedRows/AllItems)
 CustomSearchTemplate             // Custom SearchTemplate type (default: typeof(SearchTemplate))
@@ -627,7 +627,7 @@ ToggleThemeCommand           // Switch Generic ↔ Custom theme
 ```xml
 <DataGridTextColumn
     sdg:GridColumn.FilterMemberPath="CustomerName"
-    sdg:GridColumn.DefaultSearchMode="StartsWith"
+    sdg:GridColumn.DefaultSearchType="StartsWith"
     sdg:GridColumn.EnableRuleFiltering="False"
     sdg:GridColumn.ColumnDisplayName="Custom Display Name" />
 ```
@@ -683,7 +683,7 @@ OnSearchTextChanged()
 [Phase 2: Core Template Management]
 SearchTemplate created with:
   - ColumnDataType
-  - SearchType (mapped from DefaultSearchMode)
+  - SearchType (mapped from DefaultSearchType)
   - SelectedValue = SearchText
   ↓
 SubscribeToTemplateChanges()

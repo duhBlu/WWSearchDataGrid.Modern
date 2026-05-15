@@ -9,8 +9,6 @@ namespace WWSearchDataGrid.Modern.WPF
 {
     /// <summary>
     /// Attached behavior that adds animated momentum scrolling to a <see cref="ScrollViewer"/>.
-    /// Supports multiple easing modes via <see cref="AnimationModeProperty"/> and uses a
-    /// decoupled two-offset system for smooth content interpolation.
     /// </summary>
     public static class SmoothScrollBehavior
     {

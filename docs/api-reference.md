@@ -15,6 +15,10 @@ Extends `System.Windows.Controls.DataGrid`. All standard DataGrid properties, me
 | `IsColumnChooserConfinedToGrid` | `bool` | `false` | Constrains the column chooser window to the grid's viewport bounds. |
 | `SearchFilter` | `Predicate<object>` | `null` | The current compiled filter predicate applied to items. |
 | `ActualHasItems` | `bool` | `false` | Read-only. Whether the original (unfiltered) data source has any items. |
+| `ShowCriteriaInAutoFilterRow` | `bool` | `false` | When true, every auto-filter row cell shows an inline search-type selector button. Inherits to descendant cells; per-column override via `GridColumn.ShowCriteriaInAutoFilterRow`. |
+| `AutoFilterRowCellStyle` | `Style` | `null` | Style applied to every auto-filter row cell. Per-column override via `GridColumn.AutoFilterRowCellStyle`. |
+| `FilterRowDelay` | `int` (ms) | `0` | Debounce window for keystroke-driven filtering on auto-filter row cells. `0` fires on every keystroke. Ignored when the column has `ImmediateUpdateAutoFilter=false`. Inherits to cells. |
+| `AutoFilterRowClearButtonMode` | `AutoFilterRowClearButtonMode` | `Always` | Controls when the per-cell clear button is visible. `Never`, `Always` (any active filter), `Display` (only on the read-only display surface), `Edit` (only on the edit surface). Inherits to cells. |
 
 ### Properties
 
@@ -98,10 +102,10 @@ A `FrameworkContentElement` that describes a column. Declared inside `SearchData
 | `FilterMemberPath` | `string` | `null` | Overrides `FieldName` for filtering. |
 | `SortMemberPath` | `string` | `null` | Overrides `FieldName` for sorting. |
 | `ColumnDisplayName` | `string` | `null` | Display name for filter panel and column chooser. |
-| `DisplayStringFormat` | `string` | `null` | .NET format string (e.g., "C2", "MM/dd/yyyy"). |
-| `DisplayValueConverter` | `IValueConverter` | `null` | Custom display converter. |
+| `DisplayStringFormat` | `string` | `null` | .NET format string (e.g., "C2", "MM/dd/yyyy"). Also drives display-text filtering — see [Column Filter Mode](column-filter-mode.md). |
+| `DisplayValueConverter` | `IValueConverter` | `null` | Custom display converter. Also drives display-text filtering. |
 | `DisplayConverterParameter` | `object` | `null` | Converter parameter. |
-| `DisplayMask` | `string` | `null` | Mask pattern for formatted display. |
+| `DisplayMask` | `string` | `null` | Mask pattern for formatted display. Filtering compares raw values with mask characters stripped. |
 | `FieldType` | `Type` | `null` | Data type. Auto-detected in Phase 2; set explicitly for now (e.g., `{x:Type sys:Boolean}` for checkbox columns). |
 
 ### Filtering/Search Properties
@@ -109,11 +113,19 @@ A `FrameworkContentElement` that describes a column. Declared inside `SearchData
 | Property | Type | Default | Description |
 |----------|------|---------|-------------|
 | `EnableRuleFiltering` | `bool` | `true` | Enables advanced filter UI. Inherits grid-level setting when not set. |
-| `DefaultSearchMode` | `DefaultSearchMode` | `Contains` | Search type for simple textbox: `Contains`, `StartsWith`, `EndsWith`, `Equals`. |
+| `DefaultSearchType` | `DefaultSearchType` | `StartsWith` | Search type for simple textbox: `Contains`, `StartsWith`, `EndsWith`, `Equals`. String columns default to `StartsWith`; `DateTime` / enum columns default to `Equals` via auto-configuration. |
 | `UseCheckBoxInSearchBox` | `bool` | `false` | Checkbox filter for boolean columns. |
 | `CustomSearchTemplate` | `Type` | `null` | Custom search template type. |
-| `AllowFiltering` | `bool` | `true` | When false, hides the search box entirely. |
+| `AllowFiltering` | `bool` | `true` | When false, hides the auto-filter row cell entirely (collapsed — takes no space). |
+| `AllowAutoFilter` | `bool` | `true` | When false, disables (greys out) the auto-filter row cell while preserving its space. Distinct from `AllowFiltering` (which hides). |
+| `ShowCriteriaInAutoFilterRow` | `bool?` | `null` | Column-level override for the grid's setting. `null` inherits the grid value. Controls whether the inline search-type selector button appears on this cell. |
+| `AutoFilterRowCellStyle` | `Style` | `null` | Column-level style override for the auto-filter row cell. Falls back to the grid's `AutoFilterRowCellStyle`, then to the theme key. |
+| `ImmediateUpdateAutoFilter` | `bool` | `true` | When false, keystrokes do not rebuild the filter — user must commit via Enter / Tab / lost-focus. Auto-filter row cell ignores `FilterRowDelay` when this is false. |
+| `AutoFilterRowDisplayTemplate` | `DataTemplate` | `null` | Custom data template that drives the auto-filter row cell. Bind to `{Binding Value, Mode=TwoWay}` to participate in filtering. Falls back to `AutoFilterRowEditTemplate`. |
+| `AutoFilterRowEditTemplate` | `DataTemplate` | `null` | Edit-mode data template for the auto-filter row cell. Wins over `AutoFilterRowDisplayTemplate` when both are set. |
 | `AllowSorting` | `bool` | `true` | When false, disables header sort click. |
+
+See [Column Filter Mode](column-filter-mode.md) for how display properties (`DisplayStringFormat`, `DisplayValueConverter`, `DisplayMask`) affect filtering comparison.
 
 ### Select-All Properties
 
@@ -144,7 +156,7 @@ Static class providing attached properties for the legacy column configuration s
 | `UseCheckBoxInSearchBox` | `bool` | `false` | Checkbox filter for boolean columns. |
 | `FilterMemberPath` | `string` | `null` | Property path for filter value retrieval. |
 | `ColumnDisplayName` | `string` | `null` | Display name for filter panel and column chooser. |
-| `DefaultSearchMode` | `DefaultSearchMode` | `Contains` | Search type for simple textbox input. |
+| `DefaultSearchType` | `DefaultSearchType` | `StartsWith` | Search type for simple textbox input. |
 | `IsSelectAllColumn` | `bool` | `false` | Adds select-all checkbox to header. |
 | `SelectAllScope` | `SelectAllScope` | `AllItems` | Scope for select-all. |
 | `DisplayStringFormat` | `string` | `null` | .NET format string. |
@@ -194,11 +206,19 @@ Displays active filters as chips with enable/disable toggle.
 
 ## Enums
 
-### DefaultSearchMode
-- `Contains` - Match anywhere in value (default)
-- `StartsWith` - Match from beginning
+### DefaultSearchType
+- `Contains` - Match anywhere in value
+- `StartsWith` - Match from beginning (default for string columns; spec synonym `BeginsWith`)
 - `EndsWith` - Match at end
 - `Equals` - Exact match only
+
+### AutoFilterRowClearButtonMode
+- `Never` - Clear button is never shown
+- `Always` - Shown whenever the cell has an active filter, on either surface (display or edit)
+- `Display` - Shown only on the read-only display surface (focus outside the cell) with an active filter
+- `Edit` - Shown only on the edit surface (focus inside the cell) with an active filter
+
+The display / edit surfaces are managed by `ColumnFilterControl.IsFilterCellEditing`, which tracks `IsKeyboardFocusWithin` and swaps between `BaseEditSettings.CreateFilterDisplay` (read-only TextBlock) and `BaseEditSettings.CreateFilterEditor` (full editor with decoration buttons).
 
 ### SelectAllScope
 - `FilteredRows` - Currently visible/filtered rows

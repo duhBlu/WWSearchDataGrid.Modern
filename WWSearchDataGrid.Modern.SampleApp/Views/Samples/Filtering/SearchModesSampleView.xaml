@@ -25,7 +25,7 @@
                        TextWrapping="Wrap">
                 <Run FontWeight="SemiBold" Text="Per-column search modes" />
                 <LineBreak />
-                <Run Text="DefaultSearchMode chooses how a column's search box matches: Contains anywhere, StartsWith / EndsWith for prefix / suffix, Equals for exact match. UseCheckBoxInSearchBox swaps the text box for a tri-state checkbox on bool columns. AllowFiltering=False hides the search box entirely. EnableRuleFiltering toggles the funnel-icon rule popup." />
+                <Run Text="DefaultSearchType chooses how a column's search box matches: StartsWith / EndsWith for prefix / suffix (string columns default to StartsWith), Contains for matches anywhere, Equals for exact match. UseCheckBoxInSearchBox swaps the text box for a tri-state checkbox on bool columns. AllowFiltering=False hides the search box entirely. EnableRuleFiltering toggles the funnel-icon rule popup." />
             </TextBlock>
 
             <Grid>
@@ -47,15 +47,15 @@
                                     SelectionMode="Extended"
                                     SelectionUnit="FullRow">
                     <sdg:SearchDataGrid.GridColumns>
-                        <sdg:GridColumn Width="80" FieldName="OrderNumber" Header="Order #" DefaultSearchMode="StartsWith" />
-                        <sdg:GridColumn Width="120" FieldName="OrderStatusName" Header="Status" DefaultSearchMode="Equals" />
-                        <sdg:GridColumn Width="100" FieldName="OrderLocationName" Header="Location" DefaultSearchMode="Equals" />
+                        <sdg:GridColumn Width="80" FieldName="OrderNumber" Header="Order #" DefaultSearchType="StartsWith" ShowCriteriaInAutoFilterRow="True" />
+                        <sdg:GridColumn Width="120" FieldName="OrderStatusName" Header="Status" DefaultSearchType="Equals" />
+                        <sdg:GridColumn Width="100" FieldName="OrderLocationName" Header="Location" DefaultSearchType="Equals" />
                         <sdg:GridColumn Width="200" FieldName="CustomerName" Header="Customer" />
-                        <sdg:GridColumn Width="160" FieldName="EmployeeName" Header="Employee" DefaultSearchMode="Contains" />
-                        <sdg:GridColumn Width="120" FieldName="DealerPO" Header="Dealer PO" DefaultSearchMode="EndsWith" />
+                        <sdg:GridColumn Width="160" FieldName="EmployeeName" Header="Employee" DefaultSearchType="Contains" />
+                        <sdg:GridColumn Width="120" FieldName="DealerPO" Header="Dealer PO" DefaultSearchType="EndsWith" />
                         <sdg:GridColumn Width="80" FieldName="OrderCancelled" Header="Cancelled" />
-                        <sdg:GridColumn Width="60" FieldName="State" Header="State" DefaultSearchMode="Equals" EnableRuleFiltering="False" />
-                        <sdg:GridColumn Width="200" FieldName="SpecialInstructionsText" Header="Notes (no filter)" AllowFiltering="False" />
+                        <sdg:GridColumn Width="60" FieldName="State" Header="State" DefaultSearchType="Equals" EnableRuleFiltering="False" />
+                        <sdg:GridColumn Width="200" FieldName="SpecialInstructionsText" Header="Notes (no filter)" AllowAutoFilter="False" />
                     </sdg:SearchDataGrid.GridColumns>
                 </sdg:SearchDataGrid>
 
@@ -78,7 +78,7 @@
                             <LineBreak />
                             <Run Text="• Type 'Submitted' in Status — exact match only (Equals)." />
                             <LineBreak />
-                            <Run Text="• Type a partial name in Customer — matches anywhere (Contains)." />
+                            <Run Text="• Type a partial name in Customer — anchored at the start (string default StartsWith). Override to Contains on a column when you want match-anywhere." />
                             <LineBreak />
                             <Run Text="• State has rule-filtering OFF — only the simple search box, no funnel icon." />
                             <LineBreak />

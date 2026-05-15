@@ -4,7 +4,10 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Controls.Primitives;
 using System.Windows.Input;
+using System.Windows.Media;
 using WWSearchDataGrid.Modern.Core;
 
 namespace WWSearchDataGrid.Modern.WPF.Commands
@@ -64,13 +67,63 @@ namespace WWSearchDataGrid.Modern.WPF.Commands
         }, grid => grid != null);
 
         /// <summary>
-        /// Shows the advanced filter editor for the column
+        /// Opens the rule-filter editor popup for a column. Invoked by the per-column
+        /// filter button hosted in the <see cref="DataGridColumnHeader"/> chrome — the button's
+        /// <c>CommandParameter</c> binds to its templated header, the command walks up to the
+        /// owning <see cref="SearchDataGrid"/>, looks up the column's filter host through
+        /// <see cref="SearchDataGrid.FindColumnFilterControl"/>, and asks it to show its
+        /// popup via <see cref="IColumnFilterHost.ShowFilterEditor"/>. Falls back gracefully
+        /// when the parameter is the host directly (consumer-driven invocation paths).
         /// </summary>
+        /// <remarks>
+        /// CanExecute checks parameter shape only — not registry state. The pinned
+        /// AutoFilterRowPresenter creates and registers a ColumnFilterControl per column
+        /// asynchronously (one dispatcher tick after the header template applies), so the
+        /// registry is briefly empty when the header button is first templated. Gating
+        /// CanExecute on registry presence would leave the button IsEnabled=false until
+        /// CommandManager.RequerySuggested fires, and RequerySuggested only fires on
+        /// key/mouse-button/focus events — not on mouse moves — so the button would appear
+        /// dead to hover/click until the user interacted with the filter row first.
+        /// </remarks>
         private static ICommand _showFilterEditorCommand;
-        public static ICommand ShowFilterEditorCommand => _showFilterEditorCommand ??= new RelayCommand<ColumnSearchBox>(columnSearchBox =>
+        public static ICommand ShowFilterEditorCommand => _showFilterEditorCommand ??= new RelayCommand<object>(
+            parameter => ResolveColumnFilterHost(parameter)?.ShowFilterEditor(),
+            parameter => CanResolveColumnFilterHost(parameter));
+
+        private static bool CanResolveColumnFilterHost(object parameter)
         {
-            Debug.WriteLine($"[PLACEHOLDER] Show Filter Editor: Column '{columnSearchBox?.CurrentColumn?.Header}' - Not implemented");
-            // TODO: Open existing ColumnFilterEditor for this column
-        }, columnSearchBox => columnSearchBox != null);
+            return parameter switch
+            {
+                IColumnFilterHost => true,
+                DataGridColumnHeader header => header.Column != null,
+                _ => false,
+            };
+        }
+
+        private static IColumnFilterHost ResolveColumnFilterHost(object parameter)
+        {
+            switch (parameter)
+            {
+                case IColumnFilterHost host:
+                    return host;
+
+                case DataGridColumnHeader header:
+                    if (header.Column == null) return null;
+                    var grid = FindAncestor<SearchDataGrid>(header);
+                    return grid?.FindColumnFilterControl(header.Column) as IColumnFilterHost;
+            }
+            return null;
+        }
+
+        private static T FindAncestor<T>(DependencyObject from) where T : DependencyObject
+        {
+            var current = from;
+            while (current != null)
+            {
+                if (current is T match) return match;
+                current = VisualTreeHelper.GetParent(current) ?? LogicalTreeHelper.GetParent(current);
+            }
+            return null;
+        }
     }
 }

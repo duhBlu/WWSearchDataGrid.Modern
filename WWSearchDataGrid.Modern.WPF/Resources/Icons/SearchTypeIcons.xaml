@@ -1,0 +1,1947 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sdg="clr-namespace:WWSearchDataGrid.Modern.WPF">
+  <!--
+    Public-facing DrawingImage keys are ComponentResourceKey instances declared on
+    sdg:SearchTypeIconKeys, so consumers see one typed surface instead of dozens of
+    loose string keys. The Geometry/Brush/DrawingGroup x:Keys below are internal
+    plumbing — names are arbitrary and may change between releases. Do not depend
+    on them from consumer code.
+  -->
+  <DrawingGroup x:Key="this_week_earlierDrawingGroup" ClipGeometry="M0,0 V24 H24 V0 H0 Z">
+    <GeometryDrawing Brush="#FF1C1C1C">
+      <GeometryDrawing.Geometry>
+        <RectangleGeometry RadiusX="0.6" RadiusY="0.6" Rect="2,9,2.64,6" />
+      </GeometryDrawing.Geometry>
+    </GeometryDrawing>
+    <GeometryDrawing Brush="#FF1C1C1C">
+      <GeometryDrawing.Geometry>
+        <RectangleGeometry RadiusX="0.6" RadiusY="0.6" Rect="5.14,9,2.64,6" />
+      </GeometryDrawing.Geometry>
+    </GeometryDrawing>
+    <GeometryDrawing Brush="#FF1C1C1C">
+      <GeometryDrawing.Geometry>
+        <RectangleGeometry RadiusX="0.6" RadiusY="0.6" Rect="8.29,9,2.64,6" />
+      </GeometryDrawing.Geometry>
+    </GeometryDrawing>
+    <GeometryDrawing Brush="#FF1C1C1C">
+      <GeometryDrawing.Geometry>
+        <RectangleGeometry RadiusX="0.6" RadiusY="0.6" Rect="11.43,9,2.64,6" />
+      </GeometryDrawing.Geometry>
+    </GeometryDrawing>
+    <GeometryDrawing Brush="#FFFFFFFF">
+      <GeometryDrawing.Geometry>
+        <EllipseGeometry RadiusX="0.9" RadiusY="0.9" Center="12.75,12" />
+      </GeometryDrawing.Geometry>
+    </GeometryDrawing>
+    <GeometryDrawing>
+      <GeometryDrawing.Pen>
+        <Pen Thickness="1.5" StartLineCap="Round" EndLineCap="Round" LineJoin="Round">
+          <Pen.Brush>
+            <SolidColorBrush Color="#FF1C1C1C" Opacity="0.35" />
+          </Pen.Brush>
+        </Pen>
+      </GeometryDrawing.Pen>
+      <GeometryDrawing.Geometry>
+        <RectangleGeometry RadiusX="0.6" RadiusY="0.6" Rect="14.57,9,2.64,6" />
+      </GeometryDrawing.Geometry>
+    </GeometryDrawing>
+    <GeometryDrawing>
+      <GeometryDrawing.Pen>
+        <Pen Thickness="1.5" StartLineCap="Round" EndLineCap="Round" LineJoin="Round">
+          <Pen.Brush>
+            <SolidColorBrush Color="#FF1C1C1C" Opacity="0.35" />
+          </Pen.Brush>
+        </Pen>
+      </GeometryDrawing.Pen>
+      <GeometryDrawing.Geometry>
+        <RectangleGeometry RadiusX="0.6" RadiusY="0.6" Rect="17.71,9,2.64,6" />
+      </GeometryDrawing.Geometry>
+    </GeometryDrawing>
+    <GeometryDrawing>
+      <GeometryDrawing.Pen>
+        <Pen Thickness="1.5" StartLineCap="Round" EndLineCap="Round" LineJoin="Round">
+          <Pen.Brush>
+            <SolidColorBrush Color="#FF1C1C1C" Opacity="0.35" />
+          </Pen.Brush>
+        </Pen>
+      </GeometryDrawing.Pen>
+      <GeometryDrawing.Geometry>
+        <RectangleGeometry RadiusX="0.6" RadiusY="0.6" Rect="20.86,9,2.64,6" />
+      </GeometryDrawing.Geometry>
+    </GeometryDrawing>
+  </DrawingGroup>
+  <DrawingImage x:Key="{x:Static sdg:SearchTypeIconKeys.EarlierThisWeek}" Drawing="{StaticResource this_week_earlierDrawingGroup}" />
+    
+  <Geometry x:Key="prior_yearGeometry">F1 M24,24z M0,0z M6.5,8L2.5,12 6.5,16</Geometry>
+  <DrawingGroup x:Key="prior_yearDrawingGroup" ClipGeometry="M0,0 V24 H24 V0 H0 Z">
+    <DrawingGroup Opacity="1">
+      <GeometryDrawing Brush="#FF1C1C1C">
+        <GeometryDrawing.Geometry>
+          <RectangleGeometry RadiusX="0.4" RadiusY="0.4" Rect="9,5,3,3" />
+        </GeometryDrawing.Geometry>
+      </GeometryDrawing>
+      <GeometryDrawing Brush="#FF1C1C1C">
+        <GeometryDrawing.Geometry>
+          <RectangleGeometry RadiusX="0.4" RadiusY="0.4" Rect="12.5,5,3,3" />
+        </GeometryDrawing.Geometry>
+      </GeometryDrawing>
+      <GeometryDrawing Brush="#FF1C1C1C">
+        <GeometryDrawing.Geometry>
+          <RectangleGeometry RadiusX="0.4" RadiusY="0.4" Rect="16,5,3,3" />
+        </GeometryDrawing.Geometry>
+      </GeometryDrawing>
+      <GeometryDrawing Brush="#FF1C1C1C">
+        <GeometryDrawing.Geometry>
+          <RectangleGeometry RadiusX="0.4" RadiusY="0.4" Rect="9,8.5,3,3" />
+        </GeometryDrawing.Geometry>
+      </GeometryDrawing>
+      <GeometryDrawing Brush="#FF1C1C1C">
+        <GeometryDrawing.Geometry>
+          <RectangleGeometry RadiusX="0.4" RadiusY="0.4" Rect="12.5,8.5,3,3" />
+        </GeometryDrawing.Geometry>
+      </GeometryDrawing>
+      <GeometryDrawing Brush="#FF1C1C1C">
+        <GeometryDrawing.Geometry>
+          <RectangleGeometry RadiusX="0.4" RadiusY="0.4" Rect="16,8.5,3,3" />
+        </GeometryDrawing.Geometry>
+      </GeometryDrawing>
+      <GeometryDrawing Brush="#FF1C1C1C">
+        <GeometryDrawing.Geometry>
+          <RectangleGeometry RadiusX="0.4" RadiusY="0.4" Rect="9,12,3,3" />
+        </GeometryDrawing.Geometry>
+      </GeometryDrawing>
+      <GeometryDrawing Brush="#FF1C1C1C">
+        <GeometryDrawing.Geometry>
+          <RectangleGeometry RadiusX="0.4" RadiusY="0.4" Rect="12.5,12,3,3" />
+        </GeometryDrawing.Geometry>
+      </GeometryDrawing>
+      <GeometryDrawing Brush="#FF1C1C1C">
+        <GeometryDrawing.Geometry>
+          <RectangleGeometry RadiusX="0.4" RadiusY="0.4" Rect="16,12,3,3" />
+        </GeometryDrawing.Geometry>
+      </GeometryDrawing>
+      <GeometryDrawing Brush="#FF1C1C1C">
+        <GeometryDrawing.Geometry>
+          <RectangleGeometry RadiusX="0.4" RadiusY="0.4" Rect="9,15.5,3,3" />
+        </GeometryDrawing.Geometry>
+      </GeometryDrawing>
+      <GeometryDrawing Brush="#FF1C1C1C">
+        <GeometryDrawing.Geometry>
+          <RectangleGeometry RadiusX="0.4" RadiusY="0.4" Rect="12.5,15.5,3,3" />
+        </GeometryDrawing.Geometry>
+      </GeometryDrawing>
+      <GeometryDrawing Brush="#FF1C1C1C">
+        <GeometryDrawing.Geometry>
+          <RectangleGeometry RadiusX="0.4" RadiusY="0.4" Rect="16,15.5,3,3" />
+        </GeometryDrawing.Geometry>
+      </GeometryDrawing>
+    </DrawingGroup>
+    <GeometryDrawing Geometry="{StaticResource prior_yearGeometry}">
+      <GeometryDrawing.Pen>
+        <Pen Brush="#FF1C1C1C" Thickness="1.75" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" />
+      </GeometryDrawing.Pen>
+    </GeometryDrawing>
+  </DrawingGroup>
+  <DrawingImage x:Key="{x:Static sdg:SearchTypeIconKeys.PriorThisYear}" Drawing="{StaticResource prior_yearDrawingGroup}" />
+    
+  <DrawingGroup x:Key="this_year_earlierDrawingGroup" ClipGeometry="M0,0 V24 H24 V0 H0 Z">
+    <GeometryDrawing Brush="#FF1C1C1C">
+      <GeometryDrawing.Geometry>
+        <RectangleGeometry RadiusX="0.5" RadiusY="0.5" Rect="2,5,4,4" />
+      </GeometryDrawing.Geometry>
+    </GeometryDrawing>
+    <GeometryDrawing Brush="#FF1C1C1C">
+      <GeometryDrawing.Geometry>
+        <RectangleGeometry RadiusX="0.5" RadiusY="0.5" Rect="6.5,5,4,4" />
+      </GeometryDrawing.Geometry>
+    </GeometryDrawing>
+    <GeometryDrawing Brush="#FF1C1C1C">
+      <GeometryDrawing.Geometry>
+        <RectangleGeometry RadiusX="0.5" RadiusY="0.5" Rect="11,5,4,4" />
+      </GeometryDrawing.Geometry>
+    </GeometryDrawing>
+    <GeometryDrawing Brush="#FF1C1C1C">
+      <GeometryDrawing.Geometry>
+        <RectangleGeometry RadiusX="0.5" RadiusY="0.5" Rect="15.5,5,4,4" />
+      </GeometryDrawing.Geometry>
+    </GeometryDrawing>
+    <GeometryDrawing Brush="#FF1C1C1C">
+      <GeometryDrawing.Geometry>
+        <RectangleGeometry RadiusX="0.5" RadiusY="0.5" Rect="2,9.5,4,4" />
+      </GeometryDrawing.Geometry>
+    </GeometryDrawing>
+    <GeometryDrawing Brush="#FF1C1C1C">
+      <GeometryDrawing.Geometry>
+        <RectangleGeometry RadiusX="0.5" RadiusY="0.5" Rect="6.5,9.5,4,4" />
+      </GeometryDrawing.Geometry>
+    </GeometryDrawing>
+    <GeometryDrawing Brush="#FF1C1C1C">
+      <GeometryDrawing.Geometry>
+        <RectangleGeometry RadiusX="0.5" RadiusY="0.5" Rect="11,9.5,4,4" />
+      </GeometryDrawing.Geometry>
+    </GeometryDrawing>
+    <GeometryDrawing Brush="#FF1C1C1C">
+      <GeometryDrawing.Geometry>
+        <RectangleGeometry RadiusX="0.5" RadiusY="0.5" Rect="15.5,9.5,4,4" />
+      </GeometryDrawing.Geometry>
+    </GeometryDrawing>
+    <GeometryDrawing Brush="#FFFFFFFF">
+      <GeometryDrawing.Geometry>
+        <EllipseGeometry RadiusX="0.9" RadiusY="0.9" Center="17.5,11.5" />
+      </GeometryDrawing.Geometry>
+    </GeometryDrawing>
+    <GeometryDrawing>
+      <GeometryDrawing.Pen>
+        <Pen Thickness="1.5" StartLineCap="Round" EndLineCap="Round" LineJoin="Round">
+          <Pen.Brush>
+            <SolidColorBrush Color="#FF1C1C1C" Opacity="0.35" />
+          </Pen.Brush>
+        </Pen>
+      </GeometryDrawing.Pen>
+      <GeometryDrawing.Geometry>
+        <RectangleGeometry RadiusX="0.5" RadiusY="0.5" Rect="2,14,4,4" />
+      </GeometryDrawing.Geometry>
+    </GeometryDrawing>
+    <GeometryDrawing>
+      <GeometryDrawing.Pen>
+        <Pen Thickness="1.5" StartLineCap="Round" EndLineCap="Round" LineJoin="Round">
+          <Pen.Brush>
+            <SolidColorBrush Color="#FF1C1C1C" Opacity="0.35" />
+          </Pen.Brush>
+        </Pen>
+      </GeometryDrawing.Pen>
+      <GeometryDrawing.Geometry>
+        <RectangleGeometry RadiusX="0.5" RadiusY="0.5" Rect="6.5,14,4,4" />
+      </GeometryDrawing.Geometry>
+    </GeometryDrawing>
+    <GeometryDrawing>
+      <GeometryDrawing.Pen>
+        <Pen Thickness="1.5" StartLineCap="Round" EndLineCap="Round" LineJoin="Round">
+          <Pen.Brush>
+            <SolidColorBrush Color="#FF1C1C1C" Opacity="0.35" />
+          </Pen.Brush>
+        </Pen>
+      </GeometryDrawing.Pen>
+      <GeometryDrawing.Geometry>
+        <RectangleGeometry RadiusX="0.5" RadiusY="0.5" Rect="11,14,4,4" />
+      </GeometryDrawing.Geometry>
+    </GeometryDrawing>
+    <GeometryDrawing>
+      <GeometryDrawing.Pen>
+        <Pen Thickness="1.5" StartLineCap="Round" EndLineCap="Round" LineJoin="Round">
+          <Pen.Brush>
+            <SolidColorBrush Color="#FF1C1C1C" Opacity="0.35" />
+          </Pen.Brush>
+        </Pen>
+      </GeometryDrawing.Pen>
+      <GeometryDrawing.Geometry>
+        <RectangleGeometry RadiusX="0.5" RadiusY="0.5" Rect="15.5,14,4,4" />
+      </GeometryDrawing.Geometry>
+    </GeometryDrawing>
+  </DrawingGroup>
+  <DrawingImage x:Key="{x:Static sdg:SearchTypeIconKeys.EarlierThisYear}" Drawing="{StaticResource this_year_earlierDrawingGroup}" />
+    
+  <DrawingGroup x:Key="this_year_laterDrawingGroup" ClipGeometry="M0,0 V24 H24 V0 H0 Z">
+    <GeometryDrawing>
+      <GeometryDrawing.Pen>
+        <Pen Thickness="1.5" StartLineCap="Round" EndLineCap="Round" LineJoin="Round">
+          <Pen.Brush>
+            <SolidColorBrush Color="#FF1C1C1C" Opacity="0.35" />
+          </Pen.Brush>
+        </Pen>
+      </GeometryDrawing.Pen>
+      <GeometryDrawing.Geometry>
+        <RectangleGeometry RadiusX="0.5" RadiusY="0.5" Rect="2,5,4,4" />
+      </GeometryDrawing.Geometry>
+    </GeometryDrawing>
+    <GeometryDrawing>
+      <GeometryDrawing.Pen>
+        <Pen Thickness="1.5" StartLineCap="Round" EndLineCap="Round" LineJoin="Round">
+          <Pen.Brush>
+            <SolidColorBrush Color="#FF1C1C1C" Opacity="0.35" />
+          </Pen.Brush>
+        </Pen>
+      </GeometryDrawing.Pen>
+      <GeometryDrawing.Geometry>
+        <RectangleGeometry RadiusX="0.5" RadiusY="0.5" Rect="6.5,5,4,4" />
+      </GeometryDrawing.Geometry>
+    </GeometryDrawing>
+    <GeometryDrawing>
+      <GeometryDrawing.Pen>
+        <Pen Thickness="1.5" StartLineCap="Round" EndLineCap="Round" LineJoin="Round">
+          <Pen.Brush>
+            <SolidColorBrush Color="#FF1C1C1C" Opacity="0.35" />
+          </Pen.Brush>
+        </Pen>
+      </GeometryDrawing.Pen>
+      <GeometryDrawing.Geometry>
+        <RectangleGeometry RadiusX="0.5" RadiusY="0.5" Rect="11,5,4,4" />
+      </GeometryDrawing.Geometry>
+    </GeometryDrawing>
+    <GeometryDrawing>
+      <GeometryDrawing.Pen>
+        <Pen Thickness="1.5" StartLineCap="Round" EndLineCap="Round" LineJoin="Round">
+          <Pen.Brush>
+            <SolidColorBrush Color="#FF1C1C1C" Opacity="0.35" />
+          </Pen.Brush>
+        </Pen>
+      </GeometryDrawing.Pen>
+      <GeometryDrawing.Geometry>
+        <RectangleGeometry RadiusX="0.5" RadiusY="0.5" Rect="15.5,5,4,4" />
+      </GeometryDrawing.Geometry>
+    </GeometryDrawing>
+    <GeometryDrawing>
+      <GeometryDrawing.Pen>
+        <Pen Thickness="1.5" StartLineCap="Round" EndLineCap="Round" LineJoin="Round">
+          <Pen.Brush>
+            <SolidColorBrush Color="#FF1C1C1C" Opacity="0.35" />
+          </Pen.Brush>
+        </Pen>
+      </GeometryDrawing.Pen>
+      <GeometryDrawing.Geometry>
+        <RectangleGeometry RadiusX="0.5" RadiusY="0.5" Rect="2,9.5,4,4" />
+      </GeometryDrawing.Geometry>
+    </GeometryDrawing>
+    <GeometryDrawing>
+      <GeometryDrawing.Pen>
+        <Pen Thickness="1.5" StartLineCap="Round" EndLineCap="Round" LineJoin="Round">
+          <Pen.Brush>
+            <SolidColorBrush Color="#FF1C1C1C" Opacity="0.35" />
+          </Pen.Brush>
+        </Pen>
+      </GeometryDrawing.Pen>
+      <GeometryDrawing.Geometry>
+        <RectangleGeometry RadiusX="0.5" RadiusY="0.5" Rect="6.5,9.5,4,4" />
+      </GeometryDrawing.Geometry>
+    </GeometryDrawing>
+    <GeometryDrawing>
+      <GeometryDrawing.Pen>
+        <Pen Thickness="1.5" StartLineCap="Round" EndLineCap="Round" LineJoin="Round">
+          <Pen.Brush>
+            <SolidColorBrush Color="#FF1C1C1C" Opacity="0.35" />
+          </Pen.Brush>
+        </Pen>
+      </GeometryDrawing.Pen>
+      <GeometryDrawing.Geometry>
+        <RectangleGeometry RadiusX="0.5" RadiusY="0.5" Rect="11,9.5,4,4" />
+      </GeometryDrawing.Geometry>
+    </GeometryDrawing>
+    <GeometryDrawing Brush="#FF1C1C1C">
+      <GeometryDrawing.Geometry>
+        <RectangleGeometry RadiusX="0.5" RadiusY="0.5" Rect="15.5,9.5,4,4" />
+      </GeometryDrawing.Geometry>
+    </GeometryDrawing>
+    <GeometryDrawing Brush="#FFFFFFFF">
+      <GeometryDrawing.Geometry>
+        <EllipseGeometry RadiusX="0.9" RadiusY="0.9" Center="17.5,11.5" />
+      </GeometryDrawing.Geometry>
+    </GeometryDrawing>
+    <GeometryDrawing Brush="#FF1C1C1C">
+      <GeometryDrawing.Geometry>
+        <RectangleGeometry RadiusX="0.5" RadiusY="0.5" Rect="2,14,4,4" />
+      </GeometryDrawing.Geometry>
+    </GeometryDrawing>
+    <GeometryDrawing Brush="#FF1C1C1C">
+      <GeometryDrawing.Geometry>
+        <RectangleGeometry RadiusX="0.5" RadiusY="0.5" Rect="6.5,14,4,4" />
+      </GeometryDrawing.Geometry>
+    </GeometryDrawing>
+    <GeometryDrawing Brush="#FF1C1C1C">
+      <GeometryDrawing.Geometry>
+        <RectangleGeometry RadiusX="0.5" RadiusY="0.5" Rect="11,14,4,4" />
+      </GeometryDrawing.Geometry>
+    </GeometryDrawing>
+    <GeometryDrawing Brush="#FF1C1C1C">
+      <GeometryDrawing.Geometry>
+        <RectangleGeometry RadiusX="0.5" RadiusY="0.5" Rect="15.5,14,4,4" />
+      </GeometryDrawing.Geometry>
+    </GeometryDrawing>
+  </DrawingGroup>
+  <DrawingImage x:Key="{x:Static sdg:SearchTypeIconKeys.LaterThisYear}" Drawing="{StaticResource this_year_laterDrawingGroup}" />
+    
+  <Geometry x:Key="is_likeGeometry1">F1 M20.774921,11.750087z M0,0z M2.5,19L21.5,19</Geometry>
+  <Geometry x:Key="is_likeGeometry2">F1 M20.774921,11.750087z M0,0z M12,9.5L12,15.5</Geometry>
+  <Geometry x:Key="is_likeGeometry3">F1 M20.774921,11.750087z M0,0z M9.4,11L14.6,14</Geometry>
+  <Geometry x:Key="is_likeGeometry4">F1 M20.774921,11.750087z M0,0z M9.4,14L14.6,11</Geometry>
+  <DrawingGroup x:Key="is_likeDrawingGroup" ClipGeometry="M0,0 V11.750087 H20.774921 V0 H0 Z">
+    <DrawingGroup Opacity="1" Transform="1,0,0,1,-308.63719,-522.07113">
+      <DrawingGroup Opacity="1" Transform="1,0,0,1,-2.9063686,-1.191495">
+        <DrawingGroup Opacity="1" Transform="1,0,0,1,315.71769,498.13839">
+          <DrawingGroup Opacity="1" Transform="1,0,0,1,0.7847331,-0.01993203">
+            <DrawingGroup Opacity="1" Transform="1,0,0,1,-0.51600904,-0.23313472">
+              <DrawingGroup Opacity="1" Transform="1,0,0,1,-321.77248,-480.22769">
+                <DrawingGroup Opacity="1" Transform="1,0,0,1,315.71769,498.13839">
+                  <DrawingGroup Opacity="1" Transform="1,0,0,1,0.7847331,-0.01993203">
+                    <DrawingGroup Opacity="1" Transform="1,0,0,1,-0.51600904,-0.23313472">
+                      <DrawingGroup Opacity="1" Transform="1,0,0,1,1.3571038,1.646843">
+                        <DrawingGroup Opacity="1" Transform="1,0,0,1,-0.85385868,2.524808">
+                          <DrawingGroup Opacity="1" Transform="1,0,0,1,1.4017578,-2.5398243">
+                            <DrawingGroup Opacity="1" Transform="1,0,0,1,-0.33248874,1.0972918">
+                              <DrawingGroup Opacity="1" Transform="1,0,0,1,-1.8418428,-3.1344509">
+                                <GeometryDrawing Geometry="{StaticResource is_likeGeometry1}">
+                                  <GeometryDrawing.Pen>
+                                    <Pen Thickness="1.75" StartLineCap="Round" EndLineCap="Round" LineJoin="Round">
+                                      <Pen.Brush>
+                                        <SolidColorBrush Color="#FF1C1C1C" Opacity="0.55" />
+                                      </Pen.Brush>
+                                    </Pen>
+                                  </GeometryDrawing.Pen>
+                                </GeometryDrawing>
+                                <GeometryDrawing>
+                                  <GeometryDrawing.Pen>
+                                    <Pen Brush="#FF1C1C1C" Thickness="1.75" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" />
+                                  </GeometryDrawing.Pen>
+                                  <GeometryDrawing.Geometry>
+                                    <RectangleGeometry RadiusX="1" RadiusY="1" Rect="3.0489,9,4.5,7" />
+                                  </GeometryDrawing.Geometry>
+                                </GeometryDrawing>
+                                <DrawingGroup Opacity="1">
+                                  <GeometryDrawing Geometry="{StaticResource is_likeGeometry2}">
+                                    <GeometryDrawing.Pen>
+                                      <Pen Brush="#FF107C10" Thickness="1.60000002" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" />
+                                    </GeometryDrawing.Pen>
+                                  </GeometryDrawing>
+                                  <GeometryDrawing Geometry="{StaticResource is_likeGeometry3}">
+                                    <GeometryDrawing.Pen>
+                                      <Pen Brush="#FF107C10" Thickness="1.60000002" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" />
+                                    </GeometryDrawing.Pen>
+                                  </GeometryDrawing>
+                                  <GeometryDrawing Geometry="{StaticResource is_likeGeometry4}">
+                                    <GeometryDrawing.Pen>
+                                      <Pen Brush="#FF107C10" Thickness="1.60000002" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" />
+                                    </GeometryDrawing.Pen>
+                                  </GeometryDrawing>
+                                </DrawingGroup>
+                                <GeometryDrawing>
+                                  <GeometryDrawing.Pen>
+                                    <Pen Brush="#FF1C1C1C" Thickness="1.75" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" />
+                                  </GeometryDrawing.Pen>
+                                  <GeometryDrawing.Geometry>
+                                    <RectangleGeometry RadiusX="1" RadiusY="1" Rect="16.4511,9,4.5,7" />
+                                  </GeometryDrawing.Geometry>
+                                </GeometryDrawing>
+                              </DrawingGroup>
+                            </DrawingGroup>
+                          </DrawingGroup>
+                        </DrawingGroup>
+                      </DrawingGroup>
+                    </DrawingGroup>
+                  </DrawingGroup>
+                </DrawingGroup>
+              </DrawingGroup>
+            </DrawingGroup>
+          </DrawingGroup>
+        </DrawingGroup>
+      </DrawingGroup>
+    </DrawingGroup>
+  </DrawingGroup>
+  <DrawingImage x:Key="{x:Static sdg:SearchTypeIconKeys.IsLike}" Drawing="{StaticResource is_likeDrawingGroup}" />
+    
+  <Geometry x:Key="IsBetweenGeometry1">F1 M18.20022,14.231333z M0,0z M4,6L4,18</Geometry>
+  <Geometry x:Key="IsBetweenGeometry2">F1 M18.20022,14.231333z M0,0z M20,6L20,18</Geometry>
+  <Geometry x:Key="IsBetweenGeometry3">F1 M18.20022,14.231333z M0,0z M7,12L17,12</Geometry>
+  <DrawingGroup x:Key="IsBetweenDrawingGroup" ClipGeometry="M0,0 V14.231333 H18.20022 V0 H0 Z">
+    <DrawingGroup Opacity="1" Transform="1,0,0,1,-311.76638,-521.96491">
+      <DrawingGroup Opacity="1" Transform="1,0,0,1,-2.9063686,-1.191495">
+        <DrawingGroup Opacity="1" Transform="1,0,0,1,315.71769,498.13839">
+          <DrawingGroup Opacity="1" Transform="1,0,0,1,0.7847331,-0.01993203">
+            <DrawingGroup Opacity="1" Transform="1,0,0,1,-0.51600904,-0.23313472">
+              <DrawingGroup Opacity="1" Transform="1,0,0,1,-321.77248,-480.22769">
+                <DrawingGroup Opacity="1" Transform="1,0,0,1,315.71769,498.13839">
+                  <DrawingGroup Opacity="1" Transform="1,0,0,1,0.7847331,-0.01993203">
+                    <DrawingGroup Opacity="1" Transform="1,0,0,1,-0.51600904,-0.23313472">
+                      <DrawingGroup Opacity="1" Transform="1,0,0,1,1.3571038,1.646843">
+                        <DrawingGroup Opacity="1" Transform="1,0,0,1,-0.85385868,2.524808">
+                          <DrawingGroup Opacity="1" Transform="1,0,0,1,1.4017578,-2.5398243">
+                            <DrawingGroup Opacity="1" Transform="1,0,0,1,-0.33248874,1.0972918">
+                              <GeometryDrawing Geometry="{StaticResource IsBetweenGeometry1}">
+                                <GeometryDrawing.Pen>
+                                  <Pen Brush="#FF107C10" Thickness="2.2" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" />
+                                </GeometryDrawing.Pen>
+                              </GeometryDrawing>
+                              <GeometryDrawing Geometry="{StaticResource IsBetweenGeometry2}">
+                                <GeometryDrawing.Pen>
+                                  <Pen Brush="#FF107C10" Thickness="2.20000005" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" />
+                                </GeometryDrawing.Pen>
+                              </GeometryDrawing>
+                              <GeometryDrawing Geometry="{StaticResource IsBetweenGeometry3}">
+                                <GeometryDrawing.Pen>
+                                  <Pen Brush="#FF107C10" Thickness="2.20000005" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" />
+                                </GeometryDrawing.Pen>
+                              </GeometryDrawing>
+                            </DrawingGroup>
+                          </DrawingGroup>
+                        </DrawingGroup>
+                      </DrawingGroup>
+                    </DrawingGroup>
+                  </DrawingGroup>
+                </DrawingGroup>
+              </DrawingGroup>
+            </DrawingGroup>
+          </DrawingGroup>
+        </DrawingGroup>
+      </DrawingGroup>
+    </DrawingGroup>
+  </DrawingGroup>
+  <DrawingImage x:Key="{x:Static sdg:SearchTypeIconKeys.Between}" Drawing="{StaticResource IsBetweenDrawingGroup}" />
+    
+  <DrawingGroup x:Key="this_month_earlierDrawingGroup" ClipGeometry="M0,0 V24 H24 V0 H0 Z">
+    <GeometryDrawing Brush="#FF1C1C1C">
+      <GeometryDrawing.Geometry>
+        <RectangleGeometry RadiusX="0.5" RadiusY="0.5" Rect="3,5,3.5,3.5" />
+      </GeometryDrawing.Geometry>
+    </GeometryDrawing>
+    <GeometryDrawing Brush="#FF1C1C1C">
+      <GeometryDrawing.Geometry>
+        <RectangleGeometry RadiusX="0.5" RadiusY="0.5" Rect="7.75,5,3.5,3.5" />
+      </GeometryDrawing.Geometry>
+    </GeometryDrawing>
+    <GeometryDrawing Brush="#FF1C1C1C">
+      <GeometryDrawing.Geometry>
+        <RectangleGeometry RadiusX="0.5" RadiusY="0.5" Rect="12.5,5,3.5,3.5" />
+      </GeometryDrawing.Geometry>
+    </GeometryDrawing>
+    <GeometryDrawing Brush="#FF1C1C1C">
+      <GeometryDrawing.Geometry>
+        <RectangleGeometry RadiusX="0.5" RadiusY="0.5" Rect="17.25,5,3.5,3.5" />
+      </GeometryDrawing.Geometry>
+    </GeometryDrawing>
+    <GeometryDrawing Brush="#FF1C1C1C">
+      <GeometryDrawing.Geometry>
+        <RectangleGeometry RadiusX="0.5" RadiusY="0.5" Rect="3,9.75,3.5,3.5" />
+      </GeometryDrawing.Geometry>
+    </GeometryDrawing>
+    <GeometryDrawing Brush="#FF1C1C1C">
+      <GeometryDrawing.Geometry>
+        <RectangleGeometry RadiusX="0.5" RadiusY="0.5" Rect="7.75,9.75,3.5,3.5" />
+      </GeometryDrawing.Geometry>
+    </GeometryDrawing>
+    <GeometryDrawing Brush="#FF1C1C1C">
+      <GeometryDrawing.Geometry>
+        <RectangleGeometry RadiusX="0.5" RadiusY="0.5" Rect="12.5,9.75,3.5,3.5" />
+      </GeometryDrawing.Geometry>
+    </GeometryDrawing>
+    <GeometryDrawing Brush="#FF1C1C1C">
+      <GeometryDrawing.Geometry>
+        <RectangleGeometry RadiusX="0.5" RadiusY="0.5" Rect="17.25,9.75,3.5,3.5" />
+      </GeometryDrawing.Geometry>
+    </GeometryDrawing>
+    <GeometryDrawing Brush="#FF1C1C1C">
+      <GeometryDrawing.Geometry>
+        <RectangleGeometry RadiusX="0.5" RadiusY="0.5" Rect="3,14.5,3.5,3.5" />
+      </GeometryDrawing.Geometry>
+    </GeometryDrawing>
+    <GeometryDrawing Brush="#FF1C1C1C">
+      <GeometryDrawing.Geometry>
+        <RectangleGeometry RadiusX="0.5" RadiusY="0.5" Rect="7.75,14.5,3.5,3.5" />
+      </GeometryDrawing.Geometry>
+    </GeometryDrawing>
+    <GeometryDrawing Brush="#FF1C1C1C">
+      <GeometryDrawing.Geometry>
+        <RectangleGeometry RadiusX="0.5" RadiusY="0.5" Rect="12.5,14.5,3.5,3.5" />
+      </GeometryDrawing.Geometry>
+    </GeometryDrawing>
+    <GeometryDrawing Brush="#FFFFFFFF">
+      <GeometryDrawing.Geometry>
+        <EllipseGeometry RadiusX="0.8" RadiusY="0.8" Center="14.25,16.25" />
+      </GeometryDrawing.Geometry>
+    </GeometryDrawing>
+    <GeometryDrawing>
+      <GeometryDrawing.Pen>
+        <Pen Thickness="1.5" StartLineCap="Round" EndLineCap="Round" LineJoin="Round">
+          <Pen.Brush>
+            <SolidColorBrush Color="#FF1C1C1C" Opacity="0.35" />
+          </Pen.Brush>
+        </Pen>
+      </GeometryDrawing.Pen>
+      <GeometryDrawing.Geometry>
+        <RectangleGeometry RadiusX="0.5" RadiusY="0.5" Rect="17.25,14.5,3.5,3.5" />
+      </GeometryDrawing.Geometry>
+    </GeometryDrawing>
+    <GeometryDrawing>
+      <GeometryDrawing.Pen>
+        <Pen Thickness="1.5" StartLineCap="Round" EndLineCap="Round" LineJoin="Round">
+          <Pen.Brush>
+            <SolidColorBrush Color="#FF1C1C1C" Opacity="0.35" />
+          </Pen.Brush>
+        </Pen>
+      </GeometryDrawing.Pen>
+      <GeometryDrawing.Geometry>
+        <RectangleGeometry RadiusX="0.5" RadiusY="0.5" Rect="3,19.25,3.5,1.75" />
+      </GeometryDrawing.Geometry>
+    </GeometryDrawing>
+    <GeometryDrawing>
+      <GeometryDrawing.Pen>
+        <Pen Thickness="1.5" StartLineCap="Round" EndLineCap="Round" LineJoin="Round">
+          <Pen.Brush>
+            <SolidColorBrush Color="#FF1C1C1C" Opacity="0.35" />
+          </Pen.Brush>
+        </Pen>
+      </GeometryDrawing.Pen>
+      <GeometryDrawing.Geometry>
+        <RectangleGeometry RadiusX="0.5" RadiusY="0.5" Rect="7.75,19.25,3.5,1.75" />
+      </GeometryDrawing.Geometry>
+    </GeometryDrawing>
+    <GeometryDrawing>
+      <GeometryDrawing.Pen>
+        <Pen Thickness="1.5" StartLineCap="Round" EndLineCap="Round" LineJoin="Round">
+          <Pen.Brush>
+            <SolidColorBrush Color="#FF1C1C1C" Opacity="0.35" />
+          </Pen.Brush>
+        </Pen>
+      </GeometryDrawing.Pen>
+      <GeometryDrawing.Geometry>
+        <RectangleGeometry RadiusX="0.5" RadiusY="0.5" Rect="12.5,19.25,3.5,1.75" />
+      </GeometryDrawing.Geometry>
+    </GeometryDrawing>
+    <GeometryDrawing>
+      <GeometryDrawing.Pen>
+        <Pen Thickness="1.5" StartLineCap="Round" EndLineCap="Round" LineJoin="Round">
+          <Pen.Brush>
+            <SolidColorBrush Color="#FF1C1C1C" Opacity="0.35" />
+          </Pen.Brush>
+        </Pen>
+      </GeometryDrawing.Pen>
+      <GeometryDrawing.Geometry>
+        <RectangleGeometry RadiusX="0.5" RadiusY="0.5" Rect="17.25,19.25,3.5,1.75" />
+      </GeometryDrawing.Geometry>
+    </GeometryDrawing>
+  </DrawingGroup>
+  <DrawingImage x:Key="{x:Static sdg:SearchTypeIconKeys.EarlierThisMonth}" Drawing="{StaticResource this_month_earlierDrawingGroup}" />
+    
+  <Geometry x:Key="IsGreaterThanGeometry">F1 M24,24z M0,0z M7,5L17,12 7,19</Geometry>
+  <DrawingGroup x:Key="IsGreaterThanDrawingGroup" ClipGeometry="M0,0 V24 H24 V0 H0 Z">
+    <GeometryDrawing Geometry="{StaticResource IsGreaterThanGeometry}">
+      <GeometryDrawing.Pen>
+        <Pen Brush="#FF1C1C1C" Thickness="2.4" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" />
+      </GeometryDrawing.Pen>
+    </GeometryDrawing>
+  </DrawingGroup>
+  <DrawingImage x:Key="{x:Static sdg:SearchTypeIconKeys.GreaterThan}" Drawing="{StaticResource IsGreaterThanDrawingGroup}" />
+    
+  <Geometry x:Key="IsNotBetweenGeometry1">F1 M18.231334,14.231336z M0,0z M7.0000029,5.9999968L7.0000029,17.999997</Geometry>
+  <Geometry x:Key="IsNotBetweenGeometry2">F1 M18.231334,14.231336z M0,0z M17.000003,6L17.000003,18</Geometry>
+  <Geometry x:Key="IsNotBetweenGeometry3">F1 M18.231334,14.231336z M0,0z M4.0000029,11.999997L7.0000029,11.999997</Geometry>
+  <Geometry x:Key="IsNotBetweenGeometry4">F1 M18.231334,14.231336z M0,0z M17.000003,12L20.000003,12</Geometry>
+  <DrawingGroup x:Key="IsNotBetweenDrawingGroup" ClipGeometry="M0,0 V14.231336 H18.231334 V0 H0 Z">
+    <DrawingGroup Opacity="1" Transform="1,0,0,1,-311.02465,-521.49664">
+      <DrawingGroup Opacity="1" Transform="1,0,0,1,-2.9063686,-1.191495">
+        <DrawingGroup Opacity="1" Transform="1,0,0,1,315.71769,498.13839">
+          <DrawingGroup Opacity="1" Transform="1,0,0,1,0.7847331,-0.01993203">
+            <DrawingGroup Opacity="1" Transform="1,0,0,1,-0.51600904,-0.23313472">
+              <DrawingGroup Opacity="1" Transform="1,0,0,1,-321.77248,-480.22769">
+                <DrawingGroup Opacity="1" Transform="1,0,0,1,315.71769,498.13839">
+                  <DrawingGroup Opacity="1" Transform="1,0,0,1,0.7847331,-0.01993203">
+                    <DrawingGroup Opacity="1" Transform="1,0,0,1,-0.51600904,-0.23313472">
+                      <DrawingGroup Opacity="1" Transform="1,0,0,1,1.3571038,1.646843">
+                        <DrawingGroup Opacity="1" Transform="1,0,0,1,-0.85385868,2.524808">
+                          <DrawingGroup Opacity="1" Transform="1,0,0,1,1.4017578,-2.5398243">
+                            <DrawingGroup Opacity="1" Transform="1,0,0,1,-0.33248874,1.0972918">
+                              <DrawingGroup Opacity="1" Transform="1,0,0,1,-0.72617984,-0.46827104">
+                                <GeometryDrawing Geometry="{StaticResource IsNotBetweenGeometry1}">
+                                  <GeometryDrawing.Pen>
+                                    <Pen Brush="#FFCC0000" Thickness="2.20000005" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" />
+                                  </GeometryDrawing.Pen>
+                                </GeometryDrawing>
+                                <GeometryDrawing Geometry="{StaticResource IsNotBetweenGeometry2}">
+                                  <GeometryDrawing.Pen>
+                                    <Pen Brush="#FFCC0000" Thickness="2.20000005" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" />
+                                  </GeometryDrawing.Pen>
+                                </GeometryDrawing>
+                                <GeometryDrawing Geometry="{StaticResource IsNotBetweenGeometry3}">
+                                  <GeometryDrawing.Pen>
+                                    <Pen Brush="#FFCC0000" Thickness="2.20000005" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" />
+                                  </GeometryDrawing.Pen>
+                                </GeometryDrawing>
+                                <GeometryDrawing Geometry="{StaticResource IsNotBetweenGeometry4}">
+                                  <GeometryDrawing.Pen>
+                                    <Pen Brush="#FFCC0000" Thickness="2.20000005" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" />
+                                  </GeometryDrawing.Pen>
+                                </GeometryDrawing>
+                              </DrawingGroup>
+                            </DrawingGroup>
+                          </DrawingGroup>
+                        </DrawingGroup>
+                      </DrawingGroup>
+                    </DrawingGroup>
+                  </DrawingGroup>
+                </DrawingGroup>
+              </DrawingGroup>
+            </DrawingGroup>
+          </DrawingGroup>
+        </DrawingGroup>
+      </DrawingGroup>
+    </DrawingGroup>
+  </DrawingGroup>
+  <DrawingImage x:Key="{x:Static sdg:SearchTypeIconKeys.NotBetween}" Drawing="{StaticResource IsNotBetweenDrawingGroup}" />
+    
+  <DrawingGroup x:Key="is_nullDrawingGroup" ClipGeometry="M0,0 V24 H24 V0 H0 Z">
+    <GeometryDrawing>
+      <GeometryDrawing.Pen>
+                <Pen Brush="#FFCC0000" Thickness="1.6" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" />
+      </GeometryDrawing.Pen>
+      <GeometryDrawing.Geometry>
+        <EllipseGeometry RadiusX="7" RadiusY="7" Center="12,12" />
+      </GeometryDrawing.Geometry>
+    </GeometryDrawing>
+  </DrawingGroup>
+  <DrawingImage x:Key="{x:Static sdg:SearchTypeIconKeys.IsNull}" Drawing="{StaticResource is_nullDrawingGroup}" />
+    
+  <DrawingGroup x:Key="next_weekDrawingGroup" ClipGeometry="M0,0 V24 H24 V0 H0 Z">
+    <GeometryDrawing>
+      <GeometryDrawing.Pen>
+        <Pen Thickness="1.5" StartLineCap="Round" EndLineCap="Round" LineJoin="Round">
+          <Pen.Brush>
+            <SolidColorBrush Color="#FF1C1C1C" Opacity="0.2" />
+          </Pen.Brush>
+        </Pen>
+      </GeometryDrawing.Pen>
+      <GeometryDrawing.Geometry>
+        <RectangleGeometry RadiusX="0.8" RadiusY="0.8" Rect="1.5,14,10,4" />
+      </GeometryDrawing.Geometry>
+    </GeometryDrawing>
+    <GeometryDrawing Brush="#FF1C1C1C">
+      <GeometryDrawing.Geometry>
+        <RectangleGeometry RadiusX="0" RadiusY="0" Rect="8.5,14,1.5,4" />
+      </GeometryDrawing.Geometry>
+    </GeometryDrawing>
+    <GeometryDrawing Brush="#FFFFFFFF">
+      <GeometryDrawing.Geometry>
+        <EllipseGeometry RadiusX="0.8" RadiusY="0.8" Center="9.25,16" />
+      </GeometryDrawing.Geometry>
+    </GeometryDrawing>
+    <GeometryDrawing Brush="#FF1C1C1C">
+      <GeometryDrawing.Geometry>
+        <RectangleGeometry RadiusX="0.8" RadiusY="0.8" Rect="12,6,10.5,4" />
+      </GeometryDrawing.Geometry>
+    </GeometryDrawing>
+    <DrawingGroup Opacity="0.5">
+      <GeometryDrawing>
+        <GeometryDrawing.Pen>
+          <Pen Brush="#FFFFFFFF" Thickness="0.5" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" />
+        </GeometryDrawing.Pen>
+        <GeometryDrawing.Geometry>
+          <LineGeometry StartPoint="13.5,6" EndPoint="13.5,10" />
+        </GeometryDrawing.Geometry>
+      </GeometryDrawing>
+      <GeometryDrawing>
+        <GeometryDrawing.Pen>
+          <Pen Brush="#FFFFFFFF" Thickness="0.5" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" />
+        </GeometryDrawing.Pen>
+        <GeometryDrawing.Geometry>
+          <LineGeometry StartPoint="15,6" EndPoint="15,10" />
+        </GeometryDrawing.Geometry>
+      </GeometryDrawing>
+      <GeometryDrawing>
+        <GeometryDrawing.Pen>
+          <Pen Brush="#FFFFFFFF" Thickness="0.5" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" />
+        </GeometryDrawing.Pen>
+        <GeometryDrawing.Geometry>
+          <LineGeometry StartPoint="16.5,6" EndPoint="16.5,10" />
+        </GeometryDrawing.Geometry>
+      </GeometryDrawing>
+      <GeometryDrawing>
+        <GeometryDrawing.Pen>
+          <Pen Brush="#FFFFFFFF" Thickness="0.5" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" />
+        </GeometryDrawing.Pen>
+        <GeometryDrawing.Geometry>
+          <LineGeometry StartPoint="18,6" EndPoint="18,10" />
+        </GeometryDrawing.Geometry>
+      </GeometryDrawing>
+      <GeometryDrawing>
+        <GeometryDrawing.Pen>
+          <Pen Brush="#FFFFFFFF" Thickness="0.5" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" />
+        </GeometryDrawing.Pen>
+        <GeometryDrawing.Geometry>
+          <LineGeometry StartPoint="19.5,6" EndPoint="19.5,10" />
+        </GeometryDrawing.Geometry>
+      </GeometryDrawing>
+      <GeometryDrawing>
+        <GeometryDrawing.Pen>
+          <Pen Brush="#FFFFFFFF" Thickness="0.5" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" />
+        </GeometryDrawing.Pen>
+        <GeometryDrawing.Geometry>
+          <LineGeometry StartPoint="21,6" EndPoint="21,10" />
+        </GeometryDrawing.Geometry>
+      </GeometryDrawing>
+    </DrawingGroup>
+  </DrawingGroup>
+  <DrawingImage x:Key="{x:Static sdg:SearchTypeIconKeys.NextWeek}" Drawing="{StaticResource next_weekDrawingGroup}" />
+    
+  <Geometry x:Key="IsNotEqualToGeometry1">F1 M24,24z M0,0z M5,10L19,10</Geometry>
+  <Geometry x:Key="IsNotEqualToGeometry2">F1 M24,24z M0,0z M5,14L19,14</Geometry>
+  <Geometry x:Key="IsNotEqualToGeometry3">F1 M24,24z M0,0z M16.5,5L7.5,19</Geometry>
+  <DrawingGroup x:Key="IsNotEqualToDrawingGroup" ClipGeometry="M0,0 V24 H24 V0 H0 Z">
+    <GeometryDrawing Geometry="{StaticResource IsNotEqualToGeometry1}">
+      <GeometryDrawing.Pen>
+                <Pen Brush="#FF1C1C1C" Thickness="2.4" StartLineCap="Round" EndLineCap="Round" LineJoin="Miter" />
+      </GeometryDrawing.Pen>
+    </GeometryDrawing>
+    <GeometryDrawing Geometry="{StaticResource IsNotEqualToGeometry2}">
+      <GeometryDrawing.Pen>
+                <Pen Brush="#FF1C1C1C" Thickness="2.4" StartLineCap="Round" EndLineCap="Round" LineJoin="Miter" />
+      </GeometryDrawing.Pen>
+    </GeometryDrawing>
+    <GeometryDrawing Geometry="{StaticResource IsNotEqualToGeometry3}">
+      <GeometryDrawing.Pen>
+                <Pen Brush="#FF1C1C1C" Thickness="2.2" StartLineCap="Round" EndLineCap="Round" LineJoin="Miter" />
+      </GeometryDrawing.Pen>
+    </GeometryDrawing>
+  </DrawingGroup>
+  <DrawingImage x:Key="{x:Static sdg:SearchTypeIconKeys.NotEquals}" Drawing="{StaticResource IsNotEqualToDrawingGroup}" />
+    
+  <Geometry x:Key="IsLessThanGeometry">F1 M24,24z M0,0z M17,5L7,12 17,19</Geometry>
+  <DrawingGroup x:Key="IsLessThanDrawingGroup" ClipGeometry="M0,0 V24 H24 V0 H0 Z">
+    <GeometryDrawing Geometry="{StaticResource IsLessThanGeometry}">
+      <GeometryDrawing.Pen>
+                <Pen Brush="#FF1C1C1C" Thickness="2.4" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" />
+      </GeometryDrawing.Pen>
+    </GeometryDrawing>
+  </DrawingGroup>
+  <DrawingImage x:Key="{x:Static sdg:SearchTypeIconKeys.LessThan}" Drawing="{StaticResource IsLessThanDrawingGroup}" />
+    
+  <DrawingGroup x:Key="this_week_laterDrawingGroup" ClipGeometry="M0,0 V24 H24 V0 H0 Z">
+    <GeometryDrawing>
+      <GeometryDrawing.Pen>
+        <Pen Thickness="1.5" StartLineCap="Round" EndLineCap="Round" LineJoin="Round">
+          <Pen.Brush>
+            <SolidColorBrush Color="#FF1C1C1C" Opacity="0.35" />
+          </Pen.Brush>
+        </Pen>
+      </GeometryDrawing.Pen>
+      <GeometryDrawing.Geometry>
+        <RectangleGeometry RadiusX="0.6" RadiusY="0.6" Rect="2,9,2.64,6" />
+      </GeometryDrawing.Geometry>
+    </GeometryDrawing>
+    <GeometryDrawing>
+      <GeometryDrawing.Pen>
+        <Pen Thickness="1.5" StartLineCap="Round" EndLineCap="Round" LineJoin="Round">
+          <Pen.Brush>
+            <SolidColorBrush Color="#FF1C1C1C" Opacity="0.35" />
+          </Pen.Brush>
+        </Pen>
+      </GeometryDrawing.Pen>
+      <GeometryDrawing.Geometry>
+        <RectangleGeometry RadiusX="0.6" RadiusY="0.6" Rect="5.14,9,2.64,6" />
+      </GeometryDrawing.Geometry>
+    </GeometryDrawing>
+    <GeometryDrawing>
+      <GeometryDrawing.Pen>
+        <Pen Thickness="1.5" StartLineCap="Round" EndLineCap="Round" LineJoin="Round">
+          <Pen.Brush>
+            <SolidColorBrush Color="#FF1C1C1C" Opacity="0.35" />
+          </Pen.Brush>
+        </Pen>
+      </GeometryDrawing.Pen>
+      <GeometryDrawing.Geometry>
+        <RectangleGeometry RadiusX="0.6" RadiusY="0.6" Rect="8.29,9,2.64,6" />
+      </GeometryDrawing.Geometry>
+    </GeometryDrawing>
+    <GeometryDrawing Brush="#FF1C1C1C">
+      <GeometryDrawing.Geometry>
+        <RectangleGeometry RadiusX="0.6" RadiusY="0.6" Rect="11.43,9,2.64,6" />
+      </GeometryDrawing.Geometry>
+    </GeometryDrawing>
+    <GeometryDrawing Brush="#FFFFFFFF">
+      <GeometryDrawing.Geometry>
+        <EllipseGeometry RadiusX="0.9" RadiusY="0.9" Center="12.75,12" />
+      </GeometryDrawing.Geometry>
+    </GeometryDrawing>
+    <GeometryDrawing Brush="#FF1C1C1C">
+      <GeometryDrawing.Geometry>
+        <RectangleGeometry RadiusX="0.6" RadiusY="0.6" Rect="14.57,9,2.64,6" />
+      </GeometryDrawing.Geometry>
+    </GeometryDrawing>
+    <GeometryDrawing Brush="#FF1C1C1C">
+      <GeometryDrawing.Geometry>
+        <RectangleGeometry RadiusX="0.6" RadiusY="0.6" Rect="17.71,9,2.64,6" />
+      </GeometryDrawing.Geometry>
+    </GeometryDrawing>
+    <GeometryDrawing Brush="#FF1C1C1C">
+      <GeometryDrawing.Geometry>
+        <RectangleGeometry RadiusX="0.6" RadiusY="0.6" Rect="20.86,9,2.64,6" />
+      </GeometryDrawing.Geometry>
+    </GeometryDrawing>
+  </DrawingGroup>
+  <DrawingImage x:Key="{x:Static sdg:SearchTypeIconKeys.LaterThisWeek}" Drawing="{StaticResource this_week_laterDrawingGroup}" />
+    
+  <DrawingGroup x:Key="this_month_laterDrawingGroup" ClipGeometry="M0,0 V24 H24 V0 H0 Z">
+    <GeometryDrawing>
+      <GeometryDrawing.Pen>
+        <Pen Thickness="1.5" StartLineCap="Round" EndLineCap="Round" LineJoin="Round">
+          <Pen.Brush>
+            <SolidColorBrush Color="#FF1C1C1C" Opacity="0.35" />
+          </Pen.Brush>
+        </Pen>
+      </GeometryDrawing.Pen>
+      <GeometryDrawing.Geometry>
+        <RectangleGeometry RadiusX="0.5" RadiusY="0.5" Rect="3,5,3.5,3.5" />
+      </GeometryDrawing.Geometry>
+    </GeometryDrawing>
+    <GeometryDrawing>
+      <GeometryDrawing.Pen>
+        <Pen Thickness="1.5" StartLineCap="Round" EndLineCap="Round" LineJoin="Round">
+          <Pen.Brush>
+            <SolidColorBrush Color="#FF1C1C1C" Opacity="0.35" />
+          </Pen.Brush>
+        </Pen>
+      </GeometryDrawing.Pen>
+      <GeometryDrawing.Geometry>
+        <RectangleGeometry RadiusX="0.5" RadiusY="0.5" Rect="7.75,5,3.5,3.5" />
+      </GeometryDrawing.Geometry>
+    </GeometryDrawing>
+    <GeometryDrawing>
+      <GeometryDrawing.Pen>
+        <Pen Thickness="1.5" StartLineCap="Round" EndLineCap="Round" LineJoin="Round">
+          <Pen.Brush>
+            <SolidColorBrush Color="#FF1C1C1C" Opacity="0.35" />
+          </Pen.Brush>
+        </Pen>
+      </GeometryDrawing.Pen>
+      <GeometryDrawing.Geometry>
+        <RectangleGeometry RadiusX="0.5" RadiusY="0.5" Rect="12.5,5,3.5,3.5" />
+      </GeometryDrawing.Geometry>
+    </GeometryDrawing>
+    <GeometryDrawing>
+      <GeometryDrawing.Pen>
+        <Pen Thickness="1.5" StartLineCap="Round" EndLineCap="Round" LineJoin="Round">
+          <Pen.Brush>
+            <SolidColorBrush Color="#FF1C1C1C" Opacity="0.35" />
+          </Pen.Brush>
+        </Pen>
+      </GeometryDrawing.Pen>
+      <GeometryDrawing.Geometry>
+        <RectangleGeometry RadiusX="0.5" RadiusY="0.5" Rect="17.25,5,3.5,3.5" />
+      </GeometryDrawing.Geometry>
+    </GeometryDrawing>
+    <GeometryDrawing>
+      <GeometryDrawing.Pen>
+        <Pen Thickness="1.5" StartLineCap="Round" EndLineCap="Round" LineJoin="Round">
+          <Pen.Brush>
+            <SolidColorBrush Color="#FF1C1C1C" Opacity="0.35" />
+          </Pen.Brush>
+        </Pen>
+      </GeometryDrawing.Pen>
+      <GeometryDrawing.Geometry>
+        <RectangleGeometry RadiusX="0.5" RadiusY="0.5" Rect="3,9.75,3.5,3.5" />
+      </GeometryDrawing.Geometry>
+    </GeometryDrawing>
+    <GeometryDrawing>
+      <GeometryDrawing.Pen>
+        <Pen Thickness="1.5" StartLineCap="Round" EndLineCap="Round" LineJoin="Round">
+          <Pen.Brush>
+            <SolidColorBrush Color="#FF1C1C1C" Opacity="0.35" />
+          </Pen.Brush>
+        </Pen>
+      </GeometryDrawing.Pen>
+      <GeometryDrawing.Geometry>
+        <RectangleGeometry RadiusX="0.5" RadiusY="0.5" Rect="7.75,9.75,3.5,3.5" />
+      </GeometryDrawing.Geometry>
+    </GeometryDrawing>
+    <GeometryDrawing>
+      <GeometryDrawing.Pen>
+        <Pen Thickness="1.5" StartLineCap="Round" EndLineCap="Round" LineJoin="Round">
+          <Pen.Brush>
+            <SolidColorBrush Color="#FF1C1C1C" Opacity="0.35" />
+          </Pen.Brush>
+        </Pen>
+      </GeometryDrawing.Pen>
+      <GeometryDrawing.Geometry>
+        <RectangleGeometry RadiusX="0.5" RadiusY="0.5" Rect="12.5,9.75,3.5,3.5" />
+      </GeometryDrawing.Geometry>
+    </GeometryDrawing>
+    <GeometryDrawing>
+      <GeometryDrawing.Pen>
+        <Pen Thickness="1.5" StartLineCap="Round" EndLineCap="Round" LineJoin="Round">
+          <Pen.Brush>
+            <SolidColorBrush Color="#FF1C1C1C" Opacity="0.35" />
+          </Pen.Brush>
+        </Pen>
+      </GeometryDrawing.Pen>
+      <GeometryDrawing.Geometry>
+        <RectangleGeometry RadiusX="0.5" RadiusY="0.5" Rect="17.25,9.75,3.5,3.5" />
+      </GeometryDrawing.Geometry>
+    </GeometryDrawing>
+    <GeometryDrawing>
+      <GeometryDrawing.Pen>
+        <Pen Thickness="1.5" StartLineCap="Round" EndLineCap="Round" LineJoin="Round">
+          <Pen.Brush>
+            <SolidColorBrush Color="#FF1C1C1C" Opacity="0.35" />
+          </Pen.Brush>
+        </Pen>
+      </GeometryDrawing.Pen>
+      <GeometryDrawing.Geometry>
+        <RectangleGeometry RadiusX="0.5" RadiusY="0.5" Rect="3,14.5,3.5,3.5" />
+      </GeometryDrawing.Geometry>
+    </GeometryDrawing>
+    <GeometryDrawing>
+      <GeometryDrawing.Pen>
+        <Pen Thickness="1.5" StartLineCap="Round" EndLineCap="Round" LineJoin="Round">
+          <Pen.Brush>
+            <SolidColorBrush Color="#FF1C1C1C" Opacity="0.35" />
+          </Pen.Brush>
+        </Pen>
+      </GeometryDrawing.Pen>
+      <GeometryDrawing.Geometry>
+        <RectangleGeometry RadiusX="0.5" RadiusY="0.5" Rect="7.75,14.5,3.5,3.5" />
+      </GeometryDrawing.Geometry>
+    </GeometryDrawing>
+    <GeometryDrawing Brush="#FF1C1C1C">
+      <GeometryDrawing.Geometry>
+        <RectangleGeometry RadiusX="0.5" RadiusY="0.5" Rect="12.5,14.5,3.5,3.5" />
+      </GeometryDrawing.Geometry>
+    </GeometryDrawing>
+    <GeometryDrawing Brush="#FFFFFFFF">
+      <GeometryDrawing.Geometry>
+        <EllipseGeometry RadiusX="0.8" RadiusY="0.8" Center="14.25,16.25" />
+      </GeometryDrawing.Geometry>
+    </GeometryDrawing>
+    <GeometryDrawing Brush="#FF1C1C1C">
+      <GeometryDrawing.Geometry>
+        <RectangleGeometry RadiusX="0.5" RadiusY="0.5" Rect="17.25,14.5,3.5,3.5" />
+      </GeometryDrawing.Geometry>
+    </GeometryDrawing>
+    <GeometryDrawing Brush="#FF1C1C1C">
+      <GeometryDrawing.Geometry>
+        <RectangleGeometry RadiusX="0.5" RadiusY="0.5" Rect="3,19.25,3.5,1.75" />
+      </GeometryDrawing.Geometry>
+    </GeometryDrawing>
+    <GeometryDrawing Brush="#FF1C1C1C">
+      <GeometryDrawing.Geometry>
+        <RectangleGeometry RadiusX="0.5" RadiusY="0.5" Rect="7.75,19.25,3.5,1.75" />
+      </GeometryDrawing.Geometry>
+    </GeometryDrawing>
+    <GeometryDrawing Brush="#FF1C1C1C">
+      <GeometryDrawing.Geometry>
+        <RectangleGeometry RadiusX="0.5" RadiusY="0.5" Rect="12.5,19.25,3.5,1.75" />
+      </GeometryDrawing.Geometry>
+    </GeometryDrawing>
+    <GeometryDrawing Brush="#FF1C1C1C">
+      <GeometryDrawing.Geometry>
+        <RectangleGeometry RadiusX="0.5" RadiusY="0.5" Rect="17.25,19.25,3.5,1.75" />
+      </GeometryDrawing.Geometry>
+    </GeometryDrawing>
+  </DrawingGroup>
+  <DrawingImage x:Key="{x:Static sdg:SearchTypeIconKeys.LaterThisMonth}" Drawing="{StaticResource this_month_laterDrawingGroup}" />
+    
+  <DrawingGroup x:Key="yesterdayDrawingGroup" ClipGeometry="M0,0 V24 H24 V0 H0 Z">
+    <GeometryDrawing Brush="#FF1C1C1C">
+      <GeometryDrawing.Geometry>
+        <RectangleGeometry RadiusX="1" RadiusY="1" Rect="3,8,5.5,8" />
+      </GeometryDrawing.Geometry>
+    </GeometryDrawing>
+    <GeometryDrawing>
+      <GeometryDrawing.Pen>
+        <Pen Thickness="1.5" StartLineCap="Round" EndLineCap="Round" LineJoin="Round">
+          <Pen.Brush>
+            <SolidColorBrush Color="#FF1C1C1C" Opacity="0.35" />
+          </Pen.Brush>
+        </Pen>
+      </GeometryDrawing.Pen>
+      <GeometryDrawing.Geometry>
+        <RectangleGeometry RadiusX="1" RadiusY="1" Rect="9.25,8,5.5,8" />
+      </GeometryDrawing.Geometry>
+    </GeometryDrawing>
+    <GeometryDrawing>
+      <GeometryDrawing.Pen>
+        <Pen Thickness="1.5" StartLineCap="Round" EndLineCap="Round" LineJoin="Round">
+          <Pen.Brush>
+            <SolidColorBrush Color="#FF1C1C1C" Opacity="0.35" />
+          </Pen.Brush>
+        </Pen>
+      </GeometryDrawing.Pen>
+      <GeometryDrawing.Geometry>
+        <RectangleGeometry RadiusX="1" RadiusY="1" Rect="15.5,8,5.5,8" />
+      </GeometryDrawing.Geometry>
+    </GeometryDrawing>
+    <GeometryDrawing Brush="#FF1C1C1C">
+      <GeometryDrawing.Geometry>
+        <EllipseGeometry RadiusX="1" RadiusY="1" Center="12,12" />
+      </GeometryDrawing.Geometry>
+    </GeometryDrawing>
+  </DrawingGroup>
+  <DrawingImage x:Key="{x:Static sdg:SearchTypeIconKeys.Yesterday}" Drawing="{StaticResource yesterdayDrawingGroup}" />
+    
+  <Geometry x:Key="is_none_ofGeometry1">F1 M24,24z M0,0z M14,5.5C9,5.5 6.5,8.5 6.5,12 6.5,15.5 9,18.5 14,18.5</Geometry>
+  <Geometry x:Key="is_none_ofGeometry2">F1 M24,24z M0,0z M7.25,12L13,12</Geometry>
+  <Geometry x:Key="is_none_ofGeometry3">F1 M24,24z M0,0z M14,4L7,20</Geometry>
+  <DrawingGroup x:Key="is_none_ofDrawingGroup" ClipGeometry="M0,0 V24 H24 V0 H0 Z">
+    <GeometryDrawing Geometry="{StaticResource is_none_ofGeometry1}">
+      <GeometryDrawing.Pen>
+        <Pen Brush="#FF1C1C1C" Thickness="2.1" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" />
+      </GeometryDrawing.Pen>
+    </GeometryDrawing>
+    <GeometryDrawing Geometry="{StaticResource is_none_ofGeometry2}">
+      <GeometryDrawing.Pen>
+        <Pen Brush="#FF1C1C1C" Thickness="2.1" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" />
+      </GeometryDrawing.Pen>
+    </GeometryDrawing>
+    <GeometryDrawing Geometry="{StaticResource is_none_ofGeometry3}">
+      <GeometryDrawing.Pen>
+        <Pen Brush="#FF1C1C1C" Thickness="2.1" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" />
+      </GeometryDrawing.Pen>
+    </GeometryDrawing>
+  </DrawingGroup>
+  <DrawingImage x:Key="{x:Static sdg:SearchTypeIconKeys.IsNoneOf}" Drawing="{StaticResource is_none_ofDrawingGroup}" />
+    
+  <Geometry x:Key="starts_withGeometry1">F1 M20.774924,14.774925z M0,0z M2.5,19L21.5,19</Geometry>
+  <Geometry x:Key="starts_withGeometry2">F1 M20.774924,14.774925z M0,0z M2.5,6L2.5,19</Geometry>
+  <DrawingGroup x:Key="starts_withDrawingGroup" ClipGeometry="M0,0 V14.774925 H20.774924 V0 H0 Z">
+    <DrawingGroup Opacity="1" Transform="1,0,0,1,-310.26362,-521.11084">
+      <DrawingGroup Opacity="1" Transform="1,0,0,1,-2.9063686,-1.191495">
+        <DrawingGroup Opacity="1" Transform="1,0,0,1,315.71769,498.13839">
+          <DrawingGroup Opacity="1" Transform="1,0,0,1,0.7847331,-0.01993203">
+            <DrawingGroup Opacity="1" Transform="1,0,0,1,-0.51600904,-0.23313472">
+              <DrawingGroup Opacity="1" Transform="1,0,0,1,-321.77248,-480.22769">
+                <DrawingGroup Opacity="1" Transform="1,0,0,1,315.71769,498.13839">
+                  <DrawingGroup Opacity="1" Transform="1,0,0,1,0.7847331,-0.01993203">
+                    <DrawingGroup Opacity="1" Transform="1,0,0,1,-0.51600904,-0.23313472">
+                      <DrawingGroup Opacity="1" Transform="1,0,0,1,1.3571038,1.646843">
+                        <GeometryDrawing Geometry="{StaticResource starts_withGeometry1}">
+                          <GeometryDrawing.Pen>
+                            <Pen Thickness="1.75" StartLineCap="Round" EndLineCap="Round" LineJoin="Round">
+                              <Pen.Brush>
+                                <SolidColorBrush Color="#FF1C1C1C" Opacity="0.55" />
+                              </Pen.Brush>
+                            </Pen>
+                          </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                        <GeometryDrawing Geometry="{StaticResource starts_withGeometry2}">
+                          <GeometryDrawing.Pen>
+                            <Pen Brush="#FF107C10" Thickness="1.75" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" />
+                          </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                        <GeometryDrawing Brush="#FF107C10">
+                          <GeometryDrawing.Geometry>
+                            <RectangleGeometry RadiusX="1" RadiusY="1" Rect="4.25,9,4.5,7" />
+                          </GeometryDrawing.Geometry>
+                        </GeometryDrawing>
+                        <GeometryDrawing>
+                          <GeometryDrawing.Pen>
+                            <Pen Thickness="1.75" StartLineCap="Round" EndLineCap="Round" LineJoin="Round">
+                              <Pen.Brush>
+                                <SolidColorBrush Color="#FF1C1C1C" Opacity="0.45" />
+                              </Pen.Brush>
+                            </Pen>
+                          </GeometryDrawing.Pen>
+                          <GeometryDrawing.Geometry>
+                            <RectangleGeometry RadiusX="1" RadiusY="1" Rect="10.5,9,4.5,7" />
+                          </GeometryDrawing.Geometry>
+                        </GeometryDrawing>
+                        <GeometryDrawing>
+                          <GeometryDrawing.Pen>
+                            <Pen Thickness="1.75" StartLineCap="Round" EndLineCap="Round" LineJoin="Round">
+                              <Pen.Brush>
+                                <SolidColorBrush Color="#FF1C1C1C" Opacity="0.45" />
+                              </Pen.Brush>
+                            </Pen>
+                          </GeometryDrawing.Pen>
+                          <GeometryDrawing.Geometry>
+                            <RectangleGeometry RadiusX="1" RadiusY="1" Rect="16.75,9,4.5,7" />
+                          </GeometryDrawing.Geometry>
+                        </GeometryDrawing>
+                      </DrawingGroup>
+                    </DrawingGroup>
+                  </DrawingGroup>
+                </DrawingGroup>
+              </DrawingGroup>
+            </DrawingGroup>
+          </DrawingGroup>
+        </DrawingGroup>
+      </DrawingGroup>
+    </DrawingGroup>
+  </DrawingGroup>
+  <DrawingImage x:Key="{x:Static sdg:SearchTypeIconKeys.StartsWith}" Drawing="{StaticResource starts_withDrawingGroup}" />
+    
+  <Geometry x:Key="is_any_ofGeometry1">F1 M24,24z M0,0z M14,5.5C9,5.5 6.5,8.5 6.5,12 6.5,15.5 9,18.5 14,18.5</Geometry>
+  <Geometry x:Key="is_any_ofGeometry2">F1 M24,24z M0,0z M7.25,12L13,12</Geometry>
+  <DrawingGroup x:Key="is_any_ofDrawingGroup" ClipGeometry="M0,0 V24 H24 V0 H0 Z">
+    <GeometryDrawing Geometry="{StaticResource is_any_ofGeometry1}">
+      <GeometryDrawing.Pen>
+        <Pen Brush="#FF1C1C1C" Thickness="2.1" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" />
+      </GeometryDrawing.Pen>
+    </GeometryDrawing>
+    <GeometryDrawing Geometry="{StaticResource is_any_ofGeometry2}">
+      <GeometryDrawing.Pen>
+        <Pen Brush="#FF1C1C1C" Thickness="2.1" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" />
+      </GeometryDrawing.Pen>
+    </GeometryDrawing>
+  </DrawingGroup>
+  <DrawingImage x:Key="{x:Static sdg:SearchTypeIconKeys.IsAnyOf}" Drawing="{StaticResource is_any_ofDrawingGroup}" />
+    
+  <Geometry x:Key="bottom_nGeometry">F1 M20.774924,18.700001z M0,0z M2.5,15.5L21.5,15.5</Geometry>
+  <DrawingGroup x:Key="bottom_nDrawingGroup" ClipGeometry="M0,0 V18.700001 H20.774924 V0 H0 Z">
+    <DrawingGroup Opacity="1" Transform="1,0,0,1,-34.743237,-543.46205">
+      <DrawingGroup Opacity="1" Transform="1,0,0,1,33.130699,539.96205">
+        <GeometryDrawing Brush="#FF4DB4FF">
+          <GeometryDrawing.Geometry>
+            <RectangleGeometry RadiusX="0.6" RadiusY="0.6" Rect="4,3.5,3.4,12" />
+          </GeometryDrawing.Geometry>
+        </GeometryDrawing>
+        <GeometryDrawing>
+          <GeometryDrawing.Brush>
+            <SolidColorBrush Color="#FF4DB4FF" Opacity="0.7" />
+          </GeometryDrawing.Brush>
+          <GeometryDrawing.Geometry>
+            <RectangleGeometry RadiusX="0.6" RadiusY="0.6" Rect="10.3,7.5,3.4,8" />
+          </GeometryDrawing.Geometry>
+        </GeometryDrawing>
+        <GeometryDrawing>
+          <GeometryDrawing.Brush>
+            <SolidColorBrush Color="#FF4DB4FF" Opacity="0.45" />
+          </GeometryDrawing.Brush>
+          <GeometryDrawing.Geometry>
+            <RectangleGeometry RadiusX="0.6" RadiusY="0.6" Rect="16.6,10.5,3.4,5" />
+          </GeometryDrawing.Geometry>
+        </GeometryDrawing>
+        <GeometryDrawing Geometry="{StaticResource bottom_nGeometry}">
+          <GeometryDrawing.Pen>
+            <Pen Brush="#FF4DB4FF" Thickness="1.75" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" />
+          </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <DrawingGroup Opacity="1">
+          <DrawingGroup>
+            <DrawingGroup>
+              <GlyphRunDrawing ForegroundBrush="#FF4DB4FF">
+                <GlyphRunDrawing.GlyphRun>
+                  <GlyphRun PixelsPerDip="1.25" BaselineOrigin="15.929999,22.200001" FontRenderingEmSize="6" BidiLevel="0" IsSideways="False" ClusterMap="0" Characters="N" GlyphIndices="49" AdvanceWidths="4.74" GlyphOffsets="0,0" Language="en-us">
+                    <GlyphRun.GlyphTypeface>
+                      <GlyphTypeface FontUri="C:\WINDOWS\FONTS\SEGOEUIB.TTF" StyleSimulations="None" />
+                    </GlyphRun.GlyphTypeface>
+                  </GlyphRun>
+                </GlyphRunDrawing.GlyphRun>
+              </GlyphRunDrawing>
+            </DrawingGroup>
+          </DrawingGroup>
+        </DrawingGroup>
+      </DrawingGroup>
+    </DrawingGroup>
+  </DrawingGroup>
+  <DrawingImage x:Key="{x:Static sdg:SearchTypeIconKeys.BottomN}" Drawing="{StaticResource bottom_nDrawingGroup}" />
+    
+  <Geometry x:Key="IsEqualToGeometry1">F1 M24,24z M0,0z M5,10L19,10</Geometry>
+  <Geometry x:Key="IsEqualToGeometry2">F1 M24,24z M0,0z M5,14L19,14</Geometry>
+  <DrawingGroup x:Key="IsEqualToDrawingGroup" ClipGeometry="M0,0 V24 H24 V0 H0 Z">
+    <GeometryDrawing Geometry="{StaticResource IsEqualToGeometry1}">
+      <GeometryDrawing.Pen>
+                <Pen Brush="#FF1C1C1C" Thickness="2.4" StartLineCap="Round" EndLineCap="Round" LineJoin="Miter" />
+      </GeometryDrawing.Pen>
+    </GeometryDrawing>
+    <GeometryDrawing Geometry="{StaticResource IsEqualToGeometry2}">
+      <GeometryDrawing.Pen>
+                <Pen Brush="#FF1C1C1C" Thickness="2.4" StartLineCap="Round" EndLineCap="Round" LineJoin="Miter" />
+      </GeometryDrawing.Pen>
+    </GeometryDrawing>
+  </DrawingGroup>
+  <DrawingImage x:Key="{x:Static sdg:SearchTypeIconKeys.Equals}" Drawing="{StaticResource IsEqualToDrawingGroup}" />
+    
+  <DrawingGroup x:Key="todayDrawingGroup" ClipGeometry="M0,0 V24 H24 V0 H0 Z">
+    <GeometryDrawing>
+      <GeometryDrawing.Pen>
+        <Pen Thickness="1.5" StartLineCap="Round" EndLineCap="Round" LineJoin="Round">
+          <Pen.Brush>
+            <SolidColorBrush Color="#FF1C1C1C" Opacity="0.35" />
+          </Pen.Brush>
+        </Pen>
+      </GeometryDrawing.Pen>
+      <GeometryDrawing.Geometry>
+        <RectangleGeometry RadiusX="1" RadiusY="1" Rect="3,8,5.5,8" />
+      </GeometryDrawing.Geometry>
+    </GeometryDrawing>
+    <GeometryDrawing Brush="#FF1C1C1C">
+      <GeometryDrawing.Geometry>
+        <RectangleGeometry RadiusX="1" RadiusY="1" Rect="9.25,8,5.5,8" />
+      </GeometryDrawing.Geometry>
+    </GeometryDrawing>
+    <GeometryDrawing>
+      <GeometryDrawing.Pen>
+        <Pen Thickness="1.5" StartLineCap="Round" EndLineCap="Round" LineJoin="Round">
+          <Pen.Brush>
+            <SolidColorBrush Color="#FF1C1C1C" Opacity="0.35" />
+          </Pen.Brush>
+        </Pen>
+      </GeometryDrawing.Pen>
+      <GeometryDrawing.Geometry>
+        <RectangleGeometry RadiusX="1" RadiusY="1" Rect="15.5,8,5.5,8" />
+      </GeometryDrawing.Geometry>
+    </GeometryDrawing>
+    <GeometryDrawing Brush="#FFFFFFFF">
+      <GeometryDrawing.Geometry>
+        <EllipseGeometry RadiusX="1" RadiusY="1" Center="12,12" />
+      </GeometryDrawing.Geometry>
+    </GeometryDrawing>
+  </DrawingGroup>
+  <DrawingImage x:Key="{x:Static sdg:SearchTypeIconKeys.Today}" Drawing="{StaticResource todayDrawingGroup}" />
+    
+  <Geometry x:Key="ends_withGeometry1">F1 M20.774924,14.774925z M0,0z M2.5,19L21.5,19</Geometry>
+  <Geometry x:Key="ends_withGeometry2">F1 M20.774924,14.774925z M0,0z M21.5,6L21.5,19</Geometry>
+  <DrawingGroup x:Key="ends_withDrawingGroup" ClipGeometry="M0,0 V14.774925 H20.774924 V0 H0 Z">
+    <DrawingGroup Opacity="1" Transform="1,0,0,1,-314.69258,-501.80637">
+      <DrawingGroup Opacity="1" Transform="1,0,0,1,-2.9063686,-1.191495">
+        <DrawingGroup Opacity="1" Transform="1,0,0,1,315.71769,498.13839">
+          <DrawingGroup Opacity="1" Transform="1,0,0,1,0.7847331,-0.01993203">
+            <DrawingGroup Opacity="1" Transform="1,0,0,1,-0.51600904,-0.23313472">
+              <GeometryDrawing Geometry="{StaticResource ends_withGeometry1}">
+                <GeometryDrawing.Pen>
+                  <Pen Thickness="1.75" StartLineCap="Round" EndLineCap="Round" LineJoin="Round">
+                    <Pen.Brush>
+                      <SolidColorBrush Color="#FF1C1C1C" Opacity="0.55" />
+                    </Pen.Brush>
+                  </Pen>
+                </GeometryDrawing.Pen>
+              </GeometryDrawing>
+              <GeometryDrawing>
+                <GeometryDrawing.Pen>
+                  <Pen Thickness="1.75" StartLineCap="Round" EndLineCap="Round" LineJoin="Round">
+                    <Pen.Brush>
+                      <SolidColorBrush Color="#FF1C1C1C" Opacity="0.45" />
+                    </Pen.Brush>
+                  </Pen>
+                </GeometryDrawing.Pen>
+                <GeometryDrawing.Geometry>
+                  <RectangleGeometry RadiusX="1" RadiusY="1" Rect="2.75,9,4.5,7" />
+                </GeometryDrawing.Geometry>
+              </GeometryDrawing>
+              <GeometryDrawing>
+                <GeometryDrawing.Pen>
+                  <Pen Thickness="1.75" StartLineCap="Round" EndLineCap="Round" LineJoin="Round">
+                    <Pen.Brush>
+                      <SolidColorBrush Color="#FF1C1C1C" Opacity="0.45" />
+                    </Pen.Brush>
+                  </Pen>
+                </GeometryDrawing.Pen>
+                <GeometryDrawing.Geometry>
+                  <RectangleGeometry RadiusX="1" RadiusY="1" Rect="9,9,4.5,7" />
+                </GeometryDrawing.Geometry>
+              </GeometryDrawing>
+              <GeometryDrawing Brush="#FF107C10">
+                <GeometryDrawing.Geometry>
+                  <RectangleGeometry RadiusX="1" RadiusY="1" Rect="15.25,9,4.5,7" />
+                </GeometryDrawing.Geometry>
+              </GeometryDrawing>
+              <GeometryDrawing Geometry="{StaticResource ends_withGeometry2}">
+                <GeometryDrawing.Pen>
+                  <Pen Brush="#FF107C10" Thickness="1.75" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" />
+                </GeometryDrawing.Pen>
+              </GeometryDrawing>
+            </DrawingGroup>
+          </DrawingGroup>
+        </DrawingGroup>
+      </DrawingGroup>
+    </DrawingGroup>
+  </DrawingGroup>
+  <DrawingImage x:Key="{x:Static sdg:SearchTypeIconKeys.EndsWith}" Drawing="{StaticResource ends_withDrawingGroup}" />
+    
+  <Geometry x:Key="is_not_likeGeometry1">F1 M20.774921,11.750087z M0,0z M2.5,19L21.5,19</Geometry>
+  <Geometry x:Key="is_not_likeGeometry2">F1 M20.774921,11.750087z M0,0z M12,9.5L12,15.5</Geometry>
+  <Geometry x:Key="is_not_likeGeometry3">F1 M20.774921,11.750087z M0,0z M9.4,11L14.6,14</Geometry>
+  <Geometry x:Key="is_not_likeGeometry4">F1 M20.774921,11.750087z M0,0z M9.4,14L14.6,11</Geometry>
+  <DrawingGroup x:Key="is_not_likeDrawingGroup" ClipGeometry="M0,0 V11.750087 H20.774921 V0 H0 Z">
+    <DrawingGroup Opacity="1" Transform="1,0,0,1,-308.63719,-522.07113">
+      <DrawingGroup Opacity="1" Transform="1,0,0,1,-2.9063686,-1.191495">
+        <DrawingGroup Opacity="1" Transform="1,0,0,1,315.71769,498.13839">
+          <DrawingGroup Opacity="1" Transform="1,0,0,1,0.7847331,-0.01993203">
+            <DrawingGroup Opacity="1" Transform="1,0,0,1,-0.51600904,-0.23313472">
+              <DrawingGroup Opacity="1" Transform="1,0,0,1,-321.77248,-480.22769">
+                <DrawingGroup Opacity="1" Transform="1,0,0,1,315.71769,498.13839">
+                  <DrawingGroup Opacity="1" Transform="1,0,0,1,0.7847331,-0.01993203">
+                    <DrawingGroup Opacity="1" Transform="1,0,0,1,-0.51600904,-0.23313472">
+                      <DrawingGroup Opacity="1" Transform="1,0,0,1,1.3571038,1.646843">
+                        <DrawingGroup Opacity="1" Transform="1,0,0,1,-0.85385868,2.524808">
+                          <DrawingGroup Opacity="1" Transform="1,0,0,1,1.4017578,-2.5398243">
+                            <DrawingGroup Opacity="1" Transform="1,0,0,1,-0.33248874,1.0972918">
+                              <DrawingGroup Opacity="1" Transform="1,0,0,1,-1.8418428,-3.1344509">
+                                <GeometryDrawing Geometry="{StaticResource is_not_likeGeometry1}">
+                                  <GeometryDrawing.Pen>
+                                    <Pen Thickness="1.75" StartLineCap="Round" EndLineCap="Round" LineJoin="Round">
+                                      <Pen.Brush>
+                                        <SolidColorBrush Color="#FF1C1C1C" Opacity="0.55" />
+                                      </Pen.Brush>
+                                    </Pen>
+                                  </GeometryDrawing.Pen>
+                                </GeometryDrawing>
+                                <GeometryDrawing>
+                                  <GeometryDrawing.Pen>
+                                    <Pen Brush="#FF1C1C1C" Thickness="1.75" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" />
+                                  </GeometryDrawing.Pen>
+                                  <GeometryDrawing.Geometry>
+                                    <RectangleGeometry RadiusX="1" RadiusY="1" Rect="3.0489,9,4.5,7" />
+                                  </GeometryDrawing.Geometry>
+                                </GeometryDrawing>
+                                <DrawingGroup Opacity="1">
+                                  <GeometryDrawing Geometry="{StaticResource is_not_likeGeometry2}">
+                                    <GeometryDrawing.Pen>
+                                      <Pen Brush="#FFCC0000" Thickness="1.60000002" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" />
+                                    </GeometryDrawing.Pen>
+                                  </GeometryDrawing>
+                                  <GeometryDrawing Geometry="{StaticResource is_not_likeGeometry3}">
+                                    <GeometryDrawing.Pen>
+                                      <Pen Brush="#FFCC0000" Thickness="1.60000002" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" />
+                                    </GeometryDrawing.Pen>
+                                  </GeometryDrawing>
+                                  <GeometryDrawing Geometry="{StaticResource is_not_likeGeometry4}">
+                                    <GeometryDrawing.Pen>
+                                      <Pen Brush="#FFCC0000" Thickness="1.60000002" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" />
+                                    </GeometryDrawing.Pen>
+                                  </GeometryDrawing>
+                                </DrawingGroup>
+                                <GeometryDrawing>
+                                  <GeometryDrawing.Pen>
+                                    <Pen Brush="#FF1C1C1C" Thickness="1.75" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" />
+                                  </GeometryDrawing.Pen>
+                                  <GeometryDrawing.Geometry>
+                                    <RectangleGeometry RadiusX="1" RadiusY="1" Rect="16.4511,9,4.5,7" />
+                                  </GeometryDrawing.Geometry>
+                                </GeometryDrawing>
+                              </DrawingGroup>
+                            </DrawingGroup>
+                          </DrawingGroup>
+                        </DrawingGroup>
+                      </DrawingGroup>
+                    </DrawingGroup>
+                  </DrawingGroup>
+                </DrawingGroup>
+              </DrawingGroup>
+            </DrawingGroup>
+          </DrawingGroup>
+        </DrawingGroup>
+      </DrawingGroup>
+    </DrawingGroup>
+  </DrawingGroup>
+  <DrawingImage x:Key="{x:Static sdg:SearchTypeIconKeys.IsNotLike}" Drawing="{StaticResource is_not_likeDrawingGroup}" />
+    
+  <Geometry x:Key="IsLessThanOrEqualToGeometry1">F1 M24,24z M0,0z M17,4L7,10.5 17,17</Geometry>
+  <Geometry x:Key="IsLessThanOrEqualToGeometry2">F1 M24,24z M0,0z M7,20L17,20</Geometry>
+  <DrawingGroup x:Key="IsLessThanOrEqualToDrawingGroup" ClipGeometry="M0,0 V24 H24 V0 H0 Z">
+    <GeometryDrawing Geometry="{StaticResource IsLessThanOrEqualToGeometry1}">
+      <GeometryDrawing.Pen>
+                <Pen Brush="#FF1C1C1C" Thickness="2.2" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" />
+      </GeometryDrawing.Pen>
+    </GeometryDrawing>
+    <GeometryDrawing Geometry="{StaticResource IsLessThanOrEqualToGeometry2}">
+      <GeometryDrawing.Pen>
+                <Pen Brush="#FF1C1C1C" Thickness="2.2" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" />
+      </GeometryDrawing.Pen>
+    </GeometryDrawing>
+  </DrawingGroup>
+  <DrawingImage x:Key="{x:Static sdg:SearchTypeIconKeys.LessThanOrEqualTo}" Drawing="{StaticResource IsLessThanOrEqualToDrawingGroup}" />
+    
+  <DrawingGroup x:Key="is_not_nullDrawingGroup" ClipGeometry="M0,0 V24 H24 V0 H0 Z">
+        <GeometryDrawing Brush="#FF107C10">
+      <GeometryDrawing.Pen>
+                <Pen Brush="#FF107C10" Thickness="1.75" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" />
+      </GeometryDrawing.Pen>
+      <GeometryDrawing.Geometry>
+        <EllipseGeometry RadiusX="7" RadiusY="7" Center="12,12" />
+      </GeometryDrawing.Geometry>
+    </GeometryDrawing>
+  </DrawingGroup>
+  <DrawingImage x:Key="{x:Static sdg:SearchTypeIconKeys.IsNotNull}" Drawing="{StaticResource is_not_nullDrawingGroup}" />
+    
+  <Geometry x:Key="above_averageGeometry1">F1 M20.774924,17.375088z M0,0z M2.5,13L21.5,13</Geometry>
+  <Geometry x:Key="above_averageGeometry2">F1 M20.774924,17.375088z M0,0z M2.5,20.5L21.5,20.5</Geometry>
+  <DrawingGroup x:Key="above_averageDrawingGroup" ClipGeometry="M0,0 V17.375088 H20.774924 V0 H0 Z">
+    <DrawingGroup Opacity="1" Transform="1,0,0,1,-27.001748,-545.43256">
+      <DrawingGroup Opacity="1" Transform="1,0,0,1,33.130699,539.96205">
+        <DrawingGroup Opacity="1" Transform="1,0,0,1,-3.9680101,1.1611007">
+          <DrawingGroup Opacity="1" Transform="1,0,0,1,-3.7734801,0.30941377">
+            <GeometryDrawing>
+              <GeometryDrawing.Brush>
+                <SolidColorBrush Color="#FF107C10" Opacity="0.45" />
+              </GeometryDrawing.Brush>
+              <GeometryDrawing.Geometry>
+                <RectangleGeometry RadiusX="0.6" RadiusY="0.6" Rect="4,10.5,3.4,10" />
+              </GeometryDrawing.Geometry>
+            </GeometryDrawing>
+            <GeometryDrawing>
+              <GeometryDrawing.Brush>
+                <SolidColorBrush Color="#FF107C10" Opacity="0.7" />
+              </GeometryDrawing.Brush>
+              <GeometryDrawing.Geometry>
+                <RectangleGeometry RadiusX="0.6" RadiusY="0.6" Rect="10.3,7.5,3.4,13" />
+              </GeometryDrawing.Geometry>
+            </GeometryDrawing>
+            <GeometryDrawing Brush="#FF107C10">
+              <GeometryDrawing.Geometry>
+                <RectangleGeometry RadiusX="0.6" RadiusY="0.6" Rect="16.6,4,3.4,16.5" />
+              </GeometryDrawing.Geometry>
+            </GeometryDrawing>
+            <GeometryDrawing Geometry="{StaticResource above_averageGeometry1}">
+              <GeometryDrawing.Pen>
+                <Pen Thickness="1.75" StartLineCap="Round" EndLineCap="Round" DashCap="Flat" LineJoin="Round">
+                  <Pen.Brush>
+                    <SolidColorBrush Color="#FF107C10" Opacity="0.75" />
+                  </Pen.Brush>
+                  <Pen.DashStyle>
+                    <DashStyle Offset="0" Dashes="1.14285714285714 1.37142857142857" />
+                  </Pen.DashStyle>
+                </Pen>
+              </GeometryDrawing.Pen>
+            </GeometryDrawing>
+            <GeometryDrawing Geometry="{StaticResource above_averageGeometry2}">
+              <GeometryDrawing.Pen>
+                <Pen Brush="#FF107C10" Thickness="1.75" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" />
+              </GeometryDrawing.Pen>
+            </GeometryDrawing>
+          </DrawingGroup>
+        </DrawingGroup>
+      </DrawingGroup>
+    </DrawingGroup>
+  </DrawingGroup>
+  <DrawingImage x:Key="{x:Static sdg:SearchTypeIconKeys.AboveAverage}" Drawing="{StaticResource above_averageDrawingGroup}" />
+    
+  <Geometry x:Key="below_averageGeometry1">F1 M20.774924,17.375088z M0,0z M2.5,3.5L21.5,3.5</Geometry>
+  <Geometry x:Key="below_averageGeometry2">F1 M20.774924,17.375088z M0,0z M2.5,11L21.5,11</Geometry>
+  <DrawingGroup x:Key="below_averageDrawingGroup" ClipGeometry="M0,0 V17.375088 H20.774924 V0 H0 Z">
+    <DrawingGroup Opacity="1" Transform="1,0,0,1,-30.775228,-543.74806">
+      <DrawingGroup Opacity="1" Transform="1,0,0,1,33.130699,539.96205">
+        <DrawingGroup Opacity="1" Transform="1,0,0,1,-3.9680101,1.1611007">
+          <GeometryDrawing Geometry="{StaticResource below_averageGeometry1}">
+            <GeometryDrawing.Pen>
+              <Pen Brush="#FF4DB4FF" Thickness="1.75" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" />
+            </GeometryDrawing.Pen>
+          </GeometryDrawing>
+          <GeometryDrawing Brush="#FF4DB4FF">
+            <GeometryDrawing.Geometry>
+              <RectangleGeometry RadiusX="0.6" RadiusY="0.6" Rect="4,3.5,3.4,16.5" />
+            </GeometryDrawing.Geometry>
+          </GeometryDrawing>
+          <GeometryDrawing>
+            <GeometryDrawing.Brush>
+              <SolidColorBrush Color="#FF4DB4FF" Opacity="0.7" />
+            </GeometryDrawing.Brush>
+            <GeometryDrawing.Geometry>
+              <RectangleGeometry RadiusX="0.6" RadiusY="0.6" Rect="10.3,3.5,3.4,13" />
+            </GeometryDrawing.Geometry>
+          </GeometryDrawing>
+          <GeometryDrawing>
+            <GeometryDrawing.Brush>
+              <SolidColorBrush Color="#FF4DB4FF" Opacity="0.45" />
+            </GeometryDrawing.Brush>
+            <GeometryDrawing.Geometry>
+              <RectangleGeometry RadiusX="0.6" RadiusY="0.6" Rect="16.6,3.5,3.4,10" />
+            </GeometryDrawing.Geometry>
+          </GeometryDrawing>
+          <GeometryDrawing Geometry="{StaticResource below_averageGeometry2}">
+            <GeometryDrawing.Pen>
+              <Pen Thickness="1.75" StartLineCap="Round" EndLineCap="Round" DashCap="Flat" LineJoin="Round">
+                <Pen.Brush>
+                  <SolidColorBrush Color="#FF4DB4FF" Opacity="0.75" />
+                </Pen.Brush>
+                <Pen.DashStyle>
+                  <DashStyle Offset="0" Dashes="1.14285714285714 1.37142857142857" />
+                </Pen.DashStyle>
+              </Pen>
+            </GeometryDrawing.Pen>
+          </GeometryDrawing>
+        </DrawingGroup>
+      </DrawingGroup>
+    </DrawingGroup>
+  </DrawingGroup>
+  <DrawingImage x:Key="{x:Static sdg:SearchTypeIconKeys.BelowAverage}" Drawing="{StaticResource below_averageDrawingGroup}" />
+    
+  <Geometry x:Key="does_not_containGeometry1">F1 M20.774924,20.020199z M0,0z M2.5,19L21.5,19</Geometry>
+  <Geometry x:Key="does_not_containGeometry2">F1 M20.774924,20.020199z M0,0z M9.25,6.5L9.25,5 10.65,5</Geometry>
+  <Geometry x:Key="does_not_containGeometry3">F1 M20.774924,20.020199z M0,0z M14.75,6.5L14.75,5 13.35,5</Geometry>
+  <DrawingGroup x:Key="does_not_containDrawingGroup" ClipGeometry="M0,0 V20.020199 H20.774924 V0 H0 Z">
+    <DrawingGroup Opacity="1" Transform="1,0,0,1,-318.11496,-500.10836">
+      <DrawingGroup Opacity="1" Transform="1,0,0,1,315.71769,498.13839">
+        <DrawingGroup Opacity="1" Transform="1,0,0,1,0.7847331,-0.01993203">
+          <GeometryDrawing Geometry="{StaticResource does_not_containGeometry1}">
+            <GeometryDrawing.Brush>
+              <SolidColorBrush Color="#FF107C10" Opacity="0.55" />
+            </GeometryDrawing.Brush>
+            <GeometryDrawing.Pen>
+              <Pen Thickness="1.75" StartLineCap="Round" EndLineCap="Round" LineJoin="Round">
+                <Pen.Brush>
+                  <SolidColorBrush Color="#FF1C1C1C" Opacity="0.55" />
+                </Pen.Brush>
+              </Pen>
+            </GeometryDrawing.Pen>
+          </GeometryDrawing>
+          <GeometryDrawing>
+            <GeometryDrawing.Pen>
+              <Pen Thickness="1.75" StartLineCap="Round" EndLineCap="Round" LineJoin="Round">
+                <Pen.Brush>
+                  <SolidColorBrush Color="#FF1C1C1C" Opacity="0.45" />
+                </Pen.Brush>
+              </Pen>
+            </GeometryDrawing.Pen>
+            <GeometryDrawing.Geometry>
+              <RectangleGeometry RadiusX="1" RadiusY="1" Rect="3.5,9,4.5,7" />
+            </GeometryDrawing.Geometry>
+          </GeometryDrawing>
+          <GeometryDrawing Brush="#FFCC0000">
+            <GeometryDrawing.Geometry>
+              <RectangleGeometry RadiusX="1" RadiusY="1" Rect="9.75,9,4.5,7" />
+            </GeometryDrawing.Geometry>
+          </GeometryDrawing>
+          <GeometryDrawing>
+            <GeometryDrawing.Pen>
+              <Pen Thickness="1.75" StartLineCap="Round" EndLineCap="Round" LineJoin="Round">
+                <Pen.Brush>
+                  <SolidColorBrush Color="#FF1C1C1C" Opacity="0.45" />
+                </Pen.Brush>
+              </Pen>
+            </GeometryDrawing.Pen>
+            <GeometryDrawing.Geometry>
+              <RectangleGeometry RadiusX="1" RadiusY="1" Rect="16,9,4.5,7" />
+            </GeometryDrawing.Geometry>
+          </GeometryDrawing>
+          <GeometryDrawing Brush="#FF107C10" Geometry="{StaticResource does_not_containGeometry2}">
+            <GeometryDrawing.Pen>
+              <Pen Brush="#FFCC0000" Thickness="1.75" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" />
+            </GeometryDrawing.Pen>
+          </GeometryDrawing>
+          <GeometryDrawing Brush="#FF107C10" Geometry="{StaticResource does_not_containGeometry3}">
+            <GeometryDrawing.Pen>
+              <Pen Brush="#FFCC0000" Thickness="1.75" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" />
+            </GeometryDrawing.Pen>
+          </GeometryDrawing>
+        </DrawingGroup>
+      </DrawingGroup>
+    </DrawingGroup>
+  </DrawingGroup>
+  <DrawingImage x:Key="{x:Static sdg:SearchTypeIconKeys.DoesNotContain}" Drawing="{StaticResource does_not_containDrawingGroup}" />
+    
+  <Geometry x:Key="IsGreaterThanOrEqualToGeometry1">F1 M24,24z M0,0z M7,4L17,10.5 7,17</Geometry>
+  <Geometry x:Key="IsGreaterThanOrEqualToGeometry2">F1 M24,24z M0,0z M7,20L17,20</Geometry>
+  <DrawingGroup x:Key="IsGreaterThanOrEqualToDrawingGroup" ClipGeometry="M0,0 V24 H24 V0 H0 Z">
+    <GeometryDrawing Geometry="{StaticResource IsGreaterThanOrEqualToGeometry1}">
+      <GeometryDrawing.Pen>
+                <Pen Brush="#FF1C1C1C" Thickness="2.2" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" />
+      </GeometryDrawing.Pen>
+    </GeometryDrawing>
+    <GeometryDrawing Geometry="{StaticResource IsGreaterThanOrEqualToGeometry2}">
+      <GeometryDrawing.Pen>
+                <Pen Brush="#FF1C1C1C" Thickness="2.2" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" />
+      </GeometryDrawing.Pen>
+    </GeometryDrawing>
+  </DrawingGroup>
+  <DrawingImage x:Key="{x:Static sdg:SearchTypeIconKeys.GreaterThanOrEqualTo}" Drawing="{StaticResource IsGreaterThanOrEqualToDrawingGroup}" />
+    
+  <DrawingGroup x:Key="tomorrowDrawingGroup" ClipGeometry="M0,0 V24 H24 V0 H0 Z">
+    <GeometryDrawing>
+      <GeometryDrawing.Pen>
+        <Pen Thickness="1.5" StartLineCap="Round" EndLineCap="Round" LineJoin="Round">
+          <Pen.Brush>
+            <SolidColorBrush Color="#FF1C1C1C" Opacity="0.35" />
+          </Pen.Brush>
+        </Pen>
+      </GeometryDrawing.Pen>
+      <GeometryDrawing.Geometry>
+        <RectangleGeometry RadiusX="1" RadiusY="1" Rect="3,8,5.5,8" />
+      </GeometryDrawing.Geometry>
+    </GeometryDrawing>
+    <GeometryDrawing>
+      <GeometryDrawing.Pen>
+        <Pen Thickness="1.5" StartLineCap="Round" EndLineCap="Round" LineJoin="Round">
+          <Pen.Brush>
+            <SolidColorBrush Color="#FF1C1C1C" Opacity="0.35" />
+          </Pen.Brush>
+        </Pen>
+      </GeometryDrawing.Pen>
+      <GeometryDrawing.Geometry>
+        <RectangleGeometry RadiusX="1" RadiusY="1" Rect="9.25,8,5.5,8" />
+      </GeometryDrawing.Geometry>
+    </GeometryDrawing>
+    <GeometryDrawing Brush="#FF1C1C1C">
+      <GeometryDrawing.Geometry>
+        <RectangleGeometry RadiusX="1" RadiusY="1" Rect="15.5,8,5.5,8" />
+      </GeometryDrawing.Geometry>
+    </GeometryDrawing>
+    <GeometryDrawing Brush="#FF1C1C1C">
+      <GeometryDrawing.Geometry>
+        <EllipseGeometry RadiusX="1" RadiusY="1" Center="12,12" />
+      </GeometryDrawing.Geometry>
+    </GeometryDrawing>
+  </DrawingGroup>
+  <DrawingImage x:Key="{x:Static sdg:SearchTypeIconKeys.Tomorrow}" Drawing="{StaticResource tomorrowDrawingGroup}" />
+    
+  <Geometry x:Key="containsGeometry1">F1 M20.774924,20.020199z M0,0z M2.5,19L21.5,19</Geometry>
+  <Geometry x:Key="containsGeometry2">F1 M20.774924,20.020199z M0,0z M9.25,6.5L9.25,5 10.65,5</Geometry>
+  <Geometry x:Key="containsGeometry3">F1 M20.774924,20.020199z M0,0z M14.75,6.5L14.75,5 13.35,5</Geometry>
+  <DrawingGroup x:Key="containsDrawingGroup" ClipGeometry="M0,0 V20.020199 H20.774924 V0 H0 Z">
+    <DrawingGroup Opacity="1" Transform="1,0,0,1,-318.11496,-500.10836">
+      <DrawingGroup Opacity="1" Transform="1,0,0,1,315.71769,498.13839">
+        <DrawingGroup Opacity="1" Transform="1,0,0,1,0.7847331,-0.01993203">
+          <GeometryDrawing Geometry="{StaticResource containsGeometry1}">
+            <GeometryDrawing.Brush>
+              <SolidColorBrush Color="#FF107C10" Opacity="0.55" />
+            </GeometryDrawing.Brush>
+            <GeometryDrawing.Pen>
+              <Pen Thickness="1.75" StartLineCap="Round" EndLineCap="Round" LineJoin="Round">
+                <Pen.Brush>
+                  <SolidColorBrush Color="#FF1C1C1C" Opacity="0.55" />
+                </Pen.Brush>
+              </Pen>
+            </GeometryDrawing.Pen>
+          </GeometryDrawing>
+          <GeometryDrawing>
+            <GeometryDrawing.Pen>
+              <Pen Thickness="1.75" StartLineCap="Round" EndLineCap="Round" LineJoin="Round">
+                <Pen.Brush>
+                  <SolidColorBrush Color="#FF1C1C1C" Opacity="0.45" />
+                </Pen.Brush>
+              </Pen>
+            </GeometryDrawing.Pen>
+            <GeometryDrawing.Geometry>
+              <RectangleGeometry RadiusX="1" RadiusY="1" Rect="3.5,9,4.5,7" />
+            </GeometryDrawing.Geometry>
+          </GeometryDrawing>
+          <GeometryDrawing Brush="#FF107C10">
+            <GeometryDrawing.Geometry>
+              <RectangleGeometry RadiusX="1" RadiusY="1" Rect="9.75,9,4.5,7" />
+            </GeometryDrawing.Geometry>
+          </GeometryDrawing>
+          <GeometryDrawing>
+            <GeometryDrawing.Pen>
+              <Pen Thickness="1.75" StartLineCap="Round" EndLineCap="Round" LineJoin="Round">
+                <Pen.Brush>
+                  <SolidColorBrush Color="#FF1C1C1C" Opacity="0.45" />
+                </Pen.Brush>
+              </Pen>
+            </GeometryDrawing.Pen>
+            <GeometryDrawing.Geometry>
+              <RectangleGeometry RadiusX="1" RadiusY="1" Rect="16,9,4.5,7" />
+            </GeometryDrawing.Geometry>
+          </GeometryDrawing>
+          <GeometryDrawing Geometry="{StaticResource containsGeometry2}">
+            <GeometryDrawing.Pen>
+              <Pen Brush="#FF107C10" Thickness="1.75" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" />
+            </GeometryDrawing.Pen>
+          </GeometryDrawing>
+          <GeometryDrawing Brush="#FF107C10" Geometry="{StaticResource containsGeometry3}">
+            <GeometryDrawing.Pen>
+              <Pen Brush="#FF107C10" Thickness="1.75" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" />
+            </GeometryDrawing.Pen>
+          </GeometryDrawing>
+        </DrawingGroup>
+      </DrawingGroup>
+    </DrawingGroup>
+  </DrawingGroup>
+  <DrawingImage x:Key="{x:Static sdg:SearchTypeIconKeys.Contains}" Drawing="{StaticResource containsDrawingGroup}" />
+    
+  <Geometry x:Key="beyond_yearGeometry">F1 M24,24z M0,0z M17.5,8L21.5,12 17.5,16</Geometry>
+  <DrawingGroup x:Key="beyond_yearDrawingGroup" ClipGeometry="M0,0 V24 H24 V0 H0 Z">
+    <DrawingGroup Opacity="1">
+      <GeometryDrawing Brush="#FF1C1C1C">
+        <GeometryDrawing.Geometry>
+          <RectangleGeometry RadiusX="0.4" RadiusY="0.4" Rect="5,5,3,3" />
+        </GeometryDrawing.Geometry>
+      </GeometryDrawing>
+      <GeometryDrawing Brush="#FF1C1C1C">
+        <GeometryDrawing.Geometry>
+          <RectangleGeometry RadiusX="0.4" RadiusY="0.4" Rect="8.5,5,3,3" />
+        </GeometryDrawing.Geometry>
+      </GeometryDrawing>
+      <GeometryDrawing Brush="#FF1C1C1C">
+        <GeometryDrawing.Geometry>
+          <RectangleGeometry RadiusX="0.4" RadiusY="0.4" Rect="12,5,3,3" />
+        </GeometryDrawing.Geometry>
+      </GeometryDrawing>
+      <GeometryDrawing Brush="#FF1C1C1C">
+        <GeometryDrawing.Geometry>
+          <RectangleGeometry RadiusX="0.4" RadiusY="0.4" Rect="5,8.5,3,3" />
+        </GeometryDrawing.Geometry>
+      </GeometryDrawing>
+      <GeometryDrawing Brush="#FF1C1C1C">
+        <GeometryDrawing.Geometry>
+          <RectangleGeometry RadiusX="0.4" RadiusY="0.4" Rect="8.5,8.5,3,3" />
+        </GeometryDrawing.Geometry>
+      </GeometryDrawing>
+      <GeometryDrawing Brush="#FF1C1C1C">
+        <GeometryDrawing.Geometry>
+          <RectangleGeometry RadiusX="0.4" RadiusY="0.4" Rect="12,8.5,3,3" />
+        </GeometryDrawing.Geometry>
+      </GeometryDrawing>
+      <GeometryDrawing Brush="#FF1C1C1C">
+        <GeometryDrawing.Geometry>
+          <RectangleGeometry RadiusX="0.4" RadiusY="0.4" Rect="5,12,3,3" />
+        </GeometryDrawing.Geometry>
+      </GeometryDrawing>
+      <GeometryDrawing Brush="#FF1C1C1C">
+        <GeometryDrawing.Geometry>
+          <RectangleGeometry RadiusX="0.4" RadiusY="0.4" Rect="8.5,12,3,3" />
+        </GeometryDrawing.Geometry>
+      </GeometryDrawing>
+      <GeometryDrawing Brush="#FF1C1C1C">
+        <GeometryDrawing.Geometry>
+          <RectangleGeometry RadiusX="0.4" RadiusY="0.4" Rect="12,12,3,3" />
+        </GeometryDrawing.Geometry>
+      </GeometryDrawing>
+      <GeometryDrawing Brush="#FF1C1C1C">
+        <GeometryDrawing.Geometry>
+          <RectangleGeometry RadiusX="0.4" RadiusY="0.4" Rect="5,15.5,3,3" />
+        </GeometryDrawing.Geometry>
+      </GeometryDrawing>
+      <GeometryDrawing Brush="#FF1C1C1C">
+        <GeometryDrawing.Geometry>
+          <RectangleGeometry RadiusX="0.4" RadiusY="0.4" Rect="8.5,15.5,3,3" />
+        </GeometryDrawing.Geometry>
+      </GeometryDrawing>
+      <GeometryDrawing Brush="#FF1C1C1C">
+        <GeometryDrawing.Geometry>
+          <RectangleGeometry RadiusX="0.4" RadiusY="0.4" Rect="12,15.5,3,3" />
+        </GeometryDrawing.Geometry>
+      </GeometryDrawing>
+    </DrawingGroup>
+    <GeometryDrawing Geometry="{StaticResource beyond_yearGeometry}">
+      <GeometryDrawing.Pen>
+        <Pen Brush="#FF1C1C1C" Thickness="1.75" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" />
+      </GeometryDrawing.Pen>
+    </GeometryDrawing>
+  </DrawingGroup>
+  <DrawingImage x:Key="{x:Static sdg:SearchTypeIconKeys.BeyondThisYear}" Drawing="{StaticResource beyond_yearDrawingGroup}" />
+    
+  <DrawingGroup x:Key="last_weekDrawingGroup" ClipGeometry="M0,0 V24 H24 V0 H0 Z">
+    <GeometryDrawing Brush="#FF1C1C1C">
+      <GeometryDrawing.Geometry>
+        <RectangleGeometry RadiusX="0.8" RadiusY="0.8" Rect="1.5,6,10.5,4" />
+      </GeometryDrawing.Geometry>
+    </GeometryDrawing>
+    <GeometryDrawing>
+      <GeometryDrawing.Pen>
+        <Pen Thickness="1.5" StartLineCap="Round" EndLineCap="Round" LineJoin="Round">
+          <Pen.Brush>
+            <SolidColorBrush Color="#FF1C1C1C" Opacity="0.35" />
+          </Pen.Brush>
+        </Pen>
+      </GeometryDrawing.Pen>
+      <GeometryDrawing.Geometry>
+        <RectangleGeometry RadiusX="0.8" RadiusY="0.8" Rect="12.5,6,10,4" />
+      </GeometryDrawing.Geometry>
+    </GeometryDrawing>
+    <DrawingGroup Opacity="0.5">
+      <GeometryDrawing>
+        <GeometryDrawing.Pen>
+          <Pen Brush="#FFFFFFFF" Thickness="0.5" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" />
+        </GeometryDrawing.Pen>
+        <GeometryDrawing.Geometry>
+          <LineGeometry StartPoint="3,6" EndPoint="3,10" />
+        </GeometryDrawing.Geometry>
+      </GeometryDrawing>
+      <GeometryDrawing>
+        <GeometryDrawing.Pen>
+          <Pen Brush="#FFFFFFFF" Thickness="0.5" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" />
+        </GeometryDrawing.Pen>
+        <GeometryDrawing.Geometry>
+          <LineGeometry StartPoint="4.5,6" EndPoint="4.5,10" />
+        </GeometryDrawing.Geometry>
+      </GeometryDrawing>
+      <GeometryDrawing>
+        <GeometryDrawing.Pen>
+          <Pen Brush="#FFFFFFFF" Thickness="0.5" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" />
+        </GeometryDrawing.Pen>
+        <GeometryDrawing.Geometry>
+          <LineGeometry StartPoint="6,6" EndPoint="6,10" />
+        </GeometryDrawing.Geometry>
+      </GeometryDrawing>
+      <GeometryDrawing>
+        <GeometryDrawing.Pen>
+          <Pen Brush="#FFFFFFFF" Thickness="0.5" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" />
+        </GeometryDrawing.Pen>
+        <GeometryDrawing.Geometry>
+          <LineGeometry StartPoint="7.5,6" EndPoint="7.5,10" />
+        </GeometryDrawing.Geometry>
+      </GeometryDrawing>
+      <GeometryDrawing>
+        <GeometryDrawing.Pen>
+          <Pen Brush="#FFFFFFFF" Thickness="0.5" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" />
+        </GeometryDrawing.Pen>
+        <GeometryDrawing.Geometry>
+          <LineGeometry StartPoint="9,6" EndPoint="9,10" />
+        </GeometryDrawing.Geometry>
+      </GeometryDrawing>
+      <GeometryDrawing>
+        <GeometryDrawing.Pen>
+          <Pen Brush="#FFFFFFFF" Thickness="0.5" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" />
+        </GeometryDrawing.Pen>
+        <GeometryDrawing.Geometry>
+          <LineGeometry StartPoint="10.5,6" EndPoint="10.5,10" />
+        </GeometryDrawing.Geometry>
+      </GeometryDrawing>
+    </DrawingGroup>
+    <GeometryDrawing>
+      <GeometryDrawing.Pen>
+        <Pen Thickness="1.5" StartLineCap="Round" EndLineCap="Round" LineJoin="Round">
+          <Pen.Brush>
+            <SolidColorBrush Color="#FF1C1C1C" Opacity="0.2" />
+          </Pen.Brush>
+        </Pen>
+      </GeometryDrawing.Pen>
+      <GeometryDrawing.Geometry>
+        <RectangleGeometry RadiusX="0.8" RadiusY="0.8" Rect="12.5,14,10,4" />
+      </GeometryDrawing.Geometry>
+    </GeometryDrawing>
+    <GeometryDrawing Brush="#FF1C1C1C">
+      <GeometryDrawing.Geometry>
+        <RectangleGeometry RadiusX="0" RadiusY="0" Rect="14,14,1.5,4" />
+      </GeometryDrawing.Geometry>
+    </GeometryDrawing>
+    <GeometryDrawing Brush="#FFFFFFFF">
+      <GeometryDrawing.Geometry>
+        <EllipseGeometry RadiusX="0.8" RadiusY="0.8" Center="14.75,16" />
+      </GeometryDrawing.Geometry>
+    </GeometryDrawing>
+  </DrawingGroup>
+  <DrawingImage x:Key="{x:Static sdg:SearchTypeIconKeys.LastWeek}" Drawing="{StaticResource last_weekDrawingGroup}" />
+    
+  <Geometry x:Key="top_nGeometry">F1 M20.774924,20.376259z M0,0z M2.5,20.5L21.5,20.5</Geometry>
+  <DrawingGroup x:Key="top_nDrawingGroup" ClipGeometry="M0,0 V20.376259 H20.774924 V0 H0 Z">
+    <DrawingGroup Opacity="1" Transform="1,0,0,1,-25.142552,-543.81615">
+      <DrawingGroup Opacity="1" Transform="1,0,0,1,33.130699,539.96205">
+        <DrawingGroup Opacity="1" Transform="1,0,0,1,-3.9680101,1.1611007">
+          <DrawingGroup Opacity="1" Transform="1,0,0,1,-3.7734801,0.30941377">
+            <DrawingGroup Opacity="1" Transform="1,0,0,1,-1.8591952,1.3847536">
+              <GeometryDrawing>
+                <GeometryDrawing.Brush>
+                  <SolidColorBrush Color="#FF107C10" Opacity="0.45" />
+                </GeometryDrawing.Brush>
+                <GeometryDrawing.Geometry>
+                  <RectangleGeometry RadiusX="0.6" RadiusY="0.6" Rect="4,13.5,3.4,7" />
+                </GeometryDrawing.Geometry>
+              </GeometryDrawing>
+              <GeometryDrawing>
+                <GeometryDrawing.Brush>
+                  <SolidColorBrush Color="#FF107C10" Opacity="0.7" />
+                </GeometryDrawing.Brush>
+                <GeometryDrawing.Geometry>
+                  <RectangleGeometry RadiusX="0.6" RadiusY="0.6" Rect="10.3,10.5,3.4,10" />
+                </GeometryDrawing.Geometry>
+              </GeometryDrawing>
+              <GeometryDrawing Brush="#FF107C10">
+                <GeometryDrawing.Geometry>
+                  <RectangleGeometry RadiusX="0.6" RadiusY="0.6" Rect="16.6,7.5,3.4,13" />
+                </GeometryDrawing.Geometry>
+              </GeometryDrawing>
+              <GeometryDrawing Geometry="{StaticResource top_nGeometry}">
+                <GeometryDrawing.Pen>
+                  <Pen Brush="#FF107C10" Thickness="1.75" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" />
+                </GeometryDrawing.Pen>
+              </GeometryDrawing>
+              <DrawingGroup Opacity="1">
+                <DrawingGroup>
+                  <DrawingGroup>
+                    <GlyphRunDrawing ForegroundBrush="#FF107C10">
+                      <GlyphRunDrawing.GlyphRun>
+                        <GlyphRun PixelsPerDip="1.25" BaselineOrigin="15.929999,5.1999998" FontRenderingEmSize="6" BidiLevel="0" IsSideways="False" ClusterMap="0" Characters="N" GlyphIndices="49" AdvanceWidths="4.74" GlyphOffsets="0,0" Language="en-us">
+                          <GlyphRun.GlyphTypeface>
+                            <GlyphTypeface FontUri="C:\WINDOWS\FONTS\SEGOEUIB.TTF" StyleSimulations="None" />
+                          </GlyphRun.GlyphTypeface>
+                        </GlyphRun>
+                      </GlyphRunDrawing.GlyphRun>
+                    </GlyphRunDrawing>
+                  </DrawingGroup>
+                </DrawingGroup>
+              </DrawingGroup>
+            </DrawingGroup>
+          </DrawingGroup>
+        </DrawingGroup>
+      </DrawingGroup>
+    </DrawingGroup>
+  </DrawingGroup>
+  <DrawingImage x:Key="{x:Static sdg:SearchTypeIconKeys.TopN}" Drawing="{StaticResource top_nDrawingGroup}" />
+    
+</ResourceDictionary>

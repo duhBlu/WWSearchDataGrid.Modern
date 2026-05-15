@@ -210,6 +210,43 @@
 
 
     <!--
+        Chevron drop-down button used inside the EditComboBox ControlTemplate. Must be
+        declared BEFORE EditComboBox (which references it via StaticResource) so the
+        forward-reference doesn't fail in any XAML-loader path. WPF generally tolerates
+        forward StaticResource references inside Style.Setters (resolution is deferred),
+        but the rule is unreliable across BAML / runtime / debugger combinations — most
+        visibly breaking the ComboBox chevron in dynamically-instantiated hosts (the
+        filter-row's per-column ColumnFilterControl is one such host). Backward order is
+        the dependable form.
+    -->
+    <Style x:Key="{x:Static sdg:EditSettingsThemeKeys.EditComboBoxDropDownButton}" TargetType="{x:Type ToggleButton}">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Padding" Value="4,0,9,0" />
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="Foreground" Value="{StaticResource Sdg.Text.Primary}" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type ToggleButton}">
+                    <Border x:Name="MainBorder"
+                            Background="{TemplateBinding Background}"
+                            SnapsToDevicePixels="True">
+                        <TextBlock Foreground="{TemplateBinding Foreground}"
+                                   Text="&#xE70D;"
+                                   FontFamily="Segoe Fluent Icons"
+                                   FontSize="10"
+                                   Margin="{TemplateBinding Padding}"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"
+                                   IsHitTestVisible="False" />
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!--
         Flat ComboBox for ComboBoxEditSettings edit mode. Uses the custom ControlTemplate
         above so Background / BorderBrush / BorderThickness actually take effect. Borderless
         until focus, accent border on focus.
@@ -361,33 +398,6 @@
     </Style>
 
     
-    <Style x:Key="{x:Static sdg:EditSettingsThemeKeys.EditComboBoxDropDownButton}" TargetType="{x:Type ToggleButton}">
-        <Setter Property="Background" Value="Transparent" />
-        <Setter Property="BorderThickness" Value="0" />
-        <Setter Property="Padding" Value="4,0,9,0" />
-        <Setter Property="Focusable" Value="False" />
-        <Setter Property="Foreground" Value="{StaticResource Sdg.Text.Primary}" />
-        <Setter Property="VerticalAlignment" Value="Center" />
-        <Setter Property="Template">
-            <Setter.Value>
-                <ControlTemplate TargetType="{x:Type ToggleButton}">
-                    <Border x:Name="MainBorder"
-                            Background="{TemplateBinding Background}"
-                            SnapsToDevicePixels="True">
-                        <TextBlock Foreground="{TemplateBinding Foreground}"
-                                   Text="&#xE70D;"
-                                   FontFamily="Segoe Fluent Icons"
-                                   FontSize="10"
-                                   Margin="{TemplateBinding Padding}"
-                                   HorizontalAlignment="Center"
-                                   VerticalAlignment="Center"
-                                   IsHitTestVisible="False" />
-                    </Border>
-                </ControlTemplate>
-            </Setter.Value>
-        </Setter>
-    </Style>
-
     <Style x:Key="{x:Static sdg:EditSettingsThemeKeys.SpinButton}" TargetType="{x:Type RepeatButton}">
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderBrush" Value="Transparent" />
