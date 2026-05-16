@@ -57,6 +57,11 @@
                                     SelectionUnit="FullRow"
                                     AllowPerPixelScrolling="True"
                                     AllowScrollAnimation="True"
+                                    AllowCascadeUpdate="False"
+                                    RowAnimationKind="Opacity"
+                                    RowAnimationEasing="EaseInOut"
+                                    RowOpacityAnimationDuration="300"
+                                    CascadeStagger="0"
                                     CustomScrollAnimation="OnCustomScrollAnimation">
                     <sdg:SearchDataGrid.GridColumns>
                         <sdg:GridColumn Width="80"  FieldName="OrderNumber"           Header="Order #" />

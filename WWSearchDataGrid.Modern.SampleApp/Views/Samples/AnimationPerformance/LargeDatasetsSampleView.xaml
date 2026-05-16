@@ -58,7 +58,7 @@
                     <sdg:SearchDataGrid.GridColumns>
                         <sdg:GridColumn Width="80"  FieldName="OrderNumber"           Header="Order #" />
                         <sdg:GridColumn Width="100" FieldName="OrderStatusName"       Header="Status"   DefaultSearchType="Equals" />
-                        <sdg:GridColumn Width="150" FieldName="OrderDate"             Header="Date"     DisplayStringFormat="MM/dd/yyyy h:mm tt" />
+                        <sdg:GridColumn Width="150" FieldName="OrderDate"             Header="Date"     DisplayStringFormat="MM/dd/yyyy h:mm tt" RoundDateTime="True"/>
                         <sdg:GridColumn Width="200" FieldName="CustomerName"          Header="Customer" />
                         <sdg:GridColumn Width="160" FieldName="EmployeeName"          Header="Employee" />
                         <sdg:GridColumn Width="100" FieldName="OrderItemsTotalPrice"  Header="Total"    DisplayStringFormat="C2" />

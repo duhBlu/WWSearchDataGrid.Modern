@@ -61,7 +61,7 @@
                     <!-- The select-all column. SelectAllScope binds to the ComboBox below. -->
                     <sdg:GridColumn Width="80" FieldName="IsComplete" Header="Done"
                                     IsSelectAllColumn="True"
-                                    SelectAllScope="{Binding ElementName=ScopeCombo, UpdateSourceTrigger=PropertyChanged, Path=SelectedItem}">
+                                    SelectAllScope="{Binding Source={x:Reference ScopeCombo}, Path=SelectedItem, UpdateSourceTrigger=PropertyChanged}">
                         <sdg:GridColumn.EditSettings>
                             <sdg:CheckBoxEditSettings />
                         </sdg:GridColumn.EditSettings>

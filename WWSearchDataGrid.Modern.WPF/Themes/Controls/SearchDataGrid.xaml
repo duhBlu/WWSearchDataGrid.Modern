@@ -1,8 +1,9 @@
-﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-                    xmlns:sdg="clr-namespace:WWSearchDataGrid.Modern.WPF"
-                    xmlns:commands="clr-namespace:WWSearchDataGrid.Modern.WPF.Commands"
-                    xmlns:converters="clr-namespace:WWSearchDataGrid.Modern.WPF.Converters">
+﻿<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:commands="clr-namespace:WWSearchDataGrid.Modern.WPF.Commands"
+    xmlns:converters="clr-namespace:WWSearchDataGrid.Modern.WPF.Converters"
+    xmlns:sdg="clr-namespace:WWSearchDataGrid.Modern.WPF">
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF;component/Themes/Controls/Primitives/DefaultControls.xaml" />
         <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF;component/Themes/Controls/FilterPanel.xaml" />
@@ -19,19 +20,21 @@
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
                     <Grid>
-                        <Border x:Name="Border"
-                                Background="#F0F0F0"
-                                BorderBrush="#d0d0d0"
-                                BorderThickness="0,0,1,1"
-                                Margin="0,0,0,0" />
-                        <Polygon x:Name="Arrow"
-                                 Fill="#666"
-                                 Opacity="0.5"
-                                 Margin="8,8,3,3"
-                                 HorizontalAlignment="Right"
-                                 VerticalAlignment="Bottom"
-                                 Points="0,10 10,10 10,0"
-                                 Stretch="Uniform" />
+                        <Border
+                            x:Name="Border"
+                            Margin="0,0,0,0"
+                            Background="#F0F0F0"
+                            BorderBrush="#d0d0d0"
+                            BorderThickness="0,0,1,1" />
+                        <Polygon
+                            x:Name="Arrow"
+                            Margin="8,8,3,3"
+                            HorizontalAlignment="Right"
+                            VerticalAlignment="Bottom"
+                            Fill="#666"
+                            Opacity="0.5"
+                            Points="0,10 10,10 10,0"
+                            Stretch="Uniform" />
                     </Grid>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
@@ -64,14 +67,16 @@
         <Setter Property="ContextMenu">
             <Setter.Value>
                 <ContextMenu AutomationProperties.AutomationId="cmuRowHeader">
-                    <MenuItem x:Name="miCopy"
-                              Command="{x:Static commands:ContextMenuCommands.CopySelectedCellValuesCommand}"
-                              CommandParameter="{Binding Grid}"
-                              Header="Copy" />
-                    <MenuItem x:Name="miCopyWithHeaders"
-                              Command="{x:Static commands:ContextMenuCommands.CopySelectedCellValuesWithHeadersCommand}"
-                              CommandParameter="{Binding Grid}"
-                              Header="Copy With Headers" />
+                    <MenuItem
+                        x:Name="miCopy"
+                        Command="{x:Static commands:ContextMenuCommands.CopySelectedCellValuesCommand}"
+                        CommandParameter="{Binding Grid}"
+                        Header="Copy" />
+                    <MenuItem
+                        x:Name="miCopyWithHeaders"
+                        Command="{x:Static commands:ContextMenuCommands.CopySelectedCellValuesWithHeadersCommand}"
+                        CommandParameter="{Binding Grid}"
+                        Header="Copy With Headers" />
                 </ContextMenu>
             </Setter.Value>
         </Setter>
@@ -79,23 +84,25 @@
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type DataGridRowHeader}">
                     <Grid>
-                        <Border x:Name="HeaderBorder"
-                                Background="{TemplateBinding Background}"
-                                BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="{TemplateBinding BorderThickness}"
-                                Margin="-1,0,0,0"
-                                Padding="0,0,20,0">
+                        <Border
+                            x:Name="HeaderBorder"
+                            Margin="-1,0,0,0"
+                            Padding="0,0,20,0"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}">
                             <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
                         </Border>
 
-                        <TextBlock x:Name="RowStateIndicator"
-                                   FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
-                                   FontSize="12"
-                                   Foreground="#FF444444"
-                                   HorizontalAlignment="Center"
-                                   VerticalAlignment="Center"
-                                   Visibility="Collapsed"
-                                   Text="" />
+                        <TextBlock
+                            x:Name="RowStateIndicator"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                            FontSize="12"
+                            Foreground="#FF444444"
+                            Text=""
+                            Visibility="Collapsed" />
                     </Grid>
 
                     <ControlTemplate.Triggers>
@@ -125,7 +132,7 @@
         so WPF looks up a Style under the type key in this theme dictionary; without this
         entry the presenter has no Template, the column-headers band renders empty, and
         no SearchDataGridColumnHeader instances are produced.
-
+        
         The control template retargets PART_FillerColumnHeader to SearchDataGridColumnHeader.
         The DataGrid pushes its ColumnHeaderStyle setter to the filler header at
         ApplyTemplate time; that setter's TargetType is SearchDataGridColumnHeader, so the
@@ -136,8 +143,7 @@
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type sdg:SearchDataGridColumnHeadersPresenter}">
                     <Grid>
-                        <sdg:SearchDataGridColumnHeader x:Name="PART_FillerColumnHeader"
-                                                       IsHitTestVisible="False" />
+                        <sdg:SearchDataGridColumnHeader x:Name="PART_FillerColumnHeader" IsHitTestVisible="False" />
                         <ItemsPresenter />
                     </Grid>
                 </ControlTemplate>
@@ -151,47 +157,55 @@
             <Setter.Value>
                 <ContextMenu AutomationProperties.AutomationId="cmuColumnHeader">
                     <!--  Column-specific Copy Operations  -->
-                    <MenuItem x:Name="miCopy"
-                              Command="{x:Static commands:ContextMenuCommands.CopySelectedCellValuesCommand}"
-                              CommandParameter="{Binding Grid}"
-                              Header="Copy" />
-                    <MenuItem x:Name="miCopyWithHeaders"
-                              Command="{x:Static commands:ContextMenuCommands.CopySelectedCellValuesWithHeadersCommand}"
-                              CommandParameter="{Binding Grid}"
-                              Header="Copy With Headers" />
+                    <MenuItem
+                        x:Name="miCopy"
+                        Command="{x:Static commands:ContextMenuCommands.CopySelectedCellValuesCommand}"
+                        CommandParameter="{Binding Grid}"
+                        Header="Copy" />
+                    <MenuItem
+                        x:Name="miCopyWithHeaders"
+                        Command="{x:Static commands:ContextMenuCommands.CopySelectedCellValuesWithHeadersCommand}"
+                        CommandParameter="{Binding Grid}"
+                        Header="Copy With Headers" />
                     <Separator />
 
                     <!--  Sorting  -->
-                    <MenuItem x:Name="miSortAscending"
-                              Command="{x:Static commands:ContextMenuCommands.SortAscendingCommand}"
-                              CommandParameter="{Binding}"
-                              Header="Sort Ascending" />
-                    <MenuItem x:Name="miSortDescending"
-                              Command="{x:Static commands:ContextMenuCommands.SortDescendingCommand}"
-                              CommandParameter="{Binding}"
-                              Header="Sort Descending" />
-                    <MenuItem x:Name="miClearSorting"
-                              Command="{x:Static commands:ContextMenuCommands.ClearSortingCommand}"
-                              CommandParameter="{Binding}"
-                              Header="Clear Sorting" />
+                    <MenuItem
+                        x:Name="miSortAscending"
+                        Command="{x:Static commands:ContextMenuCommands.SortAscendingCommand}"
+                        CommandParameter="{Binding}"
+                        Header="Sort Ascending" />
+                    <MenuItem
+                        x:Name="miSortDescending"
+                        Command="{x:Static commands:ContextMenuCommands.SortDescendingCommand}"
+                        CommandParameter="{Binding}"
+                        Header="Sort Descending" />
+                    <MenuItem
+                        x:Name="miClearSorting"
+                        Command="{x:Static commands:ContextMenuCommands.ClearSortingCommand}"
+                        CommandParameter="{Binding}"
+                        Header="Clear Sorting" />
                     <Separator />
 
                     <!--  Column Operations  -->
-                    <MenuItem x:Name="miBestFitColumn"
-                              Command="{x:Static commands:ContextMenuCommands.BestFitColumnCommand}"
-                              CommandParameter="{Binding}"
-                              Header="Best Fit Column" />
-                    <MenuItem x:Name="miBestFitAllColumns"
-                              Command="{x:Static commands:ContextMenuCommands.BestFitAllColumnsCommand}"
-                              CommandParameter="{Binding}"
-                              Header="Best Fit All Columns" />
+                    <MenuItem
+                        x:Name="miBestFitColumn"
+                        Command="{x:Static commands:ContextMenuCommands.BestFitColumnCommand}"
+                        CommandParameter="{Binding}"
+                        Header="Best Fit Column" />
+                    <MenuItem
+                        x:Name="miBestFitAllColumns"
+                        Command="{x:Static commands:ContextMenuCommands.BestFitAllColumnsCommand}"
+                        CommandParameter="{Binding}"
+                        Header="Best Fit All Columns" />
                     <Separator />
 
                     <!--  Visibility and Layout  -->
-                    <MenuItem x:Name="miShowColumnChooser"
-                              Command="{x:Static commands:ContextMenuCommands.ShowColumnChooserCommand}"
-                              CommandParameter="{Binding Grid}"
-                              Header="Show Column Chooser">
+                    <MenuItem
+                        x:Name="miShowColumnChooser"
+                        Command="{x:Static commands:ContextMenuCommands.ShowColumnChooserCommand}"
+                        CommandParameter="{Binding Grid}"
+                        Header="Show Column Chooser">
                         <MenuItem.Style>
                             <Style TargetType="MenuItem">
                                 <Setter Property="Visibility" Value="Visible" />
@@ -203,10 +217,11 @@
                             </Style>
                         </MenuItem.Style>
                     </MenuItem>
-                    <MenuItem x:Name="miHideColumn"
-                              Command="{x:Static commands:ContextMenuCommands.HideSelectedColumnCommand}"
-                              CommandParameter="{Binding Column}"
-                              Header="Hide Column" />
+                    <MenuItem
+                        x:Name="miHideColumn"
+                        Command="{x:Static commands:ContextMenuCommands.HideSelectedColumnCommand}"
+                        CommandParameter="{Binding Column}"
+                        Header="Hide Column" />
 
                     <!--  Conditional Filtering (only shows when there's an active filter)  -->
                     <Separator>
@@ -221,10 +236,11 @@
                             </Style>
                         </Separator.Style>
                     </Separator>
-                    <MenuItem x:Name="miClearColumnFilter"
-                              Command="{x:Static commands:ContextMenuCommands.ClearColumnFilterCommand}"
-                              CommandParameter="{Binding ColumnSearchBox}"
-                              Header="Clear Column Filter (Not Implemented)">
+                    <MenuItem
+                        x:Name="miClearColumnFilter"
+                        Command="{x:Static commands:ContextMenuCommands.ClearColumnFilterCommand}"
+                        CommandParameter="{Binding ColumnSearchBox}"
+                        Header="Clear Column Filter (Not Implemented)">
                         <MenuItem.Style>
                             <Style TargetType="MenuItem">
                                 <Setter Property="Visibility" Value="Collapsed" />
@@ -250,13 +266,13 @@
                         below the headers.
                     -->
                     <Grid>
-                        <Border x:Name="HeaderBorder"
-                                Background="{TemplateBinding Background}"
-                                BorderBrush="{TemplateBinding BorderBrush}"
-                               
-                                BorderThickness="0,0,1,1"
-                                Margin="0,0,0,0"
-                                Padding="{TemplateBinding Padding}">
+                        <Border
+                            x:Name="HeaderBorder"
+                            Margin="0,0,0,0"
+                            Padding="{TemplateBinding Padding}"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="0,0,1,1">
                             <!--
                                 Layout: [select-all][header text Auto][filter button Auto][spacer *][sort arrow Auto].
                                 Header text sizes to its content (Auto), filter button sits
@@ -276,47 +292,52 @@
                                 </Grid.ColumnDefinitions>
 
                                 <!--  Select All Checkbox (visible only when IsSelectAllColumn is true AND column is boolean)  -->
-                                <StackPanel Grid.Column="0"
-                                            Orientation="Horizontal"
-                                            Margin="0,0,4,0"
-                                            VerticalAlignment="Center">
+                                <StackPanel
+                                    Grid.Column="0"
+                                    Margin="0,0,4,0"
+                                    VerticalAlignment="Center"
+                                    Orientation="Horizontal">
 
-                                    <CheckBox x:Name="PART_SelectAllCheckBox"
-                                              Style="{StaticResource {x:Static sdg:SdgThemeKeys.CheckBox}}"
-                                              Visibility="Collapsed"
-                                              VerticalAlignment="Center"
-                                              IsThreeState="True" />
+                                    <CheckBox
+                                        x:Name="PART_SelectAllCheckBox"
+                                        VerticalAlignment="Center"
+                                        IsThreeState="True"
+                                        Style="{StaticResource {x:Static sdg:SdgThemeKeys.CheckBox}}"
+                                        Visibility="Collapsed" />
 
                                     <!--  Row Count Display (visible only when using SelectedRows scope)  -->
-                                    <TextBlock x:Name="PART_SelectAllRowCount"
-                                               Foreground="#666666"
-                                               Visibility="Collapsed"
-                                               Margin="0,0,0,2"
-                                               VerticalAlignment="Center"
-                                               FontSize="10" />
+                                    <TextBlock
+                                        x:Name="PART_SelectAllRowCount"
+                                        Margin="0,0,0,2"
+                                        VerticalAlignment="Center"
+                                        FontSize="10"
+                                        Foreground="#666666"
+                                        Visibility="Collapsed" />
                                 </StackPanel>
 
                                 <!--  Header Content  -->
-                                <ContentPresenter Grid.Column="1"
-                                                  HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                                  VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
+                                <ContentPresenter
+                                    Grid.Column="1"
+                                    HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                    VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
 
-                                <Button x:Name="PART_RuleFilterEditorButton"
-                                        Grid.Column="2"
-                                        Cursor="Hand"
-                                        Command="{x:Static commands:ContextMenuCommands.ShowFilterEditorCommand}"
-                                        CommandParameter="{Binding RelativeSource={RelativeSource TemplatedParent}}"
-                                        Margin="-1,0,2,0"
-                                        Padding="0"
-                                        VerticalAlignment="Center"
-                                        IsHitTestVisible="True"
-                                        Width="22"
-                                        Focusable="False"
-                                        KeyboardNavigation.IsTabStop="False"
-                                        ToolTip="Open rule-filter editor"
-                                        FontFamily="Segoe Fluent Icons"
-                                        FontSize="12"
-                                        Content="&#xE71C;">
+                                <Button
+                                    x:Name="PART_RuleFilterEditorButton"
+                                    Grid.Column="2"
+                                    Width="22"
+                                    Margin="-1,0,2,0"
+                                    Padding="0"
+                                    VerticalAlignment="Center"
+                                    Command="{x:Static commands:ContextMenuCommands.ShowFilterEditorCommand}"
+                                    CommandParameter="{Binding RelativeSource={RelativeSource TemplatedParent}}"
+                                    Content="&#xE71C;"
+                                    Cursor="Hand"
+                                    Focusable="False"
+                                    FontFamily="Segoe Fluent Icons"
+                                    FontSize="12"
+                                    IsHitTestVisible="True"
+                                    KeyboardNavigation.IsTabStop="False"
+                                    ToolTip="Column Filter Editor">
                                     <Button.Style>
                                         <Style TargetType="Button">
                                             <Setter Property="Opacity" Value="0" />
@@ -327,16 +348,18 @@
                                             <Setter Property="Template">
                                                 <Setter.Value>
                                                     <ControlTemplate TargetType="Button">
-                                                        <Border Background="{TemplateBinding Background}"
-                                                                BorderBrush="{TemplateBinding BorderBrush}"
-                                                                BorderThickness="{TemplateBinding BorderThickness}"
-                                                                CornerRadius="3">
-                                                            <ContentPresenter Focusable="False"
-                                                                              Margin="{TemplateBinding Padding}"
-                                                                              HorizontalAlignment="Center"
-                                                                              VerticalAlignment="Center"
-                                                                              RecognizesAccessKey="True"
-                                                                              TextElement.Foreground="{TemplateBinding Foreground}" />
+                                                        <Border
+                                                            Background="{TemplateBinding Background}"
+                                                            BorderBrush="{TemplateBinding BorderBrush}"
+                                                            BorderThickness="{TemplateBinding BorderThickness}"
+                                                            CornerRadius="3">
+                                                            <ContentPresenter
+                                                                Margin="{TemplateBinding Padding}"
+                                                                HorizontalAlignment="Center"
+                                                                VerticalAlignment="Center"
+                                                                Focusable="False"
+                                                                RecognizesAccessKey="True"
+                                                                TextElement.Foreground="{TemplateBinding Foreground}" />
                                                         </Border>
                                                     </ControlTemplate>
                                                 </Setter.Value>
@@ -357,32 +380,35 @@
                                 </Button>
 
                                 <!--  Sort Arrow (Grid.Column=4, with the *-spacer at Column=3 pushing it right)  -->
-                                <TextBlock x:Name="SortArrow"
-                                           Grid.Column="4"
-                                           Foreground="{TemplateBinding Foreground}"
-                                           Visibility="Collapsed"
-                                           VerticalAlignment="Center"
-                                           FontFamily="Segoe Fluent Icons" />
+                                <TextBlock
+                                    x:Name="SortArrow"
+                                    Grid.Column="4"
+                                    VerticalAlignment="Center"
+                                    FontFamily="Segoe Fluent Icons"
+                                    Foreground="{TemplateBinding Foreground}"
+                                    Visibility="Collapsed" />
                             </Grid>
                         </Border>
 
                         <!--  Column Resizers  -->
-                        <Thumb x:Name="PART_LeftHeaderGripper"
-                               Background="Transparent"
-                               Panel.ZIndex="55"
-                               BorderBrush="Transparent"
-                               BorderThickness="0,0,1,0"
-                               Cursor="SizeWE"
-                               HorizontalAlignment="Left"
-                               Width="1" />
+                        <Thumb
+                            x:Name="PART_LeftHeaderGripper"
+                            Width="1"
+                            HorizontalAlignment="Left"
+                            Panel.ZIndex="55"
+                            Background="Transparent"
+                            BorderBrush="Transparent"
+                            BorderThickness="0,0,1,0"
+                            Cursor="SizeWE" />
 
 
-                        <Thumb x:Name="PART_RightHeaderGripper"
-                               BorderBrush="{Binding VerticalGridLinesBrush, RelativeSource={RelativeSource AncestorType={x:Type sdg:SearchDataGrid}}}"
-                               BorderThickness="1,0,0,0"
-                               Cursor="SizeWE"
-                               HorizontalAlignment="Right"
-                               Width="1" />
+                        <Thumb
+                            x:Name="PART_RightHeaderGripper"
+                            Width="1"
+                            HorizontalAlignment="Right"
+                            BorderBrush="{Binding VerticalGridLinesBrush, RelativeSource={RelativeSource AncestorType={x:Type sdg:SearchDataGrid}}}"
+                            BorderThickness="1,0,0,0"
+                            Cursor="SizeWE" />
                     </Grid>
 
                     <ControlTemplate.Triggers>
@@ -430,14 +456,16 @@
         <Setter Property="ContextMenu">
             <Setter.Value>
                 <ContextMenu AutomationProperties.AutomationId="cmuCell">
-                    <MenuItem x:Name="miCopy"
-                              Command="{x:Static commands:ContextMenuCommands.CopySelectedCellValuesCommand}"
-                              CommandParameter="{Binding Grid}"
-                              Header="Copy" />
-                    <MenuItem x:Name="miCopyWithHeaders"
-                              Command="{x:Static commands:ContextMenuCommands.CopySelectedCellValuesWithHeadersCommand}"
-                              CommandParameter="{Binding Grid}"
-                              Header="Copy With Headers" />
+                    <MenuItem
+                        x:Name="miCopy"
+                        Command="{x:Static commands:ContextMenuCommands.CopySelectedCellValuesCommand}"
+                        CommandParameter="{Binding Grid}"
+                        Header="Copy" />
+                    <MenuItem
+                        x:Name="miCopyWithHeaders"
+                        Command="{x:Static commands:ContextMenuCommands.CopySelectedCellValuesWithHeadersCommand}"
+                        CommandParameter="{Binding Grid}"
+                        Header="Copy With Headers" />
                 </ContextMenu>
             </Setter.Value>
         </Setter>
@@ -445,25 +473,26 @@
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type DataGridCell}">
                     <Grid>
-                        <Border Background="{TemplateBinding Background}"
-                                Padding="{TemplateBinding Padding}">
-                            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                              VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
+                        <Border Padding="{TemplateBinding Padding}" Background="{TemplateBinding Background}">
+                            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
                         </Border>
-                        <Border BorderBrush="{Binding VerticalGridLinesBrush, RelativeSource={RelativeSource AncestorType={x:Type DataGrid}}}"
-                                BorderThickness="0,0,1,0"
-                                IsHitTestVisible="False"
-                                Visibility="{Binding ShowVerticalGridLines, RelativeSource={RelativeSource AncestorType={x:Type sdg:SearchDataGrid}}, Converter={StaticResource BooleanToVisibilityCollapsedConverter}}" />
-                        <Border BorderBrush="{Binding HorizontalGridLinesBrush, RelativeSource={RelativeSource AncestorType={x:Type DataGrid}}}"
-                                BorderThickness="0,0,0,1"
-                                IsHitTestVisible="False"
-                                Visibility="{Binding ShowHorizontalGridLines, RelativeSource={RelativeSource AncestorType={x:Type sdg:SearchDataGrid}}, Converter={StaticResource BooleanToVisibilityCollapsedConverter}}" />
-                        <!-- Focus indicator — keyboard-focused cell. -->
-                        <Border x:Name="FocusBorder"
-                                BorderBrush="{StaticResource Sdg.Border.Focused}"
-                                BorderThickness="1"
-                                IsHitTestVisible="False"
-                                Visibility="Collapsed" />
+                        <Border
+                            BorderBrush="{Binding VerticalGridLinesBrush, RelativeSource={RelativeSource AncestorType={x:Type DataGrid}}}"
+                            BorderThickness="0,0,1,0"
+                            IsHitTestVisible="False"
+                            Visibility="{Binding ShowVerticalGridLines, RelativeSource={RelativeSource AncestorType={x:Type sdg:SearchDataGrid}}, Converter={StaticResource BooleanToVisibilityCollapsedConverter}}" />
+                        <Border
+                            BorderBrush="{Binding HorizontalGridLinesBrush, RelativeSource={RelativeSource AncestorType={x:Type DataGrid}}}"
+                            BorderThickness="0,0,0,1"
+                            IsHitTestVisible="False"
+                            Visibility="{Binding ShowHorizontalGridLines, RelativeSource={RelativeSource AncestorType={x:Type sdg:SearchDataGrid}}, Converter={StaticResource BooleanToVisibilityCollapsedConverter}}" />
+                        <!--  Focus indicator — keyboard-focused cell.  -->
+                        <Border
+                            x:Name="FocusBorder"
+                            BorderBrush="{StaticResource Sdg.Border.Focused}"
+                            BorderThickness="1"
+                            IsHitTestVisible="False"
+                            Visibility="Collapsed" />
                     </Grid>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsKeyboardFocusWithin" Value="True">
@@ -505,17 +534,17 @@
             </Trigger>
         </Style.Triggers>
     </Style>
-
     <Style x:Key="{x:Static sdg:SdgThemeKeys.SearchDataGridRow}" TargetType="{x:Type DataGridRow}">
         <Setter Property="Background" Value="{Binding RowBackground, RelativeSource={RelativeSource AncestorType={x:Type DataGrid}}}" />
         <Setter Property="ValidationErrorTemplate" Value="{x:Null}" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type DataGridRow}">
-                    <Border x:Name="DGR_Border"
-                            Background="{TemplateBinding Background}"
-                            BorderBrush="{TemplateBinding BorderBrush}"
-                            BorderThickness="{TemplateBinding BorderThickness}">
+                    <Border
+                        x:Name="DGR_Border"
+                        Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}">
                         <SelectiveScrollingGrid>
                             <SelectiveScrollingGrid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto" />
@@ -528,22 +557,22 @@
 
                             <DataGridCellsPresenter Grid.Column="1" ItemsPanel="{TemplateBinding ItemsPanel}" />
 
-                            <DataGridDetailsPresenter Grid.Row="1"
-                                                      Grid.Column="1"
-                                                      Visibility="{TemplateBinding DetailsVisibility}"
-                                                      SelectiveScrollingGrid.SelectiveScrollingOrientation="{Binding AreRowDetailsFrozen, ConverterParameter={x:Static SelectiveScrollingOrientation.Vertical}, Converter={x:Static DataGrid.RowDetailsScrollingConverter}, RelativeSource={RelativeSource AncestorType={x:Type DataGrid}}}" />
+                            <DataGridDetailsPresenter
+                                Grid.Row="1"
+                                Grid.Column="1"
+                                SelectiveScrollingGrid.SelectiveScrollingOrientation="{Binding AreRowDetailsFrozen, ConverterParameter={x:Static SelectiveScrollingOrientation.Vertical}, Converter={x:Static DataGrid.RowDetailsScrollingConverter}, RelativeSource={RelativeSource AncestorType={x:Type DataGrid}}}"
+                                Visibility="{TemplateBinding DetailsVisibility}" />
 
-                            <DataGridRowHeader Grid.RowSpan="2"
-                                               Visibility="{Binding HeadersVisibility, ConverterParameter={x:Static DataGridHeadersVisibility.Row}, Converter={x:Static DataGrid.HeadersVisibilityConverter}, RelativeSource={RelativeSource AncestorType={x:Type DataGrid}}}"
-                                               SelectiveScrollingGrid.SelectiveScrollingOrientation="Vertical" />
+                            <DataGridRowHeader
+                                Grid.RowSpan="2"
+                                SelectiveScrollingGrid.SelectiveScrollingOrientation="Vertical"
+                                Visibility="{Binding HeadersVisibility, ConverterParameter={x:Static DataGridHeadersVisibility.Row}, Converter={x:Static DataGrid.HeadersVisibilityConverter}, RelativeSource={RelativeSource AncestorType={x:Type DataGrid}}}" />
                         </SelectiveScrollingGrid>
                     </Border>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
     </Style>
-
-    <!--  Modern Search DataGrid Style  -->
     <Style x:Key="{x:Static sdg:SdgThemeKeys.SearchDataGrid}" TargetType="{x:Type sdg:SearchDataGrid}">
         <Setter Property="CellStyle" Value="{StaticResource {x:Static sdg:SdgThemeKeys.SearchDataGridCell}}" />
         <Setter Property="RowStyle" Value="{StaticResource {x:Static sdg:SdgThemeKeys.SearchDataGridRow}}" />
@@ -551,59 +580,69 @@
             <Setter.Value>
                 <ContextMenu AutomationProperties.AutomationId="cmuGridBody">
                     <!--  Filter operations  -->
-                    <MenuItem x:Name="miClearAllFilters"
-                              Command="{x:Static commands:ContextMenuCommands.ClearAllFiltersCommand}"
-                              CommandParameter="{Binding Grid}"
-                              Header="Clear All Filters (Not Implemented)" />
-                    <MenuItem x:Name="miToggleFilterPanel"
-                              Command="{x:Static commands:ContextMenuCommands.ToggleFilterPanelCommand}"
-                              CommandParameter="{Binding Grid}"
-                              Header="Toggle Filter Panel (Not Implemented)" />
-                    <MenuItem x:Name="miSaveFilterPreset"
-                              Command="{x:Static commands:ContextMenuCommands.SaveFilterPresetCommand}"
-                              CommandParameter="{Binding Grid}"
-                              Header="Save Filter Preset (Not Implemented)" />
-                    <MenuItem x:Name="miLoadFilterPreset"
-                              Command="{x:Static commands:ContextMenuCommands.LoadFilterPresetCommand}"
-                              CommandParameter="{Binding Grid}"
-                              Header="Load Filter Preset (Not Implemented)" />
+                    <MenuItem
+                        x:Name="miClearAllFilters"
+                        Command="{x:Static commands:ContextMenuCommands.ClearAllFiltersCommand}"
+                        CommandParameter="{Binding Grid}"
+                        Header="Clear All Filters (Not Implemented)" />
+                    <MenuItem
+                        x:Name="miToggleFilterPanel"
+                        Command="{x:Static commands:ContextMenuCommands.ToggleFilterPanelCommand}"
+                        CommandParameter="{Binding Grid}"
+                        Header="Toggle Filter Panel (Not Implemented)" />
+                    <MenuItem
+                        x:Name="miSaveFilterPreset"
+                        Command="{x:Static commands:ContextMenuCommands.SaveFilterPresetCommand}"
+                        CommandParameter="{Binding Grid}"
+                        Header="Save Filter Preset (Not Implemented)" />
+                    <MenuItem
+                        x:Name="miLoadFilterPreset"
+                        Command="{x:Static commands:ContextMenuCommands.LoadFilterPresetCommand}"
+                        CommandParameter="{Binding Grid}"
+                        Header="Load Filter Preset (Not Implemented)" />
                     <Separator />
 
                     <!--  Column Profiles submenu  -->
                     <MenuItem x:Name="miColumnProfiles" Header="Column Profiles">
-                        <MenuItem x:Name="miSaveCurrentProfile"
-                                  Command="{x:Static commands:ContextMenuCommands.SaveCurrentProfileCommand}"
-                                  CommandParameter="{Binding Grid}"
-                                  Header="Save Current Profile (Not Implemented)" />
-                        <MenuItem x:Name="miLoadProfile"
-                                  Command="{x:Static commands:ContextMenuCommands.LoadProfileCommand}"
-                                  CommandParameter="{Binding Grid}"
-                                  Header="Load Profile... (Not Implemented)" />
-                        <MenuItem x:Name="miManageProfiles"
-                                  Command="{x:Static commands:ContextMenuCommands.ManageProfilesCommand}"
-                                  CommandParameter="{Binding Grid}"
-                                  Header="Manage Profiles... (Not Implemented)" />
+                        <MenuItem
+                            x:Name="miSaveCurrentProfile"
+                            Command="{x:Static commands:ContextMenuCommands.SaveCurrentProfileCommand}"
+                            CommandParameter="{Binding Grid}"
+                            Header="Save Current Profile (Not Implemented)" />
+                        <MenuItem
+                            x:Name="miLoadProfile"
+                            Command="{x:Static commands:ContextMenuCommands.LoadProfileCommand}"
+                            CommandParameter="{Binding Grid}"
+                            Header="Load Profile... (Not Implemented)" />
+                        <MenuItem
+                            x:Name="miManageProfiles"
+                            Command="{x:Static commands:ContextMenuCommands.ManageProfilesCommand}"
+                            CommandParameter="{Binding Grid}"
+                            Header="Manage Profiles... (Not Implemented)" />
                     </MenuItem>
 
                     <Separator />
 
                     <!--  Export operations  -->
-                    <MenuItem x:Name="miExportToCsv"
-                              Command="{x:Static commands:ContextMenuCommands.ExportToCsvCommand}"
-                              CommandParameter="{Binding Grid}"
-                              Header="Export to CSV (Not Implemented)" />
-                    <MenuItem x:Name="miExportToExcel"
-                              Command="{x:Static commands:ContextMenuCommands.ExportToExcelCommand}"
-                              CommandParameter="{Binding Grid}"
-                              Header="Export to Excel (Not Implemented)" />
+                    <MenuItem
+                        x:Name="miExportToCsv"
+                        Command="{x:Static commands:ContextMenuCommands.ExportToCsvCommand}"
+                        CommandParameter="{Binding Grid}"
+                        Header="Export to CSV (Not Implemented)" />
+                    <MenuItem
+                        x:Name="miExportToExcel"
+                        Command="{x:Static commands:ContextMenuCommands.ExportToExcelCommand}"
+                        CommandParameter="{Binding Grid}"
+                        Header="Export to Excel (Not Implemented)" />
 
                     <Separator />
 
                     <!--  Layout operations  -->
-                    <MenuItem x:Name="miShowColumnChooser"
-                              Command="{x:Static commands:ContextMenuCommands.ShowColumnChooserCommand}"
-                              CommandParameter="{Binding Grid}"
-                              Header="Show Column Chooser">
+                    <MenuItem
+                        x:Name="miShowColumnChooser"
+                        Command="{x:Static commands:ContextMenuCommands.ShowColumnChooserCommand}"
+                        CommandParameter="{Binding Grid}"
+                        Header="Show Column Chooser">
                         <MenuItem.Style>
                             <Style TargetType="MenuItem">
                                 <Setter Property="Visibility" Value="Visible" />
@@ -615,29 +654,32 @@
                             </Style>
                         </MenuItem.Style>
                     </MenuItem>
-                    <MenuItem x:Name="miResetLayout"
-                              Command="{x:Static commands:ContextMenuCommands.ResetLayoutCommand}"
-                              CommandParameter="{Binding Grid}"
-                              Header="Reset Layout (Not Implemented)" />
+                    <MenuItem
+                        x:Name="miResetLayout"
+                        Command="{x:Static commands:ContextMenuCommands.ResetLayoutCommand}"
+                        CommandParameter="{Binding Grid}"
+                        Header="Reset Layout (Not Implemented)" />
                 </ContextMenu>
             </Setter.Value>
         </Setter>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type sdg:SearchDataGrid}">
-                    <Border Background="{TemplateBinding Background}"
-                            BorderBrush="{TemplateBinding BorderBrush}"
-                            BorderThickness="{TemplateBinding BorderThickness}">
+                    <Border
+                        Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}">
                         <Grid ClipToBounds="True">
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="*" />
                                 <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
-                            <ScrollViewer x:Name="DG_ScrollViewer"
-                                          Grid.Row="0"
-                                          Focusable="false"
-                                          sdg:HorizontalScrollBehavior.EnableShiftMouseWheelScroll="True"
-                                          CanContentScroll="true">
+                            <ScrollViewer
+                                x:Name="DG_ScrollViewer"
+                                Grid.Row="0"
+                                sdg:HorizontalScrollBehavior.EnableShiftMouseWheelScroll="True"
+                                CanContentScroll="true"
+                                Focusable="false">
                                 <ScrollViewer.Template>
                                     <ControlTemplate TargetType="ScrollViewer">
                                         <Grid>
@@ -655,10 +697,11 @@
 
 
                                             <!--  Per-Column Select All  -->
-                                            <Button Style="{StaticResource {x:Static sdg:SdgThemeKeys.SelectAllButton}}"
-                                                    Focusable="false"
-                                                    Command="{x:Static DataGrid.SelectAllCommand}"
-                                                    Panel.ZIndex="2" />
+                                            <Button
+                                                Panel.ZIndex="2"
+                                                Command="{x:Static DataGrid.SelectAllCommand}"
+                                                Focusable="false"
+                                                Style="{StaticResource {x:Static sdg:SdgThemeKeys.SelectAllButton}}" />
 
                                             <!--
                                                 Filler under the SelectAllButton, aligned with the pinned
@@ -668,20 +711,25 @@
                                                 row-header column. Visibility mirrors the filter row so the
                                                 gap is only filled when the filter row is showing.
                                             -->
-                                            <Border Grid.Row="1"
-                                                    Grid.Column="0"
-                                                    Background="#FFf9f9f9"
-                                                    BorderBrush="#FFd0d0d0"
-                                                    BorderThickness="0,0,1,1"
-                                                    SnapsToDevicePixels="True"
-                                                    UseLayoutRounding="True">
+                                            <Border
+                                                Grid.Row="1"
+                                                Grid.Column="0"
+                                                Background="#FFf9f9f9"
+                                                BorderBrush="#FFd0d0d0"
+                                                BorderThickness="0,0,1,1"
+                                                SnapsToDevicePixels="True"
+                                                UseLayoutRounding="True">
                                                 <Border.Visibility>
                                                     <MultiBinding Converter="{StaticResource AutoFilterRowVisibilityConverter}">
                                                         <Binding Path="ShowAutoFilterRow" RelativeSource="{RelativeSource AncestorType={x:Type sdg:SearchDataGrid}}" />
                                                         <Binding Path="AutoFilterRowPosition" RelativeSource="{RelativeSource AncestorType={x:Type sdg:SearchDataGrid}}" />
                                                     </MultiBinding>
                                                 </Border.Visibility>
-                                                <TextBlock Text="&#xE71C;" FontFamily="Segoe Fluent Icons" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                <TextBlock
+                                                    HorizontalAlignment="Center"
+                                                    VerticalAlignment="Center"
+                                                    FontFamily="Segoe Fluent Icons"
+                                                    Text="&#xE71C;" />
                                             </Border>
 
                                             <!--
@@ -692,9 +740,10 @@
                                                 suppresses sort when the click originated on an
                                                 interactive child (the filter-popup button).
                                             -->
-                                            <sdg:SearchDataGridColumnHeadersPresenter x:Name="PART_ColumnHeadersPresenter"
-                                                                                      Grid.Column="1"
-                                                                                      Margin="0,0,0,0" />
+                                            <sdg:SearchDataGridColumnHeadersPresenter
+                                                x:Name="PART_ColumnHeadersPresenter"
+                                                Grid.Column="1"
+                                                Margin="0,0,0,0" />
 
                                             <!--
                                                 Pinned filter row. Lives in the same template grid-column
@@ -704,9 +753,11 @@
                                                 frozen-column boundary. Phase 2 hosts placeholder borders;
                                                 Phase 3 swaps in ColumnFilterControl instances.
                                             -->
-                                            <sdg:AutoFilterRowPresenter Grid.Row="1"
-                                                                        Grid.Column="1"
-                                                                        Style="{StaticResource {x:Static sdg:SdgThemeKeys.AutoFilterRowPresenter}}">
+                                            <sdg:AutoFilterRowPresenter
+                                                x:Name="PART_AutoFilterRow"
+                                                Grid.Row="1"
+                                                Grid.Column="1"
+                                                Style="{StaticResource {x:Static sdg:SdgThemeKeys.AutoFilterRowPresenter}}">
                                                 <sdg:AutoFilterRowPresenter.Visibility>
                                                     <MultiBinding Converter="{StaticResource AutoFilterRowVisibilityConverter}">
                                                         <Binding Path="ShowAutoFilterRow" RelativeSource="{RelativeSource AncestorType={x:Type sdg:SearchDataGrid}}" />
@@ -722,14 +773,23 @@
                                                 it overlapping the header / filter-row gridline at the
                                                 content seam.
                                             -->
-                                            <Border x:Name="PART_ColumnHeaderBottomBorder" Grid.Column="1" Grid.Row="2" Background="#d0d0d0" VerticalAlignment="Top" Panel.ZIndex="2" Height="1" Margin="0,-1,0,0" />
+                                            <Border
+                                                x:Name="PART_ColumnHeaderBottomBorder"
+                                                Grid.Row="2"
+                                                Grid.Column="1"
+                                                Height="1"
+                                                Margin="0,-1,0,0"
+                                                VerticalAlignment="Top"
+                                                Panel.ZIndex="2"
+                                                Background="#d0d0d0" />
 
                                             <!--  Rows  -->
-                                            <ScrollContentPresenter x:Name="PART_ScrollContentPresenter"
-                                                                    Grid.Row="2"
-                                                                    Grid.ColumnSpan="2"
-                                                                    Margin="0,0,1,1"
-                                                                    CanContentScroll="{TemplateBinding CanContentScroll}" />
+                                            <ScrollContentPresenter
+                                                x:Name="PART_ScrollContentPresenter"
+                                                Grid.Row="2"
+                                                Grid.ColumnSpan="2"
+                                                Margin="0,0,0,0"
+                                                CanContentScroll="{TemplateBinding CanContentScroll}" />
 
                                             <!--
                                                 Placeholder: top-right gap (above the vertical scrollbar).
@@ -746,40 +806,47 @@
                                                   Visibility="{TemplateBinding ComputedVerticalScrollBarVisibility}">
                                                 <Grid.RowDefinitions>
                                                     <RowDefinition Height="Auto" />
-                                                    <RowDefinition Height="*" />
+                                                    <RowDefinition Height="Auto" />
                                                 </Grid.RowDefinitions>
                                                 <Border Grid.Row="0"
+                                                        Height="{Binding ActualHeight, ElementName=PART_ColumnHeadersPresenter}"
                                                         Background="#F9F9F9"
-                                                        Height="29" />
+                                                        SnapsToDevicePixels="True"
+                                                        UseLayoutRounding="True" />
                                                 <Border Grid.Row="1"
-                                                        Margin="0,-2,0,0"
+                                                        Height="{Binding ActualHeight, ElementName=PART_AutoFilterRow}"
                                                         Background="#F9F9F9"
                                                         BorderBrush="#FFd0d0d0"
-                                                        BorderThickness="0,1,0,1" />
+                                                        BorderThickness="0,1,0,1"
+                                                        Margin="0,-1,0,0"
+                                                        SnapsToDevicePixels="True"
+                                                        UseLayoutRounding="True" />
                                             </Grid>
 
 
                                             <!--  Scrollbars  -->
-                                            <ScrollBar x:Name="PART_VerticalScrollBar"
-                                                       Grid.Row="2"
-                                                       Grid.Column="2"
-                                                       Orientation="Vertical"
-                                                       Visibility="{TemplateBinding ComputedVerticalScrollBarVisibility}"
-                                                       Maximum="{TemplateBinding ScrollableHeight}"
-                                                       ViewportSize="{TemplateBinding ViewportHeight}"
-                                                       Value="{Binding VerticalOffset, Mode=OneWay, RelativeSource={RelativeSource TemplatedParent}}" />
+                                            <ScrollBar
+                                                x:Name="PART_VerticalScrollBar"
+                                                Grid.Row="2"
+                                                Grid.Column="2"
+                                                Maximum="{TemplateBinding ScrollableHeight}"
+                                                Orientation="Vertical"
+                                                ViewportSize="{TemplateBinding ViewportHeight}"
+                                                Visibility="{TemplateBinding ComputedVerticalScrollBarVisibility}"
+                                                Value="{Binding VerticalOffset, Mode=OneWay, RelativeSource={RelativeSource TemplatedParent}}" />
                                             <Grid Grid.Row="3" Grid.Column="1">
                                                 <Grid.ColumnDefinitions>
                                                     <ColumnDefinition Width="{Binding NonFrozenColumnsViewportHorizontalOffset, RelativeSource={RelativeSource AncestorType={x:Type DataGrid}}}" />
                                                     <ColumnDefinition Width="*" />
                                                 </Grid.ColumnDefinitions>
-                                                <ScrollBar x:Name="PART_HorizontalScrollBar"
-                                                           Grid.Column="1"
-                                                           Orientation="Horizontal"
-                                                           Visibility="{TemplateBinding ComputedHorizontalScrollBarVisibility}"
-                                                           Maximum="{TemplateBinding ScrollableWidth}"
-                                                           ViewportSize="{TemplateBinding ViewportWidth}"
-                                                           Value="{Binding HorizontalOffset, Mode=OneWay, RelativeSource={RelativeSource TemplatedParent}}" />
+                                                <ScrollBar
+                                                    x:Name="PART_HorizontalScrollBar"
+                                                    Grid.Column="1"
+                                                    Maximum="{TemplateBinding ScrollableWidth}"
+                                                    Orientation="Horizontal"
+                                                    ViewportSize="{TemplateBinding ViewportWidth}"
+                                                    Visibility="{TemplateBinding ComputedHorizontalScrollBarVisibility}"
+                                                    Value="{Binding HorizontalOffset, Mode=OneWay, RelativeSource={RelativeSource TemplatedParent}}" />
                                             </Grid>
 
                                             <!--
@@ -788,24 +855,26 @@
                                                 ContentBottomSeparator below — only the col0/col1 internal
                                                 separator stays (right BorderThickness=1).
                                             -->
-                                            <Border Grid.Row="3"
-                                                    Grid.Column="0"
-                                                    Background="#F9F9F9"
-                                                    BorderBrush="#FFd0d0d0"
-                                                    BorderThickness="0,0,1,0"
-                                                    Visibility="{TemplateBinding ComputedHorizontalScrollBarVisibility}" />
+                                            <Border
+                                                Grid.Row="3"
+                                                Grid.Column="0"
+                                                Background="#F9F9F9"
+                                                BorderBrush="#FFd0d0d0"
+                                                BorderThickness="0,0,1,0"
+                                                Visibility="{TemplateBinding ComputedHorizontalScrollBarVisibility}" />
                                             <!--
                                                 Placeholder: bottom-right corner (intersection of both scrollbars).
                                                 Keeps its own left + top edges because the two separators below stop
                                                 at the col1/col2 and row1/row2 boundaries — those edges of the corner
                                                 live entirely inside col 2 / row 2 where the separators don't reach.
                                             -->
-                                            <Border Grid.Row="3"
-                                                    Grid.Column="2"
-                                                    Background="#F9F9F9"
-                                                    BorderBrush="#FFd0d0d0"
-                                                    Margin="-1,-1,0,0"
-                                                    BorderThickness="1,1,0,0">
+                                            <Border
+                                                Grid.Row="3"
+                                                Grid.Column="2"
+                                                Margin="-1,-1,0,0"
+                                                Background="#F9F9F9"
+                                                BorderBrush="#FFd0d0d0"
+                                                BorderThickness="1,1,0,0">
                                                 <Border.Style>
                                                     <Style TargetType="Border">
                                                         <Setter Property="Visibility" Value="Collapsed" />
@@ -822,25 +891,33 @@
                                                 </Border.Style>
                                             </Border>
 
-                                            <Border x:Name="ContentRightSeparator"
-                                                    Grid.Row="0" Grid.RowSpan="3"
-                                                    Grid.Column="0" Grid.ColumnSpan="2"
-                                                    BorderBrush="#FFd0d0d0"
-                                                    BorderThickness="0,0,1,0"
-                                                    Margin="0,0,0,0"
-                                                    IsHitTestVisible="False"
-                                                    Panel.ZIndex="3"
-                                                    SnapsToDevicePixels="True"
-                                                    UseLayoutRounding="True" />
-                                            <Border x:Name="ContentBottomSeparator"
-                                                    Grid.Row="0" Grid.RowSpan="3"
-                                                    Grid.Column="0" Grid.ColumnSpan="2"
-                                                    BorderBrush="#FFd0d0d0"
-                                                    BorderThickness="0,0,0,1"
-                                                    IsHitTestVisible="False"
-                                                    Panel.ZIndex="3"
-                                                    SnapsToDevicePixels="True"
-                                                    UseLayoutRounding="True" />
+                                            <Border
+                                                x:Name="ContentRightSeparator"
+                                                Grid.Row="0"
+                                                Grid.RowSpan="3"
+                                                Grid.Column="0"
+                                                Grid.ColumnSpan="2"
+                                                Margin="0,0,0,0"
+                                                Panel.ZIndex="3"
+                                                Visibility="{TemplateBinding ComputedVerticalScrollBarVisibility}" 
+                                                BorderBrush="#FFd0d0d0"
+                                                BorderThickness="0,0,1,0"
+                                                IsHitTestVisible="False"
+                                                SnapsToDevicePixels="True"
+                                                UseLayoutRounding="True" />
+                                            <Border
+                                                x:Name="ContentBottomSeparator"
+                                                Grid.Row="0"
+                                                Grid.RowSpan="3"
+                                                Grid.Column="0"
+                                                Grid.ColumnSpan="2"
+                                                Panel.ZIndex="3"
+                                                BorderBrush="#FFd0d0d0"
+                                                Visibility="{TemplateBinding ComputedHorizontalScrollBarVisibility}" 
+                                                BorderThickness="0,0,0,1"
+                                                IsHitTestVisible="False"
+                                                SnapsToDevicePixels="True"
+                                                UseLayoutRounding="True" />
                                         </Grid>
                                     </ControlTemplate>
                                 </ScrollViewer.Template>
@@ -848,9 +925,10 @@
                             </ScrollViewer>
 
                             <!--  FilterPanel  -->
-                            <sdg:FilterPanel x:Name="PART_FilterPanel"
-                                             Style="{StaticResource {x:Static sdg:SdgThemeKeys.FilterPanel}}"
-                                             Grid.Row="1" />
+                            <sdg:FilterPanel
+                                x:Name="PART_FilterPanel"
+                                Grid.Row="1"
+                                Style="{StaticResource {x:Static sdg:SdgThemeKeys.FilterPanel}}" />
                         </Grid>
                     </Border>
                 </ControlTemplate>

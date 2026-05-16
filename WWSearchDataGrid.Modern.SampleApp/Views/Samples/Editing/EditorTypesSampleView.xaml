@@ -10,7 +10,9 @@
     <UserControl.DataContext>
         <local:EditorTypesSampleViewModel />
     </UserControl.DataContext>
-
+    <UserControl.Resources>
+        <Style TargetType="{x:Type ComboBox}" BasedOn="{StaticResource {x:Static sdg:SdgThemeKeys.ComboBox}}" />
+    </UserControl.Resources>
     <sampleControls:SampleHostControl Sources="{x:Static sampleControls:SampleSources.EditorTypes}">
         <DockPanel>
             <TextBlock DockPanel.Dock="Top"

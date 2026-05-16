@@ -70,6 +70,7 @@
                                     CanUserAddRows="False"
                                     CanUserDeleteRows="False"
                                     IsReadOnly="True"
+                                    ShowCriteriaInAutoFilterRow="True"
                                     EnableRuleFiltering="True"
                                     SelectionMode="Extended"
                                     SelectionUnit="FullRow">

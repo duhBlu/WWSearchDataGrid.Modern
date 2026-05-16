@@ -530,7 +530,7 @@
 
                             <Track.Thumb>
                                 <Thumb OverridesDefaultStyle="True"
-                                       Margin="0,-2,0,-2"
+                                       Margin="1,-2,0,-2"
                                        MinHeight="12"
                                        IsTabStop="False"
                                        ClipToBounds="False">
@@ -589,7 +589,7 @@
                                                    HorizontalAlignment="Center"
                                                    VerticalAlignment="Center"
                                                    FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
-                                                   FontSize="8" />
+                                                   FontSize="7" />
                                     </Border>
                                 </ControlTemplate>
                             </RepeatButton.Template>
@@ -666,7 +666,7 @@
                                                            HorizontalAlignment="Center"
                                                            VerticalAlignment="Center"
                                                            FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
-                                                           FontSize="8" />
+                                                           FontSize="7" />
                                             </Border>
                                         </ControlTemplate>
                                     </RepeatButton.Template>
@@ -700,7 +700,7 @@
 
                                     <Track.Thumb>
                                         <Thumb OverridesDefaultStyle="True"
-                                               Margin="-2,0,-2,0"
+                                               Margin="-2,1,-2,0"
                                                MinWidth="12"
                                                IsTabStop="False"
                                                ClipToBounds="False">
@@ -759,7 +759,7 @@
                                                            HorizontalAlignment="Center"
                                                            VerticalAlignment="Center"
                                                            FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
-                                                           FontSize="8" />
+                                                           FontSize="7" />
                                             </Border>
                                         </ControlTemplate>
                                     </RepeatButton.Template>
