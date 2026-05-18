@@ -10,16 +10,9 @@ using WWSearchDataGrid.Modern.Core;
 namespace WWSearchDataGrid.Modern.WPF
 {
     /// <summary>
-    /// Compact picker for the active <see cref="SearchType"/> on a column. Displays the
-    /// icon of the currently selected type and opens a popup of valid types (filtered by
-    /// <see cref="ColumnDataType"/>) on click.
+    /// Compact picker for the active <see cref="SearchType"/> on a column. Shows the icon of
+    /// the selected type and opens a popup of valid types filtered by <see cref="ColumnDataType"/>.
     /// </summary>
-    /// <remarks>
-    /// Phase 5: this selector is the only path to choosing a search type — the legacy
-    /// prefix-token shortcuts (<c>&gt;</c>, <c>!=</c>, <c>s#</c>, …) were removed alongside
-    /// the legacy <c>ColumnSearchBox</c>. Selection here drives
-    /// <see cref="ColumnFilterControl.SelectedSearchType"/> directly.
-    /// </remarks>
     public class SearchTypeSelector : Control
     {
         static SearchTypeSelector()
@@ -61,10 +54,7 @@ namespace WWSearchDataGrid.Modern.WPF
                 new FrameworkPropertyMetadata(false));
 
         /// <summary>
-        /// Explicit whitelist of <see cref="SearchType"/>s to surface in the dropdown — used
-        /// when the host (typically <see cref="ColumnFilterControl"/>) wants per-editor-shape
-        /// scoping instead of the broader data-type lookup. <c>null</c> falls back to
-        /// <see cref="SearchTypeRegistry.GetFiltersForDataType(ColumnDataType, bool)"/>.
+        /// Explicit operator whitelist — null falls back to the data-type registry lookup.
         /// </summary>
         public static readonly DependencyProperty SupportedSearchTypesProperty =
             DependencyProperty.Register(nameof(SupportedSearchTypes), typeof(IEnumerable<SearchType>),
@@ -124,12 +114,8 @@ namespace WWSearchDataGrid.Modern.WPF
         private ListBox _listBox;
 
         /// <summary>
-        /// Raised after the user clicks an item in the popup ListBox. Fires regardless of
-        /// whether the click actually changed <see cref="SelectedSearchType"/> — clicking the
-        /// already-selected entry should still be treated as the user committing to that
-        /// search type, but <see cref="Selector.SelectionChanged"/> stays silent in that case.
-        /// Hosts use this signal to close the popup and route keyboard focus to their
-        /// downstream editor.
+        /// Raised on item click — fires even when the click doesn't change selection, so
+        /// re-clicking the active entry still counts as a user commit (which SelectionChanged misses).
         /// </summary>
         public event EventHandler ItemChosen;
 
@@ -158,10 +144,7 @@ namespace WWSearchDataGrid.Modern.WPF
         private void OnListBoxPreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
         {
             if (_listBox == null) return;
-            // Only treat the up event as a selection gesture when the user actually clicked
-            // an item container — clicks inside the ListBox's padding / scrollbar shouldn't
-            // count as a choice. ContainerFromElement walks up the visual tree from the click
-            // target until it finds the row container (or returns null).
+            // Only count clicks landing on an item container — padding/scrollbar clicks don't.
             var container = ItemsControl.ContainerFromElement(_listBox, e.OriginalSource as DependencyObject) as ListBoxItem;
             if (container == null) return;
             ItemChosen?.Invoke(this, EventArgs.Empty);
@@ -172,10 +155,8 @@ namespace WWSearchDataGrid.Modern.WPF
 
         private void RebuildAvailableSearchTypes()
         {
-            // Per-editor-shape whitelist takes precedence — the column's EditSettings is the
-            // authoritative source for "which operators apply to this editor's value shape".
-            // The data-type registry remains the fallback for callers (legacy or test
-            // harnesses) that surface the selector without an EditSettings context.
+            // Explicit whitelist wins over data-type registry — EditSettings knows the editor's
+            // value shape; the registry is the fallback when no whitelist is supplied.
             IEnumerable<SearchTypeMetadata> metadata;
             var supported = SupportedSearchTypes;
             if (supported != null)

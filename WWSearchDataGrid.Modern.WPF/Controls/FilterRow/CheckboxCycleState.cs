@@ -1,15 +1,12 @@
 namespace WWSearchDataGrid.Modern.WPF
 {
     /// <summary>
-    /// Tri-state cycle a checkbox column rotates through when the user clicks /
-    /// keyboard-activates the filter checkbox. Used by <see cref="ColumnFilterControl"/>'s
-    /// checkbox path to drive the three filter shapes a boolean column can produce:
-    /// no filter, equals-true, equals-false (plus an indeterminate-with-IsNull fallback
-    /// on nullable columns once the cycle has been started).
+    /// Tri-state cycle the checkbox filter rotates through. Maps to no-filter / equals-true /
+    /// equals-false, with Intermediate switching to IsNull on nullable columns mid-cycle.
     /// </summary>
     public enum CheckboxCycleState
     {
-        /// <summary>Shows all data (no filter) — initial state and manual-clear state.</summary>
+        /// <summary>No filter (initial / manual-clear state).</summary>
         Intermediate,
 
         /// <summary>Shows only true values.</summary>

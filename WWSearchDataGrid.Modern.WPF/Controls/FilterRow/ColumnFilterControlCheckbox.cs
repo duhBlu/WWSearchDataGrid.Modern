@@ -7,10 +7,9 @@ using WWSearchDataGrid.Modern.Core;
 namespace WWSearchDataGrid.Modern.WPF
 {
     /// <summary>
-    /// Checkbox cycling for <see cref="ColumnFilterControl"/> on boolean / boolean-styled
-    /// columns. Behavior is a verbatim port of <see cref="ColumnSearchBox"/>'s checkbox
-    /// path — the three-state cycle (Intermediate → Checked → Unchecked → …), null-aware
-    /// branching, IsNull filter for the post-cycle indeterminate state on nullable columns.
+    /// Checkbox cycling for boolean / boolean-styled columns: three-state cycle
+    /// (Intermediate → Checked → Unchecked), with the indeterminate state mapping to
+    /// IsNull on nullable columns.
     /// </summary>
     public partial class ColumnFilterControl
     {

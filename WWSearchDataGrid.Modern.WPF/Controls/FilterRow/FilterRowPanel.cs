@@ -8,28 +8,11 @@ using System.Windows.Media;
 namespace WWSearchDataGrid.Modern.WPF
 {
     /// <summary>
-    /// Custom panel that lays out one child per <see cref="DataGridColumn"/> in the parent
-    /// <see cref="SearchDataGrid"/>, mirroring the column ordering, widths, and frozen-column
-    /// behavior of the grid's data cells. Used by <see cref="AutoFilterRowPresenter"/> to
-    /// host per-column filter editors in the pinned filter row.
+    /// Layout panel mirroring <see cref="DataGridCellsPanel"/>: children are ordered by
+    /// <see cref="DataGridColumn.DisplayIndex"/>, the first <see cref="DataGrid.FrozenColumnCount"/>
+    /// stay pinned, and the rest translate by <c>-HorizontalOffset</c> with clipping against
+    /// the frozen block. Non-virtualizing — every column gets a materialized child.
     /// </summary>
-    /// <remarks>
-    /// <para>
-    /// Layout matches <see cref="DataGridCellsPanel"/>:
-    /// </para>
-    /// <list type="bullet">
-    ///   <item>Children are ordered by their column's <see cref="DataGridColumn.DisplayIndex"/>.</item>
-    ///   <item>The first <see cref="DataGrid.FrozenColumnCount"/> display-positions stay pinned at
-    ///   the left edge regardless of horizontal scroll.</item>
-    ///   <item>Non-frozen children translate by <c>-HorizontalOffset</c> and are clipped to the
-    ///   region right of the frozen block, so they scroll under the frozen columns rather
-    ///   than overlapping them.</item>
-    /// </list>
-    /// <para>
-    /// Non-virtualizing in v1: every column gets a materialized child for the lifetime of the
-    /// row.
-    /// </para>
-    /// </remarks>
     public class FilterRowPanel : Panel
     {
         public static readonly DependencyProperty OwnerGridProperty =
@@ -60,9 +43,8 @@ namespace WWSearchDataGrid.Modern.WPF
 
             if (grid == null || grid.Columns.Count == 0)
             {
-                // No grid attached yet — let each child measure against the panel's full
-                // available width. Wrong long-term but produces a sensible first-frame
-                // rendering until the presenter wires OwnerGrid.
+                // No grid attached yet — measure children against the full available width
+                // so the first frame renders before the presenter wires OwnerGrid.
                 double totalDesired = 0;
                 foreach (UIElement child in InternalChildren)
                 {
@@ -74,11 +56,8 @@ namespace WWSearchDataGrid.Modern.WPF
                 return new Size(totalDesired, maxHeight);
             }
 
-            // Compute fallback width for columns whose ActualWidth hasn't been published yet
-            // (first layout cycle, before DataGridColumnHeadersPresenter has resolved
-            // Auto / Star widths). Divide the panel's remaining horizontal space evenly
-            // among the unresolved columns so each cell gets a sane initial width instead
-            // of collapsing to zero.
+            // Fallback for columns whose ActualWidth isn't published yet — split the remaining
+            // horizontal space evenly so cells don't collapse to zero on the first layout cycle.
             double resolvedSum = 0;
             int unresolvedCount = 0;
             int visibleCount = 0;
@@ -134,11 +113,8 @@ namespace WWSearchDataGrid.Modern.WPF
             var grid = OwnerGrid;
             if (grid == null)
             {
-                // Fallback: parent template is in flight and OwnerGrid hasn't been wired yet,
-                // but children exist. Arrange them in order at their DesiredSize.Width so they
-                // at least render — the parent presenter will re-trigger arrange once
-                // OwnerGrid lands. Without this branch the children render at zero size and
-                // the row appears empty even though it has full layout space.
+                // OwnerGrid not wired yet — arrange at DesiredSize.Width so the row renders;
+                // the presenter re-triggers arrange once OwnerGrid lands.
                 double cursor = 0;
                 foreach (UIElement child in InternalChildren)
                 {
@@ -158,11 +134,8 @@ namespace WWSearchDataGrid.Modern.WPF
 
             int frozenCount = Math.Min(grid.FrozenColumnCount, pairs.Count);
 
-            // Same fallback math as MeasureOverride so the widths used at arrange time match
-            // the per-child measure widths. Without this, a column whose ActualWidth is 0 at
-            // measure time would arrange at a different width than it was measured against
-            // (the old code returned child.DesiredSize.Width here — equal to the entire panel
-            // width because the pre-pass over-allocated — pushing every other child offscreen).
+            // Same fallback math as MeasureOverride — arrange widths must match measure widths
+            // or unresolved columns push siblings offscreen.
             double resolvedSum = 0;
             int unresolvedCount = 0;
             foreach (var column in grid.Columns)
@@ -254,10 +227,8 @@ namespace WWSearchDataGrid.Modern.WPF
             return result;
         }
 
-        // ActualWidth is authoritative once the parent DataGrid has measured. Before that —
-        // the very first layout cycle, when DataGridColumnHeadersPresenter hasn't yet
-        // resolved Auto / Star widths — return 0 so the caller knows to substitute its own
-        // fallback (an even split of the panel's remaining space across unresolved columns).
+        // Returns 0 before the grid's first measure resolves Auto/Star widths — the caller
+        // substitutes a fallback (even split of remaining space).
         private static double ResolveColumnWidth(DataGridColumn column)
         {
             if (column.ActualWidth > 0) return column.ActualWidth;
@@ -274,11 +245,8 @@ namespace WWSearchDataGrid.Modern.WPF
         private static bool IsColumnVisible(DataGridColumn column)
             => column != null && column.Visibility == Visibility.Visible;
 
-        // Last-resort per-column width used only when the panel itself has no finite
-        // available width AND the parent grid hasn't published any column ActualWidths yet —
-        // a transient state during template instantiation. 120 px is wider than typical
-        // text columns and narrower than typical date / combo columns; the DPD subscription
-        // on ActualWidthProperty will pull real widths through on the next layout pass.
+        // Last-resort per-column width — used only during the transient template-instantiation
+        // window where neither the panel nor the grid has finite widths to work with.
         private const double DefaultColumnWidth = 120.0;
     }
 }

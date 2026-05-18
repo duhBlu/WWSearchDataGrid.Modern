@@ -11,10 +11,8 @@ using WWSearchDataGrid.Modern.Core;
 namespace WWSearchDataGrid.Modern.WPF
 {
     /// <summary>
-    /// Text + typed-value filtering for <see cref="ColumnFilterControl"/>. The flow mirrors
-    /// <see cref="ColumnSearchBox"/> but drops the prefix-shortcut path entirely — the user
-    /// picks the active <see cref="SearchType"/> via the visible
-    /// <see cref="SearchTypeSelector"/>, and no prefix parsing runs.
+    /// Text + typed-value filtering for <see cref="ColumnFilterControl"/>. The active
+    /// <see cref="SearchType"/> comes from the visible <see cref="SearchTypeSelector"/>.
     /// </summary>
     public partial class ColumnFilterControl
     {
@@ -24,8 +22,7 @@ namespace WWSearchDataGrid.Modern.WPF
         {
             if (d is not ColumnFilterControl ctl) return;
             if (ctl._filterPopup?.IsOpen == true) return;
-            // Programmatic resets (NoInput transition, clear paths) manage the temp template
-            // themselves — don't auto-clear it from this side-channel notification.
+            // Programmatic resets (NoInput, clear) manage the temp template themselves.
             if (ctl._suppressSearchTextSync) return;
 
             if (string.IsNullOrWhiteSpace((string)e.NewValue))
@@ -37,10 +34,8 @@ namespace WWSearchDataGrid.Modern.WPF
             if (!ctl.EffectiveIsLiveFilteringEnabled)
                 return;
 
-            // Materialize the temporary template up front so the SelectedValue tracks the
-            // typed text immediately — the actual filter rebuild is what gets debounced.
-            // This keeps the filter-state flags (HasActiveFilter, etc.) coherent without
-            // waiting for the timer to fire.
+            // Materialize the template up front so filter-state flags track the typed text
+            // immediately; only the filter rebuild is debounced.
             ctl.CreateTemporaryTemplateImmediate();
 
             int delay = ctl.SourceDataGrid?.FilterRowDelay ?? 0;
@@ -60,13 +55,11 @@ namespace WWSearchDataGrid.Modern.WPF
         {
             if (d is not ColumnFilterControl ctl) return;
             if (ctl._filterPopup?.IsOpen == true) return;
-            // Programmatic resets (NoInput transition, clear paths) manage the temp template
-            // themselves — don't auto-clear it from this side-channel notification.
+            // Programmatic resets (NoInput, clear) manage the temp template themselves.
             if (ctl._suppressSearchTextSync) return;
 
-            // Typed editors (DatePicker / ComboBox / NumericUpDown) write through this DP.
-            // Treat a null / empty value as "clear", anything else as "apply via the active
-            // SearchType" — same shape as SearchText, just object-typed.
+            // Typed editors write through this DP — null/empty clears, anything else applies
+            // via the active SearchType.
             if (e.NewValue == null
                 || (e.NewValue is string s && string.IsNullOrWhiteSpace(s)))
             {
@@ -76,10 +69,8 @@ namespace WWSearchDataGrid.Modern.WPF
 
             ctl.CreateTemporaryTemplateImmediate();
 
-            // Typed editors don't debounce — DatePicker commits on calendar click, ComboBox
-            // on selection — so apply immediately regardless of EffectiveIsLiveFilteringEnabled.
-            // Deferred mode is meaningful only for keystroke-by-keystroke text, which is
-            // covered by OnSearchTextChanged above.
+            // Typed editors don't debounce — DatePicker/ComboBox commit on user action, not
+            // keystroke. Debounce is only meaningful for OnSearchTextChanged.
             ctl.UpdateSimpleFilter();
         }
 
@@ -89,10 +80,8 @@ namespace WWSearchDataGrid.Modern.WPF
 
         private void OnSearchTextBoxTextChanged(object sender, TextChangedEventArgs e)
         {
-            // The TextBox's Text binding to SearchText already propagates the value;
-            // OnSearchTextChanged runs the debounce / filter creation. This hook only exists
-            // to absorb the case where the popup is open (filter editor) — block our own
-            // typing path from re-entering the controller while the popup is editing it.
+            // Filter rebuild runs in OnSearchTextChanged; this hook only blocks the typing
+            // path while the rule-filter popup owns the controller.
             if (_filterPopup?.IsOpen == true) return;
         }
 
@@ -115,16 +104,14 @@ namespace WWSearchDataGrid.Modern.WPF
             }
             if (e.Key == Key.Tab && !string.IsNullOrWhiteSpace(SearchText))
             {
-                // Commit on Tab so leaving the editor doesn't drop an in-flight filter.
-                // Don't mark Handled — the host's OnKeyDown (bubble) hands Tab to
-                // FilterRowNavigator after this commit runs.
+                // Commit on Tab so leaving doesn't drop an in-flight filter. Not marked Handled
+                // — the host's bubble OnKeyDown hands Tab to FilterRowNavigator after.
                 CommitSearchText();
                 return;
             }
 
-            // Left / Right at caret boundary → step to adjacent filter cell.
-            // Down → hand off to the first data row in the same column.
-            // Up is intentionally not forwarded; nothing sits above the filter row.
+            // Arrow nav: Left/Right step cells only at caret boundary; Down hands off to the
+            // data row; Up is not forwarded.
             if ((e.Key == Key.Left || e.Key == Key.Right) && IsCaretAtTextBoundary(sender, e.Key))
             {
                 FilterRowNavigator.TryNavigate(this, e);
@@ -137,13 +124,8 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
-        /// Generic Enter/Escape handler for the dynamic editor inside <c>PART_EditorHost</c>.
-        /// The legacy <see cref="OnSearchTextBoxPreviewKeyDown"/> path only fires when the
-        /// template exposes a <c>PART_SearchTextBox</c>, which the AutoFilterRow template no
-        /// longer does — the editor (TextBox / DatePicker / ComboBox / NumericUpDown) is
-        /// produced by <see cref="BaseEditSettings.CreateFilterEditor"/> at runtime. This
-        /// handler is attached to whatever element <c>RefreshEditor</c> hosts so the
-        /// commit-and-refocus gesture works for every editor shape.
+        /// Enter/Escape/Tab/arrow handler for the editor produced by
+        /// <see cref="BaseEditSettings.CreateFilterEditor"/> — works across every editor shape.
         /// </summary>
         private void OnFilterEditorPreviewKeyDown(object sender, KeyEventArgs e)
         {
@@ -156,10 +138,8 @@ namespace WWSearchDataGrid.Modern.WPF
 
             if (e.Key == Key.Enter)
             {
-                // NoInput types (IsNull, Today, AboveAverage, …) commit on Enter even without
-                // a typed value — the auto-applied temp template is the user's intent. After
-                // committing, the cell returns to its default search type so the next entry
-                // starts on the column's normal operator (Contains / StartsWith / Equals).
+                // NoInput types commit on Enter without typed input — the temp template carries
+                // the intent. Reset to the default operator after so the next entry starts fresh.
                 bool noInput = !ActiveSearchTypeRequiresInput;
                 if (!noInput && !HasAnyInputValue()) return;
 
@@ -177,19 +157,14 @@ namespace WWSearchDataGrid.Modern.WPF
 
             if (e.Key == Key.Tab && (HasAnyInputValue() || !ActiveSearchTypeRequiresInput))
             {
-                // Commit on Tab so leaving the editor doesn't drop an in-flight filter — for
-                // NoInput types the temp template carries the filter intent even without
-                // typed input. Don't mark Handled — the host's OnKeyDown (bubble) hands Tab
-                // to FilterRowNavigator after this commit runs.
+                // Commit on Tab so leaving doesn't drop an in-flight filter. Not marked Handled
+                // — the host's bubble OnKeyDown hands Tab to FilterRowNavigator after.
                 CommitSearchText();
                 return;
             }
 
-            // Left / Right at caret boundary → step to adjacent filter cell. Non-TextBox
-            // editors (DatePicker, ComboBox, NumericUpDown) keep their own arrow handling —
-            // IsCaretAtTextBoundary returns false for non-TextBox senders. Down → hand off
-            // to the first data row in the same column (single-line filter editors have no
-            // line-down concept). Up is not forwarded; nothing sits above the filter row.
+            // Arrow nav: Left/Right step cells only at caret boundary (false for non-TextBox);
+            // Down hands off to the data row; Up is not forwarded.
             if ((e.Key == Key.Left || e.Key == Key.Right) && IsCaretAtTextBoundary(sender, e.Key))
             {
                 FilterRowNavigator.TryNavigate(this, e);
@@ -202,13 +177,8 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
-        /// Returns <c>true</c> when <paramref name="sender"/> is a <see cref="TextBox"/>
-        /// with the caret at the boundary indicated by <paramref name="key"/> (start for
-        /// <see cref="Key.Left"/>, end for <see cref="Key.Right"/>) and no active
-        /// selection. Mirrors the boundary contract used by data-cell arrow exit
-        /// (<c>BaseEditSettings.ExitCellViaArrow</c>) — selection-active and mid-text
-        /// caret states let the editor consume the arrow for caret movement; only edge
-        /// hits propagate as a cell-step request.
+        /// True for a TextBox with no selection and the caret at the start (Left) or end
+        /// (Right). Mid-text caret or active selection keeps the arrow for caret movement.
         /// </summary>
         private static bool IsCaretAtTextBoundary(object sender, Key key)
         {
@@ -224,11 +194,7 @@ namespace WWSearchDataGrid.Modern.WPF
         #region Template lifecycle
 
         /// <summary>
-        /// Returns the value to use as the temporary template's <c>SelectedValue</c>. Strips
-        /// mask literals when the column is configured with a display mask; otherwise just
-        /// returns <see cref="SearchText"/> verbatim. Prefix parsing (legacy) is not invoked
-        /// here — the active <see cref="SearchType"/> is read directly from
-        /// <see cref="SelectedSearchType"/>.
+        /// Returns <see cref="SearchText"/>, with mask literals stripped when the column has a display mask.
         /// </summary>
         private string GetEffectiveSearchText()
         {
@@ -241,10 +207,7 @@ namespace WWSearchDataGrid.Modern.WPF
             return text ?? string.Empty;
         }
 
-        /// <summary>
-        /// Returns the effective filter value — prefers <see cref="SearchValue"/> for typed
-        /// editors, falls back to <see cref="SearchText"/> for the text-editor case.
-        /// </summary>
+        /// <summary>Effective filter value — <see cref="SearchValue"/> for typed editors, otherwise <see cref="SearchText"/>.</summary>
         private object GetEffectiveFilterValue()
         {
             if (SearchValue != null && !(SearchValue is string s && string.IsNullOrWhiteSpace(s)))
@@ -364,9 +327,8 @@ namespace WWSearchDataGrid.Modern.WPF
             {
                 _changeTimer?.Stop();
 
-                // Capture whether the cell was on a NoInput type before we touch anything:
-                // resetting SelectedSearchType at the end of this method (only for NoInput)
-                // gives the user a fresh-default cell after clearing IsNull / Today / etc.
+                // Capture before clearing — we reset SelectedSearchType at the end only when
+                // the cell was on a NoInput type, so the next entry starts on the default operator.
                 bool wasNoInput = !ActiveSearchTypeRequiresInput;
 
                 if (IsCheckboxColumn)
@@ -416,8 +378,7 @@ namespace WWSearchDataGrid.Modern.WPF
             try
             {
                 if (SearchTemplateController == null || SourceDataGrid == null) return;
-                // NoInput types commit on the active SearchType alone — the temp template
-                // already carries the filter intent. Don't gate them on HasAnyInputValue.
+                // NoInput types commit without input — the temp template carries the intent.
                 if (!HasAnyInputValue() && ActiveSearchTypeRequiresInput) return;
 
                 if (ActiveSearchTypeRequiresInput)
@@ -449,9 +410,8 @@ namespace WWSearchDataGrid.Modern.WPF
 
                 Dispatcher.BeginInvoke(new Action(() =>
                 {
-                    // Prefer the dynamic editor (current AutoFilterRow template) and fall
-                    // back to the legacy PART_SearchTextBox slot — the latter is null in
-                    // the current template but kept for any host that still exposes it.
+                    // Prefer the materialized editor; PART_SearchTextBox fallback exists for
+                    // any host still exposing the legacy template slot.
                     var focusTarget = (IInputElement)_filterEditor ?? _searchTextBox;
                     if (focusTarget == null) return;
                     focusTarget.Focus();

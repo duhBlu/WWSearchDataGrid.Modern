@@ -16,8 +16,7 @@ namespace WWSearchDataGrid.Modern.WPF
     {
         #region Select All Column Support
 
-        /// Sets up select-all checkboxes in column headers
-        /// </summary>
+        /// <summary>Sets up select-all checkboxes in column headers.</summary>
         internal void SetupSelectAllColumnHeaders()
         {
             try
@@ -289,12 +288,11 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
-        /// Calculates the checkbox state for a select-all column based on the SelectAllScope setting.
-        /// Returns: true (all non-null values are true), false (all non-null values are false),
-        /// or null (mixed state or all null values)
+        /// Checkbox state for the column's SelectAllScope: true / false for uniform non-null
+        /// values, null for mixed or all-null.
         /// </summary>
         /// <param name="column">The column to calculate state for</param>
-        /// <returns>The checkbox state: true, false, or null for indeterminate</returns>
+        /// <returns>true, false, or null (indeterminate)</returns>
         internal bool? CalculateSelectAllCheckboxState(DataGridColumn column)
         {
             try
@@ -325,9 +323,7 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
-        /// Toggles all non-null boolean values in a column to the opposite state.
-        /// Null values are preserved unchanged.
-        /// Respects the SelectAllScope property to determine which items are affected.
+        /// Toggles all non-null boolean values in the column (per SelectAllScope) to the opposite state.
         /// </summary>
         /// <param name="column">The column to toggle values in</param>
         internal void ToggleSelectAllColumn(DataGridColumn column)
@@ -352,10 +348,7 @@ namespace WWSearchDataGrid.Modern.WPF
                 // Calculate current state based on scoped items
                 var currentState = CalculateSelectAllCheckboxStateForItems(itemsToToggle, bindingPath);
 
-                // Determine new value:
-                // - If all true (currentState == true), set all to false
-                // - If all false (currentState == false), set all to true
-                // - If mixed (currentState == null), set all to true (consistent behavior)
+                // All-true flips to false; any other state (all-false or mixed) flips to true.
                 bool newValue = currentState != true;
 
                 // Save current selection state before making changes

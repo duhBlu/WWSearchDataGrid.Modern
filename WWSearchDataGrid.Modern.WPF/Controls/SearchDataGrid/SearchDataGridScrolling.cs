@@ -18,36 +18,29 @@ namespace WWSearchDataGrid.Modern.WPF
         public DataGridCellsPresenter CellsPresenter { get; }
 
         /// <summary>
-        /// Zero-based index of this row within the current cascade burst. Resets
-        /// when the cascade queue drains between reveals. Useful for applying
-        /// your own staggered BeginTime in Custom row animations.
+        /// Zero-based index of this row within the current cascade burst. Resets when the
+        /// queue drains. Useful for staggered BeginTime in Custom animations.
         /// </summary>
         public int CascadeIndex { get; }
 
-        /// <summary>
-        /// Wall-clock time elapsed since the current burst started.
-        /// </summary>
+        /// <summary>Wall-clock time elapsed since the current burst started.</summary>
         public TimeSpan BurstElapsed { get; }
 
         /// <summary>
-        /// The BeginTime the built-in Opacity animation would use for this row — already
-        /// accounts for slot queue position and any dynamic stagger compression. Apply
-        /// this to your Custom animation's BeginTime to match the system cascade timing
-        /// exactly.
+        /// BeginTime the built-in Opacity animation would use — already includes slot queue
+        /// position and dynamic stagger compression. Apply to Custom animations to match.
         /// </summary>
         public TimeSpan BeginTime { get; }
 
         /// <summary>
-        /// Effective per-row stagger in use for the current wave. Differs from the
-        /// user's <c>CascadeStagger</c> when the dynamic compression engaged (large
-        /// batch of rows revealed together triggers shorter stagger). Use this — not
-        /// the DP — if your Custom handler is computing its own row-to-row timing.
+        /// Effective per-row stagger for this wave. Differs from <c>CascadeStagger</c> DP
+        /// when dynamic compression engaged. Use this for Custom row-to-row timing.
         /// </summary>
         public TimeSpan EffectiveStagger { get; }
 
         /// <summary>
-        /// Effective animation duration in use for the current wave. Differs from the
-        /// user's <c>RowOpacityAnimationDuration</c> when the dynamic compression engaged.
+        /// Effective animation duration for this wave. Differs from
+        /// <c>RowOpacityAnimationDuration</c> DP when dynamic compression engaged.
         /// </summary>
         public TimeSpan EffectiveDuration { get; }
 
@@ -104,14 +97,8 @@ namespace WWSearchDataGrid.Modern.WPF
 
         // Cascade timing uses a continuous wall-clock slot queue. Each reveal claims the
         // next available slot at max(now, _nextCascadeSlotMs), then advances the slot by
-        // CascadeStagger. When rows arrive faster than stagger the queue extends into the
-        // future and subsequent rows wait their turn. When rows trickle in slowly the wall
-        // clock catches up (now ≥ _nextCascadeSlotMs) and each row starts immediately — no
-        // explicit reset timer required.
-        //
-        // This replaces an older burst+timer model whose reset on scroll-stop-scroll could
-        // start a fresh burst while the previous one still had rows waiting at the BeginTime
-        // cap, producing a visible opacity inversion where new rows overtook stalled old ones.
+        // CascadeStagger. Fast input extends the queue into the future; slow input lets the
+        // clock catch up so each row starts immediately — no explicit reset timer required.
         private readonly Stopwatch _cascadeClock = Stopwatch.StartNew();
         private double _nextCascadeSlotMs;
 
@@ -121,32 +108,20 @@ namespace WWSearchDataGrid.Modern.WPF
         private int _cascadeIndex;
         private double _burstStartMs;
 
-        // Effective stagger/duration snapshotted at the start of each wave (see
-        // SnapshotWaveSettings). The user's CascadeStagger / RowOpacityAnimationDuration
-        // are treated as the SLOW-end target; the actual values used for a wave scale
-        // toward faster settings based on how many rows entered the viewport together.
-        //   • Small batches (slow scrolling, few reveals)   → use the user's values verbatim.
-        //   • Large batches (fast scrolling, many reveals)  → compress toward the fast ratios.
-        // Once set at wave start, these stay constant for every row in the wave so the
-        // cascade has internally consistent timing and no mid-wave jitter.
+        // Effective stagger/duration snapshotted per wave. The user's DP values are the
+        // SLOW-end target; large batches compress toward the fast ratios. Held constant
+        // for the wave so timing stays internally consistent (no mid-wave jitter).
         private double _currentWaveStaggerMs;
         private double _currentWaveDurationMs;
 
-        // Rows whose containers have been realized (often into the virtualization cache)
-        // but have not yet entered the viewport. We hold them at Opacity=0 until a scroll
-        // brings them into view, then animate the reveal. Without this, cache-prerealized
-        // rows would burn their fade-in animation offscreen and appear already-opaque when
-        // the user scrolls to them.
+        // Containers realized into the virtualization cache but not yet in the viewport.
+        // Held at Opacity=0 until a scroll brings them in — otherwise cache rows would
+        // burn their fade offscreen and look already-opaque on arrival.
         private readonly HashSet<DataGridRow> _pendingVisibilityRows = new HashSet<DataGridRow>();
         private bool _pendingVisibilityProcessScheduled;
 
-        // Last-known scroll direction, used to order the cascade so it flows with the user's
-        // scroll motion: +1 = scrolling down (cascade ascends by index), -1 = scrolling up
-        // (cascade descends by index), 0 = no scroll yet (default to ascending, which reads
-        // top-to-bottom for initial load). Updated on every ScrollChanged with non-zero
-        // VerticalChange. When scrolling up, rows enter the viewport in descending-index
-        // order (row 99 first when moving from [100..124] to [97..121], then 98, then 97)
-        // so cascading in descending order matches the order they appeared.
+        // Last-known scroll direction (+1 down, -1 up, 0 initial). The cascade sorts in the
+        // direction rows actually enter the viewport so the wave flows with scroll motion.
         private int _lastScrollDirection;
 
         #endregion
@@ -163,18 +138,16 @@ namespace WWSearchDataGrid.Modern.WPF
         // --- Gridline Visibility ---
 
         /// <summary>
-        /// Gets or sets whether horizontal gridlines are shown between rows.
-        /// Horizontal gridlines are rendered outside the CellsPresenter so they
-        /// stay fully opaque during row animations.
+        /// Horizontal gridlines between rows. Rendered outside the CellsPresenter so they
+        /// stay opaque during row animations.
         /// </summary>
         public static readonly DependencyProperty ShowHorizontalGridLinesProperty =
             DependencyProperty.Register("ShowHorizontalGridLines", typeof(bool), typeof(SearchDataGrid),
                 new PropertyMetadata(true));
 
         /// <summary>
-        /// Gets or sets whether vertical gridlines are shown between columns.
-        /// Vertical gridlines are part of the cell and animate with the row content
-        /// when RowAnimationKind is Opacity — this matches commercial DataGrid behavior.
+        /// Vertical gridlines between columns. Part of the cell — animates with row content
+        /// when RowAnimationKind is Opacity.
         /// </summary>
         public static readonly DependencyProperty ShowVerticalGridLinesProperty =
             DependencyProperty.Register("ShowVerticalGridLines", typeof(bool), typeof(SearchDataGrid),
@@ -183,20 +156,13 @@ namespace WWSearchDataGrid.Modern.WPF
         // --- Scroll Animation ---
 
         /// <summary>
-        /// Switches scrolling from item-based (the default, one row per scroll step) to
-        /// pixel-based (smooth sub-row positioning). Required for <see cref="AllowScrollAnimation"/>.
+        /// Switches scrolling from item-based to pixel-based (sub-row positioning). Required
+        /// for <see cref="AllowScrollAnimation"/>.
         /// <para>
-        /// <b>Performance caveat — do not enable on large datasets.</b> Pixel-mode scrolling
-        /// forces WPF's <c>VirtualizingStackPanel</c> to invalidate measure on every fractional
-        /// pixel change in scroll offset, versus item mode where the panel short-circuits until
-        /// the visible row set actually changes. Combined with per-frame <c>ScrollToVerticalOffset</c>
-        /// calls from the smooth-scroll animation, this produces noticeably choppy scrolling
-        /// starting around a few hundred thousand rows and gets worse from there. Item mode
-        /// (the default) scales cleanly to millions of rows.
-        /// </para>
-        /// <para>
-        /// Use this for grids up to ~100k rows where UX polish matters. For larger datasets,
-        /// leave this off.
+        /// <b>Performance caveat — do not enable on large datasets.</b> Pixel-mode forces
+        /// <c>VirtualizingStackPanel</c> to invalidate measure on every fractional offset
+        /// change; item mode short-circuits until the visible set actually changes. Suitable
+        /// for grids up to ~100k rows; item mode scales cleanly to millions.
         /// </para>
         /// </summary>
         public static readonly DependencyProperty AllowPerPixelScrollingProperty =
@@ -204,15 +170,12 @@ namespace WWSearchDataGrid.Modern.WPF
                 new PropertyMetadata(false, OnAllowPerPixelScrollingChanged));
 
         /// <summary>
-        /// Enables animated momentum/inertia scrolling for mouse wheel input. Each wheel tick
-        /// contributes to a velocity that decays over time, producing smooth coasting.
-        /// Automatically enables <see cref="AllowPerPixelScrolling"/> because momentum requires
-        /// sub-row positioning; disabling per-pixel scrolling also disables this.
+        /// Momentum/inertia scrolling for mouse wheel input. Forces
+        /// <see cref="AllowPerPixelScrolling"/> on (and disabling per-pixel disables this).
         /// <para>
-        /// <b>Performance caveat — do not enable on large datasets.</b> This inherits the
-        /// per-pixel-scrolling performance cliff (see <see cref="AllowPerPixelScrolling"/>) and
-        /// compounds it by calling <c>ScrollToVerticalOffset</c> on every animation frame.
-        /// Suitable for grids up to ~100k rows; leave off for larger datasets.
+        /// <b>Performance caveat — do not enable on large datasets.</b> Inherits the
+        /// per-pixel cliff and compounds it with per-frame <c>ScrollToVerticalOffset</c>.
+        /// Suitable up to ~100k rows.
         /// </para>
         /// </summary>
         public static readonly DependencyProperty AllowScrollAnimationProperty =
@@ -359,17 +322,14 @@ namespace WWSearchDataGrid.Modern.WPF
 
             _scrollInfrastructureReady = true;
 
-            // ScrollChanged is how we discover pre-cached rows entering the viewport.
-            // During smooth scrolling this fires every frame (ScrollToVerticalOffset
-            // is called in the render loop), so pending rows get revealed promptly.
+            // ScrollChanged drives pending-row reveals; fires every frame during smooth scroll.
             _scrollViewer.ScrollChanged += OnScrollViewerScrollChanged;
 
             ApplyScrollMode();
             ApplyScrollAnimation();
             ApplyVirtualizationCacheLength();
 
-            // If rows were realized before the scroll infrastructure was ready, drain
-            // any that are now visible in the freshly wired-up viewport.
+            // Drain any rows realized before the scroll infrastructure was wired up.
             if (_pendingVisibilityRows.Count > 0)
                 ScheduleProcessPendingVisibility();
         }
@@ -379,18 +339,11 @@ namespace WWSearchDataGrid.Modern.WPF
         #region Row Animation
 
         /// <summary>
-        /// Called from OnLoadingRow. Hides the CellsPresenter (Opacity=0) immediately so the
-        /// row doesn't flash its contents, then queues the row for a viewport-entry check.
-        /// The actual reveal animation is played by <see cref="ProcessPendingVisibleRows"/>
-        /// once the row's transform confirms it intersects the viewport.
-        ///
-        /// Why the split: the virtualization cache pre-realizes rows that are near the viewport
-        /// but not in it. If we animated on OnLoadingRow, cache rows would burn their fade-in
-        /// offscreen and appear already-opaque when the user scrolls to them — producing the
-        /// "first N rows don't animate" bug. Deferring the reveal to confirmed visibility ties
-        /// the cascade to what the user actually sees.
-        ///
-        /// Gridlines (horizontal + vertical) are rendered outside the CellsPresenter so they stay visible.
+        /// OnLoadingRow hook. Hides the CellsPresenter immediately and queues the row for a
+        /// viewport-entry check — the reveal is played by <see cref="ProcessPendingVisibleRows"/>
+        /// once the transform confirms visibility. Animating on OnLoadingRow would burn the
+        /// fade-in offscreen for virtualization-cache rows. Gridlines render outside the
+        /// CellsPresenter so they stay visible during the hide.
         /// </summary>
         internal void HandleRowAnimationOnLoadingRow(DataGridRow row)
         {
@@ -404,15 +357,13 @@ namespace WWSearchDataGrid.Modern.WPF
             if (cellsPresenter == null)
                 return;
 
-            // Hide cell content with Opacity = 0 rather than Visibility.Collapsed.
-            // Opacity preserves the row's natural height (no layout shift / jitter) and
-            // WPF skips expensive render operations for fully transparent elements.
+            // Opacity=0, not Visibility.Collapsed — preserves row height (no layout shift)
+            // and WPF skips render for fully transparent elements.
             cellsPresenter.BeginAnimation(OpacityProperty, null);
             cellsPresenter.Opacity = 0;
 
-            // Queue the row for the visibility check. ScrollChanged also triggers processing,
-            // but scheduling a deferred pass covers the initial-realization case where no
-            // scroll event has fired yet.
+            // ScrollChanged triggers processing; the deferred pass covers initial realization
+            // before any scroll event has fired.
             _pendingVisibilityRows.Add(row);
             ScheduleProcessPendingVisibility();
         }
@@ -422,12 +373,10 @@ namespace WWSearchDataGrid.Modern.WPF
             if (!AllowCascadeUpdate || RowAnimationKind == RowAnimationKind.None)
                 return;
 
-            // A row may be unloading before it ever became visible (scrolled past in the cache).
-            // Either way, drop it from the pending set so we don't try to animate a recycled container.
+            // Drop from pending — the row may have been recycled before ever becoming visible.
             _pendingVisibilityRows.Remove(row);
 
-            // Reset for clean recycling — stop any running opacity animation and fully reveal
-            // the CellsPresenter. The container will be reused for new data on the next OnLoadingRow.
+            // Reset opacity so the container is clean for the next OnLoadingRow.
             var cellsPresenter = VisualTreeHelperMethods.FindVisualChild<DataGridCellsPresenter>(row);
             if (cellsPresenter != null)
             {
@@ -437,10 +386,8 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
-        /// Schedules a single deferred pass over <see cref="_pendingVisibilityRows"/> at
-        /// <see cref="DispatcherPriority.Loaded"/> — i.e. after the current layout pass
-        /// completes, so row transforms are valid. The flag prevents multiple OnLoadingRow
-        /// calls in the same tick from queuing N redundant dispatch operations.
+        /// Schedules a single deferred pass at <see cref="DispatcherPriority.Loaded"/> so
+        /// row transforms are valid. The flag coalesces N same-tick OnLoadingRow calls.
         /// </summary>
         private void ScheduleProcessPendingVisibility()
         {
@@ -452,11 +399,9 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
-        /// Drains any pending rows whose transforms place them inside the ScrollViewer's
-        /// viewport. Called from both the scheduled dispatcher callback (covers initial
-        /// realization) and ScrollChanged (covers rows entering the viewport mid-scroll).
-        /// Rows that remain outside the viewport stay pending — their reveal is driven by
-        /// the next ScrollChanged that brings them in.
+        /// Reveals pending rows that have entered the viewport. Called from the scheduled
+        /// callback (initial realization) and from ScrollChanged (mid-scroll). Rows still
+        /// outside stay pending until the next ScrollChanged.
         /// </summary>
         private void ProcessPendingVisibleRows()
         {
@@ -465,10 +410,8 @@ namespace WWSearchDataGrid.Modern.WPF
             if (_pendingVisibilityRows.Count == 0 || _scrollViewer == null)
                 return;
 
-            // Gather rows that the transform check says are visible right now. Sorting by
-            // item index gives a visual top-to-bottom order, which is what the cascade
-            // BeginTime stagger is designed around — without the sort, HashSet iteration
-            // order could produce a disordered wave.
+            // Sort by item index — HashSet iteration order would otherwise produce a
+            // disordered wave against the cascade's top-to-bottom stagger design.
             List<DataGridRow> toAnimate = null;
             foreach (var row in _pendingVisibilityRows)
             {
@@ -481,12 +424,8 @@ namespace WWSearchDataGrid.Modern.WPF
             if (toAnimate == null)
                 return;
 
-            // Sort in the direction that matches how rows entered the viewport. For a
-            // downward scroll, rows enter from the bottom in index-ascending order — row 125
-            // first, then 126, 127 — so ascending sort makes the cascade flow with the
-            // scroll. For an upward scroll, rows enter at the top in index-descending order
-            // (99 first as the viewport moves up by one, then 98, 97), so descending sort
-            // keeps the cascade in entry order and the wave flows with the scroll.
+            // Sort matches how rows enter the viewport: down-scroll → ascending index,
+            // up-scroll → descending. Cascade then flows in the direction of motion.
             bool descending = _lastScrollDirection < 0;
             toAnimate.Sort((a, b) =>
             {
@@ -495,16 +434,9 @@ namespace WWSearchDataGrid.Modern.WPF
                 return descending ? bi.CompareTo(ai) : ai.CompareTo(bi);
             });
 
-            // Recompute effective cascade settings for this batch. Two decisions:
-            //   • Duration is snapshotted only at wave start. Changing duration mid-wave would
-            //     let later (shorter-duration) rows overtake earlier ones in opacity — a
-            //     visible inversion. So a wave picks one duration and keeps it.
-            //   • Stagger is updated every batch using the stronger of two signals: batch
-            //     size (this reveal is big) or queue lookahead (the queue is already backed
-            //     up, so the user is scrolling faster than the cascade can emit). Either
-            //     signal crossing its threshold compresses stagger toward the fast end.
-            //     Stagger can change mid-wave safely because the slot queue already handles
-            //     row-to-row ordering regardless of gap size.
+            // Duration is snapshotted at wave start (mid-wave changes would let later rows
+            // overtake earlier ones in opacity). Stagger updates per batch using max of batch
+            // size or queue lookahead — safe mid-wave because the slot queue handles ordering.
             double nowMs = _cascadeClock.Elapsed.TotalMilliseconds;
             bool isNewWave = nowMs >= _nextCascadeSlotMs;
             UpdateEffectiveCascadeSettings(toAnimate.Count, isNewWave, nowMs);
@@ -536,28 +468,15 @@ namespace WWSearchDataGrid.Modern.WPF
         // flicker — 0.5 keeps the individual animation legible while halving the wait.
         private const double FastCascadeDurationRatio = 0.5;
 
-        // Queue lookahead at which the queue-backup signal reaches full compression.
-        // Lookahead = (_nextCascadeSlotMs - now) — the wall-clock time the current queue
-        // will take to drain. When this reaches the threshold, the user is scrolling faster
-        // than the cascade can emit, and continuing with slow stagger would stack rows in
-        // a growing blank queue. 400ms was chosen so users with default settings (20ms
-        // stagger, 200ms duration) see compression kick in at ~20 rows deep, while users
-        // with slow settings (100ms stagger, 1000ms duration) see it trigger at ~4 rows
-        // deep — appropriate since their cascade is inherently slower per-row.
+        // Queue lookahead threshold for full compression. When (_nextCascadeSlotMs - now)
+        // reaches this, the user is outpacing the cascade and stagger needs to compress
+        // before the blank queue grows further.
         private const double MaxPreferredQueueLookaheadMs = 400.0;
 
         /// <summary>
-        /// Computes the effective cascade settings for the incoming batch. Duration is
-        /// snapshotted only at wave start; stagger is re-evaluated every batch using the
-        /// stronger of two signals:
-        ///   • <b>Batch size</b> — large single reveals compress (fast scroll jumps, cache
-        ///     flushes, initial load).
-        ///   • <b>Queue lookahead</b> — when the slot queue has already backed up, further
-        ///     additions compress even if they arrive in small chunks, because the user
-        ///     is clearly outpacing the current wave's stagger.
-        /// Using <c>max</c> of the two t-values means either condition can trigger
-        /// compression independently, and small trickle scrolls after a queue-backup keep
-        /// the fast settings instead of relaxing back to slow mid-wave.
+        /// Computes effective stagger/duration for the batch. Duration snapshots at wave
+        /// start; stagger uses max(batchSize, queueLookahead) so either signal can trigger
+        /// compression, and a backed-up queue stays compressed even after trickle reveals.
         /// </summary>
         private void UpdateEffectiveCascadeSettings(int batchSize, bool isNewWave, double nowMs)
         {
@@ -569,8 +488,7 @@ namespace WWSearchDataGrid.Modern.WPF
                 ? Math.Clamp((batchSize - 1.0) / denom, 0.0, 1.0)
                 : 1.0;
 
-            // Queue lookahead = time until the current queue head drains. 0 when the queue
-            // has caught up to wall clock (isNewWave case).
+            // Lookahead = time until the queue head drains; 0 when caught up to wall clock.
             double lookaheadMs = Math.Max(0, _nextCascadeSlotMs - nowMs);
             double tQueue = Math.Clamp(lookaheadMs / MaxPreferredQueueLookaheadMs, 0.0, 1.0);
 
@@ -581,19 +499,16 @@ namespace WWSearchDataGrid.Modern.WPF
 
             if (isNewWave)
             {
-                // Duration uses the batch signal only (not queue lookahead — the queue is
-                // by definition empty at wave start, so lookahead would always be 0).
+                // Duration uses batchSize only — at wave start the queue is empty, so
+                // lookahead would always be 0.
                 double fastDurationMs = slowDurationMs * FastCascadeDurationRatio;
                 _currentWaveDurationMs = slowDurationMs + tBatch * (fastDurationMs - slowDurationMs);
             }
         }
 
         /// <summary>
-        /// Kicks off the row's reveal animation, placing it at the next slot in the
-        /// continuous cascade queue. The slot logic in <see cref="ReserveNextCascadeSlot"/>
-        /// guarantees that new reveals never start before previously-queued reveals — no
-        /// matter how long the previous burst's stagger, rows that were already queued
-        /// keep their scheduled start times.
+        /// Starts the row's reveal at the next cascade slot. Slot ordering guarantees new
+        /// reveals never start before previously-queued ones.
         /// </summary>
         private void StartRowRevealAnimation(DataGridRow row, DataGridCellsPresenter cellsPresenter)
         {
@@ -624,24 +539,17 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
-        /// Claims the next cascade slot and returns the computed BeginTime + burst context.
-        /// Uses the wave-snapshot stagger (<see cref="_currentWaveStaggerMs"/>), not the
-        /// user's raw CascadeStagger, so a wave whose batch size triggered compression
-        /// stays compressed for every row. Slot math:
-        ///   slot = max(now, _nextCascadeSlotMs)
-        ///   BeginTime = slot - now
-        ///   _nextCascadeSlotMs += effectiveStagger
-        /// A cap on BeginTime (scaled with the effective stagger) prevents pathologically
-        /// long queues from leaving rows blank for many seconds. Burst index/elapsed are
-        /// refreshed when the queue fully drains so Custom consumers see a 0 index per wave.
+        /// Claims the next cascade slot using the wave-snapshot stagger. Slot math:
+        ///   slot = max(now, _nextCascadeSlotMs); BeginTime = slot - now; _nextCascadeSlotMs += stagger.
+        /// BeginTime is capped (scaled with stagger) so deep queues don't leave rows blank
+        /// for seconds. Burst counters reset when the queue drains.
         /// </summary>
         private (TimeSpan beginTime, int cascadeIndex, TimeSpan burstElapsed) ReserveNextCascadeSlot()
         {
             double nowMs = _cascadeClock.Elapsed.TotalMilliseconds;
             double staggerMs = _currentWaveStaggerMs;
 
-            // When there is no stagger, every row starts immediately and we treat each
-            // row as its own trivial "burst" — keeps Custom consumers sane.
+            // No stagger → every row is its own trivial burst; keeps Custom consumers sane.
             if (staggerMs <= 0 || RowAnimationEasing == RowAnimationEasing.None)
             {
                 _cascadeIndex = 0;
@@ -650,9 +558,7 @@ namespace WWSearchDataGrid.Modern.WPF
                 return (TimeSpan.Zero, 0, TimeSpan.Zero);
             }
 
-            // Queue has drained — wall clock caught up to the head of the queue, so this
-            // is the start of a fresh burst. Reset per-burst counters so Custom handlers
-            // see a coherent 0-based index for each wave.
+            // Queue drained — reset burst counters so Custom handlers see a 0-based index per wave.
             if (nowMs >= _nextCascadeSlotMs)
             {
                 _cascadeIndex = 0;
@@ -662,9 +568,8 @@ namespace WWSearchDataGrid.Modern.WPF
             double slotMs = Math.Max(nowMs, _nextCascadeSlotMs);
             double beginMs = slotMs - nowMs;
 
-            // Dynamic cap: scale with the wave's effective stagger so a long slow-scroll
-            // wave still covers a full viewport before batching kicks in, while a fast
-            // compressed wave doesn't waste its budget on queue lookahead it won't use.
+            // Cap scales with effective stagger so slow waves still cover a viewport while
+            // fast waves don't waste budget on lookahead they won't use.
             double maxBeginMs = Math.Max(MinCascadeCapMs, staggerMs * MaxCascadeCapSlots);
             if (beginMs > maxBeginMs)
                 beginMs = maxBeginMs;
@@ -680,22 +585,15 @@ namespace WWSearchDataGrid.Modern.WPF
                 burstElapsed: TimeSpan.FromMilliseconds(nowMs - _burstStartMs));
         }
 
-        // Last-known row height, used to map pixel offsets back to item indices in
-        // AllowPerPixelScrolling mode. Updated opportunistically whenever IsRowInViewport
-        // sees an arranged row with a real ActualHeight. DataGrid rows are uniform height
-        // by default, so a single sample is authoritative.
+        // Cached row height for pixel→item-index translation. DataGrid rows are uniform
+        // height, so a single sample is authoritative.
         private double _cachedRowHeight;
 
         /// <summary>
-        /// Returns true if the row is currently in the visible viewport. Uses pure item-index
-        /// arithmetic in both scroll modes to avoid TransformToAncestor, which walks the visual
-        /// tree and invalidates transform caches — prohibitively expensive when called once per
-        /// pending row per frame of a smooth-scroll animation.
-        ///
-        /// ScrollViewer reports VerticalOffset/ViewportHeight in different units depending on
-        /// mode: item indices in item mode, pixels in pixel mode. We translate the pixel-mode
-        /// values into item-index space using the known (uniform) row height, so the final
-        /// comparison is identical in both paths.
+        /// True if the row is in the visible viewport. Uses item-index arithmetic in both
+        /// scroll modes to avoid TransformToAncestor — prohibitively expensive when called
+        /// per-row per-frame during smooth scroll. Pixel-mode offsets are translated to
+        /// item-index space using the uniform row height so both paths share one comparison.
         /// </summary>
         private bool IsRowInViewport(DataGridRow row)
         {
@@ -735,14 +633,11 @@ namespace WWSearchDataGrid.Modern.WPF
 
         private void OnScrollViewerScrollChanged(object sender, ScrollChangedEventArgs e)
         {
-            // Track vertical scroll direction so the cascade flows with the user's motion.
-            // We only update on non-zero vertical movement — a horizontal-only or viewport-
-            // resize event shouldn't rewrite the direction we want to use for the cascade.
+            // Update direction only on actual vertical movement — horizontal/resize events
+            // shouldn't rewrite cascade direction.
             if (e.VerticalChange > 0) _lastScrollDirection = 1;
             else if (e.VerticalChange < 0) _lastScrollDirection = -1;
 
-            // Fast early-out: scroll events also fire for horizontal-only changes, which
-            // can't reveal new vertical rows. Skip those.
             if (_pendingVisibilityRows.Count == 0)
                 return;
 
@@ -762,11 +657,8 @@ namespace WWSearchDataGrid.Modern.WPF
         private const int MaxCascadeCapSlots = 30;
 
         /// <summary>
-        /// Builds the per-row fade-in animation with the supplied BeginTime (already
-        /// computed by <see cref="ReserveNextCascadeSlot"/>). Reads the effective
-        /// duration from the current wave snapshot rather than the DP directly, so
-        /// all rows in one wave share a single consistent duration even if the user
-        /// moves the slider mid-scroll.
+        /// Builds the per-row fade-in. Duration comes from the wave snapshot, not the DP,
+        /// so all rows in one wave share a single duration even if the slider moves mid-scroll.
         /// </summary>
         private DoubleAnimation BuildOpacityAnimation(TimeSpan beginTime)
         {

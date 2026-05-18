@@ -14,13 +14,9 @@ namespace WWSearchDataGrid.Modern.WPF
         private Predicate<object> _realFilter;
 
         /// <summary>
-        /// When all items are filtered out, lets one existing item through the filter
-        /// so the DataGrid's internal panel still has a child and can calculate horizontal
-        /// scroll extent. The placeholder row is rendered at zero height — completely
-        /// invisible and non-interactive.
-        ///
-        /// When <see cref="DataGrid.CanUserAddRows"/> is true the DataGrid already keeps
-        /// a new-item row that anchors the scroll extent, so no placeholder is needed.
+        /// When the filter produces zero rows, leaks one item through at zero height so the
+        /// DataGrid's internal panel can still calculate horizontal scroll extent. Skipped
+        /// when <see cref="DataGrid.CanUserAddRows"/> is true — the new-item row already anchors it.
         /// </summary>
         private void InjectPlaceholderRowIfEmpty()
         {

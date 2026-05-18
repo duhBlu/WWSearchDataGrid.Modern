@@ -57,13 +57,9 @@ namespace WWSearchDataGrid.Modern.WPF
                 // Check if filters are enabled before applying - respects FilterPanel checkbox
                 if (FilterPanel?.FiltersEnabled == true)
                 {
-                    // Iterate GridColumn descriptors (the persistent state holders) rather than
-                    // ColumnSearchBox instances (recyclable UI presenters). Header virtualization
-                    // recycles ColumnSearchBoxes between columns, so DataColumns cannot reliably
-                    // tell us "what columns currently have an active filter" — but the descriptor
-                    // collection always can. Each descriptor owns its SearchTemplateController and
-                    // its InternalColumn (with the authoritative DisplayIndex), giving a stable
-                    // foundation for both filter evaluation and chip ordering.
+                    // Iterate GridColumn descriptors, not ColumnSearchBox instances — header
+                    // virtualization recycles boxes between columns, but descriptors persist
+                    // with their controller and authoritative DisplayIndex.
                     var activeFilters = (GridColumns ?? Enumerable.Empty<GridColumn>())
                         .Where(d => d.SearchTemplateController?.HasCustomExpression == true)
                         .OrderBy(d => d.InternalColumn?.DisplayIndex >= 0 ? d.InternalColumn.DisplayIndex : int.MaxValue)
@@ -120,8 +116,7 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
-        /// Unified filter evaluation that handles both regular and collection-context filters with proper AND/OR logic
-        /// Performance optimized with cached collection contexts
+        /// Evaluates regular + collection-context filters together with their AND/OR operators.
         /// </summary>
         /// <param name="item">The item to evaluate</param>
         /// <param name="activeFilters">Descriptors for columns with active filters, in evaluation order.</param>
@@ -182,9 +177,7 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
-        /// Returns the column-binding path for a descriptor — used to read the row's value
-        /// for the column being filtered. Mirrors the resolution that
-        /// <see cref="ColumnSearchBox.ResolveFilterMemberPath"/> performs at the UI layer.
+        /// Column-binding path for a descriptor — used to read the row's value during filtering.
         /// </summary>
         private static string ResolveBindingPath(GridColumn descriptor)
         {
@@ -192,8 +185,7 @@ namespace WWSearchDataGrid.Modern.WPF
             if (!string.IsNullOrEmpty(descriptor.FilterMemberPath)) return descriptor.FilterMemberPath;
             if (!string.IsNullOrEmpty(descriptor.FieldName)) return descriptor.FieldName;
 
-            // Fallback to the generated DataGridColumn's SortMemberPath / Binding.Path,
-            // matching the legacy resolution chain in ColumnSearchBox.
+            // Fallback to the generated DataGridColumn's SortMemberPath / Binding.Path.
             var col = descriptor.InternalColumn;
             if (col != null)
             {
@@ -310,14 +302,9 @@ namespace WWSearchDataGrid.Modern.WPF
             {
                 var template = group.SearchTemplates[i];
 
-                // Pick raw vs display per template:
-                //   - Non-text-based search types always use raw (numeric/date/statistical).
-                //   - Text-based search types use display IF the stored value(s) are strings
-                //     (typed by the user in the search box → already display strings).
-                //   - Text-based search types use raw IF the stored value(s) are typed objects
-                //     (FilterValues tab or rule-editor picker stores raw values like bool/int/Date).
-                //     Without this, a "Yes/No" converter column's IsAnyOf list of [true,false] would
-                //     be compared against the transformed "Yes"/"No" string and never match.
+                // Raw vs display per template: non-text types always raw; text types use display
+                // for string-typed selected values, raw for typed-object values (FilterValues/picker
+                // store typed objects, search box stores display strings).
                 object valueToEvaluate;
                 if (SearchEngine.IsTextBasedSearchType(template.SearchType) && !TemplateStoresRawValues(template))
                     valueToEvaluate = displayValue;
@@ -345,10 +332,8 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
-        /// Returns true when the template's stored selected values are typed (non-string) objects,
-        /// indicating they came from a value picker (FilterValues tab, rule-editor dropdown) rather
-        /// than from the user typing into the search textbox. Mirrors the chip-display heuristic
-        /// in <c>SearchTemplateController</c>.
+        /// True when the template's selected values are typed (non-string) objects — i.e. came
+        /// from a value picker, not the search textbox.
         /// </summary>
         private static bool TemplateStoresRawValues(WWSearchDataGrid.Modern.Core.SearchTemplate template)
         {
@@ -647,10 +632,8 @@ namespace WWSearchDataGrid.Modern.WPF
             var activeFilters = new List<ColumnFilterInfo>();
             bool isFirstFilter = true;
 
-            // Iterate descriptors so chip generation isn't affected by ColumnSearchBox
-            // recycling. For the temporary-template chip case (user typed text but hasn't
-            // committed) we fall back to looking up a live box per descriptor, since that
-            // state is per-instance UI state, not descriptor state.
+            // Iterate descriptors so recycling can't affect chip output. The temporary-template
+            // chip case needs a live box per descriptor — that state is per-instance UI state.
             var descriptors = (GridColumns ?? Enumerable.Empty<GridColumn>()).ToList();
             var orderedActive = descriptors
                 .Select(desc => new
@@ -866,10 +849,8 @@ namespace WWSearchDataGrid.Modern.WPF
                             // Otherwise, handle the value removal normally
                             controller.HandleValueRemoval(template, e.RemovableToken.RemovalContext);
 
-                            // Sync the column's HasActiveFilter state after the controller update.
-                            // HandleValueRemoval may remove the template entirely, setting
-                            // HasCustomExpression = false, but that doesn't propagate to
-                            // the ColumnSearchBox's HasActiveFilter on its own.
+                            // HandleValueRemoval may flip HasCustomExpression to false; that
+                            // doesn't propagate to the box's HasActiveFilter on its own.
                             columnSearchBox.UpdateHasActiveFilterState();
                         }
                     }
@@ -901,9 +882,8 @@ namespace WWSearchDataGrid.Modern.WPF
                     // Update the operator based on the level
                     if (e.Level == OperatorLevel.Group)
                     {
-                        // Group-level operator: This represents the operator between different columns
-                        // The column-level operator is always stored in SearchGroups[0].OperatorName
-                        // (See GetActiveColumnFilters line 1208)
+                        // Inter-column operator lives at SearchGroups[0].OperatorName (matching
+                        // the read in GetActiveColumnFilters).
                         if (controller.SearchGroups.Count > 0)
                         {
                             controller.SearchGroups[0].OperatorName = e.NewOperator;
