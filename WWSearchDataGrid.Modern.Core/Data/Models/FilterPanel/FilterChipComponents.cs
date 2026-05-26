@@ -12,6 +12,13 @@ namespace WWSearchDataGrid.Modern.Core
     public class FilterChipComponents
     {
         /// <summary>
+        /// Gets or sets the display name of the column this component filters on.
+        /// Populated by the host when building chips so each template-level token group
+        /// can render its own column name — preparation for groups that mix columns.
+        /// </summary>
+        public string ColumnName { get; set; }
+
+        /// <summary>
         /// Gets or sets the search operation type description
         /// </summary>
         public string SearchTypeText { get; set; }

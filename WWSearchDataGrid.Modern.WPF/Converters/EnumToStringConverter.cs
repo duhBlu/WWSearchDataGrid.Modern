@@ -21,6 +21,10 @@ namespace WWSearchDataGrid.Modern.WPF.Converters
                 var metadata = SearchTypeRegistry.GetMetadata(searchType);
                 return metadata?.DisplayName ?? searchType.ToString();
             }
+            if (value is LogicalOperator logicalOperator)
+            {
+                return logicalOperator.DisplayText();
+            }
             return value?.ToString() ?? string.Empty;
         }
 

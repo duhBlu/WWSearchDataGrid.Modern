@@ -803,21 +803,22 @@ namespace WWSearchDataGrid.Modern.Core
                     var group = SearchGroups[groupIndex];
                     bool groupResult = EvaluateSearchGroupWithContext(value, group, collectionContext);
 
+                    // NotAnd / NotOr: invert the combined group body before joining to the running result.
+                    if (group.IsNegated) groupResult = !groupResult;
+
                     if (groupIndex == 0)
                     {
                         overallResult = groupResult;
                     }
                     else
                     {
-                        // Apply the logical operator from this group
-                        if (group.OperatorName == "Or")
-                        {
-                            overallResult = overallResult || groupResult;
-                        }
-                        else // AND is default
-                        {
-                            overallResult = overallResult && groupResult;
-                        }
+                        // Apply the logical operator from this group. Or and NotOr both join via OR;
+                        // the negation has already been applied above.
+                        var groupOp = LogicalOperatorExtensions.Parse(group.OperatorName);
+                        bool isOrJoin = groupOp == LogicalOperator.Or || groupOp == LogicalOperator.NotOr;
+                        overallResult = isOrJoin
+                            ? overallResult || groupResult
+                            : overallResult && groupResult;
                     }
                 }
 
@@ -1154,7 +1155,14 @@ namespace WWSearchDataGrid.Modern.Core
         /// <summary>
         /// Gets structured components for a single search template
         /// </summary>
-        private FilterChipComponents GetTemplateComponents(SearchTemplate template)
+        /// <summary>
+        /// Formats a single <see cref="SearchTemplate"/> into a <see cref="FilterChipComponents"/>
+        /// snapshot using this controller's display-value provider context. Exposed to the WPF
+        /// assembly so the FilterPanel's tree-mode renderer can format individual leaves from
+        /// <see cref="SearchDataGrid.GridFilterTree"/> without duplicating the per-search-type
+        /// formatting table.
+        /// </summary>
+        internal FilterChipComponents GetTemplateComponents(SearchTemplate template)
         {
             try
             {

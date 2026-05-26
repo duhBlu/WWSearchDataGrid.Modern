@@ -547,7 +547,6 @@ namespace WWSearchDataGrid.Modern.WPF
                     {
                         SearchTemplateController = SearchTemplateController,
                         DataContext = this,
-                        IsLiveApplyEnabled = EffectiveIsLiveFilteringEnabled,
                     };
                     _filterContent.FiltersApplied += OnFiltersApplied;
                     _filterContent.FiltersCleared += OnFiltersCleared;
@@ -555,7 +554,6 @@ namespace WWSearchDataGrid.Modern.WPF
                 else if (_filterContent.SearchTemplateController != SearchTemplateController)
                 {
                     _filterContent.SearchTemplateController = SearchTemplateController;
-                    _filterContent.IsLiveApplyEnabled = EffectiveIsLiveFilteringEnabled;
                 }
 
                 if (_filterPopup == null)

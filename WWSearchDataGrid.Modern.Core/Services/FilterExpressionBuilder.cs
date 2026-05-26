@@ -36,57 +36,22 @@ namespace WWSearchDataGrid.Modern.Core
 
                 foreach (var group in searchGroups)
                 {
-                    Expression<Func<object, bool>> templateExpression = null;
-
-                    foreach (var template in group.SearchTemplates)
-                    {
-                        template.HasChanges = false;
-
-                        // Check if this is a collection-context filter
-                        if (IsCollectionContextFilter(template.SearchType))
-                        {
-                            hasCollectionContextFilters = true;
-                            continue; // Skip for now, will be handled separately
-                        }
-
-                        Expression<Func<object, bool>> currentExpression;
-
-                        try
-                        {
-                            currentExpression = template.BuildExpression(targetColumnType);
-                        }
-                        catch (Exception ex)
-                        {
-                            // Fallback to basic expression
-                            var searchCondition = new SearchCondition(
-                                targetColumnType,
-                                template.SearchType,
-                                template.SelectedValue,
-                                template.SelectedSecondaryValue);
-
-                            currentExpression = obj => SearchEngine.EvaluateCondition(obj, searchCondition);
-                        }
-
-                        // Combine with previous expressions in this group
-                        templateExpression = templateExpression == null
-                            ? currentExpression
-                            : Compose(templateExpression, currentExpression, template.OperatorFunction);
-                    }
+                    var groupBody = BuildGroupExpression(group, targetColumnType, ref hasCollectionContextFilters);
 
                     // Skip empty groups
-                    if (templateExpression == null)
+                    if (groupBody == null)
                         continue;
 
                     // Combine with previous group expressions
                     if (groupExpression == null)
                     {
-                        groupExpression = templateExpression;
+                        groupExpression = groupBody;
                     }
                     else
                     {
                         // Ensure OperatorFunction is not null, default to AndAlso if it is
                         var operatorFunc = group.OperatorFunction ?? Expression.AndAlso;
-                        groupExpression = Compose(groupExpression, templateExpression, operatorFunc);
+                        groupExpression = Compose(groupExpression, groupBody, operatorFunc);
                     }
                 }
 
@@ -109,9 +74,10 @@ namespace WWSearchDataGrid.Modern.Core
 
                 // Update the custom expression flag
                 var hasMultipleGroups = searchGroups.Count > 1;
-                var hasCustomFilterTemplates = searchGroups.Any(g => g.SearchTemplates.Any(t => t.HasCustomFilter && t.IsValidFilter));
+                var hasNestedGroups = searchGroups.Any(g => HasAnyChildGroups(g));
+                var hasCustomFilterTemplates = searchGroups.Any(g => HasAnyCustomFilterTemplate(g));
 
-                result.HasCustomExpression = searchGroups.Count > 0 && (hasMultipleGroups || hasCustomFilterTemplates);
+                result.HasCustomExpression = searchGroups.Count > 0 && (hasMultipleGroups || hasNestedGroups || hasCustomFilterTemplates);
 
                 result.HasCollectionContextFilters = hasCollectionContextFilters;
             }
@@ -143,6 +109,91 @@ namespace WWSearchDataGrid.Modern.Core
                 default:
                     return typeof(string);
             }
+        }
+
+        /// <summary>
+        /// Builds the expression body for a single <see cref="SearchTemplateGroup"/>, including
+        /// its <c>SearchTemplates</c> combined via per-template operators and any nested
+        /// <c>ChildGroups</c> recursed and combined via each child's operator.
+        /// </summary>
+        private Expression<Func<object, bool>> BuildGroupExpression(
+            SearchTemplateGroup group,
+            Type targetColumnType,
+            ref bool hasCollectionContextFilters)
+        {
+            Expression<Func<object, bool>> body = null;
+
+            foreach (var template in group.SearchTemplates)
+            {
+                template.HasChanges = false;
+
+                if (IsCollectionContextFilter(template.SearchType))
+                {
+                    hasCollectionContextFilters = true;
+                    continue;
+                }
+
+                Expression<Func<object, bool>> currentExpression;
+
+                try
+                {
+                    currentExpression = template.BuildExpression(targetColumnType);
+                }
+                catch (Exception)
+                {
+                    var searchCondition = new SearchCondition(
+                        targetColumnType,
+                        template.SearchType,
+                        template.SelectedValue,
+                        template.SelectedSecondaryValue);
+
+                    currentExpression = obj => SearchEngine.EvaluateCondition(obj, searchCondition);
+                }
+
+                body = body == null
+                    ? currentExpression
+                    : Compose(body, currentExpression, template.OperatorFunction);
+            }
+
+            foreach (var child in group.ChildGroups)
+            {
+                var childBody = BuildGroupExpression(child, targetColumnType, ref hasCollectionContextFilters);
+                if (childBody == null) continue;
+
+                var combiner = child.OperatorFunction ?? Expression.AndAlso;
+                body = body == null
+                    ? childBody
+                    : Compose(body, childBody, combiner);
+            }
+
+            // Negated groups (NotAnd / NotOr) wrap their combined body in Expression.Not so the
+            // group's predicate is the inverse of the inner combiner's result.
+            if (body != null && group.IsNegated)
+            {
+                body = Expression.Lambda<Func<object, bool>>(Expression.Not(body.Body), body.Parameters);
+            }
+
+            return body;
+        }
+
+        private static bool HasAnyChildGroups(SearchTemplateGroup group)
+        {
+            if (group.ChildGroups.Count > 0) return true;
+            foreach (var child in group.ChildGroups)
+            {
+                if (HasAnyChildGroups(child)) return true;
+            }
+            return false;
+        }
+
+        private static bool HasAnyCustomFilterTemplate(SearchTemplateGroup group)
+        {
+            if (group.SearchTemplates.Any(t => t.HasCustomFilter && t.IsValidFilter)) return true;
+            foreach (var child in group.ChildGroups)
+            {
+                if (HasAnyCustomFilterTemplate(child)) return true;
+            }
+            return false;
         }
 
         /// <summary>

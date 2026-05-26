@@ -39,10 +39,11 @@ namespace WWSearchDataGrid.Modern.Core
                 // Add opening bracket token
                 tokens.Add(new OpenBracketToken(filterId, orderIndex++, filter));
 
-                // Add column name token
-                tokens.Add(new ColumnNameToken(filter.ColumnName, filterId, orderIndex++, filter));
-
-                // Process filter components
+                // Process filter components. Each component emits its own column-name token so
+                // chips read naturally when a group contains multiple templates (e.g.
+                // "[Total = 10000 OR Total = 2000]" instead of "[Total = 10000 OR = 2000]"),
+                // and so future mixed-column groups can show different column names per template
+                // without further changes to the token shape.
                 foreach (var component in filter.FilterComponents)
                 {
                     tokens.AddRange(ConvertComponentToTokens(component, filterId, ref orderIndex, filter));
@@ -81,6 +82,16 @@ namespace WWSearchDataGrid.Modern.Core
                 {
                     tokens.Add(new TemplateLogicalConnectorToken(component.Operator, filterId, orderIndex++, sourceFilter, component.GroupIndex, component.TemplateIndex));
                 }
+            }
+
+            // Add column name token for this component. Falls back to the parent filter's column
+            // when the component-level value isn't populated (e.g. legacy callers).
+            var componentColumnName = !string.IsNullOrEmpty(component.ColumnName)
+                ? component.ColumnName
+                : sourceFilter?.ColumnName;
+            if (!string.IsNullOrEmpty(componentColumnName))
+            {
+                tokens.Add(new ColumnNameToken(componentColumnName, filterId, orderIndex++, sourceFilter));
             }
 
             // Add search type token

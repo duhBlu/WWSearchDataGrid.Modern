@@ -27,10 +27,6 @@ namespace WWSearchDataGrid.Modern.WPF
 
         #region Dependency Properties
 
-        public static readonly DependencyProperty IsOperatorVisibleProperty =
-            DependencyProperty.Register(nameof(IsOperatorVisible), typeof(bool), typeof(ColumnFilterEditor),
-                new PropertyMetadata(false));
-
         public static readonly DependencyProperty HorizontalOffsetProperty =
             DependencyProperty.Register(nameof(HorizontalOffset), typeof(double), typeof(ColumnFilterEditor),
                 new PropertyMetadata(0.0));
@@ -38,43 +34,6 @@ namespace WWSearchDataGrid.Modern.WPF
         public static readonly DependencyProperty VerticalOffsetProperty =
             DependencyProperty.Register(nameof(VerticalOffset), typeof(double), typeof(ColumnFilterEditor),
                 new PropertyMetadata(0.0));
-
-        /// <summary>
-        /// Whether changes made inside the editor (dropdown selections, value-tab checkbox
-        /// toggles, SearchType combo swaps, etc.) apply to the grid immediately or are deferred
-        /// until the popup closes. Defaults to <c>true</c>; <see cref="ColumnSearchBox"/>
-        /// overwrites this on popup creation with its row-count-driven auto value, and the
-        /// "Live filter" checkbox in the editor footer lets the user override mid-session.
-        /// <para>
-        /// When <c>false</c>, the editor still calls <c>UpdateFilterExpression</c> internally
-        /// so the controller state and "active filter" indicator stay in sync — only the
-        /// expensive <c>grid.FilterItemsSource()</c> pass is skipped. <c>PruneAndApply</c> on
-        /// unload guarantees the final filter is applied once the editor closes.
-        /// </para>
-        /// </summary>
-        public static readonly DependencyProperty IsLiveApplyEnabledProperty =
-            DependencyProperty.Register(nameof(IsLiveApplyEnabled), typeof(bool), typeof(ColumnFilterEditor),
-                new PropertyMetadata(true, OnIsLiveApplyEnabledChanged));
-
-        public bool IsLiveApplyEnabled
-        {
-            get => (bool)GetValue(IsLiveApplyEnabledProperty);
-            set => SetValue(IsLiveApplyEnabledProperty, value);
-        }
-
-        private static void OnIsLiveApplyEnabledChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
-        {
-            // Propagate the user's footer-checkbox toggle back up to the column descriptor.
-            // GridColumn.ImmediateUpdateAutoFilter is the persistent home for this preference —
-            // setting it here keeps the in-header SearchTextBox's LiveUpdate mode in sync with
-            // the user's popup choice and outlives popup open/close cycles within a session.
-            if (d is ColumnFilterEditor editor && editor.DataContext is ColumnFilterControl csb)
-            {
-                bool newValue = (bool)e.NewValue;
-                if (csb.GridColumn != null && csb.GridColumn.ImmediateUpdateAutoFilter != newValue)
-                    csb.GridColumn.ImmediateUpdateAutoFilter = newValue;
-            }
-        }
 
         #endregion
 
@@ -87,12 +46,6 @@ namespace WWSearchDataGrid.Modern.WPF
         /// </summary>
         public FilterValueManager FilterValueManager { get; private set; }
 
-        public bool IsOperatorVisible
-        {
-            get => (bool)GetValue(IsOperatorVisibleProperty);
-            set => SetValue(IsOperatorVisibleProperty, value);
-        }
-
         public double HorizontalOffset
         {
             get => (double)GetValue(HorizontalOffsetProperty);
@@ -103,23 +56,6 @@ namespace WWSearchDataGrid.Modern.WPF
         {
             get => (double)GetValue(VerticalOffsetProperty);
             set => SetValue(VerticalOffsetProperty, value);
-        }
-
-        public string GroupOperatorName
-        {
-            get => SearchTemplateController?.SearchGroups?.Count > 0 ? SearchTemplateController.SearchGroups[0].OperatorName : "Or";
-            set
-            {
-                if (SearchTemplateController?.SearchGroups?.Count > 0)
-                {
-                    var currentValue = SearchTemplateController.SearchGroups[0].OperatorName;
-                    if (currentValue != value)
-                    {
-                        SearchTemplateController.SearchGroups[0].OperatorName = value;
-                        OnPropertyChanged(nameof(GroupOperatorName));
-                    }
-                }
-            }
         }
 
         #endregion
@@ -134,14 +70,10 @@ namespace WWSearchDataGrid.Modern.WPF
         #region Commands
 
         private ICommand _clearFilterCommand;
-        private ICommand _addSearchTemplateCommand;
-        private ICommand _removeSearchTemplateCommand;
         private ICommand _selectAllValuesCommand;
         private ICommand _clearAllValuesCommand;
 
         public ICommand ClearFilterCommand => _clearFilterCommand ??= new RelayCommand(_ => ClearFilter());
-        public ICommand AddSearchTemplateCommand => _addSearchTemplateCommand ??= new RelayCommand(_ => AddSearchTemplate());
-        public ICommand RemoveSearchTemplateCommand => _removeSearchTemplateCommand ??= new RelayCommand(template => RemoveSearchTemplate(template));
         public ICommand SelectAllValuesCommand => _selectAllValuesCommand ??= new RelayCommand(_ => ToggleSelectAllValues());
         public ICommand ClearAllValuesCommand => _clearAllValuesCommand ??= new RelayCommand(_ => FilterValueManager?.ClearAllCommand?.Execute(null));
 
@@ -297,7 +229,7 @@ namespace WWSearchDataGrid.Modern.WPF
         private void InitializeRulesInterface()
         {
             TriggerColumnValueLoading();
-            UpdateOperatorVisibility();
+            EnsureSingleRule(SearchTemplateController);
 
             if (SearchTemplateController != null)
             {
@@ -351,7 +283,7 @@ namespace WWSearchDataGrid.Modern.WPF
             if (!_isInitialized)
                 return;
 
-            if (IsLiveApplyEnabled)
+            if (ResolveEnableLiveFiltering())
             {
                 ApplyFilter();
             }
@@ -367,11 +299,22 @@ namespace WWSearchDataGrid.Modern.WPF
         private void OnFilterValueManagerApplyRequested(object sender, EventArgs e)
         {
             if (!_isInitialized) return;
-            if (IsLiveApplyEnabled)
+            if (ResolveEnableLiveFiltering())
                 ApplyFilter();
             else
                 SearchTemplateController?.UpdateFilterExpression();
         }
+
+        /// <summary>
+        /// Reads <see cref="SearchDataGrid.EnableLiveFiltering"/> via the hosting
+        /// <see cref="ColumnFilterControl"/>. Defaults to <c>true</c> when the grid isn't
+        /// reachable yet (matches the grid DP's default).
+        /// </summary>
+        private bool ResolveEnableLiveFiltering()
+            => DataContext is ColumnFilterControl csb
+               && csb.SourceDataGrid != null
+                ? csb.SourceDataGrid.EnableLiveFiltering
+                : true;
 
         private void TriggerColumnValueLoading()
         {
@@ -390,42 +333,150 @@ namespace WWSearchDataGrid.Modern.WPF
             }
         }
 
-        private void UpdateOperatorVisibility()
+        /// <summary>
+        /// Forces the controller to a single-rule shape on open. The column editor is now
+        /// single-rule only; the FilterPanel's Filter Editor window owns multi-rule and
+        /// cross-column composition. If the column's controller carries pre-existing
+        /// multi-template state (e.g. from a previous build, the auto-filter row, or the
+        /// Filter Values panel), try to fold it into one template — falling back to a
+        /// default empty template when the merge isn't lossless.
+        /// </summary>
+        /// <remarks>
+        /// Heuristic:
+        /// <list type="bullet">
+        /// <item>Already single template: no-op.</item>
+        /// <item>One live filter spread across groups: keep the live one.</item>
+        /// <item>Multiple <see cref="SearchType.Equals"/> templates on a non-DateTime column,
+        ///   or any mix of <see cref="SearchType.Equals"/> / <see cref="SearchType.IsAnyOf"/>:
+        ///   merge values into one <see cref="SearchType.IsAnyOf"/>.</item>
+        /// <item>Multiple <see cref="SearchType.Equals"/> templates on a DateTime column,
+        ///   or any mix with <see cref="SearchType.IsOnAnyOfDates"/>: merge dates into one
+        ///   <see cref="SearchType.IsOnAnyOfDates"/>.</item>
+        /// <item>Anything else (Contains stacks, mixed comparators, Between/Not-Between
+        ///   combinations): reset to a default empty template.</item>
+        /// </list>
+        /// </remarks>
+        private static void EnsureSingleRule(SearchTemplateController controller)
         {
-            IsOperatorVisible = false;
+            if (controller == null) return;
 
-            if (DataContext is ColumnFilterControl currentColumnSearchBox &&
-                currentColumnSearchBox.SourceDataGrid != null
-                && currentColumnSearchBox.GridColumn != null)
+            if (controller.SearchGroups.Count == 1
+                && controller.SearchGroups[0].SearchTemplates.Count == 1)
             {
-                var dataGrid = currentColumnSearchBox.SourceDataGrid;
-                var currentDescriptor = currentColumnSearchBox.GridColumn;
-                int currentIndex = currentDescriptor.InternalColumn?.DisplayIndex >= 0
-                    ? currentDescriptor.InternalColumn.DisplayIndex
-                    : int.MaxValue;
+                return;
+            }
 
-                // Iterate GridColumn descriptors (the persistent state holders) rather than
-                // DataColumns. DataColumns contains only the live, on-screen ColumnSearchBox
-                // instances — a column with a filter that has been scrolled off the viewport
-                // won't appear there, so the previous version mis-decided visibility whenever
-                // a preceding column with a filter happened to be virtualized out.
-                if (dataGrid.GridColumns != null)
+            var liveTemplates = controller.SearchGroups
+                .SelectMany(g => g.SearchTemplates)
+                .Where(t => t.HasCustomFilter)
+                .ToList();
+
+            if (liveTemplates.Count == 0)
+            {
+                controller.ClearAndReset();
+                return;
+            }
+
+            if (liveTemplates.Count == 1)
+            {
+                var snapshot = TemplateSnapshot.Capture(liveTemplates[0]);
+                controller.ClearAndReset();
+                snapshot.RestoreInto(controller.SearchGroups[0].SearchTemplates[0]);
+                return;
+            }
+
+            var merged = TryMergeIntoSingleTemplate(liveTemplates, controller.ColumnDataType);
+            controller.ClearAndReset();
+            merged?.RestoreInto(controller.SearchGroups[0].SearchTemplates[0]);
+        }
+
+        private static TemplateSnapshot TryMergeIntoSingleTemplate(
+            IReadOnlyList<SearchTemplate> templates,
+            ColumnDataType columnDataType)
+        {
+            // Date columns: combine Equals + IsOnAnyOfDates dates into one IsOnAnyOfDates.
+            if (columnDataType == ColumnDataType.DateTime
+                && templates.All(t => t.SearchType == SearchType.Equals
+                                   || t.SearchType == SearchType.IsOnAnyOfDates))
+            {
+                var dates = new List<DateTime>();
+                foreach (var t in templates)
                 {
-                    foreach (var descriptor in dataGrid.GridColumns)
+                    if (t.SearchType == SearchType.Equals && t.SelectedValue is DateTime dt)
+                        dates.Add(dt);
+                    else if (t.SelectedDates != null)
+                        foreach (var d in t.SelectedDates) dates.Add(d);
+                }
+                if (dates.Count == 0) return null;
+                return new TemplateSnapshot
+                {
+                    SearchType = SearchType.IsOnAnyOfDates,
+                    Dates = dates.Distinct().ToList()
+                };
+            }
+
+            // Non-date columns: combine Equals + IsAnyOf into one IsAnyOf.
+            if (templates.All(t => t.SearchType == SearchType.Equals
+                                || t.SearchType == SearchType.IsAnyOf))
+            {
+                var values = new List<object>();
+                foreach (var t in templates)
+                {
+                    if (t.SearchType == SearchType.Equals)
                     {
-                        if (descriptor == currentDescriptor) continue;
-
-                        int otherIndex = descriptor.InternalColumn?.DisplayIndex >= 0
-                            ? descriptor.InternalColumn.DisplayIndex
-                            : int.MaxValue;
-
-                        if (otherIndex < currentIndex
-                            && descriptor.SearchTemplateController?.HasCustomExpression == true)
-                        {
-                            IsOperatorVisible = true;
-                            break;
-                        }
+                        if (t.SelectedValue != null) values.Add(t.SelectedValue);
                     }
+                    else if (t.SelectedValues != null)
+                    {
+                        foreach (var v in t.SelectedValues) if (v?.Value != null) values.Add(v.Value);
+                    }
+                }
+                if (values.Count == 0) return null;
+                return new TemplateSnapshot
+                {
+                    SearchType = SearchType.IsAnyOf,
+                    Values = values.Distinct().ToList()
+                };
+            }
+
+            return null;
+        }
+
+        private sealed class TemplateSnapshot
+        {
+            public SearchType SearchType;
+            public object PrimaryValue;
+            public object SecondaryValue;
+            public List<object> Values;
+            public List<DateTime> Dates;
+
+            public static TemplateSnapshot Capture(SearchTemplate t) => new TemplateSnapshot
+            {
+                SearchType = t.SearchType,
+                PrimaryValue = t.SelectedValue,
+                SecondaryValue = t.SelectedSecondaryValue,
+                Values = t.SelectedValues?
+                    .Where(v => v?.Value != null)
+                    .Select(v => (object)v.Value)
+                    .ToList(),
+                Dates = t.SelectedDates?.ToList()
+            };
+
+            public void RestoreInto(SearchTemplate target)
+            {
+                if (target == null) return;
+                target.SearchType = SearchType;
+                if (PrimaryValue != null) target.SelectedValue = PrimaryValue;
+                if (SecondaryValue != null) target.SelectedSecondaryValue = SecondaryValue;
+                if (Values != null && target.SelectedValues != null)
+                {
+                    target.SelectedValues.Clear();
+                    foreach (var v in Values) target.SelectedValues.Add(new SelectableValueItem(v));
+                }
+                if (Dates != null && target.SelectedDates != null)
+                {
+                    target.SelectedDates.Clear();
+                    foreach (var d in Dates) target.SelectedDates.Add(d);
                 }
             }
         }
@@ -524,35 +575,6 @@ namespace WWSearchDataGrid.Modern.WPF
             catch (Exception ex)
             {
                 Debug.WriteLine($"Clear filter failed: {ex.Message}");
-            }
-        }
-
-        private void AddSearchTemplate()
-        {
-            if (SearchTemplateController == null) return;
-
-            try
-            {
-                SearchTemplateController.AddSearchTemplate(markAsChanged: true);
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"Add search template failed: {ex.Message}");
-            }
-        }
-
-        private void RemoveSearchTemplate(object template)
-        {
-            if (SearchTemplateController == null || template is not SearchTemplate searchTemplate) return;
-
-            try
-            {
-                SearchTemplateController.RemoveSearchTemplate(searchTemplate);
-                UpdateOperatorVisibility();
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"Remove search template failed: {ex.Message}");
             }
         }
 

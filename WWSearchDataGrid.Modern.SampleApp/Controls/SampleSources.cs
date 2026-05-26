@@ -75,6 +75,13 @@ namespace WWSearchDataGrid.Modern.SampleApp.Controls
             "Models/OrderItem.cs",
             "SampleData/Generators/OrderGenerator.cs");
 
+        public static IReadOnlyList<SampleSourceFile> FilterString { get; } = SampleSourceLoader.LoadFiles(
+            "Views/Samples/Filtering/FilterStringSampleView.xaml",
+            "Views/Samples/Filtering/FilterStringSampleView.xaml.cs",
+            "Views/Samples/Filtering/FilterStringSampleViewModel.cs",
+            "Models/OrderItem.cs",
+            "SampleData/Generators/OrderGenerator.cs");
+
         // ── Auto Filter Row ──────────────────────────────────────────────────
         public static IReadOnlyList<SampleSourceFile> OptionsPlayground { get; } = SampleSourceLoader.LoadFiles(
             "Views/Samples/AutoFilterRow/OptionsPlaygroundSampleView.xaml",

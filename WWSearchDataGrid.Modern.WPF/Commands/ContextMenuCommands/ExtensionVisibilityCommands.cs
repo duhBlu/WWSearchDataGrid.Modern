@@ -37,6 +37,38 @@ namespace WWSearchDataGrid.Modern.WPF.Commands
         }, grid => grid != null);
 
         /// <summary>
+        /// Opens the modal multi-column Filter Editor. The command accepts either a
+        /// <see cref="SearchDataGrid"/> directly (button binding) or a
+        /// <see cref="DataGridColumnHeader"/> (context menu binding), in which case the grid
+        /// is resolved by walking the visual tree.
+        /// </summary>
+        private static ICommand _openFilterEditorCommand;
+        public static ICommand OpenFilterEditorCommand => _openFilterEditorCommand ??= new RelayCommand<object>(parameter =>
+        {
+            try
+            {
+                var grid = ResolveSearchDataGrid(parameter);
+                if (grid == null) return;
+                FilterEditor.ShowDialog(grid);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error in OpenFilterEditorCommand: {ex.Message}");
+            }
+        }, parameter => ResolveSearchDataGrid(parameter) != null);
+
+        private static SearchDataGrid ResolveSearchDataGrid(object parameter)
+        {
+            switch (parameter)
+            {
+                case SearchDataGrid grid: return grid;
+                case DataGridColumnHeader header: return FindAncestor<SearchDataGrid>(header);
+                case DependencyObject dep: return FindAncestor<SearchDataGrid>(dep);
+            }
+            return null;
+        }
+
+        /// <summary>
         /// Toggles the visibility of the totals/summary row
         /// </summary>
         private static ICommand _toggleTotalsRowCommand;

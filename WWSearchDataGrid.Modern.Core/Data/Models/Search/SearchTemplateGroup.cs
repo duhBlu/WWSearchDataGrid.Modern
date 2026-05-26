@@ -32,7 +32,11 @@ namespace WWSearchDataGrid.Modern.Core
             set { SetProperty(value, ref operatorFunction); }
         }
         /// <summary>
-        /// Gets or sets the logical operator name
+        /// Gets or sets the logical operator name. Accepts "And", "Or", "NotAnd", "NotOr"
+        /// (case-insensitive). The negated variants keep their inner combiner in
+        /// <see cref="OperatorFunction"/> (AndAlso for And/NotAnd, OrElse for Or/NotOr);
+        /// callers detect negation via <see cref="IsNegated"/> and wrap the combined body
+        /// in <c>Expression.Not</c> at build time.
         /// </summary>
         public string OperatorName
         {
@@ -41,23 +45,20 @@ namespace WWSearchDataGrid.Modern.Core
             {
                 if (SetProperty(value, ref operatorName))
                 {
-                    // Use case-insensitive comparison and handle edge cases
-                    if (string.Equals(value, "And", StringComparison.OrdinalIgnoreCase))
-                    {
-                        OperatorFunction = Expression.AndAlso;
-                    }
-                    else if (string.Equals(value, "Or", StringComparison.OrdinalIgnoreCase))
-                    {
-                        OperatorFunction = Expression.OrElse;
-                    }
-                    else
-                    {
-                        // Handle unexpected values - default to And for safety
-                        OperatorFunction = Expression.AndAlso;
-                    }
+                    OperatorFunction = LogicalOperatorExtensions.Parse(value).InnerComposer();
+                    OnPropertyChanged(nameof(IsNegated));
                 }
             }
         }
+
+        /// <summary>
+        /// True when the operator is one of the negated variants ("NotAnd" / "NotOr").
+        /// <see cref="FilterExpressionBuilder"/> wraps the combined group body in
+        /// <see cref="Expression.Not(Expression)"/> when this is true.
+        /// </summary>
+        public bool IsNegated
+            => string.Equals(operatorName, "NotAnd", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(operatorName, "NotOr", StringComparison.OrdinalIgnoreCase);
 
         /// <summary>
         /// Gets or sets the group number
@@ -82,6 +83,13 @@ namespace WWSearchDataGrid.Modern.Core
         /// Gets the collection of search templates in this group
         /// </summary>
         public ObservableCollection<SearchTemplate> SearchTemplates { get; } = new ObservableCollection<SearchTemplate>();
+
+        /// <summary>
+        /// Nested groups composed under this group. The per-column popup
+        /// (<c>ColumnFilterEditor</c>) ignores this collection — only the Filter Editor and
+        /// <see cref="FilterExpressionBuilder"/> recurse into it.
+        /// </summary>
+        public ObservableCollection<SearchTemplateGroup> ChildGroups { get; } = new ObservableCollection<SearchTemplateGroup>();
 
         #endregion
     }

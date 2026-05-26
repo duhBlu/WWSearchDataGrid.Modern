@@ -108,6 +108,7 @@ namespace WWSearchDataGrid.Modern.WPF
         private ICommand _toggleFiltersCommand;
         private ICommand _removeTokenFilterCommand;
         private ICommand _clearAllFiltersCommand;
+        private ICommand _openFilterEditorCommand;
         private ICommand _toggleExpandCommand;
         private ICommand _setHoveredFilterCommand;
         private ICommand _clearHoveredFilterCommand;
@@ -128,6 +129,13 @@ namespace WWSearchDataGrid.Modern.WPF
         /// Gets the command to clear all filters
         /// </summary>
         public ICommand ClearAllFiltersCommand => _clearAllFiltersCommand ??= new RelayCommand(_ => ClearAllFiltersRequested?.Invoke(this, EventArgs.Empty), _ => HasActiveFilters);
+
+        /// <summary>
+        /// Gets the command that opens the modal Filter Editor window. The panel only raises
+        /// <see cref="OpenFilterEditorRequested"/>; the hosting <see cref="SearchDataGrid"/>
+        /// owns the actual window creation so the editor can reach grid-wide state.
+        /// </summary>
+        public ICommand OpenFilterEditorCommand => _openFilterEditorCommand ??= new RelayCommand(_ => OpenFilterEditorRequested?.Invoke(this, EventArgs.Empty));
 
         /// <summary>
         /// Gets the command to toggle the expand/collapse state
@@ -182,6 +190,12 @@ namespace WWSearchDataGrid.Modern.WPF
         /// Event raised when all filters should be cleared
         /// </summary>
         public event EventHandler ClearAllFiltersRequested;
+
+        /// <summary>
+        /// Event raised when the Filter Editor button is clicked. The hosting
+        /// <see cref="SearchDataGrid"/> subscribes and opens <see cref="FilterEditor"/>.
+        /// </summary>
+        public event EventHandler OpenFilterEditorRequested;
 
         #endregion
 

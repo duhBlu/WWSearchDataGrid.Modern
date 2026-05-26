@@ -392,22 +392,11 @@ namespace WWSearchDataGrid.Modern.WPF
         public bool HasTemporaryTemplate => _temporarySearchTemplate != null;
 
         /// <summary>
-        /// Effective live-filtering state — explicit column setting if set, otherwise
-        /// auto-decided from row count against <see cref="SearchDataGrid.LiveFilteringRowCountThreshold"/>.
+        /// Effective live-filtering state — reads <see cref="SearchDataGrid.EnableLiveFiltering"/>
+        /// from the hosting grid. Defaults to <c>true</c> until the grid is reachable.
         /// </summary>
         public bool EffectiveIsLiveFilteringEnabled
-        {
-            get
-            {
-                if (GridColumn != null
-                    && GridColumn.ReadLocalValue(WPF.GridColumn.ImmediateUpdateAutoFilterProperty) != DependencyProperty.UnsetValue)
-                {
-                    return GridColumn.ImmediateUpdateAutoFilter;
-                }
-                int rowCount = SourceDataGrid?.OriginalItemsCount ?? 0;
-                return rowCount < SearchDataGrid.LiveFilteringRowCountThreshold;
-            }
-        }
+            => SourceDataGrid?.EnableLiveFiltering ?? true;
 
         #endregion
 
@@ -1033,12 +1022,6 @@ namespace WWSearchDataGrid.Modern.WPF
             }
         }
 
-        internal void ApplyLiveFilteringMode()
-        {
-            if (_filterContent != null)
-                _filterContent.IsLiveApplyEnabled = EffectiveIsLiveFilteringEnabled;
-        }
-
         /// <summary>
         /// Lazily constructs the keystroke debounce timer on the UI dispatcher at Background
         /// priority so filter rebuilds can't preempt user input.
@@ -1214,7 +1197,6 @@ namespace WWSearchDataGrid.Modern.WPF
                 if (e.Action == NotifyCollectionChangedAction.Reset)
                 {
                     SearchTemplateController.RefreshColumnValues();
-                    ApplyLiveFilteringMode();
                 }
             }
             catch (Exception ex)
@@ -1240,8 +1222,6 @@ namespace WWSearchDataGrid.Modern.WPF
                     if (SourceDataGrid.Items != null && SourceDataGrid.Items.Count > 0)
                         SearchTemplateController.RefreshColumnValues();
                 }
-
-                ApplyLiveFilteringMode();
             }
             catch (Exception ex)
             {
@@ -1307,11 +1287,13 @@ namespace WWSearchDataGrid.Modern.WPF
                 // AllowFiltering, which collapses it.
                 IsFilterEnabled = GridColumn?.AllowAutoFilter ?? true;
 
+                // Shared bootstrap: creates the controller and populates ColumnName, values
+                // provider, ColumnDataType, DisplayValueProvider, DisplayMaskPattern, and
+                // RoundDateTime in one place. The FilterString DP uses the same helper so the
+                // two paths can't drift.
                 if (GridColumn != null)
                 {
-                    if (GridColumn.SearchTemplateController == null)
-                        GridColumn.SearchTemplateController = new SearchTemplateController();
-                    SearchTemplateController = GridColumn.SearchTemplateController;
+                    SearchTemplateController = SourceDataGrid.EnsureControllerBootstrapped(GridColumn);
                 }
                 else if (SearchTemplateController == null)
                 {
@@ -1334,9 +1316,14 @@ namespace WWSearchDataGrid.Modern.WPF
                 SourceDataGrid.ItemsSourceChanged -= OnSourceDataGridItemsSourceChanged;
                 SourceDataGrid.ItemsSourceChanged += OnSourceDataGridItemsSourceChanged;
 
-                SearchTemplateController.SetupColumnDataLazy(ResolveColumnDisplayName(), GetColumnValuesFromDataGrid, BindingPath);
-                SearchTemplateController.DisplayValueProvider = DisplayValueProviderFactory.Create(GridColumn);
-                SearchTemplateController.DisplayMaskPattern = ResolveDisplayMask();
+                // The descriptor path already configured the controller via the shared helper;
+                // the standalone (no-descriptor) path still needs its own setup.
+                if (GridColumn == null)
+                {
+                    SearchTemplateController.SetupColumnDataLazy(ResolveColumnDisplayName(), GetColumnValuesFromDataGrid, BindingPath);
+                    SearchTemplateController.DisplayValueProvider = DisplayValueProviderFactory.Create(GridColumn);
+                    SearchTemplateController.DisplayMaskPattern = ResolveDisplayMask();
+                }
 
                 if (SourceDataGrid.Items != null && SourceDataGrid.Items.Count > 0)
                 {

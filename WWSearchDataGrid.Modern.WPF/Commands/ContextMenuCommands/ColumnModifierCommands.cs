@@ -51,6 +51,65 @@ namespace WWSearchDataGrid.Modern.WPF.Commands
 
         #endregion
 
+        #region Fixed (Pinned) Column Commands
+
+        private static ICommand _pinColumnLeftCommand;
+        /// <summary>
+        /// Pins the context column to the left edge of the grid by setting its
+        /// <see cref="GridColumn.Fixed"/> descriptor to <see cref="FixedColumnPosition.Left"/>.
+        /// </summary>
+        public static ICommand PinColumnLeftCommand => _pinColumnLeftCommand ??=
+            new RelayCommand<ContextMenuContext>(
+                context => SetColumnFixedPosition(context, FixedColumnPosition.Left),
+                context => CanSetColumnFixedPosition(context, FixedColumnPosition.Left));
+
+        private static ICommand _pinColumnRightCommand;
+        /// <summary>
+        /// Pins the context column to the right end of the grid by setting its
+        /// <see cref="GridColumn.Fixed"/> descriptor to <see cref="FixedColumnPosition.Right"/>.
+        /// </summary>
+        public static ICommand PinColumnRightCommand => _pinColumnRightCommand ??=
+            new RelayCommand<ContextMenuContext>(
+                context => SetColumnFixedPosition(context, FixedColumnPosition.Right),
+                context => CanSetColumnFixedPosition(context, FixedColumnPosition.Right));
+
+        private static ICommand _unpinColumnCommand;
+        /// <summary>
+        /// Clears the context column's <see cref="GridColumn.Fixed"/> descriptor
+        /// (sets it to <see cref="FixedColumnPosition.None"/>).
+        /// </summary>
+        public static ICommand UnpinColumnCommand => _unpinColumnCommand ??=
+            new RelayCommand<ContextMenuContext>(
+                context => SetColumnFixedPosition(context, FixedColumnPosition.None),
+                context => CanSetColumnFixedPosition(context, FixedColumnPosition.None));
+
+        private static void SetColumnFixedPosition(ContextMenuContext context, FixedColumnPosition position)
+        {
+            try
+            {
+                var descriptor = ResolveDescriptor(context);
+                if (descriptor == null) return;
+                descriptor.Fixed = position;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error setting column Fixed={position}: {ex.Message}");
+            }
+        }
+
+        private static bool CanSetColumnFixedPosition(ContextMenuContext context, FixedColumnPosition position)
+        {
+            if (context?.Grid == null || context.Column == null) return false;
+            var descriptor = ResolveDescriptor(context);
+            if (descriptor == null) return false;
+            return descriptor.Fixed != position;
+        }
+
+        private static GridColumn ResolveDescriptor(ContextMenuContext context)
+            => context?.Grid?.FindGridColumnDescriptor(context.Column);
+
+        #endregion
+
         #region Sizing & Alignment Commands
 
         #region Best Fit Commands

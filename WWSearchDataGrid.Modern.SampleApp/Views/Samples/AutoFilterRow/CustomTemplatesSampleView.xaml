@@ -13,7 +13,7 @@
     </UserControl.DataContext>
 
     <UserControl.Resources>
-        <Style BasedOn="{StaticResource {x:Static sdg:SdgThemeKeys.CheckBox}}" TargetType="{x:Type CheckBox}" />
+        <Style BasedOn="{StaticResource {x:Static sdg:SdgThemeKeys.PrimitivesCheckBox}}" TargetType="{x:Type CheckBox}" />
         <Style BasedOn="{StaticResource SampleRadioButtonStyle
             }" TargetType="{x:Type RadioButton}" />
 
@@ -134,8 +134,7 @@
                 <sdg:SearchDataGrid.GridColumns>
                     <sdg:GridColumn Width="80"
                                     FieldName="OrderNumber"
-                                    Header="Order #"
-                                    DefaultSearchType="StartsWith" />
+                                    Header="Order #" />
                     <sdg:GridColumn Width="180"
                                     FieldName="CustomerName"
                                     Header="Customer" />

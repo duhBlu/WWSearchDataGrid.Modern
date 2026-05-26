@@ -170,19 +170,36 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
-        /// Gets or sets whether the column is frozen (fixed).
+        /// Gets or sets the column's pinned position. <see cref="FixedColumnPosition.Left"/>
+        /// pins the column to the left edge of the grid via
+        /// <see cref="System.Windows.Controls.DataGrid.FrozenColumnCount"/>;
+        /// <see cref="FixedColumnPosition.Right"/> orders the column after every
+        /// unpinned column so it stays anchored at the right end; <see cref="FixedColumnPosition.None"/>
+        /// (the default) leaves the column in the normal flow.
         /// </summary>
+        /// <remarks>
+        /// Layout reordering is performed by <see cref="SearchDataGrid"/> whenever this
+        /// property changes — left-fixed columns are moved to the start of
+        /// <see cref="System.Windows.Controls.DataGrid.Columns"/>, right-fixed columns to the
+        /// end, and unfixed columns keep their relative order between the two groups.
+        /// </remarks>
         public static readonly DependencyProperty FixedProperty =
             DependencyProperty.Register(
                 nameof(Fixed),
-                typeof(bool),
+                typeof(FixedColumnPosition),
                 typeof(GridColumn),
-                new PropertyMetadata(false));
+                new PropertyMetadata(FixedColumnPosition.None, OnFixedChanged));
 
-        public bool Fixed
+        public FixedColumnPosition Fixed
         {
-            get => (bool)GetValue(FixedProperty);
+            get => (FixedColumnPosition)GetValue(FixedProperty);
             set => SetValue(FixedProperty, value);
+        }
+
+        private static void OnFixedChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            if (d is GridColumn gc)
+                gc.Owner?.ApplyFixedColumnLayout();
         }
 
         /// <summary>
@@ -815,7 +832,7 @@ namespace WWSearchDataGrid.Modern.WPF
         /// <see cref="SearchDataGrid.AutoFilterRowCellStyle"/>. <c>null</c> (default)
         /// inherits the grid setting; any non-null <see cref="Style"/> wins over the grid
         /// value for this column. When both are null, the keyed theme style
-        /// (<see cref="SdgThemeKeys.ColumnFilterControl"/>) is used.
+        /// (<see cref="SdgThemeKeys.FilterRow.ColumnFilterControl"/>) is used.
         /// </summary>
         public static readonly DependencyProperty AutoFilterRowCellStyleProperty =
             DependencyProperty.Register(
@@ -828,26 +845,6 @@ namespace WWSearchDataGrid.Modern.WPF
         {
             get => (Style)GetValue(AutoFilterRowCellStyleProperty);
             set => SetValue(AutoFilterRowCellStyleProperty, value);
-        }
-
-        /// <summary>
-        /// Gets or sets whether the auto-filter cell applies the filter as the user types
-        /// (or interacts with the editor) versus waiting until they commit explicitly via
-        /// Enter / Tab / lost-focus. Defaults to <c>true</c> (immediate apply). When
-        /// <c>false</c>, keystrokes do not rebuild the filter expression — the user must
-        /// commit to apply.
-        /// </summary>
-        public static readonly DependencyProperty ImmediateUpdateAutoFilterProperty =
-            DependencyProperty.Register(
-                nameof(ImmediateUpdateAutoFilter),
-                typeof(bool),
-                typeof(GridColumn),
-                new PropertyMetadata(true, OnImmediateUpdateAutoFilterChanged));
-
-        public bool ImmediateUpdateAutoFilter
-        {
-            get => (bool)GetValue(ImmediateUpdateAutoFilterProperty);
-            set => SetValue(ImmediateUpdateAutoFilterProperty, value);
         }
 
         /// <summary>
@@ -1662,18 +1659,6 @@ namespace WWSearchDataGrid.Modern.WPF
             if (d is not GridColumn gc || gc.Owner == null) return;
             var host = gc.Owner.DataColumns.FirstOrDefault(c => c.CurrentColumn == gc.InternalColumn) as ColumnFilterControl;
             host?.RefreshAutoFilterRowCellStyle();
-        }
-
-        /// <summary>
-        /// Called when <see cref="ImmediateUpdateAutoFilter"/> changes. Pushes the new effective
-        /// value into the matching host so the rule-filter popup's live-apply checkbox and the
-        /// debounce path (<see cref="SearchDataGrid.FilterRowDelay"/>) stay coherent.
-        /// </summary>
-        private static void OnImmediateUpdateAutoFilterChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
-        {
-            if (d is not GridColumn gc || gc.Owner == null) return;
-            var host = gc.Owner.DataColumns.FirstOrDefault(c => c.CurrentColumn == gc.InternalColumn) as ColumnFilterControl;
-            host?.ApplyLiveFilteringMode();
         }
 
         /// <summary>

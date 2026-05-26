@@ -3,15 +3,15 @@
 ## [Unreleased]
 
 ### Added — AutoFilterRow spec conformance
-- Grid-level: `ShowCriteriaInAutoFilterRow`, `AutoFilterRowCellStyle`, `FilterRowDelay`, `AutoFilterRowClearButtonMode`
-- Column-level: `AllowAutoFilter`, `ShowCriteriaInAutoFilterRow`, `AutoFilterRowCellStyle`, `ImmediateUpdateAutoFilter`, `AutoFilterRowDisplayTemplate`, `AutoFilterRowEditTemplate`, `DefaultSearchType`, `RoundDateTime`
+- Grid-level: `ShowCriteriaInAutoFilterRow`, `AutoFilterRowCellStyle`, `FilterRowDelay`, `AutoFilterRowClearButtonMode`, `EnableLiveFiltering`
+- Column-level: `AllowAutoFilter`, `ShowCriteriaInAutoFilterRow`, `AutoFilterRowCellStyle`, `AutoFilterRowDisplayTemplate`, `AutoFilterRowEditTemplate`, `DefaultSearchType`, `RoundDateTime`
 - `EditGridCellData` hierarchy (`DataObjectBase` → `EditableDataObject` → `GridDataBase` → `GridColumnData` → `GridCellData` → `EditGridCellData`) for template authors
 - `DispatcherTimer`-based keystroke debounce replacing the dead `System.Timers.Timer` infrastructure
 - `docs/column-filter-mode.md` documenting how display properties drive raw vs display-text filter comparison
 
 ### Changed
 - String columns default to `DefaultSearchType.StartsWith` (was `Contains`). Spec-aligned.
-- Live-filtering opt-out is now per-column via `GridColumn.ImmediateUpdateAutoFilter` (was the host-level `IsLiveFilteringOverride`)
+- Live-filtering is now a single grid-level DP, `SearchDataGrid.EnableLiveFiltering` (default `true`). When `false`, popup edits and auto-filter-row typing defer until commit (Enter / Tab / focus loss / popup close). Replaces the popup's per-session "Live filter" checkbox, the per-column `GridColumn.ImmediateUpdateAutoFilter` DP, and the 100,000-row auto-disable threshold (`SearchDataGrid.LiveFilteringRowCountThreshold`).
 - `AutoFilterRowClearButtonMode` enum reshaped to `Never` / `Always` / `Display` / `Edit` (was `Default` / `WhenFilterApplied` / `Always` / `Never`). Default is now `Always`. `Display` / `Edit` now resolve from the filter cell's display/edit state — see below.
 - **Auto-filter row now has a display / edit state machine** mirroring the row's data-cell editor. `ColumnFilterControl.IsFilterCellEditing` tracks `IsKeyboardFocusWithin`; the host swaps between a read-only `TextBlock`-shaped display surface (no decoration buttons) and the full editor produced by `BaseEditSettings.CreateFilterEditor` (with chevron / calendar / spinner chrome). Click into a filter cell or tab to it to enter edit mode; focus out demotes back to display. `BaseEditSettings` gains a `CreateFilterDisplay(host)` virtual method overridden by `ComboBoxEditSettings`, `DateEditSettings`, and `SpinEditSettings` for type-appropriate formatting.
 
@@ -21,7 +21,8 @@
 
 ### Removed
 - Deprecated `DefaultSearchMode` enum and CLR property (use `DefaultSearchType`)
-- Deprecated `ColumnFilterControl.IsLiveFilteringOverride` DP (use `GridColumn.ImmediateUpdateAutoFilter`)
+- Deprecated `ColumnFilterControl.IsLiveFilteringOverride` DP (use `SearchDataGrid.EnableLiveFiltering`)
+- `GridColumn.ImmediateUpdateAutoFilter` DP, `SearchDataGrid.LiveFilteringRowCountThreshold` const, and the popup footer's "Live filter" checkbox — all replaced by `SearchDataGrid.EnableLiveFiltering`
 
 ## [0.2.0] - 2026-03-30
 

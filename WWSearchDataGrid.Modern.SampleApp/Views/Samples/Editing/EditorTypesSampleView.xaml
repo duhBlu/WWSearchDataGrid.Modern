@@ -11,7 +11,7 @@
         <local:EditorTypesSampleViewModel />
     </UserControl.DataContext>
     <UserControl.Resources>
-        <Style TargetType="{x:Type ComboBox}" BasedOn="{StaticResource {x:Static sdg:SdgThemeKeys.ComboBox}}" />
+        <Style TargetType="{x:Type ComboBox}" BasedOn="{StaticResource {x:Static sdg:SdgThemeKeys.PrimitivesComboBox}}" />
     </UserControl.Resources>
     <sampleControls:SampleHostControl Sources="{x:Static sampleControls:SampleSources.EditorTypes}">
         <DockPanel>

@@ -16,6 +16,7 @@
   <ItemGroup>
     <ProjectReference Include="..\WWSearchDataGrid.Modern.Core\WWSearchDataGrid.Modern.Core.csproj" />
     <ProjectReference Include="..\WWSearchDataGrid.Modern.WPF\WWSearchDataGrid.Modern.WPF.csproj" />
+    <ProjectReference Include="..\WWSearchDataGrid.Modern.WPF.Themes.Default\WWSearchDataGrid.Modern.WPF.Themes.Default.csproj" />
   </ItemGroup>
 
   <!-- Embed each sample's source files so SampleHostControl can show XAML / C# tabs alongside the live grid. -->
@@ -52,6 +53,9 @@
     <EmbeddedResource Include="Views\Samples\Filtering\RuleFilterPopupSampleView.xaml" />
     <EmbeddedResource Include="Views\Samples\Filtering\RuleFilterPopupSampleView.xaml.cs" />
     <EmbeddedResource Include="Views\Samples\Filtering\RuleFilterPopupSampleViewModel.cs" />
+    <EmbeddedResource Include="Views\Samples\Filtering\FilterStringSampleView.xaml" />
+    <EmbeddedResource Include="Views\Samples\Filtering\FilterStringSampleView.xaml.cs" />
+    <EmbeddedResource Include="Views\Samples\Filtering\FilterStringSampleViewModel.cs" />
 
     <!-- Auto Filter Row -->
     <EmbeddedResource Include="Views\Samples\AutoFilterRow\OptionsPlaygroundSampleView.xaml" />

@@ -13,7 +13,7 @@
 
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
-        <Style BasedOn="{StaticResource {x:Static sdg:SdgThemeKeys.CheckBox}}" TargetType="{x:Type CheckBox}" />
+        <Style BasedOn="{StaticResource {x:Static sdg:SdgThemeKeys.PrimitivesCheckBox}}" TargetType="{x:Type CheckBox}" />
         <Style x:Key="SectionLabelStyle" TargetType="TextBlock">
             <Setter Property="FontWeight" Value="SemiBold" />
             <Setter Property="Margin" Value="0,6,0,2" />
@@ -30,13 +30,11 @@
                        TextWrapping="Wrap">
                 <Run FontWeight="SemiBold" Text="Debounce &amp; live-filter behavior" />
                 <LineBreak />
-                <Run Text="Three settings interact: " />
+                <Run Text="Two settings interact: " />
                 <Run FontStyle="Italic" Text="SearchDataGrid.FilterRowDelay" />
-                <Run Text=" debounces keystrokes; " />
-                <Run FontStyle="Italic" Text="GridColumn.ImmediateUpdateAutoFilter" />
-                <Run Text=" controls whether typing fires the filter at all; the auto-threshold (" />
-                <Run FontStyle="Italic" Text="LiveFilteringRowCountThreshold = 100k" />
-                <Run Text=") flips immediate-update off by default once the dataset is big enough that live filtering would stall the UI. Switch datasets, tweak the controls, and feel the difference." />
+                <Run Text=" debounces keystrokes when live filtering is on; " />
+                <Run FontStyle="Italic" Text="SearchDataGrid.EnableLiveFiltering" />
+                <Run Text=" controls whether typing fires the filter at all. With it off, the slider has no effect — typing buffers until you commit (Enter / Tab / focus loss). Switch datasets, tweak the controls, and feel the difference." />
             </TextBlock>
 
             <Border DockPanel.Dock="Bottom"
@@ -47,15 +45,13 @@
                 <TextBlock FontSize="11" Foreground="#666" TextWrapping="Wrap">
                     <Run FontWeight="SemiBold" Text="Try:" />
                     <LineBreak />
-                    <Run Text="• FilterRowDelay=0, ImmediateUpdate=on, 1k rows: filter fires on every keystroke." />
+                    <Run Text="• FilterRowDelay=0, EnableLiveFiltering=on, 1k rows: filter fires on every keystroke." />
                     <LineBreak />
                     <Run Text="• Slide FilterRowDelay to 500ms: filter waits ~500ms after the last keystroke." />
                     <LineBreak />
-                    <Run Text="• Uncheck Immediate update: typing applies nothing — press Enter to commit. Slider has no effect in this mode." />
+                    <Run Text="• Uncheck EnableLiveFiltering: typing applies nothing — press Enter to commit. Slider has no effect in this mode." />
                     <LineBreak />
-                    <Run Text="• Switch to 100k rows: live filtering auto-disables; the badge below reads INACTIVE unless you explicitly re-enable Immediate update." />
-                    <LineBreak />
-                    <Run Text="• Switch to 1M rows with Immediate update on: typing visibly stalls — the cost the threshold is built to avoid." />
+                    <Run Text="• Switch to 1M rows with EnableLiveFiltering on: typing visibly stalls — turn live filtering off to keep the UI responsive on heavy datasets." />
                 </TextBlock>
             </Border>
 
@@ -78,7 +74,7 @@
                                     SelectionMode="Extended"
                                     SelectionUnit="FullRow">
                     <sdg:SearchDataGrid.GridColumns>
-                        <sdg:GridColumn Width="80"  FieldName="OrderNumber"          Header="Order #" DefaultSearchType="StartsWith" />
+                        <sdg:GridColumn Width="80"  FieldName="OrderNumber"          Header="Order #" />
                         <sdg:GridColumn Width="120" FieldName="OrderStatusName"      Header="Status" DefaultSearchType="Equals" />
                         <sdg:GridColumn Width="150" FieldName="OrderDate"            Header="Order Date" DisplayStringFormat="MM/dd/yyyy" />
                         <sdg:GridColumn Width="220" FieldName="CustomerName"         Header="Customer" />
@@ -94,10 +90,10 @@
                     <sdg:SimpleStackPanel Orientation="Vertical" Spacing="8">
                         <GroupBox Header="Dataset" Padding="6">
                             <sdg:SimpleStackPanel Orientation="Vertical" Spacing="6">
-                                <RadioButton Content="1,000 rows  (below threshold)"
+                                <RadioButton Content="1,000 rows"
                                              GroupName="DatasetSize"
                                              IsChecked="{Binding IsSmallSelected, Mode=TwoWay}" />
-                                <RadioButton Content="100,000 rows  (threshold trips)"
+                                <RadioButton Content="100,000 rows"
                                              GroupName="DatasetSize"
                                              IsChecked="{Binding IsMediumSelected, Mode=TwoWay}" />
                                 <RadioButton Content="1,000,000 rows  (heavy)"
@@ -122,15 +118,9 @@
                                         IsSnapToTickEnabled="True"
                                         Value="{Binding ElementName=Grid, Path=FilterRowDelay, Mode=TwoWay}" />
 
-                                <CheckBox Content="Immediate update auto-filter  (all columns)"
-                                          IsChecked="{Binding ImmediateUpdateAutoFilter, Mode=TwoWay}"
-                                          ToolTip="Applies the value to every column. Per-column granularity is in the Options Playground sample." />
-
-                                <Border Background="#F4F6FA" BorderBrush="#D0D7E2" BorderThickness="1" CornerRadius="3" Padding="6,4" Margin="0,6,0,0">
-                                    <TextBlock FontSize="11"
-                                               TextWrapping="Wrap"
-                                               Text="{Binding EffectiveLiveFilteringLabel}" />
-                                </Border>
+                                <CheckBox Content="EnableLiveFiltering"
+                                          IsChecked="{Binding ElementName=Grid, Path=EnableLiveFiltering, Mode=TwoWay}"
+                                          ToolTip="Grid-wide live-filtering toggle. When off, typing and popup edits defer until you commit (Enter / Tab / focus loss / popup close)." />
 
                                 <Border Background="#FFFFFF" BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="3" Padding="6,4" Margin="0,4,0,0">
                                     <sdg:SimpleStackPanel Orientation="Vertical" Spacing="2">

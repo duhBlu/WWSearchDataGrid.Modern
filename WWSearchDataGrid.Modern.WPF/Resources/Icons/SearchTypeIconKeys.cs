@@ -129,6 +129,16 @@ namespace WWSearchDataGrid.Modern.WPF
         public static ComponentResourceKey BelowAverage { get; } =
             new ComponentResourceKey(typeof(SearchTypeIconKeys), nameof(BelowAverage));
 
+        // ─── SearchType — uniqueness ───────────────────────────────────────────────────
+
+        /// <summary>Icon for <see cref="SearchType.Unique"/>.</summary>
+        public static ComponentResourceKey Unique { get; } =
+            new ComponentResourceKey(typeof(SearchTypeIconKeys), nameof(Unique));
+
+        /// <summary>Icon for <see cref="SearchType.Duplicate"/>.</summary>
+        public static ComponentResourceKey Duplicate { get; } =
+            new ComponentResourceKey(typeof(SearchTypeIconKeys), nameof(Duplicate));
+
         // ─── DateInterval ──────────────────────────────────────────────────────────────
 
         /// <summary>Icon for <see cref="DateInterval.PriorThisYear"/>.</summary>

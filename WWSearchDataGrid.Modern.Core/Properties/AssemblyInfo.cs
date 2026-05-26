@@ -14,6 +14,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 [assembly: InternalsVisibleTo("WWSearchDataGrid.Modern.WPF")]
+[assembly: InternalsVisibleTo("WWSearchDataGrid.Modern.Core.Tests")]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM.
 

@@ -45,9 +45,6 @@ namespace WWSearchDataGrid.Modern.SampleApp.Views.Samples.AutoFilterRow
         private bool? _showCriteriaOverride;
 
         [ObservableProperty]
-        private bool _immediateUpdateAutoFilter = true;
-
-        [ObservableProperty]
         private DefaultSearchType _defaultSearchType = DefaultSearchType.StartsWith;
 
         /// <summary>
@@ -61,7 +58,6 @@ namespace WWSearchDataGrid.Modern.SampleApp.Views.Samples.AutoFilterRow
             AllowFiltering = column.AllowFiltering;
             AllowAutoFilter = column.AllowAutoFilter;
             ShowCriteriaOverride = column.ShowCriteriaInAutoFilterRow;
-            ImmediateUpdateAutoFilter = column.ImmediateUpdateAutoFilter;
             DefaultSearchType = column.DefaultSearchType;
 
             _backingColumn = column;
@@ -80,11 +76,6 @@ namespace WWSearchDataGrid.Modern.SampleApp.Views.Samples.AutoFilterRow
         partial void OnShowCriteriaOverrideChanged(bool? value)
         {
             if (_backingColumn != null) _backingColumn.ShowCriteriaInAutoFilterRow = value;
-        }
-
-        partial void OnImmediateUpdateAutoFilterChanged(bool value)
-        {
-            if (_backingColumn != null) _backingColumn.ImmediateUpdateAutoFilter = value;
         }
 
         partial void OnDefaultSearchTypeChanged(DefaultSearchType value)

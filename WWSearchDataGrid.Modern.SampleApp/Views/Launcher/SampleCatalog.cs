@@ -73,6 +73,11 @@ namespace WWSearchDataGrid.Modern.SampleApp.Views.Launcher
                         "ColumnFilterEditor — multi-criteria rules joined with AND / OR plus a Filter Values tab.",
                         new[] { "Rules", "Popup" },
                         () => new RuleFilterPopupSampleView()),
+
+                    new("FilterString DP",
+                        "Declarative initial filter via SearchDataGrid.FilterString — DevExpress CriteriaOperator syntax in XAML or bound at runtime.",
+                        new[] { "FilterString", "Criteria" },
+                        () => new FilterStringSampleView()),
                 }),
 
             new SampleCategory(
@@ -91,8 +96,8 @@ namespace WWSearchDataGrid.Modern.SampleApp.Views.Launcher
                         () => new CustomTemplatesSampleView()),
 
                     new("Debounce & Live Filter",
-                        "FilterRowDelay × ImmediateUpdateAutoFilter × LiveFilteringRowCountThreshold (100k). Switch between 1k / 100k / 1M rows and feel each setting interact.",
-                        new[] { "Debounce", "Live filtering", "Threshold" },
+                        "FilterRowDelay × EnableLiveFiltering. Switch between 1k / 100k / 1M rows and feel each setting interact.",
+                        new[] { "Debounce", "Live filtering" },
                         () => new DebounceBehaviorSampleView()),
                 }),
 

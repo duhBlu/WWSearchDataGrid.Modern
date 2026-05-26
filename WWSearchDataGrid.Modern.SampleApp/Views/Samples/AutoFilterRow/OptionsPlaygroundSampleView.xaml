@@ -13,7 +13,7 @@
     </UserControl.DataContext>
 
     <UserControl.Resources>
-        <Style BasedOn="{StaticResource {x:Static sdg:SdgThemeKeys.CheckBox}}" TargetType="{x:Type CheckBox}" />
+        <Style BasedOn="{StaticResource {x:Static sdg:SdgThemeKeys.PrimitivesCheckBox}}" TargetType="{x:Type CheckBox}" />
         <Style BasedOn="{StaticResource SampleExpanderStyle}" TargetType="{x:Type Expander}" />
         <Style x:Key="SectionLabelStyle" TargetType="TextBlock">
             <Setter Property="FontWeight" Value="SemiBold" />
@@ -21,7 +21,7 @@
             <Setter Property="Foreground" Value="#333" />
         </Style>
 
-        <Style BasedOn="{StaticResource {x:Static sdg:SdgThemeKeys.ComboBox}}" TargetType="{x:Type ComboBox}" />
+        <Style BasedOn="{StaticResource {x:Static sdg:SdgThemeKeys.PrimitivesComboBox}}" TargetType="{x:Type ComboBox}" />
     </UserControl.Resources>
 
     <sampleControls:SampleHostControl Sources="{x:Static sampleControls:SampleSources.OptionsPlayground}">
@@ -46,7 +46,7 @@
                     <LineBreak />
                     <Run Text="• Toggle ShowCriteriaInAutoFilterRow — every cell sprouts a search-type selector." />
                     <LineBreak />
-                    <Run Text="• Pick OrderDate, set ImmediateUpdateAutoFilter=false, then type — filter waits for Enter." />
+                    <Run Text="• Uncheck EnableLiveFiltering on the grid, then type — filter waits for Enter." />
                     <LineBreak />
                     <Run Text="• Pick Cancelled, set AllowAutoFilter=false — cell greys but keeps its space." />
                     <LineBreak />
@@ -78,8 +78,7 @@
                         <sdg:GridColumn x:Name="OrderNumberColumn"
                                         Width="80"
                                         FieldName="OrderNumber"
-                                        Header="Order #"
-                                        DefaultSearchType="StartsWith" />
+                                        Header="Order #" />
                         <sdg:GridColumn x:Name="CustomerNameColumn"
                                         Width="200"
                                         FieldName="CustomerName"
@@ -115,6 +114,10 @@
                                 <CheckBox Content="ShowCriteriaInAutoFilterRow"
                                           IsChecked="{Binding ElementName=Grid, Path=ShowCriteriaInAutoFilterRow, Mode=TwoWay}"
                                           ToolTip="Grid-wide default. Individual columns can override via ShowCriteriaInAutoFilterRow (bool?)." />
+
+                                <CheckBox Content="EnableLiveFiltering"
+                                          IsChecked="{Binding ElementName=Grid, Path=EnableLiveFiltering, Mode=TwoWay}"
+                                          ToolTip="When checked, filter changes apply as you make them. When unchecked, typing and popup edits are deferred until you commit (Enter / Tab / focus loss / popup close)." />
 
                                 <TextBlock Style="{StaticResource SectionLabelStyle}">
                                     <Run Text="FilterRowDelay:" />
@@ -158,9 +161,6 @@
                                                   DisplayMemberPath="Label"
                                                   SelectedValuePath="Value"
                                                   SelectedValue="{Binding ShowCriteriaOverride, Mode=TwoWay}" />
-
-                                        <CheckBox Content="ImmediateUpdateAutoFilter  (live filter)"
-                                                  IsChecked="{Binding ImmediateUpdateAutoFilter, Mode=TwoWay}" />
 
                                         <TextBlock Style="{StaticResource SectionLabelStyle}" Text="DefaultSearchType" />
                                         <ComboBox ItemsSource="{Binding DataContext.DefaultSearchTypeChoices, RelativeSource={RelativeSource AncestorType=UserControl}}"

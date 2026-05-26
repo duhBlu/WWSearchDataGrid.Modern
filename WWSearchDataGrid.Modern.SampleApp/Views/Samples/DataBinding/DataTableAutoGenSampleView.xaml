@@ -30,7 +30,7 @@
                                 EnableRuleFiltering="True"
                                 CanUserAddRows="False"
                                 CanUserDeleteRows="False"
-                                IsReadOnly="False" />
+                                IsReadOnly="True" />
         </DockPanel>
     </sampleControls:SampleHostControl>
 </UserControl>

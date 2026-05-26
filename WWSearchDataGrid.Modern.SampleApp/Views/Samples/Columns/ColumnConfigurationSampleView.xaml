@@ -17,8 +17,8 @@
         <sampleConverters:NullToBooleanConverter x:Key="NullToBooleanConverter" />
         <sampleConverters:EnumToBooleanConverter x:Key="EnumToBooleanConverter" />
 
-        <Style BasedOn="{StaticResource {x:Static sdg:SdgThemeKeys.Button}}" TargetType="{x:Type Button}" />
-        <Style BasedOn="{StaticResource {x:Static sdg:SdgThemeKeys.CheckBox}}" TargetType="{x:Type CheckBox}" />
+        <Style BasedOn="{StaticResource {x:Static sdg:SdgThemeKeys.PrimitivesButton}}" TargetType="{x:Type Button}" />
+        <Style BasedOn="{StaticResource {x:Static sdg:SdgThemeKeys.PrimitivesCheckBox}}" TargetType="{x:Type CheckBox}" />
         <Style BasedOn="{StaticResource SampleRadioButtonStyle}" TargetType="{x:Type RadioButton}" />
         <Style BasedOn="{StaticResource SampleExpanderStyle}" TargetType="{x:Type Expander}" />
     </UserControl.Resources>
@@ -47,6 +47,7 @@
                     x:Name="Grid"
                     Grid.Column="0"
                     Margin="10"
+                    AllowFixedColumnMenu="True"
                     AutoGenerateColumns="False"
                     CanUserAddRows="False"
                     CanUserDeleteRows="False"
@@ -60,9 +61,8 @@
                     <sdg:SearchDataGrid.GridColumns>
                         <sdg:GridColumn
                             Width="80"
-                            DefaultSearchType="StartsWith"
                             FieldName="OrderNumber"
-                            Fixed="True"
+                            Fixed="Left"
                             Header="Order #"
                             ReadOnly="True" />
                         <sdg:GridColumn
@@ -203,7 +203,22 @@
                                         Orientation="Vertical"
                                         Spacing="4">
                                         <CheckBox Content="Visible" IsChecked="{Binding Visible}" />
-                                        <CheckBox Content="Fixed (Frozen)" IsChecked="{Binding Fixed}" />
+                                        <Expander Padding="4" Header="Fixed (Pinned)">
+                                            <sdg:SimpleStackPanel Orientation="Vertical" Spacing="2">
+                                                <RadioButton
+                                                    Content="None"
+                                                    GroupName="FixedColumnPosition"
+                                                    IsChecked="{Binding Fixed, Converter={StaticResource EnumToBooleanConverter}, ConverterParameter=None}" />
+                                                <RadioButton
+                                                    Content="Left"
+                                                    GroupName="FixedColumnPosition"
+                                                    IsChecked="{Binding Fixed, Converter={StaticResource EnumToBooleanConverter}, ConverterParameter=Left}" />
+                                                <RadioButton
+                                                    Content="Right"
+                                                    GroupName="FixedColumnPosition"
+                                                    IsChecked="{Binding Fixed, Converter={StaticResource EnumToBooleanConverter}, ConverterParameter=Right}" />
+                                            </sdg:SimpleStackPanel>
+                                        </Expander>
                                         <CheckBox Content="Read Only" IsChecked="{Binding ReadOnly}" />
                                         <CheckBox Content="Allow Moving" IsChecked="{Binding AllowMoving}" />
                                         <CheckBox Content="Allow Resizing" IsChecked="{Binding AllowResizing}" />

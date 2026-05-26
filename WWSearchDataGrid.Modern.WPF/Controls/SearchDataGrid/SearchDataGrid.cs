@@ -93,18 +93,13 @@ namespace WWSearchDataGrid.Modern.WPF
                 new PropertyMetadata(false, OnIsColumnChooserConfinedToGridChanged));
 
         /// <summary>
-        /// Dependency property for EnableLiveScrolling. When true, the grid content updates
-        /// in real-time while dragging the scrollbar thumb instead of waiting for release.
-        /// Defaults to true. Disable for very large datasets (100k+) if scrolling feels choppy.
+        /// Live thumb-drag scrolling. Defaults true. Disable for very large datasets (100k+) if scrolling feels choppy.
         /// </summary>
         public static readonly DependencyProperty EnableLiveScrollingProperty =
             DependencyProperty.Register("EnableLiveScrolling", typeof(bool), typeof(SearchDataGrid),
                 new PropertyMetadata(true, OnEnableLiveScrollingChanged));
 
-        /// <summary>
-        /// Dependency property for LastFocusedColumn. Persists the most recently focused
-        /// column so it remains available when focus leaves the grid.
-        /// </summary>
+        /// <summary>Persists the most recently focused column, surviving focus leaving the grid.</summary>
         public static readonly DependencyProperty LastFocusedColumnProperty =
             DependencyProperty.Register("LastFocusedColumn", typeof(DataGridColumn), typeof(SearchDataGrid),
                 new PropertyMetadata(null));
@@ -114,11 +109,9 @@ namespace WWSearchDataGrid.Modern.WPF
                 new PropertyMetadata(null));
 
         /// <summary>
-        /// Grid-wide default for when a click on a cell triggers edit mode. Individual editors
-        /// override via <see cref="BaseEditSettings.EditorShowMode"/>. The grid default is
-        /// <see cref="WPF.EditorShowMode.MouseDownFocused"/> — first click focuses the cell,
-        /// second click on the focused cell enters edit. Set to
-        /// <see cref="WPF.EditorShowMode.None"/> to require explicit Enter/F2 to edit.
+        /// Grid-wide default for when a cell click triggers edit. Default is
+        /// <see cref="WPF.EditorShowMode.MouseDownFocused"/> (focus on first click, edit on
+        /// second). Per-editor override via <see cref="BaseEditSettings.EditorShowMode"/>.
         /// </summary>
         public static readonly DependencyProperty EditorShowModeProperty =
             DependencyProperty.Register(nameof(EditorShowMode), typeof(EditorShowMode), typeof(SearchDataGrid),
@@ -132,11 +125,7 @@ namespace WWSearchDataGrid.Modern.WPF
             DependencyProperty.Register(nameof(EditorButtonShowMode), typeof(EditorButtonShowMode), typeof(SearchDataGrid),
                 new PropertyMetadata(EditorButtonShowMode.ShowOnlyInEditor));
 
-        /// <summary>
-        /// Backing key for the <see cref="GridColumns"/> dependency property.
-        /// The collection is read-only from external code; internal logic populates it
-        /// via the CLR property or XAML collection syntax.
-        /// </summary>
+        /// <summary>Read-only key for <see cref="GridColumns"/>.</summary>
         private static readonly DependencyPropertyKey GridColumnsPropertyKey =
             DependencyProperty.RegisterReadOnly(
                 nameof(GridColumns),
@@ -150,10 +139,8 @@ namespace WWSearchDataGrid.Modern.WPF
         public static readonly DependencyProperty GridColumnsProperty = GridColumnsPropertyKey.DependencyProperty;
 
         /// <summary>
-        /// Dependency property for <see cref="ShowAutoFilterRow"/>. Defaults to <c>true</c>.
-        /// Gates the auto-filter UI as a whole. Combined with
-        /// <see cref="AutoFilterRowPositionProperty"/> to decide whether filter editors live
-        /// in a pinned row below the headers or inside the column headers themselves.
+        /// Gates the auto-filter UI. Combined with <see cref="AutoFilterRowPositionProperty"/>
+        /// to choose between a pinned row and in-header editors. Defaults to <c>true</c>.
         /// </summary>
         public static readonly DependencyProperty ShowAutoFilterRowProperty =
             DependencyProperty.Register(nameof(ShowAutoFilterRow), typeof(bool), typeof(SearchDataGrid),
@@ -168,63 +155,60 @@ namespace WWSearchDataGrid.Modern.WPF
                 new FrameworkPropertyMetadata(AutoFilterRowPosition.Cell));
 
         /// <summary>
-        /// Grid-wide default for <see cref="ShowCriteriaInAutoFilterRow"/>. When <c>true</c>,
-        /// every column's filter cell renders the leading <see cref="SearchTypeSelector"/>
-        /// glyph so the user can pick the active operator (Contains / StartsWith / Equals / ...)
-        /// inline. When <c>false</c> (the default), the selector is hidden and the column's
-        /// default search type is used implicitly. Individual columns can override via
-        /// <see cref="GridColumn.ShowCriteriaInAutoFilterRow"/> — column override wins when set.
+        /// Grid-wide default for showing the inline <see cref="SearchTypeSelector"/> in each
+        /// filter cell. <c>false</c> hides it; column override via
+        /// <see cref="GridColumn.ShowCriteriaInAutoFilterRow"/> wins when set.
         /// </summary>
-        /// <remarks>
-        /// <see cref="FrameworkPropertyMetadataOptions.Inherits"/> is set for cross-tree
-        /// composition scenarios, but the per-cell effective value is resolved explicitly by
-        /// <see cref="ColumnFilterControl"/> against this grid's CLR property, so runtime
-        /// changes always reach the hosts via <see cref="OnShowCriteriaInAutoFilterRowChanged"/>.
-        /// </remarks>
         public static readonly DependencyProperty ShowCriteriaInAutoFilterRowProperty =
             DependencyProperty.Register(nameof(ShowCriteriaInAutoFilterRow), typeof(bool), typeof(SearchDataGrid),
                 new FrameworkPropertyMetadata(false, FrameworkPropertyMetadataOptions.Inherits, OnShowCriteriaInAutoFilterRowChanged));
 
         /// <summary>
-        /// Grid-wide default <see cref="Style"/> applied to every <see cref="ColumnFilterControl"/>
-        /// hosted inside the auto-filter row. A column can override via
-        /// <see cref="GridColumn.AutoFilterRowCellStyle"/> — column override wins when set.
-        /// When both are <c>null</c> the control resolves the keyed theme style under
-        /// <see cref="SdgThemeKeys.ColumnFilterControl"/>.
+        /// Grid-wide default Style for <see cref="ColumnFilterControl"/>. Column override
+        /// via <see cref="GridColumn.AutoFilterRowCellStyle"/> wins; both null falls back to
+        /// the keyed theme style under <see cref="SdgThemeKeys.FilterRow.ColumnFilterControl"/>.
         /// </summary>
         public static readonly DependencyProperty AutoFilterRowCellStyleProperty =
             DependencyProperty.Register(nameof(AutoFilterRowCellStyle), typeof(Style), typeof(SearchDataGrid),
                 new FrameworkPropertyMetadata(null, OnAutoFilterRowCellStyleChanged));
 
         /// <summary>
-        /// Debounce window (in milliseconds) before keystroke-driven filter updates fire.
-        /// Defaults to <c>0</c> — every keystroke applies the filter immediately. A positive
-        /// value buffers rapid typing so the filter expression is rebuilt only after the user
-        /// pauses for the specified interval. Only takes effect when live filtering is enabled
-        /// for the column (see <see cref="GridColumn.ImmediateUpdateAutoFilter"/>); when live
-        /// filtering is off, the delay is irrelevant — filters fire on Enter / Tab / lost-focus
-        /// regardless. <see cref="FrameworkPropertyMetadataOptions.Inherits"/> lets per-cell
-        /// <see cref="ColumnFilterControl"/> read the grid value without explicit wiring.
+        /// Debounce window (ms) for keystroke-driven filter updates. <c>0</c> applies every
+        /// keystroke immediately. Only meaningful when live filtering is enabled — without it,
+        /// filters fire on Enter/Tab/lost-focus regardless.
         /// </summary>
         public static readonly DependencyProperty FilterRowDelayProperty =
             DependencyProperty.Register(nameof(FilterRowDelay), typeof(int), typeof(SearchDataGrid),
                 new FrameworkPropertyMetadata(0, FrameworkPropertyMetadataOptions.Inherits));
 
         /// <summary>
-        /// Grid-wide policy for when the per-cell clear (X) button appears in the auto-filter
-        /// row. Defaults to <see cref="WPF.AutoFilterRowClearButtonMode.Always"/> — the button
-        /// is shown whenever a cell has an active filter, regardless of which editor surface
-        /// is rendering. <see cref="FrameworkPropertyMetadataOptions.Inherits"/> propagates
-        /// the value into the per-cell control without manual wiring.
+        /// Grid-wide live-filtering toggle. <c>true</c> (default): filter changes — popup edits
+        /// and auto-filter-row typing — apply to the grid as they happen. <c>false</c>: changes
+        /// are deferred until the user commits via Enter / Tab / focus loss / popup close.
+        /// </summary>
+        public static readonly DependencyProperty EnableLiveFilteringProperty =
+            DependencyProperty.Register(nameof(EnableLiveFiltering), typeof(bool), typeof(SearchDataGrid),
+                new FrameworkPropertyMetadata(true, FrameworkPropertyMetadataOptions.Inherits));
+
+        /// <summary>
+        /// Grid-wide policy for the per-cell clear (X) button visibility. Defaults to
+        /// <see cref="WPF.AutoFilterRowClearButtonMode.Always"/>.
         /// </summary>
         public static readonly DependencyProperty AutoFilterRowClearButtonModeProperty =
             DependencyProperty.Register(nameof(AutoFilterRowClearButtonMode), typeof(AutoFilterRowClearButtonMode), typeof(SearchDataGrid),
                 new FrameworkPropertyMetadata(AutoFilterRowClearButtonMode.Always, FrameworkPropertyMetadataOptions.Inherits));
 
         /// <summary>
-        /// Walks <see cref="DataColumns"/> and asks each <see cref="ColumnFilterControl"/> to
-        /// re-resolve its effective ShowCriteria value when the grid-level DP changes.
+        /// Gates the runtime "Pin Left / Pin Right / Unpin" items in the column-header
+        /// context menu. When <c>true</c>, end users can change a column's
+        /// <see cref="GridColumn.Fixed"/> position interactively; when <c>false</c>
+        /// (the default), pinning can only be set declaratively in XAML.
         /// </summary>
+        public static readonly DependencyProperty AllowFixedColumnMenuProperty =
+            DependencyProperty.Register(nameof(AllowFixedColumnMenu), typeof(bool), typeof(SearchDataGrid),
+                new FrameworkPropertyMetadata(false));
+
+        /// <summary>Re-resolves effective ShowCriteria on each filter cell when the grid DP changes.</summary>
         private static void OnShowCriteriaInAutoFilterRowChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
             if (d is not SearchDataGrid grid) return;
@@ -235,10 +219,7 @@ namespace WWSearchDataGrid.Modern.WPF
             }
         }
 
-        /// <summary>
-        /// Walks <see cref="DataColumns"/> and re-resolves the cell style on each
-        /// <see cref="ColumnFilterControl"/> when the grid-level style DP changes.
-        /// </summary>
+        /// <summary>Re-resolves the cell Style on each filter cell when the grid DP changes.</summary>
         private static void OnAutoFilterRowCellStyleChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
             if (d is not SearchDataGrid grid) return;
@@ -294,9 +275,8 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
-        /// Gets or sets whether rule filtering is enabled at the grid level.
-        /// When false, all columns use ColumnSearchBox filtering only, and only single text filter per column.
-        /// When true, per-column EnableRuleFiltering settings are respected.
+        /// Grid-wide rule-filtering toggle. False forces single-text-filter mode; true defers
+        /// to per-column EnableRuleFiltering.
         /// </summary>
         public bool EnableRuleFiltering
         {
@@ -305,10 +285,8 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
-        /// Gets or sets whether the Column Chooser window is visible.
-        /// When set to true, displays a non-modal window allowing users to show/hide columns.
-        /// This property is overridden by IsColumnChooserEnabled - if IsColumnChooserEnabled is false,
-        /// the column chooser cannot be shown.
+        /// Shows/hides the non-modal Column Chooser window. Forced false when
+        /// <see cref="IsColumnChooserEnabled"/> is false.
         /// </summary>
         public bool IsColumnChooserVisible
         {
@@ -317,9 +295,8 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
-        /// Gets or sets whether the Column Chooser feature is enabled.
-        /// When set to false, hides Column Chooser menu items from context menus and prevents
-        /// the column chooser from being shown. Default is true.
+        /// Enables the Column Chooser feature. False hides menu items and blocks
+        /// <see cref="IsColumnChooserVisible"/>.
         /// </summary>
         public bool IsColumnChooserEnabled
         {
@@ -328,9 +305,7 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
-        /// Gets or sets whether the Column Chooser window is confined to the grid's viewport bounds.
-        /// When set to true, the Column Chooser window cannot be dragged outside the grid's visible area.
-        /// When set to false, the window can be moved freely. Default is false.
+        /// Confines the Column Chooser window to the grid's viewport bounds when true.
         /// </summary>
         public bool IsColumnChooserConfinedToGrid
         {
@@ -339,9 +314,8 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
-        /// Gets or sets whether the grid content updates in real-time while dragging the
-        /// scrollbar thumb. When false, scrolling is deferred until thumb release.
-        /// Defaults to true. Disable for very large datasets (100k+ rows) if scrolling stutters.
+        /// Live thumb-drag scrolling. Defaults true. Disable for very large datasets (100k+ rows)
+        /// if scrolling stutters.
         /// </summary>
         public bool EnableLiveScrolling
         {
@@ -349,20 +323,14 @@ namespace WWSearchDataGrid.Modern.WPF
             set => SetValue(EnableLiveScrollingProperty, value);
         }
 
-        /// <summary>
-        /// Gets the last column that had focus. Persists when focus leaves the grid,
-        /// so external panels can continue displaying column properties.
-        /// </summary>
+        /// <summary>Last focused column. Persists when focus leaves the grid.</summary>
         public DataGridColumn LastFocusedColumn
         {
             get => (DataGridColumn)GetValue(LastFocusedColumnProperty);
             private set => SetValue(LastFocusedColumnProperty, value);
         }
 
-        /// <summary>
-        /// Gets the <see cref="GridColumn"/> descriptor for the last focused column.
-        /// Updates automatically when the focused cell changes.
-        /// </summary>
+        /// <summary>Descriptor for <see cref="LastFocusedColumn"/>.</summary>
         public GridColumn LastFocusedGridColumn
         {
             get => (GridColumn)GetValue(LastFocusedGridColumnProperty);
@@ -387,12 +355,7 @@ namespace WWSearchDataGrid.Modern.WPF
             get => (FreezableCollection<GridColumn>)GetValue(GridColumnsProperty);
         }
 
-        /// <summary>
-        /// Gets or sets whether the auto-filter UI is shown. When <c>true</c>, filter editors
-        /// are surfaced for each filterable column (placement controlled by
-        /// <see cref="AutoFilterRowPosition"/>). When <c>false</c>, no per-column filter UI is
-        /// rendered. Defaults to <c>true</c>.
-        /// </summary>
+        /// <summary>Shows the auto-filter UI (placement via <see cref="AutoFilterRowPosition"/>).</summary>
         public bool ShowAutoFilterRow
         {
             get => (bool)GetValue(ShowAutoFilterRowProperty);
@@ -400,10 +363,8 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
-        /// Gets or sets where the auto-filter UI is placed. <see cref="WPF.AutoFilterRowPosition.Cell"/>
-        /// (default) renders a dedicated pinned row beneath the column headers;
-        /// <see cref="WPF.AutoFilterRowPosition.Header"/> embeds filter editors inside each
-        /// column header (expand-on-click).
+        /// Placement of the auto-filter UI: Cell (default, pinned row) or Header (in-header
+        /// expand-on-click).
         /// </summary>
         public AutoFilterRowPosition AutoFilterRowPosition
         {
@@ -452,14 +413,21 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
-        /// Row-count threshold (in <see cref="OriginalItemsCount"/> terms) that flips the default
-        /// filter-application mode from "live as the user types / clicks" to "deferred until the
-        /// editor closes or the user explicitly commits". The same threshold is consulted by
-        /// <see cref="ColumnSearchBox"/> (for the in-header text box debounce) and by
-        /// <see cref="ColumnFilterEditor"/> (for the popup's apply-on-change behavior). Override
-        /// per-column / per-editor via their explicit live-mode properties when needed.
+        /// Gates the runtime pin/unpin items in the column-header context menu.
+        /// See <see cref="AllowFixedColumnMenuProperty"/>.
         /// </summary>
-        public const int LiveFilteringRowCountThreshold = 100_000;
+        public bool AllowFixedColumnMenu
+        {
+            get => (bool)GetValue(AllowFixedColumnMenuProperty);
+            set => SetValue(AllowFixedColumnMenuProperty, value);
+        }
+
+        /// <inheritdoc cref="EnableLiveFilteringProperty"/>
+        public bool EnableLiveFiltering
+        {
+            get => (bool)GetValue(EnableLiveFilteringProperty);
+            set => SetValue(EnableLiveFilteringProperty, value);
+        }
 
         /// <summary>
         /// Gets the original unfiltered items source
@@ -530,15 +498,10 @@ namespace WWSearchDataGrid.Modern.WPF
             // Generate columns from GridColumns descriptors once the control is loaded
             Loaded += OnSearchDataGridLoaded;
 
-            // Edit-on-focus support: flag-driven instead of always-on. The OnAnyDescendantGotFocus
-            // handler only triggers BeginEdit when _carryEditStateOnNextFocus is set. The flag is
-            // raised by:
-            //   • a left-click on a cell (PreviewMouseLeftButtonDown handler below) — click-to-edit
-            //   • a Tab/Shift+Tab keypress on a cell that is currently editing (OnGridPreviewKeyDown) —
-            //     so Tab carries edit state forward
-            // Tab from a non-editing cell, Arrow keys, and programmatic focus changes all leave the
-            // flag clear, so the destination cell ends up focused but not editing.
-            // handledEventsToo on GotFocus because upstream selection logic frequently marks it.
+            // Edit-on-focus is flag-driven: OnAnyDescendantGotFocus only enters edit when
+            // _carryEditStateOnNextFocus is set. Set by click-to-edit and Tab-from-editing;
+            // arrow keys and bare programmatic focus changes leave the flag clear.
+            // handledEventsToo because upstream selection often marks GotFocus.
             AddHandler(GotFocusEvent, new RoutedEventHandler(OnAnyDescendantGotFocus), handledEventsToo: true);
             AddHandler(PreviewMouseLeftButtonDownEvent,
                 new MouseButtonEventHandler(OnPreviewMouseLeftButtonDown_SetEditCarry), handledEventsToo: true);
@@ -566,64 +529,41 @@ namespace WWSearchDataGrid.Modern.WPF
         #region GridColumns Support
 
         /// <summary>
-        /// When true, the next focus change into a <see cref="DataGridCell"/> should auto-enter
-        /// edit mode. Raised by left-clicks on cells (click-to-edit) and by Tab/Shift+Tab from a
-        /// cell that is already editing (Tab carries edit state forward). Cleared as soon as
-        /// <see cref="OnAnyDescendantGotFocus"/> consumes it, AND at the start of every keyboard
-        /// pre-handler so a stale flag from a click-on-already-editing-cell doesn't bleed into
-        /// the next key navigation.
+        /// One-shot: next focus into a DataGridCell auto-enters edit. Set by click-to-edit
+        /// or Tab-from-editing; cleared on consume and at the start of every key pre-handler.
         /// </summary>
         private bool _carryEditStateOnNextFocus;
 
         /// <summary>
-        /// The cell that just had a deferred <c>BeginEdit</c> queued by
-        /// <see cref="OnAnyDescendantGotFocus"/>. Used by the arrow-key handler in
-        /// <see cref="OnGridPreviewKeyDown"/> to detect the press-and-hold case where auto-repeat
-        /// arrives faster than the dispatcher can drain the queued <c>BeginEdit</c> — in that
-        /// window the cell has focus but isn't editing yet, and a naive arrow-nav would move
-        /// focus on without preserving edit state. Re-arming the carry flag in that case keeps
-        /// the held-arrow navigation editing every cell along the way.
+        /// Cell with a deferred BeginEdit queued by <see cref="OnAnyDescendantGotFocus"/>.
+        /// Lets the arrow handler re-arm the carry flag when auto-repeat outruns the dispatcher,
+        /// so held-arrow nav keeps editing every cell along the way.
         /// </summary>
         private DataGridCell _pendingEditCell;
 
         /// <summary>
-        /// Sets the internal "next focused cell should auto-edit" flag — consumed exactly
-        /// once by the next eligible <see cref="DataGridCell"/> in <c>OnAnyDescendantGotFocus</c>.
-        /// Called by <see cref="BaseEditSettings.ExitCellViaArrow"/> after committing the
-        /// source cell's edit so the destination cell stays in edit mode after arrow nav,
-        /// matching the user's expectation that arrow-key navigation while editing carries
-        /// the edit context across cells.
+        /// Arms the one-shot carry flag. Called by <see cref="BaseEditSettings.ExitCellViaArrow"/>
+        /// after committing so arrow nav from an editing cell stays in edit mode at the destination.
         /// </summary>
         internal void SetCarryEditStateOnNextFocus() => _carryEditStateOnNextFocus = true;
 
         /// <summary>
-        /// True when the cell or its owning grid is read-only. Necessary because
-        /// DataGridCell.IsReadOnly is a coerced transfer DP that should reflect
-        /// DataGrid.IsReadOnly per WPF's coercion rules — but in practice the grid→cell
-        /// propagation doesn't fire reliably for cells in DataGridTemplateColumn, leaving
-        /// cell.IsReadOnly == false even when the grid is fully read-only. Every gating
-        /// check in this file goes through here so grid-level read-only actually blocks
-        /// the gestures (mouse-toggle, Space/Enter, click-to-edit, etc.).
+        /// True when the cell or owning grid is read-only. The cell-level check alone is
+        /// unreliable for DataGridTemplateColumn — the grid→cell coercion doesn't propagate.
         /// </summary>
         private bool IsCellOrGridReadOnly(DataGridCell cell)
             => cell == null || cell.IsReadOnly || IsReadOnly;
 
         /// <summary>
-        /// Captures whether the cell under the cursor was already focused before the current
-        /// mouse-down arrived. The <c>*Focused</c> editor-show modes consult this on
-        /// mouse-up / focus-change to distinguish "clicking an unfocused cell" (gives focus only)
-        /// from "clicking an already-focused cell" (enters edit).
+        /// Was the clicked cell focused before this mouse-down? Read by *Focused modes to
+        /// distinguish "click unfocused" (focus only) from "click already focused" (edit).
         /// </summary>
         private bool _wasCellFocusedAtMouseDown;
 
         /// <summary>
-        /// The click point (in <see cref="DataGridCell"/>-local coordinates) for the most recent
-        /// mouse-driven BeginEdit. Captured when a mouse-up triggers our BeginEdit (MouseUp /
-        /// MouseUpFocused) and when <see cref="OnBeginningEdit"/> allows the stock mouse-down
-        /// edit through (MouseDown / MouseDownFocused). TextBox-based editors consume this on
-        /// first GotKeyboardFocus to land the caret at the click index instead of selecting all
-        /// text — keyboard entry (Tab / Enter / F2 / programmatic) leaves it null and falls back
-        /// to select-all.
+        /// Click point (cell-local) for the most recent mouse BeginEdit. TextBox editors
+        /// consume this on first GotKeyboardFocus to land the caret at the click index;
+        /// keyboard entry leaves it null and falls back to select-all.
         /// </summary>
         private Point? _pendingMouseEditCellPoint;
         private DataGridCell _pendingMouseEditCell;
@@ -635,10 +575,8 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
-        /// Returns and clears the pending mouse-edit click point if one was stashed for
-        /// <paramref name="forCell"/>. Editors call this once during their first GotKeyboardFocus;
-        /// the consume-on-read pattern ensures a stale point from a cancelled / superseded
-        /// gesture can't bleed into a later keyboard-driven edit on the same or a different cell.
+        /// Returns and clears the stashed click point for <paramref name="forCell"/>.
+        /// Consume-on-read so a stale point can't bleed into a later keyboard-driven edit.
         /// </summary>
         internal bool TryConsumeMouseEditPoint(DataGridCell forCell, out Point cellPoint)
         {
@@ -656,11 +594,8 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
-        /// Click-to-edit: on mouse-down, decide whether the cell should enter edit mode now
-        /// (<see cref="EditorShowMode.MouseDown"/> /
-        /// <see cref="EditorShowMode.MouseDownFocused"/>) or wait for mouse-up. For
-        /// <c>*Focused</c> modes, the gesture only triggers edit when the cell already had
-        /// focus before the click arrived.
+        /// Decides whether mouse-down triggers edit now (MouseDown/MouseDownFocused) or
+        /// defers to mouse-up. *Focused variants require pre-existing focus.
         /// </summary>
         private void OnPreviewMouseLeftButtonDown_SetEditCarry(object sender, MouseButtonEventArgs e)
         {
@@ -679,17 +614,12 @@ namespace WWSearchDataGrid.Modern.WPF
                 || (mode == EditorShowMode.MouseDownFocused && _wasCellFocusedAtMouseDown);
             if (!shouldEditNow) return;
 
-            // Stash the click point for the editor that's about to materialize. WPF's stock
-            // DataGridCell click-to-edit invokes BeginEdit() (parameterless), so the OnBeginningEdit
-            // mouse-args branch in SearchDataGridEditing.cs never gets called for stock-fired
-            // edits — without this stash the TextBox would always select-all on focus. Captured
-            // here, after the shouldEditNow gate, so it covers both the already-focused branch
-            // (deferred BeginEdit below) and the newly-focusing branch (OnAnyDescendantGotFocus).
+            // Stash here (not in OnBeginningEdit) — stock DataGridCell calls BeginEdit() without
+            // args, so OnBeginningEdit's mouse branch never fires for stock-driven edits.
             StashMouseEditPoint(cell, e.GetPosition(cell));
 
-            // Newly-focusing case: arm the carry flag so OnAnyDescendantGotFocus enters edit
-            // mode after the click moves focus. Already-focused case: no GotFocus will fire,
-            // so begin edit directly (deferred a tick to let the focus pipeline settle).
+            // Already-focused: no GotFocus will fire, so BeginEdit directly (deferred a tick
+            // for the focus pipeline). Newly-focusing: let OnAnyDescendantGotFocus handle it.
             if (_wasCellFocusedAtMouseDown && !cell.IsEditing)
             {
                 Dispatcher.BeginInvoke(new Action(() =>
@@ -705,11 +635,8 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
-        /// Mouse-up handler for the <see cref="EditorShowMode.MouseUp"/> /
-        /// <see cref="EditorShowMode.MouseUpFocused"/> modes. Called after the mouse-down has
-        /// moved focus to the cell (so by mouse-up the cell is focused regardless of whether
-        /// it was beforehand). The <c>*Focused</c> variant gates on the captured pre-click
-        /// focus state.
+        /// Drives BeginEdit for the MouseUp / MouseUpFocused modes. The *Focused variant
+        /// gates on the pre-click focus state captured at mouse-down.
         /// </summary>
         private void OnPreviewMouseLeftButtonUp_BeginEdit(object sender, MouseButtonEventArgs e)
         {
@@ -721,9 +648,8 @@ namespace WWSearchDataGrid.Modern.WPF
                 || (mode == EditorShowMode.MouseUpFocused && _wasCellFocusedAtMouseDown);
             if (!shouldEdit) return;
 
-            // Stash the click point so TextBox editors place the caret where the user pointed.
-            // OnBeginningEdit fires programmatically from our deferred BeginEdit() below with
-            // EditingEventArgs == null, so it can't capture the point on its own.
+            // Stash for the editor's caret placement — our deferred BeginEdit() below fires
+            // programmatically with EditingEventArgs == null, so OnBeginningEdit can't capture it.
             StashMouseEditPoint(cell, e.GetPosition(cell));
 
             Dispatcher.BeginInvoke(new Action(() =>
@@ -734,21 +660,14 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
-        /// Keyboard state machine for the cell:
-        ///   • <see cref="Key.Enter"/> toggles edit state on the focused cell — commits if editing
-        ///     (focus stays on the cell), otherwise begins edit. Always handled.
-        ///   • <see cref="Key.Tab"/> / Shift+Tab: if the source cell is editing, set the carry flag
-        ///     so the destination cell auto-edits. Not handled — DataGrid's native Tab navigation
-        ///     still runs to commit the source and move focus.
-        ///   • Arrow keys: leave the flag clear so destination is focus-only. Not handled — TextBox
-        ///     editors override arrow keys themselves with caret-aware exit logic; non-text editors
-        ///     defer to DataGrid's native arrow navigation.
+        /// Cell keyboard handler. Enter toggles edit (handled). Tab/Shift+Tab sets the carry
+        /// flag when source is editing but lets the native handler run. Arrow keys mostly
+        /// defer to the editor (TextBox caret-aware exit) or to native nav.
         /// </summary>
         private void OnGridPreviewKeyDown(object sender, KeyEventArgs e)
         {
-            // Reset the flag at the start of every key event. A click on an already-editing cell
-            // sets the flag but doesn't trigger a focus change (focus is already there), so the
-            // flag would otherwise leak into the next key-driven focus change.
+            // Reset per-keystroke — a click on an already-editing cell would otherwise leak
+            // the flag into the next key-driven focus change.
             _carryEditStateOnNextFocus = false;
 
             var focused = Keyboard.FocusedElement as DependencyObject;
@@ -759,10 +678,8 @@ namespace WWSearchDataGrid.Modern.WPF
             {
                 case Key.Enter:
                     {
-                        // CheckBox-style cell: Enter toggles the value directly (toggle-edit-state
-                        // has no meaningful visual since display and edit are both interactive
-                        // CheckBoxes). Falls through to the standard toggle-edit semantics for
-                        // non-CheckBox cells.
+                        // CheckBox cells: Enter toggles the value (toggle-edit has no meaningful
+                        // visual since display and edit are both interactive CheckBoxes).
                         var checkBox = FindCheckBoxInCell(cell);
                         if (checkBox != null && !IsCellOrGridReadOnly(cell))
                         {
@@ -773,23 +690,16 @@ namespace WWSearchDataGrid.Modern.WPF
 
                         if (cell.IsEditing)
                         {
-                            // Commit at the Row level (not parameterless, which commits the cell
-                            // only and leaves DataGridRow.IsEditing=true until row navigation).
-                            // The row-header pencil indicator binds to DataGridRow.IsEditing, so a
-                            // cell-only commit would leave the pencil stuck until the user moved
-                            // off the row — visually contradicting the user's "Enter = done
-                            // editing" gesture. Row-level commit flips IsEditing → false and the
-                            // indicator falls back to the focused-row chevron immediately. Within-
-                            // row Tab still uses cell-only commit so mid-row tabbing keeps the
-                            // pencil up. cell.Focus() ensures focus lands on the cell itself
-                            // rather than on whatever WPF picks after the editor goes away.
+                            // Row-level commit so DataGridRow.IsEditing flips false and the
+                            // row-header pencil indicator clears — cell-level commit would leave
+                            // it stuck until row navigation. Tab still uses cell-level so mid-row
+                            // tabbing keeps the pencil up. cell.Focus() pins focus on the cell.
                             CommitEdit(DataGridEditingUnit.Row, true);
                             cell.Focus();
                         }
                         else if (!IsCellOrGridReadOnly(cell))
                         {
-                            // Bypass the EditOnFocus gate — Enter is an explicit edit-intent gesture
-                            // and should work even on columns that opt out of click/Tab auto-edit.
+                            // Bypass EditOnFocus — Enter is an explicit edit gesture.
                             BeginEdit();
                         }
                         e.Handled = true;
@@ -798,10 +708,8 @@ namespace WWSearchDataGrid.Modern.WPF
 
                 case Key.Space:
                     {
-                        // Standard CheckBox-cell keyboard UX: Space toggles the value. Works in
-                        // both display mode (cell focused, display CheckBox has Focusable=False so
-                        // wouldn't otherwise receive Space) and edit mode (preempts the inner
-                        // CheckBox's own Space handling — same toggle, just programmatic).
+                        // Space toggles CheckBox cells programmatically — works in both display
+                        // mode (display CheckBox is Focusable=False) and edit mode.
                         var checkBox = FindCheckBoxInCell(cell);
                         if (checkBox != null && !IsCellOrGridReadOnly(cell))
                         {
@@ -815,9 +723,7 @@ namespace WWSearchDataGrid.Modern.WPF
                 {
                     if (TryWrapTabWithinRow(cell, e))
                     {
-                        // Wrap intercepted — focus is on the opposite-end cell of the same row,
-                        // carry flag set so the destination auto-edits the same way Tab would
-                        // anywhere else.
+                        // Within-row wrap — carry flag already set by the helper.
                         e.Handled = true;
                         break;
                     }
@@ -828,14 +734,9 @@ namespace WWSearchDataGrid.Modern.WPF
                     break;
                 }
 
-                // Up / Down: no flag manipulation. Native DataGrid arrow handler navigates
-                // between rows. (In edit mode, the editor's own PreviewKeyDown handles these.)
-                // Up additionally hands off from the first data row to the filter row when
-                // ShowAutoFilterRow is on — symmetric with the filter row's Down handoff
-                // implemented in FilterRowNavigator. The handoff only fires when focus is
-                // on the cell shell itself; an editor descendant gets to interpret Up first
-                // (multiline TextBox caret-up, ComboBox selection, DatePicker calendar) so
-                // we don't hijack arrow keys from editors that have a real use for them.
+                // Up on the first data row hands off to the filter row (symmetric with the
+                // filter row's Down handoff). Only fires when focus is on the cell shell so
+                // editors with real Up uses (multiline caret, ComboBox, DatePicker) get it first.
                 case Key.Up:
                 {
                     if (!ShowAutoFilterRow) break;
@@ -850,29 +751,18 @@ namespace WWSearchDataGrid.Modern.WPF
                 case Key.Down:
                     break;
 
-                // Left / Right: wrap at the row edge — Right on the rightmost cell jumps to
-                // the FIRST cell of the NEXT row, Left on the leftmost cell jumps to the LAST
-                // cell of the PREVIOUS row (Tab still wraps within the same row). For fully-
-                // settled editing cells where the editor has focus, this case is a no-op —
-                // the editor's PreviewKeyDown routes through BaseEditSettings.ExitCellViaArrow,
-                // which calls the same wrap helper. The two transitional cases below cover the
-                // press-and-hold windows where focus is on the cell rather than the editor.
+                // Left/Right wrap at row edges — Right at last cell → first cell of next row,
+                // Left at first cell → last cell of previous row (Tab wraps within same row).
+                // Fully-settled editing cells route through ExitCellViaArrow → same helper;
+                // the two transitional cases below cover press-and-hold focus-on-cell states.
                 case Key.Left:
                 case Key.Right:
                 {
-                    // Two transitional press-and-hold states put focus on the cell rather
-                    // than its inner editor — in both, the editor's own PreviewKeyDown won't
-                    // fire (it isn't focused) and DataGrid's native KeyDown handler would
-                    // move focus without the carry flag, dropping edit mode mid-hold:
-                    //
-                    //   • !cell.IsEditing && _pendingEditCell == cell:
-                    //       BeginEdit was queued for this cell by the previous auto-repeat's
-                    //       OnAnyDescendantGotFocus but hasn't drained yet.
-                    //   • cell.IsEditing && focused == cell:
-                    //       BeginEdit drained, but the editor's deferred focus action
-                    //       (DispatcherPriority.Input) hasn't run, so focus is still on the
-                    //       cell. Commit explicitly so the destination's BeginEdit can take
-                    //       over on the next OnAnyDescendantGotFocus.
+                    // Press-and-hold transitional states where focus is on the cell, not the
+                    // editor — native KeyDown would move focus without the carry flag, dropping
+                    // edit mid-hold. Re-arm explicitly:
+                    //   • _pendingEditCell == cell: queued BeginEdit hasn't drained yet.
+                    //   • cell.IsEditing && focused == cell: editor's deferred focus hasn't run.
                     bool pendingEditOnCell = !cell.IsEditing && ReferenceEquals(_pendingEditCell, cell);
                     bool inFlightEdit = cell.IsEditing && ReferenceEquals(focused, cell);
 
@@ -895,10 +785,8 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
-        /// Find a <see cref="CheckBox"/> in the cell's visual tree (display or edit content).
-        /// A non-null result identifies the cell as CheckBox-style for keyboard-toggle UX —
-        /// works for both <see cref="CheckBoxEditSettings"/>-driven cells and any column that
-        /// happens to host a CheckBox in its template.
+        /// Locates a CheckBox in the cell's visual tree. Non-null = CheckBox-style cell for
+        /// keyboard-toggle UX.
         /// </summary>
         private static CheckBox FindCheckBoxInCell(DataGridCell cell)
         {
@@ -906,13 +794,9 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
-        /// Implements horizontal Tab wrap within a row: Tab at the last visible cell loops
-        /// back to the first visible cell of the same row, Shift+Tab at the first visible cell
-        /// loops to the last. The carry-edit flag is set so the destination behaves the same
-        /// way DataGrid's native Tab does for non-wrap moves — auto-editing if the column is
-        /// EditOnFocus-eligible. Returns <c>true</c> when a wrap was performed (caller marks
-        /// the event handled); <c>false</c> when the cell isn't at a row edge so the native
-        /// Tab handler continues into the next cell normally.
+        /// Within-row Tab wrap: Tab at last cell → first cell of same row, Shift+Tab at first
+        /// → last. Sets the carry flag so the destination auto-edits like a normal Tab move.
+        /// Returns false (no wrap) when the cell isn't at a row edge.
         /// </summary>
         private bool TryWrapTabWithinRow(DataGridCell cell, KeyEventArgs e)
         {
@@ -920,8 +804,7 @@ namespace WWSearchDataGrid.Modern.WPF
             var targetCell = GetWrapTargetAtRowEdge(cell, forward: !isShift, crossRow: false);
             if (targetCell == null) return false;
 
-            // Commit the source cell's edit before navigating so its bound source updates,
-            // matching the behavior the native Tab handler produces for non-wrap moves.
+            // Commit before navigating so the bound source updates (matching native Tab).
             if (cell.IsEditing)
             {
                 CommitEdit();
@@ -929,9 +812,8 @@ namespace WWSearchDataGrid.Modern.WPF
             }
             else if (IsCellAutoEditEligible(targetCell))
             {
-                // Even when the source wasn't editing, signal carry so the destination cell
-                // enters edit mode if its column opts in — matches the user's "tab through
-                // editable cells" expectation across the wrap boundary.
+                // Source wasn't editing, but destination opts into auto-edit — carry forward
+                // so wrap matches "tab through editable cells".
                 _carryEditStateOnNextFocus = true;
             }
 
@@ -940,29 +822,17 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
-        /// Horizontal arrow-key wrap at row edges. Used by both the non-editing path
-        /// (<see cref="OnGridPreviewKeyDown"/>'s Left/Right cases) and the editing path
-        /// (<see cref="BaseEditSettings.ExitCellViaArrow"/>) so Right at the rightmost
-        /// visible cell loops to the FIRST visible cell of the NEXT row, and Left at the
-        /// leftmost loops to the LAST visible cell of the PREVIOUS row (vs. Tab, which
-        /// wraps within the same row). At the grid's outer edge — Right on the last row's
-        /// last cell, Left on the first row's first cell — there's no adjacent row to wrap
-        /// to and this returns <c>false</c> so the caller falls back to native handling
-        /// (which simply doesn't move). Carry-edit flag is set when the source was editing
-        /// so the destination respects the column's EditOnFocus setting. Returns
-        /// <c>false</c> when the cell isn't at an edge or no adjacent row exists (caller
-        /// continues with the normal arrow-handling path).
+        /// Cross-row arrow wrap at row edges: Right at last cell → first cell of next row,
+        /// Left at first cell → last cell of previous row. Returns false at grid edges or
+        /// when not at a row edge (caller falls back to native arrow handling).
         /// </summary>
         internal bool TryWrapArrowAtRowEdge(DataGridCell cell, bool forward)
         {
             var targetCell = GetWrapTargetAtRowEdge(cell, forward, crossRow: true);
             if (targetCell == null) return false;
 
-            // Carry edit state ONLY when the source cell was already editing — the user is
-            // navigating between editing cells and expects the wrap-around to preserve edit
-            // mode. When the source isn't editing, plain arrow nav must stay focus-only,
-            // even if the destination column is auto-edit-eligible (clicking-to-edit only
-            // activates on click gestures, not on arrow-key wrap).
+            // Carry only when source was editing — arrow-from-display stays focus-only at
+            // the destination, even if it opts into auto-edit (click-to-edit is click-only).
             if (cell.IsEditing)
                 _carryEditStateOnNextFocus = true;
 
@@ -971,14 +841,9 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
-        /// Returns the wrap-destination cell when <paramref name="cell"/> is at the row's
-        /// edge in the requested direction, or <c>null</c> when there's no wrap to do
-        /// (cell isn't at an edge, no visible columns, row not realized yet, no adjacent
-        /// row when crossing rows, etc.). <paramref name="crossRow"/> selects between
-        /// within-row wrap (Tab — Right edge → first cell of <em>same</em> row) and
-        /// cross-row wrap (Arrow — Right edge → first cell of <em>next</em> row).
-        /// For cross-row, virtualized adjacent rows are realized via
-        /// <see cref="DataGrid.ScrollIntoView(object)"/> before the cell lookup.
+        /// Shared wrap-target resolution. <paramref name="crossRow"/>=false for Tab (within
+        /// same row), true for arrow (next/previous row). Virtualized adjacent rows are
+        /// realized via ScrollIntoView before the cell lookup.
         /// </summary>
         private DataGridCell GetWrapTargetAtRowEdge(DataGridCell cell, bool forward, bool crossRow)
         {
@@ -1000,9 +865,8 @@ namespace WWSearchDataGrid.Modern.WPF
 
             if (crossRow)
             {
-                // Pull the row item from Items (the filtered/sorted view, what's actually
-                // displayed) so wrap navigates the visible sequence rather than the raw
-                // ItemsSource order.
+                // Use Items (filtered/sorted view), not ItemsSource, so wrap follows what the
+                // user sees.
                 int rowIdx = Items.IndexOf(cell.DataContext);
                 if (rowIdx < 0) return null;
 
@@ -1028,10 +892,7 @@ namespace WWSearchDataGrid.Modern.WPF
             var row = ItemContainerGenerator.ContainerFromItem(targetRowItem) as DataGridRow;
             if (row == null && crossRow)
             {
-                // Virtualized: force realization so we can focus the cell synchronously.
-                // ScrollIntoView + UpdateLayout brings the row container into existence in
-                // the same dispatcher frame, matching the caller's synchronous wrap contract
-                // (Focus must land before the caller returns to native nav).
+                // Force synchronous realization so Focus lands before native nav resumes.
                 ScrollIntoView(targetRowItem);
                 UpdateLayout();
                 row = ItemContainerGenerator.ContainerFromItem(targetRowItem) as DataGridRow;
@@ -1041,10 +902,7 @@ namespace WWSearchDataGrid.Modern.WPF
             return GetCellAt(row, targetColumn);
         }
 
-        /// <summary>
-        /// Returns the <see cref="DataGridCell"/> at the given column inside the given row's
-        /// cell presenter, or <c>null</c> if the row hasn't realized its template yet.
-        /// </summary>
+        /// <summary>Returns the cell at <paramref name="column"/> inside <paramref name="row"/>, or null if not realized.</summary>
         private static DataGridCell GetCellAt(DataGridRow row, DataGridColumn column)
         {
             if (row == null || column == null) return null;
@@ -1060,24 +918,10 @@ namespace WWSearchDataGrid.Modern.WPF
 
         /// <summary>
         /// Type-to-edit: a printable character on a focused, non-editing, editable cell enters
-        /// edit mode and routes the typed character into the new editor's TextBox content. Mirrors
-        /// the Excel/Google Sheets UX where typing replaces the cell's value.
+        /// edit and routes the keystroke into the editor's TextBox (Excel-style type-to-replace).
+        /// Skipped for CheckBox cells (Space is the gesture) and ComboBox cells (non-text editor).
+        /// Hooks PreviewTextInput rather than PreviewKeyDown to handle IME / dead-keys / modifiers.
         /// </summary>
-        /// <remarks>
-        /// Hooks <see cref="UIElement.PreviewTextInputEvent"/> rather than <see cref="UIElement.PreviewKeyDownEvent"/>
-        /// so we get properly mapped Unicode text (handles dead-keys, IME, modifier-aware keymaps)
-        /// instead of raw Key codes. After <c>BeginEdit</c>, defer the character injection at
-        /// <see cref="DispatcherPriority.Background"/> so it runs <em>after</em> the editor's own
-        /// <c>AutoFocusOnLoad</c> (queued at <see cref="DispatcherPriority.Input"/>) has moved focus
-        /// and the existing <c>GotKeyboardFocus → SelectAll</c> behavior has run — setting Text then
-        /// replaces the selected content with the typed character (Excel-like type-to-replace).
-        /// <para>
-        /// Skipped for CheckBox cells (Space toggle is in <see cref="OnGridPreviewKeyDown"/>) and
-        /// ComboBox cells (the editor isn't text-input — type-to-edit would lose the keystroke
-        /// and surprise the user). Other column types accept the injection; if it doesn't parse
-        /// as a valid value, the edit reverts on commit, same as Excel.
-        /// </para>
-        /// </remarks>
         private void OnGridPreviewTextInput(object sender, TextCompositionEventArgs e)
         {
             if (string.IsNullOrEmpty(e.Text)) return;
@@ -1101,22 +945,17 @@ namespace WWSearchDataGrid.Modern.WPF
             _carryEditStateOnNextFocus = true;
             BeginEdit();
 
-            // After the dispatcher has run AutoFocusOnLoad (Input priority) and the editor's
-            // GotKeyboardFocus→SelectAll, inject the typed character. Background runs after
-            // Input drains, so ordering is deterministic without relying on tick counts.
+            // Inject at Background priority — runs after AutoFocusOnLoad (Input) and the
+            // editor's GotKeyboardFocus→SelectAll, so the set replaces the selected content.
             string typedText = e.Text;
             Dispatcher.BeginInvoke(new Action(() =>
             {
                 var tb = FindVisualDescendant<TextBox>(cell);
                 if (tb == null) return;
 
-                // Masked TextBoxes can't take a bare Text assignment — that wipes the existing
-                // value (e.g. account number "1234-5678-9012-3456" → "7") instead of overwriting
-                // just the first character. Route the typed char through PreviewTextInput so
-                // MaskInputBehavior sees it. OnGotFocus selected the entire first editable
-                // region; collapse that to length 1 so ClearSelection + InsertChar overwrites
-                // only the first character (yielding "7234-5678-9012-3456") rather than blanking
-                // the whole region.
+                // Masked TextBoxes need PreviewTextInput routing — a bare Text= would wipe the
+                // value. Collapse the initial select-all to length 1 so MaskInputBehavior
+                // overwrites only the first character.
                 if (!string.IsNullOrEmpty(MaskInputBehavior.GetMask(tb)))
                 {
                     if (tb.SelectionLength > 1)
@@ -1155,12 +994,8 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
-        /// Resolves the effective <see cref="WPF.EditorShowMode"/> for a cell. The column's
-        /// <see cref="BaseEditSettings.EditorShowMode"/> wins when set to anything other than
-        /// <see cref="WPF.EditorShowMode.Default"/>; otherwise the grid-level
-        /// <see cref="EditorShowMode"/> applies. A grid-level <c>Default</c> means
-        /// "no auto-edit" — cells focus on click but don't enter edit until the user explicitly
-        /// invokes Enter / F2.
+        /// Resolves effective EditorShowMode — column override (non-Default) wins, otherwise
+        /// the grid value. Grid-level Default means no auto-edit (Enter/F2 only).
         /// </summary>
         private EditorShowMode ResolveEditorShowMode(DataGridCell cell)
         {
@@ -1170,11 +1005,7 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
-        /// Whether a cell is eligible for Tab/arrow carry-edit. Any of the active modes
-        /// (MouseDown, MouseDownFocused, MouseUp, MouseUpFocused) counts — the user opted into
-        /// click-to-edit, so Tab navigation should carry the edit context the same way.
-        /// <see cref="WPF.EditorShowMode.Default"/> and <see cref="WPF.EditorShowMode.None"/>
-        /// both leave cells focus-only.
+        /// True for any active click-to-edit mode. Default and None leave cells focus-only.
         /// </summary>
         private bool IsCellAutoEditEligible(DataGridCell cell)
         {
@@ -1183,10 +1014,8 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
-        /// Auto-edit-on-focus, but only when the carry flag has been set by a recent click or
-        /// Tab-from-editing. Bare programmatic focus changes (Tab from non-editing, Arrow keys,
-        /// initial focus into the grid) leave the flag clear, so the destination cell stays
-        /// focus-only and the user can use Enter to opt into edit mode explicitly.
+        /// Auto-edits on focus when the carry flag is set (click or Tab-from-editing).
+        /// Bare programmatic focus changes leave the flag clear → focus-only at destination.
         /// </summary>
         private void OnAnyDescendantGotFocus(object sender, RoutedEventArgs e)
         {
@@ -1198,19 +1027,15 @@ namespace WWSearchDataGrid.Modern.WPF
 
             if (!IsCellAutoEditEligible(cell)) return;
 
-            // Track this cell as the pending-edit target so the arrow-key handler can carry
-            // edit state forward if auto-repeat fires before the deferred BeginEdit runs.
+            // Track for the arrow-key handler in case auto-repeat outruns the queued BeginEdit.
             _pendingEditCell = cell;
 
-            // Defer BeginEdit one dispatcher tick — calling it directly inside GotFocus can
-            // race the focus pipeline and leave the editor un-focusable.
+            // Defer one tick — direct BeginEdit inside GotFocus races the focus pipeline.
             Dispatcher.BeginInvoke(new Action(() =>
             {
                 if (!cell.IsEditing && cell.IsKeyboardFocusWithin)
                     BeginEdit();
-                // Only clear when this action's cell is still the latest pending target —
-                // a faster auto-repeat may have moved on and queued another cell, and that
-                // newer pending should keep its tracking until its own action runs.
+                // A faster auto-repeat may have queued a newer cell — don't clear theirs.
                 if (ReferenceEquals(_pendingEditCell, cell))
                     _pendingEditCell = null;
             }), DispatcherPriority.Input);
@@ -1227,30 +1052,21 @@ namespace WWSearchDataGrid.Modern.WPF
             return null;
         }
 
-        /// <summary>
-        /// Tracks whether columns have already been generated from <see cref="GridColumns"/>
-        /// to prevent duplicate generation on repeated Loaded events.
-        /// </summary>
+        /// <summary>Prevents duplicate column generation on repeated Loaded events.</summary>
         private bool _gridColumnsGenerated;
 
         /// <summary>
-        /// Suppresses <see cref="OnGridColumnsCollectionChanged"/> while auto-generation populates
-        /// the descriptor collection — the subsequent <see cref="GenerateColumnsFromDescriptors"/>
-        /// pass will build the WPF columns in one shot.
+        /// Suppresses <see cref="OnGridColumnsCollectionChanged"/> during auto-generation —
+        /// <see cref="GenerateColumnsFromDescriptors"/> will build the WPF columns in one pass.
         /// </summary>
         private bool _suppressGridColumnsChanged;
 
-        /// <summary>
-        /// Re-entry guard for the DataView → <see cref="ListCollectionView"/> wrapping path in
-        /// <see cref="OnItemsSourceChanged"/>. Prevents infinite recursion when the wrapper assignment
-        /// triggers another <see cref="OnItemsSourceChanged"/> notification.
-        /// </summary>
+        /// <summary>Re-entry guard for the DataView → ListCollectionView wrap in OnItemsSourceChanged.</summary>
         private bool _isRewrappingItemsSource;
 
         /// <summary>
-        /// True when the supplied source's default view will not support predicate-style filtering
-        /// (i.e. assigning <c>Items.Filter = ...</c> would throw <see cref="NotSupportedException"/>).
-        /// Currently catches DataView / IBindingListView shapes and DataTable (via IListSource).
+        /// True when the source's default view doesn't support predicate filtering (DataView,
+        /// IBindingListView, DataTable via IListSource).
         /// </summary>
         private static bool RequiresPredicateWrap(IEnumerable source)
         {
@@ -1295,9 +1111,8 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
-        /// Handles the Loaded event to generate columns from <see cref="GridColumns"/> descriptors.
-        /// If <see cref="DataGrid.AutoGenerateColumns"/> is true and no descriptors were declared,
-        /// auto-generates them from the data source first.
+        /// Generates columns from <see cref="GridColumns"/> on Loaded, auto-creating descriptors
+        /// from the data source first when AutoGenerateColumns is on and none were declared.
         /// </summary>
         private void OnSearchDataGridLoaded(object sender, RoutedEventArgs e)
         {
@@ -1306,12 +1121,14 @@ namespace WWSearchDataGrid.Modern.WPF
                 EnsureAutoGeneratedDescriptors();
                 GenerateColumnsFromDescriptors();
             }
+
+            if (!string.IsNullOrEmpty(FilterString))
+                ApplyFilterString();
         }
 
         /// <summary>
-        /// We manage column generation ourselves through the <see cref="GridColumns"/> descriptors.
-        /// Cancel the WPF DataGrid's built-in auto-generation pipeline so it does not produce
-        /// duplicate columns when <see cref="DataGrid.AutoGenerateColumns"/> is true.
+        /// We manage columns via <see cref="GridColumns"/> descriptors — cancel WPF's auto-gen
+        /// pipeline so it doesn't produce duplicates.
         /// </summary>
         protected override void OnAutoGeneratingColumn(DataGridAutoGeneratingColumnEventArgs e)
         {
@@ -1321,8 +1138,7 @@ namespace WWSearchDataGrid.Modern.WPF
 
         /// <summary>
         /// Populates <see cref="GridColumns"/> from the data source's property descriptors when
-        /// <see cref="DataGrid.AutoGenerateColumns"/> is true and the user did not declare any.
-        /// Honors <see cref="BrowsableAttribute"/> and <see cref="DisplayAttribute"/>.
+        /// AutoGenerateColumns is on and no descriptors were declared. Honors Browsable/Display.
         /// </summary>
         private void EnsureAutoGeneratedDescriptors()
         {
@@ -1366,10 +1182,8 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
-        /// Resolves the property descriptors for the current <see cref="ItemsSource"/>. Tries
-        /// <see cref="ITypedList"/> first (DataView/DataTable), then <see cref="IItemProperties"/>
-        /// from the default view, then <see cref="TypeDescriptor"/> against a sample item, and
-        /// finally reflection on the generic item type.
+        /// Property descriptors for ItemsSource — tries ITypedList → IItemProperties →
+        /// TypeDescriptor (sample item) → reflection (generic type), in that order.
         /// </summary>
         private PropertyDescriptorCollection GetItemPropertyDescriptors()
         {
@@ -1460,6 +1274,7 @@ namespace WWSearchDataGrid.Modern.WPF
                                 Columns.Insert(insertIndex, column);
                             }
                         }
+                        ApplyFixedColumnLayout();
                     }
                     break;
 
@@ -1475,6 +1290,7 @@ namespace WWSearchDataGrid.Modern.WPF
                             }
                             descriptor.Owner = null;
                         }
+                        ApplyFixedColumnLayout();
                     }
                     break;
 
@@ -1505,6 +1321,7 @@ namespace WWSearchDataGrid.Modern.WPF
                                 Columns.Add(column);
                         }
                     }
+                    ApplyFixedColumnLayout();
                     break;
 
                 case NotifyCollectionChangedAction.Reset:
@@ -1515,6 +1332,11 @@ namespace WWSearchDataGrid.Modern.WPF
                     GenerateColumnsFromDescriptors();
                     break;
             }
+
+            // Runtime descriptor changes can introduce or remove a column referenced by
+            // FilterString — re-apply so seeded filters track the collection.
+            if (!string.IsNullOrEmpty(FilterString))
+                ApplyFilterString();
         }
 
         /// <summary>
@@ -1550,7 +1372,85 @@ namespace WWSearchDataGrid.Modern.WPF
             }
 
             _gridColumnsGenerated = true;
+
+            ApplyFixedColumnLayout();
         }
+
+        /// <summary>
+        /// Sorts <see cref="DataGrid.Columns"/> into three groups based on each descriptor's
+        /// <see cref="GridColumn.Fixed"/> value: left-pinned columns first, then unpinned
+        /// (preserving their existing relative order), then right-pinned columns. Updates
+        /// <see cref="DataGrid.FrozenColumnCount"/> to the number of left-pinned columns so
+        /// WPF's native left-frozen layout takes effect, and resets it to 0 when no
+        /// columns are pinned left.
+        /// </summary>
+        /// <remarks>
+        /// Called whenever <see cref="GridColumn.Fixed"/> changes on any descriptor and once
+        /// after the initial column generation. The reorder is performed by adjusting
+        /// <see cref="DataGridColumn.DisplayIndex"/> rather than re-inserting columns, so
+        /// callers don't observe collection-changed churn or lose their <c>SelectedCells</c>.
+        /// </remarks>
+        internal void ApplyFixedColumnLayout()
+        {
+            if (_applyingFixedColumnLayout) return;
+            if (Columns.Count == 0) return;
+
+            var descriptors = (FreezableCollection<GridColumn>)GetValue(GridColumnsProperty);
+
+            // Snapshot each column's descriptor and current DisplayIndex so we can sort by
+            // (group, current display position) — preserving the user's existing visual
+            // order within each pinning group instead of forcing descriptor-collection order.
+            var entries = new List<(DataGridColumn Column, FixedColumnPosition Position, int CurrentDisplayIndex)>(Columns.Count);
+            foreach (var column in Columns)
+            {
+                var descriptor = descriptors != null
+                    ? descriptors.FirstOrDefault(d => d.InternalColumn == column)
+                    : null;
+                var position = descriptor?.Fixed ?? FixedColumnPosition.None;
+                entries.Add((column, position, column.DisplayIndex));
+            }
+
+            int GroupOrder(FixedColumnPosition p) => p switch
+            {
+                FixedColumnPosition.Left => 0,
+                FixedColumnPosition.None => 1,
+                FixedColumnPosition.Right => 2,
+                _ => 1,
+            };
+
+            var ordered = entries
+                .OrderBy(e => GroupOrder(e.Position))
+                .ThenBy(e => e.CurrentDisplayIndex)
+                .Select(e => e.Column)
+                .ToList();
+
+            _applyingFixedColumnLayout = true;
+            try
+            {
+                for (int i = 0; i < ordered.Count; i++)
+                {
+                    if (ordered[i].DisplayIndex != i)
+                        ordered[i].DisplayIndex = i;
+                }
+
+                int leftCount = entries.Count(e => e.Position == FixedColumnPosition.Left);
+                if (FrozenColumnCount != leftCount)
+                    FrozenColumnCount = leftCount;
+            }
+            finally
+            {
+                _applyingFixedColumnLayout = false;
+            }
+
+            // Keep an open ColumnChooser in sync with the new pinning state — its
+            // visual order (Left → None → Right) and per-row pin glyphs are derived
+            // from each descriptor's Fixed value, so a context-menu-driven Pin
+            // Left/Right/Unpin would otherwise leave the chooser stale until close.
+            // The chooser guards against re-entry from its own reorder calls.
+            _columnChooser?.OnGridFixedColumnLayoutChanged();
+        }
+
+        private bool _applyingFixedColumnLayout;
 
         /// <summary>
         /// Removes all columns that were generated from <see cref="GridColumn"/> descriptors.
@@ -1577,14 +1477,10 @@ namespace WWSearchDataGrid.Modern.WPF
         #region Field Type Resolution
 
         /// <summary>
-        /// Walks every descriptor in <see cref="GridColumns"/> and assigns <see cref="GridColumn.FieldType"/>
-        /// from the data source where it has not been set explicitly. No-op if there is no data source.
+        /// Resolves <see cref="GridColumn.FieldType"/> from the data source for descriptors
+        /// without an explicit one.
         /// </summary>
-        /// <returns>
-        /// <c>true</c> if any descriptor's <see cref="GridColumn.FieldType"/> was newly resolved
-        /// during this pass — the caller can use this to decide whether to regenerate the WPF
-        /// columns so type-driven defaults (auto <c>EditSettings</c>, column type) take effect.
-        /// </returns>
+        /// <returns>True if any FieldType was newly resolved — caller may regenerate columns.</returns>
         private bool ResolveFieldTypesFromItemsSource()
         {
             if (ItemsSource == null)
@@ -1620,9 +1516,7 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
-        /// Returns <c>true</c> when a new <see cref="GridColumn.FieldType"/> value was written —
-        /// either because the descriptor had no FieldType yet, or because the data source resolves
-        /// it to a different type than the auto value already on the descriptor.
+        /// Resolves FieldType for one descriptor. Returns true when a new value was written.
         /// </summary>
         private bool ResolveFieldTypeForDescriptor(GridColumn descriptor, Type itemType, IItemProperties itemProps, object sampleItem)
         {
@@ -1722,10 +1616,8 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
-        /// Returns true when the items source is a <see cref="System.Data.DataTable"/>-backed
-        /// collection and the named column is flagged <see cref="System.Data.DataColumn.ReadOnly"/>
-        /// (typical for computed expression columns). Returns false for non-DataTable sources, an
-        /// unknown <paramref name="fieldName"/>, or when no source is bound yet.
+        /// True when the source is DataTable-backed and the named column is ReadOnly (typical
+        /// for computed expression columns). False otherwise.
         /// </summary>
         internal bool IsSourceFieldReadOnly(string fieldName)
         {
@@ -1736,11 +1628,7 @@ namespace WWSearchDataGrid.Modern.WPF
             return table.Columns[fieldName].ReadOnly;
         }
 
-        /// <summary>
-        /// Walks the items source — including <see cref="ICollectionView"/> wrappers — and returns
-        /// the underlying <see cref="System.Data.DataTable"/>, or null if the source is not
-        /// DataTable-backed.
-        /// </summary>
+        /// <summary>Unwraps the items source through ICollectionView/IListSource to find the underlying DataTable.</summary>
         private System.Data.DataTable GetSourceDataTable()
         {
             object source = ItemsSource;
@@ -1776,7 +1664,7 @@ namespace WWSearchDataGrid.Modern.WPF
         {
             base.OnApplyTemplate();
 
-            // Unsubscribe editing events before re-subscribing to prevent duplicate handlers on re-template
+            // Re-subscribe editing events (template can re-apply at runtime).
             this.BeginningEdit -= OnBeginningEdit;
             this.RowEditEnding -= OnRowEditEnding;
             this.CellEditEnding -= OnCellEditEnding;
@@ -1790,7 +1678,6 @@ namespace WWSearchDataGrid.Modern.WPF
                 FilterPanel = new FilterPanel();
             }
 
-            // Unsubscribe from previous template FilterPanel if re-templating
             if (_templateFilterPanel != null)
             {
                 _templateFilterPanel.FiltersEnabledChanged -= OnFiltersEnabledChanged;
@@ -1798,34 +1685,30 @@ namespace WWSearchDataGrid.Modern.WPF
                 _templateFilterPanel.ValueRemovedFromToken -= OnValueRemovedFromToken;
                 _templateFilterPanel.OperatorToggled -= OnOperatorToggled;
                 _templateFilterPanel.ClearAllFiltersRequested -= OnClearAllFiltersRequested;
+                _templateFilterPanel.OpenFilterEditorRequested -= OnOpenFilterEditorRequested;
             }
 
-            // Get the FilterPanel template part and connect it to our FilterPanel instance
             if (GetTemplateChild("PART_FilterPanel") is FilterPanel templateFilterPanel && templateFilterPanel != null)
             {
-                // Copy the current state from our FilterPanel to the template FilterPanel
                 templateFilterPanel.FiltersEnabled = FilterPanel.FiltersEnabled;
                 templateFilterPanel.UpdateActiveFilters(FilterPanel.ActiveFilters);
 
-                // Wire up events from template FilterPanel using named methods (not lambdas) for cleanup
                 templateFilterPanel.FiltersEnabledChanged += OnFiltersEnabledChanged;
                 templateFilterPanel.FilterRemoved += OnFilterRemoved;
                 templateFilterPanel.ValueRemovedFromToken += OnValueRemovedFromToken;
                 templateFilterPanel.OperatorToggled += OnOperatorToggled;
                 templateFilterPanel.ClearAllFiltersRequested += OnClearAllFiltersRequested;
+                templateFilterPanel.OpenFilterEditorRequested += OnOpenFilterEditorRequested;
 
-                // Track reference for cleanup and replace FilterPanel property
                 _templateFilterPanel = templateFilterPanel;
                 FilterPanel = templateFilterPanel;
             }
 
-            // Set up select-all column headers when template is applied
             Dispatcher.BeginInvoke(new Action(() =>
             {
                 SetupSelectAllColumnHeaders();
             }), DispatcherPriority.Loaded);
 
-            // Initialize scroll velocity tracking and enhancement infrastructure
             InitializeScrollInfrastructure();
         }
 
@@ -1903,10 +1786,8 @@ namespace WWSearchDataGrid.Modern.WPF
 
         private static void OnActualHasItemsChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
-            // The DataTrigger bound to ActualHasItems in the column-header template re-evaluates
-            // automatically when this property changes. Calling UpdateLayout here is unnecessary
-            // and triggers measure/arrange side effects that can re-enter our CollectionChanged
-            // handlers, so we deliberately do not force layout here.
+            // No UpdateLayout — the DataTrigger re-evaluates automatically, and forcing layout
+            // here re-enters our CollectionChanged handlers.
             if (d is SearchDataGrid grid)
                 grid.InvalidateVisual();
         }
@@ -1979,10 +1860,8 @@ namespace WWSearchDataGrid.Modern.WPF
         /// </summary>
         protected override void OnItemsSourceChanged(IEnumerable oldValue, IEnumerable newValue)
         {
-            // BindingListCollectionView (the default view for DataView / IBindingListView) does not
-            // support predicate-based Items.Filter — it throws NotSupportedException. Our filter
-            // pipeline assigns predicates, so re-wrap the source in a ListCollectionView, which does.
-            // Guard against re-entry: if we're already wrapping, the inner re-set will skip this.
+            // BindingListCollectionView throws on predicate Items.Filter; wrap in
+            // ListCollectionView so our filter pipeline works.
             if (!_isRewrappingItemsSource && newValue != null && RequiresPredicateWrap(newValue))
             {
                 _isRewrappingItemsSource = true;
@@ -2029,30 +1908,16 @@ namespace WWSearchDataGrid.Modern.WPF
                     // Update ActualHasItems property
                     UpdateHasItemsProperty();
 
-                    // If AutoGenerateColumns is on and no descriptors were declared, populate
-                    // GridColumns from the data source. Only meaningful before the first
-                    // GenerateColumnsFromDescriptors pass — after that, the column set is established.
+                    // Auto-generate descriptors before the first column pass.
                     if (!_gridColumnsGenerated)
                         EnsureAutoGeneratedDescriptors();
 
-                    // Auto-resolve FieldType on descriptors that don't have one set explicitly.
-                    // Tracks whether anything actually changed so we know to regenerate columns
-                    // built earlier without type information.
                     bool fieldTypesChanged = ResolveFieldTypesFromItemsSource();
 
-                    // Cover the late-binding case: the grid loaded with a null ItemsSource, so
-                    // either no columns were generated yet (auto-gen path: descriptors arrived just
-                    // now via EnsureAutoGeneratedDescriptors) or columns were generated with null
-                    // FieldType (manual path: descriptors from XAML, but type resolution had no
-                    // data source to run against). Either way, build/rebuild columns now that we
-                    // have a real source — otherwise the grid renders empty (auto-gen) or with
-                    // plain text columns missing type-driven default EditSettings (manual).
-                    //
-                    // Gated on IsLoaded so we don't generate columns before the implicit style
-                    // has applied the grid's CellStyle/RowStyle. CreateDataGridColumn copies
-                    // Owner.CellStyle into per-column styles (BuildStretchingCellStyle) — running
-                    // pre-template would capture null and drop the styled setters. The Loaded
-                    // handler still covers the initial build.
+                    // Late-binding case: grid loaded with null ItemsSource, so columns either
+                    // weren't built yet or were built without type info. IsLoaded gate prevents
+                    // generation before the implicit style applies CellStyle/RowStyle —
+                    // CreateDataGridColumn copies Owner.CellStyle and would otherwise capture null.
                     if (IsLoaded)
                     {
                         var descriptors = (FreezableCollection<GridColumn>)GetValue(GridColumnsProperty);
@@ -2072,8 +1937,17 @@ namespace WWSearchDataGrid.Modern.WPF
                     // Notify controls that items source has changed
                     ItemsSourceChanged?.Invoke(this, EventArgs.Empty);
 
+                    // Apply FilterString now that ItemsSource is set and FieldTypes are resolved.
+                    // ApplyFilterString itself calls FilterItemsSource on success.
+                    bool filterStringApplied = false;
+                    if (!string.IsNullOrEmpty(FilterString))
+                    {
+                        ApplyFilterString();
+                        filterStringApplied = true;
+                    }
+
                     // Apply any existing filters - check for active column filters, not just Items.Filter
-                    if (HasActiveColumnFilters() || Items.Filter != null)
+                    if (!filterStringApplied && (HasActiveColumnFilters() || Items.Filter != null))
                     {
                         FilterItemsSource();
                     }
@@ -2248,11 +2122,9 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
-        /// Updates the ActualHasItems property. Intentionally simple: this drives a UI cosmetic
-        /// (hiding search boxes when no source is assigned), and any attempt to inspect the
-        /// actual count has historically created CollectionChanged feedback loops with views
-        /// like <see cref="ListCollectionView"/> over IBindingListView sources. Treating
-        /// "source assigned" as "has items" is good enough for the cosmetic and is loop-free.
+        /// "Source assigned" = "has items". Intentionally doesn't inspect the actual count —
+        /// past attempts created CollectionChanged feedback loops with ListCollectionView over
+        /// IBindingListView sources.
         /// </summary>
         private void UpdateHasItemsProperty()
         {

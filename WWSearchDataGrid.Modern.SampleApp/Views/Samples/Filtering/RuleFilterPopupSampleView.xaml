@@ -45,7 +45,7 @@
                                 SelectionMode="Extended"
                                 SelectionUnit="FullRow">
                 <sdg:SearchDataGrid.GridColumns>
-                    <sdg:GridColumn Width="80" FieldName="OrderNumber" Header="Order #" DefaultSearchType="StartsWith" />
+                    <sdg:GridColumn Width="80" FieldName="OrderNumber" Header="Order #" />
                     <sdg:GridColumn Width="120" FieldName="OrderStatusName" Header="Status" DefaultSearchType="Equals" />
                     <sdg:GridColumn Width="100" FieldName="OrderLocationName" Header="Location" DefaultSearchType="Equals" />
                     <sdg:GridColumn Width="150" FieldName="OrderDate" Header="Date" DisplayStringFormat="MM/dd/yyyy" />

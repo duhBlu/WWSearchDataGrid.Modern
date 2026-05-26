@@ -63,6 +63,8 @@ namespace WWSearchDataGrid.Modern.WPF.Converters
             SearchType.DateInterval => SearchTypeIconKeys.Today,
             SearchType.BetweenDates => SearchTypeIconKeys.Between,
             SearchType.NotBetweenDates => SearchTypeIconKeys.NotBetween,
+            SearchType.Unique => SearchTypeIconKeys.Unique,
+            SearchType.Duplicate => SearchTypeIconKeys.Duplicate,
             _ => null
         };
     }

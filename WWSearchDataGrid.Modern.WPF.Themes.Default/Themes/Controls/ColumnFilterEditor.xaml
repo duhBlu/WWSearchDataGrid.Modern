@@ -1,0 +1,386 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sdgCore="clr-namespace:WWSearchDataGrid.Modern.Core;assembly=WWSearchDataGrid.Modern.Core"
+                    xmlns:sys="clr-namespace:System;assembly=mscorlib"
+                    xmlns:sdg="clr-namespace:WWSearchDataGrid.Modern.WPF;assembly=WWSearchDataGrid.Modern.WPF"
+                    xmlns:converters="clr-namespace:WWSearchDataGrid.Modern.WPF.Converters;assembly=WWSearchDataGrid.Modern.WPF">
+
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF.Themes.Default;component/Themes/Controls/Primitives/DefaultControls.xaml" />
+        <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF.Themes.Default;component/Templates/SharedFilterRuleTemplates.xaml" />
+        <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF.Themes.Default;component/Themes/Controls/Primitives/NumericUpDown.xaml" />
+        <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF.Themes.Default;component/Themes/Controls/Primitives/SearchTextBox.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+
+    <!--  Converters  -->
+    <converters:SearchTypeToBetweenVisibilityConverter x:Key="BetweenValueVisibilityConverter" />
+
+    <converters:BooleanToVisibilityCollapsedConverter x:Key="BooleanToVisibilityCollapsedConverter" />
+    <converters:FilterInputTemplateToVisibilityConverter x:Key="FilterInputTemplateToVisibilityConverter" />
+    <converters:EnumToStringConverter x:Key="EnumToStringConverter" />
+
+
+    <!--
+        ColumnFilterEditor-specific Search Group Content Template.
+        Single-rule by design: this editor only ever displays one SearchTemplate per group;
+        multi-rule, multi-column composition lives in the new FilterPanel Filter Editor window.
+        The outer ItemsControl + StackPanel scaffolding is kept (binding ItemsSource to the
+        single-template SearchGroups[0].SearchTemplates collection) to minimise XAML churn while
+        the controller's multi-group API remains intact for the new editor.
+    -->
+    <DataTemplate x:Key="AdvancedFilterSearchGroupContentTemplate" DataType="{x:Type sdgCore:SearchTemplateGroup}">
+        <StackPanel>
+            <ItemsControl ItemsSource="{Binding SearchTemplates}"
+                          Grid.IsSharedSizeScope="True"
+                          VirtualizingPanel.IsVirtualizing="True"
+                          VirtualizingPanel.VirtualizationMode="Recycling"
+                          ScrollViewer.CanContentScroll="True">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <VirtualizingStackPanel Orientation="Vertical" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <!--
+                            Stacked rule layout: SearchType picker on top, value input below.
+                            Splits cleanly when the input template is multi-line (list / interval
+                            check-list) and gives the SearchType combo room to render its full
+                            label without competing for horizontal space with the input.
+                        -->
+                        <Border BorderBrush="#E8E8E8"
+                                BorderThickness="0,0,0,0"
+                                Padding="2,3">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="*" />
+                                </Grid.RowDefinitions>
+
+                                <!--  Search type dropdown  -->
+                                <ComboBox Style="{StaticResource {x:Static sdg:SdgThemeKeys.PrimitivesComboBox}}"
+                                          Grid.Row="0"
+                                          Margin="0,0,0,4"
+                                          Padding="4,2"
+                                          HorizontalAlignment="Stretch"
+                                          VerticalContentAlignment="Center"
+                                          FontSize="11"
+                                          ItemsSource="{Binding ValidSearchTypes}"
+                                          SelectedItem="{Binding SearchType}">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal">
+                                                <Image Source="{Binding Converter={StaticResource SearchTypeToIconConverter}}"
+                                                       Margin="0,0,6,0"
+                                                       VerticalAlignment="Center"
+                                                       Width="14"
+                                                       Height="14" />
+                                                <TextBlock Text="{Binding Converter={StaticResource EnumToStringConverter}}" VerticalAlignment="Center" />
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
+
+                                <!--  Value input (fills remaining width and any vertical space the input template wants)  -->
+                                <ContentControl Grid.Row="1"
+                                                HorizontalAlignment="Stretch"
+                                                VerticalAlignment="Stretch"
+                                                Content="{Binding}">
+                                    <ContentControl.Style>
+                                        <Style TargetType="ContentControl">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding InputTemplate}" Value="SingleSearchTextBox">
+                                                    <Setter Property="ContentTemplate" Value="{StaticResource SingleSearchTextBoxTemplate}" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding InputTemplate}" Value="DualSearchTextBox">
+                                                    <Setter Property="ContentTemplate" Value="{StaticResource DualSearchTextBoxTemplate}" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding InputTemplate}" Value="DualDateTimePicker">
+                                                    <Setter Property="ContentTemplate" Value="{StaticResource DualDateTimePickerTemplate}" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding InputTemplate}" Value="NumericUpDown">
+                                                    <Setter Property="ContentTemplate" Value="{StaticResource NumericUpDownTemplate}" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding InputTemplate}" Value="NoInput">
+                                                    <Setter Property="ContentTemplate" Value="{StaticResource NoInputTemplate}" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding InputTemplate}" Value="SearchTextBoxList">
+                                                    <Setter Property="ContentTemplate" Value="{StaticResource SearchTextBoxListTemplate}" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding InputTemplate}" Value="DateTimePickerList">
+                                                    <Setter Property="ContentTemplate" Value="{StaticResource DateTimePickerListTemplate}" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding InputTemplate}" Value="DateIntervalCheckList">
+                                                    <Setter Property="ContentTemplate" Value="{StaticResource DateIntervalCheckListTemplate}" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </ContentControl.Style>
+                                </ContentControl>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </StackPanel>
+    </DataTemplate>
+
+    <!--  ColumnFilterEditor Style  -->
+    <Style x:Key="{x:Static sdg:SdgThemeKeys.ColumnFilterEditor}" TargetType="{x:Type sdg:ColumnFilterEditor}">
+        <Setter Property="Background" Value="#f4f4f4" />
+        <Setter Property="BorderBrush" Value="DarkGray" />
+        <Setter Property="VerticalOffset" Value="-24" />
+        <Setter Property="HorizontalOffset" Value="-24" />
+        <Setter Property="MinWidth" Value="300" />
+        <Setter Property="MinHeight" Value="300" />
+        <Setter Property="MaxHeight" Value="500" />
+        <Setter Property="Margin" Value="12" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type sdg:ColumnFilterEditor}">
+                    <Grid Margin="{TemplateBinding Margin}">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="4">
+                            <Border.Effect>
+                                <DropShadowEffect Color="#02000000"
+                                                  Opacity="0.25"
+                                                  BlurRadius="8"
+                                                  ShadowDepth="2" />
+                            </Border.Effect>
+                            <Grid Margin="0,0,0,0">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="*" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+
+                                <!--  Tabbed Interface: Filter Rules + Filter Values  -->
+                                <TabControl x:Name="PART_TabControl"
+                                            Style="{StaticResource {x:Static sdg:SdgThemeKeys.PrimitivesTabControl}}"
+                                            Grid.Row="0">
+
+                                    <!--  TAB 1: Filter Rules (existing functionality)  -->
+                                    <TabItem Style="{StaticResource {x:Static sdg:SdgThemeKeys.PrimitivesTabItem}}" Header="Filter Rules">
+                                        <ScrollViewer Margin="4,4,4,0" VerticalScrollBarVisibility="Auto">
+                                            <ContentControl Content="{Binding SearchTemplateController, RelativeSource={RelativeSource TemplatedParent}}">
+                                                <ContentControl.Style>
+                                                    <Style TargetType="ContentControl">
+                                                        <Setter Property="ContentTemplate">
+                                                            <Setter.Value>
+                                                                <DataTemplate>
+                                                                    <ItemsControl ItemsSource="{Binding SearchGroups}" VirtualizingPanel.IsVirtualizing="False">
+                                                                        <ItemsControl.ItemsPanel>
+                                                                            <ItemsPanelTemplate>
+                                                                                <StackPanel Orientation="Vertical" />
+                                                                            </ItemsPanelTemplate>
+                                                                        </ItemsControl.ItemsPanel>
+                                                                        <ItemsControl.ItemTemplate>
+                                                                            <DataTemplate DataType="{x:Type sdgCore:SearchTemplateGroup}">
+                                                                                <ContentPresenter Content="{Binding}" ContentTemplate="{StaticResource AdvancedFilterSearchGroupContentTemplate}" />
+                                                                            </DataTemplate>
+                                                                        </ItemsControl.ItemTemplate>
+                                                                    </ItemsControl>
+                                                                </DataTemplate>
+                                                            </Setter.Value>
+                                                        </Setter>
+                                                    </Style>
+                                                </ContentControl.Style>
+                                            </ContentControl>
+                                        </ScrollViewer>
+                                    </TabItem>
+
+                                    <!--  TAB 2: Filter Values (checkbox list)  -->
+                                    <TabItem Style="{StaticResource {x:Static sdg:SdgThemeKeys.PrimitivesTabItem}}" Header="Filter Values">
+                                        <DockPanel Margin="4,4,4,0">
+
+                                            <!--  Top: Select All checkbox + Search  -->
+                                            <Grid DockPanel.Dock="Top" Margin="0,0,0,4">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="*" />
+                                                </Grid.ColumnDefinitions>
+
+                                                <CheckBox Style="{StaticResource {x:Static sdg:SdgThemeKeys.PrimitivesCheckBox}}"
+                                                          Grid.Column="0"
+                                                          IsChecked="{Binding FilterValueManager.SelectAllState, RelativeSource={RelativeSource AncestorType=sdg:ColumnFilterEditor}, Mode=OneWay}"
+                                                          Command="{Binding SelectAllValuesCommand, RelativeSource={RelativeSource AncestorType=sdg:ColumnFilterEditor}}"
+                                                          Margin="0,0,8,0"
+                                                          IsThreeState="True"
+                                                          Content="Select All"
+                                                          FontSize="11" />
+                                                <TextBox Grid.Column="1"
+                                                         Text="{Binding FilterValueManager.SearchText, RelativeSource={RelativeSource AncestorType=sdg:ColumnFilterEditor}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                                                         Padding="4,2"
+                                                         VerticalContentAlignment="Center"
+                                                         FontSize="11" />
+                                            </Grid>
+
+                                            <!--  Bottom: Status  -->
+                                            <TextBlock DockPanel.Dock="Bottom"
+                                                       Foreground="Gray"
+                                                       Margin="0,4,0,2"
+                                                       HorizontalAlignment="Right"
+                                                       FontSize="11">
+                                                <TextBlock.Text>
+                                                    <MultiBinding StringFormat="{}{0:N0} / {1:N0} selected">
+                                                        <Binding RelativeSource="{RelativeSource AncestorType=sdg:ColumnFilterEditor}" Path="FilterValueManager.CheckedCount" />
+                                                        <Binding RelativeSource="{RelativeSource AncestorType=sdg:ColumnFilterEditor}" Path="FilterValueManager.TotalCount" />
+                                                    </MultiBinding>
+                                                </TextBlock.Text>
+                                            </TextBlock>
+
+                                            <!--
+                                                Center: Flat list for non-DateTime, TreeView for DateTime.
+                                                Wrapped in a Grid so whichever is visible fills the DockPanel's remaining space.
+                                            -->
+                                            <Grid>
+
+                                                <!--  Flat checkbox list (hidden when DateTime)  -->
+                                                <ListBox Background="Transparent"
+                                                         BorderThickness="0"
+                                                         ItemsSource="{Binding FilterValueManager.ValueItems, RelativeSource={RelativeSource AncestorType=sdg:ColumnFilterEditor}}"
+                                                         ScrollViewer.CanContentScroll="True"
+                                                         VirtualizingPanel.IsVirtualizing="True"
+                                                         VirtualizingPanel.VirtualizationMode="Recycling">
+                                                    <ListBox.Style>
+                                                        <Style TargetType="ListBox">
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding FilterValueManager.IsDateTimeColumn, RelativeSource={RelativeSource AncestorType=sdg:ColumnFilterEditor}}" Value="True">
+                                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </ListBox.Style>
+                                                    <ListBox.ItemContainerStyle>
+                                                        <Style TargetType="ListBoxItem">
+                                                            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                                            <Setter Property="Padding" Value="0" />
+                                                            <Setter Property="Background" Value="Transparent" />
+                                                            <Setter Property="Visibility" Value="{Binding IsVisible, Converter={StaticResource BooleanToVisibilityCollapsedConverter}}" />
+                                                            <Style.Triggers>
+                                                                <Trigger Property="IsSelected" Value="True">
+                                                                    <Setter Property="Background" Value="Transparent" />
+                                                                </Trigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </ListBox.ItemContainerStyle>
+                                                    <ListBox.ItemTemplate>
+                                                        <DataTemplate>
+                                                            <CheckBox Style="{StaticResource {x:Static sdg:SdgThemeKeys.PrimitivesCheckBox}}"
+                                                                      IsChecked="{Binding IsChecked}"
+                                                                      Margin="2,1"
+                                                                      VerticalContentAlignment="Center">
+                                                                <CheckBox.Content>
+                                                                    <Grid>
+                                                                        <Grid.ColumnDefinitions>
+                                                                            <ColumnDefinition Width="*" />
+                                                                            <ColumnDefinition Width="Auto" />
+                                                                        </Grid.ColumnDefinitions>
+                                                                        <TextBlock Grid.Column="0"
+                                                                                   Text="{Binding DisplayValue}"
+                                                                                   VerticalAlignment="Center" />
+                                                                        <TextBlock Grid.Column="1"
+                                                                                   Foreground="Gray"
+                                                                                   Text="{Binding Count, StringFormat='({0:N0})'}"
+                                                                                   Margin="8,0,0,0"
+                                                                                   VerticalAlignment="Center"
+                                                                                   FontSize="10" />
+                                                                    </Grid>
+                                                                </CheckBox.Content>
+                                                            </CheckBox>
+                                                        </DataTemplate>
+                                                    </ListBox.ItemTemplate>
+                                                </ListBox>
+
+                                                <!--  DateTime TreeView (hidden when NOT DateTime)  -->
+                                                <TreeView Background="Transparent"
+                                                          BorderThickness="0"
+                                                          ItemsSource="{Binding FilterValueManager.DateTreeRoots, RelativeSource={RelativeSource AncestorType=sdg:ColumnFilterEditor}}">
+                                                    <TreeView.Style>
+                                                        <Style TargetType="TreeView">
+                                                            <Setter Property="Visibility" Value="Collapsed" />
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding FilterValueManager.IsDateTimeColumn, RelativeSource={RelativeSource AncestorType=sdg:ColumnFilterEditor}}" Value="True">
+                                                                    <Setter Property="Visibility" Value="Visible" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TreeView.Style>
+                                                    <TreeView.ItemContainerStyle>
+                                                        <Style TargetType="TreeViewItem">
+                                                            <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
+                                                        </Style>
+                                                    </TreeView.ItemContainerStyle>
+                                                    <TreeView.ItemTemplate>
+                                                        <HierarchicalDataTemplate ItemsSource="{Binding Children}">
+                                                            <CheckBox Style="{StaticResource {x:Static sdg:SdgThemeKeys.PrimitivesCheckBox}}"
+                                                                      IsChecked="{Binding IsChecked}"
+                                                                      Margin="2,1"
+                                                                      IsThreeState="False">
+                                                                <CheckBox.Content>
+                                                                    <StackPanel Orientation="Horizontal">
+                                                                        <TextBlock Text="{Binding DisplayName}" VerticalAlignment="Center" />
+                                                                        <TextBlock Foreground="Gray"
+                                                                                   Text="{Binding TotalCount, StringFormat=' ({0:N0})'}"
+                                                                                   VerticalAlignment="Center"
+                                                                                   FontSize="10" />
+                                                                    </StackPanel>
+                                                                </CheckBox.Content>
+                                                            </CheckBox>
+                                                        </HierarchicalDataTemplate>
+                                                    </TreeView.ItemTemplate>
+                                                </TreeView>
+                                            </Grid>
+                                        </DockPanel>
+                                    </TabItem>
+                                </TabControl>
+
+                                <!--
+                                    Footer pinned to the bottom of the popup (visible from both tabs).
+                                    Live-apply vs deferred-apply is controlled grid-wide by
+                                    SearchDataGrid.EnableLiveFiltering — the popup honors that DP
+                                    at apply time; there's no per-column or per-popup override.
+                                -->
+                                <Border Grid.Row="1"
+                                        BorderThickness="0,1,0,0"
+                                        Margin="0"
+                                        Padding="4"
+                                        CornerRadius="0,0,4,4">
+                                    <Button Style="{StaticResource {x:Static sdg:SdgThemeKeys.PrimitivesButton}}"
+                                            Command="{Binding ClearFilterCommand, RelativeSource={RelativeSource TemplatedParent}}"
+                                            HorizontalAlignment="Left"
+                                            Content="Clear Filter" />
+                                </Border>
+                            </Grid>
+                        </Border>
+
+                        <!--  Bottom-left resize grip  -->
+                        <Thumb x:Name="PART_ResizeBottomLeft"
+                               Style="{StaticResource {x:Static sdg:SdgThemeKeys.PrimitivesResizeThumb}}"
+                               Cursor="SizeNESW"
+                               HorizontalAlignment="Left"
+                               VerticalAlignment="Bottom"
+                               Panel.ZIndex="10"
+                               Width="14"
+                               Height="14" />
+
+                        <!--  Bottom-right resize grip  -->
+                        <Thumb x:Name="PART_ResizeBottomRight"
+                               Style="{StaticResource {x:Static sdg:SdgThemeKeys.PrimitivesResizeThumb}}"
+                               Cursor="SizeNWSE"
+                               HorizontalAlignment="Right"
+                               VerticalAlignment="Bottom"
+                               Panel.ZIndex="10"
+                               Width="14"
+                               Height="14" />
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style BasedOn="{StaticResource {x:Static sdg:SdgThemeKeys.ColumnFilterEditor}}" TargetType="{x:Type sdg:ColumnFilterEditor}" />
+
+</ResourceDictionary>

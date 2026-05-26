@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -13,6 +13,7 @@ using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Threading;
 using WWSearchDataGrid.Modern.Core;
+using WWSearchDataGrid.Modern.WPF.Commands;
 
 namespace WWSearchDataGrid.Modern.WPF
 {
@@ -53,6 +54,85 @@ namespace WWSearchDataGrid.Modern.WPF
             DependencyProperty.Register("Columns", typeof(ObservableCollection<ColumnVisibilityInfo>), typeof(ColumnChooser),
                 new PropertyMetadata(null));
 
+        /// <summary>
+        /// Backing collection for the Left-pinned section listbox. Reorder operations
+        /// happen within this collection; cross-section drags are impossible because
+        /// each section has its own <see cref="ReorderableListBox"/>.
+        /// </summary>
+        public static readonly DependencyProperty LeftFixedColumnsProperty =
+            DependencyProperty.Register(nameof(LeftFixedColumns), typeof(ObservableCollection<ColumnVisibilityInfo>), typeof(ColumnChooser),
+                new PropertyMetadata(null));
+
+        /// <summary>Backing collection for the unpinned (middle) section listbox.</summary>
+        public static readonly DependencyProperty UnpinnedColumnsProperty =
+            DependencyProperty.Register(nameof(UnpinnedColumns), typeof(ObservableCollection<ColumnVisibilityInfo>), typeof(ColumnChooser),
+                new PropertyMetadata(null));
+
+        /// <summary>Backing collection for the Right-pinned section listbox.</summary>
+        public static readonly DependencyProperty RightFixedColumnsProperty =
+            DependencyProperty.Register(nameof(RightFixedColumns), typeof(ObservableCollection<ColumnVisibilityInfo>), typeof(ColumnChooser),
+                new PropertyMetadata(null));
+
+        /// <summary>
+        /// The currently selected <see cref="ColumnVisibilityInfo"/> across all three
+        /// section listboxes. Updated when any section ListBox raises SelectionChanged
+        /// and used as the CommandParameter for the Move Up / Move Down buttons.
+        /// </summary>
+        public static readonly DependencyProperty SelectedColumnProperty =
+            DependencyProperty.Register(nameof(SelectedColumn), typeof(ColumnVisibilityInfo), typeof(ColumnChooser),
+                new PropertyMetadata(null));
+
+        /// <summary>
+        /// True when <see cref="LeftFixedColumns"/> has more than one item — gates
+        /// drag-drop on the Left section listbox. A single-item list has no
+        /// meaningful reorder, so we disable drag rather than animate a no-op.
+        /// </summary>
+        public static readonly DependencyProperty IsLeftDragEnabledProperty =
+            DependencyProperty.Register(nameof(IsLeftDragEnabled), typeof(bool), typeof(ColumnChooser),
+                new PropertyMetadata(false));
+
+        /// <summary>True when <see cref="UnpinnedColumns"/> has more than one item.</summary>
+        public static readonly DependencyProperty IsUnpinnedDragEnabledProperty =
+            DependencyProperty.Register(nameof(IsUnpinnedDragEnabled), typeof(bool), typeof(ColumnChooser),
+                new PropertyMetadata(false));
+
+        /// <summary>True when <see cref="RightFixedColumns"/> has more than one item.</summary>
+        public static readonly DependencyProperty IsRightDragEnabledProperty =
+            DependencyProperty.Register(nameof(IsRightDragEnabled), typeof(bool), typeof(ColumnChooser),
+                new PropertyMetadata(false));
+
+        /// <summary>True when <see cref="LeftFixedColumns"/> has any items. Collapses the
+        /// section listbox when false so the chooser doesn't reserve empty rows.</summary>
+        public static readonly DependencyProperty HasLeftFixedColumnsProperty =
+            DependencyProperty.Register(nameof(HasLeftFixedColumns), typeof(bool), typeof(ColumnChooser),
+                new PropertyMetadata(false));
+
+        /// <summary>True when <see cref="UnpinnedColumns"/> has any items.</summary>
+        public static readonly DependencyProperty HasUnpinnedColumnsProperty =
+            DependencyProperty.Register(nameof(HasUnpinnedColumns), typeof(bool), typeof(ColumnChooser),
+                new PropertyMetadata(false));
+
+        /// <summary>True when <see cref="RightFixedColumns"/> has any items.</summary>
+        public static readonly DependencyProperty HasRightFixedColumnsProperty =
+            DependencyProperty.Register(nameof(HasRightFixedColumns), typeof(bool), typeof(ColumnChooser),
+                new PropertyMetadata(false));
+
+        /// <summary>
+        /// Divider between the Left section and whatever follows it. Visible when
+        /// Left has items AND at least one of Unpinned/Right also has items.
+        /// </summary>
+        public static readonly DependencyProperty IsTopDividerVisibleProperty =
+            DependencyProperty.Register(nameof(IsTopDividerVisible), typeof(bool), typeof(ColumnChooser),
+                new PropertyMetadata(false));
+
+        /// <summary>
+        /// Divider between the Unpinned section and the Right section. Visible when
+        /// both are populated. The Left/Right-only case is handled by the top divider.
+        /// </summary>
+        public static readonly DependencyProperty IsBottomDividerVisibleProperty =
+            DependencyProperty.Register(nameof(IsBottomDividerVisible), typeof(bool), typeof(ColumnChooser),
+                new PropertyMetadata(false));
+
         public static readonly DependencyProperty WindowStyleProperty =
             DependencyProperty.Register("WindowStyle", typeof(Style), typeof(ColumnChooser),
                 new PropertyMetadata(null));
@@ -92,12 +172,102 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
-        /// Gets or sets the collection of columns with visibility information
+        /// Master flat collection of every column shown in the chooser, ordered
+        /// Left-pinned → unpinned → Right-pinned. The three section collections
+        /// (<see cref="LeftFixedColumns"/>, <see cref="UnpinnedColumns"/>,
+        /// <see cref="RightFixedColumns"/>) are partitions of this list and are
+        /// what the three section listboxes bind to. Consumers that iterate
+        /// chooser state (e.g. context-menu command handlers) read from
+        /// <see cref="Columns"/>.
         /// </summary>
         public ObservableCollection<ColumnVisibilityInfo> Columns
         {
             get => (ObservableCollection<ColumnVisibilityInfo>)GetValue(ColumnsProperty);
             set => SetValue(ColumnsProperty, value);
+        }
+
+        /// <summary>Left-pinned section. See <see cref="LeftFixedColumnsProperty"/>.</summary>
+        public ObservableCollection<ColumnVisibilityInfo> LeftFixedColumns
+        {
+            get => (ObservableCollection<ColumnVisibilityInfo>)GetValue(LeftFixedColumnsProperty);
+            set => SetValue(LeftFixedColumnsProperty, value);
+        }
+
+        /// <summary>Unpinned section. See <see cref="UnpinnedColumnsProperty"/>.</summary>
+        public ObservableCollection<ColumnVisibilityInfo> UnpinnedColumns
+        {
+            get => (ObservableCollection<ColumnVisibilityInfo>)GetValue(UnpinnedColumnsProperty);
+            set => SetValue(UnpinnedColumnsProperty, value);
+        }
+
+        /// <summary>Right-pinned section. See <see cref="RightFixedColumnsProperty"/>.</summary>
+        public ObservableCollection<ColumnVisibilityInfo> RightFixedColumns
+        {
+            get => (ObservableCollection<ColumnVisibilityInfo>)GetValue(RightFixedColumnsProperty);
+            set => SetValue(RightFixedColumnsProperty, value);
+        }
+
+        /// <summary>The currently selected column across all three sections.</summary>
+        public ColumnVisibilityInfo SelectedColumn
+        {
+            get => (ColumnVisibilityInfo)GetValue(SelectedColumnProperty);
+            set => SetValue(SelectedColumnProperty, value);
+        }
+
+        /// <summary>Whether the Left section listbox should allow drag-drop reordering (count &gt; 1).</summary>
+        public bool IsLeftDragEnabled
+        {
+            get => (bool)GetValue(IsLeftDragEnabledProperty);
+            private set => SetValue(IsLeftDragEnabledProperty, value);
+        }
+
+        /// <summary>Whether the unpinned section listbox should allow drag-drop reordering (count &gt; 1).</summary>
+        public bool IsUnpinnedDragEnabled
+        {
+            get => (bool)GetValue(IsUnpinnedDragEnabledProperty);
+            private set => SetValue(IsUnpinnedDragEnabledProperty, value);
+        }
+
+        /// <summary>Whether the Right section listbox should allow drag-drop reordering (count &gt; 1).</summary>
+        public bool IsRightDragEnabled
+        {
+            get => (bool)GetValue(IsRightDragEnabledProperty);
+            private set => SetValue(IsRightDragEnabledProperty, value);
+        }
+
+        /// <summary>True when the Left section has any items.</summary>
+        public bool HasLeftFixedColumns
+        {
+            get => (bool)GetValue(HasLeftFixedColumnsProperty);
+            private set => SetValue(HasLeftFixedColumnsProperty, value);
+        }
+
+        /// <summary>True when the Unpinned section has any items.</summary>
+        public bool HasUnpinnedColumns
+        {
+            get => (bool)GetValue(HasUnpinnedColumnsProperty);
+            private set => SetValue(HasUnpinnedColumnsProperty, value);
+        }
+
+        /// <summary>True when the Right section has any items.</summary>
+        public bool HasRightFixedColumns
+        {
+            get => (bool)GetValue(HasRightFixedColumnsProperty);
+            private set => SetValue(HasRightFixedColumnsProperty, value);
+        }
+
+        /// <summary>Visibility of the divider between Left and the rest.</summary>
+        public bool IsTopDividerVisible
+        {
+            get => (bool)GetValue(IsTopDividerVisibleProperty);
+            private set => SetValue(IsTopDividerVisibleProperty, value);
+        }
+
+        /// <summary>Visibility of the divider between Unpinned and Right.</summary>
+        public bool IsBottomDividerVisible
+        {
+            get => (bool)GetValue(IsBottomDividerVisibleProperty);
+            private set => SetValue(IsBottomDividerVisibleProperty, value);
         }
 
         public Style WindowStyle
@@ -183,8 +353,17 @@ namespace WWSearchDataGrid.Modern.WPF
         {
             DefaultStyleKey = typeof(ColumnChooser);
             Columns = new ObservableCollection<ColumnVisibilityInfo>();
+            LeftFixedColumns = new ObservableCollection<ColumnVisibilityInfo>();
+            UnpinnedColumns = new ObservableCollection<ColumnVisibilityInfo>();
+            RightFixedColumns = new ObservableCollection<ColumnVisibilityInfo>();
 
-            // Subscribe to column visibility changes to update select all state
+            // Cached delegate so AddValueChanged/RemoveValueChanged see the same
+            // instance — DependencyPropertyDescriptor uses identity equality.
+            _onCanUserReorderColumnsChanged = (_, _) => UpdateSectionFlags();
+
+            // Subscribe to column visibility changes to update select all state.
+            // Only the master Columns list owns the PropertyChanged subscription;
+            // section lists hold the same instances, so we don't double-subscribe.
             Columns.CollectionChanged += (s, e) =>
             {
                 if (e.NewItems != null)
@@ -202,11 +381,60 @@ namespace WWSearchDataGrid.Modern.WPF
                     }
                 }
             };
+
+            // Drag-enablement and section-visibility flags are derived state — recompute
+            // whenever any of the three section collections changes membership.
+            LeftFixedColumns.CollectionChanged += (s, e) => UpdateSectionFlags();
+            UnpinnedColumns.CollectionChanged += (s, e) => UpdateSectionFlags();
+            RightFixedColumns.CollectionChanged += (s, e) => UpdateSectionFlags();
+        }
+
+        /// <summary>
+        /// Recomputes drag-enabled / has-section / divider-visibility flags from the
+        /// three section counts and the parent grid's <see cref="DataGrid.CanUserReorderColumns"/>.
+        /// Called from every <see cref="System.Collections.Specialized.INotifyCollectionChanged.CollectionChanged"/>
+        /// on the section collections, on <see cref="SourceDataGrid"/> change, and when the
+        /// observed grid toggles its reorder flag.
+        /// </summary>
+        private void UpdateSectionFlags()
+        {
+            int leftCount = LeftFixedColumns.Count;
+            int unpinnedCount = UnpinnedColumns.Count;
+            int rightCount = RightFixedColumns.Count;
+
+            bool hasLeft = leftCount > 0;
+            bool hasUnpinned = unpinnedCount > 0;
+            bool hasRight = rightCount > 0;
+            bool canReorder = SourceDataGrid?.CanUserReorderColumns ?? false;
+
+            HasLeftFixedColumns = hasLeft;
+            HasUnpinnedColumns = hasUnpinned;
+            HasRightFixedColumns = hasRight;
+
+            // Drag requires both a meaningful destination (count > 1) and grid-level
+            // permission. The grid flag mirrors the original single-listbox behavior.
+            IsLeftDragEnabled = canReorder && leftCount > 1;
+            IsUnpinnedDragEnabled = canReorder && unpinnedCount > 1;
+            IsRightDragEnabled = canReorder && rightCount > 1;
+
+            // Divider rules:
+            //   Top divider — between Left and whatever follows. Shown when Left has
+            //   items AND at least one downstream section also has items. Handles the
+            //   Left+Right-only case (Unpinned collapsed): one divider, between them.
+            //   Bottom divider — between Unpinned and Right. Shown only when both
+            //   sections are populated; otherwise the top divider already covers it.
+            IsTopDividerVisible = hasLeft && (hasUnpinned || hasRight);
+            IsBottomDividerVisible = hasUnpinned && hasRight;
         }
 
         public override void OnApplyTemplate()
         {
             base.OnApplyTemplate();
+
+            // Detach any prior section listbox handlers — OnApplyTemplate can run more
+            // than once if the control template is re-applied at runtime, so cleanup
+            // prevents duplicate subscriptions.
+            DetachSectionListBoxes();
 
             // Wire up Select All checkbox
             // Use Click event only (not Checked/Unchecked) - same pattern as column header select all
@@ -216,39 +444,125 @@ namespace WWSearchDataGrid.Modern.WPF
                 selectAllCheckBox.Loaded += (s, e) => UpdateSelectAllState();
             }
 
-            // Wire up ReorderableListBox events first so we can bind to it
-            ReorderableListBox columnListBox = null;
-            if (GetTemplateChild("PART_ColumnList") is ReorderableListBox columnList)
+            // Wire up the three section listboxes — each handles its own drag-drop and
+            // raises ItemReordered with section-local indices. Cross-section drags are
+            // impossible by construction.
+            _leftSectionListBox = GetTemplateChild("PART_LeftSectionList") as ReorderableListBox;
+            _unpinnedSectionListBox = GetTemplateChild("PART_UnpinnedSectionList") as ReorderableListBox;
+            _rightSectionListBox = GetTemplateChild("PART_RightSectionList") as ReorderableListBox;
+
+            foreach (var listBox in EnumerateSectionListBoxes())
             {
-                columnListBox = columnList;
-                columnList.ItemReordered += OnColumnListItemReordered;
-                columnList.SelectionChanged += OnColumnListSelectionChanged;
+                listBox.ItemReordered += OnSectionListItemReordered;
+                listBox.SelectionChanged += OnSectionListBoxSelectionChanged;
+                // The shared column-header context menu binds against a ContextMenuContext.
+                // For chooser rows, push the row's pre-built context onto the menu at
+                // opening time — same mechanism the header path uses, just scoped to the
+                // chooser ListBoxes.
+                listBox.ContextMenuOpening += OnSectionContextMenuOpening;
             }
 
-            // Wire up Move Up/Down buttons with CommandParameter binding to ListBox SelectedItem
-            if (GetTemplateChild("PART_MoveUpButton") is Button moveUpButton && columnListBox != null)
+            // Move Up/Down buttons fire on whichever section row is currently selected.
+            // We mirror the selection into SelectedColumn so a single CommandParameter
+            // binding works regardless of which listbox owns the focus.
+            if (GetTemplateChild("PART_MoveUpButton") is Button moveUpButton)
             {
                 moveUpButton.Command = MoveUpCommand;
-                // Bind CommandParameter to the ListBox's SelectedItem
-                var binding = new System.Windows.Data.Binding("SelectedItem")
+                moveUpButton.SetBinding(Button.CommandParameterProperty, new System.Windows.Data.Binding(nameof(SelectedColumn))
                 {
-                    Source = columnListBox,
+                    Source = this,
                     Mode = System.Windows.Data.BindingMode.OneWay
-                };
-                moveUpButton.SetBinding(Button.CommandParameterProperty, binding);
+                });
             }
 
-            if (GetTemplateChild("PART_MoveDownButton") is Button moveDownButton && columnListBox != null)
+            if (GetTemplateChild("PART_MoveDownButton") is Button moveDownButton)
             {
                 moveDownButton.Command = MoveDownCommand;
-                // Bind CommandParameter to the ListBox's SelectedItem
-                var binding = new System.Windows.Data.Binding("SelectedItem")
+                moveDownButton.SetBinding(Button.CommandParameterProperty, new System.Windows.Data.Binding(nameof(SelectedColumn))
                 {
-                    Source = columnListBox,
+                    Source = this,
                     Mode = System.Windows.Data.BindingMode.OneWay
-                };
-                moveDownButton.SetBinding(Button.CommandParameterProperty, binding);
+                });
             }
+        }
+
+        private ReorderableListBox _leftSectionListBox;
+        private ReorderableListBox _unpinnedSectionListBox;
+        private ReorderableListBox _rightSectionListBox;
+
+        private IEnumerable<ReorderableListBox> EnumerateSectionListBoxes()
+        {
+            if (_leftSectionListBox != null) yield return _leftSectionListBox;
+            if (_unpinnedSectionListBox != null) yield return _unpinnedSectionListBox;
+            if (_rightSectionListBox != null) yield return _rightSectionListBox;
+        }
+
+        private void DetachSectionListBoxes()
+        {
+            foreach (var listBox in EnumerateSectionListBoxes())
+            {
+                listBox.ItemReordered -= OnSectionListItemReordered;
+                listBox.SelectionChanged -= OnSectionListBoxSelectionChanged;
+                listBox.ContextMenuOpening -= OnSectionContextMenuOpening;
+            }
+            _leftSectionListBox = null;
+            _unpinnedSectionListBox = null;
+            _rightSectionListBox = null;
+        }
+
+        /// <summary>
+        /// Wires the shared column-header context menu to the chooser row that opened it.
+        /// The Style attaches the same <see cref="ContextMenu"/> resource the column header
+        /// uses (the resource is declared <c>x:Shared="False"</c>, so every ListBoxItem gets
+        /// its own instance), but the menu's bindings target a
+        /// <see cref="ContextMenuContext"/> that's specific to the column being acted on.
+        /// This handler walks from the event source up to the originating
+        /// <see cref="ListBoxItem"/>, reads the row's pre-built
+        /// <see cref="ColumnVisibilityInfo.ContextMenuContext"/>, and pushes it onto the
+        /// ContextMenu's <see cref="System.Windows.FrameworkElement.DataContext"/> before
+        /// the menu opens. Mirrors the runtime DataContext assignment that
+        /// <see cref="ContextMenuExtensions.OnContextMenuOpening"/> performs for header
+        /// right-clicks, so commands behave identically across the two surfaces.
+        /// </summary>
+        private void OnSectionContextMenuOpening(object sender, ContextMenuEventArgs e)
+        {
+            if (sender is not ReorderableListBox listBox) return;
+
+            // Walk up to the originating ListBoxItem so the chooser-row identity is preserved
+            // even when the click lands on a child element (checkbox, text, glyph).
+            var origin = e.OriginalSource as DependencyObject;
+            ListBoxItem item = null;
+            var cursor = origin;
+            while (cursor != null)
+            {
+                if (cursor is ListBoxItem candidate)
+                {
+                    item = candidate;
+                    break;
+                }
+                cursor = System.Windows.Media.VisualTreeHelper.GetParent(cursor)
+                         ?? LogicalTreeHelper.GetParent(cursor);
+            }
+
+            if (item?.DataContext is not ColumnVisibilityInfo columnInfo || columnInfo.ContextMenuContext == null)
+            {
+                // No identifiable row (e.g., right-click on listbox background) — suppress the
+                // menu rather than show a half-bound copy whose commands would no-op.
+                e.Handled = true;
+                return;
+            }
+
+            Core.CommandManager.InvalidateRequerySuggested();
+
+            var menu = item.ContextMenu ?? listBox.ContextMenu;
+            if (menu == null)
+            {
+                e.Handled = true;
+                return;
+            }
+
+            menu.DataContext = columnInfo.ContextMenuContext;
+            menu.PlacementTarget = item;
         }
 
         #endregion
@@ -494,26 +808,50 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
-        /// Handles changes to the source data grid
+        /// Handles changes to the source data grid. Rebuilds the column lists and
+        /// re-subscribes the <see cref="DataGrid.CanUserReorderColumns"/> listener
+        /// to the new grid (detaching from the old) so per-section drag-enable
+        /// flags stay accurate when the consumer toggles reordering at runtime.
         /// </summary>
         private static void OnSourceDataGridChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
-            if (d is ColumnChooser editor)
-            {
-                editor.RefreshColumns();
-            }
+            if (d is not ColumnChooser chooser) return;
+
+            var canReorderDpd = DependencyPropertyDescriptor.FromProperty(
+                DataGrid.CanUserReorderColumnsProperty, typeof(DataGrid));
+
+            if (e.OldValue is DataGrid oldGrid)
+                canReorderDpd?.RemoveValueChanged(oldGrid, chooser._onCanUserReorderColumnsChanged);
+
+            if (e.NewValue is DataGrid newGrid)
+                canReorderDpd?.AddValueChanged(newGrid, chooser._onCanUserReorderColumnsChanged);
+
+            chooser.RefreshColumns();
+            chooser.UpdateSectionFlags();
         }
 
+        private EventHandler _onCanUserReorderColumnsChanged;
+
         /// <summary>
-        /// Refreshes the columns collection from the source data grid
+        /// Refreshes all four chooser collections from the source data grid.
+        /// Iterates in <see cref="DataGridColumn.DisplayIndex"/> order, builds one
+        /// <see cref="ColumnVisibilityInfo"/> per visible descriptor, and partitions
+        /// the results into <see cref="LeftFixedColumns"/> / <see cref="UnpinnedColumns"/>
+        /// / <see cref="RightFixedColumns"/> based on each descriptor's
+        /// <see cref="GridColumn.Fixed"/> value. <see cref="Columns"/> is rebuilt as
+        /// the concatenation Left → Unpinned → Right so callers iterating it see the
+        /// same order the user sees in the chooser.
         /// </summary>
-        private void RefreshColumns()
+        internal void RefreshColumns()
         {
             Columns.Clear();
+            LeftFixedColumns.Clear();
+            UnpinnedColumns.Clear();
+            RightFixedColumns.Clear();
 
             if (SourceDataGrid?.Columns == null) return;
 
-            foreach (DataGridColumn column in SourceDataGrid.Columns)
+            foreach (DataGridColumn column in SourceDataGrid.Columns.OrderBy(c => c.DisplayIndex))
             {
                 var descriptor = SourceDataGrid.FindGridColumnDescriptor(column);
                 if (descriptor == null)
@@ -526,18 +864,69 @@ namespace WWSearchDataGrid.Modern.WPF
                     ? descriptor.ColumnDisplayName
                     : descriptor.HeaderCaption;
 
+                // Look up the column's filter host so the row can mirror the column header's
+                // filter-active glyph and so the shared header context menu (which binds to a
+                // ContextMenuContext.ColumnSearchBox) operates against the same instance the
+                // header context menu would.
+                var filterHost = SourceDataGrid.DataColumns?
+                    .FirstOrDefault(c => c.CurrentColumn == column);
+
                 var columnInfo = new ColumnVisibilityInfo
                 {
                     Column = column,
                     GridColumnDescriptor = descriptor,
                     DisplayName = displayName ?? "Unknown Column",
-                    IsVisible = column.Visibility == Visibility.Visible
+                    IsVisible = column.Visibility == Visibility.Visible,
+                    FixedPosition = descriptor.Fixed,
+                    ColumnFilterHost = filterHost,
+                    ContextMenuContext = new ContextMenuContext
+                    {
+                        ContextType = ContextMenuType.ColumnHeader,
+                        Grid = SourceDataGrid,
+                        Column = column,
+                        ColumnSearchBox = filterHost,
+                    }
                 };
 
                 columnInfo.PropertyChanged += OnColumnInfoPropertyChanged;
 
+                // Master list first so PropertyChanged subscription is established
+                // before the section listbox observes the item.
                 Columns.Add(columnInfo);
+                GetSectionFor(columnInfo.FixedPosition).Add(columnInfo);
             }
+
+            // Selection survives only if the previously selected item is still in
+            // the rebuilt master list — clear otherwise so the Move buttons disable.
+            if (SelectedColumn != null && !Columns.Contains(SelectedColumn))
+                SelectedColumn = null;
+        }
+
+        /// <summary>
+        /// Returns the section <see cref="ObservableCollection{T}"/> that hosts a column with
+        /// the given <see cref="FixedColumnPosition"/>.
+        /// </summary>
+        private ObservableCollection<ColumnVisibilityInfo> GetSectionFor(FixedColumnPosition position)
+            => position switch
+            {
+                FixedColumnPosition.Left => LeftFixedColumns,
+                FixedColumnPosition.Right => RightFixedColumns,
+                _ => UnpinnedColumns,
+            };
+
+        /// <summary>
+        /// Returns the section <see cref="ObservableCollection{T}"/> that currently
+        /// hosts <paramref name="columnInfo"/>, falling back to the column's
+        /// <see cref="ColumnVisibilityInfo.FixedPosition"/> when the column isn't
+        /// found in any list yet.
+        /// </summary>
+        private ObservableCollection<ColumnVisibilityInfo> GetHostSection(ColumnVisibilityInfo columnInfo)
+        {
+            if (columnInfo == null) return UnpinnedColumns;
+            if (LeftFixedColumns.Contains(columnInfo)) return LeftFixedColumns;
+            if (UnpinnedColumns.Contains(columnInfo)) return UnpinnedColumns;
+            if (RightFixedColumns.Contains(columnInfo)) return RightFixedColumns;
+            return GetSectionFor(columnInfo.FixedPosition);
         }
 
         /// <summary>
@@ -1015,74 +1404,185 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
-        /// Handles selection changes in the ReorderableListBox
+        /// Cross-section single-selection sync. When one section listbox gains a
+        /// selection, clear the other two so only one row is highlighted across
+        /// the whole chooser. Also mirrors the selected item into
+        /// <see cref="SelectedColumn"/>, which the Move Up / Move Down buttons
+        /// bind their CommandParameter to.
         /// </summary>
-        private void OnColumnListSelectionChanged(object sender, SelectionChangedEventArgs e)
+        private void OnSectionListBoxSelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            // Update IsSelected property to match ListBox selection
-            if (sender is ReorderableListBox listBox)
+            if (_isSyncingSelection) return;
+            if (sender is not ReorderableListBox source) return;
+
+            _isSyncingSelection = true;
+            try
             {
-                foreach (var column in Columns)
+                var newlySelected = source.SelectedItem as ColumnVisibilityInfo;
+
+                // Clear selection in the sibling listboxes so only one chooser row
+                // is highlighted at a time. Skipping the active one prevents the
+                // reentrant SelectionChanged loop the guard above also catches.
+                foreach (var listBox in EnumerateSectionListBoxes())
                 {
-                    column.IsSelected = (column == listBox.SelectedItem);
+                    if (listBox != source)
+                        listBox.SelectedItem = null;
                 }
 
-                // Note: CommandParameter binding will automatically trigger CanExecute re-evaluation
-                // when SelectedItem changes, so no need to manually invalidate
+                // Mirror IsSelected onto every ColumnVisibilityInfo so item-level
+                // styling stays consistent across sections.
+                foreach (var column in Columns)
+                    column.IsSelected = (column == newlySelected);
+
+                SelectedColumn = newlySelected;
+            }
+            finally
+            {
+                _isSyncingSelection = false;
+            }
+        }
+
+        private bool _isSyncingSelection;
+
+        /// <summary>
+        /// Handles drag-drop reordering inside one of the three section listboxes.
+        /// The section structure enforces the group constraint by construction —
+        /// drag-drop never crosses a section boundary because each section is its
+        /// own <see cref="ReorderableListBox"/> — so this handler only needs to
+        /// apply the move within the host section.
+        /// </summary>
+        private void OnSectionListItemReordered(object sender, ItemReorderedEventArgs e)
+        {
+            if (e.Item is not ColumnVisibilityInfo columnInfo || SourceDataGrid == null)
+                return;
+            if (columnInfo.Column == null) return;
+
+            var section = GetHostSection(columnInfo);
+            int oldIndex = e.OldIndex;
+            int newIndex = e.NewIndex;
+
+            if (oldIndex < 0 || newIndex < 0) return;
+            if (oldIndex >= section.Count || newIndex >= section.Count) return;
+            if (oldIndex == newIndex) return;
+
+            ApplyChooserMove(columnInfo, section, oldIndex, newIndex);
+        }
+
+        /// <summary>
+        /// Applies a same-section reorder to the host <paramref name="section"/> collection,
+        /// rebuilds the master <see cref="Columns"/> order from the three sections, then
+        /// re-stamps <see cref="DataGridColumn.DisplayIndex"/> on every grid column from
+        /// that order and asks the grid to reapply its fixed-column layout. The
+        /// <see cref="SearchDataGrid.ApplyFixedColumnLayout"/> call keeps
+        /// <see cref="DataGrid.FrozenColumnCount"/> in sync — important because a reorder
+        /// inside the Left section can change which descriptors are first, even though the
+        /// count of left-pinned columns hasn't changed.
+        /// </summary>
+        private void ApplyChooserMove(
+            ColumnVisibilityInfo columnInfo,
+            ObservableCollection<ColumnVisibilityInfo> section,
+            int oldIndex,
+            int newIndex)
+        {
+            if (section == null) return;
+            if (oldIndex == newIndex) return;
+            if (oldIndex < 0 || oldIndex >= section.Count) return;
+            if (newIndex < 0 || newIndex >= section.Count) return;
+
+            _isApplyingInternalMove = true;
+            try
+            {
+                section.Move(oldIndex, newIndex);
+
+                // Rebuild the master flat list from the three section orders so
+                // anything iterating Columns (e.g., select-all calculations) sees
+                // the same order the user is looking at.
+                RebuildMasterColumnsFromSections();
+
+                // Reassign DisplayIndex from the new master order. Iterating by master
+                // position keeps unpinned columns' relative order intact and gives the
+                // grid a contiguous index space that ApplyFixedColumnLayout will treat
+                // as the desired Left/None/Right sequence.
+                for (int i = 0; i < Columns.Count; i++)
+                {
+                    var col = Columns[i].Column;
+                    if (col != null && col.DisplayIndex != i)
+                        col.DisplayIndex = i;
+                }
+
+                SourceDataGrid.ApplyFixedColumnLayout();
+                SourceDataGrid.UpdateLayout();
+
+                MoveUpCommand.RaiseCanExecuteChanged();
+                MoveDownCommand.RaiseCanExecuteChanged();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[ChooserMove] ERROR: {ex.Message}");
+                Debug.WriteLine($"[ChooserMove] Stack trace: {ex.StackTrace}");
+            }
+            finally
+            {
+                _isApplyingInternalMove = false;
             }
         }
 
         /// <summary>
-        /// Handles drag-drop reordering of columns in the ReorderableListBox
+        /// Rebuilds <see cref="Columns"/> by concatenating the three section collections
+        /// in Left → Unpinned → Right order. Items are moved (not re-added) to preserve
+        /// their <see cref="ColumnVisibilityInfo.PropertyChanged"/> subscriptions on the
+        /// master-list path.
         /// </summary>
-        private void OnColumnListItemReordered(object sender, ItemReorderedEventArgs e)
+        private void RebuildMasterColumnsFromSections()
         {
-            if (e.Item is not ColumnVisibilityInfo columnInfo || SourceDataGrid == null)
-                return;
+            var desired = new List<ColumnVisibilityInfo>(
+                LeftFixedColumns.Count + UnpinnedColumns.Count + RightFixedColumns.Count);
+            desired.AddRange(LeftFixedColumns);
+            desired.AddRange(UnpinnedColumns);
+            desired.AddRange(RightFixedColumns);
 
-            int oldIndex = e.OldIndex;
-            int newIndex = e.NewIndex;
-
-            if (columnInfo.Column == null || oldIndex < 0 || newIndex < 0)
-                return;
-
-            if (oldIndex == newIndex)
-                return;
-
-            try
+            // Use Move so existing PropertyChanged subscriptions stay bound. We only
+            // get here when ordering changed within one section, so the set is identical;
+            // only relative ordering differs.
+            for (int target = 0; target < desired.Count; target++)
             {
-                // 1. Move in our Columns ObservableCollection to update the visual display
-                if (oldIndex < Columns.Count && newIndex < Columns.Count)
+                var item = desired[target];
+                int current = Columns.IndexOf(item);
+                if (current < 0)
                 {
-                    Columns.Move(oldIndex, newIndex);
+                    // Shouldn't happen — section lists are partitions of Columns — but
+                    // recover by inserting rather than throwing.
+                    item.PropertyChanged += OnColumnVisibilityChanged;
+                    Columns.Insert(target, item);
                 }
-
-                // 2. Move in the DataGrid columns collection to update the actual grid
-                int gridOldIndex = SourceDataGrid.Columns.IndexOf(columnInfo.Column);
-
-                if (gridOldIndex >= 0 && newIndex < SourceDataGrid.Columns.Count)
+                else if (current != target)
                 {
-                    SourceDataGrid.Columns.Move(gridOldIndex, newIndex);
-
-                    // Verify the move
-                    int verifyIndex = SourceDataGrid.Columns.IndexOf(columnInfo.Column);
-                    
-                    // IMPORTANT: Update DisplayIndex to match the new position
-                    // DataGrid uses DisplayIndex for visual rendering, not collection index!
-                    columnInfo.Column.DisplayIndex = newIndex;
-
-                    // Force layout update
-                    SourceDataGrid.UpdateLayout();
-
-                    MoveUpCommand.RaiseCanExecuteChanged();
-                    MoveDownCommand.RaiseCanExecuteChanged();
+                    Columns.Move(current, target);
                 }
             }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"[ItemReordered] ERROR: {ex.Message}");
-                Debug.WriteLine($"[ItemReordered] Stack trace: {ex.StackTrace}");
-            }
+        }
+
+        /// <summary>
+        /// True while <see cref="ApplyChooserMove"/> is updating the grid. Guards
+        /// <see cref="OnGridFixedColumnLayoutChanged"/> from rebuilding the chooser list
+        /// in response to our own layout call, which would discard the in-flight selection.
+        /// </summary>
+        private bool _isApplyingInternalMove;
+
+        /// <summary>
+        /// Called by <see cref="SearchDataGrid.ApplyFixedColumnLayout"/> when a column's
+        /// <see cref="GridColumn.Fixed"/> value changes (typically via the column-header
+        /// "Pin Left / Pin Right / Unpin" context menu). Rebuilds the chooser list so
+        /// row order, pin glyphs, and move-arrow enablement reflect the new pinning state.
+        /// </summary>
+        internal void OnGridFixedColumnLayoutChanged()
+        {
+            if (_isApplyingInternalMove) return;
+            if (SourceDataGrid == null) return;
+
+            RefreshColumns();
+            MoveUpCommand.RaiseCanExecuteChanged();
+            MoveDownCommand.RaiseCanExecuteChanged();
         }
 
         /// <summary>
@@ -1134,80 +1634,44 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
-        /// Moves the specified column up or down in the display order
+        /// Moves the specified column up or down within its host section.
+        /// The section structure enforces the group constraint, so this is a
+        /// straightforward bounds-check inside the section.
         /// </summary>
         private void MoveColumn(ColumnVisibilityInfo columnInfo, int direction)
         {
             if (columnInfo?.Column == null || SourceDataGrid == null)
-            {
                 return;
-            }
 
-            try
-            {
-                // Get current indices
-                int displayIndex = Columns.IndexOf(columnInfo);
-                int gridIndex = SourceDataGrid.Columns.IndexOf(columnInfo.Column);
+            var section = GetHostSection(columnInfo);
+            int currentIndex = section.IndexOf(columnInfo);
+            if (currentIndex < 0)
+                return;
 
+            int newIndex = currentIndex + direction;
+            if (newIndex < 0 || newIndex >= section.Count)
+                return;
 
-                if (displayIndex < 0 || gridIndex < 0)
-                {
-                    return;
-                }
-
-                // Calculate new indices
-                int newDisplayIndex = displayIndex + direction;
-                int newGridIndex = gridIndex + direction;
-
-                // Validate new indices
-                if (newDisplayIndex >= 0 && newDisplayIndex < Columns.Count &&
-                    newGridIndex >= 0 && newGridIndex < SourceDataGrid.Columns.Count)
-                {
-                    // Move in our display list first
-                    Columns.Move(displayIndex, newDisplayIndex);
-                    SourceDataGrid.Columns.Move(gridIndex, newGridIndex);
-
-                    // Verify the move
-                    int verifyIndex = SourceDataGrid.Columns.IndexOf(columnInfo.Column);
-
-                    // IMPORTANT: Update DisplayIndex to match the new position
-                    // DataGrid uses DisplayIndex for visual rendering, not collection index!
-                    columnInfo.Column.DisplayIndex = newGridIndex;
-
-                    // Force layout update
-                    SourceDataGrid.UpdateLayout();
-
-                    MoveUpCommand.RaiseCanExecuteChanged();
-                    MoveDownCommand.RaiseCanExecuteChanged();
-                }
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"[MoveColumn] Error moving column: {ex.Message}");
-            }
+            ApplyChooserMove(columnInfo, section, currentIndex, newIndex);
         }
 
         /// <summary>
-        /// Determines if the specified column can be moved in the specified direction
+        /// Determines whether the specified column can be moved one step in the given
+        /// direction inside its host section. Returns <c>false</c> at the top of the
+        /// section for direction = -1 and at the bottom for direction = +1.
         /// </summary>
         private bool CanMoveColumn(ColumnVisibilityInfo columnInfo, int direction)
         {
-            if (SourceDataGrid == null)
-                return false;
+            if (SourceDataGrid == null) return false;
+            if (!SourceDataGrid.CanUserReorderColumns) return false;
+            if (columnInfo == null) return false;
 
-            // Check if reordering is allowed
-            if (!SourceDataGrid.CanUserReorderColumns)
-                return false;
-
-            if (columnInfo == null)
-                return false;
-
-            int currentIndex = Columns.IndexOf(columnInfo);
-            if (currentIndex < 0)
-                return false;
+            var section = GetHostSection(columnInfo);
+            int currentIndex = section.IndexOf(columnInfo);
+            if (currentIndex < 0) return false;
 
             int newIndex = currentIndex + direction;
-            return newIndex >= 0 && newIndex < Columns.Count;
+            return newIndex >= 0 && newIndex < section.Count;
         }
 
         /// <summary>
@@ -1248,6 +1712,7 @@ namespace WWSearchDataGrid.Modern.WPF
         private bool _isVisible;
         private string _displayName;
         private bool _isSelected;
+        private FixedColumnPosition _fixedPosition;
 
         public DataGridColumn Column { get; set; }
 
@@ -1256,6 +1721,27 @@ namespace WWSearchDataGrid.Modern.WPF
         /// <see cref="Column"/>, or null for legacy attached-property columns.
         /// </summary>
         public GridColumn GridColumnDescriptor { get; set; }
+
+        /// <summary>
+        /// The <see cref="IColumnFilterHost"/> for this column (its
+        /// <see cref="ColumnFilterControl"/> in the auto-filter row), or <c>null</c> if the
+        /// column has no filter editor. Exposed for binding so the chooser row can mirror
+        /// the column header's filter-active glyph reactively — the host's
+        /// <see cref="IColumnFilterHost.HasActiveFilter"/> is a <see cref="DependencyProperty"/>
+        /// on <see cref="ColumnFilterControl"/>, so the binding updates as filters come and go.
+        /// </summary>
+        public IColumnFilterHost ColumnFilterHost { get; set; }
+
+        /// <summary>
+        /// The <see cref="ContextMenuContext"/> that the shared column-header context menu
+        /// binds against when invoked from this chooser row. Constructed once per row in
+        /// <see cref="ColumnChooser.RefreshColumns"/> and remains valid for the row's lifetime
+        /// — the column reference and Grid are stable; the filter host reference is captured
+        /// from <see cref="SearchDataGrid.DataColumns"/> at the same time. Commands sourced
+        /// from the shared menu (sort / hide / pin / clear filter / …) read Grid, Column, and
+        /// ColumnSearchBox off this object exactly the same way they would from a header click.
+        /// </summary>
+        public ContextMenuContext ContextMenuContext { get; set; }
 
         public string DisplayName
         {
@@ -1274,6 +1760,24 @@ namespace WWSearchDataGrid.Modern.WPF
             get => _isSelected;
             set => SetProperty(value, ref _isSelected, nameof(IsSelected));
         }
+
+        /// <summary>
+        /// Mirrors <see cref="GridColumn.Fixed"/> so the chooser can apply per-row
+        /// styling (pin glyph, dimmed move arrows) and constrain reorder operations
+        /// to within a single pinning group.
+        /// </summary>
+        public FixedColumnPosition FixedPosition
+        {
+            get => _fixedPosition;
+            set
+            {
+                if (SetProperty(value, ref _fixedPosition, nameof(FixedPosition)))
+                    OnPropertyChanged(nameof(IsFixed));
+            }
+        }
+
+        /// <summary>Convenience for binding — true when <see cref="FixedPosition"/> is not <c>None</c>.</summary>
+        public bool IsFixed => _fixedPosition != FixedColumnPosition.None;
     }
 
     #endregion
