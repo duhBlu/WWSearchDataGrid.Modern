@@ -3,6 +3,7 @@
 
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF.Themes.Default;component/Resources/Icons/SearchTypeIcons.xaml" />
+        <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF.Themes.Default;component/Resources/Icons/SdgIcons.xaml" />
         <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF.Themes.Default;component/Themes/Controls/ColumnFilterEditor.xaml" />
         <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF.Themes.Default;component/Themes/Controls/FilterEditor/GroupOperatorChip.xaml" />
         <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF.Themes.Default;component/Themes/Controls/FilterEditor/ColumnNameTokenEditor.xaml" />

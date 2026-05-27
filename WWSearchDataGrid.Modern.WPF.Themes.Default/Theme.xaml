@@ -1,0 +1,14 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- Public entry point for the Default theme. Consumers reference this file:
+             <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF.Themes.Default;component/Theme.xaml"/>
+         The assembly suffix (.Themes.Default) names the theme; the filename (Theme.xaml)
+         is identical across theme satellites so a swap is a one-token change in the URI.
+         Themes/Generic.xaml remains the WPF-discovered dictionary referenced by
+         [ThemeInfo] in the controls assembly; this file is only the public alias. -->
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF.Themes.Default;component/Themes/Generic.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+
+</ResourceDictionary>

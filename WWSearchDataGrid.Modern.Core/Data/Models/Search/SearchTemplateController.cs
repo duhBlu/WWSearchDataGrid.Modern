@@ -5,6 +5,7 @@ using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Globalization;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Numerics;
@@ -1089,7 +1090,13 @@ namespace WWSearchDataGrid.Modern.Core
         {
             if (DateTime.TryParse(value, out DateTime date))
             {
-                // Use the column's display provider if available for consistent formatting
+                // RoundDateTime forces date-only comparison; the chip must match so the
+                // user never sees a time the filter doesn't honor. Overrides
+                // DisplayValueProvider because a time-bearing display format would
+                // re-introduce the time after rounding.
+                if (RoundDateTime && ColumnDataType == ColumnDataType.DateTime)
+                    return date.ToString("d", CultureInfo.CurrentCulture);
+
                 if (HasDisplayValueProvider)
                     return GetDisplayValue(date);
 
@@ -1099,6 +1106,22 @@ namespace WWSearchDataGrid.Modern.Core
                     : date.ToString("yyyy-MM-dd");
             }
             return value;
+        }
+
+        /// <summary>
+        /// Formats <paramref name="value"/> as a culture-aware short date when it represents a
+        /// <see cref="DateTime"/>; returns <c>null</c> when no DateTime can be extracted so
+        /// callers can fall back to the raw string. Used by <see cref="GetTemplateComponents"/>
+        /// when <see cref="RoundDateTime"/> is on, so chip text drops time-of-day regardless of
+        /// the column's <c>DisplayStringFormat</c>.
+        /// </summary>
+        private static string FormatAsDateOnly(object value)
+        {
+            if (value is DateTime dt)
+                return dt.ToString("d", CultureInfo.CurrentCulture);
+            if (value != null && DateTime.TryParse(value.ToString(), out var parsed))
+                return parsed.ToString("d", CultureInfo.CurrentCulture);
+            return null;
         }
 
         private string FormatMultiValueFilter(string prefix, IEnumerable selectedValues)
@@ -1177,7 +1200,17 @@ namespace WWSearchDataGrid.Modern.Core
                 string value;
                 string secondaryValue;
 
-                if (HasDisplayValueProvider && DisplayValueProvider.UseRawComparison && DisplayValueProvider is Display.MaskDisplayProvider maskProvider)
+                // RoundDateTime collapses chip text to date-only ahead of any provider/raw
+                // routing below — the column's DisplayStringFormat may carry time tokens that
+                // would re-introduce the time-of-day the filter is going to discard.
+                bool roundDates = RoundDateTime && ColumnDataType == ColumnDataType.DateTime;
+
+                if (roundDates)
+                {
+                    value = FormatAsDateOnly(template.SelectedValue) ?? rawValue;
+                    secondaryValue = FormatAsDateOnly(template.SelectedSecondaryValue) ?? rawSecondaryValue;
+                }
+                else if (HasDisplayValueProvider && DisplayValueProvider.UseRawComparison && DisplayValueProvider is Display.MaskDisplayProvider maskProvider)
                 {
                     // Mask provider: choose chip format based on search type
                     switch (template.SearchType)
@@ -1221,7 +1254,8 @@ namespace WWSearchDataGrid.Modern.Core
                 var components = new FilterChipComponents
                 {
                     IsDateInterval = IsDateIntervalType(template.SearchType),
-                    HasNoInputValues = IsNoInputValueType(template.SearchType)
+                    HasNoInputValues = IsNoInputValueType(template.SearchType),
+                    SourceTemplate = template
                 };
 
                 switch (template.SearchType)

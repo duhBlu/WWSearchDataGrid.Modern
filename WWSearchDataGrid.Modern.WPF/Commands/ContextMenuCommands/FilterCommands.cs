@@ -47,5 +47,49 @@ namespace WWSearchDataGrid.Modern.WPF.Commands
                 };
             });
 
+        private static ICommand _filterByCellValueCommand;
+        /// <summary>
+        /// Replaces the column's filter with an equality filter against the right-clicked
+        /// cell's raw value. When the cell value is null, applies an <see cref="SearchType.IsNull"/>
+        /// filter instead so the action remains meaningful on empty cells. Mirrors the
+        /// programmatic-filter pattern used by <c>ApplyCheckboxBooleanFilter</c>: rebuild the
+        /// column's <see cref="SearchTemplateController.SearchGroups"/> to a single
+        /// group+template, then drive the grid's filter pipeline.
+        /// </summary>
+        public static ICommand FilterByCellValueCommand => _filterByCellValueCommand ??= new RelayCommand<ContextMenuContext>(
+            context =>
+            {
+                var controller = context?.ColumnSearchBox?.SearchTemplateController;
+                if (controller == null) return;
+
+                try
+                {
+                    controller.SearchGroups.Clear();
+                    var group = new SearchTemplateGroup();
+                    controller.SearchGroups.Add(group);
+
+                    var template = new SearchTemplate(controller.ColumnDataType)
+                    {
+                        SearchType = context.CellValue == null ? SearchType.IsNull : SearchType.Equals,
+                        SelectedValue = context.CellValue,
+                        SearchTemplateController = controller,
+                    };
+                    controller.SubscribeToTemplateChanges(template);
+                    group.SearchTemplates.Add(template);
+
+                    controller.UpdateOperatorVisibility();
+                    controller.UpdateFilterExpression();
+
+                    context.Grid?.FilterItemsSource();
+                    context.Grid?.UpdateFilterPanel();
+                    context.ColumnSearchBox?.UpdateHasActiveFilterState();
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"Error in FilterByCellValueCommand: {ex.Message}");
+                }
+            },
+            context => context?.ColumnSearchBox?.SearchTemplateController != null);
+
     }
 }

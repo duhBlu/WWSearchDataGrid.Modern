@@ -4,6 +4,10 @@
                     xmlns:behaviors="clr-namespace:WWSearchDataGrid.Modern.WPF.Behaviors;assembly=WWSearchDataGrid.Modern.WPF"
                     xmlns:sdg="clr-namespace:WWSearchDataGrid.Modern.WPF;assembly=WWSearchDataGrid.Modern.WPF">
 
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF.Themes.Default;component/Resources/Icons/SdgIcons.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+
     <!--  Converters  -->
     <converters:StringEqualityConverter x:Key="StringEqualityConverter" />
     <converters:BooleanToVisibilityCollapsedConverter x:Key="BooleanToVisibilityCollapsedConverter" />
@@ -86,10 +90,11 @@
                     CommandParameter="{Binding}"
                     HorizontalAlignment="Stretch"
                     VerticalAlignment="Stretch"
-                    FontFamily="Segoe MDL2 Assets"
-                    FontSize="12"
-                    Content="&#xF78A;"
                     Tag="{Binding FilterId}">
+                <sdg:SdgIcon Width="12"
+                             Height="12"
+                             IconSource="{StaticResource {x:Static sdg:SdgIconKeys.IconClear}}"
+                             IconBrush="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
                 <Button.ToolTip>
                     <ToolTip>
                         <ToolTip.ContentTemplate>
@@ -167,10 +172,11 @@
                     Margin="1"
                     HorizontalAlignment="Stretch"
                     VerticalAlignment="Stretch"
-                    FontFamily="Segoe MDL2 Assets"
-                    FontSize="12"
-                    Content="&#xF78A;"
                     Tag="{Binding FilterId}">
+                <sdg:SdgIcon Width="12"
+                             Height="12"
+                             IconSource="{StaticResource {x:Static sdg:SdgIconKeys.IconClear}}"
+                             IconBrush="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
                 <Button.ToolTip>
                     <ToolTip>
                         <ToolTip.ContentTemplate>
@@ -325,13 +331,15 @@
                 Margin="1,0,-2,0"
                 BorderThickness="0"
                 VerticalAlignment="Top"
-                Padding="4"
+                Padding="3"
                 behaviors:TokenHoverBehavior.IsEnabled="True"
-                FontFamily="Segoe Fluent Icons"
-                FontSize="4"
-                Content="&#xE8BB;"
                 ToolTip="Remove Filter"
                 Tag="{Binding FilterId}">
+            <sdg:SdgIcon Width="6"
+                         Height="6"
+                         StrokeThickness="3"
+                         IconSource="{StaticResource {x:Static sdg:SdgIconKeys.IconClear}}"
+                         IconBrush="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
             <Button.Style>
                 <Style TargetType="Button">
                     <Setter Property="Foreground" Value="White" />

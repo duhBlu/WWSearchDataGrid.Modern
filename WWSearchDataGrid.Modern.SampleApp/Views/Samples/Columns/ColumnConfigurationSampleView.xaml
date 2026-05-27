@@ -75,6 +75,7 @@
                             Width="150"
                             DisplayStringFormat="MM/dd/yyyy h:mm tt"
                             FieldName="OrderDate"
+                            RoundDateTime="True"
                             Header="Order Date" />
                         <sdg:GridColumn
                             Width="200"

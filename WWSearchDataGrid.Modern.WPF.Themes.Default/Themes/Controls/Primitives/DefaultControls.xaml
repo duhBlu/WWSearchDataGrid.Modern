@@ -2,6 +2,9 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:sdg="clr-namespace:WWSearchDataGrid.Modern.WPF;assembly=WWSearchDataGrid.Modern.WPF">
 
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF.Themes.Default;component/Resources/Icons/SdgIcons.xaml" />
+    </ResourceDictionary.MergedDictionaries>
 
     <!--#region Button Style-->
 
@@ -9,7 +12,6 @@
         <Setter Property="Background" Value="#FFFFFF" />
         <Setter Property="Foreground" Value="#1C1C1C" />
         <Setter Property="BorderBrush" Value="#e3e3e3" />
-        <Setter Property="BorderThickness" Value="1" />
         <Setter Property="Padding" Value="6,2" />
         <Setter Property="MinHeight" Value="24" />
         <Setter Property="FontSize" Value="12" />
@@ -24,11 +26,16 @@
                             BorderBrush="{TemplateBinding BorderBrush}"
                             BorderThickness="1,1,1,0"
                             CornerRadius="4">
-                        <Border x:Name="innerBorder" Background="Transparent" BorderBrush="#bfbfbf" BorderThickness="0,0,0,1" CornerRadius="4">
-                            
-                        <ContentPresenter Margin="{TemplateBinding Padding}"
-                                          HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                          VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
+                        <Border x:Name="innerBorder"
+                                Background="Transparent"
+                                BorderBrush="#bfbfbf"
+                                BorderThickness="0,0,0,0.8"
+                                Margin="0,0,0,-1"
+                                CornerRadius="4">
+
+                            <ContentPresenter Margin="{TemplateBinding Padding}"
+                                              HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                              VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
                         </Border>
                     </Border>
                     <ControlTemplate.Triggers>
@@ -62,7 +69,6 @@
         <Setter Property="Background" Value="#FFFFFF" />
         <Setter Property="BorderBrush" Value="#AAAAAA" />
         <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="FontSize" Value="12" />
         <Setter Property="Cursor" Value="Hand" />
         <Setter Property="HorizontalContentAlignment" Value="Left" />
         <Setter Property="VerticalContentAlignment" Value="Center" />
@@ -85,14 +91,25 @@
                                 Width="16"
                                 Height="16"
                                 CornerRadius="3">
-                            <TextBlock x:Name="Glyph"
-                                       Foreground="#FFFFFF"
-                                       Opacity="0"
-                                       Text="&#xE73E;"
-                                       HorizontalAlignment="Center"
-                                       VerticalAlignment="Center"
-                                       FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
-                                       FontSize="12" />
+                            <Grid>
+                                <sdg:SdgIcon x:Name="CheckGlyph"
+                                             Opacity="0"
+                                             HorizontalAlignment="Center"
+                                             VerticalAlignment="Center"
+                                             Width="10"
+                                             Height="10"
+                                             StrokeThickness="3"
+                                             IconSource="{StaticResource {x:Static sdg:SdgIconKeys.IconCheck}}"
+                                             IconBrush="White" />
+                                <sdg:SdgIcon x:Name="IndeterminateGlyph"
+                                             Opacity="0"
+                                             HorizontalAlignment="Center"
+                                             VerticalAlignment="Center"
+                                             Width="10"
+                                             Height="10"
+                                             IconBrush="#FFFFFF"
+                                             IconSource="{StaticResource {x:Static sdg:SdgIconKeys.IconCheckIntermediate}}" />
+                            </Grid>
                         </Border>
 
                         <ContentPresenter Grid.Column="1"
@@ -106,15 +123,13 @@
                             <Setter TargetName="Box" Property="Background" Value="#0078D4" />
                             <Setter TargetName="Box" Property="BorderThickness" Value="0" />
                             <Setter TargetName="Box" Property="Padding" Value="1" />
-                            <Setter TargetName="Glyph" Property="Opacity" Value="1" />
+                            <Setter TargetName="CheckGlyph" Property="Opacity" Value="1" />
                         </Trigger>
                         <Trigger Property="IsChecked" Value="{x:Null}">
                             <Setter TargetName="Box" Property="Background" Value="#0078D4" />
                             <Setter TargetName="Box" Property="BorderThickness" Value="0" />
                             <Setter TargetName="Box" Property="Padding" Value="1" />
-                            <Setter TargetName="Glyph" Property="Text" Value="&#xE738;" />
-                            <Setter TargetName="Glyph" Property="FontSize" Value="10" />
-                            <Setter TargetName="Glyph" Property="Opacity" Value="1" />
+                            <Setter TargetName="IndeterminateGlyph" Property="Opacity" Value="1" />
                         </Trigger>
                         <MultiTrigger>
                             <MultiTrigger.Conditions>
@@ -228,13 +243,16 @@
                         </ToggleButton>
 
                         <!--  Chevron (column 1, pass-through)  -->
-                        <TextBlock x:Name="Arrow"
-                                   Grid.Column="1"
-                                   Text="&#xE70D;"
-                                   IsHitTestVisible="False"
-                                   HorizontalAlignment="Center"
-                                   VerticalAlignment="Center"
-                                   FontFamily="Segoe Fluent Icons" />
+                        <sdg:SdgIcon x:Name="Arrow"
+                                     Grid.Column="1"
+                                     IsHitTestVisible="False"
+                                     HorizontalAlignment="Center"
+                                     VerticalAlignment="Center"
+                                     Width="10"
+                                     Height="10"
+                                     StrokeThickness="1"
+                                     IconSource="{StaticResource {x:Static sdg:SdgIconKeys.IconChevronDown}}"
+                                     IconBrush="{TemplateBinding Foreground}" />
 
                         <!--  Editable text (hidden for standard combo)  -->
                         <TextBox x:Name="PART_EditableTextBox"
@@ -291,7 +309,6 @@
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Foreground" Value="#999999" />
-                            <Setter TargetName="Arrow" Property="Foreground" Value="#999999" />
                             <Setter Property="Cursor" Value="Arrow" />
                         </Trigger>
                     </ControlTemplate.Triggers>
@@ -428,8 +445,8 @@
                         <!--  Always-visible track  -->
                         <Border x:Name="TrackBackground"
                                 Grid.RowSpan="3"
+                                Background="#FFFFFF"
                                 BorderBrush="#CCCCCC"
-                                Background="Transparent"
                                 CornerRadius="0" />
 
                         <!--  Line-Up button  -->
@@ -630,7 +647,7 @@
                                        ClipToBounds="False"
                                        IsDirectionReversed="False">
                                     <Track.DecreaseRepeatButton>
-                                        <RepeatButton Command="ScrollBar.PageLeftCommand" >
+                                        <RepeatButton Command="ScrollBar.PageLeftCommand">
                                             <RepeatButton.Style>
                                                 <Style TargetType="{x:Type RepeatButton}">
                                                     <Setter Property="OverridesDefaultStyle" Value="True" />
@@ -675,7 +692,7 @@
                                     </Track.Thumb>
 
                                     <Track.IncreaseRepeatButton>
-                                        <RepeatButton Command="ScrollBar.PageRightCommand" >
+                                        <RepeatButton Command="ScrollBar.PageRightCommand">
                                             <RepeatButton.Style>
                                                 <Style TargetType="{x:Type RepeatButton}">
                                                     <Setter Property="OverridesDefaultStyle" Value="True" />

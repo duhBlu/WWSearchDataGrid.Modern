@@ -55,6 +55,23 @@ namespace WWSearchDataGrid.Modern.WPF
         public static ComponentResourceKey PrimitivesNumericUpDown { get; } =
             new ComponentResourceKey(typeof(SdgThemeKeys), nameof(PrimitivesNumericUpDown));
 
+        /// <summary>
+        /// Default style for the <see cref="ContextMenu"/> shell — rounded white surface with
+        /// soft border and shadow. Applied by the four shared SearchDataGrid context menus
+        /// (column header, cell, row header, grid body) and available for consumer-defined
+        /// context menus that should match the library's look.
+        /// </summary>
+        public static ComponentResourceKey PrimitivesContextMenu { get; } =
+            new ComponentResourceKey(typeof(SdgThemeKeys), nameof(PrimitivesContextMenu));
+
+        /// <summary>
+        /// Default style for <see cref="MenuItem"/>s hosted inside an SDG context menu —
+        /// icon column, header, gesture text, and a chevron when the item carries a submenu.
+        /// Wired up as the <c>ItemContainerStyle</c> of <see cref="PrimitivesContextMenu"/>.
+        /// </summary>
+        public static ComponentResourceKey PrimitivesMenuItem { get; } =
+            new ComponentResourceKey(typeof(SdgThemeKeys), nameof(PrimitivesMenuItem));
+
         #endregion
 
         #region Grid
@@ -89,6 +106,31 @@ namespace WWSearchDataGrid.Modern.WPF
         /// </summary>
         public static ComponentResourceKey GridSearchDataGridColumnHeaderContextMenu { get; } =
             new ComponentResourceKey(typeof(SdgThemeKeys), nameof(GridSearchDataGridColumnHeaderContextMenu));
+
+        /// <summary>
+        /// Shared <see cref="ContextMenu"/> resource for the cell right-click menu —
+        /// copy / copy-with-headers. The menu's <c>DataContext</c> is set to a
+        /// <see cref="Commands.ContextMenuContext"/> by the consumer when the menu opens.
+        /// </summary>
+        public static ComponentResourceKey GridSearchDataGridCellContextMenu { get; } =
+            new ComponentResourceKey(typeof(SdgThemeKeys), nameof(GridSearchDataGridCellContextMenu));
+
+        /// <summary>
+        /// Shared <see cref="ContextMenu"/> resource for the row-header right-click menu —
+        /// copy / copy-with-headers. The menu's <c>DataContext</c> is set to a
+        /// <see cref="Commands.ContextMenuContext"/> by the consumer when the menu opens.
+        /// </summary>
+        public static ComponentResourceKey GridSearchDataGridRowHeaderContextMenu { get; } =
+            new ComponentResourceKey(typeof(SdgThemeKeys), nameof(GridSearchDataGridRowHeaderContextMenu));
+
+        /// <summary>
+        /// Shared <see cref="ContextMenu"/> resource for the grid-body right-click menu —
+        /// filter operations, column profiles, export, and layout actions. The menu's
+        /// <c>DataContext</c> is set to a <see cref="Commands.ContextMenuContext"/> by the
+        /// consumer when the menu opens.
+        /// </summary>
+        public static ComponentResourceKey GridSearchDataGridContextMenu { get; } =
+            new ComponentResourceKey(typeof(SdgThemeKeys), nameof(GridSearchDataGridContextMenu));
 
         /// <summary>Default style for the select-all corner button in the SearchDataGrid header.</summary>
         public static ComponentResourceKey GridSelectAllButton { get; } =

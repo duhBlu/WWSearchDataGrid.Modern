@@ -152,6 +152,32 @@ namespace WWSearchDataGrid.Modern.WPF.Commands
             }
         }, grid => grid?.SelectedCells?.Count > 0);
 
+        private static ICommand _copyCellValueCommand;
+        /// <summary>
+        /// Copies the display value of the single cell the context menu was opened on, ignoring
+        /// any wider selection. Useful when SelectionUnit is FullRow / CellOrRowHeader and the
+        /// default Copy would dump every cell in every selected row.
+        /// </summary>
+        public static ICommand CopyCellValueCommand => _copyCellValueCommand ??= new RelayCommand<ContextMenuContext>(ctx =>
+        {
+            try
+            {
+                if (ctx?.Grid == null || ctx.Column == null || ctx.RowData == null)
+                    return;
+
+                var path = GetBindingPath(ctx.Column, ctx.Grid);
+                if (string.IsNullOrEmpty(path)) return;
+
+                var rawVal = ReflectionHelper.GetPropValue(ctx.RowData, path);
+                var displayVal = FormatDisplayValue(rawVal, ctx.Column, ctx.Grid);
+                Clipboard.SetText(displayVal ?? string.Empty);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error copying cell value: {ex.Message}");
+            }
+        }, ctx => ctx?.Grid != null && ctx.Column != null && ctx.RowData != null);
+
         /// <summary>
         /// Exports the grid data to CSV format
         /// </summary>

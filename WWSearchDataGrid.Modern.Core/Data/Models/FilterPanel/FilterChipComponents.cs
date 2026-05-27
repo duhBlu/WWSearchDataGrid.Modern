@@ -70,6 +70,15 @@ namespace WWSearchDataGrid.Modern.Core
         public bool IsGroupLevelOperator { get; set; }
 
         /// <summary>
+        /// Direct reference to the <see cref="SearchTemplate"/> this component was built from.
+        /// Set by <see cref="SearchTemplateController.GetTemplateComponents"/> and the tree-mode
+        /// leaf builder so per-value tokens can resolve a <see cref="ValueRemovalContext"/>
+        /// without reflecting on <see cref="ColumnFilterInfo.FilterData"/> — that path doesn't
+        /// work for editor-composed chips whose FilterData isn't a per-column host.
+        /// </summary>
+        public SearchTemplate SourceTemplate { get; set; }
+
+        /// <summary>
         /// Gets or sets the collection of individual values for multi-value filters
         /// </summary>
         public ObservableCollection<string> ValueItems { get; set; } = new ObservableCollection<string>();

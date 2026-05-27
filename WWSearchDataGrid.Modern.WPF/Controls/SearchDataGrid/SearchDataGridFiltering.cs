@@ -1155,49 +1155,163 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
-        /// Handles requests to remove a specific value from a filter token
+        /// Handles requests to remove a specific value from a filter token. Branches on the chip's
+        /// <see cref="ColumnFilterInfo.FilterData"/>:
+        /// <list type="bullet">
+        /// <item><description><see cref="IColumnFilterHost"/> — the chip is per-column; mutate the
+        ///   column's <see cref="SearchTemplateController"/> directly and reapply via the per-column
+        ///   path.</description></item>
+        /// <item><description><see cref="MultiColumnFilterGroupHandle"/> — the chip was rendered from
+        ///   <see cref="GridFilterTree"/>. Resolve the owning column for the template, mutate it,
+        ///   and (when the template becomes invalid) detach the corresponding
+        ///   <see cref="FilterConditionNode"/> from the tree so the editor view stays in sync.</description></item>
+        /// </list>
         /// </summary>
         private void OnValueRemovedFromToken(object sender, ValueRemovedFromTokenEventArgs e)
         {
             try
             {
-                if (e.RemovableToken?.RemovalContext != null && e.RemovableToken.SourceFilter?.FilterData is IColumnFilterHost columnSearchBox)
+                var removalContext = e.RemovableToken?.RemovalContext;
+                var template = removalContext?.ParentTemplate;
+                if (template == null) return;
+
+                switch (e.RemovableToken.SourceFilter?.FilterData)
                 {
-                    var template = e.RemovableToken.RemovalContext.ParentTemplate;
-                    var controller = columnSearchBox.SearchTemplateController;
-
-                    if (controller != null && template != null)
-                    {
-                        // Count only templates that have actual filters, not default empty ones
-                        var activeTemplateCount = controller.SearchGroups
-                            .SelectMany(g => g.SearchTemplates)
-                            .Count(t => t.HasCustomFilter);
-                        var wouldBeInvalid = !template.WouldBeValidAfterValueRemoval(e.RemovableToken.RemovalContext);
-
-                        if (activeTemplateCount <= 1 && wouldBeInvalid)
-                        {
-                            // If this is the last active template and it would become invalid, clear the entire filter
-                            columnSearchBox.ClearFilter();
-                        }
-                        else
-                        {
-                            // Otherwise, handle the value removal normally
-                            controller.HandleValueRemoval(template, e.RemovableToken.RemovalContext);
-
-                            // HandleValueRemoval may flip HasCustomExpression to false; that
-                            // doesn't propagate to the box's HasActiveFilter on its own.
-                            columnSearchBox.UpdateHasActiveFilterState();
-                        }
-                    }
-
-                    // Reapply filters and update UI
-                    FilterItemsSource();
-                    UpdateFilterPanel();
+                    case IColumnFilterHost columnSearchBox:
+                        HandleValueRemovedFromColumnHost(columnSearchBox, template, removalContext);
+                        break;
+                    case MultiColumnFilterGroupHandle handle:
+                        HandleValueRemovedFromTree(handle, template, removalContext);
+                        break;
                 }
             }
             catch (Exception ex)
             {
                 Debug.WriteLine($"Error in OnValueRemovedFromToken: {ex.Message}");
+            }
+        }
+
+        private void HandleValueRemovedFromColumnHost(IColumnFilterHost columnSearchBox, SearchTemplate template, ValueRemovalContext removalContext)
+        {
+            var controller = columnSearchBox.SearchTemplateController;
+            if (controller == null) return;
+
+            // Count only templates that have actual filters, not default empty ones
+            var activeTemplateCount = controller.SearchGroups
+                .SelectMany(g => g.SearchTemplates)
+                .Count(t => t.HasCustomFilter);
+            var wouldBeInvalid = !template.WouldBeValidAfterValueRemoval(removalContext);
+
+            if (activeTemplateCount <= 1 && wouldBeInvalid)
+            {
+                // If this is the last active template and it would become invalid, clear the entire filter
+                columnSearchBox.ClearFilter();
+            }
+            else
+            {
+                // Otherwise, handle the value removal normally
+                controller.HandleValueRemoval(template, removalContext);
+
+                // HandleValueRemoval may flip HasCustomExpression to false; that
+                // doesn't propagate to the box's HasActiveFilter on its own.
+                columnSearchBox.UpdateHasActiveFilterState();
+            }
+
+            FilterItemsSource();
+            UpdateFilterPanel();
+        }
+
+        /// <summary>
+        /// Per-value removal for chips rendered from <see cref="GridFilterTree"/>. The chip's
+        /// FilterData carries the touched columns; the value token's <see cref="ValueRemovalContext"/>
+        /// references the actual <see cref="SearchTemplate"/> shared between the tree and its
+        /// owning column's slice. We locate that owning column, then either mutate the template
+        /// in place (when the removal keeps it valid — the tree picks up the change for free
+        /// since it references the same instance) or detach the corresponding
+        /// <see cref="FilterConditionNode"/> from the tree and re-derive per-column slices via
+        /// <see cref="FilterEditorTreeBuilder.WriteBackToGrid"/>. Mirrors the pattern
+        /// <see cref="MultiColumnFilterGroupHandle.ClearAll"/> uses for whole-chip removal so
+        /// per-value removal stays in lockstep with full-chip removal.
+        /// </summary>
+        private void HandleValueRemovedFromTree(MultiColumnFilterGroupHandle handle, SearchTemplate template, ValueRemovalContext removalContext)
+        {
+            GridColumn owningColumn = null;
+            foreach (var col in handle.TouchedColumns)
+            {
+                var ctrl = col?.SearchTemplateController;
+                if (ctrl == null) continue;
+                if (ctrl.SearchGroups.SelectMany(g => g.SearchTemplates).Any(t => ReferenceEquals(t, template)))
+                {
+                    owningColumn = col;
+                    break;
+                }
+            }
+            if (owningColumn == null) return;
+
+            var controller = owningColumn.SearchTemplateController;
+            var wouldBeInvalid = !template.WouldBeValidAfterValueRemoval(removalContext);
+
+            if (wouldBeInvalid && GridFilterTree != null)
+            {
+                var nodeToRemove = FindConditionNodeByTemplate(GridFilterTree, template);
+                if (nodeToRemove?.Parent != null)
+                {
+                    var parent = nodeToRemove.Parent;
+                    parent.Children.Remove(nodeToRemove);
+                    FilterEditorNormalizer.NormalizeAfterRemoval(parent);
+                }
+
+                if (GridFilterTree.Children.Count == 0)
+                {
+                    // Detachment emptied the tree — clear every touched column and drop the tree
+                    // so the per-column AND path resumes authority. Same fallback shape as
+                    // MultiColumnFilterGroupHandle.ClearAll's empty-tree branch.
+                    foreach (var col in handle.TouchedColumns)
+                    {
+                        col?.SearchTemplateController?.ClearAndReset();
+                    }
+                    InvalidateGridFilterTree();
+                    FilterItemsSource();
+                }
+                else
+                {
+                    // Tree still has structure — rewrite per-column slices so the per-column popup
+                    // and chip strip see the new state, then reapply via the editor path so the
+                    // tree (not the per-column AND join) remains authoritative.
+                    FilterEditorTreeBuilder.WriteBackToGrid(GridFilterTree, this);
+                    FilterItemsSourceFromFilterEditor();
+                }
+            }
+            else
+            {
+                // Template stays valid — mutate values in place. The tree references the same
+                // template instance, so its compiled predicate picks up the change automatically.
+                controller.HandleValueRemoval(template, removalContext);
+
+                if (GridFilterTree != null)
+                    FilterItemsSourceFromFilterEditor();
+                else
+                    FilterItemsSource();
+            }
+
+            UpdateFilterPanel();
+        }
+
+        private static FilterConditionNode FindConditionNodeByTemplate(FilterEditorNode root, SearchTemplate template)
+        {
+            switch (root)
+            {
+                case FilterConditionNode c:
+                    return ReferenceEquals(c.SearchTemplate, template) ? c : null;
+                case FilterGroupNode g:
+                    foreach (var child in g.Children)
+                    {
+                        var found = FindConditionNodeByTemplate(child, template);
+                        if (found != null) return found;
+                    }
+                    return null;
+                default:
+                    return null;
             }
         }
 

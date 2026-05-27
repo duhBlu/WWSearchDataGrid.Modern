@@ -105,14 +105,25 @@
                                 Width="16"
                                 Height="16"
                                 CornerRadius="3">
-                            <TextBlock x:Name="Glyph"
-                                       Foreground="#FFFFFF"
-                                       Opacity="0"
-                                       Text="&#xE73E;"
-                                       HorizontalAlignment="Center"
-                                       VerticalAlignment="Center"
-                                       FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
-                                       FontSize="12" />
+                            <Grid>
+                                <sdg:SdgIcon x:Name="CheckGlyph"
+                                             Opacity="0"
+                                             HorizontalAlignment="Center"
+                                             VerticalAlignment="Center"
+                                             Width="10"
+                                             Height="10"
+                                             StrokeThickness="3"
+                                             IconSource="{StaticResource {x:Static sdg:SdgIconKeys.IconCheck}}"
+                                             IconBrush="White" />
+                                <sdg:SdgIcon x:Name="IndeterminateGlyph"
+                                             Opacity="0"
+                                             HorizontalAlignment="Center"
+                                             VerticalAlignment="Center"
+                                             Width="10"
+                                             Height="10"
+                                             IconBrush="#FFFFFF"
+                                             IconSource="{StaticResource {x:Static sdg:SdgIconKeys.IconCheckIntermediate}}" />
+                            </Grid>
                         </Border>
 
                         <ContentPresenter Grid.Column="1"
@@ -126,15 +137,13 @@
                             <Setter TargetName="Box" Property="Background" Value="#0078D4" />
                             <Setter TargetName="Box" Property="BorderThickness" Value="0" />
                             <Setter TargetName="Box" Property="Padding" Value="1" />
-                            <Setter TargetName="Glyph" Property="Opacity" Value="1" />
+                            <Setter TargetName="CheckGlyph" Property="Opacity" Value="1" />
                         </Trigger>
                         <Trigger Property="IsChecked" Value="{x:Null}">
                             <Setter TargetName="Box" Property="Background" Value="#0078D4" />
                             <Setter TargetName="Box" Property="BorderThickness" Value="0" />
                             <Setter TargetName="Box" Property="Padding" Value="1" />
-                            <Setter TargetName="Glyph" Property="Text" Value="&#xE738;" />
-                            <Setter TargetName="Glyph" Property="FontSize" Value="10" />
-                            <Setter TargetName="Glyph" Property="Opacity" Value="1" />
+                            <Setter TargetName="IndeterminateGlyph" Property="Opacity" Value="1" />
                         </Trigger>
                         <MultiTrigger>
                             <MultiTrigger.Conditions>
@@ -163,12 +172,12 @@
         <Style.Triggers>
             <DataTrigger Binding="{Binding IsReadOnly, RelativeSource={RelativeSource AncestorType={x:Type DataGridCell}}}" Value="True">
                 <Setter Property="IsHitTestVisible" Value="False" />
-                <Setter Property="Opacity" Value="0.55" />
+                <Setter Property="Opacity" Value="0.8" />
                 <Setter Property="Cursor" Value="Arrow" />
             </DataTrigger>
             <DataTrigger Binding="{Binding IsReadOnly, RelativeSource={RelativeSource AncestorType={x:Type DataGrid}}}" Value="True">
                 <Setter Property="IsHitTestVisible" Value="False" />
-                <Setter Property="Opacity" Value="0.55" />
+                <Setter Property="Opacity" Value="0.8" />
                 <Setter Property="Cursor" Value="Arrow" />
             </DataTrigger>
         </Style.Triggers>
@@ -234,12 +243,12 @@
                             SnapsToDevicePixels="True">
                         <TextBlock Foreground="{TemplateBinding Foreground}"
                                    Text="&#xE70D;"
-                                   FontFamily="Segoe Fluent Icons"
-                                   FontSize="10"
+                                   IsHitTestVisible="False"
                                    Margin="{TemplateBinding Padding}"
                                    HorizontalAlignment="Center"
                                    VerticalAlignment="Center"
-                                   IsHitTestVisible="False" />
+                                   FontFamily="Segoe Fluent Icons"
+                                   FontSize="10" />
                     </Border>
                 </ControlTemplate>
             </Setter.Value>
@@ -305,18 +314,20 @@
                                               TextElement.Foreground="{TemplateBinding Foreground}"
                                               TextElement.FontWeight="{TemplateBinding FontWeight}" />
 
-                            <!-- Visual-only chevron — the actual popup toggle is the full-area
-                                 DropDownToggle stacked behind this. IsHitTestVisible=False keeps
-                                 clicks routed to that toggle. IsChecked tracks IsDropDownOpen so
-                                 the button's checked-state visuals (if the style adds any) reflect
-                                 popup state. Style supplies glyph + font; Foreground TemplateBinding
-                                 keeps the chevron in sync with ComboBox.Foreground. -->
+                            <!--
+                                Visual-only chevron — the actual popup toggle is the full-area
+                                DropDownToggle stacked behind this. IsHitTestVisible=False keeps
+                                clicks routed to that toggle. IsChecked tracks IsDropDownOpen so
+                                the button's checked-state visuals (if the style adds any) reflect
+                                popup state. Style supplies glyph + font; Foreground TemplateBinding
+                                keeps the chevron in sync with ComboBox.Foreground.
+                            -->
                             <ToggleButton x:Name="Chevron"
+                                          Style="{StaticResource {x:Static sdg:EditSettingsThemeKeys.EditComboBoxDropDownButton}}"
                                           Grid.Column="1"
-                                          IsChecked="{Binding IsDropDownOpen, Mode=OneWay, RelativeSource={RelativeSource TemplatedParent}}"
-                                          IsHitTestVisible="False"
                                           Foreground="{TemplateBinding Foreground}"
-                                          Style="{StaticResource {x:Static sdg:EditSettingsThemeKeys.EditComboBoxDropDownButton}}" />
+                                          IsChecked="{Binding IsDropDownOpen, Mode=OneWay, RelativeSource={RelativeSource TemplatedParent}}"
+                                          IsHitTestVisible="False" />
 
                             <Popup x:Name="PART_Popup"
                                    Grid.ColumnSpan="2"
@@ -373,13 +384,10 @@
                     <Border x:Name="MainBorder"
                             Background="{TemplateBinding Background}"
                             SnapsToDevicePixels="True">
-                        <TextBlock Foreground="{TemplateBinding Foreground}"
-                                   Text="&#xE787;"
-                                   FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
-                                   FontSize="14"
-                                   HorizontalAlignment="Center"
-                                   VerticalAlignment="Center"
-                                   IsHitTestVisible="False" />
+                        <sdg:SdgIcon IconSource="{StaticResource {x:Static sdg:SdgIconKeys.IconCalendar}}"
+                                     Width="14"
+                                     Height="14"
+                                     IconBrush="{TemplateBinding Foreground}" />
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
@@ -397,7 +405,7 @@
         </Setter>
     </Style>
 
-    
+
     <Style x:Key="{x:Static sdg:EditSettingsThemeKeys.SpinButton}" TargetType="{x:Type RepeatButton}">
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderBrush" Value="Transparent" />
@@ -415,13 +423,13 @@
                             BorderBrush="{TemplateBinding BorderBrush}"
                             BorderThickness="{TemplateBinding BorderThickness}"
                             SnapsToDevicePixels="True">
-                        <TextBlock Text="{TemplateBinding Content}"
-                                   Foreground="{TemplateBinding Foreground}"
-                                   FontFamily="Segoe Fluent Icons"
-                                   FontSize="8"
+                        <TextBlock Foreground="{TemplateBinding Foreground}"
+                                   Text="{TemplateBinding Content}"
+                                   IsHitTestVisible="False"
                                    HorizontalAlignment="Center"
                                    VerticalAlignment="Center"
-                                   IsHitTestVisible="False" />
+                                   FontFamily="Segoe Fluent Icons"
+                                   FontSize="8" />
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
@@ -454,10 +462,12 @@
 
                         <TextBox x:Name="PART_TextBox" Style="{StaticResource {x:Static sdg:EditSettingsThemeKeys.EditTextBox}}" />
 
-                        <!-- Calendar glyph is provided by EditDateDropDownButton's ControlTemplate
-                             so the same icon appears in DateEditSettings's display-mode ShowAlways
-                             indicator without a parallel definition. Override that one style key
-                             to retheme the button + icon in both surfaces. -->
+                        <!--
+                            Calendar glyph is provided by EditDateDropDownButton's ControlTemplate
+                            so the same icon appears in DateEditSettings's display-mode ShowAlways
+                            indicator without a parallel definition. Override that one style key
+                            to retheme the button + icon in both surfaces.
+                        -->
                         <ToggleButton x:Name="PART_DropDownButton"
                                       Style="{StaticResource {x:Static sdg:EditSettingsThemeKeys.EditDateDropDownButton}}"
                                       Grid.Column="1"

@@ -269,26 +269,62 @@ namespace WWSearchDataGrid.Modern.WPF.Behaviors
                 case Key.Right when (Keyboard.Modifiers & ModifierKeys.Control) != 0:
                 case Key.Left  when (Keyboard.Modifiers & ModifierKeys.Control) != 0:
                 {
-                    // Ctrl+Arrow cycles between editable regions. Tab is left alone so the grid
-                    // can use it for cell-to-cell navigation. AddTextBoxCaretAwareArrowExit
-                    // explicitly defers when Ctrl is held, so it won't try to exit the cell here.
+                    // Ctrl+Arrow cycles between editable regions. Ctrl+Shift+Arrow extends the
+                    // selection to the current editable region's boundary — Shift turns the
+                    // motion into selection within the region rather than a jump to the next
+                    // one, matching how Ctrl+Shift+Arrow works for word-wise selection in a
+                    // plain textbox. Tab is left alone so the grid can use it for cell-to-cell
+                    // navigation. AddTextBoxCaretAwareArrowExit explicitly defers when Ctrl is
+                    // held, so it won't try to exit the cell here.
                     if (!state.RegionEditMode) break;
 
-                    var (regionIdx, _) = formatter.GetRegionAtCaret(textBox.CaretIndex);
-                    int targetStart = e.Key == Key.Left
-                        ? formatter.GetPrevEditableRegionStart(regionIdx)
-                        : formatter.GetNextEditableRegionStart(regionIdx);
+                    bool shiftHeld = (Keyboard.Modifiers & ModifierKeys.Shift) != 0;
+                    int caret = textBox.CaretIndex;
+                    var (currentIdx, _) = formatter.GetRegionAtCaret(caret);
+                    var (currentStart, currentLength) = formatter.GetEditableRegionBounds(currentIdx);
 
-                    if (targetStart < 0)
+                    // GetEditableRegionBounds returns bounds for any region despite the name;
+                    // confirm editability by asking whether the next editable region from
+                    // (currentIdx - 1) lands on this region's start.
+                    bool currentIsEditable = currentLength > 0
+                        && formatter.GetNextEditableRegionStart(currentIdx - 1) == currentStart;
+
+                    if (shiftHeld && currentIsEditable)
+                    {
+                        int target = e.Key == Key.Right
+                            ? currentStart + currentLength
+                            : currentStart;
+
+                        if (target == caret) break; // already at the boundary
+
+                        e.Handled = true;
+                        int existingSelStart = textBox.SelectionStart;
+                        int existingSelEnd = existingSelStart + textBox.SelectionLength;
+                        int anchor = e.Key == Key.Right
+                            ? Math.Min(existingSelStart, caret)
+                            : Math.Max(existingSelEnd, caret);
+
+                        textBox.SelectionStart = Math.Min(anchor, target);
+                        textBox.SelectionLength = Math.Abs(target - anchor);
+                        break;
+                    }
+
+                    // Ctrl+Arrow (no Shift), or Ctrl+Shift+Arrow when the caret sits on a
+                    // literal: jump to the next/previous editable region and select it.
+                    int jumpTarget = e.Key == Key.Left
+                        ? formatter.GetPrevEditableRegionStart(currentIdx)
+                        : formatter.GetNextEditableRegionStart(currentIdx);
+
+                    if (jumpTarget < 0)
                         break; // No more regions in that direction — let key pass.
 
                     e.Handled = true;
 
-                    var (targetRegionIdx, _2) = formatter.GetRegionAtCaret(targetStart);
-                    var (rStart, rLength) = formatter.GetEditableRegionBounds(targetRegionIdx);
+                    var (jumpRegionIdx, _2) = formatter.GetRegionAtCaret(jumpTarget);
+                    var (jumpStart, jumpLength) = formatter.GetEditableRegionBounds(jumpRegionIdx);
 
-                    textBox.SelectionStart = rStart;
-                    textBox.SelectionLength = Math.Max(rLength, 1);
+                    textBox.SelectionStart = jumpStart;
+                    textBox.SelectionLength = Math.Max(jumpLength, 1);
                     break;
                 }
 

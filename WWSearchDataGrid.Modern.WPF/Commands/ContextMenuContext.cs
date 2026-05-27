@@ -67,5 +67,14 @@ namespace WWSearchDataGrid.Modern.WPF.Commands
         /// Convenience property: returns true if this context has row data
         /// </summary>
         public bool HasRowData => RowData != null;
+
+        /// <summary>
+        /// True when the grid has more than one cell currently selected. The cell context menu
+        /// uses this to surface a "copy only the right-clicked cell" action that disambiguates
+        /// from the default "copy all selected cells" behavior — relevant when SelectionUnit is
+        /// FullRow or CellOrRowHeader, where right-clicking a single cell still has many cells
+        /// selected.
+        /// </summary>
+        public bool HasMultipleSelectedCells => Grid?.SelectedCells?.Count > 1;
     }
 }

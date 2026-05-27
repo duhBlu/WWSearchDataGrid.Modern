@@ -12,8 +12,8 @@
                 <!-- Window chrome style -->
                 <ResourceDictionary Source="/Styles/WindowStyle.xaml"/>
 
-                <!-- Generic control styles from SDG library -->
-                <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF;component/Themes/Generic.xaml"/>
+                <!-- SDG default theme. Swap the .Themes.Default assembly suffix to switch themes. -->
+                <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF.Themes.Default;component/Theme.xaml"/>
             </ResourceDictionary.MergedDictionaries>
 
             <converters:EnumToBooleanConverter x:Key="EnumToBool" />

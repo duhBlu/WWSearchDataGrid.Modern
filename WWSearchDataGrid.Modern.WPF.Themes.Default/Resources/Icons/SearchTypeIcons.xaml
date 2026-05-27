@@ -531,11 +531,14 @@
                                                                 </GeometryDrawing>
                                                                 <GeometryDrawing>
                                                                     <GeometryDrawing.Pen>
-                                                                        <Pen Brush="#FF1C1C1C"
-                                                                             Thickness="1.75"
+                                                                        <Pen Thickness="1.75"
                                                                              StartLineCap="Round"
                                                                              EndLineCap="Round"
-                                                                             LineJoin="Round" />
+                                                                             LineJoin="Round" >
+                                                                            <Pen.Brush>
+                                                                                <SolidColorBrush Color="#FF1C1C1C" Opacity="0.45" />
+                                                                            </Pen.Brush>
+                                                                        </Pen>
                                                                     </GeometryDrawing.Pen>
                                                                     <GeometryDrawing.Geometry>
                                                                         <RectangleGeometry RadiusX="1"
@@ -574,11 +577,14 @@
                                                                 </DrawingGroup>
                                                                 <GeometryDrawing>
                                                                     <GeometryDrawing.Pen>
-                                                                        <Pen Brush="#FF1C1C1C"
-                                                                             Thickness="1.75"
+                                                                        <Pen Thickness="1.75"
                                                                              StartLineCap="Round"
                                                                              EndLineCap="Round"
-                                                                             LineJoin="Round" />
+                                                                             LineJoin="Round" >
+                                                                            <Pen.Brush>
+                                                                                <SolidColorBrush Color="#FF1C1C1C" Opacity="0.45" />
+                                                                            </Pen.Brush>
+                                                                        </Pen>
                                                                     </GeometryDrawing.Pen>
                                                                     <GeometryDrawing.Geometry>
                                                                         <RectangleGeometry RadiusX="1"
@@ -1781,11 +1787,14 @@
                                                                 </GeometryDrawing>
                                                                 <GeometryDrawing>
                                                                     <GeometryDrawing.Pen>
-                                                                        <Pen Brush="#FF1C1C1C"
-                                                                             Thickness="1.75"
+                                                                        <Pen Thickness="1.75"
                                                                              StartLineCap="Round"
                                                                              EndLineCap="Round"
-                                                                             LineJoin="Round" />
+                                                                             LineJoin="Round" >
+                                                                            <Pen.Brush>
+                                                                                <SolidColorBrush Color="#FF1C1C1C" Opacity="0.45" />
+                                                                            </Pen.Brush>
+                                                                        </Pen>
                                                                     </GeometryDrawing.Pen>
                                                                     <GeometryDrawing.Geometry>
                                                                         <RectangleGeometry RadiusX="1"
@@ -1824,11 +1833,14 @@
                                                                 </DrawingGroup>
                                                                 <GeometryDrawing>
                                                                     <GeometryDrawing.Pen>
-                                                                        <Pen Brush="#FF1C1C1C"
-                                                                             Thickness="1.75"
+                                                                        <Pen Thickness="1.75"
                                                                              StartLineCap="Round"
                                                                              EndLineCap="Round"
-                                                                             LineJoin="Round" />
+                                                                             LineJoin="Round">
+                                                                            <Pen.Brush>
+                                                                                <SolidColorBrush Color="#FF1C1C1C" Opacity="0.45" />
+                                                                            </Pen.Brush>
+                                                                        </Pen>
                                                                     </GeometryDrawing.Pen>
                                                                     <GeometryDrawing.Geometry>
                                                                         <RectangleGeometry RadiusX="1"

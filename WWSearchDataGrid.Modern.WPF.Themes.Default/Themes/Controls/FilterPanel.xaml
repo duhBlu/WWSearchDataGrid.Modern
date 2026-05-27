@@ -5,6 +5,7 @@
                     xmlns:sdg="clr-namespace:WWSearchDataGrid.Modern.WPF;assembly=WWSearchDataGrid.Modern.WPF">
 
     <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF.Themes.Default;component/Resources/Icons/SdgIcons.xaml" />
         <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF.Themes.Default;component/Themes/Controls/Primitives/DefaultControls.xaml" />
         <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF.Themes.Default;component/Templates/FilterTokenTemplates.xaml" />
     </ResourceDictionary.MergedDictionaries>
@@ -36,7 +37,7 @@
                                       IsChecked="{Binding FiltersEnabled, RelativeSource={RelativeSource TemplatedParent}}"
                                       ToolTip="Enable or disable all filters without clearing filter definitions">
                                 <CheckBox.Style>
-                                    <Style TargetType="{x:Type CheckBox}" BasedOn="{StaticResource {x:Static sdg:SdgThemeKeys.PrimitivesCheckBox}}">
+                                    <Style BasedOn="{StaticResource {x:Static sdg:SdgThemeKeys.PrimitivesCheckBox}}" TargetType="{x:Type CheckBox}">
                                         <Setter Property="VerticalAlignment" Value="Top" />
                                         <Setter Property="Margin" Value="6,4,0,0" />
                                         <Style.Triggers>
@@ -125,65 +126,23 @@
                                     </Style>
                                 </StackPanel.Style>
 
-                                <!--  Filter Editor Button — opens the modal multi-column composer.  -->
-                                <Button x:Name="PART_OpenFilterEditorButton"
-                                        BorderThickness="0"
-                                        Cursor="Hand"
-                                        Command="{Binding OpenFilterEditorCommand, RelativeSource={RelativeSource TemplatedParent}}"
-                                        Width="24"
-                                        Height="24"
-                                        FontFamily="Segoe Fluent Icons"
-                                        Content="&#xE71C;"
-                                        FontSize="12"
-                                        ToolTip="Open filter editor">
-                                    <Button.Style>
-                                        <Style TargetType="{x:Type Button}">
-                                            <Setter Property="Foreground" Value="DarkGray" />
-                                            <Setter Property="Background" Value="Transparent" />
-                                            <Setter Property="Template">
-                                                <Setter.Value>
-                                                    <ControlTemplate TargetType="{x:Type Button}">
-                                                        <Border x:Name="border"
-                                                                Background="{TemplateBinding Background}"
-                                                                BorderBrush="{TemplateBinding BorderBrush}"
-                                                                BorderThickness="{TemplateBinding BorderThickness}">
-                                                            <ContentPresenter x:Name="contentPresenter"
-                                                                              Focusable="False"
-                                                                              Margin="{TemplateBinding Padding}"
-                                                                              HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                                                              VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
-                                                                              RecognizesAccessKey="True"
-                                                                              TextElement.Foreground="{TemplateBinding Foreground}" />
-                                                        </Border>
-                                                    </ControlTemplate>
-                                                </Setter.Value>
-                                            </Setter>
-                                            <Style.Triggers>
-                                                <Trigger Property="IsMouseOver" Value="True">
-                                                    <Setter Property="Foreground" Value="Gray" />
-                                                </Trigger>
-                                                <Trigger Property="IsPressed" Value="True">
-                                                    <Setter Property="Foreground" Value="Black" />
-                                                </Trigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </Button.Style>
-                                </Button>
-
                                 <!--  Expand/Collapse Toggle Button  -->
                                 <Button x:Name="PART_ExpandButton"
                                         BorderThickness="0"
                                         Cursor="Hand"
                                         Command="{Binding ToggleExpandCommand, RelativeSource={RelativeSource TemplatedParent}}"
                                         Width="24"
-                                        Height="24"
-                                        FontFamily="Segoe MDL2 Assets"
-                                        FontWeight="ExtraBlack"
-                                        FontSize="14">
+                                        Height="24">
                                     <Button.Style>
                                         <Style TargetType="{x:Type Button}">
-                                            <Setter Property="Content" Value="&#xE712;" />
-                                            <Setter Property="Foreground" Value="Gray" />
+                                            <Setter Property="Content">
+                                                <Setter.Value>
+                                                    <sdg:SdgIcon Width="12"
+                                                                 Height="12"
+                                                                 IconSource="{StaticResource {x:Static sdg:SdgIconKeys.IconExpandPanel}}"
+                                                                 IconBrush="#1c1c1c" />
+                                                </Setter.Value>
+                                            </Setter>
                                             <Setter Property="Background" Value="Transparent" />
                                             <Setter Property="ToolTip" Value="Expand filter panel" />
                                             <Setter Property="Visibility" Value="Visible" />
@@ -193,7 +152,8 @@
                                                         <Border x:Name="border"
                                                                 Background="{TemplateBinding Background}"
                                                                 BorderBrush="{TemplateBinding BorderBrush}"
-                                                                BorderThickness="{TemplateBinding BorderThickness}">
+                                                                BorderThickness="{TemplateBinding BorderThickness}"
+                                                                CornerRadius="4">
                                                             <ContentPresenter x:Name="contentPresenter"
                                                                               Focusable="False"
                                                                               Margin="{TemplateBinding Padding}"
@@ -206,22 +166,74 @@
                                                 </Setter.Value>
                                             </Setter>
                                             <Style.Triggers>
-                                                <!--  Hide expand button when there's no overflow  -->
                                                 <DataTrigger Binding="{Binding HasOverflow, RelativeSource={RelativeSource TemplatedParent}}" Value="False">
                                                     <Setter Property="Visibility" Value="Collapsed" />
                                                 </DataTrigger>
                                                 <DataTrigger Binding="{Binding IsExpanded, RelativeSource={RelativeSource TemplatedParent}}" Value="True">
-                                                    <Setter Property="Content" Value="&#xE896;" />
+                                                    <Setter Property="Content">
+                                                        <Setter.Value>
+                                                            <sdg:SdgIcon Width="14"
+                                                                         Height="14"
+                                                                         IconSource="{StaticResource {x:Static sdg:SdgIconKeys.IconCollapsePanel}}"
+                                                                         IconBrush="#1c1c1c" />
+                                                        </Setter.Value>
+                                                    </Setter>
                                                     <Setter Property="ToolTip" Value="Collapse filter panel" />
                                                     <Setter Property="Visibility" Value="Visible" />
                                                 </DataTrigger>
                                                 <Trigger Property="IsMouseOver" Value="True">
-                                                    <Setter Property="Background" Value="#FFF0F0F0" />
-                                                    <Setter Property="Foreground" Value="#1c1c1c" />
+                                                    <Setter Property="Background" Value="#f1f1f1" />
                                                 </Trigger>
                                                 <Trigger Property="IsPressed" Value="True">
-                                                    <Setter Property="Background" Value="#FFF0F0F0" />
-                                                    <Setter Property="Foreground" Value="#000000" />
+                                                    <Setter Property="Background" Value="#e7e7e7" />
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                </Button>
+
+                                <!--  Filter Editor Button — opens the modal multi-column composer.  -->
+                                <Button x:Name="PART_OpenFilterEditorButton"
+                                        BorderThickness="0"
+                                        Cursor="Hand"
+                                        Command="{Binding OpenFilterEditorCommand, RelativeSource={RelativeSource TemplatedParent}}"
+                                        Width="24"
+                                        Height="24"
+                                        ToolTip="Open filter editor">
+                                    <sdg:SdgIcon Width="14"
+                                                 Height="14"
+                                                 StrokeThickness="3"
+                                                 IconSource="{StaticResource {x:Static sdg:SdgIconKeys.IconFilterEditor}}"
+                                                 IconBrush="#1c1c1c" />
+                                    <Button.Style>
+                                        <Style TargetType="{x:Type Button}">
+                                            <Setter Property="Foreground" Value="#1c1c1c" />
+                                            <Setter Property="Background" Value="Transparent" />
+                                            <Setter Property="Template">
+                                                <Setter.Value>
+                                                    <ControlTemplate TargetType="{x:Type Button}">
+                                                        <Border x:Name="border"
+                                                                Background="{TemplateBinding Background}"
+                                                                BorderBrush="{TemplateBinding BorderBrush}"
+                                                                BorderThickness="{TemplateBinding BorderThickness}"
+                                                                CornerRadius="4">
+                                                            <ContentPresenter x:Name="contentPresenter"
+                                                                              Focusable="False"
+                                                                              Margin="{TemplateBinding Padding}"
+                                                                              HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                                                              VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                                                              RecognizesAccessKey="True"
+                                                                              TextElement.Foreground="{TemplateBinding Foreground}" />
+                                                        </Border>
+                                                    </ControlTemplate>
+                                                </Setter.Value>
+                                            </Setter>
+                                            <Style.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter Property="Background" Value="#f1f1f1" />
+                                                </Trigger>
+                                                <Trigger Property="IsPressed" Value="True">
+                                                    <Setter Property="Background" Value="#e7e7e7" />
                                                 </Trigger>
                                             </Style.Triggers>
                                         </Style>
@@ -234,21 +246,24 @@
                                         Command="{Binding ClearAllFiltersCommand, RelativeSource={RelativeSource TemplatedParent}}"
                                         Width="24"
                                         Height="24"
-                                        FontFamily="Segoe Fluent Icons"
-                                        Content="&#xE653;"
-                                        FontSize="12"
                                         ToolTip="Clear all filters">
+                                    <sdg:SdgIcon Width="12"
+                                                 Height="12"
+                                                 IconSource="{StaticResource {x:Static sdg:SdgIconKeys.IconClear}}"
+                                                 IconBrush="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
                                     <Button.Style>
                                         <Style TargetType="{x:Type Button}">
-                                            <Setter Property="Foreground" Value="DarkGray" />
+                                            <Setter Property="Foreground" Value="#1c1c1c" />
                                             <Setter Property="Background" Value="Transparent" />
+
                                             <Setter Property="Template">
                                                 <Setter.Value>
                                                     <ControlTemplate TargetType="{x:Type Button}">
                                                         <Border x:Name="border"
                                                                 Background="{TemplateBinding Background}"
                                                                 BorderBrush="{TemplateBinding BorderBrush}"
-                                                                BorderThickness="{TemplateBinding BorderThickness}">
+                                                                BorderThickness="{TemplateBinding BorderThickness}"
+                                                                CornerRadius="4">
                                                             <ContentPresenter x:Name="contentPresenter"
                                                                               Focusable="False"
                                                                               Margin="{TemplateBinding Padding}"
@@ -262,10 +277,10 @@
                                             </Setter>
                                             <Style.Triggers>
                                                 <Trigger Property="IsMouseOver" Value="True">
-                                                    <Setter Property="Foreground" Value="Gray" />
+                                                    <Setter Property="Background" Value="#f1f1f1" />
                                                 </Trigger>
                                                 <Trigger Property="IsPressed" Value="True">
-                                                    <Setter Property="Foreground" Value="Black" />
+                                                    <Setter Property="Background" Value="#e7e7e7" />
                                                 </Trigger>
                                             </Style.Triggers>
                                         </Style>

@@ -83,6 +83,7 @@
 
                                 <!--  Value input (fills remaining width and any vertical space the input template wants)  -->
                                 <ContentControl Grid.Row="1"
+                                                Margin="0,0,0,-1"
                                                 HorizontalAlignment="Stretch"
                                                 VerticalAlignment="Stretch"
                                                 Content="{Binding}">
@@ -238,8 +239,11 @@
                                             <Grid>
 
                                                 <!--  Flat checkbox list (hidden when DateTime)  -->
-                                                <ListBox Background="Transparent"
-                                                         BorderThickness="0"
+                                                <ListBox Background="White"
+                                                         BorderBrush="DarkGray"
+                                                         BorderThickness="0,1"
+                                                         Margin="-4,0"
+                                                         Padding="4,0"
                                                          ItemsSource="{Binding FilterValueManager.ValueItems, RelativeSource={RelativeSource AncestorType=sdg:ColumnFilterEditor}}"
                                                          ScrollViewer.CanContentScroll="True"
                                                          VirtualizingPanel.IsVirtualizing="True"
@@ -295,8 +299,11 @@
                                                 </ListBox>
 
                                                 <!--  DateTime TreeView (hidden when NOT DateTime)  -->
-                                                <TreeView Background="Transparent"
-                                                          BorderThickness="0"
+                                                <TreeView Background="White"
+                                                          BorderBrush="DarkGray"
+                                                          BorderThickness="0,1"
+                                                          Margin="-4,0"
+                                                          Padding="4,0"
                                                           ItemsSource="{Binding FilterValueManager.DateTreeRoots, RelativeSource={RelativeSource AncestorType=sdg:ColumnFilterEditor}}">
                                                     <TreeView.Style>
                                                         <Style TargetType="TreeView">

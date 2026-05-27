@@ -1050,10 +1050,11 @@ namespace WWSearchDataGrid.Modern.WPF
 
             // Auto-fill an EditSettings for fields that would otherwise fall through to plain
             // DataGridTextColumn / DataGridCheckBoxColumn so consumers get a styled, keyboard-aware
-            // editor regardless of CLR type. Suppressed when the column has a user-supplied display
-            // hint (converter / string format / mask) so the existing text-column path keeps the
-            // formatted output. DateTime auto-pick ignores wantsCustomDisplay because the masked
-            // date editor integrates display formatting natively.
+            // editor regardless of CLR type. Columns with a user-supplied display hint (converter /
+            // string format / mask) also auto-fill — TextEditSettings.CreateDisplayTemplate applies
+            // the converter / mask / format string through the same styled DisplayTextBlock the
+            // numeric and date paths use, so all formatted columns get matching padding and
+            // vertical centering.
             BaseEditSettings effectiveEditSettings = EditSettings ?? AutoCreateEditSettings(wantsCustomDisplay);
 
             // Surface auto-created settings on the descriptor so downstream readers — most
@@ -1143,10 +1144,14 @@ namespace WWSearchDataGrid.Modern.WPF
         ///   like a plain TextBox in edit mode while still routing the filter row through the
         ///   numeric operator whitelist (Equals, GreaterThan, Between, …). Consumers who want
         ///   up/down spinner UX assign <see cref="SpinEditSettings"/> explicitly.</item>
+        ///   <item>Any non-DateTime, non-numeric-format field with <paramref name="wantsCustomDisplay"/> →
+        ///   plain <see cref="TextEditSettings"/>. <see cref="TextEditSettings.UseMaskAsDisplayFormat"/>
+        ///   is set when <see cref="GridColumn.DisplayMask"/> is present so the mask formats the
+        ///   display text; otherwise <see cref="TextEditSettings.CreateDisplayTemplate"/> applies
+        ///   the column's <see cref="GridColumn.DisplayValueConverter"/> or
+        ///   <see cref="GridColumn.DisplayStringFormat"/> to the styled
+        ///   <c>DisplayTextBlock</c>.</item>
         /// </list>
-        /// Returns <c>null</c> when <paramref name="wantsCustomDisplay"/> is <c>true</c> for
-        /// non-DateTime, non-numeric-format types — the consumer's converter / mask is a signal
-        /// that they want plain text rendering, so the existing text-column fallback runs instead.
         /// </summary>
         private BaseEditSettings AutoCreateEditSettings(bool wantsCustomDisplay)
         {
@@ -1169,7 +1174,19 @@ namespace WWSearchDataGrid.Modern.WPF
                 };
             }
 
-            if (wantsCustomDisplay) return null;
+            // Custom-display column on a non-DateTime, non-numeric-format field: route through
+            // a plain TextEditSettings so the styled DisplayTextBlock template renders the value
+            // with the same padding and vertical centering the other formatted columns use.
+            // TextEditSettings.CreateDisplayTemplate already honors DisplayValueConverter and
+            // DisplayStringFormat; UseMaskAsDisplayFormat=true engages the MaskFormatConverter
+            // path when the column carries a DisplayMask.
+            if (wantsCustomDisplay)
+            {
+                return new TextEditSettings
+                {
+                    UseMaskAsDisplayFormat = !string.IsNullOrEmpty(DisplayMask),
+                };
+            }
 
             if (FieldType == typeof(bool) || FieldType == typeof(bool?))
                 return new CheckBoxEditSettings();
@@ -1220,13 +1237,10 @@ namespace WWSearchDataGrid.Modern.WPF
             // Date-only DisplayStringFormat: adopt it as the editor Mask with
             // UseMaskAsDisplayFormat=true so the filter editor has no time segments, the cell
             // continues to render the same date-only text via MaskFormatConverter, and
-            // ResolveEffectiveRoundDateTime forces .Date comparison. Without this, the auto
-            // editor falls through to "MM/dd/yyyy HH:mm:ss", lets the user commit a midnight
-            // DateTime, and then exact-DateTime comparison against row values carrying
-            // hours/minutes never matches. Time-bearing DisplayStringFormat is intentionally
-            // left to the existing path: routing it through MaskFormatConverter would
-            // normalize single 'h'/'m' tokens to fixed-width 'hh'/'mm' and silently change
-            // the displayed hour from "8:30 AM" to "08:30 AM".
+            // ResolveEffectiveRoundDateTime forces .Date comparison. Time-bearing
+            // DisplayStringFormat is intentionally left to the path below: routing it through
+            // MaskFormatConverter would normalize single 'h'/'m' tokens to fixed-width
+            // 'hh'/'mm' and silently change the displayed hour from "8:30 AM" to "08:30 AM".
             if (!string.IsNullOrEmpty(DisplayStringFormat) && !DateTimeFormatHasTimeTokens(DisplayStringFormat))
             {
                 return new DateEditSettings
@@ -1237,7 +1251,12 @@ namespace WWSearchDataGrid.Modern.WPF
                 };
             }
 
-            if (AnyBoundValueHasTimeOfDay(maxSamples: 200))
+            // Past this point DisplayStringFormat is empty or carries time tokens. The editor
+            // mask must agree with whether the filter comparison rounds time-of-day — when it
+            // rounds, exposing time segments lets the user commit a value the filter silently
+            // discards. ResolveEffectiveRoundDateTime is the single source of truth: explicit
+            // RoundDateTime DP, otherwise the data-sampling fallback.
+            if (!ResolveEffectiveRoundDateTime())
             {
                 return new DateEditSettings
                 {

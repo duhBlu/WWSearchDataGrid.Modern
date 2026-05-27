@@ -1,0 +1,35 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:commands="clr-namespace:WWSearchDataGrid.Modern.WPF.Commands;assembly=WWSearchDataGrid.Modern.WPF"
+                    xmlns:sdg="clr-namespace:WWSearchDataGrid.Modern.WPF;assembly=WWSearchDataGrid.Modern.WPF">
+
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF.Themes.Default;component/Resources/Icons/SdgIcons.xaml" />
+        <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF.Themes.Default;component/Themes/Controls/Primitives/ContextMenu.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+
+    <!--
+        Shared row-header right-click menu. The menu's DataContext is rebound to a
+        Commands.ContextMenuContext per opening, so a single instance is fine here
+        (x:Shared defaults to True for ContextMenu).
+    -->
+    <ContextMenu x:Key="{x:Static sdg:SdgThemeKeys.GridSearchDataGridRowHeaderContextMenu}"
+                 Style="{StaticResource {x:Static sdg:SdgThemeKeys.PrimitivesContextMenu}}"
+                 AutomationProperties.AutomationId="cmuRowHeader">
+        <MenuItem x:Name="miCopy"
+                  Command="{x:Static commands:ContextMenuCommands.CopySelectedCellValuesCommand}"
+                  CommandParameter="{Binding Grid}"
+                  Header="Copy">
+            <MenuItem.Icon>
+                <sdg:SdgIcon Width="14"
+                             Height="14"
+                             IconSource="{StaticResource {x:Static sdg:SdgIconKeys.IconCopy}}"/>
+            </MenuItem.Icon>
+        </MenuItem>
+        <MenuItem x:Name="miCopyWithHeaders"
+                  Command="{x:Static commands:ContextMenuCommands.CopySelectedCellValuesWithHeadersCommand}"
+                  CommandParameter="{Binding Grid}"
+                  Header="Copy With Headers" />
+    </ContextMenu>
+
+</ResourceDictionary>

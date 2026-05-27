@@ -16,7 +16,6 @@ namespace WWSearchDataGrid.Modern.WPF
     {
         private LogicalOperator op = LogicalOperator.And;
         private ObservableCollection<GridColumn> availableColumns;
-        private bool isAddPopupOpen;
         private ICommand addConditionCommand;
         private ICommand addGroupCommand;
         private ICommand removeCommand;
@@ -88,16 +87,6 @@ namespace WWSearchDataGrid.Modern.WPF
             }
         }
 
-        /// <summary>
-        /// Bound two-way by the Add popup so the AddCondition/AddGroup commands can close it
-        /// after they fire. The popup itself opens via the toggle button in the template.
-        /// </summary>
-        public bool IsAddPopupOpen
-        {
-            get => isAddPopupOpen;
-            set => SetProperty(value, ref isAddPopupOpen);
-        }
-
         public ICommand AddConditionCommand =>
             addConditionCommand ?? (addConditionCommand = new RelayCommand(_ =>
             {
@@ -108,14 +97,12 @@ namespace WWSearchDataGrid.Modern.WPF
                 {
                     condition.Column = columns[0];
                 }
-                IsAddPopupOpen = false;
             }));
 
         public ICommand AddGroupCommand =>
             addGroupCommand ?? (addGroupCommand = new RelayCommand(_ =>
             {
                 Children.Insert(0, new FilterGroupNode { Operator = LogicalOperator.And });
-                IsAddPopupOpen = false;
             }));
 
         public ICommand RemoveCommand =>

@@ -266,11 +266,13 @@ namespace WWSearchDataGrid.Modern.WPF
                     FrameworkPropertyMetadataOptions.BindsTwoWayByDefault,
                     OnSelectedItemChanged));
 
-        public object SelectedItem
+#nullable enable
+        public object? SelectedItem
         {
             get => GetValue(SelectedItemProperty);
             set => SetValue(SelectedItemProperty, value);
         }
+#nullable disable
 
         /// <summary>
         /// Whether to maintain text when ItemsSource changes

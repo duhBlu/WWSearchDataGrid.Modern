@@ -104,7 +104,7 @@ namespace WWSearchDataGrid.Modern.Core
                 else
                 {
                     // UnarySearchType tokens can be removed entirely
-                    var unaryRemovalContext = CreateValueRemovalContext(sourceFilter, ValueType.UnarySearchType, component.SearchTypeText, null, component.GroupIndex, component.TemplateIndex);
+                    var unaryRemovalContext = CreateValueRemovalContext(sourceFilter, ValueType.UnarySearchType, component.SearchTypeText, null, component.GroupIndex, component.TemplateIndex, component.SourceTemplate);
                     tokens.Add(new UnarySearchTypeToken(component.SearchTypeText, filterId, orderIndex++, sourceFilter, unaryRemovalContext));
                 }
             }
@@ -117,7 +117,7 @@ namespace WWSearchDataGrid.Modern.Core
                 for (int i = 0; i < component.ValueItems.Count; i++)
                 {
                     var value = component.ValueItems[i];
-                    var removalContext = CreateValueRemovalContext(sourceFilter, ValueType.CollectionItem, value, i, component.GroupIndex, component.TemplateIndex);
+                    var removalContext = CreateValueRemovalContext(sourceFilter, ValueType.CollectionItem, value, i, component.GroupIndex, component.TemplateIndex, component.SourceTemplate);
                     tokens.Add(new ValueToken(value, filterId, orderIndex++, sourceFilter, removalContext));
                 }
             }
@@ -126,7 +126,7 @@ namespace WWSearchDataGrid.Modern.Core
                 // Handle single or dual values
                 if (!string.IsNullOrEmpty(component.PrimaryValue) && !component.HasNoInputValues)
                 {
-                    var primaryRemovalContext = CreateValueRemovalContext(sourceFilter, ValueType.Primary, component.PrimaryValue, null, component.GroupIndex, component.TemplateIndex);
+                    var primaryRemovalContext = CreateValueRemovalContext(sourceFilter, ValueType.Primary, component.PrimaryValue, null, component.GroupIndex, component.TemplateIndex, component.SourceTemplate);
                     tokens.Add(new ValueToken(component.PrimaryValue, filterId, orderIndex++, sourceFilter, primaryRemovalContext));
                 }
 
@@ -139,7 +139,7 @@ namespace WWSearchDataGrid.Modern.Core
                 // Add secondary value if present
                 if (!string.IsNullOrEmpty(component.SecondaryValue))
                 {
-                    var secondaryRemovalContext = CreateValueRemovalContext(sourceFilter, ValueType.Secondary, component.SecondaryValue, null, component.GroupIndex, component.TemplateIndex);
+                    var secondaryRemovalContext = CreateValueRemovalContext(sourceFilter, ValueType.Secondary, component.SecondaryValue, null, component.GroupIndex, component.TemplateIndex, component.SourceTemplate);
                     tokens.Add(new ValueToken(component.SecondaryValue, filterId, orderIndex++, sourceFilter, secondaryRemovalContext));
                 }
             }
@@ -148,7 +148,12 @@ namespace WWSearchDataGrid.Modern.Core
         }
 
         /// <summary>
-        /// Creates a ValueRemovalContext for a token if possible
+        /// Builds a <see cref="ValueRemovalContext"/> for a token. Prefers the direct
+        /// <paramref name="sourceTemplate"/> reference attached to the component when present —
+        /// editor-tree chips populate that field because their <see cref="ColumnFilterInfo.FilterData"/>
+        /// (a multi-column handle) doesn't expose a <see cref="SearchTemplateController"/>.
+        /// Falls back to reflection-based controller lookup for legacy callers that build chips
+        /// without setting <see cref="FilterChipComponents.SourceTemplate"/>.
         /// </summary>
         /// <param name="sourceFilter">The source filter info containing the template reference</param>
         /// <param name="valueType">The type of value being represented</param>
@@ -156,24 +161,22 @@ namespace WWSearchDataGrid.Modern.Core
         /// <param name="valueIndex">The index of the value in collections (optional)</param>
         /// <param name="groupIndex">The index of the SearchTemplateGroup this value belongs to</param>
         /// <param name="templateIndex">The index of the SearchTemplate within the group</param>
+        /// <param name="sourceTemplate">Direct template reference from the chip component, when available</param>
         /// <returns>A ValueRemovalContext if the template can be accessed, null otherwise</returns>
-        private static ValueRemovalContext CreateValueRemovalContext(ColumnFilterInfo sourceFilter, ValueType valueType, object originalValue, int? valueIndex, int groupIndex, int templateIndex)
+        private static ValueRemovalContext CreateValueRemovalContext(ColumnFilterInfo sourceFilter, ValueType valueType, object originalValue, int? valueIndex, int groupIndex, int templateIndex, SearchTemplate sourceTemplate = null)
         {
-            // Try to get the SearchTemplate from the source filter data
-            SearchTemplate template = null;
+            var template = sourceTemplate;
 
-            // Check if FilterData is a ColumnSearchBox with SearchTemplateController
-            if (sourceFilter?.FilterData != null)
+            // Fallback: reflect on FilterData for the column-host case when SourceTemplate wasn't
+            // populated by the caller.
+            if (template == null && sourceFilter?.FilterData != null)
             {
                 var filterData = sourceFilter.FilterData;
-
-                // Using reflection to access SearchTemplateController from the column object
                 var searchTemplateControllerProperty = filterData.GetType().GetProperty("SearchTemplateController");
                 if (searchTemplateControllerProperty != null)
                 {
                     var controller = searchTemplateControllerProperty.GetValue(filterData) as SearchTemplateController;
 
-                    // Use the groupIndex and templateIndex to find the correct template
                     if (controller?.SearchGroups != null && groupIndex >= 0 && groupIndex < controller.SearchGroups.Count)
                     {
                         var group = controller.SearchGroups[groupIndex];

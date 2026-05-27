@@ -58,9 +58,9 @@
                                     <Style TargetType="{x:Type Border}">
                                         <Setter Property="Background" Value="#F0F0F0" />
                                         <Setter Property="BorderBrush" Value="#CCCCCC" />
-                                        <Setter Property="BorderThickness" Value="1"  />
-                                        <Setter Property="Padding" Value="4,2"  />
-                                        <Setter Property="CornerRadius" Value="4"  />
+                                        <Setter Property="BorderThickness" Value="1" />
+                                        <Setter Property="Padding" Value="4,2" />
+                                        <Setter Property="CornerRadius" Value="4" />
                                         <Style.Triggers>
                                             <Trigger Property="IsMouseOver" Value="True">
                                                 <Setter Property="Background" Value="#FFFFFF" />
@@ -78,65 +78,61 @@
                                     <TextBlock Text="{Binding DisplayName}"
                                                VerticalAlignment="Center"
                                                TextTrimming="CharacterEllipsis" />
-                                    <!-- Filter-active glyph -->
-                                    <TextBlock Grid.Column="2"
-                                               Foreground="#1c1c1c"
-                                               Text="&#xE71C;"
-                                               Margin="6,0,0,0"
-                                               VerticalAlignment="Center"
-                                               FontFamily="Segoe Fluent Icons"
-                                               FontSize="11"
-                                               ToolTip="An active filter is applied to this column">
-                                        <TextBlock.Style>
-                                            <Style TargetType="TextBlock">
+                                    <!--  Filter-active glyph  -->
+                                    <sdg:SdgIcon Grid.Column="2"
+                                                 Margin="6,0,0,0"
+                                                 VerticalAlignment="Center"
+                                                 Width="12"
+                                                 Height="12"
+                                                 IconBrush="#1c1c1c"
+                                                 IconSource="{StaticResource {x:Static sdg:SdgIconKeys.IconFilter}}"
+                                                 ToolTip="An active filter is applied to this column">
+                                        <sdg:SdgIcon.Style>
+                                            <Style TargetType="sdg:SdgIcon">
                                                 <Setter Property="Visibility" Value="Collapsed" />
-
-
                                                 <Style.Triggers>
                                                     <DataTrigger Binding="{Binding ColumnFilterHost.HasActiveFilter}" Value="True">
                                                         <Setter Property="Visibility" Value="Visible" />
                                                     </DataTrigger>
                                                 </Style.Triggers>
                                             </Style>
-                                        </TextBlock.Style>
-                                    </TextBlock>
+                                        </sdg:SdgIcon.Style>
+                                    </sdg:SdgIcon>
 
-                                    <!-- Sort-direction glyph -->
-                                    <TextBlock Grid.Column="3"
-                                               Foreground="#495057"
+                                    <!--  Sort-direction glyph  -->
+                                    <sdg:SdgIcon Grid.Column="2"
                                                Margin="6,0,0,0"
-                                               VerticalAlignment="Center"
-                                               FontFamily="Segoe Fluent Icons"
-                                               FontSize="11">
-                                        <TextBlock.Style>
-                                            <Style TargetType="TextBlock">
+                                                 IconBrush="Gray" Width="12" Height="12"
+                                               VerticalAlignment="Center">
+                                        <sdg:SdgIcon.Style>
+                                            <Style TargetType="sdg:SdgIcon">
                                                 <Setter Property="Visibility" Value="Collapsed" />
                                                 <Style.Triggers>
                                                     <DataTrigger Binding="{Binding Column.SortDirection}" Value="{x:Static ComponentModel:ListSortDirection.Ascending}">
                                                         <Setter Property="Visibility" Value="Visible" />
-                                                        <Setter Property="Text" Value="&#xE972;" />
+                                                        <Setter Property="IconSource" Value="{StaticResource {x:Static sdg:SdgIconKeys.IconChevronUp}}" />
                                                         <Setter Property="ToolTip" Value="Sorted ascending" />
                                                     </DataTrigger>
                                                     <DataTrigger Binding="{Binding Column.SortDirection}" Value="{x:Static ComponentModel:ListSortDirection.Descending}">
                                                         <Setter Property="Visibility" Value="Visible" />
-                                                        <Setter Property="Text" Value="&#xE971;" />
+                                                        <Setter Property="IconSource" Value="{StaticResource {x:Static sdg:SdgIconKeys.IconChevronDown}}" />
                                                         <Setter Property="ToolTip" Value="Sorted descending" />
                                                     </DataTrigger>
                                                 </Style.Triggers>
                                             </Style>
-                                        </TextBlock.Style>
-                                    </TextBlock>
+                                        </sdg:SdgIcon.Style>
+                                    </sdg:SdgIcon>
 
-                                    <!-- Pin glyph for fixed rows -->
-                                    <TextBlock Grid.Column="4"
-                                               Foreground="#6C757D"
-                                               Text="&#xE840;"
+                                    <!--  Pin glyph for fixed rows  -->
+                                    <sdg:SdgIcon Grid.Column="3"
+                                               IconBrush="#6C757D"
                                                Margin="6,0,0,0"
                                                VerticalAlignment="Center"
-                                               FontFamily="Segoe Fluent Icons"
-                                               FontSize="11">
-                                        <TextBlock.Style>
-                                            <Style TargetType="TextBlock">
+                                                 Width="12"
+                                                 Height="12"
+                                               >
+                                        <sdg:SdgIcon.Style>
+                                            <Style TargetType="sdg:SdgIcon">
                                                 <Setter Property="Visibility" Value="Collapsed" />
                                                 <Style.Triggers>
                                                     <DataTrigger Binding="{Binding IsFixed}" Value="True">
@@ -144,20 +140,23 @@
                                                     </DataTrigger>
                                                     <DataTrigger Binding="{Binding FixedPosition}" Value="Left">
                                                         <Setter Property="ToolTip" Value="Pinned left — reorder is restricted to other left-pinned columns" />
+                                                        
+                                                        <Setter Property="IconSource" Value="{StaticResource {x:Static sdg:SdgIconKeys.IconPinLeft}}" />
                                                     </DataTrigger>
                                                     <DataTrigger Binding="{Binding FixedPosition}" Value="Right">
                                                         <Setter Property="ToolTip" Value="Pinned right — reorder is restricted to other right-pinned columns" />
+                                                        <Setter Property="IconSource" Value="{StaticResource {x:Static sdg:SdgIconKeys.IconPinRight}}" />
                                                     </DataTrigger>
                                                 </Style.Triggers>
                                             </Style>
-                                        </TextBlock.Style>
-                                    </TextBlock>
+                                        </sdg:SdgIcon.Style>
+                                    </sdg:SdgIcon>
                                 </Grid>
                             </Border>
                         </Grid>
                     </Border>
                     <ControlTemplate.Triggers>
-                        
+
                         <Trigger Property="IsSelected" Value="True">
                             <Setter Property="Background" Value="#D6E9F8" />
                         </Trigger>
@@ -442,7 +441,7 @@
                                 </Grid>
                             </Border>
 
-                            <!-- Column List with Drag-Drop Reordering. 3 listboxes, for left/none/right pinned columns -->
+                            <!--  Column List with Drag-Drop Reordering. 3 listboxes, for left/none/right pinned columns  -->
                             <AdornerDecorator Grid.Row="1">
                                 <Grid>
                                     <Grid.RowDefinitions>

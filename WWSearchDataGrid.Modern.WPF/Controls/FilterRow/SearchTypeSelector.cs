@@ -109,45 +109,30 @@ namespace WWSearchDataGrid.Modern.WPF
 
         #endregion
 
-        public const string PartListName = "PART_List";
-
-        private ListBox _listBox;
-
         /// <summary>
         /// Raised on item click — fires even when the click doesn't change selection, so
         /// re-clicking the active entry still counts as a user commit (which SelectionChanged misses).
         /// </summary>
         public event EventHandler ItemChosen;
 
+        private ICommand _selectSearchTypeCommand;
+
+        /// <summary>
+        /// Invoked by each <see cref="SearchTypeOption"/> MenuItem in the dropdown. Sets
+        /// <see cref="SelectedSearchType"/> and fires <see cref="ItemChosen"/> on every click —
+        /// including re-clicks of the active option, which a plain SelectedValue binding
+        /// would silently drop. The ContextMenu's auto-close handles dismissal.
+        /// </summary>
+        public ICommand SelectSearchTypeCommand => _selectSearchTypeCommand ??= new RelayCommand<SearchTypeOption>(option =>
+        {
+            if (option == null) return;
+            SelectedSearchType = option.SearchType;
+            ItemChosen?.Invoke(this, EventArgs.Empty);
+        });
+
         public SearchTypeSelector()
         {
             RebuildAvailableSearchTypes();
-        }
-
-        public override void OnApplyTemplate()
-        {
-            base.OnApplyTemplate();
-
-            if (_listBox != null)
-            {
-                _listBox.PreviewMouseLeftButtonUp -= OnListBoxPreviewMouseLeftButtonUp;
-                _listBox = null;
-            }
-
-            _listBox = GetTemplateChild(PartListName) as ListBox;
-            if (_listBox != null)
-            {
-                _listBox.PreviewMouseLeftButtonUp += OnListBoxPreviewMouseLeftButtonUp;
-            }
-        }
-
-        private void OnListBoxPreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
-        {
-            if (_listBox == null) return;
-            // Only count clicks landing on an item container — padding/scrollbar clicks don't.
-            var container = ItemsControl.ContainerFromElement(_listBox, e.OriginalSource as DependencyObject) as ListBoxItem;
-            if (container == null) return;
-            ItemChosen?.Invoke(this, EventArgs.Empty);
         }
 
         private static void OnFilteringInputChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)

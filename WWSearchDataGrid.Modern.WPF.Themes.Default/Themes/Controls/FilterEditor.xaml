@@ -7,6 +7,7 @@
 
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF.Themes.Default;component/Themes/Controls/Primitives/DefaultControls.xaml" />
+        <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF.Themes.Default;component/Themes/Controls/Primitives/ContextMenu.xaml" />
     </ResourceDictionary.MergedDictionaries>
 
     <converters:BooleanToVisibilityCollapsedConverter x:Key="FilterEditorBoolToVis" />
@@ -47,10 +48,12 @@
                     VerticalAlignment="Center"
                     Width="14"
                     Height="14"
-                    FontSize="6"
-                    FontFamily="Segoe Fluent Icons"
-                    Content="&#xEF2C;"
                     ToolTip="Remove condition">
+                <sdg:SdgIcon Width="6"
+                             Height="6"
+                             StrokeThickness="4"
+                             IconSource="{StaticResource {x:Static sdg:SdgIconKeys.IconClear}}"
+                             IconBrush="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
                 <Button.Style>
                     <Style TargetType="Button">
                         <Setter Property="Background" Value="Gray" />
@@ -59,9 +62,7 @@
                         <Setter Property="Template">
                             <Setter.Value>
                                 <ControlTemplate TargetType="Button">
-                                    <Border Background="{TemplateBinding Background}"
-                                            Padding="0"
-                                            CornerRadius="8">
+                                    <Border Background="{TemplateBinding Background}" CornerRadius="7">
                                         <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
                                     </Border>
                                 </ControlTemplate>
@@ -73,6 +74,9 @@
                             </DataTrigger>
                             <Trigger Property="IsMouseOver" Value="True">
                                 <Setter Property="Background" Value="#ed4341" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Background" Value="#c83532" />
                             </Trigger>
                         </Style.Triggers>
                     </Style>
@@ -97,100 +101,89 @@
                     <sdg:GroupOperatorChip Operator="{Binding Operator, Mode=TwoWay}" />
 
                     <Button x:Name="AddConditionDirectButton"
-                            Foreground="White"
+                            BorderThickness="0"
                             Cursor="Hand"
                             Command="{Binding AddConditionCommand}"
                             Margin="4,0,0,0"
                             HorizontalAlignment="Center"
                             VerticalAlignment="Center"
-                            FontSize="10"
-                            Width="16"
-                            Height="16"
-                            Content="&#xF8AA;"
-                            FontFamily="Segoe Fluent Icons"
-                            ToolTip="Add condition">
-                        <Button.Template>
-                            <ControlTemplate TargetType="Button">
-                                <Border x:Name="AddBorder"
-                                        Background="Gray"
-                                        Padding="0"
-                                        CornerRadius="8">
-                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                </Border>
-                                <ControlTemplate.Triggers>
+                            Width="14"
+                            Height="14">
+                        <sdg:SdgIcon Width="8"
+                                     Height="8"
+                                     StrokeThickness="3.5"
+                                     IconSource="{StaticResource {x:Static sdg:SdgIconKeys.IconAdd}}"
+                                     IconBrush="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
+                        <Button.Style>
+                            <Style TargetType="Button">
+                                <Setter Property="Background" Value="Gray" />
+                                <Setter Property="Foreground" Value="White" />
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border Background="{TemplateBinding Background}" CornerRadius="8">
+                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                                <Style.Triggers>
                                     <Trigger Property="IsMouseOver" Value="True">
-                                        <Setter TargetName="AddBorder" Property="Background" Value="#42a358" />
+                                        <Setter Property="Background" Value="#42a358" />
                                     </Trigger>
-                                </ControlTemplate.Triggers>
-                            </ControlTemplate>
-                        </Button.Template>
+                                    <Trigger Property="IsPressed" Value="True">
+                                        <Setter Property="Background" Value="#358648" />
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
                     </Button>
 
-                    <ToggleButton x:Name="AddPopupToggle"
-                                  IsChecked="{Binding IsAddPopupOpen, Mode=TwoWay}"
-                                  Cursor="Hand"
-                                  Margin="0,0,0,0"
-                                  Padding="0"
-                                  Width="18"
-                                  Height="22"
-                                  FontFamily="Segoe MDL2 Assets"
-                                  FontSize="8"
-                                  Content="&#xE70D;"
-                                  ToolTip="More options">
-                        <ToggleButton.Template>
-                            <ControlTemplate TargetType="ToggleButton">
-                                <Border x:Name="ToggleBorder"
-                                        Background="Transparent"
+                    <Button x:Name="AddMenuButton"
+                            behaviors:ButtonContextMenuBehavior.OpenOnClick="True"
+                            Cursor="Hand"
+                            Margin="0,0,0,0"
+                            Padding="0"
+                            Width="18"
+                            Height="22">
+                        <sdg:SdgIcon Width="8"
+                                     Height="8"
+                                     IconSource="{StaticResource {x:Static sdg:SdgIconKeys.IconChevronDown}}"
+                                     IconBrush="Gray" />
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <Border Background="Transparent"
                                         BorderBrush="Transparent"
                                         BorderThickness="1"
                                         CornerRadius="3">
                                     <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
                                 </Border>
                             </ControlTemplate>
-                        </ToggleButton.Template>
-                    </ToggleButton>
-
-                    <Popup AllowsTransparency="True"
-                           IsOpen="{Binding IsAddPopupOpen, Mode=TwoWay}"
-                           StaysOpen="False"
-                           Placement="Bottom"
-                           PlacementTarget="{Binding ElementName=AddPopupToggle}"
-                           PopupAnimation="Fade">
-                        <Border Background="White"
-                                BorderBrush="#BBB"
-                                BorderThickness="1"
-                                Padding="2"
-                                MinWidth="180"
-                                CornerRadius="3"
-                                SnapsToDevicePixels="True">
-                            <Border.Effect>
-                                <DropShadowEffect Color="#22000000"
-                                                  BlurRadius="6"
-                                                  ShadowDepth="2" />
-                            </Border.Effect>
-                            <StackPanel Orientation="Vertical">
-                                <Button Background="Transparent"
-                                        BorderThickness="0"
-                                        Command="{Binding AddConditionCommand}"
-                                        Padding="8,4"
-                                        HorizontalContentAlignment="Left"
-                                        Content="Add condition" />
-                                <Button Background="Transparent"
-                                        BorderThickness="0"
-                                        Command="{Binding AddGroupCommand}"
-                                        Padding="8,4"
-                                        HorizontalContentAlignment="Left"
-                                        Content="Add group" />
-                                <Button Background="Transparent"
-                                        BorderThickness="0"
-                                        IsEnabled="False"
-                                        Padding="8,4"
-                                        HorizontalContentAlignment="Left"
-                                        ToolTip="Coming soon"
-                                        Content="Add custom expression" />
-                            </StackPanel>
-                        </Border>
-                    </Popup>
+                        </Button.Template>
+                        <Button.ContextMenu>
+                            <ContextMenu Style="{StaticResource {x:Static sdg:SdgThemeKeys.PrimitivesContextMenu}}">
+                                <MenuItem Header="Add condition"
+                                          Command="{Binding AddConditionCommand}">
+                                    <MenuItem.Icon>
+                                        <sdg:SdgIcon Width="14"
+                                                     Height="14"
+                                                     IconSource="{StaticResource {x:Static sdg:SdgIconKeys.IconAddCondition}}" />
+                                    </MenuItem.Icon>
+                                </MenuItem>
+                                <MenuItem Header="Add group"
+                                          Command="{Binding AddGroupCommand}">
+                                    <MenuItem.Icon>
+                                        <sdg:SdgIcon Width="14"
+                                                     Height="14"
+                                                     IconSource="{StaticResource {x:Static sdg:SdgIconKeys.IconAddGroup}}" />
+                                    </MenuItem.Icon>
+                                </MenuItem>
+                                <MenuItem Header="Add custom expression"
+                                          IsEnabled="False"
+                                          ToolTip="Coming soon" />
+                            </ContextMenu>
+                        </Button.ContextMenu>
+                    </Button>
 
                     <!--  Group-level remove (hidden for the root, which has no parent; otherwise visible on header hover)  -->
                     <Button BorderThickness="0"
@@ -201,10 +194,12 @@
                             VerticalAlignment="Center"
                             Width="14"
                             Height="14"
-                            FontSize="6"
-                            FontFamily="Segoe Fluent Icons"
-                            Content="&#xEF2C;"
                             ToolTip="Remove group">
+                        <sdg:SdgIcon Width="6"
+                                     Height="6"
+                                     StrokeThickness="4"
+                                     IconSource="{StaticResource {x:Static sdg:SdgIconKeys.IconClear}}"
+                                     IconBrush="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
                         <Button.Style>
                             <Style TargetType="Button">
                                 <Setter Property="Background" Value="Gray" />
@@ -213,7 +208,7 @@
                                 <Setter Property="Template">
                                     <Setter.Value>
                                         <ControlTemplate TargetType="Button">
-                                            <Border Background="{TemplateBinding Background}" CornerRadius="8">
+                                            <Border Background="{TemplateBinding Background}" CornerRadius="7">
                                                 <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
                                             </Border>
                                         </ControlTemplate>
@@ -225,6 +220,9 @@
                                     </DataTrigger>
                                     <Trigger Property="IsMouseOver" Value="True">
                                         <Setter Property="Background" Value="#ed4341" />
+                                    </Trigger>
+                                    <Trigger Property="IsPressed" Value="True">
+                                        <Setter Property="Background" Value="#c83532" />
                                     </Trigger>
                                     <DataTrigger Binding="{Binding Parent}" Value="{x:Null}">
                                         <Setter Property="Visibility" Value="Collapsed" />

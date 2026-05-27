@@ -14,8 +14,7 @@
 
     <UserControl.Resources>
         <Style BasedOn="{StaticResource {x:Static sdg:SdgThemeKeys.PrimitivesCheckBox}}" TargetType="{x:Type CheckBox}" />
-        <Style BasedOn="{StaticResource SampleRadioButtonStyle
-            }" TargetType="{x:Type RadioButton}" />
+        <Style BasedOn="{StaticResource SampleRadioButtonStyle}" TargetType="{x:Type RadioButton}" />
 
         <!--
             Template 1 — Slider editor on a numeric column. The DataContext is the
@@ -25,18 +24,18 @@
             this template demonstrates the editor swap; matching is exact equality.
         -->
         <DataTemplate x:Key="TotalSliderFilterTemplate">
-            <DockPanel LastChildFill="True" Margin="4,0">
+            <DockPanel Margin="4,0" LastChildFill="True">
                 <TextBlock DockPanel.Dock="Right"
-                           Width="60"
+                           Text="{Binding Value, StringFormat='C0'}"
                            Margin="6,0,0,0"
                            VerticalAlignment="Center"
-                           TextAlignment="Right"
-                           Text="{Binding Value, StringFormat='C0'}" />
-                <Slider Minimum="0"
+                           Width="60"
+                           TextAlignment="Right" />
+                <Slider VerticalAlignment="Center"
+                        Minimum="0"
                         Maximum="25000"
                         TickFrequency="1000"
                         IsSnapToTickEnabled="True"
-                        VerticalAlignment="Center"
                         Value="{Binding Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
             </DockPanel>
         </DataTemplate>
@@ -47,9 +46,9 @@
             of-day from the equality check.
         -->
         <DataTemplate x:Key="DatePickerFilterTemplate">
-            <DatePicker SelectedDate="{Binding Value, Mode=TwoWay}"
+            <DatePicker Margin="2,0"
                         VerticalAlignment="Center"
-                        Margin="2,0" />
+                        SelectedDate="{Binding Value, Mode=TwoWay}" />
         </DataTemplate>
 
         <!--
@@ -59,9 +58,9 @@
             EditGridCellData DataContext and writes Value directly.
         -->
         <DataTemplate x:Key="StatusRadioFilterTemplate">
-            <ItemsControl ItemsSource="{Binding Column.Tag}"
-                          HorizontalAlignment="Center"
-                          VerticalAlignment="Center">
+            <ItemsControl HorizontalAlignment="Center"
+                          VerticalAlignment="Center"
+                          ItemsSource="{Binding Column.Tag}">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
                         <StackPanel Orientation="Horizontal" />
@@ -69,11 +68,11 @@
                 </ItemsControl.ItemsPanel>
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                        <RadioButton Content="{Binding}"
-                                     GroupName="StatusFilter"
+                        <RadioButton Click="StatusRadio_Click"
                                      Margin="0,0,8,0"
                                      VerticalContentAlignment="Center"
-                                     Click="StatusRadio_Click" />
+                                     Content="{Binding}"
+                                     GroupName="StatusFilter" />
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
@@ -83,11 +82,11 @@
     <sampleControls:SampleHostControl Sources="{x:Static sampleControls:SampleSources.CustomTemplates}">
         <DockPanel>
             <TextBlock DockPanel.Dock="Top"
+                       Foreground="#444"
                        Margin="16,12,16,4"
                        FontSize="13"
-                       Foreground="#444"
                        TextWrapping="Wrap">
-                <Run FontWeight="SemiBold" Text="Custom auto-filter-row templates" />
+                <Run Text="Custom auto-filter-row templates" FontWeight="SemiBold" />
                 <LineBreak />
                 <Run Text="Set GridColumn.AutoFilterRowEditTemplate to swap the default filter editor for any WPF control. The template's DataContext is an EditGridCellData exposing " />
                 <Run FontStyle="Italic" Text="Value" />
@@ -105,8 +104,10 @@
                     BorderBrush="#DDDDDD"
                     BorderThickness="0,1,0,0"
                     Padding="12,8">
-                <TextBlock FontSize="11" Foreground="#666" TextWrapping="Wrap">
-                    <Run FontWeight="SemiBold" Text="Try:" />
+                <TextBlock Foreground="#666"
+                           FontSize="11"
+                           TextWrapping="Wrap">
+                    <Run Text="Try:" FontWeight="SemiBold" />
                     <LineBreak />
                     <Run Text="• Move the Total slider — Value (double) flows into SearchValue; the column compares with Equals semantics." />
                     <LineBreak />
@@ -119,18 +120,17 @@
             </Border>
 
             <sdg:SearchDataGrid x:Name="Grid"
+                                IsReadOnly="True"
                                 Margin="10"
-                                Height="500"
                                 ItemsSource="{Binding Items}"
                                 AutoGenerateColumns="False"
                                 CanUserAddRows="False"
                                 CanUserDeleteRows="False"
-                                IsReadOnly="True"
-                                    ShowCriteriaInAutoFilterRow="True"
-                                
+                                ShowCriteriaInAutoFilterRow="True"
                                 EnableRuleFiltering="True"
                                 SelectionMode="Extended"
                                 SelectionUnit="FullRow">
+
                 <sdg:SearchDataGrid.GridColumns>
                     <sdg:GridColumn Width="80"
                                     FieldName="OrderNumber"
