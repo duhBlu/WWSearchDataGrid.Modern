@@ -439,9 +439,9 @@ namespace WWSearchDataGrid.Modern.WPF
         {
             return () =>
             {
-                if (descriptor?.Owner == null || string.IsNullOrEmpty(bindingPath))
+                if (descriptor?.View == null || string.IsNullOrEmpty(bindingPath))
                     return Enumerable.Empty<object>();
-                IEnumerable source = descriptor.Owner.OriginalItemsSource ?? descriptor.Owner.Items;
+                IEnumerable source = descriptor.View.OriginalItemsSource ?? descriptor.View.Items;
                 if (source == null) return Enumerable.Empty<object>();
                 var values = new List<object>();
                 foreach (var item in source)

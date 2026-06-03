@@ -57,13 +57,13 @@ namespace WWSearchDataGrid.Modern.WPF
         private ContentPresenter _editorHost;
         private UIElement _filterEditor;
         private Popup _filterPopup;
-        private ColumnFilterEditor _filterContent;
+        private ColumnFilterPopup _filterContent;
         private DispatcherTimer _changeTimer;
         private SearchTemplate _temporarySearchTemplate;
         private CheckboxCycleState _checkboxCycleState = CheckboxCycleState.Intermediate;
         private bool _isInitialState = true;
         private bool _suppressSearchTextSync;
-        /// <summary>Data context for user-supplied AutoFilterRow templates. Non-null only while a template is active.</summary>
+        /// <summary>Data context for user-supplied FilterRow templates. Non-null only while a template is active.</summary>
         private EditGridCellData _filterCellData;
 
         /// <summary>Re-entrancy guard masking the focus dip during display/edit surface swap.</summary>
@@ -71,6 +71,15 @@ namespace WWSearchDataGrid.Modern.WPF
 
         /// <summary>Currently-subscribed controller. Tracked separately so a recycled cell can detach from the prior column's controller before subscribing to the new one.</summary>
         private SearchTemplateController _subscribedController;
+
+        /// <summary>
+        /// Snapshot of the input that the most recent Enter/Tab in this cell committed as a
+        /// temp template. When live filtering is off, a second Enter on unchanged input
+        /// promotes that temp template to a permanent rule and resets the editor — this
+        /// snapshot is how that "unchanged input" check is made.
+        /// </summary>
+        private string _lastCommittedSearchText;
+        private object _lastCommittedSearchValue;
 
         #endregion
 
@@ -159,15 +168,15 @@ namespace WWSearchDataGrid.Modern.WPF
         /// </summary>
         public static readonly DependencyProperty EffectiveShowCriteriaProperty = EffectiveShowCriteriaPropertyKey.DependencyProperty;
 
-        private static readonly DependencyPropertyKey HasAutoFilterRowTemplatePropertyKey =
-            DependencyProperty.RegisterReadOnly(nameof(HasAutoFilterRowTemplate), typeof(bool), typeof(ColumnFilterControl),
+        private static readonly DependencyPropertyKey HasFilterRowTemplatePropertyKey =
+            DependencyProperty.RegisterReadOnly(nameof(HasFilterRowTemplate), typeof(bool), typeof(ColumnFilterControl),
                 new PropertyMetadata(false));
 
         /// <summary>
-        /// True when a user-supplied AutoFilterRow template is driving the editor host —
+        /// True when a user-supplied FilterRow template is driving the editor host —
         /// suppresses the default boolean checkbox/editor switching.
         /// </summary>
-        public static readonly DependencyProperty HasAutoFilterRowTemplateProperty = HasAutoFilterRowTemplatePropertyKey.DependencyProperty;
+        public static readonly DependencyProperty HasFilterRowTemplateProperty = HasFilterRowTemplatePropertyKey.DependencyProperty;
 
         private static readonly DependencyPropertyKey IsFilterCellEditingPropertyKey =
             DependencyProperty.RegisterReadOnly(nameof(IsFilterCellEditing), typeof(bool), typeof(ColumnFilterControl),
@@ -336,11 +345,11 @@ namespace WWSearchDataGrid.Modern.WPF
             private set => SetValue(EffectiveShowCriteriaPropertyKey, value);
         }
 
-        /// <inheritdoc cref="HasAutoFilterRowTemplateProperty"/>
-        public bool HasAutoFilterRowTemplate
+        /// <inheritdoc cref="HasFilterRowTemplateProperty"/>
+        public bool HasFilterRowTemplate
         {
-            get => (bool)GetValue(HasAutoFilterRowTemplateProperty);
-            private set => SetValue(HasAutoFilterRowTemplatePropertyKey, value);
+            get => (bool)GetValue(HasFilterRowTemplateProperty);
+            private set => SetValue(HasFilterRowTemplatePropertyKey, value);
         }
 
         /// <inheritdoc cref="IsFilterCellEditingProperty"/>
@@ -468,7 +477,7 @@ namespace WWSearchDataGrid.Modern.WPF
                 _editorHost.PreviewMouseLeftButtonDown += OnEditorHostPreviewMouseLeftButtonDown;
             }
             RefreshEditor();
-            RefreshAutoFilterRowCellStyle();
+            RefreshFilterRowCellStyle();
         }
 
         private static void OnGridColumnChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
@@ -479,13 +488,13 @@ namespace WWSearchDataGrid.Modern.WPF
 
         /// <summary>
         /// Materializes the per-column editor inside <see cref="_editorHost"/>. Uses the column's
-        /// AutoFilterRow template if supplied, otherwise the descriptor's display/edit pair.
+        /// FilterRow template if supplied, otherwise the descriptor's display/edit pair.
         /// </summary>
         private void RefreshEditor()
         {
             if (_editorHost == null) return;
 
-            DataTemplate template = GridColumn?.AutoFilterRowEditTemplate ?? GridColumn?.AutoFilterRowDisplayTemplate;
+            DataTemplate template = GridColumn?.FilterRowEditTemplate ?? GridColumn?.FilterRowDisplayTemplate;
             if (template != null)
             {
                 // Template author binds {Binding Value} to drive the filter; un-bound templates
@@ -513,7 +522,7 @@ namespace WWSearchDataGrid.Modern.WPF
 
             ForceFilterEditorEnabled();
 
-            HasAutoFilterRowTemplate = template != null;
+            HasFilterRowTemplate = template != null;
 
             // Selector is hosted outside PART_EditorHost, so it applies to both editor branches.
             RefreshSupportedSearchTypes();
@@ -521,7 +530,7 @@ namespace WWSearchDataGrid.Modern.WPF
             // Fresh-bind path: per-DP callbacks cover in-place flips, but the descriptor itself
             // only re-binds here.
             RefreshEffectiveShowCriteria();
-            RefreshAutoFilterRowCellStyle();
+            RefreshFilterRowCellStyle();
             UpdateEffectiveIsCellEnabled();
         }
 
@@ -673,7 +682,7 @@ namespace WWSearchDataGrid.Modern.WPF
         private void OnEditorHostPreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
             if (IsFilterCellEditing) return;
-            if (HasAutoFilterRowTemplate) return;
+            if (HasFilterRowTemplate) return;
             Focus();
         }
 
@@ -920,7 +929,7 @@ namespace WWSearchDataGrid.Modern.WPF
                 ctl.SearchTemplateController?.UpdateFilterExpression();
                 if (ctl.EffectiveIsLiveFilteringEnabled)
                     ctl.SourceDataGrid?.FilterItemsSource();
-                ctl.SourceDataGrid?.UpdateFilterPanel();
+                ctl.SourceDataGrid?.UpdateFilterSummaryPanel();
                 ctl.HasAdvancedFilter = ctl.SearchTemplateController?.HasCustomExpression ?? false;
                 ctl.UpdateHasActiveFilterState();
             }
@@ -938,7 +947,7 @@ namespace WWSearchDataGrid.Modern.WPF
                     ctl.SearchTemplateController?.UpdateFilterExpression();
                     if (ctl.EffectiveIsLiveFilteringEnabled)
                         ctl.SourceDataGrid?.FilterItemsSource();
-                    ctl.SourceDataGrid?.UpdateFilterPanel();
+                    ctl.SourceDataGrid?.UpdateFilterSummaryPanel();
                     ctl.UpdateHasActiveFilterState();
                 }
             }
@@ -1083,15 +1092,15 @@ namespace WWSearchDataGrid.Modern.WPF
         /// <summary>Recomputes <see cref="EffectiveShowCriteria"/> — column override beats grid setting.</summary>
         internal void RefreshEffectiveShowCriteria()
         {
-            bool? columnOverride = GridColumn?.ShowCriteriaInAutoFilterRow;
-            bool gridDefault = SourceDataGrid?.ShowCriteriaInAutoFilterRow ?? false;
+            bool? columnOverride = GridColumn?.ShowCriteriaInFilterRow;
+            bool gridDefault = SourceDataGrid?.ShowCriteriaInFilterRow ?? false;
             EffectiveShowCriteria = columnOverride ?? gridDefault;
         }
 
         /// <summary>Resolves the cell Style — column override beats grid setting, falls back to the keyed theme style.</summary>
-        internal void RefreshAutoFilterRowCellStyle()
+        internal void RefreshFilterRowCellStyle()
         {
-            Style resolved = GridColumn?.AutoFilterRowCellStyle ?? SourceDataGrid?.AutoFilterRowCellStyle;
+            Style resolved = GridColumn?.FilterRowCellStyle ?? SourceDataGrid?.FilterRowCellStyle;
             if (resolved != null)
             {
                 Style = resolved;
@@ -1253,15 +1262,15 @@ namespace WWSearchDataGrid.Modern.WPF
         internal string ResolveDisplayMask()
             => GridColumn?.DisplayMask;
 
-        internal bool ResolveEnableRuleFiltering()
+        internal bool ResolveAllowFilterPopup()
         {
             if (GridColumn != null)
             {
-                var localValue = GridColumn.ReadLocalValue(GridColumn.EnableRuleFilteringProperty);
+                var localValue = GridColumn.ReadLocalValue(GridColumn.AllowFilterPopupProperty);
                 if (localValue != DependencyProperty.UnsetValue)
                     return (bool)localValue;
             }
-            return SourceDataGrid?.EnableRuleFiltering ?? true;
+            return SourceDataGrid?.AllowFilterPopup ?? true;
         }
 
         #endregion
@@ -1419,7 +1428,7 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         public void UpdateIsComplexFilteringEnabled()
-            => IsComplexFilteringEnabled = ResolveEnableRuleFiltering();
+            => IsComplexFilteringEnabled = ResolveAllowFilterPopup();
 
         /// <summary>
         /// Recomputes <see cref="HasActiveFilter"/> (any filter applied) and the narrower
@@ -1478,6 +1487,7 @@ namespace WWSearchDataGrid.Modern.WPF
             try
             {
                 _changeTimer?.Stop();
+                ClearLastCommittedSnapshot();
 
                 bool wasNoInput = !ActiveSearchTypeRequiresInput;
 

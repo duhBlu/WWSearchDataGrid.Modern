@@ -49,7 +49,7 @@ namespace WWSearchDataGrid.Modern.WPF.Commands
             {
                 var grid = ResolveSearchDataGrid(parameter);
                 if (grid == null) return;
-                FilterEditor.ShowDialog(grid);
+                FilterEditorDialog.ShowDialog(grid);
             }
             catch (Exception ex)
             {
@@ -85,8 +85,8 @@ namespace WWSearchDataGrid.Modern.WPF.Commands
         public static ICommand ToggleFilterPanelCommand => _toggleFilterPanelCommand ??= new RelayCommand<SearchDataGrid>(grid =>
         {
             Debug.WriteLine($"[PLACEHOLDER] Toggle Filter Panel - Not implemented");
-            // TODO: Toggle FilterPanel visibility
-        }, grid => grid?.FilterPanel != null);
+            // TODO: Toggle FilterSummaryPanel visibility
+        }, grid => grid?.FilterSummaryPanel != null);
 
         /// <summary>
         /// Toggles the visibility of search controls
@@ -109,7 +109,7 @@ namespace WWSearchDataGrid.Modern.WPF.Commands
         /// </summary>
         /// <remarks>
         /// CanExecute checks parameter shape only — not registry state. The pinned
-        /// AutoFilterRowPresenter creates and registers a ColumnFilterControl per column
+        /// FilterRowPresenter creates and registers a ColumnFilterControl per column
         /// asynchronously (one dispatcher tick after the header template applies), so the
         /// registry is briefly empty when the header button is first templated. Gating
         /// CanExecute on registry presence would leave the button IsEnabled=false until

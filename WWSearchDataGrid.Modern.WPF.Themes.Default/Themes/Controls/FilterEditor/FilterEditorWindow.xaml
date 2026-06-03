@@ -4,12 +4,12 @@
                     xmlns:sdg="clr-namespace:WWSearchDataGrid.Modern.WPF;assembly=WWSearchDataGrid.Modern.WPF">
 
     <!--
-        Window chrome for the modal FilterEditor dialog. Mirrors ColumnChooserWindow's look —
+        Window chrome for the modal FilterEditorDialog. Mirrors ColumnChooserWindow's look —
         custom WindowChrome with a 28px title bar and a single Close (X) button. The X button
-        binds to the FilterEditor's CancelCommand: closing the dialog discards pending edits,
+        binds to the FilterEditorDialog's CancelCommand: closing the dialog discards pending edits,
         the same outcome as clicking Cancel in the footer.
     -->
-    <Style x:Key="{x:Static sdg:SdgThemeKeys.FilterEditorWindow}" TargetType="Window">
+    <Style x:Key="{x:Static sdg:ThemeKeys.FilterEditorWindow}" TargetType="Window">
         <Setter Property="Background" Value="White" />
         <Setter Property="BorderBrush" Value="#ADB5BD" />
         <Setter Property="BorderThickness" Value="1" />
@@ -59,7 +59,7 @@
                                                FontSize="12"
                                                FontWeight="Normal" />
 
-                                    <!--  Close Button — bound to FilterEditor.CancelCommand  -->
+                                    <!--  Close Button — bound to FilterEditorDialog.CancelCommand  -->
                                     <Button x:Name="btnClose"
                                             Grid.Column="1"
                                             BorderBrush="Transparent"
@@ -69,10 +69,10 @@
                                             Height="28"
                                             shell:WindowChrome.IsHitTestVisibleInChrome="True"
                                             ToolTip="Close">
-                                        <sdg:SdgIcon Width="10"
+                                        <sdg:Icon Width="10"
                                                      Height="10"
                                                      StrokeThickness="1.5"
-                                                     IconSource="{StaticResource {x:Static sdg:SdgIconKeys.IconClear}}"
+                                                     IconSource="{StaticResource {x:Static sdg:IconKeys.IconClear}}"
                                                      IconBrush="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
                                         <Button.Style>
                                             <Style TargetType="Button">

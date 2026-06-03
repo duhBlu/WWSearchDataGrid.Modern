@@ -17,8 +17,8 @@
         <sampleConverters:NullToBooleanConverter x:Key="NullToBooleanConverter" />
         <sampleConverters:EnumToBooleanConverter x:Key="EnumToBooleanConverter" />
 
-        <Style BasedOn="{StaticResource {x:Static sdg:SdgThemeKeys.PrimitivesButton}}" TargetType="{x:Type Button}" />
-        <Style BasedOn="{StaticResource {x:Static sdg:SdgThemeKeys.PrimitivesCheckBox}}" TargetType="{x:Type CheckBox}" />
+        <Style BasedOn="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesButton}}" TargetType="{x:Type Button}" />
+        <Style BasedOn="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesCheckBox}}" TargetType="{x:Type CheckBox}" />
         <Style BasedOn="{StaticResource SampleRadioButtonStyle}" TargetType="{x:Type RadioButton}" />
         <Style BasedOn="{StaticResource SampleExpanderStyle}" TargetType="{x:Type Expander}" />
     </UserControl.Resources>
@@ -33,7 +33,7 @@
                 TextWrapping="Wrap">
                 <Run FontWeight="SemiBold" Text="Column configuration" />
                 <LineBreak />
-                <Run Text="Click any column cell to focus it, then tweak its settings on the right. Covers Identity (Header / DisplayName / FilterMemberPath / SortMemberPath), Layout (Visible / Fixed / AllowMoving / AllowResizing / AllowSorting / ShowInColumnChooser / ReadOnly), and grid-level Selection mode / unit." />
+                <Run Text="Click any column cell to focus it, then tweak its settings on the right. Covers Identity (Header / DisplayName / FilterMemberPath / SortMemberPath), Layout (Visible / Fixed / AllowMoving / AllowResizing / AllowSorting / ShowInColumnChooser / IsReadOnly), and grid-level Selection mode / unit." />
             </TextBlock>
 
             <Grid>
@@ -51,7 +51,6 @@
                     AutoGenerateColumns="False"
                     CanUserAddRows="False"
                     CanUserDeleteRows="False"
-                    EnableRuleFiltering="True"
                     IsColumnChooserConfinedToGrid="True"
                     IsColumnChooserEnabled="True"
                     IsReadOnly="False"
@@ -64,7 +63,7 @@
                             FieldName="OrderNumber"
                             Fixed="Left"
                             Header="Order #"
-                            ReadOnly="True" />
+                            IsReadOnly="True" />
                         <sdg:GridColumn
                             Width="120"
                             ColumnDisplayName="Order Status"
@@ -220,7 +219,7 @@
                                                     IsChecked="{Binding Fixed, Converter={StaticResource EnumToBooleanConverter}, ConverterParameter=Right}" />
                                             </sdg:SimpleStackPanel>
                                         </Expander>
-                                        <CheckBox Content="Read Only" IsChecked="{Binding ReadOnly}" />
+                                        <CheckBox Content="Read Only" IsChecked="{Binding IsReadOnly}" />
                                         <CheckBox Content="Allow Moving" IsChecked="{Binding AllowMoving}" />
                                         <CheckBox Content="Allow Resizing" IsChecked="{Binding AllowResizing}" />
                                         <CheckBox Content="Allow Sorting" IsChecked="{Binding AllowSorting}" />

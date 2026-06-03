@@ -7,7 +7,7 @@ namespace WWSearchDataGrid.Modern.WPF
     /// <summary>
     /// Typed resource keys for the per-<see cref="SearchType"/> and per-<see cref="DateInterval"/>
     /// <see cref="DrawingImage"/> icons shipped with the WPF SearchDataGrid library. Like the
-    /// style keys in <see cref="SdgThemeKeys"/>, these are <see cref="ComponentResourceKey"/>
+    /// style keys in <see cref="ThemeKeys"/>, these are <see cref="ComponentResourceKey"/>
     /// instances rather than loose string keys so that:
     /// <list type="bullet">
     ///   <item>Consumer resource scopes cannot collide with our icon names by accident.</item>

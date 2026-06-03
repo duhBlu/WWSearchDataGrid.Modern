@@ -1,0 +1,508 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:ComponentModel="clr-namespace:System.ComponentModel;assembly=System.ComponentModel.TypeConverter"
+                    xmlns:sdg="clr-namespace:WWSearchDataGrid.Modern.WPF;assembly=WWSearchDataGrid.Modern.WPF"
+                    xmlns:i="interactivity">
+
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF.Themes.Default;component/Themes/Controls/Primitives/DefaultControls.xaml" />
+        <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF.Themes.Default;component/Themes/Controls/SearchDataGrid/Column/ColumnHeaderContextMenu.xaml" />
+        <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF.Themes.Default;component/Themes/Controls/Primitives/ReorderableListBox.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+
+    <!--  Converters  -->
+    <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+
+    <!--
+        Shared item-container style for every section listbox in the chooser.
+        Defined as a resource so each section listbox can reference it instead
+        of duplicating the template; the chooser uses three separate listboxes
+        (Left / Unpinned / Right) but every row renders the same way.
+        
+        The row mirrors the column header chrome — sort-direction glyph and
+        filter-active glyph are bound to the same state the header reads, so
+        the chooser stays in lockstep with what the user sees in the headers
+        band. Right-click on a row opens the shared column-header context
+        menu (same instance the header itself uses), giving the chooser the
+        full sort / best-fit / hide / pin / clear-filter surface. The menu's
+        DataContext is set per-row from ColumnVisibilityInfo.ContextMenuContext
+        in ColumnChooser.OnSectionContextMenuOpening, matching how the header
+        path wires its menu at opening time.
+    -->
+    <Style x:Key="{x:Static sdg:ThemeKeys.ColumnChooserSectionItem}" TargetType="ListBoxItem">
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="ContextMenu" Value="{StaticResource {x:Static sdg:ThemeKeys.GridSearchDataGridColumnHeaderContextMenu}}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ListBoxItem">
+                    <Border x:Name="itemBorder"
+                            Background="{TemplateBinding Background}"
+                            Padding="4,2,2,2"
+                            CornerRadius="0">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <CheckBox Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesCheckBox}}"
+                                      Grid.Column="0"
+                                      IsChecked="{Binding IsVisible}"
+                                      Focusable="False"
+                                      Margin="0,0,8,0"
+                                      VerticalAlignment="Center" />
+
+                            <Border Grid.Column="1">
+                                <Border.Style>
+                                    <Style TargetType="{x:Type Border}">
+                                        <Setter Property="Background" Value="#F0F0F0" />
+                                        <Setter Property="BorderBrush" Value="#CCCCCC" />
+                                        <Setter Property="BorderThickness" Value="1" />
+                                        <Setter Property="Padding" Value="4,2" />
+                                        <Setter Property="CornerRadius" Value="4" />
+                                        <Style.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter Property="Background" Value="#FFFFFF" />
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="{Binding DisplayName}"
+                                               VerticalAlignment="Center"
+                                               TextTrimming="CharacterEllipsis" />
+                                    <!--  Filter-active glyph  -->
+                                    <sdg:Icon Grid.Column="2"
+                                                 Margin="6,0,0,0"
+                                                 VerticalAlignment="Center"
+                                                 Width="12"
+                                                 Height="12"
+                                                 IconBrush="#1c1c1c"
+                                                 IconSource="{StaticResource {x:Static sdg:IconKeys.IconFilter}}"
+                                                 ToolTip="An active filter is applied to this column">
+                                        <sdg:Icon.Style>
+                                            <Style TargetType="sdg:Icon">
+                                                <Setter Property="Visibility" Value="Collapsed" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding ColumnFilterHost.HasActiveFilter}" Value="True">
+                                                        <Setter Property="Visibility" Value="Visible" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </sdg:Icon.Style>
+                                    </sdg:Icon>
+
+                                    <!--  Sort-direction glyph  -->
+                                    <sdg:Icon Grid.Column="2"
+                                               Margin="6,0,0,0"
+                                                 IconBrush="Gray" Width="12" Height="12"
+                                               VerticalAlignment="Center">
+                                        <sdg:Icon.Style>
+                                            <Style TargetType="sdg:Icon">
+                                                <Setter Property="Visibility" Value="Collapsed" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Column.SortDirection}" Value="{x:Static ComponentModel:ListSortDirection.Ascending}">
+                                                        <Setter Property="Visibility" Value="Visible" />
+                                                        <Setter Property="IconSource" Value="{StaticResource {x:Static sdg:IconKeys.IconChevronUp}}" />
+                                                        <Setter Property="ToolTip" Value="Sorted ascending" />
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding Column.SortDirection}" Value="{x:Static ComponentModel:ListSortDirection.Descending}">
+                                                        <Setter Property="Visibility" Value="Visible" />
+                                                        <Setter Property="IconSource" Value="{StaticResource {x:Static sdg:IconKeys.IconChevronDown}}" />
+                                                        <Setter Property="ToolTip" Value="Sorted descending" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </sdg:Icon.Style>
+                                    </sdg:Icon>
+
+                                    <!--  Pin glyph for fixed rows  -->
+                                    <sdg:Icon Grid.Column="3"
+                                               IconBrush="#6C757D"
+                                               Margin="6,0,0,0"
+                                               VerticalAlignment="Center"
+                                                 Width="12"
+                                                 Height="12"
+                                               >
+                                        <sdg:Icon.Style>
+                                            <Style TargetType="sdg:Icon">
+                                                <Setter Property="Visibility" Value="Collapsed" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsFixed}" Value="True">
+                                                        <Setter Property="Visibility" Value="Visible" />
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding FixedPosition}" Value="Left">
+                                                        <Setter Property="ToolTip" Value="Pinned left — reorder is restricted to other left-pinned columns" />
+                                                        
+                                                        <Setter Property="IconSource" Value="{StaticResource {x:Static sdg:IconKeys.IconPinLeft}}" />
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding FixedPosition}" Value="Right">
+                                                        <Setter Property="ToolTip" Value="Pinned right — reorder is restricted to other right-pinned columns" />
+                                                        <Setter Property="IconSource" Value="{StaticResource {x:Static sdg:IconKeys.IconPinRight}}" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </sdg:Icon.Style>
+                                    </sdg:Icon>
+                                </Grid>
+                            </Border>
+                        </Grid>
+                    </Border>
+                    <ControlTemplate.Triggers>
+
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter Property="Background" Value="#D6E9F8" />
+                        </Trigger>
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="IsSelected" Value="True" />
+                                <Condition Property="IsMouseOver" Value="True" />
+                            </MultiTrigger.Conditions>
+                            <Setter Property="Background" Value="#BFD9EF" />
+                        </MultiTrigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+        <Style.Triggers>
+            <!--  Collapse the item while it's being dragged.  -->
+            <DataTrigger Binding="{Binding Path=(sdg:DragHelpers.IsDragged), RelativeSource={RelativeSource Self}}" Value="True">
+                <Setter Property="Visibility" Value="Collapsed" />
+                <Setter Property="IsHitTestVisible" Value="False" />
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+
+    <!--  Default Window Style for ColumnChooser  -->
+    <Style x:Key="{x:Static sdg:ThemeKeys.ColumnChooserWindow}" TargetType="Window">
+        <Setter Property="Background" Value="White" />
+        <Setter Property="BorderBrush" Value="#ADB5BD" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="ResizeMode" Value="CanResize" />
+        <Setter Property="ShowInTaskbar" Value="False" />
+        <Setter Property="WindowStyle" Value="None" />
+        <Setter Property="AllowsTransparency" Value="False" />
+        <Setter Property="TextOptions.TextFormattingMode" Value="Display" />
+        <Setter Property="WindowChrome.WindowChrome">
+            <Setter.Value>
+                <WindowChrome CaptionHeight="28"
+                              ResizeBorderThickness="4"
+                              UseAeroCaptionButtons="True"
+                              NonClientFrameEdges="None" />
+            </Setter.Value>
+        </Setter>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Window">
+                    <Border Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="28" />
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
+
+                            <!--  Title Bar  -->
+                            <Border Grid.Row="0"
+                                    Background="#F8F9FA"
+                                    BorderBrush="#DEE2E6"
+                                    BorderThickness="0,0,0,0">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <!--  Title Text  -->
+                                    <TextBlock Grid.Column="0"
+                                               Foreground="#495057"
+                                               Text="{Binding Title, RelativeSource={RelativeSource TemplatedParent}}"
+                                               Margin="8,0,0,0"
+                                               VerticalAlignment="Center"
+                                               FontSize="12"
+                                               FontWeight="Normal"
+                                               WindowChrome.IsHitTestVisibleInChrome="False" />
+
+                                    <!--  Close Button  -->
+                                    <Button x:Name="btnClose"
+                                            Grid.Column="1"
+                                            BorderBrush="Transparent"
+                                            BorderThickness="0"
+                                            Command="{Binding Content.CloseCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                            Width="28"
+                                            Height="28"
+                                            FontFamily="Segoe MDL2 Assets"
+                                            FontSize="10"
+                                            Content="&#xE8BB;"
+                                            WindowChrome.IsHitTestVisibleInChrome="True"
+                                            ToolTip="Close">
+                                        <Button.Style>
+                                            <Style TargetType="Button">
+                                                <Setter Property="Template">
+                                                    <Setter.Value>
+                                                        <ControlTemplate TargetType="Button">
+                                                            <Border Background="{TemplateBinding Background}">
+                                                                <ContentPresenter HorizontalAlignment="Center"
+                                                                                  VerticalAlignment="Center"
+                                                                                  TextElement.Foreground="{TemplateBinding Foreground}" />
+                                                            </Border>
+                                                        </ControlTemplate>
+                                                    </Setter.Value>
+                                                </Setter>
+                                                <Setter Property="Foreground" Value="#666666" />
+                                                <Setter Property="Background" Value="Transparent" />
+                                                <Style.Triggers>
+                                                    <!--  Normal hover when enabled  -->
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter Property="Foreground" Value="#333333" />
+                                                        <Setter Property="Background" Value="#E5E5E5" />
+                                                        <Setter Property="Cursor" Value="Hand" />
+                                                    </Trigger>
+
+                                                    <!--  Pressed when enabled  -->
+                                                    <Trigger Property="IsPressed" Value="True">
+                                                        <Setter Property="Background" Value="#CCCCCC" />
+                                                    </Trigger>
+
+                                                    <!--  Disabled baseline  -->
+                                                    <Trigger Property="IsEnabled" Value="False">
+                                                        <Setter Property="Cursor" Value="Arrow" />
+                                                        <Setter Property="IsHitTestVisible" Value="True" />
+                                                    </Trigger>
+
+                                                    <!--  Disabled + Hover  -->
+                                                    <MultiTrigger>
+                                                        <MultiTrigger.Conditions>
+                                                            <Condition Property="IsEnabled" Value="False" />
+                                                            <Condition Property="IsMouseOver" Value="True" />
+                                                        </MultiTrigger.Conditions>
+                                                        <Setter Property="Background" Value="Red" />
+                                                        <Setter Property="Cursor" Value="Hand" />
+                                                    </MultiTrigger>
+
+                                                    <!--  Disabled + Pressed  -->
+                                                    <MultiTrigger>
+                                                        <MultiTrigger.Conditions>
+                                                            <Condition Property="IsEnabled" Value="False" />
+                                                            <Condition Property="IsPressed" Value="True" />
+                                                        </MultiTrigger.Conditions>
+                                                        <Setter Property="Background" Value="DarkRed" />
+                                                    </MultiTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Button.Style>
+                                    </Button>
+                                </Grid>
+                            </Border>
+                            <!--  Content  -->
+                            <ContentPresenter Grid.Row="1" />
+                        </Grid>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!--  Main ColumnChooser Style  -->
+    <Style TargetType="{x:Type sdg:ColumnChooser}">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type sdg:ColumnChooser}">
+                    <Border Background="White"
+                            BorderBrush="#DEE2E6"
+                            BorderThickness="0,1,0,0"
+                            CornerRadius="0">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
+
+                            <!--  Header with Select All and Reorder Buttons  -->
+                            <Border Grid.Row="0"
+                                    Background="#F8F9FA"
+                                    BorderBrush="#DEE2E6"
+                                    BorderThickness="0,0,0,1"
+                                    Padding="8,4">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <CheckBox x:Name="PART_SelectAllCheckBox"
+                                              Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesCheckBox}}"
+                                              Grid.Column="0"
+                                              Foreground="#495057"
+                                              VerticalAlignment="Center"
+                                              Content="Select All"
+                                              IsThreeState="True"
+                                              FontWeight="Normal" />
+
+                                    <!--  Reorder Buttons for Selected Column  -->
+                                    <StackPanel Grid.Column="1"
+                                                Orientation="Horizontal"
+                                                Visibility="{Binding SourceDataGrid.CanUserReorderColumns, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                                Margin="4,0,0,0">
+                                        <Button x:Name="PART_MoveUpButton"
+                                                Cursor="Hand"
+                                                Margin="2,0"
+                                                Width="24"
+                                                Height="24"
+                                                FontFamily="Segoe MDL2 Assets"
+                                                FontSize="10"
+                                                Content="&#xE70E;"
+                                                ToolTip="Move Selected Column Up">
+                                            <Button.Style>
+                                                <Style TargetType="Button">
+                                                    <Setter Property="Template">
+                                                        <Setter.Value>
+                                                            <ControlTemplate TargetType="Button">
+                                                                <Border Background="{TemplateBinding Background}"
+                                                                        BorderBrush="#ADB5BD"
+                                                                        BorderThickness="1"
+                                                                        CornerRadius="2">
+                                                                    <ContentPresenter HorizontalAlignment="Center"
+                                                                                      VerticalAlignment="Center"
+                                                                                      TextElement.Foreground="{TemplateBinding Foreground}" />
+                                                                </Border>
+                                                            </ControlTemplate>
+                                                        </Setter.Value>
+                                                    </Setter>
+                                                    <Setter Property="Foreground" Value="#495057" />
+                                                    <Setter Property="Background" Value="White" />
+                                                    <Style.Triggers>
+                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                            <Setter Property="Background" Value="#E9ECEF" />
+                                                        </Trigger>
+                                                        <Trigger Property="IsPressed" Value="True">
+                                                            <Setter Property="Background" Value="#DEE2E6" />
+                                                        </Trigger>
+                                                        <Trigger Property="IsEnabled" Value="False">
+                                                            <Setter Property="Foreground" Value="#CED4DA" />
+                                                            <Setter Property="BorderBrush" Value="#E9ECEF" />
+                                                        </Trigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Button.Style>
+                                        </Button>
+
+                                        <Button x:Name="PART_MoveDownButton"
+                                                Cursor="Hand"
+                                                Margin="2,0"
+                                                Width="24"
+                                                Height="24"
+                                                FontFamily="Segoe MDL2 Assets"
+                                                FontSize="10"
+                                                Content="&#xE70D;"
+                                                ToolTip="Move Selected Column Down">
+                                            <Button.Style>
+                                                <Style TargetType="Button">
+                                                    <Setter Property="Template">
+                                                        <Setter.Value>
+                                                            <ControlTemplate TargetType="Button">
+                                                                <Border Background="{TemplateBinding Background}"
+                                                                        BorderBrush="#ADB5BD"
+                                                                        BorderThickness="1"
+                                                                        CornerRadius="2">
+                                                                    <ContentPresenter HorizontalAlignment="Center"
+                                                                                      VerticalAlignment="Center"
+                                                                                      TextElement.Foreground="{TemplateBinding Foreground}" />
+                                                                </Border>
+                                                            </ControlTemplate>
+                                                        </Setter.Value>
+                                                    </Setter>
+                                                    <Setter Property="Foreground" Value="#495057" />
+                                                    <Setter Property="Background" Value="White" />
+                                                    <Style.Triggers>
+                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                            <Setter Property="Background" Value="#E9ECEF" />
+                                                        </Trigger>
+                                                        <Trigger Property="IsPressed" Value="True">
+                                                            <Setter Property="Background" Value="#DEE2E6" />
+                                                        </Trigger>
+                                                        <Trigger Property="IsEnabled" Value="False">
+                                                            <Setter Property="Foreground" Value="#CED4DA" />
+                                                            <Setter Property="BorderBrush" Value="#E9ECEF" />
+                                                        </Trigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Button.Style>
+                                        </Button>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+
+                            <!--  Column List with Drag-Drop Reordering. 3 listboxes, for left/none/right pinned columns  -->
+                            <AdornerDecorator Grid.Row="1">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="*" />
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                    </Grid.RowDefinitions>
+
+                                    <!--  Left section  -->
+                                    <sdg:ReorderableListBox x:Name="PART_LeftSectionList"
+                                                            ItemContainerStyle="{StaticResource {x:Static sdg:ThemeKeys.ColumnChooserSectionItem}}"
+                                                            Grid.Row="0"
+                                                            BorderThickness="0"
+                                                            Visibility="{Binding HasLeftFixedColumns, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                                            Padding="0"
+                                                            EnableDragDrop="{Binding IsLeftDragEnabled, RelativeSource={RelativeSource TemplatedParent}}"
+                                                            ItemsSource="{Binding LeftFixedColumns, RelativeSource={RelativeSource TemplatedParent}}"
+                                                            SelectionMode="Single" />
+
+                                    <!--  Divider between Left and the rest.  -->
+                                    <Border Grid.Row="1"
+                                            Background="#DEE2E6"
+                                            Visibility="{Binding IsTopDividerVisible, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                            Height="1" />
+
+                                    <!--  Unpinned section — fills remaining vertical space.  -->
+                                    <sdg:ReorderableListBox x:Name="PART_UnpinnedSectionList"
+                                                            ItemContainerStyle="{StaticResource {x:Static sdg:ThemeKeys.ColumnChooserSectionItem}}"
+                                                            Grid.Row="2"
+                                                            BorderThickness="0"
+                                                            Visibility="{Binding HasUnpinnedColumns, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                                            Padding="0"
+                                                            EnableDragDrop="{Binding IsUnpinnedDragEnabled, RelativeSource={RelativeSource TemplatedParent}}"
+                                                            ItemsSource="{Binding UnpinnedColumns, RelativeSource={RelativeSource TemplatedParent}}"
+                                                            SelectionMode="Single" />
+
+                                    <!--  Divider between Unpinned and Right.  -->
+                                    <Border Grid.Row="3"
+                                            Background="#DEE2E6"
+                                            Visibility="{Binding IsBottomDividerVisible, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                            Height="1" />
+
+                                    <!--  Right section  -->
+                                    <sdg:ReorderableListBox x:Name="PART_RightSectionList"
+                                                            ItemContainerStyle="{StaticResource {x:Static sdg:ThemeKeys.ColumnChooserSectionItem}}"
+                                                            Grid.Row="4"
+                                                            BorderThickness="0"
+                                                            Visibility="{Binding HasRightFixedColumns, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                                            Padding="0"
+                                                            EnableDragDrop="{Binding IsRightDragEnabled, RelativeSource={RelativeSource TemplatedParent}}"
+                                                            ItemsSource="{Binding RightFixedColumns, RelativeSource={RelativeSource TemplatedParent}}"
+                                                            SelectionMode="Single" />
+                                </Grid>
+                            </AdornerDecorator>
+                        </Grid>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+</ResourceDictionary>

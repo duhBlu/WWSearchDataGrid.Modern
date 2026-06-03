@@ -32,10 +32,9 @@
                                 AutoGenerateColumns="False"
                                 CanUserAddRows="False"
                                 CanUserDeleteRows="False"
-                                EnableRuleFiltering="True"
                                 EditorShowMode="MouseDown">
                 <sdg:SearchDataGrid.GridColumns>
-                    <sdg:GridColumn Width="40" FieldName="Id" Header="#" ReadOnly="True" />
+                    <sdg:GridColumn Width="40" FieldName="Id" Header="#" IsReadOnly="True" />
                     <sdg:GridColumn Width="140" FieldName="FullName" Header="Name" />
 
                     <sdg:GridColumn Width="140" FieldName="Phone" Header="Phone">

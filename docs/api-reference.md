@@ -15,11 +15,11 @@ Extends `System.Windows.Controls.DataGrid`. All standard DataGrid properties, me
 | `IsColumnChooserConfinedToGrid` | `bool` | `false` | Constrains the column chooser window to the grid's viewport bounds. |
 | `SearchFilter` | `Predicate<object>` | `null` | The current compiled filter predicate applied to items. |
 | `ActualHasItems` | `bool` | `false` | Read-only. Whether the original (unfiltered) data source has any items. |
-| `ShowCriteriaInAutoFilterRow` | `bool` | `false` | When true, every auto-filter row cell shows an inline search-type selector button. Inherits to descendant cells; per-column override via `GridColumn.ShowCriteriaInAutoFilterRow`. |
-| `AutoFilterRowCellStyle` | `Style` | `null` | Style applied to every auto-filter row cell. Per-column override via `GridColumn.AutoFilterRowCellStyle`. |
-| `FilterRowDelay` | `int` (ms) | `0` | Debounce window for keystroke-driven filtering on auto-filter row cells. `0` fires on every keystroke. Ignored when `EnableLiveFiltering=false`. Inherits to cells. |
-| `EnableLiveFiltering` | `bool` | `true` | Grid-wide live-filtering toggle. When `false`, popup edits and auto-filter-row typing defer until commit (Enter / Tab / focus loss / popup close). Inherits to cells. |
-| `AutoFilterRowClearButtonMode` | `AutoFilterRowClearButtonMode` | `Always` | Controls when the per-cell clear button is visible. `Never`, `Always` (any active filter), `Display` (only on the read-only display surface), `Edit` (only on the edit surface). Inherits to cells. |
+| `ShowCriteriaInFilterRow` | `bool` | `false` | When true, every filter row cell shows an inline search-type selector button. Inherits to descendant cells; per-column override via `GridColumn.ShowCriteriaInFilterRow`. |
+| `FilterRowCellStyle` | `Style` | `null` | Style applied to every filter row cell. Per-column override via `GridColumn.FilterRowCellStyle`. |
+| `FilterRowDelay` | `int` (ms) | `0` | Debounce window for keystroke-driven filtering on filter row cells. `0` fires on every keystroke. Ignored when `EnableLiveFiltering=false`. Inherits to cells. |
+| `EnableLiveFiltering` | `bool` | `true` | Grid-wide live-filtering toggle. When `false`, popup edits and filter-row typing defer until commit (Enter / Tab / focus loss / popup close). Inherits to cells. |
+| `FilterClearButtonMode` | `FilterClearButtonMode` | `Always` | Controls when the per-cell clear button is visible. `Never`, `Always` (any active filter), `Display` (only on the read-only display surface), `Edit` (only on the edit surface). Inherits to cells. |
 | `AllowFixedColumnMenu` | `bool` | `false` | When `true`, the column-header context menu surfaces a `Fixed` submenu with `Pin Left`, `Pin Right`, and `Unpin` items so end users can change a column's `GridColumn.Fixed` value at runtime. When `false`, pinning can only be set declaratively in XAML. |
 
 ### Properties
@@ -28,7 +28,7 @@ Extends `System.Windows.Controls.DataGrid`. All standard DataGrid properties, me
 |----------|------|-------------|
 | `DataColumns` | `ObservableCollection<ColumnSearchBox>` | Collection of column search box controls, one per column. |
 | `OriginalItemsSource` | `IEnumerable` | The original unfiltered items source. |
-| `FilterPanel` | `FilterPanel` | The filter panel control showing active filter chips. |
+| `FilterSummaryPanel` | `FilterSummaryPanel` | The summary panel control showing active filter chips. |
 | `OriginalItemsCount` | `int` | Count of items in the original data source. |
 
 ### Events
@@ -46,7 +46,7 @@ Extends `System.Windows.Controls.DataGrid`. All standard DataGrid properties, me
 | `FilterItemsSource(int delay = 0)` | Applies all active filters to the items source. Optional delay in ms. |
 | `ClearAllFilters()` | Clears all column filters and resets the view. |
 | `ClearAllCachedData()` | Clears all cached column values and collection contexts. Call when replacing data sources. |
-| `UpdateFilterPanel()` | Refreshes the filter panel to reflect current filter state. |
+| `UpdateFilterSummaryPanel()` | Refreshes the filter panel to reflect current filter state. |
 | `FindGridColumnDescriptor(column)` | Returns the `GridColumn` descriptor that generated the given `DataGridColumn`, or null. |
 
 ### Scrolling & Animation
@@ -118,12 +118,12 @@ A `FrameworkContentElement` that describes a column. Declared inside `SearchData
 | `DefaultSearchType` | `DefaultSearchType` | `StartsWith` | Search type for simple textbox: `Contains`, `StartsWith`, `EndsWith`, `Equals`. String columns default to `StartsWith`; `DateTime` / enum columns default to `Equals` via auto-configuration. |
 | `UseCheckBoxInSearchBox` | `bool` | `false` | Checkbox filter for boolean columns. |
 | `CustomSearchTemplate` | `Type` | `null` | Custom search template type. |
-| `AllowFiltering` | `bool` | `true` | When false, hides the auto-filter row cell entirely (collapsed — takes no space). |
-| `AllowAutoFilter` | `bool` | `true` | When false, disables (greys out) the auto-filter row cell while preserving its space. Distinct from `AllowFiltering` (which hides). |
-| `ShowCriteriaInAutoFilterRow` | `bool?` | `null` | Column-level override for the grid's setting. `null` inherits the grid value. Controls whether the inline search-type selector button appears on this cell. |
-| `AutoFilterRowCellStyle` | `Style` | `null` | Column-level style override for the auto-filter row cell. Falls back to the grid's `AutoFilterRowCellStyle`, then to the theme key. |
-| `AutoFilterRowDisplayTemplate` | `DataTemplate` | `null` | Custom data template that drives the auto-filter row cell. Bind to `{Binding Value, Mode=TwoWay}` to participate in filtering. Falls back to `AutoFilterRowEditTemplate`. |
-| `AutoFilterRowEditTemplate` | `DataTemplate` | `null` | Edit-mode data template for the auto-filter row cell. Wins over `AutoFilterRowDisplayTemplate` when both are set. |
+| `AllowFiltering` | `bool` | `true` | When false, hides the filter row cell entirely (collapsed — takes no space). |
+| `AllowAutoFilter` | `bool` | `true` | When false, disables (greys out) the filter row cell while preserving its space. Distinct from `AllowFiltering` (which hides). |
+| `ShowCriteriaInFilterRow` | `bool?` | `null` | Column-level override for the grid's setting. `null` inherits the grid value. Controls whether the inline search-type selector button appears on this cell. |
+| `FilterRowCellStyle` | `Style` | `null` | Column-level style override for the filter row cell. Falls back to the grid's `FilterRowCellStyle`, then to the theme key. |
+| `FilterRowDisplayTemplate` | `DataTemplate` | `null` | Custom data template that drives the filter row cell. Bind to `{Binding Value, Mode=TwoWay}` to participate in filtering. Falls back to `FilterRowEditTemplate`. |
+| `FilterRowEditTemplate` | `DataTemplate` | `null` | Edit-mode data template for the filter row cell. Wins over `FilterRowDisplayTemplate` when both are set. |
 | `AllowSorting` | `bool` | `true` | When false, disables header sort click. |
 
 See [Column Filter Mode](column-filter-mode.md) for how display properties (`DisplayStringFormat`, `DisplayValueConverter`, `DisplayMask`) affect filtering comparison.
@@ -175,7 +175,7 @@ Static class providing attached properties for the legacy column configuration s
 
 ---
 
-## FilterPanel
+## FilterSummaryPanel
 
 Displays active filters as chips with enable/disable toggle.
 
@@ -213,7 +213,7 @@ Displays active filters as chips with enable/disable toggle.
 - `EndsWith` - Match at end
 - `Equals` - Exact match only
 
-### AutoFilterRowClearButtonMode
+### FilterClearButtonMode
 - `Never` - Clear button is never shown
 - `Always` - Shown whenever the cell has an active filter, on either surface (display or edit)
 - `Display` - Shown only on the read-only display surface (focus outside the cell) with an active filter

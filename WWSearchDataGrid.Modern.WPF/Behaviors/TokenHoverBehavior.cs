@@ -49,7 +49,7 @@ namespace WWSearchDataGrid.Modern.WPF.Behaviors
         {
             if (sender is FrameworkElement element && element.Tag is string filterId)
             {
-                var filterPanel = VisualTreeHelperMethods.FindAncestor<FilterPanel>(element);
+                var filterPanel = VisualTreeHelperMethods.FindVisualAncestor<FilterSummaryPanel>(element);
                 if (filterPanel != null)
                 {
                     // Cancel any pending clear operation
@@ -65,7 +65,7 @@ namespace WWSearchDataGrid.Modern.WPF.Behaviors
         {
             if (sender is FrameworkElement element)
             {
-                var filterPanel = VisualTreeHelperMethods.FindAncestor<FilterPanel>(element);
+                var filterPanel = VisualTreeHelperMethods.FindVisualAncestor<FilterSummaryPanel>(element);
                 if (filterPanel != null)
                 {
                     // Create or reuse a timer for delayed clearing

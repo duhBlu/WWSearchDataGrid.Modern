@@ -148,6 +148,21 @@ namespace WWSearchDataGrid.Modern.WPF
                 factory.SetValue(FrameworkElement.StyleProperty, style);
         }
 
+        /// <summary>
+        /// Strips the default WPF validation error adorner — the red border WPF draws around an
+        /// editor whose binding holds a <see cref="System.Windows.Controls.ValidationError"/> —
+        /// from <paramref name="factory"/> by nulling its <see cref="Validation.ErrorTemplate"/>.
+        /// The library surfaces data-annotation errors through the cell's
+        /// <see cref="ValidationErrorIcon"/> badge instead, so the red border is redundant chrome.
+        /// Only the adorner is suppressed: <see cref="Binding.NotifyOnValidationError"/> stays on
+        /// and the error still registers on the binding, so the commit gate keeps working.
+        /// Call on the element that carries the <see cref="CreateValueBinding"/> value binding.
+        /// </summary>
+        protected static void SuppressValidationErrorAdorner(FrameworkElementFactory factory)
+        {
+            factory?.SetValue(Validation.ErrorTemplateProperty, null);
+        }
+
         // ComponentResourceKey lookup walks the standard resource chain (element tree → app)
         // AND, courtesy of the assembly's [ThemeInfo] attribute, falls through to the
         // library's Themes/Generic.xaml when the consumer hasn't merged anything explicitly.
@@ -179,31 +194,31 @@ namespace WWSearchDataGrid.Modern.WPF
         /// <see cref="GridColumn"/> calls — subclasses still implement <see cref="CreateDisplayTemplate"/>
         /// for the default; users override at this layer.
         /// </summary>
-        public DataTemplate ResolveDisplayTemplate(GridColumn column)
+        public DataTemplate ResolveDisplayTemplate(ColumnDataBase column)
             => DisplayTemplate ?? CreateDisplayTemplate(column);
 
         /// <summary>
         /// Returns the user-supplied <see cref="EditTemplate"/> if set; otherwise builds the
         /// editor's default via <see cref="CreateEditTemplate"/>.
         /// </summary>
-        public DataTemplate ResolveEditTemplate(GridColumn column)
+        public DataTemplate ResolveEditTemplate(ColumnDataBase column)
             => EditTemplate ?? CreateEditTemplate(column);
 
         /// <summary>
         /// Builds the read-only display template. Receives the owning <see cref="GridColumn"/> so
         /// the implementation can reach the binding path, display formatting, and converters.
         /// </summary>
-        public abstract DataTemplate CreateDisplayTemplate(GridColumn column);
+        public abstract DataTemplate CreateDisplayTemplate(ColumnDataBase column);
 
         /// <summary>
         /// Builds the in-place edit template. Receives the owning <see cref="GridColumn"/> so the
         /// implementation can wire a two-way binding to the field.
         /// </summary>
-        public abstract DataTemplate CreateEditTemplate(GridColumn column);
+        public abstract DataTemplate CreateEditTemplate(ColumnDataBase column);
 
         /// <summary>
         /// Builds the editor element placed in the per-column cell of the
-        /// <see cref="AutoFilterRowPresenter"/>. Mirrors <see cref="CreateEditTemplate"/> in shape
+        /// <see cref="FilterRowPresenter"/>. Mirrors <see cref="CreateEditTemplate"/> in shape
         /// (same editor type, same keyed style, same theming) but binds the editor's value DP to
         /// the supplied <paramref name="host"/>'s filter DPs (<c>SearchText</c> for text editors,
         /// <c>SearchValue</c> for typed editors, <c>FilterCheckboxState</c> for checkboxes)
@@ -228,7 +243,7 @@ namespace WWSearchDataGrid.Modern.WPF
 
         /// <summary>
         /// Builds the read-only display surface placed in the per-column cell of the
-        /// <see cref="AutoFilterRowPresenter"/> when the filter cell is NOT in keyboard focus.
+        /// <see cref="FilterRowPresenter"/> when the filter cell is NOT in keyboard focus.
         /// Mirrors <see cref="CreateFilterEditor"/> but renders a <see cref="TextBlock"/>-shaped
         /// presentation of the filter value rather than an editable control — same display /
         /// edit split that <see cref="CreateDisplayTemplate"/> / <see cref="CreateEditTemplate"/>
@@ -302,7 +317,7 @@ namespace WWSearchDataGrid.Modern.WPF
         /// that the CLR-type-based default (set by <see cref="GridColumn.ApplyTypeBasedDefaults"/>)
         /// can fall outside <see cref="GetSupportedFilterSearchTypes"/> — e.g. a
         /// <see cref="ComboBoxEditSettings"/> on a string-typed field would otherwise inherit
-        /// <see cref="WPF.DefaultSearchType.StartsWith"/> and disable the AutoFilterRow cell.
+        /// <see cref="WPF.DefaultSearchType.StartsWith"/> and disable the FilterRow cell.
         /// Default returns <c>null</c> (no preference; type-based default wins). Honored by
         /// <see cref="GridColumn"/> only when the user hasn't set
         /// <see cref="GridColumn.DefaultSearchType"/> explicitly.
@@ -448,11 +463,11 @@ namespace WWSearchDataGrid.Modern.WPF
         /// </remarks>
         internal static void ExitCellViaArrow(DependencyObject source, KeyEventArgs e)
         {
-            var cell = VisualTreeHelperMethods.FindVisualParent<DataGridCell>(source);
+            var cell = VisualTreeHelperMethods.FindVisualAncestor<DataGridCell>(source);
             if (cell == null)
             {
                 // Filter-row hosting: the editor isn't inside a DataGridCell, it's inside a
-                // ColumnFilterControl in the AutoFilterRow. Same intent (caret-at-boundary
+                // ColumnFilterControl in the FilterRow. Same intent (caret-at-boundary
                 // wants to step to the adjacent cell), different host plumbing — route the
                 // request through FilterRowNavigator which knows how to walk the filter row
                 // in DisplayIndex order and hand off Down / end-of-row Tab to the data area.
@@ -460,14 +475,21 @@ namespace WWSearchDataGrid.Modern.WPF
                 // CheckBoxEditSettings) mark the event Handled after the call regardless of
                 // whether navigation actually moved, which matches data-cell semantics: at
                 // the filter row's outer edge the key is consumed and focus stays put.
-                var filter = VisualTreeHelperMethods.FindVisualParent<ColumnFilterControl>(source);
+                var filter = VisualTreeHelperMethods.FindVisualAncestor<ColumnFilterControl>(source);
                 if (filter != null)
                     FilterRowNavigator.TryNavigate(filter, e);
                 return;
             }
 
-            var grid = VisualTreeHelperMethods.FindVisualParent<DataGrid>(cell);
+            var grid = VisualTreeHelperMethods.FindVisualAncestor<DataGrid>(cell);
             if (grid == null) return;
+
+            // Validation edit lock: while the editing cell holds an unresolved error and
+            // commit-on-error is off, an arrow at a boundary must not carry focus to another cell.
+            // The caller already marked the key handled, so returning simply consumes the arrow
+            // and keeps the user in the editor.
+            if (grid is SearchDataGrid lockedGrid && lockedGrid.IsEditLockActive())
+                return;
 
             grid.CommitEdit();
             cell.Focus();
@@ -503,13 +525,13 @@ namespace WWSearchDataGrid.Modern.WPF
         /// pulls together the editor's <see cref="EditorButtonShowMode"/>, the grid's default,
         /// and the surrounding cell/row state, then routes them through
         /// <see cref="Converters.EditorButtonVisibilityConverter"/>. Returns null when the column
-        /// has no <see cref="GridColumn.Owner"/> (e.g. unit tests) — caller can leave the button
+        /// has no <see cref="ColumnLayoutBase.View"/> (e.g. unit tests) — caller can leave the button
         /// unconditionally visible.
         /// </summary>
-        /// 
-        protected static MultiBinding BuildEditorButtonVisibilityBinding(BaseEditSettings settings, GridColumn column)
+        ///
+        protected static MultiBinding BuildEditorButtonVisibilityBinding(BaseEditSettings settings, ColumnDataBase column)
         {
-            if (settings == null || column?.Owner == null) return null;
+            if (settings == null || column?.View == null) return null;
 
             var binding = new MultiBinding
             {
@@ -517,7 +539,7 @@ namespace WWSearchDataGrid.Modern.WPF
                 Mode = BindingMode.OneWay,
             };
             binding.Bindings.Add(new Binding { Source = settings, Path = new PropertyPath(EditorButtonShowModeProperty), Mode = BindingMode.OneWay });
-            binding.Bindings.Add(new Binding { Source = column.Owner, Path = new PropertyPath(SearchDataGrid.EditorButtonShowModeProperty), Mode = BindingMode.OneWay });
+            binding.Bindings.Add(new Binding { Source = column.View, Path = new PropertyPath(SearchDataGrid.EditorButtonShowModeProperty), Mode = BindingMode.OneWay });
             binding.Bindings.Add(new Binding
             {
                 RelativeSource = new RelativeSource(RelativeSourceMode.FindAncestor) { AncestorType = typeof(DataGridCell) },
@@ -558,9 +580,9 @@ namespace WWSearchDataGrid.Modern.WPF
         /// </summary>
         protected internal static void EnsureCellEditing(DependencyObject source)
         {
-            var cell = VisualTreeHelperMethods.FindVisualParent<DataGridCell>(source);
+            var cell = VisualTreeHelperMethods.FindVisualAncestor<DataGridCell>(source);
             if (cell == null || cell.IsEditing) return;
-            var grid = VisualTreeHelperMethods.FindVisualParent<DataGrid>(cell);
+            var grid = VisualTreeHelperMethods.FindVisualAncestor<DataGrid>(cell);
             if (grid == null) return;
             cell.Focus();
             grid.BeginEdit();
@@ -574,7 +596,7 @@ namespace WWSearchDataGrid.Modern.WPF
         /// <c>HorizontalAlignment</c> since the glyph itself is what shifts. The editor's outer
         /// stretching is unaffected — only the content within it moves.
         /// </summary>
-        protected static void ApplyTextAlignment(FrameworkElementFactory factory, GridColumn column)
+        protected static void ApplyTextAlignment(FrameworkElementFactory factory, ColumnDataBase column)
         {
             if (factory == null || column == null) return;
             var alignment = column.TextAlignment;
@@ -623,15 +645,28 @@ namespace WWSearchDataGrid.Modern.WPF
         /// Helper for subclasses: build a two-way binding to the column's <see cref="GridColumn.FieldName"/>,
         /// updating the source when focus is lost (the standard editing UX).
         /// </summary>
-        protected static Binding CreateValueBinding(GridColumn column, BindingMode mode = BindingMode.TwoWay)
+        protected static Binding CreateValueBinding(ColumnDataBase column, BindingMode mode = BindingMode.TwoWay)
         {
-            return new Binding(column.FieldName)
+            var binding = new Binding(column.FieldName)
             {
                 Mode = mode,
                 UpdateSourceTrigger = UpdateSourceTrigger.LostFocus,
                 ValidatesOnDataErrors = true,
                 ValidatesOnExceptions = true
             };
+
+            // Phase 2.2: validate the edited value against the property's data-annotation
+            // attributes. The rule no-ops when the column resolves
+            // ActualShowValidationAttributeErrors to false, so the grid/column toggle controls
+            // whether errors surface. NotifyOnValidationError lets the grid raise Validation.Error
+            // for the message tooltip and for commit gating.
+            if (!string.IsNullOrEmpty(column.FieldName) && column.FieldName.IndexOf('.') < 0)
+            {
+                binding.NotifyOnValidationError = true;
+                binding.ValidationRules.Add(new DataAnnotationsValidationRule(column, column.FieldName));
+            }
+
+            return binding;
         }
     }
 }

@@ -12,8 +12,8 @@
     </UserControl.DataContext>
 
     <UserControl.Resources>
-        <Style BasedOn="{StaticResource {x:Static sdg:SdgThemeKeys.PrimitivesButton}}" TargetType="{x:Type Button}" />
-        <Style BasedOn="{StaticResource {x:Static sdg:SdgThemeKeys.PrimitivesCheckBox}}" TargetType="{x:Type CheckBox}" />
+        <Style BasedOn="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesButton}}" TargetType="{x:Type Button}" />
+        <Style BasedOn="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesCheckBox}}" TargetType="{x:Type CheckBox}" />
         <Style BasedOn="{StaticResource SampleSliderStyle}" TargetType="{x:Type Slider}" />
         <Style BasedOn="{StaticResource SampleExpanderStyle}" TargetType="{x:Type Expander}" />
     </UserControl.Resources>
@@ -27,7 +27,7 @@
                        TextWrapping="Wrap">
                 <Run FontWeight="SemiBold" Text="Large datasets &amp; virtualization" />
                 <LineBreak />
-                <Run Text="Use the quick-scale buttons to push the grid up to 1M rows. No animation toggles here — those settings are antithetical to smooth scaling. See the Scrolling Animation sample for momentum / per-pixel scrolling." />
+                <Run Text="Use the quick-scale buttons to push the grid up to 1M rows. Tune virtualization, live scrolling, and filter-row debounce — the settings that decide whether scrolling and typing stay smooth at scale. No animation toggles here; those settings are antithetical to smooth scaling. See the Scrolling Animation sample for momentum / per-pixel scrolling." />
             </TextBlock>
 
             <sampleControls:SampleFooterControl DockPanel.Dock="Bottom"
@@ -52,7 +52,7 @@
                                     CanUserAddRows="False"
                                     CanUserDeleteRows="False"
                                     IsReadOnly="True"
-                                    EnableRuleFiltering="True"
+                                    AllowFilterPopup="True"
                                     SelectionMode="Extended"
                                     SelectionUnit="FullRow">
                     <sdg:SearchDataGrid.GridColumns>
@@ -104,6 +104,29 @@
                             </sdg:SimpleStackPanel>
                         </Expander>
 
+                        <Expander Header="Filter behavior" IsExpanded="True">
+                            <sdg:SimpleStackPanel Orientation="Vertical" Spacing="6" Margin="4">
+                                <sdg:SimpleStackPanel Orientation="Vertical" Spacing="2"
+                                                      ToolTip="Debounces filter-row keystrokes while live filtering is on. Has no effect when EnableLiveFiltering is off.">
+                                    <TextBlock>
+                                        <Run Text="FilterRowDelay:" />
+                                        <Run Text="{Binding ElementName=Grid, Path=FilterRowDelay, Mode=OneWay}" />
+                                        <Run Text="ms" />
+                                    </TextBlock>
+                                    <Slider Minimum="0" Maximum="2000"
+                                            TickFrequency="100" IsSnapToTickEnabled="True"
+                                            Value="{Binding ElementName=Grid, Path=FilterRowDelay, Mode=TwoWay}" />
+                                </sdg:SimpleStackPanel>
+                                <CheckBox Content="EnableLiveFiltering"
+                                          IsChecked="{Binding ElementName=Grid, Path=EnableLiveFiltering, Mode=TwoWay}"
+                                          ToolTip="Grid-wide live-filtering toggle. When off, typing and popup edits defer until you commit (Enter / Tab / focus loss / popup close)." />
+                                <Button Content="Clear all filters"
+                                        Margin="0,4,0,0"
+                                        HorizontalAlignment="Left"
+                                        Click="OnClearAllFiltersClicked" />
+                            </sdg:SimpleStackPanel>
+                        </Expander>
+
                         <Expander Header="Tuning tips">
                             <TextBlock Margin="4" FontSize="11" Foreground="#666" TextWrapping="Wrap">
                                 <Run FontWeight="SemiBold" Text="At 100k+:" />
@@ -111,6 +134,9 @@
                                 <LineBreak />
                                 <Run FontWeight="SemiBold" Text="At 1M:" />
                                 <Run Text="disable Live Scrolling. Cache 1.0–1.5 pages. Item-mode scrolling only." />
+                                <LineBreak />
+                                <Run FontWeight="SemiBold" Text="Filter row at scale:" />
+                                <Run Text="at 100k+ rows with live filtering on, raise FilterRowDelay (300–500ms) so typing isn't refiltering on every keystroke. At 1M, turn EnableLiveFiltering off entirely — commit on Enter." />
                             </TextBlock>
                         </Expander>
 

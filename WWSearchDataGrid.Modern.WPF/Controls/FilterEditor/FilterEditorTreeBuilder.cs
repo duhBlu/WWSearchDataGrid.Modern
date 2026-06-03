@@ -16,8 +16,8 @@ namespace WWSearchDataGrid.Modern.WPF
         /// <summary>
         /// Builds a grid-level tree from the per-column controllers using each non-first column's
         /// <see cref="SearchTemplateGroup.OperatorName"/> as the inter-column join operator
-        /// (left-folded). Used by the FilterPanel operator-toggle path so an inter-column OR
-        /// renders as a single OR group in both the editor and the FilterPanel chip strip,
+        /// (left-folded). Used by the FilterSummaryPanel operator-toggle path so an inter-column OR
+        /// renders as a single OR group in both the editor and the FilterSummaryPanel chip strip,
         /// instead of getting interpreted as the inner combiner of one column's group.
         /// <para>
         /// Returns <c>null</c> when there are no active columns. Column-level OperatorName is
@@ -126,7 +126,7 @@ namespace WWSearchDataGrid.Modern.WPF
         /// Builds the editor-time subtree for one <see cref="SearchTemplateGroup"/> in the
         /// synthesize path. Mirrors <see cref="BuildEditorNodeFromGroup"/> but derives the inner
         /// combiner exclusively from non-first template OperatorName values, so the group-level
-        /// OperatorName (which the FilterPanel toggle uses as the inter-column join) doesn't get
+        /// OperatorName (which the FilterSummaryPanel toggle uses as the inter-column join) doesn't get
         /// misread as an intra-group operator.
         /// </summary>
         private static FilterEditorNode BuildSynthesizedSubtreeForGroup(SearchTemplateGroup coreGroup, GridColumn column)
@@ -185,7 +185,7 @@ namespace WWSearchDataGrid.Modern.WPF
                 var existing = grid.GridFilterTree;
                 existing.AvailableColumns = availableColumns;
 
-                // Edits made outside the editor (per-column popup, FilterPanel chip removals,
+                // Edits made outside the editor (per-column popup, FilterSummaryPanel chip removals,
                 // etc.) can leave redundant single-AND wrappers behind. Clean them up now so
                 // the editor opens on a normalized tree instead of a stale AND > AND > {…} chain.
                 FilterEditorNormalizer.Normalize(existing);
@@ -229,7 +229,7 @@ namespace WWSearchDataGrid.Modern.WPF
         /// Apply-time: stores the composed editor tree on the grid (so the unified evaluator can
         /// honor cross-column groupings) and replaces each touched column's
         /// <see cref="SearchTemplateController.SearchGroups"/> with the slice derived from the
-        /// tree (so the per-column popup and FilterPanel chip strip still reflect what's
+        /// tree (so the per-column popup and FilterSummaryPanel chip strip still reflect what's
         /// active). Triggers <see cref="SearchTemplateController.UpdateFilterExpression(bool)"/>
         /// on every touched column.
         /// </summary>
@@ -401,7 +401,7 @@ namespace WWSearchDataGrid.Modern.WPF
                 };
 
                 // The inner combiner (And vs Or) gets stamped onto each non-leading template's
-                // OperatorName so the existing FilterPanel chip strip, SearchDataGridFiltering
+                // OperatorName so the existing FilterSummaryPanel chip strip, SearchDataGridFiltering
                 // evaluator, and FilterExpressionBuilder all read the same intent. Negation lives
                 // on the group's own OperatorName (set via group.Operator.ToTokenString() above).
                 bool isOrCombiner = group.Operator == LogicalOperator.Or || group.Operator == LogicalOperator.NotOr;

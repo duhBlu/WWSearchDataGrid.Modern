@@ -81,7 +81,7 @@ namespace WWSearchDataGrid.Modern.WPF.Commands
                     controller.UpdateFilterExpression();
 
                     context.Grid?.FilterItemsSource();
-                    context.Grid?.UpdateFilterPanel();
+                    context.Grid?.UpdateFilterSummaryPanel();
                     context.ColumnSearchBox?.UpdateHasActiveFilterState();
                 }
                 catch (Exception ex)

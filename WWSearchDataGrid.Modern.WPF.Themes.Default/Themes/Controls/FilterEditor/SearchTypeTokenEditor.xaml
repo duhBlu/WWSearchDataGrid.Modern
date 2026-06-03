@@ -3,10 +3,14 @@
                     xmlns:sdg="clr-namespace:WWSearchDataGrid.Modern.WPF;assembly=WWSearchDataGrid.Modern.WPF"
                     xmlns:converters="clr-namespace:WWSearchDataGrid.Modern.WPF.Converters;assembly=WWSearchDataGrid.Modern.WPF">
 
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF.Themes.Default;component/Themes/Controls/Primitives/DefaultControls.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+
     <converters:SearchTypeToIconConverter x:Key="FilterEditorSearchTypeToIconConverter" />
     <converters:EnumToStringConverter x:Key="FilterEditorEnumToStringConverter" />
 
-    <Style x:Key="{x:Static sdg:SdgThemeKeys.FilterEditorSearchTypeToken}" TargetType="{x:Type sdg:SearchTypeTokenEditor}">
+    <Style x:Key="{x:Static sdg:ThemeKeys.FilterEditorSearchTypeToken}" TargetType="{x:Type sdg:SearchTypeTokenEditor}">
         <Setter Property="Focusable" Value="True" />
         <Setter Property="VerticalAlignment" Value="Center" />
         <Setter Property="Template">
@@ -62,14 +66,17 @@
                                          MaxHeight="300"
                                          ItemsSource="{Binding ValidSearchTypes, RelativeSource={RelativeSource TemplatedParent}}"
                                          SelectedItem="{Binding SelectedSearchType, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}">
+                                    <ListBox.ItemContainerStyle>
+                                        <Style BasedOn="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesListBoxItem}}" TargetType="ListBoxItem" />
+                                    </ListBox.ItemContainerStyle>
                                     <ListBox.ItemTemplate>
                                         <DataTemplate>
-                                            <StackPanel Orientation="Horizontal" Margin="6,3">
-                                                <Image Source="{Binding Converter={StaticResource FilterEditorSearchTypeToIconConverter}}"
-                                                       Margin="0,0,6,0"
-                                                       VerticalAlignment="Center"
-                                                       Width="14"
-                                                       Height="14" />
+                                            <StackPanel Orientation="Horizontal">
+                                                <sdg:Icon IconSource="{Binding Converter={StaticResource FilterEditorSearchTypeToIconConverter}}"
+                                                          Margin="0,0,6,0"
+                                                          VerticalAlignment="Center"
+                                                          Width="14"
+                                                          Height="14" />
                                                 <TextBlock Text="{Binding Converter={StaticResource FilterEditorEnumToStringConverter}}" VerticalAlignment="Center" />
                                             </StackPanel>
                                         </DataTemplate>
@@ -83,6 +90,6 @@
         </Setter>
     </Style>
 
-    <Style BasedOn="{StaticResource {x:Static sdg:SdgThemeKeys.FilterEditorSearchTypeToken}}" TargetType="{x:Type sdg:SearchTypeTokenEditor}" />
+    <Style BasedOn="{StaticResource {x:Static sdg:ThemeKeys.FilterEditorSearchTypeToken}}" TargetType="{x:Type sdg:SearchTypeTokenEditor}" />
 
 </ResourceDictionary>

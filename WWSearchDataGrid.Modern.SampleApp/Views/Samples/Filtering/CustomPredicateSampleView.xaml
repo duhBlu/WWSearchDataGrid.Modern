@@ -12,7 +12,7 @@
     </UserControl.DataContext>
 
     <UserControl.Resources>
-        <Style BasedOn="{StaticResource {x:Static sdg:SdgThemeKeys.PrimitivesCheckBox}}" TargetType="{x:Type CheckBox}" />
+        <Style BasedOn="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesCheckBox}}" TargetType="{x:Type CheckBox}" />
         <Style BasedOn="{StaticResource SampleExpanderStyle}" TargetType="{x:Type Expander}" />
     </UserControl.Resources>
 
@@ -23,9 +23,9 @@
                        FontSize="13"
                        Foreground="#444"
                        TextWrapping="Wrap">
-                <Run FontWeight="SemiBold" Text="Custom Predicate&lt;object&gt; + FilterPanel events" />
+                <Run FontWeight="SemiBold" Text="Custom Predicate&lt;object&gt; + FilterSummaryPanel events" />
                 <LineBreak />
-                <Run Text="A custom SearchFilter delegate runs alongside any column filters. Enter a substring on the right and check 'Apply predicate' to filter rows whose Notes contain it. The bottom panel logs every FilterPanel event in real time — toggle filters off, remove chips, swap AND/OR, clear all." />
+                <Run Text="A custom SearchFilter delegate runs alongside any column filters. Enter a substring on the right and check 'Apply predicate' to filter rows whose Notes contain it. The bottom panel logs every FilterSummaryPanel event in real time — toggle filters off, remove chips, swap AND/OR, clear all." />
             </TextBlock>
 
             <Grid>
@@ -43,7 +43,6 @@
                                     CanUserAddRows="False"
                                     CanUserDeleteRows="False"
                                     IsReadOnly="True"
-                                    EnableRuleFiltering="True"
                                     SelectionMode="Extended"
                                     SelectionUnit="FullRow">
                     <sdg:SearchDataGrid.GridColumns>
@@ -72,7 +71,7 @@
                                 </sdg:SimpleStackPanel>
                             </Expander>
 
-                            <Expander Header="FilterPanel events" IsExpanded="True"
+                            <Expander Header="FilterSummaryPanel events" IsExpanded="True"
                                       ToolTip="Live log of FiltersEnabledChanged, FilterRemoved, ValueRemovedFromToken, OperatorToggled, ClearAllFiltersRequested.">
                                 <ListBox ItemsSource="{Binding EventLog}"
                                          Height="240"

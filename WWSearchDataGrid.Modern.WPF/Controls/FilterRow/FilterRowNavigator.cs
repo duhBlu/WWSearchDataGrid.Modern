@@ -6,7 +6,7 @@ using System.Windows.Media;
 namespace WWSearchDataGrid.Modern.WPF
 {
     /// <summary>
-    /// Cross-cell keyboard navigation for the AutoFilterRow. Steps Tab/Shift+Tab/Left/Right
+    /// Cross-cell keyboard navigation for the FilterRow. Steps Tab/Shift+Tab/Left/Right
     /// between adjacent <see cref="ColumnFilterControl"/> hosts in
     /// <see cref="System.Windows.Controls.DataGridColumn.DisplayIndex"/> order (distinct from
     /// the <see cref="FilterRowPanel"/>'s column-insertion child order); Down hands off to

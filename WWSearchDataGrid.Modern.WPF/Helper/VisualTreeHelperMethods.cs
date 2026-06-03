@@ -1,116 +1,67 @@
-﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Media;
 using System.Windows;
+using System.Windows.Media;
 
 namespace WWSearchDataGrid.Modern.WPF
 {
-    class VisualTreeHelperMethods
+    public static class VisualTreeHelperMethods
     {
-        internal static T FindAncestor<T>(DependencyObject current) where T : class
+        /// <summary>
+        /// Walks the visual tree upward from <paramref name="start"/> (inclusive) and returns
+        /// the first element of type <typeparamref name="T"/>, or null if none is found.
+        /// </summary>
+        public static T FindVisualAncestor<T>(DependencyObject start) where T : DependencyObject
         {
+            var current = start;
             while (current != null)
             {
-                if (current is T ancestor)
-                    return ancestor;
-
+                if (current is T match) return match;
                 current = VisualTreeHelper.GetParent(current);
             }
             return null;
         }
 
         /// <summary>
-        /// Finds a parent of a specific type in the visual tree
+        /// Walks the visual tree downward from <paramref name="parent"/> and returns the first
+        /// descendant of type <typeparamref name="T"/>, optionally matching
+        /// <see cref="FrameworkElement.Name"/>. Returns null if no match exists.
         /// </summary>
-        internal static T FindVisualParent<T>(DependencyObject child) where T : DependencyObject
+        public static T FindVisualDescendant<T>(DependencyObject parent, string name = null) where T : DependencyObject
         {
-            try
+            if (parent == null) return null;
+
+            int childCount = VisualTreeHelper.GetChildrenCount(parent);
+            for (int i = 0; i < childCount; i++)
             {
-                DependencyObject parentObject = VisualTreeHelper.GetParent(child);
+                var child = VisualTreeHelper.GetChild(parent, i);
 
-                if (parentObject == null)
-                    return null;
+                if (child is T typed)
+                {
+                    if (string.IsNullOrEmpty(name)) return typed;
+                    if (child is FrameworkElement fe && fe.Name == name) return typed;
+                }
 
-                if (parentObject is T parent)
-                    return parent;
-
-                return FindVisualParent<T>(parentObject);
+                var nested = FindVisualDescendant<T>(child, name);
+                if (nested != null) return nested;
             }
-            catch
-            {
-                return null;
-            }
+            return null;
         }
 
         /// <summary>
-        /// Finds a child of a specific type with a specific name in the visual tree
+        /// Walks the visual tree downward from <paramref name="parent"/> and yields every
+        /// descendant of type <typeparamref name="T"/>.
         /// </summary>
-        internal static T FindVisualChild<T>(DependencyObject parent, string name = null) where T : DependencyObject
+        public static IEnumerable<T> FindVisualDescendants<T>(DependencyObject parent) where T : DependencyObject
         {
-            try
+            if (parent == null) yield break;
+
+            int childCount = VisualTreeHelper.GetChildrenCount(parent);
+            for (int i = 0; i < childCount; i++)
             {
-                if (parent == null)
-                    return null;
-
-                int childCount = VisualTreeHelper.GetChildrenCount(parent);
-                for (int i = 0; i < childCount; i++)
-                {
-                    var child = VisualTreeHelper.GetChild(parent, i);
-
-                    if (child is T typedChild)
-                    {
-                        if (string.IsNullOrEmpty(name))
-                            return typedChild;
-
-                        if (child is FrameworkElement element && element.Name == name)
-                            return typedChild;
-                    }
-
-                    var result = FindVisualChild<T>(child, name);
-                    if (result != null)
-                        return result;
-                }
-
-                return null;
+                var child = VisualTreeHelper.GetChild(parent, i);
+                if (child is T typed) yield return typed;
+                foreach (var nested in FindVisualDescendants<T>(child)) yield return nested;
             }
-            catch
-            {
-                return null;
-            }
-        }
-
-        /// <summary>
-        /// Finds all children of a specific type in the visual tree
-        /// </summary>
-        internal static IEnumerable<T> FindVisualChildren<T>(DependencyObject parent) where T : DependencyObject
-        {
-            var children = new List<T>();
-
-            try
-            {
-                if (parent == null)
-                    return children;
-
-                int childCount = VisualTreeHelper.GetChildrenCount(parent);
-                for (int i = 0; i < childCount; i++)
-                {
-                    var child = VisualTreeHelper.GetChild(parent, i);
-
-                    if (child is T typedChild)
-                        children.Add(typedChild);
-
-                    children.AddRange(FindVisualChildren<T>(child));
-                }
-            }
-            catch
-            {
-                // Return what we found so far
-            }
-
-            return children;
         }
     }
 }

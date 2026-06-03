@@ -59,7 +59,7 @@ namespace WWSearchDataGrid.Modern.WPF
             set => SetValue(LargeIncrementProperty, value);
         }
 
-        public override DataTemplate CreateDisplayTemplate(GridColumn column)
+        public override DataTemplate CreateDisplayTemplate(ColumnDataBase column)
         {
             var grid = BuildSpinHostGrid();
 
@@ -77,6 +77,9 @@ namespace WWSearchDataGrid.Modern.WPF
                 binding.StringFormat = column.DisplayStringFormat;
 
             textBlock.SetBinding(TextBlock.TextProperty, binding);
+            // Display element validates against the INotifyDataErrorInfo row by default; the badge
+            // is the library's error surface, so strip WPF's red adorner. See TextEditSettings.
+            SuppressValidationErrorAdorner(textBlock);
             textBlock.SetValue(Grid.ColumnProperty, 0);
             textBlock.SetValue(Grid.RowSpanProperty, 2);
             grid.AppendChild(textBlock);
@@ -153,7 +156,7 @@ namespace WWSearchDataGrid.Modern.WPF
             return spin;
         }
 
-        public override DataTemplate CreateEditTemplate(GridColumn column)
+        public override DataTemplate CreateEditTemplate(ColumnDataBase column)
         {
             var grid = BuildSpinHostGrid();
 
@@ -161,6 +164,7 @@ namespace WWSearchDataGrid.Modern.WPF
             ApplyEditorStyle(factory, EditSettingsThemeKeys.EditNumericTextBox);
             ApplyTextAlignment(factory, column);
             factory.SetBinding(TextBox.TextProperty, CreateValueBinding(column));
+            SuppressValidationErrorAdorner(factory);
             factory.SetValue(Grid.ColumnProperty, 0);
             factory.SetValue(Grid.RowSpanProperty, 2);
 
@@ -277,7 +281,7 @@ namespace WWSearchDataGrid.Modern.WPF
         ///   Up/Down handler uses.</item>
         /// </list>
         /// </summary>
-        private static FrameworkElementFactory BuildSpinButton(SpinEditSettings settings, GridColumn column, bool isUp, bool isDisplayMode)
+        private static FrameworkElementFactory BuildSpinButton(SpinEditSettings settings, ColumnDataBase column, bool isUp, bool isDisplayMode)
         {
             var btn = new FrameworkElementFactory(typeof(RepeatButton));
             // Style FIRST. FrameworkElementFactory has a known quirk where StyleProperty must be
@@ -315,9 +319,9 @@ namespace WWSearchDataGrid.Modern.WPF
             {
                 btn.AddHandler(ButtonBase.ClickEvent, new RoutedEventHandler((s, _) =>
                 {
-                    var cell = FindVisualAncestor<DataGridCell>(s as DependencyObject);
+                    var cell = VisualTreeHelperMethods.FindVisualAncestor<DataGridCell>(s as DependencyObject);
                     if (cell == null) return;
-                    var tb = FindVisualDescendant<TextBox>(cell);
+                    var tb = VisualTreeHelperMethods.FindVisualDescendant<TextBox>(cell);
                     if (tb == null) return;
 
                     if (!double.TryParse(tb.Text, NumberStyles.Any, CultureInfo.CurrentCulture, out var current))
@@ -335,32 +339,5 @@ namespace WWSearchDataGrid.Modern.WPF
             return btn;
         }
 
-        /// <summary>Walks the visual tree downward to find the first descendant of type <typeparamref name="T"/>.</summary>
-        private static T FindVisualDescendant<T>(DependencyObject root) where T : DependencyObject
-        {
-            if (root == null) return null;
-            int count = VisualTreeHelper.GetChildrenCount(root);
-            for (int i = 0; i < count; i++)
-            {
-                var child = VisualTreeHelper.GetChild(root, i);
-                if (child is T match) return match;
-                var deeper = FindVisualDescendant<T>(child);
-                if (deeper != null) return deeper;
-            }
-            return null;
-        }
-
-        // Re-declare visual-tree helper here to avoid bumping accessibility on the BaseEditSettings
-        // private. Same logic as the base class's FindVisualAncestor.
-        private static T FindVisualAncestor<T>(DependencyObject start) where T : DependencyObject
-        {
-            var current = start;
-            while (current != null)
-            {
-                if (current is T match) return match;
-                current = VisualTreeHelper.GetParent(current);
-            }
-            return null;
-        }
     }
 }

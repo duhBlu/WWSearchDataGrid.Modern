@@ -5,7 +5,7 @@ namespace WWSearchDataGrid.Modern.WPF
 {
     /// <summary>
     /// Sentinel placed on <see cref="WWSearchDataGrid.Modern.Core.ColumnFilterInfo.FilterData"/>
-    /// when the FilterPanel chip represents an editor-tree group that spans more than one column.
+    /// when the FilterSummaryPanel chip represents an editor-tree group that spans more than one column.
     /// <para>
     /// Two modes:
     /// </para>

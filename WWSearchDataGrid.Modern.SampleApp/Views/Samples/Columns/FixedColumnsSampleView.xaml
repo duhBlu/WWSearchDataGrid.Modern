@@ -1,0 +1,118 @@
+<UserControl x:Class="WWSearchDataGrid.Modern.SampleApp.Views.Samples.Columns.FixedColumnsSampleView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:sdg="clr-namespace:WWSearchDataGrid.Modern.WPF;assembly=WWSearchDataGrid.Modern.WPF"
+             xmlns:sampleControls="clr-namespace:WWSearchDataGrid.Modern.SampleApp.Controls"
+             xmlns:sampleConverters="clr-namespace:WWSearchDataGrid.Modern.SampleApp.Converters"
+             xmlns:local="clr-namespace:WWSearchDataGrid.Modern.SampleApp.Views.Samples.Columns"
+             mc:Ignorable="d">
+    <UserControl.DataContext>
+        <local:FixedColumnsSampleViewModel />
+    </UserControl.DataContext>
+
+    <UserControl.Resources>
+        <sampleConverters:EnumToBooleanConverter x:Key="EnumToBool" />
+        <Style BasedOn="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesCheckBox}}" TargetType="{x:Type CheckBox}" />
+        <Style BasedOn="{StaticResource SampleRadioButtonStyle}" TargetType="{x:Type RadioButton}" />
+        <Style BasedOn="{StaticResource SampleExpanderStyle}" TargetType="{x:Type Expander}" />
+        <Style x:Key="ColLabelStyle" TargetType="TextBlock">
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Margin" Value="0,6,0,2" />
+            <Setter Property="Foreground" Value="#333" />
+        </Style>
+    </UserControl.Resources>
+
+    <sampleControls:SampleHostControl Sources="{x:Static sampleControls:SampleSources.FixedColumns}">
+        <DockPanel>
+            <TextBlock DockPanel.Dock="Top"
+                       Margin="16,12,16,4"
+                       FontSize="13"
+                       Foreground="#444"
+                       TextWrapping="Wrap">
+                <Run FontWeight="SemiBold" Text="Fixed (pinned) columns" />
+                <LineBreak />
+                <Run Text="GridColumn.Fixed pins a column so it stays put while the rest scroll horizontally. Left uses the DataGrid's frozen-column mechanism; Right anchors the column after every unpinned column. Order # starts pinned Left and Cancelled pinned Right — scroll the grid sideways, or use the radios (or the header's right-click Fixed menu, enabled via AllowFixedColumnMenu)." />
+            </TextBlock>
+
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="300" />
+                </Grid.ColumnDefinitions>
+
+                <sdg:SearchDataGrid x:Name="Grid"
+                                    Grid.Column="0"
+                                    Margin="10"
+                                    AllowFixedColumnMenu="True"
+                                    AutoGenerateColumns="False"
+                                    CanUserAddRows="False"
+                                    CanUserDeleteRows="False"
+                                    IsReadOnly="True"
+                                    HorizontalScrollBarVisibility="Auto"
+                                    SelectionMode="Extended"
+                                    SelectionUnit="FullRow">
+                    <sdg:SearchDataGrid.GridColumns>
+                        <sdg:GridColumn x:Name="OrderNumberColumn" Width="90" FieldName="OrderNumber" Header="Order #" Fixed="Left" />
+                        <sdg:GridColumn x:Name="StatusColumn" Width="130" FieldName="OrderStatusName" Header="Status" DefaultSearchType="Equals" />
+                        <sdg:GridColumn x:Name="OrderDateColumn" Width="150" FieldName="OrderDate" Header="Order Date" DisplayStringFormat="MM/dd/yyyy" />
+                        <sdg:GridColumn x:Name="CustomerColumn" Width="200" FieldName="CustomerName" Header="Customer" />
+                        <sdg:GridColumn x:Name="EmployeeColumn" Width="170" FieldName="EmployeeName" Header="Employee" />
+                        <sdg:GridColumn x:Name="LocationColumn" Width="140" FieldName="OrderLocationName" Header="Location" DefaultSearchType="Equals" />
+                        <sdg:GridColumn x:Name="DealerPoColumn" Width="130" FieldName="DealerPO" Header="Dealer PO" />
+                        <sdg:GridColumn x:Name="TotalColumn" Width="110" FieldName="OrderItemsTotalPrice" Header="Total" DisplayStringFormat="C2" />
+                        <sdg:GridColumn x:Name="CancelledColumn" Width="90" FieldName="OrderCancelled" Header="Cancelled" Fixed="Right" />
+                    </sdg:SearchDataGrid.GridColumns>
+                </sdg:SearchDataGrid>
+
+                <GridSplitter Grid.Column="1" Width="5" HorizontalAlignment="Stretch" Background="#CCCCCC" />
+
+                <ScrollViewer Grid.Column="2" Padding="8,4" Background="#FFFFFF" VerticalScrollBarVisibility="Auto">
+                    <sdg:SimpleStackPanel Orientation="Vertical" Spacing="6">
+                        <TextBlock Style="{StaticResource ColLabelStyle}" Text="Pin position per column" />
+
+                        <GroupBox Header="Order #" Padding="6">
+                            <sdg:SimpleStackPanel Orientation="Vertical" Spacing="2">
+                                <RadioButton Content="None" GroupName="FixedOrderNumber" IsChecked="{Binding ElementName=OrderNumberColumn, Path=Fixed, Converter={StaticResource EnumToBool}, ConverterParameter=None}" />
+                                <RadioButton Content="Left" GroupName="FixedOrderNumber" IsChecked="{Binding ElementName=OrderNumberColumn, Path=Fixed, Converter={StaticResource EnumToBool}, ConverterParameter=Left}" />
+                                <RadioButton Content="Right" GroupName="FixedOrderNumber" IsChecked="{Binding ElementName=OrderNumberColumn, Path=Fixed, Converter={StaticResource EnumToBool}, ConverterParameter=Right}" />
+                            </sdg:SimpleStackPanel>
+                        </GroupBox>
+
+                        <GroupBox Header="Customer" Padding="6">
+                            <sdg:SimpleStackPanel Orientation="Vertical" Spacing="2">
+                                <RadioButton Content="None" GroupName="FixedCustomer" IsChecked="{Binding ElementName=CustomerColumn, Path=Fixed, Converter={StaticResource EnumToBool}, ConverterParameter=None}" />
+                                <RadioButton Content="Left" GroupName="FixedCustomer" IsChecked="{Binding ElementName=CustomerColumn, Path=Fixed, Converter={StaticResource EnumToBool}, ConverterParameter=Left}" />
+                                <RadioButton Content="Right" GroupName="FixedCustomer" IsChecked="{Binding ElementName=CustomerColumn, Path=Fixed, Converter={StaticResource EnumToBool}, ConverterParameter=Right}" />
+                            </sdg:SimpleStackPanel>
+                        </GroupBox>
+
+                        <GroupBox Header="Total" Padding="6">
+                            <sdg:SimpleStackPanel Orientation="Vertical" Spacing="2">
+                                <RadioButton Content="None" GroupName="FixedTotal" IsChecked="{Binding ElementName=TotalColumn, Path=Fixed, Converter={StaticResource EnumToBool}, ConverterParameter=None}" />
+                                <RadioButton Content="Left" GroupName="FixedTotal" IsChecked="{Binding ElementName=TotalColumn, Path=Fixed, Converter={StaticResource EnumToBool}, ConverterParameter=Left}" />
+                                <RadioButton Content="Right" GroupName="FixedTotal" IsChecked="{Binding ElementName=TotalColumn, Path=Fixed, Converter={StaticResource EnumToBool}, ConverterParameter=Right}" />
+                            </sdg:SimpleStackPanel>
+                        </GroupBox>
+
+                        <GroupBox Header="Cancelled" Padding="6">
+                            <sdg:SimpleStackPanel Orientation="Vertical" Spacing="2">
+                                <RadioButton Content="None" GroupName="FixedCancelled" IsChecked="{Binding ElementName=CancelledColumn, Path=Fixed, Converter={StaticResource EnumToBool}, ConverterParameter=None}" />
+                                <RadioButton Content="Left" GroupName="FixedCancelled" IsChecked="{Binding ElementName=CancelledColumn, Path=Fixed, Converter={StaticResource EnumToBool}, ConverterParameter=Left}" />
+                                <RadioButton Content="Right" GroupName="FixedCancelled" IsChecked="{Binding ElementName=CancelledColumn, Path=Fixed, Converter={StaticResource EnumToBool}, ConverterParameter=Right}" />
+                            </sdg:SimpleStackPanel>
+                        </GroupBox>
+
+                        <TextBlock FontSize="11"
+                                   Foreground="#666"
+                                   TextWrapping="Wrap"
+                                   Margin="0,8,0,0"
+                                   Text="Any other column can be pinned from its header's right-click → Fixed menu (shown because AllowFixedColumnMenu is on)." />
+                    </sdg:SimpleStackPanel>
+                </ScrollViewer>
+            </Grid>
+        </DockPanel>
+    </sampleControls:SampleHostControl>
+</UserControl>

@@ -13,7 +13,7 @@
 
     <UserControl.Resources>
         <Style BasedOn="{StaticResource SampleExpanderStyle}" TargetType="{x:Type Expander}" />
-        <Style BasedOn="{StaticResource {x:Static sdg:SdgThemeKeys.PrimitivesButton}}" TargetType="{x:Type Button}" />
+        <Style BasedOn="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesButton}}" TargetType="{x:Type Button}" />
     </UserControl.Resources>
 
     <sampleControls:SampleHostControl Sources="{x:Static sampleControls:SampleSources.FilterString}">
@@ -42,10 +42,9 @@
                                     ItemsSource="{Binding Items}"
                                     FilterString="{Binding FilterString, UpdateSourceTrigger=PropertyChanged}"
                                     AutoGenerateColumns="False"
-                                    ShowAutoFilterRow="True"
+                                    ShowFilterRow="True"
                                     CanUserAddRows="False"
                                     CanUserDeleteRows="False"
-                                    EnableRuleFiltering="True"
                                     SelectionMode="Extended"
                                     SelectionUnit="FullRow">
                     <sdg:SearchDataGrid.GridColumns>

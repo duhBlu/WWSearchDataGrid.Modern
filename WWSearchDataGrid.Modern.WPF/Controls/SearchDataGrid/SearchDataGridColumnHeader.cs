@@ -1,4 +1,5 @@
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -9,8 +10,11 @@ namespace WWSearchDataGrid.Modern.WPF
     /// Custom column header. Subclassing is needed because the stock header is a
     /// <see cref="ButtonBase"/> that triggers sort on every click — including clicks on
     /// descendant buttons (filter popup, etc.). <see cref="OnClick"/> suppresses sort when
-    /// the click came from a descendant button. Also exposes <see cref="HasAdvancedFilter"/> /
-    /// <see cref="HasActiveFilter"/> DPs the header template binds against.
+    /// the click came from a descendant button. Also hosts the attached property
+    /// <see cref="DescriptorProperty"/>, which the column generator pins on each created
+    /// <see cref="DataGridColumn"/> so the header template can bind directly to its matching
+    /// <see cref="ColumnDataBase"/> descriptor — e.g. <c>Column.(sdg:SearchDataGridColumnHeader.Descriptor).IsFiltered</c>
+    /// for the "filtered column" highlight, without any C# subscription wiring.
     /// </summary>
     public class SearchDataGridColumnHeader : DataGridColumnHeader
     {
@@ -22,32 +26,23 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
-        /// True when the column has a committed rule-filter. Bindable from the header template
-        /// for a persistent "advanced filter active" highlight.
+        /// Attached on the generated <see cref="DataGridColumn"/> (the header's <c>Column</c>)
+        /// during <see cref="ColumnDataBase.CreateDataGridColumn"/> and pointing at the originating
+        /// descriptor. Used by the header template to bind directly against descriptor-side DPs
+        /// such as <see cref="ColumnDataBase.IsFiltered"/>.
         /// </summary>
-        public static readonly DependencyProperty HasAdvancedFilterProperty =
-            DependencyProperty.Register(nameof(HasAdvancedFilter), typeof(bool), typeof(SearchDataGridColumnHeader),
-                new PropertyMetadata(false));
+        public static readonly DependencyProperty DescriptorProperty =
+            DependencyProperty.RegisterAttached(
+                "Descriptor",
+                typeof(ColumnDataBase),
+                typeof(SearchDataGridColumnHeader),
+                new PropertyMetadata(null));
 
-        public bool HasAdvancedFilter
-        {
-            get => (bool)GetValue(HasAdvancedFilterProperty);
-            set => SetValue(HasAdvancedFilterProperty, value);
-        }
+        public static ColumnDataBase GetDescriptor(DependencyObject obj) =>
+            (ColumnDataBase)obj.GetValue(DescriptorProperty);
 
-        /// <summary>
-        /// True when the column has any active filter affecting row visibility. Bindable from
-        /// the header template; distinct from the advanced-filter-only <see cref="HasAdvancedFilter"/>.
-        /// </summary>
-        public static readonly DependencyProperty HasActiveFilterProperty =
-            DependencyProperty.Register(nameof(HasActiveFilter), typeof(bool), typeof(SearchDataGridColumnHeader),
-                new PropertyMetadata(false));
-
-        public bool HasActiveFilter
-        {
-            get => (bool)GetValue(HasActiveFilterProperty);
-            set => SetValue(HasActiveFilterProperty, value);
-        }
+        public static void SetDescriptor(DependencyObject obj, ColumnDataBase value) =>
+            obj.SetValue(DescriptorProperty, value);
 
         // Captured in OnPreviewMouseLeftButtonDown, consulted (and reset) in OnClick.
         private bool _clickFromChildButton;

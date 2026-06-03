@@ -3,19 +3,26 @@
 
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF.Themes.Default;component/Resources/Icons/SearchTypeIcons.xaml" />
-        <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF.Themes.Default;component/Resources/Icons/SdgIcons.xaml" />
-        <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF.Themes.Default;component/Themes/Controls/ColumnFilterEditor.xaml" />
+        <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF.Themes.Default;component/Resources/Icons/Icons.xaml" />
+        <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF.Themes.Default;component/Themes/Controls/Primitives/RangeSlider.xaml" />
+        <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF.Themes.Default;component/Themes/Controls/Primitives/StatusIcon.xaml" />
+        <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF.Themes.Default;component/Themes/Controls/Validation/ValidationCellPresenter.xaml" />
+        <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF.Themes.Default;component/Themes/Controls/ColumnFilterPopup/ColumnFilterPopup.xaml" />
+        <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF.Themes.Default;component/Themes/Controls/ColumnFilterPopup/CheckedListFilterElement.xaml" />
+        <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF.Themes.Default;component/Themes/Controls/ColumnFilterPopup/DateTreeFilterElement.xaml" />
+        <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF.Themes.Default;component/Themes/Controls/ColumnFilterPopup/DatePeriodsFilterElement.xaml" />
+        <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF.Themes.Default;component/Themes/Controls/ColumnFilterPopup/MultiFilterElement.xaml" />
+        <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF.Themes.Default;component/Themes/Controls/ColumnFilterPopup/RangeFilterElement.xaml" />
         <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF.Themes.Default;component/Themes/Controls/FilterEditor/GroupOperatorChip.xaml" />
         <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF.Themes.Default;component/Themes/Controls/FilterEditor/ColumnNameTokenEditor.xaml" />
         <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF.Themes.Default;component/Themes/Controls/FilterEditor/SearchTypeTokenEditor.xaml" />
         <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF.Themes.Default;component/Themes/Controls/FilterEditor/ValueTokenEditor.xaml" />
-        <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF.Themes.Default;component/Themes/Controls/FilterEditor/FilterEditorTemplates.xaml" />
         <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF.Themes.Default;component/Themes/Controls/FilterEditor/FilterEditorWindow.xaml" />
-        <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF.Themes.Default;component/Themes/Controls/FilterEditor.xaml" />
-        <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF.Themes.Default;component/Themes/Controls/ColumnChooser.xaml" />
-        <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF.Themes.Default;component/Themes/Controls/SearchDataGrid.xaml" />
-        <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF.Themes.Default;component/Themes/EditSettings.xaml" />
-        <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF.Themes.Default;component/Themes/Controls/FilterRow/AutoFilterRow.xaml" />
+        <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF.Themes.Default;component/Themes/Controls/FilterEditor/FilterEditorDialog.xaml" />
+        <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF.Themes.Default;component/Themes/Controls/ColumnChooser/ColumnChooser.xaml" />
+        <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF.Themes.Default;component/Themes/Controls/SearchDataGrid/Grid/SearchDataGrid.xaml" />
+        <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF.Themes.Default;component/Themes/Controls/EditSettings/EditSettings.xaml" />
+        <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF.Themes.Default;component/Themes/Controls/FilterRow/FilterRow.xaml" />
     </ResourceDictionary.MergedDictionaries>
 
 </ResourceDictionary>

@@ -15,6 +15,13 @@ namespace WWSearchDataGrid.Modern.SampleApp.Models
         [ObservableProperty] private string _contactPhone = string.Empty;
         [ObservableProperty] private string _status = string.Empty;
         [ObservableProperty] private string _department = string.Empty;
+
+        public bool IsOverdue => !IsComplete && DueDate.Date < DateTime.Today;
+        public string Initials => string.IsNullOrEmpty(AssignedTo) ? "?" : AssignedTo.Substring(0, 1).ToUpperInvariant();
+
+        partial void OnAssignedToChanged(string value) => OnPropertyChanged(nameof(Initials));
+        partial void OnIsCompleteChanged(bool value) => OnPropertyChanged(nameof(IsOverdue));
+        partial void OnDueDateChanged(DateTime value) => OnPropertyChanged(nameof(IsOverdue));
     }
 
     public sealed record PriorityOption(int Id, string Name);

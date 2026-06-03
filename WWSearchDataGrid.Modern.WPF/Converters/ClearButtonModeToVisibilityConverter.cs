@@ -6,8 +6,8 @@ using System.Windows.Data;
 namespace WWSearchDataGrid.Modern.WPF.Converters
 {
     /// <summary>
-    /// Resolves the visibility of the per-cell clear (X) button in the auto-filter row from
-    /// three inputs: the grid-wide <see cref="AutoFilterRowClearButtonMode"/>, whether the
+    /// Resolves the visibility of the per-cell clear (X) button in the filter row from
+    /// three inputs: the grid-wide <see cref="FilterClearButtonMode"/>, whether the
     /// editor itself holds a value the X can clear (<see cref="ColumnFilterControl.HasEditorInputValue"/>),
     /// and whether the cell is currently in the edit surface (i.e. focus is inside the
     /// <see cref="ColumnFilterControl"/>). The display / edit split mirrors the cell
@@ -29,24 +29,24 @@ namespace WWSearchDataGrid.Modern.WPF.Converters
             if (values == null || values.Length < 3)
                 return Visibility.Collapsed;
 
-            var mode = values[0] is AutoFilterRowClearButtonMode m
+            var mode = values[0] is FilterClearButtonMode m
                 ? m
-                : AutoFilterRowClearButtonMode.Always;
+                : FilterClearButtonMode.Always;
             bool hasEditorInput = values[1] is bool editorInput && editorInput;
             bool isEditing = values[2] is bool editing && editing;
 
             switch (mode)
             {
-                case AutoFilterRowClearButtonMode.Never:
+                case FilterClearButtonMode.Never:
                     return Visibility.Collapsed;
 
-                case AutoFilterRowClearButtonMode.Always:
+                case FilterClearButtonMode.Always:
                     return hasEditorInput ? Visibility.Visible : Visibility.Collapsed;
 
-                case AutoFilterRowClearButtonMode.Display:
+                case FilterClearButtonMode.Display:
                     return hasEditorInput && !isEditing ? Visibility.Visible : Visibility.Collapsed;
 
-                case AutoFilterRowClearButtonMode.Edit:
+                case FilterClearButtonMode.Edit:
                     return hasEditorInput && isEditing ? Visibility.Visible : Visibility.Collapsed;
 
                 default:

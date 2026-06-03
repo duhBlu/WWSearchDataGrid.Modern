@@ -22,15 +22,12 @@
   <!-- Embed each sample's source files so SampleHostControl can show XAML / C# tabs alongside the live grid. -->
   <ItemGroup>
     <!-- Data Binding -->
-    <EmbeddedResource Include="Views\Samples\DataBinding\PocoAttributesSampleView.xaml" />
-    <EmbeddedResource Include="Views\Samples\DataBinding\PocoAttributesSampleView.xaml.cs" />
-    <EmbeddedResource Include="Views\Samples\DataBinding\PocoAttributesSampleViewModel.cs" />
+    <EmbeddedResource Include="Views\Samples\DataBinding\AutoColumnsSampleView.xaml" />
+    <EmbeddedResource Include="Views\Samples\DataBinding\AutoColumnsSampleView.xaml.cs" />
+    <EmbeddedResource Include="Views\Samples\DataBinding\AutoColumnsSampleViewModel.cs" />
     <EmbeddedResource Include="Views\Samples\DataBinding\DataTableManualSampleView.xaml" />
     <EmbeddedResource Include="Views\Samples\DataBinding\DataTableManualSampleView.xaml.cs" />
     <EmbeddedResource Include="Views\Samples\DataBinding\DataTableManualSampleViewModel.cs" />
-    <EmbeddedResource Include="Views\Samples\DataBinding\DataTableAutoGenSampleView.xaml" />
-    <EmbeddedResource Include="Views\Samples\DataBinding\DataTableAutoGenSampleView.xaml.cs" />
-    <EmbeddedResource Include="Views\Samples\DataBinding\DataTableAutoGenSampleViewModel.cs" />
 
     <!-- Columns -->
     <EmbeddedResource Include="Views\Samples\Columns\ColumnConfigurationSampleView.xaml" />
@@ -42,6 +39,17 @@
     <EmbeddedResource Include="Views\Samples\Columns\ColumnChooserSampleView.xaml" />
     <EmbeddedResource Include="Views\Samples\Columns\ColumnChooserSampleView.xaml.cs" />
     <EmbeddedResource Include="Views\Samples\Columns\ColumnChooserSampleViewModel.cs" />
+    <EmbeddedResource Include="Views\Samples\Columns\FixedColumnsSampleView.xaml" />
+    <EmbeddedResource Include="Views\Samples\Columns\FixedColumnsSampleView.xaml.cs" />
+    <EmbeddedResource Include="Views\Samples\Columns\FixedColumnsSampleViewModel.cs" />
+
+    <!-- Selection and Usability -->
+    <EmbeddedResource Include="Views\Samples\Usability\CopyPasteSampleView.xaml" />
+    <EmbeddedResource Include="Views\Samples\Usability\CopyPasteSampleView.xaml.cs" />
+    <EmbeddedResource Include="Views\Samples\Usability\CopyPasteSampleViewModel.cs" />
+    <EmbeddedResource Include="Views\Samples\Usability\ContextMenusSampleView.xaml" />
+    <EmbeddedResource Include="Views\Samples\Usability\ContextMenusSampleView.xaml.cs" />
+    <EmbeddedResource Include="Views\Samples\Usability\ContextMenusSampleViewModel.cs" />
 
     <!-- Filtering -->
     <EmbeddedResource Include="Views\Samples\Filtering\SearchModesSampleView.xaml" />
@@ -50,24 +58,24 @@
     <EmbeddedResource Include="Views\Samples\Filtering\CustomPredicateSampleView.xaml" />
     <EmbeddedResource Include="Views\Samples\Filtering\CustomPredicateSampleView.xaml.cs" />
     <EmbeddedResource Include="Views\Samples\Filtering\CustomPredicateSampleViewModel.cs" />
-    <EmbeddedResource Include="Views\Samples\Filtering\RuleFilterPopupSampleView.xaml" />
-    <EmbeddedResource Include="Views\Samples\Filtering\RuleFilterPopupSampleView.xaml.cs" />
-    <EmbeddedResource Include="Views\Samples\Filtering\RuleFilterPopupSampleViewModel.cs" />
     <EmbeddedResource Include="Views\Samples\Filtering\FilterStringSampleView.xaml" />
     <EmbeddedResource Include="Views\Samples\Filtering\FilterStringSampleView.xaml.cs" />
     <EmbeddedResource Include="Views\Samples\Filtering\FilterStringSampleViewModel.cs" />
+    <EmbeddedResource Include="Views\Samples\Filtering\CustomFilterElementsSampleView.xaml" />
+    <EmbeddedResource Include="Views\Samples\Filtering\CustomFilterElementsSampleView.xaml.cs" />
+    <EmbeddedResource Include="Views\Samples\Filtering\CustomFilterElementsSampleViewModel.cs" />
+    <EmbeddedResource Include="Views\Samples\Filtering\MultiTabFilterPopupSampleView.xaml" />
+    <EmbeddedResource Include="Views\Samples\Filtering\MultiTabFilterPopupSampleView.xaml.cs" />
+    <EmbeddedResource Include="Views\Samples\Filtering\MultiTabFilterPopupSampleViewModel.cs" />
 
-    <!-- Auto Filter Row -->
-    <EmbeddedResource Include="Views\Samples\AutoFilterRow\OptionsPlaygroundSampleView.xaml" />
-    <EmbeddedResource Include="Views\Samples\AutoFilterRow\OptionsPlaygroundSampleView.xaml.cs" />
-    <EmbeddedResource Include="Views\Samples\AutoFilterRow\OptionsPlaygroundSampleViewModel.cs" />
-    <EmbeddedResource Include="Views\Samples\AutoFilterRow\ColumnPlaygroundConfig.cs" />
-    <EmbeddedResource Include="Views\Samples\AutoFilterRow\CustomTemplatesSampleView.xaml" />
-    <EmbeddedResource Include="Views\Samples\AutoFilterRow\CustomTemplatesSampleView.xaml.cs" />
-    <EmbeddedResource Include="Views\Samples\AutoFilterRow\CustomTemplatesSampleViewModel.cs" />
-    <EmbeddedResource Include="Views\Samples\AutoFilterRow\DebounceBehaviorSampleView.xaml" />
-    <EmbeddedResource Include="Views\Samples\AutoFilterRow\DebounceBehaviorSampleView.xaml.cs" />
-    <EmbeddedResource Include="Views\Samples\AutoFilterRow\DebounceBehaviorSampleViewModel.cs" />
+    <!-- Filter Row -->
+    <EmbeddedResource Include="Views\Samples\FilterRow\OptionsPlaygroundSampleView.xaml" />
+    <EmbeddedResource Include="Views\Samples\FilterRow\OptionsPlaygroundSampleView.xaml.cs" />
+    <EmbeddedResource Include="Views\Samples\FilterRow\OptionsPlaygroundSampleViewModel.cs" />
+    <EmbeddedResource Include="Views\Samples\FilterRow\ColumnPlaygroundConfig.cs" />
+    <EmbeddedResource Include="Views\Samples\FilterRow\CustomTemplatesSampleView.xaml" />
+    <EmbeddedResource Include="Views\Samples\FilterRow\CustomTemplatesSampleView.xaml.cs" />
+    <EmbeddedResource Include="Views\Samples\FilterRow\CustomTemplatesSampleViewModel.cs" />
 
     <!-- Editing -->
     <EmbeddedResource Include="Views\Samples\Editing\EditorTypesSampleView.xaml" />
@@ -76,12 +84,15 @@
     <EmbeddedResource Include="Views\Samples\Editing\EditorCustomizationSampleView.xaml" />
     <EmbeddedResource Include="Views\Samples\Editing\EditorCustomizationSampleView.xaml.cs" />
     <EmbeddedResource Include="Views\Samples\Editing\EditorCustomizationSampleViewModel.cs" />
-    <EmbeddedResource Include="Views\Samples\Editing\SelectAllSampleView.xaml" />
-    <EmbeddedResource Include="Views\Samples\Editing\SelectAllSampleView.xaml.cs" />
-    <EmbeddedResource Include="Views\Samples\Editing\SelectAllSampleViewModel.cs" />
     <EmbeddedResource Include="Views\Samples\Editing\InputMaskingSampleView.xaml" />
     <EmbeddedResource Include="Views\Samples\Editing\InputMaskingSampleView.xaml.cs" />
     <EmbeddedResource Include="Views\Samples\Editing\InputMaskingSampleViewModel.cs" />
+    <EmbeddedResource Include="Views\Samples\Editing\DataValidationSampleView.xaml" />
+    <EmbeddedResource Include="Views\Samples\Editing\DataValidationSampleView.xaml.cs" />
+    <EmbeddedResource Include="Views\Samples\Editing\DataValidationSampleViewModel.cs" />
+    <EmbeddedResource Include="Views\Samples\Editing\DataErrorIndicationSampleView.xaml" />
+    <EmbeddedResource Include="Views\Samples\Editing\DataErrorIndicationSampleView.xaml.cs" />
+    <EmbeddedResource Include="Views\Samples\Editing\DataErrorIndicationSampleViewModel.cs" />
 
     <!-- Animation & Performance -->
     <EmbeddedResource Include="Views\Samples\AnimationPerformance\ScrollingAnimationSampleView.xaml" />
@@ -96,6 +107,8 @@
     <EmbeddedResource Include="Models\OrderItem.cs" />
     <EmbeddedResource Include="Models\TaskItem.cs" />
     <EmbeddedResource Include="Models\Contact.cs" />
+    <EmbeddedResource Include="Models\ValidationData.cs" />
+    <EmbeddedResource Include="Models\PersonInfo.cs" />
     <EmbeddedResource Include="SampleData\SampleViewModelBase.cs" />
     <EmbeddedResource Include="SampleData\GeneratableSampleViewModel.cs" />
     <EmbeddedResource Include="SampleData\SampleDataGenerator.cs" />

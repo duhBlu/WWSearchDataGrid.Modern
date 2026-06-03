@@ -1,0 +1,432 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sdgCore="clr-namespace:WWSearchDataGrid.Modern.Core;assembly=WWSearchDataGrid.Modern.Core"
+                    xmlns:sys="clr-namespace:System;assembly=mscorlib"
+                    xmlns:sdg="clr-namespace:WWSearchDataGrid.Modern.WPF;assembly=WWSearchDataGrid.Modern.WPF"
+                    xmlns:converters="clr-namespace:WWSearchDataGrid.Modern.WPF.Converters;assembly=WWSearchDataGrid.Modern.WPF">
+
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF.Themes.Default;component/Themes/Controls/Primitives/DefaultControls.xaml" />
+        <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF.Themes.Default;component/Themes/Controls/Primitives/SearchTextBox.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+
+    <!--  Converters  -->
+    <converters:SearchTypeToBetweenVisibilityConverter x:Key="BetweenValueVisibilityConverter" />
+    <converters:SearchTypeToIconConverter x:Key="SearchTypeToIconConverter" />
+    <converters:DateIntervalToIconConverter x:Key="DateIntervalToIconConverter" />
+    <converters:BooleanToVisibilityCollapsedConverter x:Key="BooleanToVisibilityCollapsedConverter" />
+    <converters:FilterInputTemplateToVisibilityConverter x:Key="FilterInputTemplateToVisibilityConverter" />
+    <converters:EnumToStringConverter x:Key="EnumToStringConverter" />
+    <converters:BoolGateConverter x:Key="BoolGateConverter" />
+
+    <!--
+        Single SearchTextBox Template. ColumnValueCounts is gated through a MultiFilterElement
+        ancestor if one is hosting the template — its ShowCounts DP toggles count display.
+        FallbackValue=True means hosts outside a MultiFilterElement (e.g. the default popup
+        before the Rules-tab/MultiFilterElement unification, or any consumer that drops this
+        template directly) get counts unconditionally, matching the prior shared behavior.
+    -->
+    <DataTemplate x:Key="SingleSearchTextBoxTemplate">
+        <sdg:SearchTextBox Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesSearchTextBox}}"
+                           Text="{Binding SelectedValue, UpdateSourceTrigger=LostFocus}"
+                           ItemsSource="{Binding SearchTemplateController.DisplayColumnValues}"
+                           ShowClearButton="False"
+                           ShowToggleButton="True"
+                           PreserveValueOnSourceChange="True"
+                           Watermark="Enter or select value...">
+            <sdg:SearchTextBox.ColumnValueCounts>
+                <MultiBinding Converter="{StaticResource BoolGateConverter}">
+                    <Binding RelativeSource="{RelativeSource AncestorType={x:Type sdg:MultiFilterElement}}" Path="ShowCounts" FallbackValue="True" />
+                    <Binding Path="SearchTemplateController.DisplayColumnValueCounts" UpdateSourceTrigger="PropertyChanged" />
+                </MultiBinding>
+            </sdg:SearchTextBox.ColumnValueCounts>
+        </sdg:SearchTextBox>
+    </DataTemplate>
+
+    <!--  Dual SearchTextBox Template — counts gated by MultiFilterElement.ShowCounts when an ancestor is present (see SingleSearchTextBoxTemplate notes).  -->
+    <DataTemplate x:Key="DualSearchTextBoxTemplate">
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="12" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <TextBlock Grid.Column="0" Grid.Row="0"
+                       Foreground="#666666"
+                       Text="From"
+                       Margin="0,0,0,2"
+                       FontSize="11" />
+            <TextBlock Grid.Column="2" Grid.Row="0"
+                       Foreground="#666666"
+                       Text="To"
+                       Margin="0,0,0,2"
+                       FontSize="11" />
+
+            <sdg:SearchTextBox Grid.Column="0" Grid.Row="1"
+                               Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesSearchTextBox}}"
+                               Text="{Binding SelectedValue, UpdateSourceTrigger=LostFocus, ValidatesOnDataErrors=True}"
+                               HorizontalAlignment="Stretch"
+                               ItemsSource="{Binding SearchTemplateController.DisplayColumnValues}"
+                               ShowClearButton="False"
+                               ShowToggleButton="True"
+                               PreserveValueOnSourceChange="True"
+                               Watermark="Enter or select...">
+                <sdg:SearchTextBox.ColumnValueCounts>
+                    <MultiBinding Converter="{StaticResource BoolGateConverter}">
+                        <Binding RelativeSource="{RelativeSource AncestorType={x:Type sdg:MultiFilterElement}}" Path="ShowCounts" FallbackValue="True" />
+                        <Binding Path="SearchTemplateController.DisplayColumnValueCounts" UpdateSourceTrigger="PropertyChanged" />
+                    </MultiBinding>
+                </sdg:SearchTextBox.ColumnValueCounts>
+            </sdg:SearchTextBox>
+            <sdg:SearchTextBox Grid.Column="2" Grid.Row="1"
+                               Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesSearchTextBox}}"
+                               Text="{Binding SelectedSecondaryValue, UpdateSourceTrigger=LostFocus, ValidatesOnDataErrors=True}"
+                               HorizontalAlignment="Stretch"
+                               ItemsSource="{Binding SearchTemplateController.DisplayColumnValues}"
+                               ShowClearButton="False"
+                               ShowToggleButton="True"
+                               PreserveValueOnSourceChange="True"
+                               Watermark="Enter or select...">
+                <sdg:SearchTextBox.ColumnValueCounts>
+                    <MultiBinding Converter="{StaticResource BoolGateConverter}">
+                        <Binding RelativeSource="{RelativeSource AncestorType={x:Type sdg:MultiFilterElement}}" Path="ShowCounts" FallbackValue="True" />
+                        <Binding Path="SearchTemplateController.DisplayColumnValueCounts" UpdateSourceTrigger="PropertyChanged" />
+                    </MultiBinding>
+                </sdg:SearchTextBox.ColumnValueCounts>
+            </sdg:SearchTextBox>
+        </Grid>
+    </DataTemplate>
+
+    <!--  Dual DateTime Picker Template  -->
+    <DataTemplate x:Key="DualDateTimePickerTemplate">
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="12" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <TextBlock Grid.Column="0" Grid.Row="0"
+                       Foreground="#666666"
+                       Text="From"
+                       Margin="0,0,0,2"
+                       FontSize="11" />
+            <TextBlock Grid.Column="2" Grid.Row="0"
+                       Foreground="#666666"
+                       Text="To"
+                       Margin="0,0,0,2"
+                       FontSize="11" />
+
+            <sdg:SegmentedDateTimeEditor Grid.Column="0" Grid.Row="1"
+                                         HorizontalAlignment="Stretch"
+                                         IsFilterRowEditor="True"
+                                         MaskType="DateTime"
+                                         Mask="{Binding SearchTemplateController.DisplayMaskPattern, TargetNullValue=d, FallbackValue=d}"
+                                         Value="{Binding SelectedValue}" />
+            <sdg:SegmentedDateTimeEditor Grid.Column="2" Grid.Row="1"
+                                         HorizontalAlignment="Stretch"
+                                         IsFilterRowEditor="True"
+                                         MaskType="DateTime"
+                                         Mask="{Binding SearchTemplateController.DisplayMaskPattern, TargetNullValue=d, FallbackValue=d}"
+                                         Value="{Binding SelectedSecondaryValue}" />
+        </Grid>
+    </DataTemplate>
+
+    <!--  Numeric UpDown Template  -->
+    <DataTemplate x:Key="NumericUpDownTemplate">
+        <StackPanel Orientation="Horizontal">
+            <sdg:NumericUpDown Width="80"
+                               Minimum="1"
+                               Maximum="10000"
+                               Increment="1"
+                               Value="{Binding SelectedValue, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+            <TextBlock Foreground="Gray"
+                       Text="items"
+                       Margin="5,0,0,0"
+                       VerticalAlignment="Center" />
+        </StackPanel>
+    </DataTemplate>
+
+    <!--  No Input Template  -->
+    <DataTemplate x:Key="NoInputTemplate">
+        <TextBlock FontStyle="Italic"
+                   Foreground="Gray"
+                   Text="(No value required)"
+                   VerticalAlignment="Center" />
+    </DataTemplate>
+
+    <!--
+        SearchTextBox List Template — each value renders as its own row-level pill, with a
+        trailing + button outside the pills. Used by IsAnyOf / IsNoneOf via the
+        FilterInputTemplate.SearchTextBoxList enum. The host ValueTokenEditor flattens its
+        own outer wrapper in list mode so these pills sit inline with the other row chips.
+    -->
+    <DataTemplate x:Key="SearchTextBoxListTemplate">
+        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+
+            <!--  Sibling pill per value — text + × remove  -->
+            <ItemsControl ItemsSource="{Binding SelectedValues}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <StackPanel Orientation="Horizontal" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border Background="#bbe2c5"
+                                Margin="1,0"
+                                Padding="2,0"
+                                MinHeight="22"
+                                CornerRadius="4">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <sdg:SearchTextBox Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesSearchTextBox}}"
+                                                   Grid.Column="0"
+                                                   Background="Transparent"
+                                                   BorderThickness="0"
+                                                   Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}"
+                                                   MinWidth="100"
+                                                   MinHeight="20"
+                                                   ItemsSource="{Binding DataContext.SearchTemplateController.DisplayColumnValues, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                   ColumnValueCounts="{Binding DataContext.SearchTemplateController.DisplayColumnValueCounts, RelativeSource={RelativeSource AncestorType=ItemsControl}, UpdateSourceTrigger=PropertyChanged}"
+                                                   SelectedItem="{Binding SelectedItem, UpdateSourceTrigger=PropertyChanged}"
+                                                   ShowClearButton="False"
+                                                   ShowToggleButton="True"
+                                                   PreserveValueOnSourceChange="True"
+                                                   Watermark="Value..." />
+                                <Button Grid.Column="1"
+                                        BorderThickness="0"
+                                        Cursor="Hand"
+                                        Command="{Binding DataContext.RemoveValueCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                        CommandParameter="{Binding}"
+                                        Margin="0,0,0,0"
+                                        Padding="4"
+                                        VerticalAlignment="Center"
+                                        ToolTip="Remove value">
+                                    <sdg:Icon Width="8"
+                                                 Height="8"
+                                                 IconSource="{StaticResource {x:Static sdg:IconKeys.IconClear}}"
+                                                 IconBrush="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
+                                    <Button.Style>
+                                        <Style TargetType="{x:Type Button}">
+                                            <Setter Property="Background" Value="Transparent" />
+                                            <Setter Property="Foreground" Value="DarkGray" />
+                                            <Setter Property="Template">
+                                                <Setter.Value>
+                                                    <ControlTemplate TargetType="{x:Type Button}">
+                                                        <Border Background="{TemplateBinding Background}"
+                                                                Padding="{TemplateBinding Padding}"
+                                                                CornerRadius="8">
+                                                            <ContentPresenter HorizontalAlignment="Center"
+                                                                              VerticalAlignment="Center"
+                                                                              TextElement.Foreground="{TemplateBinding Foreground}" />
+                                                        </Border>
+                                                    </ControlTemplate>
+                                                </Setter.Value>
+                                            </Setter>
+                                            <Style.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter Property="Foreground" Value="Gray" />
+                                                </Trigger>
+                                                <Trigger Property="IsPressed" Value="True">
+                                                    <Setter Property="Foreground" Value="Black" />
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                </Button>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <!--  + button — sits outside the pills, adds a new empty value  -->
+            <Button BorderThickness="1"
+                    Cursor="Hand"
+                    Command="{Binding AddValueCommand}"
+                    Margin="2,0,1,0"
+                    VerticalAlignment="Center"
+                    FontFamily="Segoe Fluent Icons"
+                    FontSize="11"
+                    Content="&#xF8AA;"
+                    ToolTip="Add value">
+                <Button.Style>
+                    <Style TargetType="{x:Type Button}">
+                        <Setter Property="Background" Value="Transparent" />
+                        <Setter Property="BorderBrush" Value="Transparent" />
+                        <Setter Property="Foreground" Value="DarkGray" />
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="{x:Type Button}">
+                                    <Border Background="{TemplateBinding Background}"
+                                            BorderBrush="{TemplateBinding BorderBrush}"
+                                            BorderThickness="{TemplateBinding BorderThickness}"
+                                            CornerRadius="12">
+                                        <ContentPresenter HorizontalAlignment="Center"
+                                                          VerticalAlignment="Center"
+                                                          TextElement.Foreground="{TemplateBinding Foreground}" />
+                                    </Border>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                        <Style.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Foreground" Value="Gray" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Foreground" Value="Black" />
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </Button.Style>
+            </Button>
+        </StackPanel>
+    </DataTemplate>
+
+    <!--  DateTime Picker List Template  -->
+    <DataTemplate x:Key="DateTimePickerListTemplate">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <Button Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesButton}}"
+                    Grid.Row="0"
+                    Command="{Binding AddDateCommand}"
+                    Margin="0,0,0,5"
+                    HorizontalAlignment="Left"
+                    Content="Add Date" />
+
+            <ListBox Grid.Row="1"
+                     Background="Transparent"
+                     BorderThickness="0"
+                     MaxHeight="150"
+                     ItemsSource="{Binding SelectedDates}"
+                     ScrollViewer.CanContentScroll="True"
+                     VirtualizingPanel.IsVirtualizing="True"
+                     VirtualizingPanel.VirtualizationMode="Recycling">
+                <ListBox.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <VirtualizingStackPanel Orientation="Vertical" />
+                    </ItemsPanelTemplate>
+                </ListBox.ItemsPanel>
+                <ListBox.ItemContainerStyle>
+                    <Style TargetType="ListBoxItem">
+                        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                        <Setter Property="Background" Value="Transparent" />
+                        <Setter Property="BorderThickness" Value="0" />
+                        <Setter Property="Padding" Value="0" />
+                    </Style>
+                </ListBox.ItemContainerStyle>
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <Border BorderBrush="#CCCCCC"
+                                BorderThickness="1"
+                                CornerRadius="3"
+                                Margin="0,2"
+                                Padding="4">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <sdg:SegmentedDateTimeEditor Grid.Column="0"
+                                                             IsFilterRowEditor="True"
+                                                             MaskType="DateTime"
+                                                             Mask="{Binding DataContext.SearchTemplateController.DisplayMaskPattern, RelativeSource={RelativeSource AncestorType=ListBox}, TargetNullValue=d, FallbackValue=d}"
+                                                             Value="{Binding DateValue}" />
+                                <Button Grid.Column="1"
+                                        BorderThickness="0"
+                                        Cursor="Hand"
+                                        Command="{Binding DataContext.RemoveDateCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"
+                                        CommandParameter="{Binding}"
+                                        Margin="3,0,0,0"
+                                        Width="20"
+                                        FontFamily="Segoe MDL2 Assets"
+                                        Content="&#xE711;">
+                                    <Button.Style>
+                                        <Style TargetType="{x:Type Button}">
+                                            <Setter Property="Background" Value="Transparent" />
+                                            <Setter Property="Template">
+                                                <Setter.Value>
+                                                    <ControlTemplate TargetType="{x:Type Button}">
+                                                        <Border x:Name="border"
+                                                                Background="{TemplateBinding Background}"
+                                                                BorderBrush="{TemplateBinding BorderBrush}"
+                                                                BorderThickness="{TemplateBinding BorderThickness}">
+                                                            <ContentPresenter x:Name="contentPresenter"
+                                                                              Focusable="False"
+                                                                              Margin="{TemplateBinding Padding}"
+                                                                              HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                                                              VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                                                              RecognizesAccessKey="True"
+                                                                              TextElement.Foreground="{TemplateBinding Foreground}" />
+                                                        </Border>
+                                                    </ControlTemplate>
+                                                </Setter.Value>
+                                            </Setter>
+                                            <Style.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter Property="Background" Value="#FFF0F0F0" />
+                                                    <Setter Property="Foreground" Value="#1c1c1c" />
+                                                </Trigger>
+                                                <Trigger Property="IsPressed" Value="True">
+                                                    <Setter Property="Background" Value="#FFE0E0E0" />
+                                                    <Setter Property="Foreground" Value="#000000" />
+                                                </Trigger>
+                                                <Trigger Property="IsEnabled" Value="False">
+                                                    <Setter Property="Opacity" Value="0.5" />
+                                                    <Setter Property="Cursor" Value="Arrow" />
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                </Button>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </Grid>
+    </DataTemplate>
+
+    <!--  Date Interval CheckList Template  -->
+    <DataTemplate x:Key="DateIntervalCheckListTemplate">
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <ItemsControl ItemsSource="{Binding DateIntervals}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <CheckBox IsChecked="{Binding IsSelected}" Margin="0,2">
+                            <CheckBox.Content>
+                                <StackPanel Orientation="Horizontal">
+                                    <!--<Image Source="{Binding Interval, Converter={StaticResource DateIntervalToIconConverter}}"
+                                           Visibility="Collapsed"
+                                           Margin="0,0,6,0"
+                                           VerticalAlignment="Center"
+                                           Width="16"
+                                           Height="16" />-->
+                                    <TextBlock Text="{Binding DisplayName}" VerticalAlignment="Center" />
+                                </StackPanel>
+                            </CheckBox.Content>
+                        </CheckBox>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+    </DataTemplate>
+
+</ResourceDictionary>

@@ -15,10 +15,10 @@ namespace WWSearchDataGrid.Modern.WPF
     /// </summary>
     public class CheckBoxEditSettings : BaseEditSettings
     {
-        public override DataTemplate CreateDisplayTemplate(GridColumn column)
+        public override DataTemplate CreateDisplayTemplate(ColumnDataBase column)
             => BuildCheckBoxTemplate(column, isDisplay: true);
 
-        public override DataTemplate CreateEditTemplate(GridColumn column)
+        public override DataTemplate CreateEditTemplate(ColumnDataBase column)
             => BuildCheckBoxTemplate(column, isDisplay: false);
 
         public override System.Collections.Generic.IEnumerable<Core.SearchType> GetSupportedFilterSearchTypes(Core.ColumnDataType columnDataType, bool isNullable)
@@ -51,7 +51,7 @@ namespace WWSearchDataGrid.Modern.WPF
             return cb;
         }
 
-        private DataTemplate BuildCheckBoxTemplate(GridColumn column, bool isDisplay)
+        private DataTemplate BuildCheckBoxTemplate(ColumnDataBase column, bool isDisplay)
         {
             var factory = new FrameworkElementFactory(typeof(CheckBox));
             // Style FIRST — FrameworkElementFactory requires StyleProperty before other setters.
@@ -62,6 +62,7 @@ namespace WWSearchDataGrid.Modern.WPF
             ApplyTextAlignment(factory, column);
 
             factory.SetBinding(ToggleButton.IsCheckedProperty, CreateValueBinding(column));
+            SuppressValidationErrorAdorner(factory);
 
             if (!isDisplay)
             {

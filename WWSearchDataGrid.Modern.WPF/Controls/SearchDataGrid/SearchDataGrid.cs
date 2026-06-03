@@ -64,11 +64,44 @@ namespace WWSearchDataGrid.Modern.WPF
                 new PropertyMetadata(false, OnActualHasItemsChanged));
 
         /// <summary>
-        /// Dependency property for EnableRuleFiltering
+        /// Grid-level default for <see cref="ColumnDataBase.AllowFilterPopup"/>. Inherits down the
+        /// visual tree so child elements (filter controls, row panels) can read it without an
+        /// explicit grid reference.
         /// </summary>
-        public static readonly DependencyProperty EnableRuleFilteringProperty =
-            DependencyProperty.Register("EnableRuleFiltering", typeof(bool), typeof(SearchDataGrid),
-                new FrameworkPropertyMetadata(false, FrameworkPropertyMetadataOptions.Inherits, OnEnableRuleFilteringChanged));
+        public static readonly DependencyProperty AllowFilterPopupProperty =
+            DependencyProperty.Register("AllowFilterPopup", typeof(bool), typeof(SearchDataGrid),
+                new FrameworkPropertyMetadata(false, FrameworkPropertyMetadataOptions.Inherits, OnAllowFilterPopupChanged));
+
+        /// <summary>
+        /// Grid-level default for <see cref="ColumnDataBase.IsSmart"/>. When <c>true</c>,
+        /// auto-generated columns (produced when <see cref="AutoGenerateColumns"/> is on and no
+        /// <see cref="GridColumns"/> were declared) are created in smart mode — each reads its
+        /// bound property's data annotations to configure header, display format, editor, and
+        /// mask. Has no effect on explicitly declared columns; set <see cref="ColumnDataBase.IsSmart"/>
+        /// per column for those. Default <c>false</c>.
+        /// </summary>
+        public static readonly DependencyProperty EnableSmartColumnsGenerationProperty =
+            DependencyProperty.Register(nameof(EnableSmartColumnsGeneration), typeof(bool), typeof(SearchDataGrid),
+                new PropertyMetadata(false));
+
+        /// <summary>
+        /// Grid-level default for whether data-annotation validation errors are surfaced while
+        /// editing. Each column resolves <see cref="ColumnDataBase.ActualShowValidationAttributeErrors"/>
+        /// from its own override falling back to this value. Default <c>true</c>.
+        /// </summary>
+        public static readonly DependencyProperty ShowValidationAttributeErrorsProperty =
+            DependencyProperty.Register(nameof(ShowValidationAttributeErrors), typeof(bool), typeof(SearchDataGrid),
+                new PropertyMetadata(true, OnShowValidationAttributeErrorsChanged));
+
+        /// <summary>
+        /// Whether a cell edit may be committed while it has unresolved data-annotation validation
+        /// errors. When <c>false</c> (default), the grid cancels the commit and keeps the editor
+        /// open until the value validates. When <c>true</c>, the edit commits regardless and the
+        /// error chrome stays visible as an advisory.
+        /// </summary>
+        public static readonly DependencyProperty AllowCommitOnValidationAttributeErrorProperty =
+            DependencyProperty.Register(nameof(AllowCommitOnValidationAttributeError), typeof(bool), typeof(SearchDataGrid),
+                new PropertyMetadata(false));
 
 
         /// <summary>
@@ -139,38 +172,38 @@ namespace WWSearchDataGrid.Modern.WPF
         public static readonly DependencyProperty GridColumnsProperty = GridColumnsPropertyKey.DependencyProperty;
 
         /// <summary>
-        /// Gates the auto-filter UI. Combined with <see cref="AutoFilterRowPositionProperty"/>
+        /// Gates the filter UI. Combined with <see cref="FilterEditorPlacementProperty"/>
         /// to choose between a pinned row and in-header editors. Defaults to <c>true</c>.
         /// </summary>
-        public static readonly DependencyProperty ShowAutoFilterRowProperty =
-            DependencyProperty.Register(nameof(ShowAutoFilterRow), typeof(bool), typeof(SearchDataGrid),
+        public static readonly DependencyProperty ShowFilterRowProperty =
+            DependencyProperty.Register(nameof(ShowFilterRow), typeof(bool), typeof(SearchDataGrid),
                 new FrameworkPropertyMetadata(true));
 
         /// <summary>
-        /// Dependency property for <see cref="AutoFilterRowPosition"/>. Defaults to
-        /// <see cref="WPF.AutoFilterRowPosition.Cell"/>.
+        /// Dependency property for <see cref="FilterEditorPlacement"/>. Defaults to
+        /// <see cref="WPF.FilterEditorPlacement.Row"/>.
         /// </summary>
-        public static readonly DependencyProperty AutoFilterRowPositionProperty =
-            DependencyProperty.Register(nameof(AutoFilterRowPosition), typeof(AutoFilterRowPosition), typeof(SearchDataGrid),
-                new FrameworkPropertyMetadata(AutoFilterRowPosition.Cell));
+        public static readonly DependencyProperty FilterEditorPlacementProperty =
+            DependencyProperty.Register(nameof(FilterEditorPlacement), typeof(FilterEditorPlacement), typeof(SearchDataGrid),
+                new FrameworkPropertyMetadata(FilterEditorPlacement.Row));
 
         /// <summary>
         /// Grid-wide default for showing the inline <see cref="SearchTypeSelector"/> in each
         /// filter cell. <c>false</c> hides it; column override via
-        /// <see cref="GridColumn.ShowCriteriaInAutoFilterRow"/> wins when set.
+        /// <see cref="GridColumn.ShowCriteriaInFilterRow"/> wins when set.
         /// </summary>
-        public static readonly DependencyProperty ShowCriteriaInAutoFilterRowProperty =
-            DependencyProperty.Register(nameof(ShowCriteriaInAutoFilterRow), typeof(bool), typeof(SearchDataGrid),
-                new FrameworkPropertyMetadata(false, FrameworkPropertyMetadataOptions.Inherits, OnShowCriteriaInAutoFilterRowChanged));
+        public static readonly DependencyProperty ShowCriteriaInFilterRowProperty =
+            DependencyProperty.Register(nameof(ShowCriteriaInFilterRow), typeof(bool), typeof(SearchDataGrid),
+                new FrameworkPropertyMetadata(false, FrameworkPropertyMetadataOptions.Inherits, OnShowCriteriaInFilterRowChanged));
 
         /// <summary>
         /// Grid-wide default Style for <see cref="ColumnFilterControl"/>. Column override
-        /// via <see cref="GridColumn.AutoFilterRowCellStyle"/> wins; both null falls back to
-        /// the keyed theme style under <see cref="SdgThemeKeys.FilterRow.ColumnFilterControl"/>.
+        /// via <see cref="GridColumn.FilterRowCellStyle"/> wins; both null falls back to
+        /// the keyed theme style under <see cref="ThemeKeys.FilterRow.ColumnFilterControl"/>.
         /// </summary>
-        public static readonly DependencyProperty AutoFilterRowCellStyleProperty =
-            DependencyProperty.Register(nameof(AutoFilterRowCellStyle), typeof(Style), typeof(SearchDataGrid),
-                new FrameworkPropertyMetadata(null, OnAutoFilterRowCellStyleChanged));
+        public static readonly DependencyProperty FilterRowCellStyleProperty =
+            DependencyProperty.Register(nameof(FilterRowCellStyle), typeof(Style), typeof(SearchDataGrid),
+                new FrameworkPropertyMetadata(null, OnFilterRowCellStyleChanged));
 
         /// <summary>
         /// Debounce window (ms) for keystroke-driven filter updates. <c>0</c> applies every
@@ -183,7 +216,7 @@ namespace WWSearchDataGrid.Modern.WPF
 
         /// <summary>
         /// Grid-wide live-filtering toggle. <c>true</c> (default): filter changes — popup edits
-        /// and auto-filter-row typing — apply to the grid as they happen. <c>false</c>: changes
+        /// and filter-row typing — apply to the grid as they happen. <c>false</c>: changes
         /// are deferred until the user commits via Enter / Tab / focus loss / popup close.
         /// </summary>
         public static readonly DependencyProperty EnableLiveFilteringProperty =
@@ -192,11 +225,11 @@ namespace WWSearchDataGrid.Modern.WPF
 
         /// <summary>
         /// Grid-wide policy for the per-cell clear (X) button visibility. Defaults to
-        /// <see cref="WPF.AutoFilterRowClearButtonMode.Always"/>.
+        /// <see cref="WPF.FilterClearButtonMode.Always"/>.
         /// </summary>
-        public static readonly DependencyProperty AutoFilterRowClearButtonModeProperty =
-            DependencyProperty.Register(nameof(AutoFilterRowClearButtonMode), typeof(AutoFilterRowClearButtonMode), typeof(SearchDataGrid),
-                new FrameworkPropertyMetadata(AutoFilterRowClearButtonMode.Always, FrameworkPropertyMetadataOptions.Inherits));
+        public static readonly DependencyProperty FilterClearButtonModeProperty =
+            DependencyProperty.Register(nameof(FilterClearButtonMode), typeof(FilterClearButtonMode), typeof(SearchDataGrid),
+                new FrameworkPropertyMetadata(FilterClearButtonMode.Always, FrameworkPropertyMetadataOptions.Inherits));
 
         /// <summary>
         /// Gates the runtime "Pin Left / Pin Right / Unpin" items in the column-header
@@ -209,7 +242,7 @@ namespace WWSearchDataGrid.Modern.WPF
                 new FrameworkPropertyMetadata(false));
 
         /// <summary>Re-resolves effective ShowCriteria on each filter cell when the grid DP changes.</summary>
-        private static void OnShowCriteriaInAutoFilterRowChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        private static void OnShowCriteriaInFilterRowChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
             if (d is not SearchDataGrid grid) return;
             foreach (var host in grid.DataColumns)
@@ -220,13 +253,13 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>Re-resolves the cell Style on each filter cell when the grid DP changes.</summary>
-        private static void OnAutoFilterRowCellStyleChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        private static void OnFilterRowCellStyleChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
             if (d is not SearchDataGrid grid) return;
             foreach (var host in grid.DataColumns)
             {
                 if (host is ColumnFilterControl ctl)
-                    ctl.RefreshAutoFilterRowCellStyle();
+                    ctl.RefreshFilterRowCellStyle();
             }
         }
 
@@ -275,13 +308,62 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
-        /// Grid-wide rule-filtering toggle. False forces single-text-filter mode; true defers
-        /// to per-column EnableRuleFiltering.
+        /// Grid-wide default for <see cref="ColumnDataBase.AllowFilterPopup"/>. False forces
+        /// single-text-filter mode; true defers to each column's local
+        /// <see cref="ColumnDataBase.AllowFilterPopup"/> when set.
         /// </summary>
-        public bool EnableRuleFiltering
+        public bool AllowFilterPopup
         {
-            get { return (bool)GetValue(EnableRuleFilteringProperty); }
-            set { SetValue(EnableRuleFilteringProperty, value); }
+            get { return (bool)GetValue(AllowFilterPopupProperty); }
+            set { SetValue(AllowFilterPopupProperty, value); }
+        }
+
+        /// <summary>
+        /// Grid-wide default for <see cref="ColumnDataBase.IsSmart"/> applied to auto-generated
+        /// columns. See <see cref="EnableSmartColumnsGenerationProperty"/>.
+        /// </summary>
+        public bool EnableSmartColumnsGeneration
+        {
+            get { return (bool)GetValue(EnableSmartColumnsGenerationProperty); }
+            set { SetValue(EnableSmartColumnsGenerationProperty, value); }
+        }
+
+        /// <summary>
+        /// Grid-level default for surfacing data-annotation validation errors while editing. See
+        /// <see cref="ShowValidationAttributeErrorsProperty"/>.
+        /// </summary>
+        public bool ShowValidationAttributeErrors
+        {
+            get { return (bool)GetValue(ShowValidationAttributeErrorsProperty); }
+            set { SetValue(ShowValidationAttributeErrorsProperty, value); }
+        }
+
+        /// <summary>
+        /// Whether cell edits may commit while they carry data-annotation validation errors. See
+        /// <see cref="AllowCommitOnValidationAttributeErrorProperty"/>.
+        /// </summary>
+        public bool AllowCommitOnValidationAttributeError
+        {
+            get { return (bool)GetValue(AllowCommitOnValidationAttributeErrorProperty); }
+            set { SetValue(AllowCommitOnValidationAttributeErrorProperty, value); }
+        }
+
+        private static void OnShowValidationAttributeErrorsChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            if (d is SearchDataGrid grid)
+                grid.RefreshColumnValidationDisplay();
+        }
+
+        /// <summary>
+        /// Pushes the grid-level <see cref="ShowValidationAttributeErrors"/> down to every column
+        /// descriptor so each re-resolves <see cref="ColumnDataBase.ActualShowValidationAttributeErrors"/>.
+        /// </summary>
+        private void RefreshColumnValidationDisplay()
+        {
+            var descriptors = (FreezableCollection<GridColumn>)GetValue(GridColumnsProperty);
+            if (descriptors == null) return;
+            foreach (var descriptor in descriptors)
+                descriptor?.RefreshActualShowValidationAttributeErrors();
         }
 
         /// <summary>
@@ -355,41 +437,41 @@ namespace WWSearchDataGrid.Modern.WPF
             get => (FreezableCollection<GridColumn>)GetValue(GridColumnsProperty);
         }
 
-        /// <summary>Shows the auto-filter UI (placement via <see cref="AutoFilterRowPosition"/>).</summary>
-        public bool ShowAutoFilterRow
+        /// <summary>Shows the filter UI (placement via <see cref="FilterEditorPlacement"/>).</summary>
+        public bool ShowFilterRow
         {
-            get => (bool)GetValue(ShowAutoFilterRowProperty);
-            set => SetValue(ShowAutoFilterRowProperty, value);
+            get => (bool)GetValue(ShowFilterRowProperty);
+            set => SetValue(ShowFilterRowProperty, value);
         }
 
         /// <summary>
-        /// Placement of the auto-filter UI: Cell (default, pinned row) or Header (in-header
+        /// Placement of the filter UI: Row (default, pinned row) or InHeader (in-header
         /// expand-on-click).
         /// </summary>
-        public AutoFilterRowPosition AutoFilterRowPosition
+        public FilterEditorPlacement FilterEditorPlacement
         {
-            get => (AutoFilterRowPosition)GetValue(AutoFilterRowPositionProperty);
-            set => SetValue(AutoFilterRowPositionProperty, value);
+            get => (FilterEditorPlacement)GetValue(FilterEditorPlacementProperty);
+            set => SetValue(FilterEditorPlacementProperty, value);
         }
 
         /// <summary>
         /// Gets or sets whether each column's filter cell renders the inline search-type
-        /// selector. See <see cref="ShowCriteriaInAutoFilterRowProperty"/>.
+        /// selector. See <see cref="ShowCriteriaInFilterRowProperty"/>.
         /// </summary>
-        public bool ShowCriteriaInAutoFilterRow
+        public bool ShowCriteriaInFilterRow
         {
-            get => (bool)GetValue(ShowCriteriaInAutoFilterRowProperty);
-            set => SetValue(ShowCriteriaInAutoFilterRowProperty, value);
+            get => (bool)GetValue(ShowCriteriaInFilterRowProperty);
+            set => SetValue(ShowCriteriaInFilterRowProperty, value);
         }
 
         /// <summary>
         /// Gets or sets the grid-wide default <see cref="Style"/> for the per-column
-        /// <see cref="ColumnFilterControl"/>. See <see cref="AutoFilterRowCellStyleProperty"/>.
+        /// <see cref="ColumnFilterControl"/>. See <see cref="FilterRowCellStyleProperty"/>.
         /// </summary>
-        public Style AutoFilterRowCellStyle
+        public Style FilterRowCellStyle
         {
-            get => (Style)GetValue(AutoFilterRowCellStyleProperty);
-            set => SetValue(AutoFilterRowCellStyleProperty, value);
+            get => (Style)GetValue(FilterRowCellStyleProperty);
+            set => SetValue(FilterRowCellStyleProperty, value);
         }
 
         /// <summary>
@@ -404,12 +486,12 @@ namespace WWSearchDataGrid.Modern.WPF
 
         /// <summary>
         /// Gets or sets the visibility policy for the per-cell clear (X) button in the
-        /// auto-filter row. See <see cref="AutoFilterRowClearButtonModeProperty"/>.
+        /// filter row. See <see cref="FilterClearButtonModeProperty"/>.
         /// </summary>
-        public AutoFilterRowClearButtonMode AutoFilterRowClearButtonMode
+        public FilterClearButtonMode FilterClearButtonMode
         {
-            get => (AutoFilterRowClearButtonMode)GetValue(AutoFilterRowClearButtonModeProperty);
-            set => SetValue(AutoFilterRowClearButtonModeProperty, value);
+            get => (FilterClearButtonMode)GetValue(FilterClearButtonModeProperty);
+            set => SetValue(FilterClearButtonModeProperty, value);
         }
 
         /// <summary>
@@ -437,7 +519,7 @@ namespace WWSearchDataGrid.Modern.WPF
         /// <summary>
         /// Gets the filter panel control
         /// </summary>
-        public FilterPanel FilterPanel { get; private set; }
+        public FilterSummaryPanel FilterSummaryPanel { get; private set; }
 
         /// <summary>
         /// Gets the count of original items for debugging purposes
@@ -475,11 +557,22 @@ namespace WWSearchDataGrid.Modern.WPF
 
         #region Constructor
 
-        // Track template FilterPanel reference for event cleanup on re-template
-        private FilterPanel _templateFilterPanel;
+        // Track template FilterSummaryPanel reference for event cleanup on re-template
+        private FilterSummaryPanel _templateFilterSummaryPanel;
 
         public SearchDataGrid() : base()
         {
+            // Watch the base DataGrid.IsReadOnly DP via DependencyPropertyDescriptor so a
+            // grid-wide change propagates to each column's DataGridColumn.IsReadOnly (via
+            // GetEffectiveReadOnly). The base DP is not inheriting; without this, only
+            // freshly-synced columns would pick up the grid value, and runtime toggles would
+            // leave existing columns out of date. Per-instance subscription (rather than a
+            // type-level OverrideMetadata) avoids clobbering the base DataGrid's own row /
+            // details notification callback chain.
+            var isReadOnlyDpd = System.ComponentModel.DependencyPropertyDescriptor
+                .FromProperty(DataGrid.IsReadOnlyProperty, typeof(DataGrid));
+            isReadOnlyDpd?.AddValueChanged(this, OnGridIsReadOnlyValueChanged);
+
             // Initialize the GridColumns collection so XAML can populate it immediately
             var gridColumns = new FreezableCollection<GridColumn>();
             SetValue(GridColumnsPropertyKey, gridColumns);
@@ -503,6 +596,10 @@ namespace WWSearchDataGrid.Modern.WPF
             // arrow keys and bare programmatic focus changes leave the flag clear.
             // handledEventsToo because upstream selection often marks GotFocus.
             AddHandler(GotFocusEvent, new RoutedEventHandler(OnAnyDescendantGotFocus), handledEventsToo: true);
+            // First crack at every press: the validation edit lock swallows clicks that would
+            // carry focus off an invalid cell (before the left-button / DataGrid handlers run).
+            AddHandler(PreviewMouseDownEvent,
+                new MouseButtonEventHandler(OnGridPreviewMouseDown), handledEventsToo: true);
             AddHandler(PreviewMouseLeftButtonDownEvent,
                 new MouseButtonEventHandler(OnPreviewMouseLeftButtonDown_SetEditCarry), handledEventsToo: true);
             AddHandler(PreviewMouseLeftButtonUpEvent,
@@ -522,6 +619,20 @@ namespace WWSearchDataGrid.Modern.WPF
                 foreach (var descriptor in descriptors)
                     descriptor.DataContext = e.NewValue;
             };
+        }
+
+        /// <summary>
+        /// Re-pushes each column descriptor's effective read-only state onto its generated
+        /// <see cref="DataGridColumn"/>. Subscribed to <see cref="DataGrid.IsReadOnlyProperty"/>
+        /// via <see cref="System.ComponentModel.DependencyPropertyDescriptor"/> so grid-wide
+        /// toggles of <see cref="DataGrid.IsReadOnly"/> reach every column.
+        /// </summary>
+        private void OnGridIsReadOnlyValueChanged(object sender, EventArgs e)
+        {
+            var descriptors = (FreezableCollection<GridColumn>)GetValue(GridColumnsProperty);
+            if (descriptors == null) return;
+            foreach (var descriptor in descriptors)
+                descriptor.SyncToInternalColumn();
         }
 
         #endregion
@@ -594,12 +705,70 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
+        /// Earliest pointer hook — blocks any press (any button) that lands outside a locked
+        /// editing cell so focus and selection can't move off an invalid value. See
+        /// <see cref="TryBlockPointerForEditLock"/>.
+        /// </summary>
+        private void OnGridPreviewMouseDown(object sender, MouseButtonEventArgs e)
+            => TryBlockPointerForEditLock(e);
+
+        /// <summary>
+        /// Mouse gate for the validation edit lock. When a cell is locked
+        /// (<see cref="IsEditLockActive"/>) and the press lands outside that cell, the press is
+        /// swallowed so focus and selection can't move off the invalid cell — keeping the user in
+        /// the editor until the value validates. Presses inside the locked cell pass through
+        /// (caret placement, editor interaction). Returns true when the press was blocked (so
+        /// callers early-out). A no-op in commit-on-error mode or when no cell is mid-edit.
+        /// </summary>
+        private bool TryBlockPointerForEditLock(MouseButtonEventArgs e)
+        {
+            if (e.Handled) return true;
+            if (!TryGetLockedEditingCell(out var lockedCell)) return false;
+
+            var clickedCell = VisualTreeHelperMethods.FindVisualAncestor<DataGridCell>(e.OriginalSource as DependencyObject);
+            if (ReferenceEquals(clickedCell, lockedCell)) return false;
+
+            e.Handled = true;
+            return true;
+        }
+
+        /// <summary>
+        /// Keys that carry grid focus off the current cell (as opposed to moving the caret inside
+        /// the editor). The validation edit lock swallows these. Bare Home/End place the caret in
+        /// a text editor, so only their Ctrl-modified forms (jump to first/last cell) count as
+        /// grid navigation; bare arrows reach the editor and are neutralized at the boundary by
+        /// <see cref="BaseEditSettings.ExitCellViaArrow"/>.
+        /// </summary>
+        private static bool IsCellExitNavigationKey(Key key, ModifierKeys mods)
+        {
+            switch (key)
+            {
+                case Key.Tab:
+                case Key.Enter:
+                case Key.PageUp:
+                case Key.PageDown:
+                    return true;
+                case Key.Home:
+                case Key.End:
+                    return (mods & ModifierKeys.Control) != 0;
+                default:
+                    return false;
+            }
+        }
+
+        /// <summary>True for the four arrow keys.</summary>
+        private static bool IsArrowKey(Key key)
+            => key == Key.Left || key == Key.Right || key == Key.Up || key == Key.Down;
+
+        /// <summary>
         /// Decides whether mouse-down triggers edit now (MouseDown/MouseDownFocused) or
         /// defers to mouse-up. *Focused variants require pre-existing focus.
         /// </summary>
         private void OnPreviewMouseLeftButtonDown_SetEditCarry(object sender, MouseButtonEventArgs e)
         {
-            var cell = FindAncestor<DataGridCell>(e.OriginalSource as DependencyObject);
+            if (TryBlockPointerForEditLock(e)) return;
+
+            var cell = VisualTreeHelperMethods.FindVisualAncestor<DataGridCell>(e.OriginalSource as DependencyObject);
             if (cell == null || IsCellOrGridReadOnly(cell))
             {
                 _wasCellFocusedAtMouseDown = false;
@@ -640,7 +809,9 @@ namespace WWSearchDataGrid.Modern.WPF
         /// </summary>
         private void OnPreviewMouseLeftButtonUp_BeginEdit(object sender, MouseButtonEventArgs e)
         {
-            var cell = FindAncestor<DataGridCell>(e.OriginalSource as DependencyObject);
+            if (TryBlockPointerForEditLock(e)) return;
+
+            var cell = VisualTreeHelperMethods.FindVisualAncestor<DataGridCell>(e.OriginalSource as DependencyObject);
             if (cell == null || IsCellOrGridReadOnly(cell) || cell.IsEditing) return;
 
             var mode = ResolveEditorShowMode(cell);
@@ -671,8 +842,24 @@ namespace WWSearchDataGrid.Modern.WPF
             _carryEditStateOnNextFocus = false;
 
             var focused = Keyboard.FocusedElement as DependencyObject;
-            var cell = FindAncestor<DataGridCell>(focused);
+            var cell = VisualTreeHelperMethods.FindVisualAncestor<DataGridCell>(focused);
             if (cell == null) return;
+
+            // Validation edit lock: with commit-on-error off and the cell holding an unresolved
+            // error, swallow every key that would carry focus off the cell. Caret keys (bare
+            // arrows / Home / End) still reach the editor; boundary-exit arrows are neutralized in
+            // ExitCellViaArrow so the user stays put until the value validates. The arrow clause
+            // covers the transitional state where focus sits on the cell shell (mid edit-entry) —
+            // there the grid, not the editor, would move. Gating on the cheap key/focus test
+            // first keeps the live validation off the per-keystroke path.
+            bool focusOnCellShell = ReferenceEquals(focused, cell);
+            bool candidateExitKey = IsCellExitNavigationKey(e.Key, Keyboard.Modifiers)
+                || (focusOnCellShell && IsArrowKey(e.Key));
+            if (candidateExitKey && IsEditLockActive())
+            {
+                e.Handled = true;
+                return;
+            }
 
             switch (e.Key)
             {
@@ -739,9 +926,9 @@ namespace WWSearchDataGrid.Modern.WPF
                 // editors with real Up uses (multiline caret, ComboBox, DatePicker) get it first.
                 case Key.Up:
                 {
-                    if (!ShowAutoFilterRow) break;
+                    if (!ShowFilterRow) break;
                     if (!ReferenceEquals(focused, cell)) break;
-                    var rowContainer = FindAncestor<DataGridRow>(cell);
+                    var rowContainer = VisualTreeHelperMethods.FindVisualAncestor<DataGridRow>(cell);
                     if (rowContainer == null) break;
                     if (ItemContainerGenerator.IndexFromContainer(rowContainer) != 0) break;
                     if (TryFocusFilterCellForColumn(cell.Column))
@@ -790,7 +977,7 @@ namespace WWSearchDataGrid.Modern.WPF
         /// </summary>
         private static CheckBox FindCheckBoxInCell(DataGridCell cell)
         {
-            return FindVisualDescendant<CheckBox>(cell);
+            return VisualTreeHelperMethods.FindVisualDescendant<CheckBox>(cell);
         }
 
         /// <summary>
@@ -906,11 +1093,11 @@ namespace WWSearchDataGrid.Modern.WPF
         private static DataGridCell GetCellAt(DataGridRow row, DataGridColumn column)
         {
             if (row == null || column == null) return null;
-            var presenter = FindVisualDescendant<DataGridCellsPresenter>(row);
+            var presenter = VisualTreeHelperMethods.FindVisualDescendant<DataGridCellsPresenter>(row);
             if (presenter == null)
             {
                 row.ApplyTemplate();
-                presenter = FindVisualDescendant<DataGridCellsPresenter>(row);
+                presenter = VisualTreeHelperMethods.FindVisualDescendant<DataGridCellsPresenter>(row);
             }
             if (presenter == null) return null;
             return presenter.ItemContainerGenerator.ContainerFromIndex(column.DisplayIndex) as DataGridCell;
@@ -930,7 +1117,7 @@ namespace WWSearchDataGrid.Modern.WPF
             if (char.IsControl(e.Text[0])) return;
 
             var focused = Keyboard.FocusedElement as DependencyObject;
-            var cell = FindAncestor<DataGridCell>(focused);
+            var cell = VisualTreeHelperMethods.FindVisualAncestor<DataGridCell>(focused);
             if (cell == null || cell.IsEditing || IsCellOrGridReadOnly(cell)) return;
             if (!IsCellAutoEditEligible(cell)) return;
 
@@ -950,7 +1137,7 @@ namespace WWSearchDataGrid.Modern.WPF
             string typedText = e.Text;
             Dispatcher.BeginInvoke(new Action(() =>
             {
-                var tb = FindVisualDescendant<TextBox>(cell);
+                var tb = VisualTreeHelperMethods.FindVisualDescendant<TextBox>(cell);
                 if (tb == null) return;
 
                 // Masked TextBoxes need PreviewTextInput routing — a bare Text= would wipe the
@@ -979,20 +1166,6 @@ namespace WWSearchDataGrid.Modern.WPF
             e.Handled = true;
         }
 
-        private static T FindVisualDescendant<T>(DependencyObject root) where T : DependencyObject
-        {
-            if (root == null) return null;
-            int count = System.Windows.Media.VisualTreeHelper.GetChildrenCount(root);
-            for (int i = 0; i < count; i++)
-            {
-                var child = System.Windows.Media.VisualTreeHelper.GetChild(root, i);
-                if (child is T match) return match;
-                var deeper = FindVisualDescendant<T>(child);
-                if (deeper != null) return deeper;
-            }
-            return null;
-        }
-
         /// <summary>
         /// Resolves effective EditorShowMode — column override (non-Default) wins, otherwise
         /// the grid value. Grid-level Default means no auto-edit (Enter/F2 only).
@@ -1019,7 +1192,7 @@ namespace WWSearchDataGrid.Modern.WPF
         /// </summary>
         private void OnAnyDescendantGotFocus(object sender, RoutedEventArgs e)
         {
-            var cell = e.OriginalSource as DataGridCell ?? FindAncestor<DataGridCell>(e.OriginalSource as DependencyObject);
+            var cell = e.OriginalSource as DataGridCell ?? VisualTreeHelperMethods.FindVisualAncestor<DataGridCell>(e.OriginalSource as DependencyObject);
             if (cell == null || cell.IsEditing || IsCellOrGridReadOnly(cell)) return;
 
             if (!_carryEditStateOnNextFocus) return;
@@ -1039,17 +1212,6 @@ namespace WWSearchDataGrid.Modern.WPF
                 if (ReferenceEquals(_pendingEditCell, cell))
                     _pendingEditCell = null;
             }), DispatcherPriority.Input);
-        }
-
-        private static T FindAncestor<T>(DependencyObject start) where T : DependencyObject
-        {
-            var current = start;
-            while (current != null)
-            {
-                if (current is T match) return match;
-                current = System.Windows.Media.VisualTreeHelper.GetParent(current);
-            }
-            return null;
         }
 
         /// <summary>Prevents duplicate column generation on repeated Loaded events.</summary>
@@ -1168,8 +1330,9 @@ namespace WWSearchDataGrid.Modern.WPF
                     {
                         FieldName = pd.Name,
                         Header = ResolveHeaderText(pd) ?? pd.Name,
-                        IsAutoGenerated = true
+                        IsSmart = EnableSmartColumnsGeneration,
                     };
+                    gc.SetIsAutoGenerated(true);
                     // Set FieldType directly from the descriptor — no further reflection needed.
                     gc.SetAutoFieldType(Nullable.GetUnderlyingType(pd.PropertyType) ?? pd.PropertyType);
                     descriptors.Add(gc);
@@ -1261,9 +1424,10 @@ namespace WWSearchDataGrid.Modern.WPF
                     {
                         foreach (GridColumn descriptor in e.NewItems)
                         {
-                            descriptor.Owner = this;
+                            descriptor.SetView(this);
                             descriptor.DataContext = DataContext;
                             ResolveFieldTypeForDescriptor(descriptor);
+                            ApplySmartConfiguration(descriptor);
                             var column = descriptor.CreateDataGridColumn();
                             if (column != null)
                             {
@@ -1272,6 +1436,8 @@ namespace WWSearchDataGrid.Modern.WPF
                                     ? e.NewStartingIndex
                                     : Columns.Count;
                                 Columns.Insert(insertIndex, column);
+                                HookSortObservation(descriptor);
+                                HookColumnStateObservation(descriptor);
                             }
                         }
                         ApplyFixedColumnLayout();
@@ -1283,12 +1449,14 @@ namespace WWSearchDataGrid.Modern.WPF
                     {
                         foreach (GridColumn descriptor in e.OldItems)
                         {
+                            UnhookSortObservation(descriptor);
+                            UnhookColumnStateObservation(descriptor);
                             if (descriptor.InternalColumn != null)
                             {
                                 Columns.Remove(descriptor.InternalColumn);
                                 descriptor.InternalColumn = null;
                             }
-                            descriptor.Owner = null;
+                            descriptor.SetView(null);
                         }
                         ApplyFixedColumnLayout();
                     }
@@ -1300,12 +1468,14 @@ namespace WWSearchDataGrid.Modern.WPF
                     {
                         foreach (GridColumn descriptor in e.OldItems)
                         {
+                            UnhookSortObservation(descriptor);
+                            UnhookColumnStateObservation(descriptor);
                             if (descriptor.InternalColumn != null)
                             {
                                 Columns.Remove(descriptor.InternalColumn);
                                 descriptor.InternalColumn = null;
                             }
-                            descriptor.Owner = null;
+                            descriptor.SetView(null);
                         }
                     }
                     // Add new
@@ -1313,12 +1483,17 @@ namespace WWSearchDataGrid.Modern.WPF
                     {
                         foreach (GridColumn descriptor in e.NewItems)
                         {
-                            descriptor.Owner = this;
+                            descriptor.SetView(this);
                             descriptor.DataContext = DataContext;
                             ResolveFieldTypeForDescriptor(descriptor);
+                            ApplySmartConfiguration(descriptor);
                             var column = descriptor.CreateDataGridColumn();
                             if (column != null)
+                            {
                                 Columns.Add(column);
+                                HookSortObservation(descriptor);
+                                HookColumnStateObservation(descriptor);
+                            }
                         }
                     }
                     ApplyFixedColumnLayout();
@@ -1362,13 +1537,21 @@ namespace WWSearchDataGrid.Modern.WPF
             // column type (e.g. DataGridCheckBoxColumn for bool) is chosen.
             ResolveFieldTypesFromItemsSource();
 
+            // Smart columns read their annotations now — after FieldType is known (the editor /
+            // mask resolution depends on it) and before CreateDataGridColumn auto-fills an editor.
+            ApplySmartConfiguration();
+
             foreach (var descriptor in descriptors)
             {
-                descriptor.Owner = this;
+                descriptor.SetView(this);
                 descriptor.DataContext = DataContext;
                 var column = descriptor.CreateDataGridColumn();
                 if (column != null)
+                {
                     Columns.Add(column);
+                    HookSortObservation(descriptor);
+                    HookColumnStateObservation(descriptor);
+                }
             }
 
             _gridColumnsGenerated = true;
@@ -1463,12 +1646,14 @@ namespace WWSearchDataGrid.Modern.WPF
 
             foreach (var descriptor in descriptors)
             {
+                UnhookSortObservation(descriptor);
+                UnhookColumnStateObservation(descriptor);
                 if (descriptor.InternalColumn != null)
                 {
                     Columns.Remove(descriptor.InternalColumn);
                     descriptor.InternalColumn = null;
                 }
-                descriptor.Owner = null;
+                descriptor.SetView(null);
             }
         }
 
@@ -1501,6 +1686,51 @@ namespace WWSearchDataGrid.Modern.WPF
                     anyResolved = true;
             }
             return anyResolved;
+        }
+
+        /// <summary>
+        /// Applies data-annotation-driven smart configuration to every <see cref="GridColumns"/>
+        /// descriptor flagged <see cref="ColumnDataBase.IsSmart"/>. Resolves the item's property
+        /// descriptors once and hands each smart column its matching one. Call after field types
+        /// are resolved and before generating the internal WPF columns.
+        /// </summary>
+        private void ApplySmartConfiguration()
+        {
+            var descriptors = (FreezableCollection<GridColumn>)GetValue(GridColumnsProperty);
+            if (descriptors == null || descriptors.Count == 0)
+                return;
+            if (!descriptors.Any(d => d != null && d.IsSmart))
+                return;
+
+            var pds = GetItemPropertyDescriptors();
+            if (pds == null || pds.Count == 0)
+                return;
+
+            foreach (var descriptor in descriptors)
+                ApplySmartConfiguration(descriptor, pds);
+        }
+
+        /// <summary>
+        /// Applies smart configuration to a single descriptor. Resolves the property descriptors
+        /// on demand; prefer the batch <see cref="ApplySmartConfiguration()"/> when configuring
+        /// many columns. No-op when the descriptor is not smart.
+        /// </summary>
+        private void ApplySmartConfiguration(GridColumn descriptor)
+        {
+            if (descriptor == null || !descriptor.IsSmart)
+                return;
+            ApplySmartConfiguration(descriptor, GetItemPropertyDescriptors());
+        }
+
+        private static void ApplySmartConfiguration(GridColumn descriptor, PropertyDescriptorCollection pds)
+        {
+            if (descriptor == null || !descriptor.IsSmart || pds == null)
+                return;
+            if (string.IsNullOrEmpty(descriptor.FieldName))
+                return;
+            var pd = pds[descriptor.FieldName];
+            if (pd != null)
+                SmartColumnConfigurator.Apply(descriptor, pd);
         }
 
         /// <summary>
@@ -1673,40 +1903,44 @@ namespace WWSearchDataGrid.Modern.WPF
             this.RowEditEnding += OnRowEditEnding;
             this.CellEditEnding += OnCellEditEnding;
 
-            if (FilterPanel == null)
+            // Surface data-annotation validation messages (Phase 2.2) as editor tooltips.
+            Validation.RemoveErrorHandler(this, OnValidationError);
+            Validation.AddErrorHandler(this, OnValidationError);
+
+            if (FilterSummaryPanel == null)
             {
-                FilterPanel = new FilterPanel();
+                FilterSummaryPanel = new FilterSummaryPanel();
             }
 
-            if (_templateFilterPanel != null)
+            if (_templateFilterSummaryPanel != null)
             {
-                _templateFilterPanel.FiltersEnabledChanged -= OnFiltersEnabledChanged;
-                _templateFilterPanel.FilterRemoved -= OnFilterRemoved;
-                _templateFilterPanel.ValueRemovedFromToken -= OnValueRemovedFromToken;
-                _templateFilterPanel.OperatorToggled -= OnOperatorToggled;
-                _templateFilterPanel.ClearAllFiltersRequested -= OnClearAllFiltersRequested;
-                _templateFilterPanel.OpenFilterEditorRequested -= OnOpenFilterEditorRequested;
+                _templateFilterSummaryPanel.FiltersEnabledChanged -= OnFiltersEnabledChanged;
+                _templateFilterSummaryPanel.FilterRemoved -= OnFilterRemoved;
+                _templateFilterSummaryPanel.ValueRemovedFromToken -= OnValueRemovedFromToken;
+                _templateFilterSummaryPanel.OperatorToggled -= OnOperatorToggled;
+                _templateFilterSummaryPanel.ClearAllFiltersRequested -= OnClearAllFiltersRequested;
+                _templateFilterSummaryPanel.OpenFilterEditorRequested -= OnOpenFilterEditorRequested;
             }
 
-            if (GetTemplateChild("PART_FilterPanel") is FilterPanel templateFilterPanel && templateFilterPanel != null)
+            if (GetTemplateChild("PART_FilterSummaryPanel") is FilterSummaryPanel templateFilterSummaryPanel && templateFilterSummaryPanel != null)
             {
-                templateFilterPanel.FiltersEnabled = FilterPanel.FiltersEnabled;
-                templateFilterPanel.UpdateActiveFilters(FilterPanel.ActiveFilters);
+                templateFilterSummaryPanel.FiltersEnabled = FilterSummaryPanel.FiltersEnabled;
+                templateFilterSummaryPanel.UpdateActiveFilters(FilterSummaryPanel.ActiveFilters);
 
-                templateFilterPanel.FiltersEnabledChanged += OnFiltersEnabledChanged;
-                templateFilterPanel.FilterRemoved += OnFilterRemoved;
-                templateFilterPanel.ValueRemovedFromToken += OnValueRemovedFromToken;
-                templateFilterPanel.OperatorToggled += OnOperatorToggled;
-                templateFilterPanel.ClearAllFiltersRequested += OnClearAllFiltersRequested;
-                templateFilterPanel.OpenFilterEditorRequested += OnOpenFilterEditorRequested;
+                templateFilterSummaryPanel.FiltersEnabledChanged += OnFiltersEnabledChanged;
+                templateFilterSummaryPanel.FilterRemoved += OnFilterRemoved;
+                templateFilterSummaryPanel.ValueRemovedFromToken += OnValueRemovedFromToken;
+                templateFilterSummaryPanel.OperatorToggled += OnOperatorToggled;
+                templateFilterSummaryPanel.ClearAllFiltersRequested += OnClearAllFiltersRequested;
+                templateFilterSummaryPanel.OpenFilterEditorRequested += OnOpenFilterEditorRequested;
 
-                _templateFilterPanel = templateFilterPanel;
-                FilterPanel = templateFilterPanel;
+                _templateFilterSummaryPanel = templateFilterSummaryPanel;
+                FilterSummaryPanel = templateFilterSummaryPanel;
             }
 
             Dispatcher.BeginInvoke(new Action(() =>
             {
-                SetupSelectAllColumnHeaders();
+                RefreshAllSelectAllHeaders();
             }), DispatcherPriority.Loaded);
 
             InitializeScrollInfrastructure();
@@ -1838,7 +2072,7 @@ namespace WWSearchDataGrid.Modern.WPF
             }
         }
 
-        private static void OnEnableRuleFilteringChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        private static void OnAllowFilterPopupChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
             if (d is SearchDataGrid grid)
             {
@@ -1957,7 +2191,7 @@ namespace WWSearchDataGrid.Modern.WPF
                     // Update select-all checkbox states after items source changes
                     Dispatcher.BeginInvoke(new Action(() =>
                     {
-                        UpdateAllSelectAllCheckboxStates();
+                        RefreshAllSelectAllHeaders();
                     }), DispatcherPriority.Background);
                 }
                 else

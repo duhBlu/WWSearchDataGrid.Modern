@@ -1,4 +1,5 @@
 using CommunityToolkit.Mvvm.ComponentModel;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
@@ -15,7 +16,10 @@ namespace WWSearchDataGrid.Modern.SampleApp.Views.Samples.Editing
         private ObservableCollection<TaskItem> _tasks = new();
 
         public IReadOnlyList<string> Statuses { get; } = TaskLookups.TaskStatuses;
-        public IReadOnlyList<string> Departments { get; } = TaskLookups.Departments;
+        public IReadOnlyList<string> Assignees { get; } = TaskLookups.Assignees;
+
+        public IReadOnlyList<PriorityOption> Priorities { get; } =
+            Array.ConvertAll(TaskLookups.Priorities, p => new PriorityOption(p.Id, p.Name));
 
         public EditorCustomizationSampleViewModel()
         {

@@ -18,8 +18,8 @@ namespace WWSearchDataGrid.Modern.WPF
 
             switch (item)
             {
-                case FilterGroupNode _: return element.TryFindResource(SdgThemeKeys.FilterEditorGroup) as DataTemplate;
-                case FilterConditionNode _: return element.TryFindResource(SdgThemeKeys.FilterEditorConditionRow) as DataTemplate;
+                case FilterGroupNode _: return element.TryFindResource(ThemeKeys.FilterEditorGroup) as DataTemplate;
+                case FilterConditionNode _: return element.TryFindResource(ThemeKeys.FilterEditorConditionRow) as DataTemplate;
                 default: return base.SelectTemplate(item, container);
             }
         }

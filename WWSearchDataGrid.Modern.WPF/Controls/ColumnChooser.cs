@@ -631,7 +631,7 @@ namespace WWSearchDataGrid.Modern.WPF
                 // Resolve the library default Window style by ComponentResourceKey. The lookup
                 // walks element scope → app scope → the assembly's Themes/Generic.xaml courtesy
                 // of [ThemeInfo], so consumers get the default with no manual merge.
-                var defaultStyle = TryFindResource(SdgThemeKeys.ColumnChooserWindow) as Style;
+                var defaultStyle = TryFindResource(ThemeKeys.ColumnChooserWindow) as Style;
                 if (defaultStyle != null)
                 {
                     _parentWindow.Style = defaultStyle;
@@ -963,7 +963,7 @@ namespace WWSearchDataGrid.Modern.WPF
             {
                 try
                 {
-                    var scrollViewer = VisualTreeHelperMethods.FindVisualChild<ScrollViewer>(SourceDataGrid);
+                    var scrollViewer = VisualTreeHelperMethods.FindVisualDescendant<ScrollViewer>(SourceDataGrid);
                     if (scrollViewer != null)
                     {
                         scrollViewer.InvalidateScrollInfo();

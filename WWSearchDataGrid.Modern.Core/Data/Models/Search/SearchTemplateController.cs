@@ -1181,7 +1181,7 @@ namespace WWSearchDataGrid.Modern.Core
         /// <summary>
         /// Formats a single <see cref="SearchTemplate"/> into a <see cref="FilterChipComponents"/>
         /// snapshot using this controller's display-value provider context. Exposed to the WPF
-        /// assembly so the FilterPanel's tree-mode renderer can format individual leaves from
+        /// assembly so the FilterSummaryPanel's tree-mode renderer can format individual leaves from
         /// <see cref="SearchDataGrid.GridFilterTree"/> without duplicating the per-search-type
         /// formatting table.
         /// </summary>

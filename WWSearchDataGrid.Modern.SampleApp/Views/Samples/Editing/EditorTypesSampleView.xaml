@@ -11,7 +11,7 @@
         <local:EditorTypesSampleViewModel />
     </UserControl.DataContext>
     <UserControl.Resources>
-        <Style TargetType="{x:Type ComboBox}" BasedOn="{StaticResource {x:Static sdg:SdgThemeKeys.PrimitivesComboBox}}" />
+        <Style TargetType="{x:Type ComboBox}" BasedOn="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesComboBox}}" />
     </UserControl.Resources>
     <sampleControls:SampleHostControl Sources="{x:Static sampleControls:SampleSources.EditorTypes}">
         <DockPanel>
@@ -22,7 +22,7 @@
                        TextWrapping="Wrap">
                 <Run FontWeight="SemiBold" Text="Editor types — every EditSettings" />
                 <LineBreak />
-                <Run Text="One column per editor type. Use the dropdowns to flip the grid's EditorShowMode (when click-to-edit triggers), EditorButtonShowMode (when combo/date/spin buttons appear), and the BooleanEditor for the Done column (CheckBox vs. Text vs. ComboBox)." />
+                <Run Text="One column per editor type. Flip the grid's EditorShowMode (when click-to-edit triggers), EditorButtonShowMode (when combo/date/spin buttons appear), and the BooleanEditor for the Done column (CheckBox vs. Text vs. ComboBox). The Done column also exposes ShowCheckBoxInHeader — toggle the header checkbox to flip every value; SelectAllScope decides which rows are affected (FilteredRows / SelectedRows / AllItems)." />
             </TextBlock>
 
             <sdg:SimpleStackPanel DockPanel.Dock="Right" Margin="16,4,16,8">
@@ -40,10 +40,16 @@
                 </GroupBox>
 
                 <GroupBox Header="Boolean Edit Type">
-                    
+
                 <ComboBox Grid.Row="5"
                           ItemsSource="{Binding BooleanEditorChoices}"
                           SelectedItem="{Binding BooleanEditor, Mode=TwoWay}" />
+                </GroupBox>
+
+                <GroupBox Header="Select-All Scope"
+                          ToolTip="The Done column header has a select-all checkbox. SelectAllScope decides which rows it toggles: FilteredRows (only currently visible rows after filters), SelectedRows (only the user's current selection), or AllItems (every row regardless of filter or selection).">
+                    <ComboBox ItemsSource="{Binding SelectAllScopeChoices}"
+                              SelectedItem="{Binding SelectAllScope, Mode=TwoWay}" />
                 </GroupBox>
             </sdg:SimpleStackPanel>
 
@@ -53,11 +59,10 @@
                                 AutoGenerateColumns="False"
                                 CanUserAddRows="False"
                                 CanUserDeleteRows="False"
-                                EnableRuleFiltering="True"
                                 EditorShowMode="{Binding EditorShowMode}"
                                 EditorButtonShowMode="{Binding EditorButtonShowMode}">
                 <sdg:SearchDataGrid.GridColumns>
-                    <sdg:GridColumn Width="50" FieldName="Id" Header="#" ReadOnly="True" />
+                    <sdg:GridColumn Width="50" FieldName="Id" Header="#" IsReadOnly="True" />
 
                     <sdg:GridColumn Width="2*" FieldName="Title" Header="Title" />
 
@@ -81,8 +86,12 @@
                         </sdg:GridColumn.EditSettings>
                     </sdg:GridColumn>
 
-                    <!-- IsComplete column's EditSettings is swapped at runtime by the code-behind based on BooleanEditor. -->
-                    <sdg:GridColumn x:Name="DoneColumn" Width="80" FieldName="IsComplete" Header="Done">
+                    <!-- IsComplete column's EditSettings is swapped at runtime by the code-behind based on BooleanEditor.
+                         ShowCheckBoxInHeader surfaces a header checkbox bound two-way to GridColumn.IsChecked;
+                         toggling it flips every IsComplete value within the chosen SelectAllScope. -->
+                    <sdg:GridColumn x:Name="DoneColumn" Width="80" FieldName="IsComplete" Header="Done"
+                                    ShowCheckBoxInHeader="True"
+                                    SelectAllScope="{Binding SelectAllScope}">
                         <sdg:GridColumn.EditSettings>
                             <sdg:CheckBoxEditSettings />
                         </sdg:GridColumn.EditSettings>

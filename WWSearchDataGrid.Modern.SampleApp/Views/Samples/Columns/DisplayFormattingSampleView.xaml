@@ -34,8 +34,7 @@
                                 AutoGenerateColumns="False"
                                 CanUserAddRows="False"
                                 CanUserDeleteRows="False"
-                                IsReadOnly="True"
-                                EnableRuleFiltering="True">
+                                IsReadOnly="True">
                 <sdg:SearchDataGrid.GridColumns>
                     <!-- Raw integer (no format) -->
                     <sdg:GridColumn Width="100" FieldName="OrderNumber" Header="Order # (raw)" />

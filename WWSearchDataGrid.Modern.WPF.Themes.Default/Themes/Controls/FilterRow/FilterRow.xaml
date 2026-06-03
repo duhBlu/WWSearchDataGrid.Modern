@@ -1,0 +1,526 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:converters="clr-namespace:WWSearchDataGrid.Modern.WPF.Converters;assembly=WWSearchDataGrid.Modern.WPF"
+                    xmlns:behaviors="clr-namespace:WWSearchDataGrid.Modern.WPF.Behaviors;assembly=WWSearchDataGrid.Modern.WPF"
+                    xmlns:sdg="clr-namespace:WWSearchDataGrid.Modern.WPF;assembly=WWSearchDataGrid.Modern.WPF">
+
+    <!--
+        ═══════════════════════════════════════════════════════════════════════
+        FilterRow — Editor templates, ColumnFilterControl, SearchTypeSelector
+        ═══════════════════════════════════════════════════════════════════════
+        
+        Templates bind the editor's value DP to ColumnFilterControl via RelativeSource
+        AncestorType. Text editor binds Text → ColumnFilterControl.SearchText (string).
+        Date / ComboBox / NumericUpDown bind their value DPs → ColumnFilterControl.SearchValue
+        (object) — the control's filter pipeline treats SearchText as a string fast path
+        and SearchValue as the typed-value fast path.
+        
+        Phase 3 wires the Cell-mode chrome (search-type selector + editor + clear/popup
+        buttons). The Header-mode VisualStates exist so the same template handles both
+        placements when Phase 4 hides ColumnSearchBox; for now the Editing state is the
+        always-on default since the control renders inside the pinned filter row.
+    -->
+
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF.Themes.Default;component/Themes/Controls/Primitives/DefaultControls.xaml" />
+        <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF.Themes.Default;component/Themes/Controls/Primitives/ContextMenu.xaml" />
+        <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF.Themes.Default;component/Themes/Controls/EditSettings/EditSettings.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+
+    <converters:IntToVisibilityConverter x:Key="FilterRowIntToVisibilityConverter" />
+    <converters:SearchTypeToIconConverter x:Key="FilterRowSearchTypeToIconConverter" />
+    <converters:ClearButtonModeToVisibilityConverter x:Key="FilterRowClearButtonModeConverter" />
+    <BooleanToVisibilityConverter x:Key="FilterRowBooleanToVisibilityConverter" />
+
+    <!--
+        Per-column editors are produced by BaseEditSettings.CreateFilterEditor (one method
+        per EditSettings subtype) — same editor element + keyed theme style the cell editor
+        uses, but with its value DP bound to ColumnFilterControl.SearchText / SearchValue /
+        FilterCheckboxState instead of a row-item field path.
+        ColumnFilterControl.RefreshEditor populates PART_EditorHost in code-behind; no
+        per-editor-shape filter-row template resources or template selector are needed.
+    -->
+
+    <!--
+        ═══════════════════════════════════════════════════════════════════════
+        SearchTypeSelector — Button + ContextMenu of valid SearchTypes filtered
+        by the column's ColumnDataType. The shared PrimitivesContextMenu style
+        provides the visual; each item invokes SelectSearchTypeCommand which
+        sets SelectedSearchType and raises ItemChosen (fires even on re-pick
+        of the active type, which a plain SelectedValue binding would drop).
+
+        IsDropDownOpen is kept as a public DP and TwoWay-bound to the menu's
+        IsOpen so ColumnFilterControl can still observe open/close transitions
+        and close the menu programmatically after item commit.
+        ═══════════════════════════════════════════════════════════════════════
+    -->
+
+    <Style x:Key="{x:Static sdg:ThemeKeys.FilterRowSearchTypeSelector}" TargetType="{x:Type sdg:SearchTypeSelector}">
+        <Setter Property="Width" Value="Auto" />
+        <Setter Property="Padding" Value="2,4" />
+        <Setter Property="Margin" Value="-1,-1,0,-1" />
+        <Setter Property="VerticalAlignment" Value="Stretch" />
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type sdg:SearchTypeSelector}">
+                    <Button x:Name="PART_Toggle"
+                            behaviors:ButtonContextMenuBehavior.OpenOnClick="True"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            Focusable="False"
+                            Cursor="Hand"
+                            Margin="{TemplateBinding Margin}"
+                            Padding="{TemplateBinding Padding}"
+                            HorizontalAlignment="{TemplateBinding HorizontalAlignment}"
+                            VerticalAlignment="{TemplateBinding VerticalAlignment}"
+                            IsTabStop="False"
+                            ToolTip="Choose how this column is matched">
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <Border x:Name="ToggleBorder"
+                                        Background="{TemplateBinding Background}"
+                                        BorderBrush="{TemplateBinding BorderBrush}"
+                                        BorderThickness="{TemplateBinding BorderThickness}"
+                                        Margin="{TemplateBinding Margin}"
+                                        Padding="{TemplateBinding Padding}"
+                                        HorizontalAlignment="{TemplateBinding HorizontalAlignment}"
+                                        VerticalAlignment="{TemplateBinding VerticalAlignment}"
+                                        CornerRadius="0">
+                                    <Image Source="{Binding SelectedSearchType, RelativeSource={RelativeSource AncestorType={x:Type sdg:SearchTypeSelector}}, Converter={StaticResource FilterRowSearchTypeToIconConverter}}"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"
+                                           Width="14"
+                                           Height="14" />
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter TargetName="ToggleBorder" Property="BorderBrush" Value="#CCCCCC" />
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Button.Template>
+                        <Button.ContextMenu>
+                            <ContextMenu Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesContextMenu}}"
+                                         DataContext="{Binding RelativeSource={RelativeSource TemplatedParent}}"
+                                         IsOpen="{Binding IsDropDownOpen, Mode=TwoWay}"
+                                         ItemsSource="{Binding AvailableSearchTypes}"
+                                         VerticalOffset="-4">
+                                <ContextMenu.Resources>
+                                    <!--
+                                        Implicit DataTemplate for SearchTypeOption — applied by the
+                                        MenuItem.Icon ContentPresenter when each item's Icon is bound
+                                        to the option itself. Gives every menu item its own Image
+                                        instance: a <Image> placed directly in Setter.Value would be
+                                        shared across all rows, and a Visual can only be parented
+                                        once, so only one row would actually render an icon.
+                                    -->
+                                    <DataTemplate DataType="{x:Type sdg:SearchTypeOption}">
+                                        <Image Source="{Binding SearchType, Converter={StaticResource FilterRowSearchTypeToIconConverter}}"
+                                               Width="14"
+                                               Height="14" 
+                                               Margin="-6,0,-2,0"/>
+                                    </DataTemplate>
+                                </ContextMenu.Resources>
+                                <ContextMenu.ItemContainerStyle>
+                                    <Style TargetType="MenuItem" BasedOn="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesMenuItem}}">
+                                        <Setter Property="Header" Value="{Binding DisplayName}" />
+                                        <Setter Property="Command" Value="{Binding DataContext.SelectSearchTypeCommand, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}" />
+                                        <Setter Property="CommandParameter" Value="{Binding}" />
+                                        <Setter Property="Icon" Value="{Binding}" />
+                                    </Style>
+                                </ContextMenu.ItemContainerStyle>
+                            </ContextMenu>
+                        </Button.ContextMenu>
+                    </Button>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style BasedOn="{StaticResource {x:Static sdg:ThemeKeys.FilterRowSearchTypeSelector}}" TargetType="{x:Type sdg:SearchTypeSelector}" />
+
+    <!--
+        ═══════════════════════════════════════════════════════════════════════
+        ColumnFilterControl — the per-column filter editor host.
+        
+        Layout: [SearchTypeSelector] [editor (templated by EditSettings)] [clear] [popup]
+        The editor area is a ContentControl whose template is selected by
+        FilterRowEditorTemplateSelector against GridColumn.EditSettings. Empty data
+        context for the ContentControl is the GridColumn descriptor — the editor
+        templates' ComboBox bindings (ItemsSource / DisplayMemberPath / SelectedValuePath)
+        resolve against the EditSettings instance.
+        
+        The CheckBox path for boolean columns swaps the entire editor area for a CheckBox
+        hosted directly (no template selector) so the IsCheckboxColumn data trigger can
+        flip visibility on the standard ContentControl path.
+        ═══════════════════════════════════════════════════════════════════════
+    -->
+
+    <Style x:Key="{x:Static sdg:ThemeKeys.FilterRowColumnFilterControl}" TargetType="{x:Type sdg:ColumnFilterControl}">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderBrush" Value="#FFC8C8C8" />
+        <Setter Property="BorderThickness" Value="0,0,1,1" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="MinHeight" Value="28" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type sdg:ColumnFilterControl}">
+                    <Border x:Name="MainBorder"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            Padding="{TemplateBinding Padding}">
+                        <!--
+                            Filter cell layout: [SearchTypeSelector] [editor] [clear-button].
+                            Phase 5 moved the rule-filter popup button to the DataGridColumnHeader
+                            chrome, so the filter cell no longer needs a column for it.
+                            
+                            TabNavigation=Continue (not Local) so when FilterRowNavigator
+                            falls off the start of the row on Shift+Tab and returns
+                            unhandled, WPF's default Tab carries focus out cleanly instead
+                            of cycling within the cell. DirectionalNavigation=None keeps
+                            arrow keys at the cell edge from landing on column header chrome
+                            or an unrelated focusable above/below — the navigator owns the
+                            cross-cell arrow path explicitly.
+                        -->
+                        <Grid KeyboardNavigation.DirectionalNavigation="None" KeyboardNavigation.TabNavigation="Continue">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <!--
+                                Search-type selector. Hidden for checkbox columns — those
+                                only support Equals/IsNull which the cycle button drives
+                                implicitly.
+                            -->
+                            <sdg:SearchTypeSelector x:Name="PART_SearchTypeSelector"
+                                                    Grid.Column="0"
+                                                    Margin="0,-2"
+                                                    Padding="4,0,4,0"
+                                                    ColumnDataType="{Binding ColumnDataType, RelativeSource={RelativeSource TemplatedParent}}"
+                                                    IsNullable="{Binding IsColumnNullable, RelativeSource={RelativeSource TemplatedParent}}"
+                                                    SelectedSearchType="{Binding SelectedSearchType, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}"
+                                                    SupportedSearchTypes="{Binding SupportedSearchTypes, RelativeSource={RelativeSource TemplatedParent}}">
+                                <sdg:SearchTypeSelector.Style>
+                                    <Style BasedOn="{StaticResource {x:Static sdg:ThemeKeys.FilterRowSearchTypeSelector}}" TargetType="{x:Type sdg:SearchTypeSelector}">
+                                        <!--
+                                            Visibility tracks the resolved EffectiveShowCriteria on the host
+                                            (GridColumn.ShowCriteriaInFilterRow ?? SearchDataGrid.ShowCriteriaInFilterRow).
+                                            False → the inline selector glyph is hidden and the column uses
+                                            its DefaultSearchType implicitly (legacy behavior).
+                                        -->
+                                        <Setter Property="Visibility" Value="{Binding EffectiveShowCriteria, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource FilterRowBooleanToVisibilityConverter}}" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsCheckboxColumn, RelativeSource={RelativeSource TemplatedParent}}" Value="True">
+                                                <Setter Property="Visibility" Value="Collapsed" />
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding IsKeyboardFocusWithin, ElementName=PART_EditorHost}" Value="True">
+                                                <Setter Property="BorderBrush" Value="#CCCCCC" />
+                                                <Setter Property="BorderThickness" Value="0,0,1,0" />
+                                                <Setter Property="Margin" Value="0,-2,-1,-2" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </sdg:SearchTypeSelector.Style>
+                            </sdg:SearchTypeSelector>
+
+                            <!--
+                                Editor host. ColumnFilterControl.RefreshEditor populates this
+                                ContentPresenter in code-behind with either:
+                                • the element produced by GridColumn.EditSettings.CreateFilterEditor
+                                (default path — bound to the host's SearchText / SearchValue /
+                                FilterCheckboxState DPs), or
+                                • the user-supplied FilterRowEditTemplate / FilterRowDisplayTemplate
+                                with an EditGridCellData data-context whose Value is two-way-bound
+                                to SearchValue.
+                                When a template is active (HasFilterRowTemplate=True) the host stays
+                                visible even on boolean columns so the user template wins over the default
+                                checkbox cell — matching DevExpress's "template owns the visual tree" rule.
+                            -->
+                            <ContentPresenter x:Name="PART_EditorHost"
+                                              Grid.Column="1"
+                                              HorizontalAlignment="Stretch"
+                                              VerticalAlignment="Stretch">
+                                <ContentPresenter.Style>
+                                    <Style TargetType="ContentPresenter">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                        <Style.Triggers>
+                                            <MultiDataTrigger>
+                                                <MultiDataTrigger.Conditions>
+                                                    <Condition Binding="{Binding IsCheckboxColumn, RelativeSource={RelativeSource TemplatedParent}}" Value="True" />
+                                                    <Condition Binding="{Binding HasFilterRowTemplate, RelativeSource={RelativeSource TemplatedParent}}" Value="False" />
+                                                </MultiDataTrigger.Conditions>
+                                                <Setter Property="Visibility" Value="Collapsed" />
+                                            </MultiDataTrigger>
+                                            <!--
+                                                NoInput operator active (IsNull, IsToday, AboveAverage, …) →
+                                                hide the disabled editor so the PART_NoInputDisplay placeholder
+                                                below takes its place. Skipped when a user template is in play
+                                                (HasFilterRowTemplate=True): templates own their own visual
+                                                tree and aren't replaced by our placeholder.
+                                            -->
+                                            <MultiDataTrigger>
+                                                <MultiDataTrigger.Conditions>
+                                                    <Condition Binding="{Binding ActiveSearchTypeRequiresInput, RelativeSource={RelativeSource TemplatedParent}}" Value="False" />
+                                                    <Condition Binding="{Binding HasFilterRowTemplate, RelativeSource={RelativeSource TemplatedParent}}" Value="False" />
+                                                    <Condition Binding="{Binding IsCheckboxColumn, RelativeSource={RelativeSource TemplatedParent}}" Value="False" />
+                                                </MultiDataTrigger.Conditions>
+                                                <Setter Property="Visibility" Value="Collapsed" />
+                                            </MultiDataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </ContentPresenter.Style>
+                            </ContentPresenter>
+
+                            <!--
+                                Placeholder shown in the editor slot when the active search type takes no
+                                input value (IsNull / IsNotNull / Today / Yesterday / AboveAverage /
+                                BelowAverage / Unique / Duplicate). Renders the operator's display name in
+                                a dim foreground so the user can tell which filter is engaged without
+                                having to open the search-type selector. Collapsed for checkbox columns
+                                (their cycle button drives the equivalent state) and for columns with a
+                                user-supplied FilterRow template (template owns the visuals).
+                            -->
+                            <TextBlock x:Name="PART_NoInputDisplay"
+                                       FontStyle="Italic"
+                                       Grid.Column="1"
+                                       Foreground="#666666"
+                                       Text="{Binding ActiveSearchTypeDisplayName, RelativeSource={RelativeSource TemplatedParent}}"
+                                       IsHitTestVisible="False"
+                                       Margin="4,0"
+                                       HorizontalAlignment="Left"
+                                       VerticalAlignment="Center"
+                                       TextTrimming="CharacterEllipsis">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                        <Style.Triggers>
+                                            <MultiDataTrigger>
+                                                <MultiDataTrigger.Conditions>
+                                                    <Condition Binding="{Binding ActiveSearchTypeRequiresInput, RelativeSource={RelativeSource TemplatedParent}}" Value="False" />
+                                                    <Condition Binding="{Binding HasFilterRowTemplate, RelativeSource={RelativeSource TemplatedParent}}" Value="False" />
+                                                    <Condition Binding="{Binding IsCheckboxColumn, RelativeSource={RelativeSource TemplatedParent}}" Value="False" />
+                                                </MultiDataTrigger.Conditions>
+                                                <Setter Property="Visibility" Value="Visible" />
+                                            </MultiDataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+
+                            <!--
+                                Boolean column checkbox. PART name lets ColumnFilterControl
+                                hook PreviewKeyDown/PreviewMouseDown for the cycle gesture.
+                                Suppressed when a user template is active so the template owns
+                                the cell unambiguously.
+                            -->
+                            <CheckBox x:Name="PART_FilterCheckBox"
+                                      Grid.Column="1"
+                                      IsChecked="{Binding FilterCheckboxState, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}"
+                                      HorizontalAlignment="Center"
+                                      VerticalAlignment="Center"
+                                      IsThreeState="True"
+                                      ToolTip="Filter by checkbox state">
+                                <CheckBox.Style>
+                                    <Style BasedOn="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesCheckBox}}" TargetType="CheckBox">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                        <Setter Property="Padding" Value="0" />
+                                        <Setter Property="FocusVisualStyle">
+                                            <Setter.Value>
+                                                <Style>
+                                                    <Setter Property="Control.Template">
+                                                        <Setter.Value>
+                                                            <ControlTemplate>
+                                                                <Border BorderBrush="Black"
+                                                                        BorderThickness="2"
+                                                                        Margin="-3"
+                                                                        Padding="4"
+                                                                        CornerRadius="4"
+                                                                        UseLayoutRounding="True"
+                                                                        SnapsToDevicePixels="True" />
+                                                            </ControlTemplate>
+                                                        </Setter.Value>
+                                                    </Setter>
+                                                </Style>
+                                            </Setter.Value>
+                                        </Setter>
+                                        <Style.Triggers>
+                                            <MultiDataTrigger>
+                                                <MultiDataTrigger.Conditions>
+                                                    <Condition Binding="{Binding IsCheckboxColumn, RelativeSource={RelativeSource TemplatedParent}}" Value="True" />
+                                                    <Condition Binding="{Binding HasFilterRowTemplate, RelativeSource={RelativeSource TemplatedParent}}" Value="False" />
+                                                </MultiDataTrigger.Conditions>
+                                                <Setter Property="Visibility" Value="Visible" />
+                                            </MultiDataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </CheckBox.Style>
+                            </CheckBox>
+
+                            <!--
+                                Clear button. Visibility is resolved by
+                                ClearButtonModeToVisibilityConverter against three inputs:
+                                • SearchDataGrid.FilterClearButtonMode (the policy)
+                                • HasEditorInputValue (the editor itself has something the X
+                                can clear — pending text/value, in-flight temporary template,
+                                or non-initial checkbox cycle state). Deliberately *not*
+                                HasActiveFilter: rule-popup-committed filters can't be
+                                cleared from this button, so showing it then would mislead.
+                                • IsFilterCellEditing (focus inside the control → edit surface
+                                rendering; outside → display surface rendering)
+                                Modes: Never (always hidden) / Always (visible whenever the
+                                editor holds a value) / Display (visible only on the read-only
+                                display surface) / Edit (visible only on the edit surface).
+                            -->
+                            <Button x:Name="PART_ClearFilterButton"
+                                    Grid.Column="2"
+                                    Cursor="Hand"
+                                    Command="{Binding ClearSearchTextCommand, RelativeSource={RelativeSource TemplatedParent}}"
+                                    Margin="2,0"
+                                    Width="13"
+                                    Height="13"
+                                    VerticalAlignment="Center"
+                                    IsTabStop="False" 
+                                    ToolTip="Clear filter">
+                                <sdg:Icon x:Name="CheckGlyph"
+                                             HorizontalAlignment="Center"
+                                             VerticalAlignment="Center"
+                                             Width="6"
+                                             Height="6"
+                                             StrokeThickness="3"
+                                             IconSource="{StaticResource {x:Static sdg:IconKeys.IconClear}}"
+                                             IconBrush="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
+                                <Button.Visibility>
+                                    <MultiBinding Converter="{StaticResource FilterRowClearButtonModeConverter}">
+                                        <Binding RelativeSource="{RelativeSource AncestorType={x:Type sdg:ColumnFilterControl}}" Path="(sdg:SearchDataGrid.FilterClearButtonMode)" />
+                                        <Binding RelativeSource="{RelativeSource AncestorType={x:Type sdg:ColumnFilterControl}}" Path="HasEditorInputValue" />
+                                        <Binding RelativeSource="{RelativeSource AncestorType={x:Type sdg:ColumnFilterControl}}" Path="IsFilterCellEditing" />
+                                    </MultiBinding>
+                                </Button.Visibility>
+                                <Button.Style>
+                                    <Style TargetType="Button">
+                                        <Setter Property="Foreground" Value="White" />
+                                        <Setter Property="Background" Value="DarkGray" />
+                                        <Setter Property="BorderBrush" Value="Transparent" />
+                                        <Setter Property="BorderThickness" Value="0" />
+                                        <Setter Property="Focusable" Value="False" />
+                                        <Setter Property="Template">
+                                            <Setter.Value>
+                                                <ControlTemplate TargetType="Button">
+                                                    <Border Background="{TemplateBinding Background}"
+                                                            BorderBrush="{TemplateBinding BorderBrush}"
+                                                            BorderThickness="{TemplateBinding BorderThickness}"
+                                                            CornerRadius="12">
+                                                        <ContentPresenter Focusable="False"
+                                                                          Margin="{TemplateBinding Padding}"
+                                                                          HorizontalAlignment="Center"
+                                                                          VerticalAlignment="Center"
+                                                                          RecognizesAccessKey="True" />
+                                                    </Border>
+                                                </ControlTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                        <Style.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter Property="Background" Value="Gray" />
+                                            </Trigger>
+                                            <Trigger Property="IsPressed" Value="True">
+                                                <Setter Property="Background" Value="Black" />
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+
+                            <!--
+                                Focus indicator. Mirrors the SearchDataGridCell pattern
+                                (see SearchDataGrid.xaml's SearchDataGridCell template) so
+                                a focused filter cell reads the same as a focused data
+                                cell. Filter cells are ColumnFilterControl instances, not
+                                real DataGridCells, so they don't inherit the data-cell
+                                style — this overlay reproduces the contract explicitly.
+                                Grid.ColumnSpan=3 covers SearchTypeSelector + editor +
+                                clear-button columns; IsHitTestVisible=False keeps mouse
+                                interaction routing to the underlying content. Visibility
+                                is flipped by the ControlTemplate.Trigger below on
+                                IsKeyboardFocusWithin.
+                            -->
+                            <Border x:Name="FocusBorder"
+                                    Grid.ColumnSpan="3"
+                                    BorderBrush="#0078D4"
+                                    BorderThickness="1"
+                                    Visibility="Collapsed"
+                                    IsHitTestVisible="False"
+                                    UseLayoutRounding="True"
+                                    SnapsToDevicePixels="True" />
+                        </Grid>
+                        <VisualStateManager.VisualStateGroups>
+                            <!--
+                                Header-mode state machine. Cell-mode placement holds Editing
+                                continuously (the editor is always visible in the pinned row);
+                                Header-mode (Phase 4) animates between the four states.
+                            -->
+                            <VisualStateGroup x:Name="HeaderDisplayStates">
+                                <VisualState x:Name="Idle" />
+                                <VisualState x:Name="Hover" />
+                                <VisualState x:Name="Editing" />
+                                <VisualState x:Name="FilteredIdle" />
+                            </VisualStateGroup>
+                        </VisualStateManager.VisualStateGroups>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <!--
+                            Cell-wide focus border lights up for every column shape EXCEPT
+                            checkbox columns. Checkbox cells have their own
+                            FocusVisualStyle on PART_FilterCheckBox (2px black around just
+                            the box) — showing the cell border on top would double up the
+                            focus cue. Gated by IsCheckboxColumn on the templated parent.
+                        -->
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="IsKeyboardFocusWithin" Value="True" />
+                                <Condition Property="IsCheckboxColumn" Value="False" />
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="FocusBorder" Property="Visibility" Value="Visible" />
+                        </MultiTrigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style BasedOn="{StaticResource {x:Static sdg:ThemeKeys.FilterRowColumnFilterControl}}" TargetType="{x:Type sdg:ColumnFilterControl}" />
+
+    <!--
+        ═══════════════════════════════════════════════════════════════════════
+        FilterRowPresenter — pinned filter row hosting FilterRowPanel
+        ═══════════════════════════════════════════════════════════════════════
+    -->
+
+    <Style x:Key="{x:Static sdg:ThemeKeys.FilterRowPresenter}" TargetType="{x:Type sdg:FilterRowPresenter}">
+        <Setter Property="Background" Value="#FFFFFF" />
+        <Setter Property="BorderBrush" Value="#d0d0d0" />
+        <Setter Property="BorderThickness" Value="0,0,0,0" />
+        <Setter Property="MinHeight" Value="28" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type sdg:FilterRowPresenter}">
+                    <Border Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            ClipToBounds="True"
+                            KeyboardNavigation.TabNavigation="Continue">
+                        <sdg:FilterRowPanel x:Name="PART_FilterRowPanel" />
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style BasedOn="{StaticResource {x:Static sdg:ThemeKeys.FilterRowPresenter}}" TargetType="{x:Type sdg:FilterRowPresenter}" />
+
+</ResourceDictionary>

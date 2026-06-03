@@ -99,7 +99,7 @@ namespace WWSearchDataGrid.Modern.WPF
             set => SetValue(UseMaskAsDisplayFormatProperty, value);
         }
 
-        public override DataTemplate CreateDisplayTemplate(GridColumn column)
+        public override DataTemplate CreateDisplayTemplate(ColumnDataBase column)
         {
             // Two-column host: TextBlock fills column 0, calendar dropdown indicator sits in
             // column 1 with visibility controlled by EditorButtonShowMode.
@@ -133,6 +133,9 @@ namespace WWSearchDataGrid.Modern.WPF
             }
 
             factory.SetBinding(TextBlock.TextProperty, binding);
+            // Display element validates against the INotifyDataErrorInfo row by default; the badge
+            // is the library's error surface, so strip WPF's red adorner. See TextEditSettings.
+            SuppressValidationErrorAdorner(factory);
             grid.AppendChild(factory);
 
             // Calendar glyph indicator — non-functional in display; click enters edit mode and
@@ -233,7 +236,7 @@ namespace WWSearchDataGrid.Modern.WPF
             return editor;
         }
 
-        public override DataTemplate CreateEditTemplate(GridColumn column)
+        public override DataTemplate CreateEditTemplate(ColumnDataBase column)
         {
             string effectiveMask = !string.IsNullOrEmpty(Mask) ? Mask : column.DisplayMask;
             if (!string.IsNullOrEmpty(effectiveMask))
@@ -245,6 +248,7 @@ namespace WWSearchDataGrid.Modern.WPF
             var factory = new FrameworkElementFactory(typeof(SegmentedDateTimeEditor));
             ApplyTextAlignment(factory, column);
             factory.SetBinding(SegmentedDateTimeEditor.ValueProperty, CreateValueBinding(column));
+            SuppressValidationErrorAdorner(factory);
             factory.SetValue(SegmentedDateTimeEditor.MaskProperty, effectiveMask);
             factory.SetValue(SegmentedDateTimeEditor.MaskTypeProperty, MaskType);
             if (MinDate.HasValue) factory.SetValue(SegmentedDateTimeEditor.MinDateProperty, MinDate.Value);

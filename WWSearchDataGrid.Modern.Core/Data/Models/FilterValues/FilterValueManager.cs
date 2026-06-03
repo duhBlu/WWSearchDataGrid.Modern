@@ -19,7 +19,7 @@ namespace WWSearchDataGrid.Modern.Core
 
         /// <summary>
         /// Raised when the filter should be applied to the grid (after checkbox changes, Select All, etc.).
-        /// The ColumnFilterEditor subscribes to this to call ApplyFilter().
+        /// The ColumnFilterPopup subscribes to this to call ApplyFilter().
         /// </summary>
         public event EventHandler FilterApplyRequested;
 

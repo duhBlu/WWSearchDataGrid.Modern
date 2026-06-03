@@ -48,6 +48,9 @@ namespace WWSearchDataGrid.Modern.SampleApp.Views.Samples.Editing
         public IReadOnlyList<EditorButtonShowMode> EditorButtonShowModeChoices { get; } =
             (EditorButtonShowMode[])Enum.GetValues(typeof(EditorButtonShowMode));
 
+        public IReadOnlyList<SelectAllScope> SelectAllScopeChoices { get; } =
+            (SelectAllScope[])Enum.GetValues(typeof(SelectAllScope));
+
         [ObservableProperty]
         private BooleanEditorKind _booleanEditor = BooleanEditorKind.CheckEdit;
 
@@ -56,6 +59,9 @@ namespace WWSearchDataGrid.Modern.SampleApp.Views.Samples.Editing
 
         [ObservableProperty]
         private EditorButtonShowMode _editorButtonShowMode = EditorButtonShowMode.ShowOnlyInEditor;
+
+        [ObservableProperty]
+        private SelectAllScope _selectAllScope = SelectAllScope.FilteredRows;
 
         public EditorTypesSampleViewModel()
         {

@@ -76,7 +76,7 @@ You do not configure this. The grid detects it from the stored search value's ru
 
 ## Filter-chip display
 
-Filter chips on the `FilterPanel` reflect provider configuration:
+Filter chips on the `FilterSummaryPanel` reflect provider configuration:
 
 - **Mask providers** show different chip text per search type — `StartsWith` shows the mask-formatted prefix `(555) ___-____`, `EndsWith` shows the end-aligned form `(___) ___-1234`, and `Contains` / `Equals` show the raw value `5551234`.
 - **Format / converter providers** show the display-formatted value when the user picked a typed value (e.g. from a dropdown), and show the user's literal text when they typed it.

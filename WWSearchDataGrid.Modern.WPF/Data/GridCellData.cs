@@ -3,8 +3,8 @@ using System.Windows;
 namespace WWSearchDataGrid.Modern.WPF
 {
     /// <summary>
-    /// Per-cell data context exposed to <see cref="GridColumn.AutoFilterRowDisplayTemplate"/>
-    /// and <see cref="GridColumn.AutoFilterRowEditTemplate"/>. Per D6 in the AutoFilterRow
+    /// Per-cell data context exposed to <see cref="GridColumn.FilterRowDisplayTemplate"/>
+    /// and <see cref="GridColumn.FilterRowEditTemplate"/>. Per D6 in the filter-row
     /// plan, the same type backs filter-row and (future) cell-edit contexts — in the
     /// filter-row case <see cref="RowData"/> is always <c>null</c> and selection slots stay
     /// at their defaults, so a template that binds to <c>RowData.X</c> simply produces a

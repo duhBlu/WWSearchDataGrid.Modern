@@ -379,7 +379,7 @@ namespace WWSearchDataGrid.Modern.WPF
             _startPoint = e.GetPosition(this);
 
             DependencyObject subject = GetSubjectForDrag(e.OriginalSource);
-            _draggingItem = VisualTreeHelperMethods.FindAncestor<ListBoxItem>(subject);
+            _draggingItem = VisualTreeHelperMethods.FindVisualAncestor<ListBoxItem>(subject);
 
             if (_draggingItem != null)
             {
@@ -403,7 +403,7 @@ namespace WWSearchDataGrid.Modern.WPF
             if (!EnableDragDrop) return;
 
             if (_scrollViewer == null)
-                _scrollViewer = VisualTreeHelperMethods.FindVisualChild<ScrollViewer>(this);
+                _scrollViewer = VisualTreeHelperMethods.FindVisualDescendant<ScrollViewer>(this);
 
             Point mousePos = e.GetPosition(this);
             Vector diff = _startPoint - mousePos;

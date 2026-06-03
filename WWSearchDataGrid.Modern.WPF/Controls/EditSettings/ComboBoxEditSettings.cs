@@ -78,7 +78,7 @@ namespace WWSearchDataGrid.Modern.WPF
         /// the bound value to its display text using the configured ItemsSource / DisplayMemberPath
         /// / SelectedValuePath, so a column storing an Id still shows the friendly name.
         /// </summary>
-        public override DataTemplate CreateDisplayTemplate(GridColumn column)
+        public override DataTemplate CreateDisplayTemplate(ColumnDataBase column)
         {
             // Two-column host: TextBlock fills column 0, optional chevron drop-down indicator
             // sits in column 1 with visibility controlled by EditorButtonShowMode.
@@ -101,6 +101,9 @@ namespace WWSearchDataGrid.Modern.WPF
                 Converter = new ComboBoxValueLookupConverter(ItemsSource, DisplayMemberPath, SelectedValuePath)
             };
             factory.SetBinding(TextBlock.TextProperty, binding);
+            // Display element validates against the INotifyDataErrorInfo row by default; the badge
+            // is the library's error surface, so strip WPF's red adorner. See TextEditSettings.
+            SuppressValidationErrorAdorner(factory);
             grid.AppendChild(factory);
 
             // Chevron — non-functional in display, click enters edit mode (the auto-open dropdown
@@ -131,7 +134,7 @@ namespace WWSearchDataGrid.Modern.WPF
 
         // Pair with the whitelist above: string-typed fields would otherwise inherit
         // DefaultSearchType.StartsWith from GridColumn.ApplyTypeBasedDefaults, which is not in
-        // the ComboBox whitelist and would disable the AutoFilterRow cell.
+        // the ComboBox whitelist and would disable the FilterRow cell.
         public override DefaultSearchType? GetPreferredDefaultSearchType() => DefaultSearchType.Equals;
 
         public override UIElement CreateFilterDisplay(IColumnFilterHost host)
@@ -212,7 +215,7 @@ namespace WWSearchDataGrid.Modern.WPF
             return cb;
         }
 
-        public override DataTemplate CreateEditTemplate(GridColumn column)
+        public override DataTemplate CreateEditTemplate(ColumnDataBase column)
         {
             var factory = new FrameworkElementFactory(typeof(ComboBox));
             // Style FIRST. FrameworkElementFactory has a known quirk where StyleProperty must be
@@ -251,6 +254,7 @@ namespace WWSearchDataGrid.Modern.WPF
             {
                 factory.SetBinding(Selector.SelectedItemProperty, CreateValueBinding(column));
             }
+            SuppressValidationErrorAdorner(factory);
 
             // Pull keyboard focus onto the ComboBox itself when the edit template materializes —
             // otherwise tabbing into the cell lands focus on the DataGridCell wrapper and the
@@ -282,8 +286,8 @@ namespace WWSearchDataGrid.Modern.WPF
                     bool shouldOpen = openOnEdit;
                     if (!shouldOpen)
                     {
-                        var cell = FindAncestor<DataGridCell>(cb);
-                        var grid = FindAncestor<SearchDataGrid>(cell);
+                        var cell = VisualTreeHelperMethods.FindVisualAncestor<DataGridCell>(cb);
+                        var grid = VisualTreeHelperMethods.FindVisualAncestor<SearchDataGrid>(cell);
                         if (grid != null && cell != null
                             && grid.TryConsumeMouseEditPoint(cell, out Point _))
                         {
@@ -346,16 +350,6 @@ namespace WWSearchDataGrid.Modern.WPF
             return new DataTemplate { VisualTree = factory };
         }
 
-        private static T FindAncestor<T>(DependencyObject start) where T : DependencyObject
-        {
-            var current = start;
-            while (current != null)
-            {
-                if (current is T match) return match;
-                current = System.Windows.Media.VisualTreeHelper.GetParent(current);
-            }
-            return null;
-        }
     }
 
     /// <summary>

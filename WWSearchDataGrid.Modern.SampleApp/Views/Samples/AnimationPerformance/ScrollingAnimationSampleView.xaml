@@ -15,8 +15,8 @@
     <UserControl.Resources>
         <sampleConverters:EnumToBooleanConverter x:Key="EnumToBooleanConverter" />
 
-        <Style BasedOn="{StaticResource {x:Static sdg:SdgThemeKeys.PrimitivesButton}}" TargetType="{x:Type Button}" />
-        <Style BasedOn="{StaticResource {x:Static sdg:SdgThemeKeys.PrimitivesCheckBox}}" TargetType="{x:Type CheckBox}" />
+        <Style BasedOn="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesButton}}" TargetType="{x:Type Button}" />
+        <Style BasedOn="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesCheckBox}}" TargetType="{x:Type CheckBox}" />
         <Style BasedOn="{StaticResource SampleRadioButtonStyle}" TargetType="{x:Type RadioButton}" />
         <Style BasedOn="{StaticResource SampleSliderStyle}" TargetType="{x:Type Slider}" />
         <Style BasedOn="{StaticResource SampleExpanderStyle}" TargetType="{x:Type Expander}" />
@@ -52,7 +52,6 @@
                                     CanUserAddRows="False"
                                     CanUserDeleteRows="False"
                                     IsReadOnly="True"
-                                    EnableRuleFiltering="True"
                                     SelectionMode="Extended"
                                     SelectionUnit="FullRow"
                                     AllowPerPixelScrolling="True"

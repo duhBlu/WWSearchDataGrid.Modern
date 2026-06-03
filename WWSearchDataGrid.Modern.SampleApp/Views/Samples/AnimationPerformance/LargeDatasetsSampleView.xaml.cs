@@ -17,5 +17,10 @@ namespace WWSearchDataGrid.Modern.SampleApp.Views.Samples.AnimationPerformance
             if (vm.GenerateCommand?.CanExecute(count) == true)
                 vm.GenerateCommand.Execute(count);
         }
+
+        private void OnClearAllFiltersClicked(object sender, RoutedEventArgs e)
+        {
+            Grid.ClearAllFilters();
+        }
     }
 }

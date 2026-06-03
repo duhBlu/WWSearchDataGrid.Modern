@@ -12,8 +12,8 @@
     </UserControl.DataContext>
 
     <UserControl.Resources>
-        <Style BasedOn="{StaticResource {x:Static sdg:SdgThemeKeys.PrimitivesButton}}" TargetType="{x:Type Button}" />
-        <Style BasedOn="{StaticResource {x:Static sdg:SdgThemeKeys.PrimitivesCheckBox}}" TargetType="{x:Type CheckBox}" />
+        <Style BasedOn="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesButton}}" TargetType="{x:Type Button}" />
+        <Style BasedOn="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesCheckBox}}" TargetType="{x:Type CheckBox}" />
         <Style BasedOn="{StaticResource SampleExpanderStyle}" TargetType="{x:Type Expander}" />
     </UserControl.Resources>
 
@@ -44,7 +44,6 @@
                                     CanUserAddRows="False"
                                     CanUserDeleteRows="False"
                                     IsReadOnly="True"
-                                    EnableRuleFiltering="True"
                                     IsColumnChooserEnabled="True">
                     <sdg:SearchDataGrid.GridColumns>
                         <sdg:GridColumn Width="80" FieldName="OrderNumber" Header="Order #" />

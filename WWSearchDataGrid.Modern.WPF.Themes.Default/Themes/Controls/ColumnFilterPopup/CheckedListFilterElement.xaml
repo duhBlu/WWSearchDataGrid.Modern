@@ -1,0 +1,131 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sdg="clr-namespace:WWSearchDataGrid.Modern.WPF;assembly=WWSearchDataGrid.Modern.WPF"
+                    xmlns:converters="clr-namespace:WWSearchDataGrid.Modern.WPF.Converters;assembly=WWSearchDataGrid.Modern.WPF">
+
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF.Themes.Default;component/Themes/Controls/Primitives/DefaultControls.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+
+    <converters:BooleanToVisibilityCollapsedConverter x:Key="BoolToVisCollapsed" />
+
+    <Style TargetType="{x:Type sdg:CheckedListFilterElement}">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Foreground" Value="{x:Static SystemColors.WindowTextBrush}" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="MinWidth" Value="240" />
+        <Setter Property="MinHeight" Value="200" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type sdg:CheckedListFilterElement}">
+                    <Border Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            Padding="{TemplateBinding Padding}"
+                            CornerRadius="4">
+                        <DockPanel LastChildFill="True">
+
+                            <!-- Top: Select All + Search -->
+                            <Grid DockPanel.Dock="Top" Margin="0,0,0,4">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+
+                                <CheckBox Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesCheckBox}}"
+                                          Grid.Column="0"
+                                          IsChecked="{Binding FilterValueManager.SelectAllState, RelativeSource={RelativeSource TemplatedParent}, Mode=OneWay}"
+                                          Command="{Binding SelectAllToggleCommand, RelativeSource={RelativeSource TemplatedParent}}"
+                                          Margin="0,0,8,0"
+                                          IsThreeState="True"
+                                          Content="Select All"
+                                          FontSize="11" />
+
+                                <TextBox Grid.Column="1"
+                                         Text="{Binding FilterValueManager.SearchText, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                                         Padding="4,2"
+                                         VerticalContentAlignment="Center"
+                                         FontSize="11" />
+                            </Grid>
+
+                            <!-- Bottom: Status -->
+                            <TextBlock DockPanel.Dock="Bottom"
+                                       Foreground="Gray"
+                                       Margin="0,4,0,2"
+                                       HorizontalAlignment="Right"
+                                       FontSize="11">
+                                <TextBlock.Text>
+                                    <MultiBinding StringFormat="{}{0:N0} / {1:N0} selected">
+                                        <Binding RelativeSource="{RelativeSource TemplatedParent}" Path="FilterValueManager.CheckedCount" />
+                                        <Binding RelativeSource="{RelativeSource TemplatedParent}" Path="FilterValueManager.TotalCount" />
+                                    </MultiBinding>
+                                </TextBlock.Text>
+                            </TextBlock>
+
+                            <!-- Center: Flat checkbox list, wrapped in a rounded themed card -->
+                            <Border Background="{x:Static SystemColors.WindowBrush}"
+                                    BorderBrush="#CCCCCC"
+                                    BorderThickness="1"
+                                    CornerRadius="4"
+                                    ClipToBounds="True">
+                                <ListBox BorderThickness="0"
+                                         Padding="2"
+                                         Margin="1"
+                                         Background="Transparent"
+                                         ClipToBounds="True"
+                                         ItemsSource="{Binding FilterValueManager.ValueItems, RelativeSource={RelativeSource TemplatedParent}}"
+                                         ScrollViewer.CanContentScroll="True"
+                                         VirtualizingPanel.IsVirtualizing="True"
+                                         VirtualizingPanel.VirtualizationMode="Recycling">
+                                <ListBox.ItemContainerStyle>
+                                    <Style TargetType="ListBoxItem">
+                                        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                        <Setter Property="Padding" Value="0" />
+                                        <Setter Property="Background" Value="Transparent" />
+                                        <Setter Property="Visibility" Value="{Binding IsVisible, Converter={StaticResource BoolToVisCollapsed}}" />
+                                        <Style.Triggers>
+                                            <Trigger Property="IsSelected" Value="True">
+                                                <Setter Property="Background" Value="Transparent" />
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </ListBox.ItemContainerStyle>
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <CheckBox Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesCheckBox}}"
+                                                  IsChecked="{Binding IsChecked}"
+                                                  Margin="2,1"
+                                                  VerticalContentAlignment="Center">
+                                            <CheckBox.Content>
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock Grid.Column="0"
+                                                               Text="{Binding DisplayValue}"
+                                                               VerticalAlignment="Center" />
+                                                    <TextBlock Grid.Column="1"
+                                                               Foreground="Gray"
+                                                               Text="{Binding Count, StringFormat='({0:N0})'}"
+                                                               Margin="8,0,0,0"
+                                                               VerticalAlignment="Center"
+                                                               FontSize="10"
+                                                               Visibility="{Binding ShowCounts, RelativeSource={RelativeSource AncestorType={x:Type sdg:CheckedListFilterElement}}, Converter={StaticResource BoolToVisCollapsed}}" />
+                                                </Grid>
+                                            </CheckBox.Content>
+                                        </CheckBox>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                                </ListBox>
+                            </Border>
+
+                        </DockPanel>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+</ResourceDictionary>

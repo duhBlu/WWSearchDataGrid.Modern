@@ -3,12 +3,12 @@
                     xmlns:sdg="clr-namespace:WWSearchDataGrid.Modern.WPF;assembly=WWSearchDataGrid.Modern.WPF">
 
     <ResourceDictionary.MergedDictionaries>
-        <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF.Themes.Default;component/Templates/SharedFilterRuleTemplates.xaml" />
+        <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF.Themes.Default;component/Themes/Controls/FilterEditor/SharedFilterRuleTemplates.xaml" />
         <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF.Themes.Default;component/Themes/Controls/Primitives/SearchTextBox.xaml" />
         <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF.Themes.Default;component/Themes/Controls/Primitives/NumericUpDown.xaml" />
     </ResourceDictionary.MergedDictionaries>
 
-    <Style x:Key="{x:Static sdg:SdgThemeKeys.FilterEditorValueToken}" TargetType="{x:Type sdg:ValueTokenEditor}">
+    <Style x:Key="{x:Static sdg:ThemeKeys.FilterEditorValueToken}" TargetType="{x:Type sdg:ValueTokenEditor}">
         <Setter Property="Focusable" Value="True" />
         <Setter Property="VerticalAlignment" Value="Center" />
         <Setter Property="Template">
@@ -105,6 +105,6 @@
         </Style.Triggers>
     </Style>
 
-    <Style BasedOn="{StaticResource {x:Static sdg:SdgThemeKeys.FilterEditorValueToken}}" TargetType="{x:Type sdg:ValueTokenEditor}" />
+    <Style BasedOn="{StaticResource {x:Static sdg:ThemeKeys.FilterEditorValueToken}}" TargetType="{x:Type sdg:ValueTokenEditor}" />
 
 </ResourceDictionary>

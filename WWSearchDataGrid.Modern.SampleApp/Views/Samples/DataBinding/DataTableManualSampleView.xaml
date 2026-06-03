@@ -27,11 +27,11 @@
                                 Margin="8,4"
                                 ItemsSource="{Binding VendorTableView}"
                                 AutoGenerateColumns="False"
-                                EnableRuleFiltering="False" 
+                                AllowFilterPopup="False"
                                 CanUserAddRows="False"
                                 CanUserDeleteRows="False"
-                                ShowAutoFilterRow="True"
-                                AutoFilterRowPosition="Cell"
+                                ShowFilterRow="True"
+                                FilterEditorPlacement="Row"
                                 IsReadOnly="False">
                 <sdg:SearchDataGrid.GridColumns>
                     <sdg:GridColumn FieldName="ProductId" Header="Product #" Width="90" />

@@ -86,7 +86,7 @@ namespace WWSearchDataGrid.Modern.Core
 
         /// <summary>
         /// Nested groups composed under this group. The per-column popup
-        /// (<c>ColumnFilterEditor</c>) ignores this collection — only the Filter Editor and
+        /// (<c>ColumnFilterPopup</c>) ignores this collection — only the Filter Editor and
         /// <see cref="FilterExpressionBuilder"/> recurse into it.
         /// </summary>
         public ObservableCollection<SearchTemplateGroup> ChildGroups { get; } = new ObservableCollection<SearchTemplateGroup>();

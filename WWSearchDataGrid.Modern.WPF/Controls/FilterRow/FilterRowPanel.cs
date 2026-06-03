@@ -3,15 +3,19 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Media;
 
 namespace WWSearchDataGrid.Modern.WPF
 {
     /// <summary>
-    /// Layout panel mirroring <see cref="DataGridCellsPanel"/>: children are ordered by
-    /// <see cref="DataGridColumn.DisplayIndex"/>, the first <see cref="DataGrid.FrozenColumnCount"/>
-    /// stay pinned, and the rest translate by <c>-HorizontalOffset</c> with clipping against
-    /// the frozen block. Non-virtualizing — every column gets a materialized child.
+    /// Layout panel hosting one filter cell per data column. Primary strategy: mirror each
+    /// column header's actual rendered X/width via <see cref="UIElement.TransformToVisual"/>,
+    /// guaranteeing alignment with the column headers (which are the source of truth — the
+    /// data cells use the same <see cref="DataGridCellsPanel"/> arrangement the headers do).
+    /// Falls back to a snap-to-pixel cumulative-width arrangement when headers haven't
+    /// materialized yet (initial layout pass). Non-virtualizing — every column gets a
+    /// materialized child.
     /// </summary>
     public class FilterRowPanel : Panel
     {
@@ -132,10 +136,87 @@ namespace WWSearchDataGrid.Modern.WPF
             if (pairs.Count == 0)
                 return finalSize;
 
+            // Try header-mirroring first. Falls back to cumulative-width arrangement when
+            // headers aren't materialized yet (first paint before the headers presenter
+            // arranges, or transient cases where the lookup misses an entry).
+            if (TryArrangeFromHeaderPositions(pairs, grid, finalSize))
+                return finalSize;
+
+            ArrangeFromCumulativeWidths(pairs, grid, finalSize);
+            return finalSize;
+        }
+
+        /// <summary>
+        /// Arranges each filter cell at the X/width of the corresponding column header.
+        /// Returns <c>true</c> when every visible column resolved to a usable header
+        /// (positive ActualWidth and a transform back to this panel). When any column
+        /// can't be resolved, returns <c>false</c> and the caller falls back to the
+        /// cumulative-width arrangement so we don't half-mirror and leave some cells stranded.
+        /// </summary>
+        private bool TryArrangeFromHeaderPositions(
+            List<(DataGridColumn column, UIElement child)> pairs,
+            SearchDataGrid grid,
+            Size finalSize)
+        {
+            var headerLookup = BuildHeaderLookup(grid);
+            if (headerLookup == null || headerLookup.Count == 0)
+                return false;
+
+            // First pass: collect the resolved bounds. Bail out without mutating any
+            // child arrangement if a single visible column doesn't resolve cleanly.
+            var arrangements = new List<(UIElement child, Rect bounds, bool hidden)>(pairs.Count);
+            foreach (var (column, child) in pairs)
+            {
+                if (!IsColumnVisible(column))
+                {
+                    arrangements.Add((child, default, true));
+                    continue;
+                }
+
+                if (!headerLookup.TryGetValue(column, out var header) || header.ActualWidth <= 0)
+                    return false;
+
+                Point origin;
+                try
+                {
+                    origin = header.TranslatePoint(new Point(0, 0), this);
+                }
+                catch (InvalidOperationException)
+                {
+                    // No common ancestor / header detached — fall back.
+                    return false;
+                }
+
+                arrangements.Add((child, new Rect(origin.X, 0, header.ActualWidth, finalSize.Height), false));
+            }
+
+            foreach (var (child, bounds, hidden) in arrangements)
+            {
+                if (hidden)
+                {
+                    HideChild(child);
+                    continue;
+                }
+                // Clipping is handled by the outer ClipToBounds on the FilterRowPresenter
+                // template — no need to compute per-cell clips like the cumulative path does.
+                ArrangeChild(child, bounds, clip: null);
+            }
+            return true;
+        }
+
+        /// <summary>
+        /// Fallback arrangement used until the column headers are materialized. Each cell's
+        /// X / right is snapped via banker's rounding (matching WPF's UseLayoutRounding) so
+        /// the panel at least lines up on integer pixels when the headers aren't available
+        /// to mirror.
+        /// </summary>
+        private void ArrangeFromCumulativeWidths(
+            List<(DataGridColumn column, UIElement child)> pairs,
+            SearchDataGrid grid,
+            Size finalSize)
+        {
             int frozenCount = Math.Min(grid.FrozenColumnCount, pairs.Count);
 
-            // Same fallback math as MeasureOverride — arrange widths must match measure widths
-            // or unresolved columns push siblings offscreen.
             double resolvedSum = 0;
             int unresolvedCount = 0;
             foreach (var column in grid.Columns)
@@ -152,6 +233,7 @@ namespace WWSearchDataGrid.Modern.WPF
                 fallbackWidth = DefaultColumnWidth;
 
             double frozenCursor = 0;
+            double frozenCursorSnapped = 0;
             for (int i = 0; i < frozenCount; i++)
             {
                 var (column, child) = pairs[i];
@@ -162,12 +244,15 @@ namespace WWSearchDataGrid.Modern.WPF
                 }
 
                 double width = ResolveArrangedWidth(column, fallbackWidth);
-                ArrangeChild(child, new Rect(frozenCursor, 0, width, finalSize.Height), clip: null);
                 frozenCursor += width;
+                double nextSnapped = SnapToPixel(frozenCursor);
+                ArrangeChild(child, new Rect(frozenCursorSnapped, 0, nextSnapped - frozenCursorSnapped, finalSize.Height), clip: null);
+                frozenCursorSnapped = nextSnapped;
             }
 
             double scroll = HorizontalOffset;
             double nonFrozenCursor = frozenCursor;
+            double nonFrozenCursorSnapped = frozenCursorSnapped;
 
             for (int i = frozenCount; i < pairs.Count; i++)
             {
@@ -179,22 +264,57 @@ namespace WWSearchDataGrid.Modern.WPF
                 }
 
                 double width = ResolveArrangedWidth(column, fallbackWidth);
-                double x = nonFrozenCursor - scroll;
-                var bounds = new Rect(x, 0, width, finalSize.Height);
+                nonFrozenCursor += width;
+                double nextSnapped = SnapToPixel(nonFrozenCursor);
+                double snappedWidth = nextSnapped - nonFrozenCursorSnapped;
+                double x = nonFrozenCursorSnapped - scroll;
+                var bounds = new Rect(x, 0, snappedWidth, finalSize.Height);
 
-                double leftClip = Math.Max(0, frozenCursor - x);
+                double leftClip = Math.Max(0, frozenCursorSnapped - x);
                 Geometry clip = null;
-                if (leftClip > 0 && leftClip < width)
-                    clip = new RectangleGeometry(new Rect(leftClip, 0, width - leftClip, finalSize.Height));
-                else if (leftClip >= width)
+                if (leftClip > 0 && leftClip < snappedWidth)
+                    clip = new RectangleGeometry(new Rect(leftClip, 0, snappedWidth - leftClip, finalSize.Height));
+                else if (leftClip >= snappedWidth)
                     clip = Geometry.Empty;
 
                 ArrangeChild(child, bounds, clip);
-                nonFrozenCursor += width;
+                nonFrozenCursorSnapped = nextSnapped;
             }
-
-            return finalSize;
         }
+
+        /// <summary>
+        /// Walks the grid's headers presenter and returns a column→header map. Returns
+        /// <c>null</c> when the presenter isn't applied yet (transient on early layout
+        /// passes); the caller falls back to width-based arrangement.
+        /// </summary>
+        private static Dictionary<DataGridColumn, DataGridColumnHeader> BuildHeaderLookup(SearchDataGrid grid)
+        {
+            var presenter = grid.Template?.FindName("PART_ColumnHeadersPresenter", grid) as DataGridColumnHeadersPresenter;
+            if (presenter == null) return null;
+
+            var result = new Dictionary<DataGridColumn, DataGridColumnHeader>(grid.Columns.Count);
+            CollectHeaders(presenter, result);
+            return result;
+        }
+
+        private static void CollectHeaders(DependencyObject root, Dictionary<DataGridColumn, DataGridColumnHeader> result)
+        {
+            int count = VisualTreeHelper.GetChildrenCount(root);
+            for (int i = 0; i < count; i++)
+            {
+                var child = VisualTreeHelper.GetChild(root, i);
+                if (child is DataGridColumnHeader header && header.Column != null)
+                    result[header.Column] = header;
+                CollectHeaders(child, result);
+            }
+        }
+
+        // Mirror WPF UseLayoutRounding's rounding mode (banker's rounding / ToEven —
+        // confirmed by symptom: AwayFromZero produces more misalignments than ToEven).
+        // Matches the per-pixel snap the standard DataGridCellsPanel applies via
+        // UseLayoutRounding="True" on the grid root.
+        private static double SnapToPixel(double value)
+            => Math.Round(value, MidpointRounding.ToEven);
 
         private static void ArrangeChild(UIElement child, Rect bounds, Geometry clip)
         {

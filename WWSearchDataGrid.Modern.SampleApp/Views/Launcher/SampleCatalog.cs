@@ -1,10 +1,11 @@
 using System.Collections.Generic;
+using WWSearchDataGrid.Modern.SampleApp.Views.Samples;
 using WWSearchDataGrid.Modern.SampleApp.Views.Samples.AnimationPerformance;
-using WWSearchDataGrid.Modern.SampleApp.Views.Samples.AutoFilterRow;
 using WWSearchDataGrid.Modern.SampleApp.Views.Samples.Columns;
 using WWSearchDataGrid.Modern.SampleApp.Views.Samples.DataBinding;
 using WWSearchDataGrid.Modern.SampleApp.Views.Samples.Editing;
 using WWSearchDataGrid.Modern.SampleApp.Views.Samples.Filtering;
+using WWSearchDataGrid.Modern.SampleApp.Views.Samples.Usability;
 
 namespace WWSearchDataGrid.Modern.SampleApp.Views.Launcher
 {
@@ -14,28 +15,29 @@ namespace WWSearchDataGrid.Modern.SampleApp.Views.Launcher
         {
             new SampleCategory(
                 "Data Binding",
-                "How rows reach the grid — POCO vs DataTable, manual vs auto-generated columns.",
+                "How rows and columns reach the grid — POCO vs DataTable, static vs dynamic shapes.",
                 new SampleDefinition[]
                 {
-                    new("POCO + Attributes",
-                        "[Display] / [Browsable] attributes drive auto-generated columns from a plain CLR collection.",
-                        new[] { "POCO", "Attributes", "Auto-gen" },
-                        () => new PocoAttributesSampleView()),
+                    new("Auto Columns Generation",
+                        "AutoGenerateColumns=True with a POCO ⇄ DataTable source-type switch — attribute-driven columns vs DataTable schema, side by side.",
+                        new[] { "POCO", "DataTable", "Auto-gen" },
+                        () => new AutoColumnsSampleView()),
 
-                    new("DataTable, Manual Columns",
-                        "DataTable / DataView with manually declared GridColumns. DBNull, computed expression, name-with-space.",
-                        new[] { "DataTable", "Manual" },
-                        () => new DataTableManualSampleView()),
-
-                    new("DataTable, Auto-gen",
-                        "Same DataTable bound with AutoGenerateColumns=True — columns come from ITypedList descriptors.",
-                        new[] { "DataTable", "Auto-gen" },
-                        () => new DataTableAutoGenSampleView()),
+                    new("Binding to Dynamic Object",
+                        "Bind a grid to a dynamic object with runtime add/remove columns and add-row support — also covers the DataTable dynamic columns/rows case.",
+                        new[] { "Dynamic", "Add/Remove" },
+                        () => PlannedSampleView.Planned(
+                            "Binding to Dynamic Object",
+                            "A grid bound to a dynamic object, with the ability to add new rows and add/remove columns at runtime. Doubles as the DataTable dynamic columns/rows demo.",
+                            "Support binding to a dynamic/expando-style item source",
+                            "Add/remove columns at runtime",
+                            "Add-new-row support",
+                            "Reuse the existing DataTableManual sample as the DataTable variant")),
                 }),
 
             new SampleCategory(
-                "Columns",
-                "Per-column knobs and grid-level features that shape what each column looks like.",
+                "Layout and Customization",
+                "Per-column knobs and grid-level layout — formatting, the column chooser, pinned columns, saved layouts.",
                 new SampleDefinition[]
                 {
                     new("Column Configuration",
@@ -52,94 +54,142 @@ namespace WWSearchDataGrid.Modern.SampleApp.Views.Launcher
                         "Floating chooser window with Enabled / Visible / ConfinedToGrid toggles. Plus per-column ShowInColumnChooser=False.",
                         new[] { "Chooser", "Visibility" },
                         () => new ColumnChooserSampleView()),
+
+                    new("Fixed Columns",
+                        "Left- and right-pinned columns via GridColumn.Fixed — pinned columns stay anchored while the rest scroll horizontally.",
+                        new[] { "Fixed", "Pinned" },
+                        () => new FixedColumnsSampleView()),
+
+                    new("Save and Restore Layout",
+                        "Persist and reload column layouts (order, width, visibility, pinning, grouping, totals).",
+                        new[] { "Layout", "Persistence" },
+                        () => PlannedSampleView.Planned(
+                            "Save and Restore Layout",
+                            "Save the current column layout and restore it later.",
+                            "Serialize/restore column order, width, visibility, pinning",
+                            "Prereq: column grouping",
+                            "Prereq: totals row")),
                 }),
 
             new SampleCategory(
-                "Filtering",
-                "Search modes, custom predicates, and the rule-filter popup.",
+                "Selection and Usability",
+                "Interaction surfaces — clipboard, context menus.",
                 new SampleDefinition[]
                 {
-                    new("Search Modes",
-                        "DefaultSearchType (StartsWith / EndsWith / Contains / Equals — string columns default to StartsWith), AllowFiltering=False, EnableRuleFiltering toggle.",
-                        new[] { "Search", "Modes" },
-                        () => new SearchModesSampleView()),
+                    new("Copy / Paste operations",
+                        "Grid on top, paste TextBox below. Ctrl+C / Ctrl+Shift+C (or the buttons) copy tab-separated values, with headers optional.",
+                        new[] { "Clipboard", "Copy" },
+                        () => new CopyPasteSampleView()),
 
-                    new("Custom Predicate & Events",
-                        "A Predicate<object> SearchFilter applied alongside column filters, with a live event log of every FilterPanel event.",
-                        new[] { "Predicate", "Events" },
-                        () => new CustomPredicateSampleView()),
-
-                    new("Rule Filter Popup",
-                        "ColumnFilterEditor — multi-criteria rules joined with AND / OR plus a Filter Values tab.",
-                        new[] { "Rules", "Popup" },
-                        () => new RuleFilterPopupSampleView()),
-
-                    new("FilterString DP",
-                        "Declarative initial filter via SearchDataGrid.FilterString — DevExpress CriteriaOperator syntax in XAML or bound at runtime.",
-                        new[] { "FilterString", "Criteria" },
-                        () => new FilterStringSampleView()),
-                }),
-
-            new SampleCategory(
-                "Auto Filter Row",
-                "Per-column quick-search row across the top of the grid. Grid- and column-level DPs control its behavior.",
-                new SampleDefinition[]
-                {
-                    new("Options Playground",
-                        "Every grid-level and column-level auto-filter-row DP exposed as runtime toggles — pick a column, tweak its settings, watch the grid react.",
-                        new[] { "Playground", "DPs" },
-                        () => new OptionsPlaygroundSampleView()),
-
-                    new("Custom Templates",
-                        "Replace the default filter editor per column: numeric Slider, DatePicker, and a RadioButton group via GridColumn.AutoFilterRowEditTemplate + EditGridCellData.",
-                        new[] { "Templates", "EditGridCellData" },
-                        () => new CustomTemplatesSampleView()),
-
-                    new("Debounce & Live Filter",
-                        "FilterRowDelay × EnableLiveFiltering. Switch between 1k / 100k / 1M rows and feel each setting interact.",
-                        new[] { "Debounce", "Live filtering" },
-                        () => new DebounceBehaviorSampleView()),
+                    new("Built-In Context Menus",
+                        "Right-click cells / headers / row headers for the default menus; toggle grid properties to gate items. Custom-item injection is Planned.",
+                        new[] { "ContextMenu", "Customization" },
+                        () => new ContextMenusSampleView()),
                 }),
 
             new SampleCategory(
                 "Editing",
-                "EditSettings types, customization layers, select-all, and input masking.",
+                "EditSettings types, customization layers, masking, validation, and row-level editing.",
                 new SampleDefinition[]
                 {
-                    new("Editor Types",
-                        "Every EditSettings type — Text, ComboBox, Spin, id-based ComboBox, CheckBox, Date. EditorShowMode grid + per-editor override; toggle BooleanEditor and EditorButtonShowMode at runtime.",
-                        new[] { "EditSettings", "EditorShowMode", "EditorButtonShowMode" },
+                    new("Cell Editors",
+                        "Every EditSettings type — Text, ComboBox, Spin, id-based ComboBox, CheckBox, Date. EditorShowMode grid + per-editor override.",
+                        new[] { "EditSettings", "EditorShowMode" },
                         () => new EditorTypesSampleView()),
 
-                    new("Editor Customization",
+                    new("Cell Editor Customization",
                         "Two layers — EditorStyle (re-style without replacing) and EditTemplate / DisplayTemplate (full takeover).",
                         new[] { "EditorStyle", "Templates" },
                         () => new EditorCustomizationSampleView()),
 
-                    new("Select-All Columns",
-                        "IsSelectAllColumn header checkbox + switchable SelectAllScope (FilteredRows / SelectedRows / AllItems).",
-                        new[] { "Select-All", "Scope" },
-                        () => new SelectAllSampleView()),
-
-                    new("Input Masking",
+                    new("Editor Input Masking",
                         "Mask grammar — phone, SSN, ZIP+4, plate, account, date, Numeric C / P2 / F2, TimeSpan.",
                         new[] { "Masking", "Grammar" },
                         () => new InputMaskingSampleView()),
+
+                    new("New Item Row",
+                        "Place the new-item row at top / bottom / none (adding disabled).",
+                        new[] { "NewRow", "AddRow" },
+                        () => PlannedSampleView.Planned(
+                            "New Item Row",
+                            "Position the new-item row at the top or bottom of the grid, or disable adding rows entirely.",
+                            "Implement NewRowPosition (Top / Bottom / None)",
+                            "Harden add-new-row commit flow")),
+
+                    new("Data Validation",
+                        "Smart columns validate edits against DataAnnotations (Required / Range / StringLength / RegularExpression / CustomValidation). Invalid edits show a red border + message tooltip and are blocked; toggle commit-on-error and validation on/off.",
+                        new[] { "Validation", "Errors", "Smart" },
+                        () => new DataValidationSampleView()),
+
+                    new("Data Error Indication",
+                        "A self-reporting row (ObservableValidator → INotifyDataErrorInfo) drives severity-aware badges — blocking Error (red), advisory Info (blue), and Warning (amber) — via IValidationSeverityProvider. Edit a cell to clear or raise a badge.",
+                        new[] { "Severity", "Warnings" },
+                        () => new DataErrorIndicationSampleView()),
+
+                    new("Inline Edit Form",
+                        "Edit a row through an inline form rather than in-cell.",
+                        new[] { "Form", "Inline" },
+                        () => PlannedSampleView.Planned(
+                            "Inline Edit Form",
+                            "Edit the focused row via an inline form region instead of editing in-cell.",
+                            "Implement an inline edit-form host",
+                            "Field layout / template support")),
+
+                    new("Edit Entire Row",
+                        "Put the whole row into edit mode at once and commit/cancel together.",
+                        new[] { "Row", "Batch" },
+                        () => PlannedSampleView.Planned(
+                            "Edit Entire Row",
+                            "Edit every cell in a row simultaneously, committing or cancelling as a unit.",
+                            "Implement row-level edit mode",
+                            "Row-scoped commit/cancel")),
                 }),
 
             new SampleCategory(
-                "Animation & Performance",
+                "Data Shaping",
+                "Filtering, grouping, and summaries.",
+                new SampleDefinition[]
+                {
+                    new("Filtering",
+                        "Hub of filtering mini-samples — Excel-style dropdown, filter editor, filter row, filter panel, search modes.",
+                        new[] { "Filtering", "Hub" },
+                        () => new FilteringHubSampleView()),
+
+                    new("Grouping",
+                        "Group rows by one or more columns with a group panel and expand/animation options.",
+                        new[] { "Grouping", "GroupPanel" },
+                        () => PlannedSampleView.Planned(
+                            "Grouping",
+                            "Group rows by columns with a group panel and rich expand options.",
+                            "Implement grouping + group panel",
+                            "Options: Allow Fixed Groups, Show Group Panel, Show Grouped Columns",
+                            "Options: auto-expand all, animate expand, expand recursively",
+                            "Pre-set group-by presets")),
+
+                    new("Total Summaries",
+                        "Aggregate summaries (sum / avg / count) in a totals row or group footers.",
+                        new[] { "Totals", "Aggregate" },
+                        () => PlannedSampleView.Planned(
+                            "Total Summaries",
+                            "Show aggregate summaries in a totals row and/or group footers.",
+                            "Implement a totals/summary row",
+                            "Aggregate functions (sum / avg / count / min / max)",
+                            "Group-level summary footers")),
+                }),
+
+            new SampleCategory(
+                "Performance",
                 "Make scrolling feel right, then make it scale.",
                 new SampleDefinition[]
                 {
-                    new("Scrolling Animation",
-                        "Mouse-wheel momentum / inertia, per-pixel scrolling, ScrollAnimationMode (EaseOut / EaseInOut / Linear / Custom Storyboard).",
+                    new("Vertical Scrolling Options",
+                        "Mouse-wheel momentum / inertia, per-pixel scrolling, ScrollAnimationMode. (Allow-Fixed-Groups and Cascade-Update toggles are Planned.)",
                         new[] { "Scrolling", "Momentum" },
                         () => new ScrollingAnimationSampleView()),
 
                     new("Large Datasets",
-                        "Virtualization tuning, column virtualization, live scrolling. Quick scale buttons up to 1M rows.",
-                        new[] { "Virtualization", "Scale" },
+                        "Virtualization tuning, column virtualization, live scrolling, plus FilterRowDelay × EnableLiveFiltering. Quick scale buttons up to 1M rows.",
+                        new[] { "Virtualization", "Scale", "Debounce" },
                         () => new LargeDatasetsSampleView()),
                 }),
         };

@@ -42,8 +42,8 @@ namespace WWSearchDataGrid.Modern.SampleApp.Views.Samples.Filtering
                 }
             };
 
-            // Subscribe to FilterPanel events for the live event log.
-            var panel = Grid.FilterPanel;
+            // Subscribe to FilterSummaryPanel events for the live event log.
+            var panel = Grid.FilterSummaryPanel;
             if (panel is null) return;
 
             panel.FiltersEnabledChanged += (_, ev) =>

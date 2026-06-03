@@ -61,7 +61,7 @@ WWSearchDataGrid.Modern.sln
 │   │   ├── SearchDataGrid.cs            (Main DataGrid control)
 │   │   ├── ColumnSearchBox.cs           (Per-column filter)
 │   │   ├── ColumnFilterEditor.cs        (Advanced filter dialog)
-│   │   ├── FilterPanel.cs               (Active filter chips)
+│   │   ├── FilterSummaryPanel.cs               (Active filter chips)
 │   │   ├── ColumnChooser.cs             (Column visibility)
 │   │   ├── GridColumn.cs                (Static attached properties)
 │   │   └── Primitives/
@@ -93,7 +93,7 @@ WWSearchDataGrid.Modern.sln
 │       └── Controls/                     (Control XAML templates)
 │           ├── SearchDataGrid.xaml
 │           ├── ColumnSearchBox.xaml
-│           ├── FilterPanel.xaml
+│           ├── FilterSummaryPanel.xaml
 │           ├── ColumnFilterEditor.xaml
 │           └── Primitives/
 │               ├── SearchTextBox.xaml
@@ -319,7 +319,7 @@ System.Windows.Controls.Control
 ├── ColumnFilterEditor : Control, INotifyPropertyChanged
 │   └── Advanced multi-criteria filter dialog
 │
-├── FilterPanel : Control
+├── FilterSummaryPanel : Control
 │   └── Active filter chip display with toggle
 │
 ├── ColumnChooser : Control
@@ -410,9 +410,9 @@ CycleCheckboxStateForward()                // Advance checkbox state
 ShowFilterPopup()                          // Open advanced filter dialog
 ```
 
-### FilterPanel.cs - Active Filter Display
+### FilterSummaryPanel.cs - Active Filter Display
 
-**File**: `/Controls/FilterPanel.cs`
+**File**: `/Controls/FilterSummaryPanel.cs`
 **Purpose**: Display active filters as removable chips
 
 **Key Features**:
@@ -478,7 +478,7 @@ CustomSearchTemplate             // Custom SearchTemplate type (default: typeof(
 **TokenHoverBehavior.cs**:
 - **Attaches To**: Filter token chips
 - **Purpose**: Highlights corresponding column on hover
-- **Integration**: Finds parent `FilterPanel`, executes `SetHoveredFilterCommand`
+- **Integration**: Finds parent `FilterSummaryPanel`, executes `SetHoveredFilterCommand`
 
 ### Commands Architecture
 
@@ -549,8 +549,8 @@ Command logic runs (often delegates to control methods)
 │   └── GenericSearchDataGridRowHeaderStyle
 ├── Controls/ColumnSearchBox.xaml
 │   └── GenericColumnSearchBoxStyle (dual input mode)
-├── Controls/FilterPanel.xaml
-│   └── GenericFilterPanelStyle (expandable with overflow)
+├── Controls/FilterSummaryPanel.xaml
+│   └── GenericFilterSummaryPanelStyle (expandable with overflow)
 ├── Controls/ColumnFilterEditor.xaml
 │   └── GenericColumnFilterEditorStyle (dynamic input templates)
 └── Primitives/
@@ -565,7 +565,7 @@ Command logic runs (often delegates to control methods)
 - **States**: Default, Hover, Pressed, Focused, Disabled
 
 **Template Parts** (PART_* naming):
-- `PART_FilterPanel`, `PART_SearchTextBox`, `PART_FilterCheckBox`
+- `PART_FilterSummaryPanel`, `PART_SearchTextBox`, `PART_FilterCheckBox`
 - `PART_ClearFilterButton`, `PART_RuleFilterEditorButton`, `PART_Popup`
 
 ---
@@ -749,9 +749,9 @@ RESULT: bool (match/no match)
 [Phase 6: UI Update]
 CollectionView.Refresh() (WPF internal)
   ↓
-UpdateFilterPanel()
+UpdateFilterSummaryPanel()
   ↓
-FilterPanel.UpdateActiveFilters()
+FilterSummaryPanel.UpdateActiveFilters()
   ↓
 FilterTokenConverter.ConvertToTokens()
   ↓
@@ -815,7 +815,7 @@ TextBox.TextChanged → OnSearchTextBoxTextChanged → SearchText setter
   → OnSearchTextChanged → CreateTemporaryTemplateImmediate
   → UpdateHasActiveFilterState → StartOrResetChangeTimer → (250ms)
   → OnChangeTimerElapsed → UpdateSimpleFilter → UpdateFilterExpression
-  → FilterItemsSource → UpdateFilterPanel
+  → FilterItemsSource → UpdateFilterSummaryPanel
 ```
 
 **Checkbox Cycle Chain**:
@@ -824,7 +824,7 @@ CheckBox.PreviewMouseDown → OnCheckboxPreviewMouseDown
   → CycleCheckboxStateForward → EnsureNullStatusDetermined
   → SetCheckboxCycleState → ApplyCheckboxCycleFilter
   → ApplyCheckboxBooleanFilter/IsNullFilter → UpdateFilterExpression
-  → FilterItemsSource → UpdateFilterPanel
+  → FilterItemsSource → UpdateFilterSummaryPanel
 ```
 
 **Advanced Filter Dialog Chain**:
@@ -833,15 +833,15 @@ Filter icon click → ShowFilterPopup → ColumnFilterEditor loaded
   → User modifies templates → SearchTemplate.PropertyChanged
   → OnSearchTemplatePropertyChanged → InvokeAutoApplyFilter
   → (Popup closed) → OnFiltersApplied → UpdateHasActiveFilterState
-  → UpdateFilterPanel
+  → UpdateFilterSummaryPanel
 ```
 
 **Filter Panel Operator Toggle Chain**:
 ```
-Operator token click → FilterPanel.ToggleOperatorCommand
+Operator token click → FilterSummaryPanel.ToggleOperatorCommand
   → ExecuteToggleOperator → OperatorToggled event
   → SearchDataGrid.OnOperatorToggled → Update template/group operator
-  → UpdateFilterExpression → FilterItemsSource → UpdateFilterPanel
+  → UpdateFilterExpression → FilterItemsSource → UpdateFilterSummaryPanel
 ```
 
 ### Cross-Project Integration
@@ -1030,7 +1030,7 @@ WWSearchDataGrid.Modern.Core (Business Logic)
 - Main grid: `WPF/Controls/SearchDataGrid.cs`
 - Column filter: `WPF/Controls/ColumnSearchBox.cs`
 - Filter dialog: `WPF/Controls/ColumnFilterEditor.cs`
-- Filter panel: `WPF/Controls/FilterPanel.cs`
+- Filter panel: `WPF/Controls/FilterSummaryPanel.cs`
 
 **Themes**:
 - Main merger: `WPF/Themes/Generic.xaml`

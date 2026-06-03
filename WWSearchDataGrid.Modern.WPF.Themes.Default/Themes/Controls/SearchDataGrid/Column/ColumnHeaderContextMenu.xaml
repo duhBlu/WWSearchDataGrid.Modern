@@ -1,0 +1,209 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:commands="clr-namespace:WWSearchDataGrid.Modern.WPF.Commands;assembly=WWSearchDataGrid.Modern.WPF"
+                    xmlns:sdg="clr-namespace:WWSearchDataGrid.Modern.WPF;assembly=WWSearchDataGrid.Modern.WPF">
+
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF.Themes.Default;component/Resources/Icons/Icons.xaml" />
+        <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF.Themes.Default;component/Themes/Controls/Primitives/ContextMenu.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+
+    <!--
+        Shared column-header right-click menu. Referenced by both the
+        SearchDataGridColumnHeader style (header surface) and the
+        ColumnChooser section-item style (chooser rows behave like header
+        surfaces). x:Shared defaults to True for ContextMenu, but consumers
+        rebind DataContext per opening so a single instance is fine here.
+    -->
+    <ContextMenu x:Key="{x:Static sdg:ThemeKeys.GridSearchDataGridColumnHeaderContextMenu}"
+                 Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesContextMenu}}"
+                 StaysOpen="True"
+                 AutomationProperties.AutomationId="cmuColumnHeader">
+        <!--  Column-specific Copy Operations  -->
+        <MenuItem x:Name="miCopy"
+                  Command="{x:Static commands:ContextMenuCommands.CopySelectedCellValuesCommand}"
+                  CommandParameter="{Binding Grid}"
+                  Header="Copy">
+            <MenuItem.Icon>
+                <sdg:Icon Width="14"
+                             Height="14"
+                             IconSource="{StaticResource {x:Static sdg:IconKeys.IconCopy}}"/>
+            </MenuItem.Icon>
+        </MenuItem>
+        <MenuItem x:Name="miCopyWithHeaders"
+                  Command="{x:Static commands:ContextMenuCommands.CopySelectedCellValuesWithHeadersCommand}"
+                  CommandParameter="{Binding Grid}"
+                  Header="Copy With Headers" />
+        <Separator />
+
+        <!--  Sorting  -->
+        <MenuItem x:Name="miSortAscending"
+                  Command="{x:Static commands:ContextMenuCommands.SortAscendingCommand}"
+                  CommandParameter="{Binding}"
+                  Header="Sort Ascending">
+            <MenuItem.Icon>
+                <sdg:Icon Width="14"
+                             Height="14"
+                             
+                             IconSource="{StaticResource {x:Static sdg:IconKeys.IconSortAscending}}"/>
+            </MenuItem.Icon>
+        </MenuItem>
+        <MenuItem x:Name="miSortDescending"
+                  Command="{x:Static commands:ContextMenuCommands.SortDescendingCommand}"
+                  CommandParameter="{Binding}"
+                  Header="Sort Descending">
+            <MenuItem.Icon>
+                <sdg:Icon Width="14"
+                             Height="14"
+                             IconSource="{StaticResource {x:Static sdg:IconKeys.IconSortDescending}}" />
+            </MenuItem.Icon>
+        </MenuItem>
+        <MenuItem x:Name="miClearSorting"
+                  Command="{x:Static commands:ContextMenuCommands.ClearSortingCommand}"
+                  CommandParameter="{Binding}"
+                  Header="Clear Sorting" />
+        <Separator />
+
+        <!--  Column Operations  -->
+        <MenuItem x:Name="miBestFitColumn"
+                  Command="{x:Static commands:ContextMenuCommands.BestFitColumnCommand}"
+                  CommandParameter="{Binding}"
+                  Header="Best Fit Column">
+            <MenuItem.Icon>
+                <sdg:Icon Width="14"
+                             Height="14"
+                             IconSource="{StaticResource {x:Static sdg:IconKeys.IconBestFit}}" />
+            </MenuItem.Icon>
+        </MenuItem>
+        <MenuItem x:Name="miBestFitAllColumns"
+                  Command="{x:Static commands:ContextMenuCommands.BestFitAllColumnsCommand}"
+                  CommandParameter="{Binding}"
+                  Header="Best Fit All Columns" />
+        <Separator />
+
+        <!--  Visibility and Layout  -->
+        <MenuItem x:Name="miShowColumnChooser"
+                  Command="{x:Static commands:ContextMenuCommands.ShowColumnChooserCommand}"
+                  CommandParameter="{Binding Grid}"
+                  Header="Column Chooser">
+            <MenuItem.Icon>
+                <sdg:Icon Width="14"
+                             Height="14"
+                             IconSource="{StaticResource {x:Static sdg:IconKeys.IconColumnChooser}}" />
+            </MenuItem.Icon>
+            <MenuItem.Style>
+                <Style TargetType="MenuItem" BasedOn="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesMenuItem}}">
+                    <Setter Property="Visibility" Value="Visible" />
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding Grid.IsColumnChooserEnabled}" Value="False">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </MenuItem.Style>
+        </MenuItem>
+        <MenuItem x:Name="miHideColumn"
+                  Command="{x:Static commands:ContextMenuCommands.HideSelectedColumnCommand}"
+                  CommandParameter="{Binding Column}"
+                  Header="Hide Column">
+            <MenuItem.Icon>
+                <sdg:Icon Width="14"
+                             Height="14"
+                             IconSource="{StaticResource {x:Static sdg:IconKeys.IconHideColumn}}"
+                              />
+            </MenuItem.Icon>
+        </MenuItem>
+
+        <!--  Fixed (pinned) column controls — gated by SearchDataGrid.AllowFixedColumnMenu  -->
+        <MenuItem x:Name="miFixedColumn" Header="Fixed">
+            <MenuItem.Style>
+                <Style TargetType="MenuItem" BasedOn="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesMenuItem}}">
+                    <Setter Property="Visibility" Value="Collapsed" />
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding Grid.AllowFixedColumnMenu}" Value="True">
+                            <Setter Property="Visibility" Value="Visible" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </MenuItem.Style>
+            <MenuItem x:Name="miPinColumnLeft"
+                      Command="{x:Static commands:ContextMenuCommands.PinColumnLeftCommand}"
+                      CommandParameter="{Binding}"
+                      Header="Pin Left">
+                <MenuItem.Icon>
+                    <sdg:Icon Width="14"
+                                 Height="14"
+                                 IconSource="{StaticResource {x:Static sdg:IconKeys.IconPinLeft}}"
+                                  />
+                </MenuItem.Icon>
+            </MenuItem>
+            <MenuItem x:Name="miPinColumnRight"
+                      Command="{x:Static commands:ContextMenuCommands.PinColumnRightCommand}"
+                      CommandParameter="{Binding}"
+                      Header="Pin Right">
+                <MenuItem.Icon>
+                    <sdg:Icon Width="14"
+                                 Height="14"
+                                 IconSource="{StaticResource {x:Static sdg:IconKeys.IconPinRight}}"/>
+                </MenuItem.Icon>
+            </MenuItem>
+            <MenuItem x:Name="miUnpinColumn"
+                      Command="{x:Static commands:ContextMenuCommands.UnpinColumnCommand}"
+                      CommandParameter="{Binding}"
+                      Header="Unpin">
+                <MenuItem.Icon>
+                    <sdg:Icon Width="14"
+                                 Height="14"
+                                 IconSource="{StaticResource {x:Static sdg:IconKeys.IconUnpin}}" />
+                </MenuItem.Icon>
+            </MenuItem>
+        </MenuItem>
+
+        <!--  Conditional Filtering (only shows when there's an active filter)  -->
+        <Separator>
+            <Separator.Style>
+                <Style TargetType="Separator" BasedOn="{StaticResource {x:Static MenuItem.SeparatorStyleKey}}">
+                    <Setter Property="Visibility" Value="Collapsed" />
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding HasActiveFilter}" Value="True">
+                            <Setter Property="Visibility" Value="Visible" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Separator.Style>
+        </Separator>
+        <MenuItem x:Name="miClearColumnFilter"
+                  Command="{x:Static commands:ContextMenuCommands.ClearColumnFilterCommand}"
+                  CommandParameter="{Binding ColumnSearchBox}"
+                  Header="Clear Column Filter">
+            <MenuItem.Icon>
+                <sdg:Icon Width="14"
+                             Height="14"
+                             IconSource="{StaticResource {x:Static sdg:IconKeys.IconClearFilter}}"
+                              />
+            </MenuItem.Icon>
+            <MenuItem.Style>
+                <Style TargetType="MenuItem" BasedOn="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesMenuItem}}">
+                    <Setter Property="Visibility" Value="Collapsed" />
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding HasActiveFilter}" Value="True">
+                            <Setter Property="Visibility" Value="Visible" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </MenuItem.Style>
+        </MenuItem>
+        <MenuItem x:Name="miOpenFilterEditor"
+                  Command="{x:Static commands:ContextMenuCommands.OpenFilterEditorCommand}"
+                  CommandParameter="{Binding Grid}"
+                  Header="Open Filter Editor…">
+            <MenuItem.Icon>
+                <sdg:Icon Width="14"
+                             Height="14"
+                             IconSource="{StaticResource {x:Static sdg:IconKeys.IconFilterEditor}}"
+                              />
+            </MenuItem.Icon>
+        </MenuItem>
+    </ContextMenu>
+
+</ResourceDictionary>

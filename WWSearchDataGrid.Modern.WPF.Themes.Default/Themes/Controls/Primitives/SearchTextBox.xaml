@@ -4,7 +4,8 @@
                     xmlns:converters="clr-namespace:WWSearchDataGrid.Modern.WPF.Converters;assembly=WWSearchDataGrid.Modern.WPF">
 
     <ResourceDictionary.MergedDictionaries>
-        <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF.Themes.Default;component/Resources/Icons/SdgIcons.xaml" />
+        <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF.Themes.Default;component/Resources/Icons/Icons.xaml" />
+        <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF.Themes.Default;component/Themes/Controls/Primitives/DefaultControls.xaml" />
     </ResourceDictionary.MergedDictionaries>
 
     <!--  Converters  -->
@@ -13,7 +14,7 @@
     <converters:ValueToCountConverter x:Key="ValueToCountConverter" />
 
     <!--  Default SearchTextBox Style  -->
-    <Style x:Key="{x:Static sdg:SdgThemeKeys.PrimitivesSearchTextBox}" TargetType="{x:Type sdg:SearchTextBox}">
+    <Style x:Key="{x:Static sdg:ThemeKeys.PrimitivesSearchTextBox}" TargetType="{x:Type sdg:SearchTextBox}">
         <Setter Property="Background" Value="#FFFFFFFF" />
         <Setter Property="BorderBrush" Value="#FFCCCCCC" />
         <Setter Property="Foreground" Value="#FF000000" />
@@ -70,12 +71,12 @@
                                                             BorderThickness="{TemplateBinding BorderThickness}"
                                                             Padding="{TemplateBinding Padding}"
                                                             CornerRadius="4">
-                                                        <sdg:SdgIcon Width="10"
+                                                        <sdg:Icon Width="10"
                                                                      Height="10"
                                                                      StrokeThickness="1.5"
                                                                      HorizontalAlignment="Center"
                                                                      VerticalAlignment="Center"
-                                                                     IconSource="{StaticResource {x:Static sdg:SdgIconKeys.IconChevronDown}}"
+                                                                     IconSource="{StaticResource {x:Static sdg:IconKeys.IconChevronDown}}"
                                                                      IconBrush="{TemplateBinding Foreground}" />
                                                     </Border>
                                                 </ControlTemplate>
@@ -211,7 +212,18 @@
                                    PlacementTarget="{Binding RelativeSource={RelativeSource TemplatedParent}}"
                                    Placement="Bottom"
                                    PopupAnimation="Slide"
-                                   StaysOpen="True">
+                                   StaysOpen="True"
+                                   VerticalOffset="-4"
+                                   HorizontalOffset="-4">
+                                <Border Padding="4">
+                                    <Border Background="Transparent">
+                                        <Border.Effect>
+                                            <DropShadowEffect Color="#000000"
+                                                              Opacity="0.2"
+                                                              BlurRadius="12"
+                                                              ShadowDepth="2"
+                                                              Direction="270" />
+                                        </Border.Effect>
                                 <Border Background="White"
                                         BorderBrush="#FFCCCCCC"
                                         BorderThickness="1"
@@ -327,21 +339,12 @@
                                                 </DataTemplate>
                                             </ListBox.ItemTemplate>
                                             <ListBox.ItemContainerStyle>
-                                                <Style TargetType="ListBoxItem">
-                                                    <Setter Property="Padding" Value="8,4" />
-                                                    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-                                                    <Style.Triggers>
-                                                        <Trigger Property="IsMouseOver" Value="True">
-                                                            <Setter Property="Background" Value="#FFF0F0F0" />
-                                                        </Trigger>
-                                                        <Trigger Property="IsSelected" Value="True">
-                                                            <Setter Property="Background" Value="#FFE3F2FD" />
-                                                        </Trigger>
-                                                    </Style.Triggers>
-                                                </Style>
+                                                <Style BasedOn="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesListBoxItem}}" TargetType="ListBoxItem" />
                                             </ListBox.ItemContainerStyle>
                                         </ListBox>
                                     </Grid>
+                                </Border>
+                                    </Border>
                                 </Border>
                             </Popup>
                         </Grid>

@@ -271,7 +271,7 @@ namespace WWSearchDataGrid.Modern.Core.Tests
         public void Shorthand_omitting_field_after_Or_is_rejected()
         {
             // Mirrors the chip-rendering rule: every search template must name its column.
-            // "[Total] = 10000 Or = 2000" used to render misleadingly in the FilterPanel and
+            // "[Total] = 10000 Or = 2000" used to render misleadingly in the FilterSummaryPanel and
             // would also be parser-illegal — this test pins that down so a future "implicit
             // field reuse" extension has to revisit the chip-rendering contract first.
             var result = FilterStringParser.Parse("[Total] = 10000 Or = 2000");

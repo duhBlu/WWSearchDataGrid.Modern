@@ -2,7 +2,11 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:sdg="clr-namespace:WWSearchDataGrid.Modern.WPF;assembly=WWSearchDataGrid.Modern.WPF">
 
-    <Style x:Key="{x:Static sdg:SdgThemeKeys.FilterEditorColumnNameToken}" TargetType="{x:Type sdg:ColumnNameTokenEditor}">
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF.Themes.Default;component/Themes/Controls/Primitives/DefaultControls.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+
+    <Style x:Key="{x:Static sdg:ThemeKeys.FilterEditorColumnNameToken}" TargetType="{x:Type sdg:ColumnNameTokenEditor}">
         <Setter Property="Focusable" Value="True" />
         <Setter Property="VerticalAlignment" Value="Center" />
         <Setter Property="Template">
@@ -59,9 +63,12 @@
                                          MaxHeight="300"
                                          ItemsSource="{Binding AvailableColumns, RelativeSource={RelativeSource TemplatedParent}}"
                                          SelectedItem="{Binding SelectedColumn, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}">
+                                    <ListBox.ItemContainerStyle>
+                                        <Style BasedOn="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesListBoxItem}}" TargetType="ListBoxItem" />
+                                    </ListBox.ItemContainerStyle>
                                     <ListBox.ItemTemplate>
                                         <DataTemplate>
-                                            <TextBlock Text="{Binding HeaderCaption}" Padding="6,3" />
+                                            <TextBlock Text="{Binding HeaderCaption}" />
                                         </DataTemplate>
                                     </ListBox.ItemTemplate>
                                 </ListBox>
@@ -73,6 +80,6 @@
         </Setter>
     </Style>
 
-    <Style BasedOn="{StaticResource {x:Static sdg:SdgThemeKeys.FilterEditorColumnNameToken}}" TargetType="{x:Type sdg:ColumnNameTokenEditor}" />
+    <Style BasedOn="{StaticResource {x:Static sdg:ThemeKeys.FilterEditorColumnNameToken}}" TargetType="{x:Type sdg:ColumnNameTokenEditor}" />
 
 </ResourceDictionary>

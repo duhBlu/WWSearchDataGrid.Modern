@@ -13,7 +13,7 @@ namespace WWSearchDataGrid.Modern.WPF.Display
         /// Creates a display value provider from a <see cref="GridColumn"/> descriptor,
         /// or null if no display transformation is configured.
         /// </summary>
-        public static IDisplayValueProvider Create(GridColumn descriptor)
+        public static IDisplayValueProvider Create(ColumnDataBase descriptor)
         {
             if (descriptor == null)
                 return null;
@@ -63,7 +63,7 @@ namespace WWSearchDataGrid.Modern.WPF.Display
         /// the editor is configured to use its mask as the display format. Returns
         /// <c>(null, default)</c> when no such mask is configured.
         /// </summary>
-        private static (string mask, MaskType maskType) ResolveEditSettingsDisplayMask(GridColumn descriptor)
+        private static (string mask, MaskType maskType) ResolveEditSettingsDisplayMask(ColumnDataBase descriptor)
         {
             switch (descriptor.EditSettings)
             {

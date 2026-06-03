@@ -3,7 +3,7 @@
                     xmlns:sdg="clr-namespace:WWSearchDataGrid.Modern.WPF;assembly=WWSearchDataGrid.Modern.WPF">
 
     <ResourceDictionary.MergedDictionaries>
-        <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF.Themes.Default;component/Resources/Icons/SdgIcons.xaml" />
+        <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF.Themes.Default;component/Resources/Icons/Icons.xaml" />
     </ResourceDictionary.MergedDictionaries>
 
     <!--
@@ -41,7 +41,7 @@
         Note: the icon column keeps its 20px reservation even when MenuItem.Icon is null,
         so every item in a menu — iconned or not — lines up on the same vertical guideline.
     -->
-    <Style x:Key="{x:Static sdg:SdgThemeKeys.PrimitivesMenuItem}" TargetType="{x:Type MenuItem}">
+    <Style x:Key="{x:Static sdg:ThemeKeys.PrimitivesMenuItem}" TargetType="{x:Type MenuItem}">
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="Foreground" Value="#1C1C1C" />
         <Setter Property="FontSize" Value="12" />
@@ -155,7 +155,7 @@
         Modern flat ContextMenu shell. AllowsTransparency=True (inherited via HasDropShadow=False
         below) lets the rounded Border + drop shadow render without the popup clipping them.
     -->
-    <Style x:Key="{x:Static sdg:SdgThemeKeys.PrimitivesContextMenu}" TargetType="{x:Type ContextMenu}">
+    <Style x:Key="{x:Static sdg:ThemeKeys.PrimitivesContextMenu}" TargetType="{x:Type ContextMenu}">
         <!--
             Implicit MenuItem style scoped to this ContextMenu only. We can't use
             ItemContainerStyle here because the ContextMenu's items collection holds both
@@ -165,7 +165,7 @@
             Separator continues to use MenuItem.SeparatorStyleKey from the merged dictionary.
         -->
         <Style.Resources>
-            <Style TargetType="{x:Type MenuItem}" BasedOn="{StaticResource {x:Static sdg:SdgThemeKeys.PrimitivesMenuItem}}" />
+            <Style TargetType="{x:Type MenuItem}" BasedOn="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesMenuItem}}" />
         </Style.Resources>
         <Setter Property="Background" Value="#FFFFFFFF" />
         <Setter Property="BorderBrush" Value="#FFE0E0E0" />

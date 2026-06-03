@@ -12,23 +12,18 @@ namespace WWSearchDataGrid.Modern.SampleApp.Controls
     public static class SampleSources
     {
         // ── Data Binding ─────────────────────────────────────────────────────
-        public static IReadOnlyList<SampleSourceFile> PocoAttributes { get; } = SampleSourceLoader.LoadFiles(
-            "Views/Samples/DataBinding/PocoAttributesSampleView.xaml",
-            "Views/Samples/DataBinding/PocoAttributesSampleView.xaml.cs",
-            "Views/Samples/DataBinding/PocoAttributesSampleViewModel.cs",
+        public static IReadOnlyList<SampleSourceFile> AutoColumns { get; } = SampleSourceLoader.LoadFiles(
+            "Views/Samples/DataBinding/AutoColumnsSampleView.xaml",
+            "Views/Samples/DataBinding/AutoColumnsSampleView.xaml.cs",
+            "Views/Samples/DataBinding/AutoColumnsSampleViewModel.cs",
             "Models/Customer.cs",
-            "SampleData/Generators/CustomerGenerator.cs");
+            "SampleData/Generators/CustomerGenerator.cs",
+            "SampleData/Generators/VendorTableGenerator.cs");
 
         public static IReadOnlyList<SampleSourceFile> DataTableManual { get; } = SampleSourceLoader.LoadFiles(
             "Views/Samples/DataBinding/DataTableManualSampleView.xaml",
             "Views/Samples/DataBinding/DataTableManualSampleView.xaml.cs",
             "Views/Samples/DataBinding/DataTableManualSampleViewModel.cs",
-            "SampleData/Generators/VendorTableGenerator.cs");
-
-        public static IReadOnlyList<SampleSourceFile> DataTableAutoGen { get; } = SampleSourceLoader.LoadFiles(
-            "Views/Samples/DataBinding/DataTableAutoGenSampleView.xaml",
-            "Views/Samples/DataBinding/DataTableAutoGenSampleView.xaml.cs",
-            "Views/Samples/DataBinding/DataTableAutoGenSampleViewModel.cs",
             "SampleData/Generators/VendorTableGenerator.cs");
 
         // ── Columns ──────────────────────────────────────────────────────────
@@ -53,6 +48,28 @@ namespace WWSearchDataGrid.Modern.SampleApp.Controls
             "Models/OrderItem.cs",
             "SampleData/Generators/OrderGenerator.cs");
 
+        public static IReadOnlyList<SampleSourceFile> FixedColumns { get; } = SampleSourceLoader.LoadFiles(
+            "Views/Samples/Columns/FixedColumnsSampleView.xaml",
+            "Views/Samples/Columns/FixedColumnsSampleView.xaml.cs",
+            "Views/Samples/Columns/FixedColumnsSampleViewModel.cs",
+            "Models/OrderItem.cs",
+            "SampleData/Generators/OrderGenerator.cs");
+
+        // ── Selection and Usability ──────────────────────────────────────────
+        public static IReadOnlyList<SampleSourceFile> CopyPaste { get; } = SampleSourceLoader.LoadFiles(
+            "Views/Samples/Usability/CopyPasteSampleView.xaml",
+            "Views/Samples/Usability/CopyPasteSampleView.xaml.cs",
+            "Views/Samples/Usability/CopyPasteSampleViewModel.cs",
+            "Models/OrderItem.cs",
+            "SampleData/Generators/OrderGenerator.cs");
+
+        public static IReadOnlyList<SampleSourceFile> ContextMenus { get; } = SampleSourceLoader.LoadFiles(
+            "Views/Samples/Usability/ContextMenusSampleView.xaml",
+            "Views/Samples/Usability/ContextMenusSampleView.xaml.cs",
+            "Views/Samples/Usability/ContextMenusSampleViewModel.cs",
+            "Models/OrderItem.cs",
+            "SampleData/Generators/OrderGenerator.cs");
+
         // ── Filtering ────────────────────────────────────────────────────────
         public static IReadOnlyList<SampleSourceFile> SearchModes { get; } = SampleSourceLoader.LoadFiles(
             "Views/Samples/Filtering/SearchModesSampleView.xaml",
@@ -68,13 +85,6 @@ namespace WWSearchDataGrid.Modern.SampleApp.Controls
             "Models/OrderItem.cs",
             "SampleData/Generators/OrderGenerator.cs");
 
-        public static IReadOnlyList<SampleSourceFile> RuleFilterPopup { get; } = SampleSourceLoader.LoadFiles(
-            "Views/Samples/Filtering/RuleFilterPopupSampleView.xaml",
-            "Views/Samples/Filtering/RuleFilterPopupSampleView.xaml.cs",
-            "Views/Samples/Filtering/RuleFilterPopupSampleViewModel.cs",
-            "Models/OrderItem.cs",
-            "SampleData/Generators/OrderGenerator.cs");
-
         public static IReadOnlyList<SampleSourceFile> FilterString { get; } = SampleSourceLoader.LoadFiles(
             "Views/Samples/Filtering/FilterStringSampleView.xaml",
             "Views/Samples/Filtering/FilterStringSampleView.xaml.cs",
@@ -82,27 +92,33 @@ namespace WWSearchDataGrid.Modern.SampleApp.Controls
             "Models/OrderItem.cs",
             "SampleData/Generators/OrderGenerator.cs");
 
-        // ── Auto Filter Row ──────────────────────────────────────────────────
+        public static IReadOnlyList<SampleSourceFile> CustomFilterElements { get; } = SampleSourceLoader.LoadFiles(
+            "Views/Samples/Filtering/CustomFilterElementsSampleView.xaml",
+            "Views/Samples/Filtering/CustomFilterElementsSampleView.xaml.cs",
+            "Views/Samples/Filtering/CustomFilterElementsSampleViewModel.cs",
+            "Models/OrderItem.cs",
+            "SampleData/Generators/OrderGenerator.cs");
+
+        public static IReadOnlyList<SampleSourceFile> MultiTabFilterPopup { get; } = SampleSourceLoader.LoadFiles(
+            "Views/Samples/Filtering/MultiTabFilterPopupSampleView.xaml",
+            "Views/Samples/Filtering/MultiTabFilterPopupSampleView.xaml.cs",
+            "Views/Samples/Filtering/MultiTabFilterPopupSampleViewModel.cs",
+            "Models/OrderItem.cs",
+            "SampleData/Generators/OrderGenerator.cs");
+
+        // ── Filter Row ───────────────────────────────────────────────────────
         public static IReadOnlyList<SampleSourceFile> OptionsPlayground { get; } = SampleSourceLoader.LoadFiles(
-            "Views/Samples/AutoFilterRow/OptionsPlaygroundSampleView.xaml",
-            "Views/Samples/AutoFilterRow/OptionsPlaygroundSampleView.xaml.cs",
-            "Views/Samples/AutoFilterRow/OptionsPlaygroundSampleViewModel.cs",
-            "Views/Samples/AutoFilterRow/ColumnPlaygroundConfig.cs",
+            "Views/Samples/FilterRow/OptionsPlaygroundSampleView.xaml",
+            "Views/Samples/FilterRow/OptionsPlaygroundSampleView.xaml.cs",
+            "Views/Samples/FilterRow/OptionsPlaygroundSampleViewModel.cs",
+            "Views/Samples/FilterRow/ColumnPlaygroundConfig.cs",
             "Models/OrderItem.cs",
             "SampleData/Generators/OrderGenerator.cs");
 
         public static IReadOnlyList<SampleSourceFile> CustomTemplates { get; } = SampleSourceLoader.LoadFiles(
-            "Views/Samples/AutoFilterRow/CustomTemplatesSampleView.xaml",
-            "Views/Samples/AutoFilterRow/CustomTemplatesSampleView.xaml.cs",
-            "Views/Samples/AutoFilterRow/CustomTemplatesSampleViewModel.cs",
-            "Models/OrderItem.cs",
-            "SampleData/Generators/OrderGenerator.cs");
-
-        public static IReadOnlyList<SampleSourceFile> DebounceBehavior { get; } = SampleSourceLoader.LoadFiles(
-            "Views/Samples/AutoFilterRow/DebounceBehaviorSampleView.xaml",
-            "Views/Samples/AutoFilterRow/DebounceBehaviorSampleView.xaml.cs",
-            "Views/Samples/AutoFilterRow/DebounceBehaviorSampleViewModel.cs",
-            "SampleData/SampleDataGenerator.cs",
+            "Views/Samples/FilterRow/CustomTemplatesSampleView.xaml",
+            "Views/Samples/FilterRow/CustomTemplatesSampleView.xaml.cs",
+            "Views/Samples/FilterRow/CustomTemplatesSampleViewModel.cs",
             "Models/OrderItem.cs",
             "SampleData/Generators/OrderGenerator.cs");
 
@@ -121,19 +137,24 @@ namespace WWSearchDataGrid.Modern.SampleApp.Controls
             "Models/TaskItem.cs",
             "SampleData/Generators/TaskGenerator.cs");
 
-        public static IReadOnlyList<SampleSourceFile> SelectAll { get; } = SampleSourceLoader.LoadFiles(
-            "Views/Samples/Editing/SelectAllSampleView.xaml",
-            "Views/Samples/Editing/SelectAllSampleView.xaml.cs",
-            "Views/Samples/Editing/SelectAllSampleViewModel.cs",
-            "Models/TaskItem.cs",
-            "SampleData/Generators/TaskGenerator.cs");
-
         public static IReadOnlyList<SampleSourceFile> InputMasking { get; } = SampleSourceLoader.LoadFiles(
             "Views/Samples/Editing/InputMaskingSampleView.xaml",
             "Views/Samples/Editing/InputMaskingSampleView.xaml.cs",
             "Views/Samples/Editing/InputMaskingSampleViewModel.cs",
             "Models/Contact.cs",
             "SampleData/Generators/ContactGenerator.cs");
+
+        public static IReadOnlyList<SampleSourceFile> DataValidation { get; } = SampleSourceLoader.LoadFiles(
+            "Views/Samples/Editing/DataValidationSampleView.xaml",
+            "Views/Samples/Editing/DataValidationSampleView.xaml.cs",
+            "Views/Samples/Editing/DataValidationSampleViewModel.cs",
+            "Models/ValidationData.cs");
+
+        public static IReadOnlyList<SampleSourceFile> DataErrorIndication { get; } = SampleSourceLoader.LoadFiles(
+            "Views/Samples/Editing/DataErrorIndicationSampleView.xaml",
+            "Views/Samples/Editing/DataErrorIndicationSampleView.xaml.cs",
+            "Views/Samples/Editing/DataErrorIndicationSampleViewModel.cs",
+            "Models/PersonInfo.cs");
 
         // ── Animation & Performance ──────────────────────────────────────────
         public static IReadOnlyList<SampleSourceFile> ScrollingAnimation { get; } = SampleSourceLoader.LoadFiles(

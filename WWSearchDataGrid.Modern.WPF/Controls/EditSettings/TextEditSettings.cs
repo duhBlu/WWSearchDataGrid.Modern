@@ -112,7 +112,7 @@ namespace WWSearchDataGrid.Modern.WPF
             }, isNullable);
         }
 
-        public override DataTemplate CreateDisplayTemplate(GridColumn column)
+        public override DataTemplate CreateDisplayTemplate(ColumnDataBase column)
         {
             var factory = new FrameworkElementFactory(typeof(TextBlock));
             // Style FIRST — FrameworkElementFactory requires StyleProperty before other setters.
@@ -147,10 +147,15 @@ namespace WWSearchDataGrid.Modern.WPF
             }
 
             factory.SetBinding(TextBlock.TextProperty, binding);
+            // Binding.ValidatesOnNotifyDataErrors defaults on, so a display element bound to a
+            // property of an INotifyDataErrorInfo row draws WPF's red error adorner whenever that
+            // property reports an error. The library surfaces errors through the cell's
+            // ValidationErrorIcon badge, so strip the adorner from the read-only display element.
+            SuppressValidationErrorAdorner(factory);
             return new DataTemplate { VisualTree = factory };
         }
 
-        public override DataTemplate CreateEditTemplate(GridColumn column)
+        public override DataTemplate CreateEditTemplate(ColumnDataBase column)
         {
             var factory = new FrameworkElementFactory(typeof(TextBox));
             ApplyEditorStyle(factory, EditSettingsThemeKeys.EditTextBox);
@@ -184,6 +189,7 @@ namespace WWSearchDataGrid.Modern.WPF
                 factory.SetValue(MaskInputBehavior.MaskProperty, effectiveMask);
             }
             factory.SetBinding(TextBox.TextProperty, editBinding);
+            SuppressValidationErrorAdorner(factory);
 
             // Select all when the editor receives focus — standard cell-editing UX for keyboard
             // entry (Tab / Enter / F2 / programmatic). When edit mode was triggered by a mouse
@@ -222,9 +228,9 @@ namespace WWSearchDataGrid.Modern.WPF
         /// </summary>
         private static bool TryApplyMouseClickCaret(TextBox tb)
         {
-            var cell = VisualTreeHelperMethods.FindVisualParent<DataGridCell>(tb);
+            var cell = VisualTreeHelperMethods.FindVisualAncestor<DataGridCell>(tb);
             if (cell == null) return false;
-            var grid = VisualTreeHelperMethods.FindVisualParent<SearchDataGrid>(cell);
+            var grid = VisualTreeHelperMethods.FindVisualAncestor<SearchDataGrid>(cell);
             if (grid == null) return false;
             if (!grid.TryConsumeMouseEditPoint(cell, out var cellPoint)) return false;
 
@@ -260,17 +266,6 @@ namespace WWSearchDataGrid.Modern.WPF
             }
         }
 
-        private static T FindVisualAncestor<T>(System.Windows.DependencyObject start) where T : System.Windows.DependencyObject
-        {
-            var current = start;
-            while (current != null)
-            {
-                if (current is T match) return match;
-                current = System.Windows.Media.VisualTreeHelper.GetParent(current);
-            }
-            return null;
-        }
-
         /// <summary>
         /// Resolves the effective mask pattern + engine type for a column. Order:
         /// <list type="number">
@@ -284,7 +279,7 @@ namespace WWSearchDataGrid.Modern.WPF
         /// Returns <c>(null, MaskType)</c> when nothing applies — the caller leaves
         /// <see cref="MaskInputBehavior"/> unwired and the TextBox behaves like a plain editor.
         /// </summary>
-        private (string mask, MaskType maskType) ResolveEffectiveMask(GridColumn column)
+        private (string mask, MaskType maskType) ResolveEffectiveMask(ColumnDataBase column)
         {
             if (!string.IsNullOrEmpty(Mask))
                 return (Mask, MaskType);

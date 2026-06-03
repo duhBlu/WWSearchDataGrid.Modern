@@ -204,7 +204,10 @@ namespace WWSearchDataGrid.Modern.WPF.Commands
             {
                 Debug.WriteLine($"Error in SortAscendingCommand: {ex.Message}");
             }
-        }, context => context.Column != null && context.Column.SortDirection != ListSortDirection.Ascending && CanSortColumn(context.Column));
+        }, context => context.Column != null
+            && context.Column.SortDirection != ListSortDirection.Ascending
+            && CanSortColumn(context.Column)
+            && IsSortDirectionAllowed(context, AllowedSortOrders.Ascending));
 
         private static ICommand _sortDescendingCommand;
         /// <summary>
@@ -220,7 +223,22 @@ namespace WWSearchDataGrid.Modern.WPF.Commands
             {
                 Debug.WriteLine($"Error in SortDescendingCommand: {ex.Message}");
             }
-        }, context => context.Column != null && context.Column.SortDirection != ListSortDirection.Descending && CanSortColumn(context.Column));
+        }, context => context.Column != null
+            && context.Column.SortDirection != ListSortDirection.Descending
+            && CanSortColumn(context.Column)
+            && IsSortDirectionAllowed(context, AllowedSortOrders.Descending));
+
+        /// <summary>
+        /// True when the resolved <see cref="GridColumn.AllowedSortOrders"/> includes
+        /// <paramref name="direction"/>. Columns without a descriptor (manually added
+        /// <see cref="DataGridColumn"/> instances) default to allowed.
+        /// </summary>
+        private static bool IsSortDirectionAllowed(ContextMenuContext context, AllowedSortOrders direction)
+        {
+            var descriptor = ResolveDescriptor(context);
+            if (descriptor == null) return true;
+            return (descriptor.AllowedSortOrders & direction) != 0;
+        }
         
         private static ICommand _clearSortingCommand;
         /// <summary>

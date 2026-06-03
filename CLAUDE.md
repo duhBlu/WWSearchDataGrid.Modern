@@ -64,9 +64,9 @@ TopN, BottomN, AboveAverage, BelowAverage, Unique, Duplicate
 
 - **`SearchDataGrid.cs`** - Main control extending DataGrid (partial class, split into 5 files)
   - `SearchDataGrid.cs` - Fields, DPs, properties, events, constructor, OnApplyTemplate, overrides, collection handlers
-  - `SearchDataGridFiltering.cs` - FilterItemsSource, expression evaluation, collection context, FilterPanel handlers
-  - `SearchDataGridSelectAll.cs` - Select-all checkbox logic, header setup, toggle/sync
-  - `SearchDataGridEditing.cs` - BeginningEdit/EndEdit handlers, cell value change detection
+  - `SearchDataGrid.Filtering.cs` - FilterItemsSource, expression evaluation, collection context, FilterSummaryPanel handlers
+  - `SearchDataGrid.SelectAll.cs` - Select-all checkbox logic, header setup, toggle/sync
+  - `SearchDataGrid.Editing.cs` - BeginningEdit/EndEdit handlers, cell value change detection
   - `SearchDataGridAutoSize.cs` - Column auto-sizing, scroll handling, ColumnChooser show/hide
 
 - **`ColumnSearchBox.cs`** - Individual column filter control (partial class, split into 3 files)
@@ -75,7 +75,7 @@ TopN, BottomN, AboveAverage, BelowAverage, Unique, Duplicate
   - `ColumnSearchBoxTextFilter.cs` - Text filter CRUD, temporary templates, popup management
 
 - **`ColumnFilterEditor.cs`** - Complex multi-criteria filter UI
-- **`FilterPanel.cs`** - Active filter chips display
+- **`FilterSummaryPanel.cs`** - Active filter chips display
 - **`ColumnChooser.cs`** - Column visibility manager with drag-drop reordering
 - **`GridColumn.cs`** - Column descriptor class (`FrameworkContentElement`). Declared inside `SearchDataGrid.GridColumns`; the grid generates internal `DataGridColumn` instances from each descriptor.
 - **`GridColumnSettings.cs`** - Legacy static attached properties for column configuration (used internally as a bridge and for backwards compatibility)
@@ -164,7 +164,7 @@ SearchText    Manages State     Builds Expressions    Evaluates Items   Compiles
 - **Main DataGrid**: `WWSearchDataGrid.Modern.WPF/Controls/SearchDataGrid.cs`
 - **Column filters**: `WWSearchDataGrid.Modern.WPF/Controls/ColumnSearchBox.cs`
 - **Advanced dialog**: `WWSearchDataGrid.Modern.WPF/Controls/ColumnFilterEditor.cs`
-- **Filter chips**: `WWSearchDataGrid.Modern.WPF/Controls/FilterPanel.cs`
+- **Filter chips**: `WWSearchDataGrid.Modern.WPF/Controls/FilterSummaryPanel.cs`
 
 ### Styling Problems
 - **Default styles**: `WWSearchDataGrid.Modern.WPF/Themes/Generic.xaml`
