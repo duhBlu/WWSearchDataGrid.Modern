@@ -7,18 +7,20 @@ using System.Windows.Media.Animation;
 namespace WWSearchDataGrid.Modern.WPF
 {
     /// <summary>
-    /// Attached behavior driving the expand/collapse animation in
-    /// <c>AnimatedGroupExpanderTemplate</c>. Attach <see cref="IsHostProperty"/> to the
-    /// content-host <see cref="FrameworkElement"/> inside the Expander's template; the
-    /// behavior resolves the owning <see cref="Expander"/> via
-    /// <see cref="FrameworkElement.TemplatedParent"/>, wires
-    /// <see cref="Expander.Expanded"/> / <see cref="Expander.Collapsed"/>, and animates the
-    /// host's <see cref="FrameworkElement.Height"/> between 0 and a viewport-bounded
-    /// natural height. The host carries <see cref="Visibility.Collapsed"/> in the steady
-    /// collapsed state so the inner <see cref="VirtualizingStackPanel"/> skips measure
-    /// work — and the natural-height measure is capped at the enclosing
-    /// <see cref="ScrollViewer.ViewportHeight"/> so the panel realizes only the items that
-    /// currently fit, keeping the grid's grouping virtualization intact.
+    /// Attached behavior driving the expand/collapse of the group-expander content host.
+    /// Attach <see cref="IsHostProperty"/> to the content-host <see cref="FrameworkElement"/>
+    /// inside the Expander's template; the behavior resolves the owning <see cref="Expander"/>
+    /// via <see cref="FrameworkElement.TemplatedParent"/>, wires
+    /// <see cref="Expander.Expanded"/> / <see cref="Expander.Collapsed"/>, and either animates
+    /// the host's <see cref="FrameworkElement.Height"/> between 0 and a viewport-bounded natural
+    /// height or snaps it instantly — gated on the owning grid's
+    /// <see cref="SearchDataGrid.UseGroupExpansionAnimation"/>. A single Expander template uses
+    /// this host for both modes; when the flag is off, expand/collapse just flips Visibility
+    /// (the same steady-state path as <see cref="ApplyImmediateState"/>). In both modes the host
+    /// carries <see cref="Visibility.Collapsed"/> while collapsed so the inner
+    /// <see cref="VirtualizingStackPanel"/> skips measure work — and the natural-height measure
+    /// is capped at the enclosing <see cref="ScrollViewer.ViewportHeight"/> so the panel realizes
+    /// only the items that currently fit, keeping the grid's grouping virtualization intact.
     /// </summary>
     public static class GroupExpansionAnimator
     {
@@ -140,17 +142,28 @@ namespace WWSearchDataGrid.Modern.WPF
             // too. Only animate when the originating expander matches our subscription.
             if (sender is not Expander subscribed) return;
             if (e.OriginalSource != subscribed) return;
-            if (FindHost(subscribed) is FrameworkElement host)
-                AnimateExpand(host);
+            if (FindHost(subscribed) is not FrameworkElement host) return;
+            if (AnimationsEnabled(host)) AnimateExpand(host);
+            else ApplyImmediateState(host, true);
         }
 
         private static void OnExpanderCollapsed(object sender, RoutedEventArgs e)
         {
             if (sender is not Expander subscribed) return;
             if (e.OriginalSource != subscribed) return;
-            if (FindHost(subscribed) is FrameworkElement host)
-                AnimateCollapse(host);
+            if (FindHost(subscribed) is not FrameworkElement host) return;
+            if (AnimationsEnabled(host)) AnimateCollapse(host);
+            else ApplyImmediateState(host, false);
         }
+
+        /// <summary>
+        /// Whether the owning grid wants animated expand/collapse. Resolved off the
+        /// <see cref="SearchDataGrid"/> ancestor's
+        /// <see cref="SearchDataGrid.UseGroupExpansionAnimation"/>; defaults to <c>true</c> when no
+        /// grid is found so a detached host still behaves like the animated template it came from.
+        /// </summary>
+        private static bool AnimationsEnabled(FrameworkElement host)
+            => FindAncestor<SearchDataGrid>(host)?.UseGroupExpansionAnimation ?? true;
 
         /// <summary>
         /// Walks the visual tree under <paramref name="expander"/> to find the host

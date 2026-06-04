@@ -155,6 +155,16 @@
                                   Content="Expand groups recursively" />
                         <CheckBox IsChecked="{Binding UseGroupExpansionAnimation, ElementName=Grid}"
                                   Content="Use group expansion animation" />
+                        <!--
+                            AllowFixedGroups (Phase 3.1.f): the group header(s) for the topmost
+                            visible row stay pinned to the top of the data area as the grid
+                            scrolls. Sibling-group transitions slide the topmost pinned row up
+                            to make room (push transition). Add nested levels via the GROUP BY
+                            buttons above to see multi-level stair-stepped pinning.
+                        -->
+                        <CheckBox IsChecked="{Binding AllowFixedGroups, ElementName=Grid}"
+                                  Content="Allow fixed groups"
+                                  ToolTip="Pin the current group chain to the top of the data area while scrolling." />
 
                     </sdg:SimpleStackPanel>
                 </ScrollViewer>
@@ -167,6 +177,9 @@
                                 AutoGenerateColumns="False"
                                 CanUserAddRows="False"
                                 CanUserDeleteRows="False"
+                                AllowScrollAnimation="True"
+                                AllowPerPixelScrolling="True"
+                                AllowFixedGroups="True"
                                 IsGroupPanelVisible="True">
                 <sdg:SearchDataGrid.GridColumns>
                     <!--  Declarative grouping: the grid loads pre-grouped by status.  -->

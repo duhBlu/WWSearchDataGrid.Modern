@@ -139,6 +139,17 @@ namespace WWSearchDataGrid.Modern.WPF
             new ComponentResourceKey(typeof(ThemeKeys), nameof(GridSearchDataGridGroupStyle));
 
         /// <summary>
+        /// <see cref="ControlTemplate"/> applied to every group <see cref="Expander"/>. Renders
+        /// the row-header gutter, chevron, and group header, and hosts the content via
+        /// <see cref="GroupExpansionAnimator"/>. The animator drives a Height animation on the
+        /// content host when <see cref="SearchDataGrid.UseGroupExpansionAnimation"/> is <c>true</c>
+        /// and snaps the host's Visibility instantly when it is <c>false</c>, so this single
+        /// template serves both the animated and non-animated modes.
+        /// </summary>
+        public static ComponentResourceKey GridSearchDataGridGroupExpanderTemplate { get; } =
+            new ComponentResourceKey(typeof(ThemeKeys), nameof(GridSearchDataGridGroupExpanderTemplate));
+
+        /// <summary>
         /// Shared <see cref="ContextMenu"/> resource (declared with <c>x:Shared="False"</c> so
         /// every Expander gets its own instance) that hosts the group-header right-click menu —
         /// Expand / Collapse this group, Expand / Collapse all at this level, Ungroup at this
@@ -168,6 +179,24 @@ namespace WWSearchDataGrid.Modern.WPF
         /// </summary>
         public static ComponentResourceKey GridSearchDataGridGroupPillContextMenu { get; } =
             new ComponentResourceKey(typeof(ThemeKeys), nameof(GridSearchDataGridGroupPillContextMenu));
+
+        /// <summary>
+        /// Default <see cref="Style"/> for the <see cref="FixedGroupHeadersPresenter"/> — the
+        /// sticky strip pinned to the top of the data area that mirrors the active group chain
+        /// of the topmost visible row when <see cref="SearchDataGrid.AllowFixedGroups"/> is true.
+        /// </summary>
+        public static ComponentResourceKey GridSearchDataGridFixedGroupHeadersPresenter { get; } =
+            new ComponentResourceKey(typeof(ThemeKeys), nameof(GridSearchDataGridFixedGroupHeadersPresenter));
+
+        /// <summary>
+        /// Right-click <see cref="ContextMenu"/> attached to every pinned header in the sticky
+        /// strip — Expand / Collapse this group, Expand / Collapse all at this level, Ungroup at
+        /// this level. Sibling to <see cref="GridSearchDataGridGroupHeaderContextMenu"/> but
+        /// commands take a <see cref="FixedGroupHeaderEntry"/> instead of an <see cref="Expander"/>
+        /// because the strip lives outside the rows-presenter visual subtree.
+        /// </summary>
+        public static ComponentResourceKey GridSearchDataGridFixedGroupHeaderContextMenu { get; } =
+            new ComponentResourceKey(typeof(ThemeKeys), nameof(GridSearchDataGridFixedGroupHeaderContextMenu));
 
         /// <summary>
         /// Shared <see cref="ContextMenu"/> resource (declared with

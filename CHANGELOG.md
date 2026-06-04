@@ -2,6 +2,27 @@
 
 ## [Unreleased]
 
+### Added — Allow Fixed Groups (sticky group headers)
+- `SearchDataGrid.AllowFixedGroups` (bool, default `false`). When `true` on a grouped grid the
+  group header(s) for the topmost visible row stay pinned to the top of the data area; as the
+  next sibling rises into the strip, the topmost pinned header slides up to make room (push
+  transition). Outer-to-inner stacking matches the in-place stair-step indent.
+- `FixedGroupHeadersPresenter` (new `ItemsControl` in `Controls/Grouping/`) overlaid in the
+  grid template; `FixedGroupHeaderEntry` (per-pinned-level view-model with TwoWay `IsExpanded`);
+  `FixedGroupIndentConverter` (per-level `Margin.Left` matching `GroupHeaderMarginConverter`'s
+  output formula).
+- Pinned chrome carries its own context menu: `ContextMenuCommands.ExpandFixedGroupCommand` /
+  `CollapseFixedGroupCommand` / `ExpandAllAtFixedLevelCommand` / `CollapseAllAtFixedLevelCommand` /
+  `UngroupAtFixedLevelCommand`. Sibling set to the in-place commands but takes a
+  `FixedGroupHeaderEntry` instead of an `Expander`.
+- Click on a pinned header routes through `SearchDataGrid.ApplyFixedGroupExpansion`, which
+  toggles the realized real `Expander` (firing the existing class handler that updates
+  `_groupExpandState`) or writes straight to the persistence map when the represented group is
+  virtualized — so the in-place chrome and the persistence layer stay coherent.
+- Sample: `BasicGroupingSampleView` (Data Shaping › Grouping) ships an `Allow fixed groups`
+  toggle in the OPTIONS group alongside the rest of the grouping switches. Use the GROUP BY
+  buttons in the sample to add nested levels and watch the strip stair-step.
+
 ### Added — AutoFilterRow spec conformance
 - Grid-level: `ShowCriteriaInAutoFilterRow`, `AutoFilterRowCellStyle`, `FilterRowDelay`, `AutoFilterRowClearButtonMode`, `EnableLiveFiltering`
 - Column-level: `AllowAutoFilter`, `ShowCriteriaInAutoFilterRow`, `AutoFilterRowCellStyle`, `AutoFilterRowDisplayTemplate`, `AutoFilterRowEditTemplate`, `DefaultSearchType`, `RoundDateTime`

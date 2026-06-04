@@ -28,14 +28,29 @@
                  AutomationProperties.AutomationId="cmuGroupPanel">
         <MenuItem Header="Expand All Groups"
                   Command="{x:Static commands:ContextMenuCommands.ExpandAllGroupsCommand}"
-                  CommandParameter="{Binding PlacementTarget.OwnerGrid, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}" />
+                  CommandParameter="{Binding PlacementTarget.OwnerGrid, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}">
+            <MenuItem.Icon>
+                <sdg:Icon Width="14" Height="14"
+                          IconSource="{StaticResource {x:Static sdg:IconKeys.IconExpandGroups}}" />
+            </MenuItem.Icon>
+        </MenuItem>
         <MenuItem Header="Collapse All Groups"
                   Command="{x:Static commands:ContextMenuCommands.CollapseAllGroupsCommand}"
-                  CommandParameter="{Binding PlacementTarget.OwnerGrid, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}" />
+                  CommandParameter="{Binding PlacementTarget.OwnerGrid, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}">
+            <MenuItem.Icon>
+                <sdg:Icon Width="14" Height="14"
+                          IconSource="{StaticResource {x:Static sdg:IconKeys.IconCollapseGroups}}" />
+            </MenuItem.Icon>
+        </MenuItem>
         <Separator />
         <MenuItem Header="Clear Grouping"
                   Command="{x:Static commands:ContextMenuCommands.ClearAllGroupingCommand}"
-                  CommandParameter="{Binding PlacementTarget.OwnerGrid, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}" />
+                  CommandParameter="{Binding PlacementTarget.OwnerGrid, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}">
+            <MenuItem.Icon>
+                <sdg:Icon Width="14" Height="14"
+                          IconSource="{StaticResource {x:Static sdg:IconKeys.IconUngroup}}" />
+            </MenuItem.Icon>
+        </MenuItem>
     </ContextMenu>
 
     <!--
@@ -57,14 +72,29 @@
         <!-- Pill-specific group actions -->
         <MenuItem Header="Full Expand"
                   Command="{x:Static commands:ContextMenuCommands.FullExpandGroupCommand}"
-                  CommandParameter="{Binding}" />
+                  CommandParameter="{Binding}">
+            <MenuItem.Icon>
+                <sdg:Icon Width="14" Height="14"
+                          IconSource="{StaticResource {x:Static sdg:IconKeys.IconExpandGroups}}" />
+            </MenuItem.Icon>
+        </MenuItem>
         <MenuItem Header="Full Collapse"
                   Command="{x:Static commands:ContextMenuCommands.FullCollapseGroupCommand}"
-                  CommandParameter="{Binding}" />
+                  CommandParameter="{Binding}">
+            <MenuItem.Icon>
+                <sdg:Icon Width="14" Height="14"
+                          IconSource="{StaticResource {x:Static sdg:IconKeys.IconCollapseGroups}}" />
+            </MenuItem.Icon>
+        </MenuItem>
         <Separator />
         <MenuItem Header="Ungroup"
                   Command="{x:Static commands:ContextMenuCommands.UngroupColumnCommand}"
-                  CommandParameter="{Binding ., Converter={StaticResource GridColumnToContextMenuContextConverter}}" />
+                  CommandParameter="{Binding ., Converter={StaticResource GridColumnToContextMenuContextConverter}}">
+            <MenuItem.Icon>
+                <sdg:Icon Width="14" Height="14"
+                          IconSource="{StaticResource {x:Static sdg:IconKeys.IconUngroup}}" />
+            </MenuItem.Icon>
+        </MenuItem>
         <Separator />
 
         <!-- Mirror of the column-header menu, fed via the converter -->

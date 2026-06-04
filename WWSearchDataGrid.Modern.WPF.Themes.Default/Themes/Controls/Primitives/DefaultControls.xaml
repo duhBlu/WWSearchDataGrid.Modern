@@ -537,7 +537,7 @@
                                 Grid.RowSpan="3"
                                 Background="#FFFFFF"
                                 BorderBrush="#CCCCCC"
-                                CornerRadius="0" />
+                                CornerRadius="4" />
 
                         <!--  Line-Up button  -->
                         <RepeatButton x:Name="PART_LineUpButton"

@@ -322,12 +322,21 @@ namespace WWSearchDataGrid.Modern.WPF
 
             _scrollInfrastructureReady = true;
 
-            // ScrollChanged drives pending-row reveals; fires every frame during smooth scroll.
+            // Template (re)applied — the cached scroll-content-presenter points at the old visual
+            // tree. Drop it so it re-resolves against the new template on the next resolver pass.
+            _scrollContentPresenter = null;
+
+            // ScrollChanged drives pending-row reveals AND the sticky-group strip's chain resolve;
+            // fires every frame during smooth scroll, idle otherwise.
             _scrollViewer.ScrollChanged += OnScrollViewerScrollChanged;
 
             ApplyScrollMode();
             ApplyScrollAnimation();
             ApplyVirtualizationCacheLength();
+
+            // Populate the sticky strip once against the freshly-applied template (covers a
+            // template reapply mid-scroll); bails cheaply when the feature is off or ungrouped.
+            UpdateFixedGroupHeaders();
 
             // Drain any rows realized before the scroll infrastructure was wired up.
             if (_pendingVisibilityRows.Count > 0)
@@ -638,10 +647,23 @@ namespace WWSearchDataGrid.Modern.WPF
             if (e.VerticalChange > 0) _lastScrollDirection = 1;
             else if (e.VerticalChange < 0) _lastScrollDirection = -1;
 
+            bool verticalOrExtentChanged = e.VerticalChange != 0
+                || e.ViewportHeightChange != 0
+                || e.ExtentHeightChange != 0;
+
+            // Re-resolve the sticky-group strip's active chain on vertical/extent/viewport change.
+            // The strip now just SNAPS the pinned chain (no push transform), so the old jitter that
+            // forced this onto a per-frame CompositionTarget.Rendering tick no longer applies — a
+            // content swap read a frame early/late at the threshold is imperceptible, and driving it
+            // from ScrollChanged means no always-on render loop while idle. Cheap gates first so a
+            // non-grouped grid never walks the visual tree here.
+            if (verticalOrExtentChanged && AllowFixedGroups && GroupCount > 0)
+                UpdateFixedGroupHeaders();
+
             if (_pendingVisibilityRows.Count == 0)
                 return;
 
-            if (e.VerticalChange == 0 && e.ViewportHeightChange == 0 && e.ExtentHeightChange == 0)
+            if (!verticalOrExtentChanged)
                 return;
 
             ProcessPendingVisibleRows();

@@ -35,7 +35,9 @@ namespace WWSearchDataGrid.Modern.WPF
 
         public override DataTemplate SelectTemplate(object item, DependencyObject container)
         {
-            var column = ResolveOwningColumn(container);
+            // In the pinned strip the header renders outside the rows-presenter subtree, so there
+            // is no GroupItem ancestor to count — the entry carries its owning column directly.
+            var column = item is FixedGroupHeaderEntry entry ? entry.Column : ResolveOwningColumn(container);
             if (column != null)
             {
                 var bySelector = column.ActualGroupHeaderTemplateSelector?.SelectTemplate(item, container);

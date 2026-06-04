@@ -4,6 +4,7 @@
                     xmlns:commands="clr-namespace:WWSearchDataGrid.Modern.WPF.Commands;assembly=WWSearchDataGrid.Modern.WPF">
 
     <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF.Themes.Default;component/Resources/Icons/Icons.xaml" />
         <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF.Themes.Default;component/Themes/Controls/Primitives/ContextMenu.xaml" />
     </ResourceDictionary.MergedDictionaries>
 
@@ -44,8 +45,8 @@
     -->
     <DataTemplate x:Key="DefaultGroupHeaderTemplate">
         <StackPanel Orientation="Horizontal"
-                    Margin="2,3"
                     IsHitTestVisible="False"
+                    Margin="2,3"
                     VerticalAlignment="Center">
             <!--
                 Column-name prefix: the owning column's HeaderCaption followed by ": ", resolved
@@ -55,6 +56,7 @@
             <TextBlock Foreground="#FF808080" VerticalAlignment="Center">
                 <TextBlock.Text>
                     <MultiBinding Converter="{StaticResource GroupColumnNameConverter}">
+                        <Binding />
                         <Binding RelativeSource="{RelativeSource AncestorType={x:Type GroupItem}}" />
                         <Binding RelativeSource="{RelativeSource AncestorType={x:Type sdg:SearchDataGrid}}" />
                     </MultiBinding>
@@ -71,60 +73,20 @@
                        VerticalAlignment="Center" />
         </StackPanel>
     </DataTemplate>
-
-    <!--
-        Whole-header selector. Resolves the group's nesting level to the owning grouped column
-        and returns that column's GroupHeaderTemplate (or the default chrome above, which itself
-        defers to GroupValueTemplate for the value slot).
-    -->
+    
     <sdg:GroupHeaderTemplateSelector x:Key="GroupHeaderTemplateSelector" DefaultTemplate="{StaticResource DefaultGroupHeaderTemplate}" />
-
-    <!--
-        Produces the Margin applied to a group header's chevron + label (inside the Expander
-        template), positioning it at an absolute X offset from the GroupItem's left edge.
-        Outermost group headers start at DataGrid.RowHeaderActualWidth (so they sit at the
-        cell-content edge, clear of the row-header gutter); each additional nesting level
-        compounds by SearchDataGrid.GroupIndentWidth. The Expander itself carries no
-        horizontal margin — only the header is offset, so the Expander's content area (data
-        rows) remains flush with the grid's left edge and DataGridRowHeaders stay pinned at
-        x=0 regardless of how deeply the row is nested.
-    -->
     <sdg:GroupHeaderMarginConverter x:Key="GroupHeaderMarginConverter" />
-
-    <!--
-        Default (non-animated) group Expander template. The Expander's outer Border carries the
-        full-width background so the gray group bar extends across the entire grid row,
-        including over the row-header gutter. The header (ToggleButton with chevron + label)
-        is offset horizontally via GroupHeaderMarginConverter so the chevron sits at
-        RowHeaderActualWidth (clear of the gutter) plus per-level group indent. The content
-        ContentPresenter (data rows / nested groups) carries NO horizontal offset, so each
-        DataGridRow inside renders at the GroupItem's left edge and its DataGridRowHeader
-        remains pinned at the grid's x=0.
-    -->
-    <ControlTemplate x:Key="GroupExpanderTemplate" TargetType="{x:Type Expander}">
+    
+    <ControlTemplate x:Key="{x:Static sdg:ThemeKeys.GridSearchDataGridGroupExpanderTemplate}" TargetType="{x:Type Expander}">
         <Border Background="{TemplateBinding Background}"
                 Padding="{TemplateBinding Padding}"
                 UseLayoutRounding="True"
                 SnapsToDevicePixels="True">
             <DockPanel>
-                <!--
-                    Header row container. Carries the bottom divider (TemplateBinding flows from
-                    the Expander's BorderBrush/BorderThickness setters in GroupExpanderStyle) so
-                    every group header — outer and nested — gets a line directly under the
-                    chevron row, separating header chrome from content.
-                -->
                 <Border DockPanel.Dock="Top"
                         BorderBrush="{TemplateBinding BorderBrush}"
                         BorderThickness="{TemplateBinding BorderThickness}">
                     <Grid>
-                        <!--
-                            Row-header gutter for the group header row. Pinned at the
-                            GroupItem's left edge (which == grid x=0, since the Expander
-                            carries no horizontal margin), sized to the grid's
-                            RowHeaderActualWidth, styled to match DataGridRowHeader chrome.
-                            Renders only across the header strip — content rows below have
-                            their own DataGridRowHeader at the same x=0.
-                        -->
                         <Border Background="#FFf9f9f9"
                                 BorderBrush="#FFd0d0d0"
                                 BorderThickness="0,0,1,0"
@@ -149,122 +111,23 @@
                             </ToggleButton.Margin>
                             <ToggleButton.Template>
                                 <ControlTemplate TargetType="{x:Type ToggleButton}">
-                                    <Border Background="{TemplateBinding Background}">
-                                        <sdg:SimpleStackPanel Orientation="Horizontal" Spacing="8" Margin="6,0,0,0">
-                                            <!--<Path x:Name="Chevron"
-                                                  DockPanel.Dock="Left"
-                                                  Margin="2,0,6,0"
-                                                  Width="6"
-                                                  Height="9"
-                                                  Data="M 0,0 L 4,4 L 0,8 Z"
-                                                  Fill="#FF555555"
-                                                  Stretch="Uniform"
-                                                  VerticalAlignment="Center"
-                                                  RenderTransformOrigin="0.5,0.5" />-->
-
+                                    <Border Background="{TemplateBinding Background}" Padding="0,1,0,1">
+                                        <sdg:SimpleStackPanel Orientation="Horizontal"
+                                                              Margin="6,0,0,0"
+                                                              Spacing="8">
                                             <sdg:Icon x:Name="Chevron"
-                                                      DockPanel.Dock="Left"
-                                                      Width="10"
-                                                      Height="10"
-                                                      StrokeThickness="1.5"
-                                                      IconSource="{StaticResource {x:Static sdg:IconKeys.IconChevronRight}}" />
+                                                      VerticalAlignment="Center"
+                                                      Width="9"
+                                                      Height="9"
+                                                      Margin="0,1,0,0"
+                                                      IconSource="{StaticResource {x:Static sdg:IconKeys.IconChevronRight}}"
+                                                      RenderTransformOrigin="0.5,0.5">
+                                                <sdg:Icon.RenderTransform>
+                                                    <RotateTransform x:Name="ChevronRotate" Angle="0" />
+                                                </sdg:Icon.RenderTransform>
+                                            </sdg:Icon>
                                             <ContentPresenter VerticalAlignment="Center" />
                                         </sdg:SimpleStackPanel>
-                                    </Border>
-                                    <ControlTemplate.Triggers>
-                                        <Trigger Property="IsChecked" Value="True">
-                                            <Setter TargetName="Chevron" Property="IconSource" Value="{StaticResource {x:Static sdg:IconKeys.IconChevronDown}}" />
-                                        </Trigger>
-                                    </ControlTemplate.Triggers>
-                                </ControlTemplate>
-                            </ToggleButton.Template>
-                            <ContentPresenter Content="{TemplateBinding Header}"
-                                              ContentTemplate="{TemplateBinding HeaderTemplate}"
-                                              ContentTemplateSelector="{TemplateBinding HeaderTemplateSelector}" />
-                        </ToggleButton>
-                    </Grid>
-                </Border>
-                <ContentPresenter x:Name="ContentSite" Visibility="Collapsed" />
-            </DockPanel>
-        </Border>
-        <ControlTemplate.Triggers>
-            <Trigger Property="IsExpanded" Value="True">
-                <Setter TargetName="ContentSite" Property="Visibility" Value="Visible" />
-            </Trigger>
-        </ControlTemplate.Triggers>
-    </ControlTemplate>
-
-    <!--
-        Animated Expander template. Applied when SearchDataGrid.UseGroupExpansionAnimation
-        is true (see the DataTrigger on GroupExpanderStyle below). Mirrors
-        GroupExpanderTemplate's layout — same header indent via GroupHeaderMarginConverter,
-        same un-offset content area — and animates two things on expand/collapse: the
-        chevron rotates via a RotateTransform driven by the ToggleButton's IsChecked
-        trigger, and the content host's Height is animated between 0 and a viewport-bounded
-        natural height by sdg:GroupExpansionAnimator. The animator also flips the host's
-        Visibility for the steady collapsed state so the inner VirtualizingStackPanel
-        skips measure work while the group is hidden.
-    -->
-    <ControlTemplate x:Key="AnimatedGroupExpanderTemplate" TargetType="{x:Type Expander}">
-        <Border Background="{TemplateBinding Background}"
-                Padding="{TemplateBinding Padding}"
-                UseLayoutRounding="True"
-                SnapsToDevicePixels="True">
-            <DockPanel>
-                <!--
-                    Header row container. Carries the bottom divider so every group header gets
-                    a line directly under the chevron row, separating header chrome from content.
-                -->
-                <Border DockPanel.Dock="Top"
-                        BorderBrush="{TemplateBinding BorderBrush}"
-                        BorderThickness="{TemplateBinding BorderThickness}">
-                    <Grid>
-                        <!--
-                            Row-header gutter for the group header row, pinned at the grid's
-                            x=0 with row-header chrome styling.
-                        -->
-                        <Border Background="#FFf9f9f9"
-                                BorderBrush="#FFd0d0d0"
-                                BorderThickness="0,0,1,0"
-                                HorizontalAlignment="Left"
-                                Width="{Binding RowHeaderActualWidth, RelativeSource={RelativeSource AncestorType={x:Type sdg:SearchDataGrid}}}"
-                                UseLayoutRounding="True"
-                                SnapsToDevicePixels="True" />
-                        <ToggleButton x:Name="HeaderToggle"
-                                      Background="Transparent"
-                                      BorderThickness="0"
-                                      IsChecked="{Binding IsExpanded, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}"
-                                      Focusable="False"
-                                      Cursor="Hand"
-                                      HorizontalAlignment="Stretch"
-                                      HorizontalContentAlignment="Left">
-                            <ToggleButton.Margin>
-                                <MultiBinding Converter="{StaticResource GroupHeaderMarginConverter}">
-                                    <Binding RelativeSource="{RelativeSource AncestorType={x:Type GroupItem}}" />
-                                    <Binding RelativeSource="{RelativeSource AncestorType={x:Type sdg:SearchDataGrid}}" Path="RowHeaderActualWidth" />
-                                    <Binding RelativeSource="{RelativeSource AncestorType={x:Type sdg:SearchDataGrid}}" Path="GroupIndentWidth" />
-                                </MultiBinding>
-                            </ToggleButton.Margin>
-                            <ToggleButton.Template>
-                                <ControlTemplate TargetType="{x:Type ToggleButton}">
-                                    <Border Background="{TemplateBinding Background}" Padding="2,3">
-                                        <DockPanel LastChildFill="True">
-                                            <Path x:Name="Chevron"
-                                                  DockPanel.Dock="Left"
-                                                  Fill="#FF555555"
-                                                  Data="M 0,0 L 4,4 L 0,8 Z"
-                                                  Margin="2,0,6,0"
-                                                  VerticalAlignment="Center"
-                                                  Width="6"
-                                                  Height="9"
-                                                  Stretch="Uniform"
-                                                  RenderTransformOrigin="0.5,0.5">
-                                                <Path.RenderTransform>
-                                                    <RotateTransform x:Name="ChevronRotate" Angle="0" />
-                                                </Path.RenderTransform>
-                                            </Path>
-                                            <ContentPresenter VerticalAlignment="Center" />
-                                        </DockPanel>
                                     </Border>
                                     <ControlTemplate.Triggers>
                                         <Trigger Property="IsChecked" Value="True">
@@ -316,8 +179,10 @@
 
     <!--
         Style applied to every group's Expander. The IsExpanded setter binds OneWay to the grid's
-        AutoExpandAllGroups, so each newly-materialized group starts with that initial state. The
-        UseGroupExpansionAnimation DataTrigger swaps in the animated template above when on.
+        AutoExpandAllGroups, so each newly-materialized group starts with that initial state.
+        Every Expander uses the single GroupExpanderTemplate above; the grid's
+        UseGroupExpansionAnimation is honored inside that template by sdg:GroupExpansionAnimator
+        (animate vs. snap) rather than by swapping templates here.
         Runtime AutoExpandAllGroups toggles are pushed actively by the grid (see
         OnAutoExpandAllGroupsChanged in SearchDataGrid.Grouping.cs) so already-realized groups
         also respond.
@@ -337,6 +202,11 @@
         <MenuItem Command="{x:Static commands:ContextMenuCommands.ExpandGroupCommand}"
                   CommandParameter="{Binding PlacementTarget, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}"
                   Header="Expand this group">
+            <MenuItem.Icon>
+                <sdg:Icon Width="14"
+                          Height="14"
+                          IconSource="{StaticResource {x:Static sdg:IconKeys.IconExpandGroups}}" />
+            </MenuItem.Icon>
             <MenuItem.Style>
                 <Style TargetType="{x:Type MenuItem}">
                     <Style.Triggers>
@@ -350,6 +220,11 @@
         <MenuItem Command="{x:Static commands:ContextMenuCommands.CollapseGroupCommand}"
                   CommandParameter="{Binding PlacementTarget, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}"
                   Header="Collapse this group">
+            <MenuItem.Icon>
+                <sdg:Icon Width="14"
+                          Height="14"
+                          IconSource="{StaticResource {x:Static sdg:IconKeys.IconCollapseGroups}}" />
+            </MenuItem.Icon>
             <MenuItem.Style>
                 <Style TargetType="{x:Type MenuItem}">
                     <Style.Triggers>
@@ -363,14 +238,32 @@
         <Separator />
         <MenuItem Command="{x:Static commands:ContextMenuCommands.ExpandAllAtLevelCommand}"
                   CommandParameter="{Binding PlacementTarget, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}"
-                  Header="Expand all at this level" />
+                  Header="Expand all at this level">
+            <MenuItem.Icon>
+                <sdg:Icon Width="14"
+                          Height="14"
+                          IconSource="{StaticResource {x:Static sdg:IconKeys.IconExpandGroups}}" />
+            </MenuItem.Icon>
+        </MenuItem>
         <MenuItem Command="{x:Static commands:ContextMenuCommands.CollapseAllAtLevelCommand}"
                   CommandParameter="{Binding PlacementTarget, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}"
-                  Header="Collapse all at this level" />
+                  Header="Collapse all at this level">
+            <MenuItem.Icon>
+                <sdg:Icon Width="14"
+                          Height="14"
+                          IconSource="{StaticResource {x:Static sdg:IconKeys.IconCollapseGroups}}" />
+            </MenuItem.Icon>
+        </MenuItem>
         <Separator />
         <MenuItem Command="{x:Static commands:ContextMenuCommands.UngroupAtLevelCommand}"
                   CommandParameter="{Binding PlacementTarget, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}"
-                  Header="Ungroup at this level" />
+                  Header="Ungroup at this level">
+            <MenuItem.Icon>
+                <sdg:Icon Width="14"
+                          Height="14"
+                          IconSource="{StaticResource {x:Static sdg:IconKeys.IconUngroup}}" />
+            </MenuItem.Icon>
+        </MenuItem>
     </ContextMenu>
 
     <Style x:Key="GroupExpanderStyle" TargetType="{x:Type Expander}">
@@ -393,7 +286,7 @@
             content area (data rows / nested groups) stays flush with the GroupItem's left edge.
             That keeps each DataGridRowHeader pinned at the grid's x=0 regardless of group depth.
         -->
-        <Setter Property="Template" Value="{StaticResource GroupExpanderTemplate}" />
+        <Setter Property="Template" Value="{StaticResource {x:Static sdg:ThemeKeys.GridSearchDataGridGroupExpanderTemplate}}" />
         <Setter Property="IsExpanded" Value="{Binding RelativeSource={RelativeSource AncestorType={x:Type sdg:SearchDataGrid}}, Path=AutoExpandAllGroups, Mode=OneWay}" />
         <Setter Property="Background" Value="#FFF3F3F3" />
         <Setter Property="BorderBrush" Value="#FFd0d0d0" />
@@ -401,12 +294,186 @@
         <Setter Property="Padding" Value="0" />
         <Setter Property="UseLayoutRounding" Value="True" />
         <Setter Property="SnapsToDevicePixels" Value="True" />
-        <Style.Triggers>
-            <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType={x:Type sdg:SearchDataGrid}}, Path=UseGroupExpansionAnimation}" Value="True">
-                <Setter Property="Template" Value="{StaticResource AnimatedGroupExpanderTemplate}" />
-            </DataTrigger>
-        </Style.Triggers>
     </Style>
+
+    <!--
+        Sticky group-header strip applied via implicit style to every FixedGroupHeadersPresenter.
+        The scroll-driven resolver (SearchDataGrid.FixedGroups.cs) populates ItemsSource with the
+        active group chain view-models (one per nesting level, outermost first). The ItemTemplate
+        mirrors the in-place group header's look: a chevron plus the entry's content routed through
+        GroupHeaderTemplateSelector — the SAME selector the in-place Expander uses — so a column's
+        custom GroupHeaderTemplate / GroupValueTemplate renders identically in the strip, falling
+        back to the shared DefaultGroupHeaderTemplate chrome (column-prefixed value + count chip on
+        the same #FFF3F3F3 / #FFd0d0d0 background). Chevron state reads through
+        FixedGroupEntryIsExpandedConverter (which walks entry.RepresentedGroupItem's inner
+        Expander.IsExpanded), and clicks fire ToggleFixedGroupCommand — that toggles the
+        underlying real expander AND requests a strip refresh so the chevron updates against
+        fresh entry instances on the next pass.
+        
+        Each pinned header is indented per nesting level via FixedGroupIndentConverter so its
+        chevron lines up exactly with the in-place header at the same depth.
+    -->
+    <sdg:FixedGroupIndentConverter x:Key="FixedGroupIndentConverter" />
+    <sdg:FixedGroupEntryIsExpandedConverter x:Key="FixedGroupEntryIsExpandedConverter" />
+
+    <ContextMenu x:Key="{x:Static sdg:ThemeKeys.GridSearchDataGridFixedGroupHeaderContextMenu}"
+                 AutomationProperties.AutomationId="cmuFixedGroupHeader"
+                 Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesContextMenu}}"
+                 x:Shared="False">
+        <MenuItem Command="{x:Static commands:ContextMenuCommands.ExpandFixedGroupCommand}"
+                  CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}"
+                  Header="Expand this group">
+            <MenuItem.Icon>
+                <sdg:Icon Width="14"
+                          Height="14"
+                          IconSource="{StaticResource {x:Static sdg:IconKeys.IconExpandGroups}}" />
+            </MenuItem.Icon>
+            <MenuItem.Style>
+                <Style TargetType="{x:Type MenuItem}">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}, Converter={StaticResource FixedGroupEntryIsExpandedConverter}}" Value="True">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </MenuItem.Style>
+        </MenuItem>
+        <MenuItem Command="{x:Static commands:ContextMenuCommands.CollapseFixedGroupCommand}"
+                  CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}"
+                  Header="Collapse this group">
+            <MenuItem.Icon>
+                <sdg:Icon Width="14"
+                          Height="14"
+                          IconSource="{StaticResource {x:Static sdg:IconKeys.IconCollapseGroups}}" />
+            </MenuItem.Icon>
+            <MenuItem.Style>
+                <Style TargetType="{x:Type MenuItem}">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}, Converter={StaticResource FixedGroupEntryIsExpandedConverter}}" Value="False">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </MenuItem.Style>
+        </MenuItem>
+        <Separator />
+        <MenuItem Command="{x:Static commands:ContextMenuCommands.ExpandAllAtFixedLevelCommand}"
+                  CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}"
+                  Header="Expand all at this level">
+            <MenuItem.Icon>
+                <sdg:Icon Width="14"
+                          Height="14"
+                          IconSource="{StaticResource {x:Static sdg:IconKeys.IconExpandGroups}}" />
+            </MenuItem.Icon>
+        </MenuItem>
+        <MenuItem Command="{x:Static commands:ContextMenuCommands.CollapseAllAtFixedLevelCommand}"
+                  CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}"
+                  Header="Collapse all at this level">
+            <MenuItem.Icon>
+                <sdg:Icon Width="14"
+                          Height="14"
+                          IconSource="{StaticResource {x:Static sdg:IconKeys.IconCollapseGroups}}" />
+            </MenuItem.Icon>
+        </MenuItem>
+        <Separator />
+        <MenuItem Command="{x:Static commands:ContextMenuCommands.UngroupAtFixedLevelCommand}"
+                  CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}"
+                  Header="Ungroup at this level">
+            <MenuItem.Icon>
+                <sdg:Icon Width="14"
+                          Height="14"
+                          IconSource="{StaticResource {x:Static sdg:IconKeys.IconUngroup}}" />
+            </MenuItem.Icon>
+        </MenuItem>
+    </ContextMenu>
+
+    <Style x:Key="{x:Static sdg:ThemeKeys.GridSearchDataGridFixedGroupHeadersPresenter}" TargetType="{x:Type sdg:FixedGroupHeadersPresenter}">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="UseLayoutRounding" Value="True" />
+        <Setter Property="SnapsToDevicePixels" Value="True" />
+        <Setter Property="ItemsPanel">
+            <Setter.Value>
+                <ItemsPanelTemplate>
+                    <StackPanel Orientation="Vertical" />
+                </ItemsPanelTemplate>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="ItemTemplate">
+            <Setter.Value>
+                <DataTemplate DataType="{x:Type sdg:FixedGroupHeaderEntry}">
+                    <Border Background="#FFF3F3F3"
+                            BorderBrush="#FFd0d0d0"
+                            BorderThickness="0,0,0,1"
+                            ContextMenu="{StaticResource {x:Static sdg:ThemeKeys.GridSearchDataGridFixedGroupHeaderContextMenu}}"
+                            UseLayoutRounding="True"
+                            SnapsToDevicePixels="True">
+                        <Grid>
+                            <Border Background="#FFf9f9f9"
+                                    BorderBrush="#FFd0d0d0"
+                                    BorderThickness="0,0,1,0"
+                                    Margin="0,0,0,0"
+                                    HorizontalAlignment="Left"
+                                    Width="{Binding RowHeaderActualWidth, RelativeSource={RelativeSource AncestorType={x:Type sdg:SearchDataGrid}}}"
+                                    UseLayoutRounding="True"
+                                    SnapsToDevicePixels="True" />
+                            <Button Background="Transparent"
+                                    BorderThickness="0"
+                                    Focusable="False"
+                                    Cursor="Hand"
+                                    Command="{x:Static commands:ContextMenuCommands.ToggleFixedGroupCommand}"
+                                    CommandParameter="{Binding}"
+                                    HorizontalAlignment="Stretch"
+                                    HorizontalContentAlignment="Left">
+                                <Button.Margin>
+                                    <MultiBinding Converter="{StaticResource FixedGroupIndentConverter}">
+                                        <Binding Path="Level" />
+                                        <Binding RelativeSource="{RelativeSource AncestorType={x:Type sdg:SearchDataGrid}}" Path="RowHeaderActualWidth" />
+                                        <Binding RelativeSource="{RelativeSource AncestorType={x:Type sdg:SearchDataGrid}}" Path="GroupIndentWidth" />
+                                    </MultiBinding>
+                                </Button.Margin>
+                                <Button.Template>
+                                    <ControlTemplate TargetType="{x:Type Button}">
+                                        <Border Background="{TemplateBinding Background}">
+                                            <sdg:SimpleStackPanel Orientation="Horizontal"
+                                                                  Margin="6,0,0,0"
+                                                                  Spacing="8">
+                                                <sdg:Icon x:Name="Chevron"
+                                                          VerticalAlignment="Center"
+                                                          Width="9"
+                                                          Height="9"
+                                                          IconSource="{StaticResource {x:Static sdg:IconKeys.IconChevronRight}}" />
+                                                <ContentControl VerticalAlignment="Center"
+                                                                Content="{Binding}"
+                                                                ContentTemplateSelector="{StaticResource GroupHeaderTemplateSelector}" />
+                                            </sdg:SimpleStackPanel>
+                                        </Border>
+                                        <ControlTemplate.Triggers>
+                                            <DataTrigger Binding="{Binding Converter={StaticResource FixedGroupEntryIsExpandedConverter}}" Value="True">
+                                                <Setter TargetName="Chevron" Property="IconSource" Value="{StaticResource {x:Static sdg:IconKeys.IconChevronDown}}" />
+                                            </DataTrigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </Button.Template>
+                            </Button>
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type sdg:FixedGroupHeadersPresenter}">
+                    <Border Background="{TemplateBinding Background}"
+                            UseLayoutRounding="True"
+                            SnapsToDevicePixels="True">
+                        <ItemsPresenter />
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style BasedOn="{StaticResource {x:Static sdg:ThemeKeys.GridSearchDataGridFixedGroupHeadersPresenter}}" TargetType="{x:Type sdg:FixedGroupHeadersPresenter}" />
 
     <GroupStyle x:Key="{x:Static sdg:ThemeKeys.GridSearchDataGridGroupStyle}">
         <GroupStyle.ContainerStyle>
@@ -414,18 +481,6 @@
                 <Setter Property="Template">
                     <Setter.Value>
                         <ControlTemplate TargetType="{x:Type GroupItem}">
-                            <!--
-                                Expander.Header bound to the CollectionViewGroup itself, with
-                                HeaderTemplateSelector resolving the whole-header template per
-                                grouped column (column.GroupHeaderTemplate wins, else
-                                DefaultGroupHeaderTemplate — which in turn defers to
-                                GroupValueTemplateSelector for the value slot). The Expander
-                                spans the full GroupItem width (no horizontal margin) so its
-                                content area — the data rows below — renders flush with the
-                                grid's left edge, leaving each DataGridRowHeader pinned at x=0.
-                                Per-level indent is applied to the header (chevron + label) only,
-                                inside the Expander template via GroupHeaderMarginConverter.
-                            -->
                             <Expander Style="{StaticResource GroupExpanderStyle}"
                                       Header="{Binding}"
                                       HeaderTemplateSelector="{StaticResource GroupHeaderTemplateSelector}">

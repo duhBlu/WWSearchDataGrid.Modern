@@ -252,6 +252,39 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
+        /// When <c>true</c>, the group header(s) for the topmost visible row stay pinned to the
+        /// top of the data area as the grid scrolls vertically — nested groups stack their headers
+        /// in <see cref="GridColumn.GroupLevel"/> order. As the next sibling group's in-place
+        /// header rises into the strip, the topmost pinned header slides up to make room (push
+        /// transition). Default <c>false</c>. The strip itself is rendered by
+        /// <see cref="FixedGroupHeadersPresenter"/> and only materializes when this is true
+        /// AND <see cref="GroupCount"/> &gt; 0.
+        /// </summary>
+        public static readonly DependencyProperty AllowFixedGroupsProperty =
+            DependencyProperty.Register(
+                nameof(AllowFixedGroups),
+                typeof(bool),
+                typeof(SearchDataGrid),
+                new PropertyMetadata(true, OnAllowFixedGroupsChanged));
+
+        /// <inheritdoc cref="AllowFixedGroupsProperty"/>
+        public bool AllowFixedGroups
+        {
+            get => (bool)GetValue(AllowFixedGroupsProperty);
+            set => SetValue(AllowFixedGroupsProperty, value);
+        }
+
+        private static void OnAllowFixedGroupsChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            if (d is not SearchDataGrid grid) return;
+            // Run the resolver once now so the strip reflects the new state immediately. Toggling
+            // on: it populates without waiting for the next scroll. Toggling off: the resolver's own
+            // gate clears the backing collection, so the (then-empty) strip hides via its Visibility
+            // binding. Scroll-driven updates thereafter come from OnScrollViewerScrollChanged.
+            grid.UpdateFixedGroupHeaders();
+        }
+
+        /// <summary>
         /// Backing collection for <see cref="GroupedColumns"/>. Maintained by
         /// <see cref="RebuildGroupDescriptions"/> as the ordered (by <see cref="GridColumn.GroupLevel"/>)
         /// set of currently-grouped descriptors. Exposed as <see cref="ObservableCollection{T}"/>
@@ -535,25 +568,48 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
-        /// Expands every realized group's expander. Clears the per-group persistence map first so
-        /// the explicit "all" instruction overrides earlier per-group toggles when virtualized
-        /// groups realize later.
+        /// Expands every group's expander, including currently-virtualized groups. Routes through
+        /// <see cref="AutoExpandAllGroups"/> so the Style binding's default flips with the call —
+        /// when a virtualized group later realizes, its initial <see cref="Expander.IsExpanded"/>
+        /// reflects the new default (the persistence map, cleared by the change handler, no
+        /// longer holds an override). When the property is already at the target value the
+        /// change handler won't fire, so the walk runs directly to catch any groups the user
+        /// has toggled since the last call.
         /// </summary>
-        public void ExpandAllGroups()
-        {
-            _groupExpandState.Clear();
-            SetAllGroupsExpanded(true);
-        }
+        public void ExpandAllGroups() => SetAllGroupsExpandedAndDefault(true);
 
         /// <summary>
-        /// Collapses every realized group's expander. Clears the per-group persistence map first
-        /// so the explicit "all" instruction overrides earlier per-group toggles when virtualized
-        /// groups realize later.
+        /// Collapses every group's expander, including currently-virtualized groups. Routes
+        /// through <see cref="AutoExpandAllGroups"/> so the Style binding's default flips with
+        /// the call — when a virtualized group later realizes, its initial
+        /// <see cref="Expander.IsExpanded"/> reflects the new default. See
+        /// <see cref="ExpandAllGroups"/> for the symmetric details on map clearing and the
+        /// already-at-target fall-through.
         /// </summary>
-        public void CollapseAllGroups()
+        public void CollapseAllGroups() => SetAllGroupsExpandedAndDefault(false);
+
+        /// <summary>
+        /// Shared body for <see cref="ExpandAllGroups"/> / <see cref="CollapseAllGroups"/>.
+        /// Flips <see cref="AutoExpandAllGroups"/> when needed (the change handler clears the
+        /// persistence map and walks realized expanders); when the property is already at
+        /// <paramref name="expanded"/> the handler won't fire, so the work runs here directly.
+        /// </summary>
+        private void SetAllGroupsExpandedAndDefault(bool expanded)
         {
+            if (AutoExpandAllGroups != expanded)
+            {
+                // OnAutoExpandAllGroupsChanged clears the persistence map and pushes the new
+                // state to every realized expander; newly-realized (virtualized) groups pick
+                // up the changed default through their Style binding.
+                SetCurrentValue(AutoExpandAllGroupsProperty, expanded);
+                return;
+            }
+
+            // Property unchanged — the change handler won't fire. Clear the map and push the
+            // state to realized groups explicitly so a repeat call still collapses groups the
+            // user has expanded manually since the last "all" instruction.
             _groupExpandState.Clear();
-            SetAllGroupsExpanded(false);
+            SetAllGroupsExpanded(expanded);
         }
 
         /// <summary>
@@ -720,6 +776,13 @@ namespace WWSearchDataGrid.Modern.WPF
             {
                 _rebuildingGroups = false;
             }
+
+            // Grouping just changed — the sticky strip's active chain may now have more, fewer, or
+            // wholly-different entries (columns added/removed, GroupLevel renormalized). Run the
+            // resolver once; it bails out cheaply when AllowFixedGroups=false. Called outside the
+            // _rebuildingGroups try/finally so the resolver's own visual-tree walk doesn't see a
+            // half-applied state. Scroll-driven updates thereafter come from OnScrollViewerScrollChanged.
+            UpdateFixedGroupHeaders();
         }
 
         /// <summary>

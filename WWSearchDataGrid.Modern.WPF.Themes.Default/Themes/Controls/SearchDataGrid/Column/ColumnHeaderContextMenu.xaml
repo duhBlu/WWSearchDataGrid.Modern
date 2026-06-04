@@ -73,7 +73,13 @@
         <MenuItem x:Name="miGroupByColumn"
                   Command="{x:Static commands:ContextMenuCommands.GroupByColumnCommand}"
                   CommandParameter="{Binding}"
-                  Header="Group By This Column" />
+                  Header="Group By This Column">
+            <MenuItem.Icon>
+                <sdg:Icon Width="14"
+                             Height="14"
+                             IconSource="{StaticResource {x:Static sdg:IconKeys.IconGroup}}" />
+            </MenuItem.Icon>
+        </MenuItem>
         <MenuItem x:Name="miToggleGroupPanel"
                   Command="{x:Static commands:ContextMenuCommands.ToggleGroupPanelVisibilityCommand}"
                   CommandParameter="{Binding Grid}">

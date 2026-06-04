@@ -125,8 +125,23 @@ namespace WWSearchDataGrid.Modern.WPF
         /// <summary>Unpin the column, returning it to the scrollable region.</summary>
         public static ComponentResourceKey IconUnpin { get; } =
             new ComponentResourceKey(typeof(IconKeys), nameof(IconUnpin));
-        
-        
+
+        /// <summary>Group the rows by this column — column header / group-panel action.</summary>
+        public static ComponentResourceKey IconGroup { get; } =
+            new ComponentResourceKey(typeof(IconKeys), nameof(IconGroup));
+
+        /// <summary>Remove the column from the grouping — column header / group-panel action.</summary>
+        public static ComponentResourceKey IconUngroup { get; } =
+            new ComponentResourceKey(typeof(IconKeys), nameof(IconUngroup));
+
+        /// <summary>Expand every group in the grid — group-panel "Expand All" action.</summary>
+        public static ComponentResourceKey IconExpandGroups { get; } =
+            new ComponentResourceKey(typeof(IconKeys), nameof(IconExpandGroups));
+      
+        /// <summary>Collapse every group in the grid — group-panel "Collapse All" action.</summary>
+        public static ComponentResourceKey IconCollapseGroups { get; } =
+            new ComponentResourceKey(typeof(IconKeys), nameof(IconCollapseGroups));
+
         public static ComponentResourceKey IconAddCondition { get; } =
             new ComponentResourceKey(typeof(IconKeys), nameof(IconAddCondition));
         

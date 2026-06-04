@@ -582,6 +582,11 @@ namespace WWSearchDataGrid.Modern.WPF
             // GroupedColumns DP so the group panel can bind to it directly.
             SetValue(GroupedColumnsPropertyKey, _groupedColumnsBacking);
 
+            // Same pattern for the sticky-strip's chain of pinned-header view-models maintained
+            // by the active-chain resolver (SearchDataGrid.FixedGroups.cs). The
+            // FixedGroupHeadersPresenter binds its ItemsSource to this collection.
+            SetValue(FixedGroupHeadersPropertyKey, _fixedGroupHeadersBacking);
+
             // Initialize context menu functionality
             this.InitializeContextMenu();
 

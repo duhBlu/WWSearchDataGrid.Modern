@@ -99,8 +99,11 @@ See `MIGRATION_PLAN.md` for the full category map.
 
 ### Cascade Update + Allow Fixed Groups  *(Performance › Vertical Scrolling Options)*
 - [ ] Library: Cascade Update behavior.
-- [ ] Library: Allow Fixed Groups while scrolling (depends on Grouping).
-- [ ] Sample: enable the two greyed toggles in `ScrollingAnimationSampleView`.
+- [x] Library: Allow Fixed Groups while scrolling (depends on Grouping).
+- [x] Sample: Allow Fixed Groups toggle lives with the rest of the grouping options in
+      `BasicGroupingSampleView` (Data Shaping › Grouping). The legacy intent to host it in
+      `ScrollingAnimationSampleView` is dropped — the strip's behavior is grouping-shaped, not
+      scrolling-shaped. Cascade Update toggle still pending.
 
 ---
 

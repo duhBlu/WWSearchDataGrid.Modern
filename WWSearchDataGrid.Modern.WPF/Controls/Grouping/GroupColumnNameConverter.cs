@@ -16,6 +16,12 @@ namespace WWSearchDataGrid.Modern.WPF
     /// <remarks>
     /// Inputs (in order):
     /// <list type="number">
+    ///   <item><c>DataContext</c> — the header's data item (binding source = <c>{Binding}</c>).
+    ///         When it is a <see cref="FixedGroupHeaderEntry"/> (the pinned strip, which has no
+    ///         <see cref="GroupItem"/> ancestor to walk), the converter reads the caption straight
+    ///         off <see cref="FixedGroupHeaderEntry.Column"/> and ignores the remaining inputs.
+    ///         For an in-place header (a <see cref="System.Windows.Data.CollectionViewGroup"/>)
+    ///         it falls through to the ancestor-walk path below.</item>
     ///   <item><see cref="GroupItem"/> — the originating group container (binding source =
     ///         <c>RelativeSource AncestorType=GroupItem</c>); the converter counts its
     ///         <see cref="GroupItem"/> ancestors (inclusive) to derive the group's nesting level
@@ -35,17 +41,24 @@ namespace WWSearchDataGrid.Modern.WPF
     {
         public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
         {
-            if (values == null || values.Length < 2) return string.Empty;
-            if (values[0] is not GroupItem groupItem) return string.Empty;
-            if (values[1] is not SearchDataGrid grid) return string.Empty;
+            if (values == null || values.Length < 1) return string.Empty;
+
+            // Pinned-strip header: the entry carries its owning column directly.
+            if (values[0] is FixedGroupHeaderEntry entry)
+                return Format(entry.Column?.HeaderCaption);
+
+            if (values.Length < 3) return string.Empty;
+            if (values[1] is not GroupItem groupItem) return string.Empty;
+            if (values[2] is not SearchDataGrid grid) return string.Empty;
 
             int level = CountGroupItemAncestors(groupItem) - 1;
             if (level < 0) return string.Empty;
 
-            var column = grid.GetGroupedColumnAtLevel(level);
-            var caption = column?.HeaderCaption;
-            return string.IsNullOrEmpty(caption) ? string.Empty : caption + ": ";
+            return Format(grid.GetGroupedColumnAtLevel(level)?.HeaderCaption);
         }
+
+        private static string Format(string caption)
+            => string.IsNullOrEmpty(caption) ? string.Empty : caption + ": ";
 
         public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)
             => null;
