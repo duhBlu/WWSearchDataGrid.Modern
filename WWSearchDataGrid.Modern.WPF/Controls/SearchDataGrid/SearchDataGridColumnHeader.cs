@@ -47,10 +47,55 @@ namespace WWSearchDataGrid.Modern.WPF
         // Captured in OnPreviewMouseLeftButtonDown, consulted (and reset) in OnClick.
         private bool _clickFromChildButton;
 
+        // Drag-to-group state: where the mouse came down, whether we've already started a drag
+        // for this gesture (so we don't keep firing DoDragDrop on every subsequent MouseMove).
+        private Point? _dragStartPoint;
+        private bool _dragStarted;
+
         protected override void OnPreviewMouseLeftButtonDown(MouseButtonEventArgs e)
         {
             _clickFromChildButton = IsClickFromChildButton(e.OriginalSource as DependencyObject);
+            // Capture the starting point so PreviewMouseMove can decide whether the gesture is
+            // an upward drag toward the group panel (start a DragDrop) vs. a click or sideways
+            // drag (let the base header handle sort / reorder).
+            _dragStartPoint = e.GetPosition(this);
+            _dragStarted = false;
             base.OnPreviewMouseLeftButtonDown(e);
+        }
+
+        protected override void OnPreviewMouseMove(MouseEventArgs e)
+        {
+            base.OnPreviewMouseMove(e);
+            if (_dragStarted) return;
+            if (_dragStartPoint is not Point start) return;
+            if (e.LeftButton != MouseButtonState.Pressed) return;
+
+            var current = e.GetPosition(this);
+            double dx = current.X - start.X;
+            double dy = current.Y - start.Y;
+
+            // Upward drag past the system drag threshold = the user is pulling the column out of
+            // the header strip toward the group panel. Sideways drags (column reorder) and short
+            // gestures (clicks) are left untouched so the base header behavior keeps working.
+            if (dy < -SystemParameters.MinimumVerticalDragDistance
+                && System.Math.Abs(dy) > System.Math.Abs(dx))
+            {
+                var grid = VisualTreeHelperMethods.FindVisualAncestor<SearchDataGrid>(this);
+                var descriptor = grid?.FindGridColumnDescriptor(Column);
+                if (descriptor != null && descriptor.ActualAllowGrouping)
+                {
+                    _dragStarted = true;
+                    var data = new DataObject(GroupPanel.DragDataFormat, descriptor);
+                    DragDrop.DoDragDrop(this, data, DragDropEffects.Move);
+                }
+            }
+        }
+
+        protected override void OnPreviewMouseLeftButtonUp(MouseButtonEventArgs e)
+        {
+            base.OnPreviewMouseLeftButtonUp(e);
+            _dragStartPoint = null;
+            _dragStarted = false;
         }
 
         /// <summary>

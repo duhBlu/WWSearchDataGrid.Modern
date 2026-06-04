@@ -40,6 +40,13 @@ namespace WWSearchDataGrid.Modern.WPF.Display
             if (!string.IsNullOrEmpty(descriptor.DisplayStringFormat))
                 return new StringFormatDisplayProvider(descriptor.DisplayStringFormat);
 
+            // Priority 4b: Date-specific display format used when the column rounds dates to
+            // date-only. Lower priority than the general DisplayStringFormat; mirrors the
+            // fallback order in ColumnDataBase.ResolveEffectiveDisplayFormat / CreateBinding so
+            // the cell, the filter chip, and copy commands all render the same string.
+            if (!string.IsNullOrEmpty(descriptor.RoundDateDisplayFormat))
+                return new StringFormatDisplayProvider(descriptor.RoundDateDisplayFormat);
+
             // Priority 5: ComboBoxEditSettings lookup. A column whose editor is a ComboBox with
             // a DisplayMemberPath wants its filter popup / chips / copy commands to show the
             // display name rather than the raw id (or raw item ToString). Only kicks in when

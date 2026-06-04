@@ -12,10 +12,13 @@
         <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF.Themes.Default;component/Themes/Controls/SearchDataGrid/Cell/DataGridCell.xaml" />
         <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF.Themes.Default;component/Themes/Controls/SearchDataGrid/Row/DataGridRow.xaml" />
         <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF.Themes.Default;component/Themes/Controls/SearchDataGrid/Column/DataGridColumnHeader.xaml" />
+        <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF.Themes.Default;component/Themes/Controls/SearchDataGrid/Grid/GroupStyle.xaml" />
+        <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF.Themes.Default;component/Themes/Controls/SearchDataGrid/Grid/GroupPanel.xaml" />
     </ResourceDictionary.MergedDictionaries>
 
     <converters:NullOrEmptyToBooleanConverter x:Key="NullOrEmptyToBooleanConverter" />
     <converters:FilterRowVisibilityConverter x:Key="FilterRowVisibilityConverter" />
+    <converters:BooleanToVisibilityCollapsedConverter x:Key="BooleanToVisibilityCollapsedConverter" />
 
     <Style x:Key="{x:Static sdg:ThemeKeys.GridSearchDataGrid}" TargetType="{x:Type sdg:SearchDataGrid}">
         <Setter Property="CellStyle" Value="{StaticResource {x:Static sdg:ThemeKeys.GridSearchDataGridCell}}" />
@@ -29,11 +32,22 @@
                             BorderThickness="{TemplateBinding BorderThickness}">
                         <Grid ClipToBounds="True">
                             <Grid.RowDefinitions>
+                                <!-- Group panel strip (collapsed when IsGroupPanelVisible=false) -->
+                                <RowDefinition Height="Auto" />
                                 <RowDefinition Height="*" />
                                 <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
+                            <!--
+                                Group Panel — stair-stepped pills for grouped columns. Sits
+                                outside the ScrollViewer so it stays fixed during horizontal
+                                scroll. Collapsed by default; IsGroupPanelVisible toggles it.
+                            -->
+                            <sdg:GroupPanel x:Name="PART_GroupPanel"
+                                            Grid.Row="0"
+                                            ItemsSource="{Binding GroupedColumns, RelativeSource={RelativeSource AncestorType={x:Type sdg:SearchDataGrid}}}"
+                                            Visibility="{Binding IsGroupPanelVisible, RelativeSource={RelativeSource AncestorType={x:Type sdg:SearchDataGrid}}, Converter={StaticResource BooleanToVisibilityCollapsedConverter}}" />
                             <ScrollViewer x:Name="DG_ScrollViewer"
-                                          Grid.Row="0"
+                                          Grid.Row="1"
                                           Focusable="false"
                                           Padding="0,0,1,1"
                                           sdg:HorizontalScrollBehavior.EnableShiftMouseWheelScroll="True"
@@ -82,13 +96,13 @@
                                                     </MultiBinding>
                                                 </Border.Visibility>
                                                 <sdg:Icon Width="12"
-                                                             Height="12"
-                                                             IconSource="{StaticResource {x:Static sdg:IconKeys.IconFilter}}"
-                                                             IconBrush="Gray" />
+                                                          Height="12"
+                                                          IconSource="{StaticResource {x:Static sdg:IconKeys.IconFilter}}"
+                                                          IconBrush="Gray" />
                                             </Border>
 
                                             <!--
-                                                Column Headers. The custom header type carries the OnClick 
+                                                Column Headers. The custom header type carries the OnClick
                                                 override that suppresses sort when the click originated on an
                                                 interactive child (the filter-popup button).
                                             -->
@@ -218,6 +232,45 @@
                                                     </Style>
                                                 </Border.Style>
                                             </Border>
+                                            <!-- Bottom Border of the grid when content extends offscreen -->
+                                            <Border Grid.Row="3"
+                                                    Grid.ColumnSpan="2"
+                                                    BorderBrush="#FFd0d0d0"
+                                                    BorderThickness="0,1,0,0"
+                                                    Margin="0,0,0,-1">
+                                                <Border.Style>
+                                                    <Style TargetType="Border">
+                                                        <Setter Property="Visibility" Value="Collapsed" />
+                                                        <Style.Triggers>
+                                                            <MultiDataTrigger>
+                                                                <MultiDataTrigger.Conditions>
+                                                                    <Condition Binding="{Binding ComputedVerticalScrollBarVisibility, RelativeSource={RelativeSource TemplatedParent}}" Value="Visible" />
+                                                                    <Condition Binding="{Binding ComputedHorizontalScrollBarVisibility, RelativeSource={RelativeSource TemplatedParent}}" Value="Collapsed" />
+                                                                </MultiDataTrigger.Conditions>
+                                                                <Setter Property="Visibility" Value="Visible" />
+                                                            </MultiDataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Border.Style>
+                                            </Border>
+                                            
+                                            <!-- Right  Border of the grid when content extends offscreen -->
+                                            <Border Grid.RowSpan="3"
+                                                    Grid.Column="3"
+                                                    BorderBrush="#FFd0d0d0"
+                                                    BorderThickness="0,0,1,0"
+                                                    Margin="0,0,-1,0">
+                                                <Border.Style>
+                                                    <Style TargetType="Border">
+                                                        <Setter Property="Visibility" Value="Collapsed" />
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding ComputedVerticalScrollBarVisibility, RelativeSource={RelativeSource TemplatedParent}}" Value="Collapsed" >
+                                                                <Setter Property="Visibility" Value="Visible" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Border.Style>
+                                            </Border>
                                         </Grid>
                                     </ControlTemplate>
                                 </ScrollViewer.Template>
@@ -227,7 +280,7 @@
                             <!--  FilterSummaryPanel  -->
                             <sdg:FilterSummaryPanel x:Name="PART_FilterSummaryPanel"
                                                     Style="{StaticResource {x:Static sdg:ThemeKeys.FilterSummaryPanel}}"
-                                                    Grid.Row="1" />
+                                                    Grid.Row="2" />
                         </Grid>
                     </Border>
                 </ControlTemplate>

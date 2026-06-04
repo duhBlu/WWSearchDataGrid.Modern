@@ -5,6 +5,7 @@ using System.Reflection;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
+using System.Windows.Input;
 using WWSearchDataGrid.Modern.Core.Display;
 
 namespace WWSearchDataGrid.Modern.WPF
@@ -61,6 +62,53 @@ namespace WWSearchDataGrid.Modern.WPF
         {
             if (d is ColumnDataBase col)
                 col.RefreshHeaderCaption();
+        }
+
+        // Deliberately a plain CLR property, NOT a DependencyProperty. WPF's Binding markup
+        // extension assigns the Binding *object* as a literal only when the target is a CLR
+        // property of type BindingBase; against a DependencyProperty it would instead establish a
+        // BindingExpression (binding this property to the column's DataContext), so XAML like
+        // Binding="{Binding Id}" would never reach the setter as a Binding. This mirrors stock
+        // WPF's DataGridBoundColumn.Binding, which is a CLR property for exactly this reason.
+        private BindingBase _binding;
+
+        /// <summary>
+        /// Gets or sets an explicit binding for the cell's value. When set, it overrides the
+        /// binding auto-generated from <see cref="FieldName"/> for the displayed and edited cell
+        /// value only — <see cref="FieldName"/> stays the column's identity key and continues to
+        /// drive sorting, filtering, validation, read-only resolution, and the header fallback.
+        /// When no <see cref="FieldName"/> is set, the binding's path becomes the identity (so a
+        /// binding-only <c>Binding="{Binding Id}"</c> column still sorts/filters); a nested path,
+        /// different source, or converter is honored for the cell value.
+        /// <para>
+        /// A single <see cref="System.Windows.Data.Binding"/> has the column's
+        /// <see cref="DisplayStringFormat"/> / <see cref="DisplayValueConverter"/> layered onto any
+        /// slot it leaves empty. A <see cref="MultiBinding"/> / <see cref="PriorityBinding"/> is
+        /// taken verbatim for the read-only / bound-column display and the clipboard value;
+        /// template-column editors fall back to <see cref="FieldName"/> for the editable binding
+        /// (a multi-binding has no single editable path). Read at column-generation time, mirroring
+        /// <see cref="FieldName"/>.
+        /// </para>
+        /// </summary>
+        public BindingBase Binding
+        {
+            get => _binding;
+            set
+            {
+                _binding = value;
+
+                // Binding-only columns (an explicit Binding with no FieldName, e.g.
+                // <GridColumn Binding="{Binding Id}"/> or a runtime-added column over an
+                // ExpandoObject source) adopt the binding's path as their identity so sorting,
+                // filtering, validation, and the header fallback all work. An explicitly-set
+                // FieldName always wins and is left untouched.
+                if (string.IsNullOrEmpty(FieldName)
+                    && value is Binding b
+                    && !string.IsNullOrEmpty(b.Path?.Path))
+                {
+                    FieldName = b.Path.Path;
+                }
+            }
         }
 
         /// <summary>
@@ -274,6 +322,28 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
+        /// Gets or sets whether clipboard copy operations emit this column's formatted
+        /// display text (<c>true</c>, default) or its raw editing value (<c>false</c>).
+        /// The copy commands always run the cell through the column's display pipeline
+        /// (<see cref="DisplayMask"/> / <see cref="DisplayValueConverter"/> /
+        /// <see cref="DisplayStringFormat"/> / ComboBox lookup); setting this <c>false</c>
+        /// bypasses that and copies the underlying value's <c>ToString()</c> — useful when
+        /// the display layer masks an id or code the consumer actually wants to paste.
+        /// </summary>
+        public static readonly DependencyProperty CopyValueAsDisplayTextProperty =
+            DependencyProperty.Register(
+                nameof(CopyValueAsDisplayText),
+                typeof(bool),
+                typeof(ColumnDataBase),
+                new PropertyMetadata(true));
+
+        public bool CopyValueAsDisplayText
+        {
+            get => (bool)GetValue(CopyValueAsDisplayTextProperty);
+            set => SetValue(CopyValueAsDisplayTextProperty, value);
+        }
+
+        /// <summary>
         /// Gets or sets how cell content aligns horizontally within its editor element. Routes to
         /// the inner control's text-alignment property — <see cref="TextBlock.TextAlignmentProperty"/>
         /// / <see cref="TextBox.TextAlignmentProperty"/> for text editors,
@@ -350,6 +420,129 @@ namespace WWSearchDataGrid.Modern.WPF
             get => (bool)GetValue(AllowFilterPopupProperty);
             set => SetValue(AllowFilterPopupProperty, value);
         }
+
+        #region Auto-Filter Row State
+
+        /// <summary>
+        /// Column-level override for the grid's <see cref="SearchDataGrid.EnableLiveFiltering"/>.
+        /// <c>null</c> (default) inherits the grid value; <c>true</c>/<c>false</c> overrides it for
+        /// this column only — <c>true</c> applies filter-row edits as they happen, <c>false</c>
+        /// defers them until commit (Enter / Tab / focus loss). The resolved value is exposed by
+        /// <see cref="ActualEnableLiveFiltering"/> and consumed by
+        /// <c>ColumnFilterControl.EffectiveIsLiveFilteringEnabled</c>. Named to match the grid DP
+        /// rather than the DevExpress <c>ImmediateUpdateAutoFilter</c> spelling, by team convention.
+        /// </summary>
+        public static readonly DependencyProperty EnableLiveFilteringProperty =
+            DependencyProperty.Register(
+                nameof(EnableLiveFiltering),
+                typeof(bool?),
+                typeof(ColumnDataBase),
+                new PropertyMetadata(null, OnEnableLiveFilteringChanged));
+
+        public bool? EnableLiveFiltering
+        {
+            get => (bool?)GetValue(EnableLiveFilteringProperty);
+            set => SetValue(EnableLiveFilteringProperty, value);
+        }
+
+        private static readonly DependencyPropertyKey ActualEnableLiveFilteringPropertyKey =
+            DependencyProperty.RegisterReadOnly(
+                nameof(ActualEnableLiveFiltering),
+                typeof(bool),
+                typeof(ColumnDataBase),
+                new PropertyMetadata(true));
+
+        public static readonly DependencyProperty ActualEnableLiveFilteringProperty = ActualEnableLiveFilteringPropertyKey.DependencyProperty;
+
+        /// <summary>
+        /// Resolved live-filtering state for this column: the explicit <see cref="EnableLiveFiltering"/>
+        /// when set, otherwise the grid-level <see cref="SearchDataGrid.EnableLiveFiltering"/>
+        /// (defaulting to <c>true</c> when no grid is attached).
+        /// </summary>
+        public bool ActualEnableLiveFiltering => (bool)GetValue(ActualEnableLiveFilteringProperty);
+
+        /// <summary>
+        /// Resolves the effective live-filtering value — column override first, then the grid,
+        /// then <c>true</c>. The single source of truth read by both
+        /// <see cref="RefreshActualEnableLiveFiltering"/> and <c>ColumnFilterControl</c> (which
+        /// calls this directly to avoid any staleness in the mirror DP).
+        /// </summary>
+        internal bool ResolveEffectiveEnableLiveFiltering()
+            => EnableLiveFiltering ?? View?.EnableLiveFiltering ?? true;
+
+        /// <summary>
+        /// Recomputes <see cref="ActualEnableLiveFiltering"/>. Called when the column override
+        /// changes, when the column attaches to a grid (<see cref="OnViewChanged"/>), and when the
+        /// grid's <see cref="SearchDataGrid.EnableLiveFiltering"/> changes (the grid walks columns).
+        /// </summary>
+        internal void RefreshActualEnableLiveFiltering()
+            => SetValue(ActualEnableLiveFilteringPropertyKey, ResolveEffectiveEnableLiveFiltering());
+
+        private static void OnEnableLiveFilteringChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            if (d is ColumnDataBase col)
+                col.RefreshActualEnableLiveFiltering();
+        }
+
+        private static readonly DependencyPropertyKey AutoFilterValuePropertyKey =
+            DependencyProperty.RegisterReadOnly(
+                nameof(AutoFilterValue),
+                typeof(object),
+                typeof(ColumnDataBase),
+                new PropertyMetadata(null));
+
+        public static readonly DependencyProperty AutoFilterValueProperty = AutoFilterValuePropertyKey.DependencyProperty;
+
+        /// <summary>
+        /// The value currently held by this column's auto-filter (filter row) cell — the typed
+        /// editor value, the text-box string, or the checkbox tri-state. Read-only; pushed by the
+        /// live <c>ColumnFilterControl</c> whenever the cell's filter state changes. <c>null</c>
+        /// when the cell is empty.
+        /// </summary>
+        public object AutoFilterValue => GetValue(AutoFilterValueProperty);
+
+        internal void SetAutoFilterValue(object value)
+            => SetValue(AutoFilterValuePropertyKey, value);
+
+        private static readonly DependencyPropertyKey AutoFilterConditionPropertyKey =
+            DependencyProperty.RegisterReadOnly(
+                nameof(AutoFilterCondition),
+                typeof(Core.SearchType),
+                typeof(ColumnDataBase),
+                new PropertyMetadata(Core.SearchType.Equals));
+
+        public static readonly DependencyProperty AutoFilterConditionProperty = AutoFilterConditionPropertyKey.DependencyProperty;
+
+        /// <summary>
+        /// The comparison operator (<see cref="Core.SearchType"/>) the auto-filter row currently
+        /// uses for this column — e.g. <c>Contains</c>, <c>StartsWith</c>, <c>Equals</c>. Read-only;
+        /// pushed by the live <c>ColumnFilterControl</c>. Seeded from <see cref="DefaultSearchType"/>.
+        /// </summary>
+        public Core.SearchType AutoFilterCondition => (Core.SearchType)GetValue(AutoFilterConditionProperty);
+
+        internal void SetAutoFilterCondition(Core.SearchType value)
+            => SetValue(AutoFilterConditionPropertyKey, value);
+
+        private static readonly DependencyPropertyKey AutoFilterHeaderStatePropertyKey =
+            DependencyProperty.RegisterReadOnly(
+                nameof(AutoFilterHeaderState),
+                typeof(AutoFilterHeaderState),
+                typeof(ColumnDataBase),
+                new PropertyMetadata(AutoFilterHeaderState.Empty));
+
+        public static readonly DependencyProperty AutoFilterHeaderStateProperty = AutoFilterHeaderStatePropertyKey.DependencyProperty;
+
+        /// <summary>
+        /// Aggregate semantic state of this column's auto-filter cell
+        /// (<see cref="WPF.AutoFilterHeaderState"/>: Empty / PendingInput / Active / Disabled /
+        /// Hidden). Read-only; pushed by the live <c>ColumnFilterControl</c>.
+        /// </summary>
+        public AutoFilterHeaderState AutoFilterHeaderState => (AutoFilterHeaderState)GetValue(AutoFilterHeaderStateProperty);
+
+        internal void SetAutoFilterHeaderState(AutoFilterHeaderState value)
+            => SetValue(AutoFilterHeaderStatePropertyKey, value);
+
+        #endregion
 
         /// <summary>
         /// Gets or sets the default search type for this column's auto-filter row quick search.
@@ -611,7 +804,7 @@ namespace WWSearchDataGrid.Modern.WPF
 
         public static readonly DependencyProperty AllowedFormatConditionFiltersProperty =
             DependencyProperty.Register(nameof(AllowedFormatConditionFilters), typeof(bool), typeof(ColumnDataBase), new PropertyMetadata(true));
-        /// <summary>Conditional-formatting comparison operators (couples with Phase 3.4). Default <c>true</c>.</summary>
+        /// <summary>Conditional-formatting comparison operators. Default <c>true</c>.</summary>
         public bool AllowedFormatConditionFilters
         {
             get => (bool)GetValue(AllowedFormatConditionFiltersProperty);
@@ -880,6 +1073,30 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
+        /// Gets or sets the .NET date/time format string used to render this column's values
+        /// when its dates are rounded to date-only (e.g. <c>"MM/dd/yyyy"</c>, <c>"d"</c>).
+        /// Acts as a lower-priority, date-specific fallback for <see cref="DisplayStringFormat"/>:
+        /// the display pipeline consults it after <see cref="DisplayStringFormat"/> at every
+        /// display-consumption point (cell binding, filter chips, copy commands). Because a
+        /// date-only format carries no time tokens, setting it also drives
+        /// <see cref="ResolveEffectiveRoundDateTime"/> to <c>true</c> — so a column rendered
+        /// date-only filters on dates only, without a separate <see cref="RoundDateTime"/> set.
+        /// Display-only: it never alters the editor's input mask.
+        /// </summary>
+        public static readonly DependencyProperty RoundDateDisplayFormatProperty =
+            DependencyProperty.Register(
+                nameof(RoundDateDisplayFormat),
+                typeof(string),
+                typeof(ColumnDataBase),
+                new PropertyMetadata(null, OnDisplayPropertyChanged));
+
+        public string RoundDateDisplayFormat
+        {
+            get => (string)GetValue(RoundDateDisplayFormatProperty);
+            set => SetValue(RoundDateDisplayFormatProperty, value);
+        }
+
+        /// <summary>
         /// Gets or sets a column-level override for the grid's
         /// <see cref="SearchDataGrid.FilterRowCellStyle"/>. <c>null</c> (default)
         /// inherits the grid setting; any non-null <see cref="Style"/> wins over the grid
@@ -944,7 +1161,7 @@ namespace WWSearchDataGrid.Modern.WPF
             set => SetValue(FilterRowEditTemplateProperty, value);
         }
 
-        #region Column Filter Popup (Phase 2.1)
+        #region Column Filter Popup 
 
         // Drop-down filter popup configuration. The popup itself — typically opened by clicking
         // a chevron glyph on the column header and offering a checkbox-list of distinct values,
@@ -1572,6 +1789,10 @@ namespace WWSearchDataGrid.Modern.WPF
             RefreshActualShowCheckBoxInHeader();
             // Push the initial IsChecked snapshot once the grid is reachable.
             View?.RefreshSelectAllHeader(this);
+            // Focus/nav projections — seed on attach so the first cell-style build picks them up.
+            RefreshActualFocusNav();
+            // ActualEnableLiveFiltering falls back to the grid's value — resolve on attach.
+            RefreshActualEnableLiveFiltering();
         }
 
         /// <summary>
@@ -1679,7 +1900,10 @@ namespace WWSearchDataGrid.Modern.WPF
         {
             bool needsTooltip = HasCellToolTip;
             bool needsIsEnabled = IsEnabledBinding != null;
-            if (!stretching && !needsTooltip && !needsIsEnabled)
+            // AllowFocus/TabStop differ from defaults => need cell-style setters.
+            bool needsFocusable = !ActualAllowFocus;
+            bool needsTabStop = !ActualTabStop;
+            if (!stretching && !needsTooltip && !needsIsEnabled && !needsFocusable && !needsTabStop)
                 return basedOn;
 
             var style = new Style(typeof(DataGridCell), basedOn);
@@ -1695,6 +1919,12 @@ namespace WWSearchDataGrid.Modern.WPF
 
             if (needsIsEnabled)
                 style.Setters.Add(new Setter(UIElement.IsEnabledProperty, IsEnabledBinding));
+
+            if (needsFocusable)
+                style.Setters.Add(new Setter(UIElement.FocusableProperty, false));
+
+            if (needsTabStop)
+                style.Setters.Add(new Setter(KeyboardNavigation.IsTabStopProperty, false));
 
             return style;
         }
@@ -1877,6 +2107,141 @@ namespace WWSearchDataGrid.Modern.WPF
                 return true;
             }
             return false;
+        }
+
+        #endregion
+
+        #region Focus & Navigation 
+
+        /// <summary>
+        /// Gets or sets whether cells in this column can receive keyboard focus. When
+        /// <c>false</c>, Tab/Shift+Tab AND arrow keys skip the column, mouse clicks on cells
+        /// do not focus them, and edit-mode entry (F2 / double-click / type-to-edit) is
+        /// suppressed. Distinct from <see cref="IsReadOnly"/>, which only blocks the write —
+        /// a read-only cell can still be focused (for selection, copy, sort participation).
+        /// <para>
+        /// Drives the cell-style <see cref="UIElement.FocusableProperty"/> setter: when
+        /// <c>false</c>, the cell is non-focusable and native WPF skips it for all input.
+        /// </para>
+        /// </summary>
+        public static readonly DependencyProperty AllowFocusProperty =
+            DependencyProperty.Register(
+                nameof(AllowFocus),
+                typeof(bool),
+                typeof(ColumnDataBase),
+                new PropertyMetadata(true, OnFocusNavPropertyChanged));
+
+        public bool AllowFocus
+        {
+            get => (bool)GetValue(AllowFocusProperty);
+            set => SetValue(AllowFocusProperty, value);
+        }
+
+        private static readonly DependencyPropertyKey ActualAllowFocusPropertyKey =
+            DependencyProperty.RegisterReadOnly(
+                nameof(ActualAllowFocus),
+                typeof(bool),
+                typeof(ColumnDataBase),
+                new PropertyMetadata(true));
+
+        public static readonly DependencyProperty ActualAllowFocusProperty = ActualAllowFocusPropertyKey.DependencyProperty;
+
+        /// <summary>
+        /// Resolved <see cref="AllowFocus"/>. Mirrors the column-level value today; reserved
+        /// for future grid-level default resolution (matching the <c>AllowFilterPopup</c>
+        /// pattern).
+        /// </summary>
+        public bool ActualAllowFocus => (bool)GetValue(ActualAllowFocusProperty);
+
+        /// <summary>
+        /// Gets or sets whether Tab / Shift+Tab traversal stops on cells in this column. When
+        /// <c>false</c>, Tab skips the column but arrow keys still reach it (the "skip in Tab
+        /// order but cell is still selectable" case). Combine with
+        /// <see cref="AllowFocus"/>=<c>false</c> to make a column entirely keyboard-inert.
+        /// <para>
+        /// Drives the cell-style <see cref="KeyboardNavigation.IsTabStopProperty"/> setter.
+        /// </para>
+        /// </summary>
+        public static readonly DependencyProperty TabStopProperty =
+            DependencyProperty.Register(
+                nameof(TabStop),
+                typeof(bool),
+                typeof(ColumnDataBase),
+                new PropertyMetadata(true, OnFocusNavPropertyChanged));
+
+        public bool TabStop
+        {
+            get => (bool)GetValue(TabStopProperty);
+            set => SetValue(TabStopProperty, value);
+        }
+
+        private static readonly DependencyPropertyKey ActualTabStopPropertyKey =
+            DependencyProperty.RegisterReadOnly(
+                nameof(ActualTabStop),
+                typeof(bool),
+                typeof(ColumnDataBase),
+                new PropertyMetadata(true));
+
+        public static readonly DependencyProperty ActualTabStopProperty = ActualTabStopPropertyKey.DependencyProperty;
+
+        /// <summary>
+        /// Resolved <see cref="TabStop"/>. Mirrors the column-level value today.
+        /// </summary>
+        public bool ActualTabStop => (bool)GetValue(ActualTabStopProperty);
+
+        /// <summary>
+        /// Gets or sets a custom Tab-traversal order for this column, independent of its
+        /// visual <see cref="ColumnLayoutBase.DisplayIndex"/>. Default <c>-1</c> means "use
+        /// the natural display order." When at least one column in the grid sets a
+        /// non-default value, Tab visits columns with explicit indices first (ascending),
+        /// then everything else in display order. Same column resolution is used by the data
+        /// row Tab handler and by <c>FilterRowNavigator</c>, so a single configuration
+        /// governs both rows.
+        /// </summary>
+        /// <remarks>
+        /// Mirrors the WPF <see cref="KeyboardNavigation.TabIndexProperty"/> convention
+        /// (lower wins, default = "no opinion"), but lives on the column descriptor instead
+        /// of the cell — WPF's built-in DataGrid Tab handler walks cells by
+        /// <c>DisplayIndex</c> and ignores cell-level <c>TabIndex</c>, so we route Tab
+        /// through <c>SearchDataGrid.TryHandleNavigationIndexTab</c> when this DP is set.
+        /// </remarks>
+        public static readonly DependencyProperty NavigationIndexProperty =
+            DependencyProperty.Register(
+                nameof(NavigationIndex),
+                typeof(int),
+                typeof(ColumnDataBase),
+                new PropertyMetadata(-1));
+
+        public int NavigationIndex
+        {
+            get => (int)GetValue(NavigationIndexProperty);
+            set => SetValue(NavigationIndexProperty, value);
+        }
+
+        /// <summary>
+        /// Recomputes the focus / navigation <c>Actual*</c> projections from their source
+        /// DPs. Called from <see cref="OnFocusNavPropertyChanged"/> and on grid attach.
+        /// </summary>
+        internal void RefreshActualFocusNav()
+        {
+            SetValue(ActualAllowFocusPropertyKey, AllowFocus);
+            SetValue(ActualTabStopPropertyKey, TabStop);
+        }
+
+        private static void OnFocusNavPropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            if (d is not ColumnDataBase col) return;
+            col.RefreshActualFocusNav();
+            // Cell style carries Focusable / IsTabStop setters; re-resolve so the change
+            // takes effect on the generated cells without a full template rebuild.
+            col.SyncToInternalColumn();
+            // Filter cell consults the descriptor directly via ColumnFilterControl —
+            // ask the matching host to re-evaluate.
+            if (col.View != null)
+            {
+                var host = col.View.DataColumns.FirstOrDefault(c => c.CurrentColumn == col.InternalColumn) as ColumnFilterControl;
+                host?.RefreshFocusNav();
+            }
         }
 
         #endregion
@@ -2230,6 +2595,7 @@ namespace WWSearchDataGrid.Modern.WPF
                 return textSettings.Mask;
             if (!string.IsNullOrEmpty(DisplayMask)) return DisplayMask;
             if (!string.IsNullOrEmpty(DisplayStringFormat)) return DisplayStringFormat;
+            if (!string.IsNullOrEmpty(RoundDateDisplayFormat)) return RoundDateDisplayFormat;
             return null;
         }
 
@@ -2391,7 +2757,7 @@ namespace WWSearchDataGrid.Modern.WPF
                 // same way the SyncToInternalColumn path used to.
                 var tplCol = new ValidationSuppressingTemplateColumn
                 {
-                    ClipboardContentBinding = CreateBinding(),
+                    ClipboardContentBinding = ResolveCellBinding(),
                 };
                 ApplyDisplayTemplate(tplCol);
                 ApplyEditTemplate(tplCol);
@@ -2406,7 +2772,7 @@ namespace WWSearchDataGrid.Modern.WPF
             {
                 var checkBoxColumn = new DataGridCheckBoxColumn
                 {
-                    Binding = new Binding(FieldName)
+                    Binding = ResolveCellBinding()
                 };
                 ApplyAlignmentToCheckBoxColumn(checkBoxColumn);
                 SetOrClear(checkBoxColumn, DataGridColumn.CellStyleProperty,
@@ -2417,7 +2783,7 @@ namespace WWSearchDataGrid.Modern.WPF
             {
                 var textColumn = new DataGridTextColumn
                 {
-                    Binding = CreateBinding()
+                    Binding = ResolveCellBinding()
                 };
                 ApplyAlignmentToTextColumn(textColumn);
                 SetOrClear(textColumn, DataGridColumn.CellStyleProperty,
@@ -2635,24 +3001,84 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
-        /// Creates the <see cref="Binding"/> for a text column, applying <see cref="DisplayStringFormat"/>
-        /// and <see cref="DisplayValueConverter"/> if set.
+        /// Creates the value <see cref="Binding"/> for a text column, applying
+        /// <see cref="DisplayStringFormat"/> and <see cref="DisplayValueConverter"/> onto any slot
+        /// the resolved field binding leaves empty. The path/source come from
+        /// <see cref="CreateFieldBinding"/> (the explicit <see cref="Binding"/> override when set,
+        /// otherwise <see cref="FieldName"/>).
         /// </summary>
         private Binding CreateBinding()
         {
-            var binding = new Binding(FieldName);
+            var binding = CreateFieldBinding();
 
-            if (!string.IsNullOrEmpty(DisplayStringFormat))
-                binding.StringFormat = DisplayStringFormat;
-
-            if (DisplayValueConverter != null)
+            if (binding.Converter == null && DisplayValueConverter != null)
             {
                 binding.Converter = DisplayValueConverter;
                 binding.ConverterParameter = DisplayConverterParameter;
             }
 
+            if (string.IsNullOrEmpty(binding.StringFormat) && !string.IsNullOrEmpty(DisplayStringFormat))
+                binding.StringFormat = DisplayStringFormat;
+            else if (string.IsNullOrEmpty(binding.StringFormat) && !string.IsNullOrEmpty(RoundDateDisplayFormat))
+                binding.StringFormat = RoundDateDisplayFormat;
+
             return binding;
         }
+
+        /// <summary>
+        /// Builds a fresh single <see cref="Binding"/> targeting the cell value. When
+        /// <see cref="Binding"/> is set to a single <see cref="Binding"/>, its path, source, and
+        /// converter are honored; otherwise — no override, or a <see cref="MultiBinding"/> /
+        /// <see cref="PriorityBinding"/> that has no single editable path — the binding targets
+        /// <see cref="FieldName"/>. Callers layer mode, update trigger, validation, and display
+        /// formatting on top. Shared by the bound-column paths and every EditSettings editor /
+        /// display template so they bind to the same effective value.
+        /// </summary>
+        internal Binding CreateFieldBinding()
+        {
+            if (Binding is Binding custom)
+            {
+                var b = new Binding
+                {
+                    Converter = custom.Converter,
+                    ConverterParameter = custom.ConverterParameter,
+                    ConverterCulture = custom.ConverterCulture,
+                };
+                if (custom.Path != null)
+                    b.Path = custom.Path;
+                if (custom.Source != null)
+                    b.Source = custom.Source;
+                else if (custom.RelativeSource != null)
+                    b.RelativeSource = custom.RelativeSource;
+                else if (!string.IsNullOrEmpty(custom.ElementName))
+                    b.ElementName = custom.ElementName;
+                return b;
+            }
+
+            return new Binding(FieldName);
+        }
+
+        /// <summary>
+        /// Resolves the binding used for a bound column's cell value and clipboard content. An
+        /// explicit <see cref="MultiBinding"/> / <see cref="PriorityBinding"/> is returned verbatim
+        /// (no display-formatting layering — the consumer owns a multi-binding's output); otherwise
+        /// the result is <see cref="CreateBinding"/>, i.e. the field/override path with the column's
+        /// display formatting layered in.
+        /// </summary>
+        internal BindingBase ResolveCellBinding()
+        {
+            if (Binding != null && Binding is not System.Windows.Data.Binding)
+                return Binding;
+            return CreateBinding();
+        }
+
+        /// <summary>
+        /// Resolves the top-level property-path string the cell value reads from: the explicit
+        /// <see cref="Binding"/> override's path when it is a single <see cref="Binding"/>,
+        /// otherwise <see cref="FieldName"/>. Used by reflection-based value access (e.g. the spin
+        /// editor's increment buttons) that needs the path rather than a <see cref="Binding"/>.
+        /// </summary>
+        internal string ResolveValuePath() => (Binding as Binding)?.Path?.Path ?? FieldName;
 
         #endregion
 

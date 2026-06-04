@@ -130,6 +130,46 @@ namespace WWSearchDataGrid.Modern.WPF
             new ComponentResourceKey(typeof(ThemeKeys), nameof(GridSearchDataGridColumnHeader));
 
         /// <summary>
+        /// Default <see cref="System.Windows.Controls.GroupStyle"/> attached to the grid the first
+        /// time it is grouped — an expander group header showing the group value and item count.
+        /// The grid pulls it by this key and adds it to its <c>GroupStyle</c> collection lazily;
+        /// a consumer that supplies its own <c>GroupStyle</c> opts out.
+        /// </summary>
+        public static ComponentResourceKey GridSearchDataGridGroupStyle { get; } =
+            new ComponentResourceKey(typeof(ThemeKeys), nameof(GridSearchDataGridGroupStyle));
+
+        /// <summary>
+        /// Shared <see cref="ContextMenu"/> resource (declared with <c>x:Shared="False"</c> so
+        /// every Expander gets its own instance) that hosts the group-header right-click menu —
+        /// Expand / Collapse this group, Expand / Collapse all at this level, Ungroup at this
+        /// level. Attached to each group Expander via the default <c>GroupExpanderStyle</c>.
+        /// </summary>
+        public static ComponentResourceKey GridSearchDataGridGroupHeaderContextMenu { get; } =
+            new ComponentResourceKey(typeof(ThemeKeys), nameof(GridSearchDataGridGroupHeaderContextMenu));
+
+        /// <summary>
+        /// Default <see cref="Style"/> for the <see cref="GroupPanel"/> — the strip above the
+        /// column headers that shows one pill per grouped column.
+        /// </summary>
+        public static ComponentResourceKey GridSearchDataGridGroupPanel { get; } =
+            new ComponentResourceKey(typeof(ThemeKeys), nameof(GridSearchDataGridGroupPanel));
+
+        /// <summary>
+        /// Right-click <see cref="ContextMenu"/> for the empty area of the
+        /// <see cref="GroupPanel"/> — Expand All / Collapse All / Clear Grouping.
+        /// </summary>
+        public static ComponentResourceKey GridSearchDataGridGroupPanelContextMenu { get; } =
+            new ComponentResourceKey(typeof(ThemeKeys), nameof(GridSearchDataGridGroupPanelContextMenu));
+
+        /// <summary>
+        /// Right-click <see cref="ContextMenu"/> for an individual group-panel pill — Full Expand
+        /// / Full Collapse on top, then the full column-header menu mirror (Copy / Sort / Best Fit
+        /// / Hide / Pin / Filter operations). <c>x:Shared="False"</c> so every pill gets its own.
+        /// </summary>
+        public static ComponentResourceKey GridSearchDataGridGroupPillContextMenu { get; } =
+            new ComponentResourceKey(typeof(ThemeKeys), nameof(GridSearchDataGridGroupPillContextMenu));
+
+        /// <summary>
         /// Shared <see cref="ContextMenu"/> resource (declared with
         /// <c>x:Shared="False"</c> so every consumer gets its own instance) that hosts the
         /// column-header right-click menu — sort / best-fit / hide / pin / clear-filter. The

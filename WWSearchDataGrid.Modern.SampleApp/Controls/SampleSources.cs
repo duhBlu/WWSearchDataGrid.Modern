@@ -26,6 +26,11 @@ namespace WWSearchDataGrid.Modern.SampleApp.Controls
             "Views/Samples/DataBinding/DataTableManualSampleViewModel.cs",
             "SampleData/Generators/VendorTableGenerator.cs");
 
+        public static IReadOnlyList<SampleSourceFile> BindingToDynamicObject { get; } = SampleSourceLoader.LoadFiles(
+            "Views/Samples/DataBinding/BindingToDynamicObjectSampleView.xaml",
+            "Views/Samples/DataBinding/BindingToDynamicObjectSampleView.xaml.cs",
+            "Views/Samples/DataBinding/BindingToDynamicObjectSampleViewModel.cs");
+
         // ── Columns ──────────────────────────────────────────────────────────
         public static IReadOnlyList<SampleSourceFile> ColumnConfiguration { get; } = SampleSourceLoader.LoadFiles(
             "Views/Samples/Columns/ColumnConfigurationSampleView.xaml",
@@ -119,6 +124,14 @@ namespace WWSearchDataGrid.Modern.SampleApp.Controls
             "Views/Samples/FilterRow/CustomTemplatesSampleView.xaml",
             "Views/Samples/FilterRow/CustomTemplatesSampleView.xaml.cs",
             "Views/Samples/FilterRow/CustomTemplatesSampleViewModel.cs",
+            "Models/OrderItem.cs",
+            "SampleData/Generators/OrderGenerator.cs");
+
+        // ── Grouping ─────────────────────────────────────────────────────────
+        public static IReadOnlyList<SampleSourceFile> BasicGrouping { get; } = SampleSourceLoader.LoadFiles(
+            "Views/Samples/Grouping/BasicGroupingSampleView.xaml",
+            "Views/Samples/Grouping/BasicGroupingSampleView.xaml.cs",
+            "Views/Samples/Grouping/BasicGroupingSampleViewModel.cs",
             "Models/OrderItem.cs",
             "SampleData/Generators/OrderGenerator.cs");
 

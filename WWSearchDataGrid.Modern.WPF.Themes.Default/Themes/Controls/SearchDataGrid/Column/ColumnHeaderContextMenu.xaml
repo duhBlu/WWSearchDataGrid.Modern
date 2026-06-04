@@ -64,6 +64,32 @@
                   Header="Clear Sorting" />
         <Separator />
 
+        <!--
+            Grouping. Only two items live here now — per-column Group By, plus the toggle for the
+            Group Panel itself. Per-column Ungroup / Full Expand / Full Collapse moved to the
+            group-panel pill (right-click a pill); grid-wide Expand / Collapse / Clear Grouping
+            moved to the panel context menu (right-click the empty panel).
+        -->
+        <MenuItem x:Name="miGroupByColumn"
+                  Command="{x:Static commands:ContextMenuCommands.GroupByColumnCommand}"
+                  CommandParameter="{Binding}"
+                  Header="Group By This Column" />
+        <MenuItem x:Name="miToggleGroupPanel"
+                  Command="{x:Static commands:ContextMenuCommands.ToggleGroupPanelVisibilityCommand}"
+                  CommandParameter="{Binding Grid}">
+            <MenuItem.Style>
+                <Style TargetType="MenuItem" BasedOn="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesMenuItem}}">
+                    <Setter Property="Header" Value="Show Group Panel" />
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding Grid.IsGroupPanelVisible}" Value="True">
+                            <Setter Property="Header" Value="Hide Group Panel" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </MenuItem.Style>
+        </MenuItem>
+        <Separator />
+
         <!--  Column Operations  -->
         <MenuItem x:Name="miBestFitColumn"
                   Command="{x:Static commands:ContextMenuCommands.BestFitColumnCommand}"

@@ -48,6 +48,25 @@ namespace WWSearchDataGrid.Modern.SampleApp.Views.Samples.FilterRow
         private DefaultSearchType _defaultSearchType = DefaultSearchType.StartsWith;
 
         /// <summary>
+        /// <c>null</c> = inherit from the grid's <see cref="SearchDataGrid.EnableLiveFiltering"/>.
+        /// <c>true</c> / <c>false</c> = override live-filtering for this column only.
+        /// </summary>
+        [ObservableProperty]
+        private bool? _enableLiveFiltering;
+
+        /// <summary>column-level focus permission.</summary>
+        [ObservableProperty]
+        private bool _allowFocus = true;
+
+        /// <summary>Tab traversal stop bit.</summary>
+        [ObservableProperty]
+        private bool _tabStop = true;
+
+        /// <summary>custom Tab order. <c>-1</c> = natural display order.</summary>
+        [ObservableProperty]
+        private int _navigationIndex = -1;
+
+        /// <summary>
         /// Attach the live <see cref="GridColumn"/> after the view is loaded. Seeds the config's
         /// observable state from the column's current values without re-triggering write-through.
         /// </summary>
@@ -59,6 +78,10 @@ namespace WWSearchDataGrid.Modern.SampleApp.Views.Samples.FilterRow
             AllowAutoFilter = column.AllowAutoFilter;
             ShowCriteriaOverride = column.ShowCriteriaInFilterRow;
             DefaultSearchType = column.DefaultSearchType;
+            EnableLiveFiltering = column.EnableLiveFiltering;
+            AllowFocus = column.AllowFocus;
+            TabStop = column.TabStop;
+            NavigationIndex = column.NavigationIndex;
 
             _backingColumn = column;
         }
@@ -81,6 +104,26 @@ namespace WWSearchDataGrid.Modern.SampleApp.Views.Samples.FilterRow
         partial void OnDefaultSearchTypeChanged(DefaultSearchType value)
         {
             if (_backingColumn != null) _backingColumn.DefaultSearchType = value;
+        }
+
+        partial void OnEnableLiveFilteringChanged(bool? value)
+        {
+            if (_backingColumn != null) _backingColumn.EnableLiveFiltering = value;
+        }
+
+        partial void OnAllowFocusChanged(bool value)
+        {
+            if (_backingColumn != null) _backingColumn.AllowFocus = value;
+        }
+
+        partial void OnTabStopChanged(bool value)
+        {
+            if (_backingColumn != null) _backingColumn.TabStop = value;
+        }
+
+        partial void OnNavigationIndexChanged(int value)
+        {
+            if (_backingColumn != null) _backingColumn.NavigationIndex = value;
         }
     }
 }

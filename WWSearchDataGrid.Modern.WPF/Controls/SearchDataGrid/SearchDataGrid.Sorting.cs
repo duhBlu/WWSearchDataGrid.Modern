@@ -96,21 +96,46 @@ namespace WWSearchDataGrid.Modern.WPF
             string path = col.SortMemberPath;
             if (string.IsNullOrEmpty(path)) return;
 
+            // Grouping owns a leading SortDescription for each grouped column's path (D2 — grouping
+            // leads sorting). A header click on a grouped column re-orders that group: update the
+            // grouping-owned entry in place rather than clearing it or adding a competing user sort.
+            // Grouping always carries an order, so a "clear" falls back to ascending.
+            if (IsGroupSortPath(path))
+            {
+                for (int i = 0; i < descriptions.Count; i++)
+                {
+                    if (descriptions[i].PropertyName != path) continue;
+                    var groupDir = direction ?? ListSortDirection.Ascending;
+                    descriptions[i] = new SortDescription(path, groupDir);
+                    col.SortDirection = groupDir;
+                    return;
+                }
+            }
+
             if (!multiColumn)
             {
-                descriptions.Clear();
+                // Clear only user (non-group) sorts; grouping-owned leading sorts stay put.
+                for (int i = descriptions.Count - 1; i >= 0; i--)
+                {
+                    if (!IsGroupSortPath(descriptions[i].PropertyName))
+                        descriptions.RemoveAt(i);
+                }
                 foreach (var other in Columns)
                 {
-                    if (other != col) other.SortDirection = null;
+                    if (other == col) continue;
+                    // Don't clear the sort arrow on grouped columns — their group sort persists.
+                    var otherDescriptor = FindGridColumnDescriptor(other);
+                    if (otherDescriptor != null && otherDescriptor.IsGrouped) continue;
+                    other.SortDirection = null;
                 }
             }
             else
             {
-                // Drop any existing entry for this column's path so we don't end up with
+                // Drop any existing user entry for this column's path so we don't end up with
                 // duplicate descriptions when the user re-clicks an already-sorted column.
                 for (int i = descriptions.Count - 1; i >= 0; i--)
                 {
-                    if (descriptions[i].PropertyName == path)
+                    if (descriptions[i].PropertyName == path && !IsGroupSortPath(descriptions[i].PropertyName))
                         descriptions.RemoveAt(i);
                 }
             }
@@ -159,7 +184,30 @@ namespace WWSearchDataGrid.Modern.WPF
 
             EventHandler handler = (s, e) =>
             {
-                descriptor.SetSortOrder(MapSortDirection(col.SortDirection));
+                var newDir = col.SortDirection;
+                // Grouping owns this column's sort direction (D2). If something post-rebuild
+                // clears it to null while the column is still grouped (WPF resync after
+                // ItemsSource init or a later layout pass — observed only at load time on the
+                // declaratively-grouped column), restore the direction from the surviving
+                // group SortDescription. The recursive set re-enters this handler with a
+                // non-null value and falls through to the normal mirror.
+                if (newDir == null && _groupSortDescriptors.Contains(descriptor))
+                {
+                    string path = descriptor.ResolveGroupPath();
+                    var sorts = Items?.SortDescriptions;
+                    if (sorts != null && !string.IsNullOrEmpty(path))
+                    {
+                        for (int i = 0; i < sorts.Count; i++)
+                        {
+                            if (sorts[i].PropertyName == path)
+                            {
+                                col.SortDirection = sorts[i].Direction;
+                                return;
+                            }
+                        }
+                    }
+                }
+                descriptor.SetSortOrder(MapSortDirection(newDir));
                 RefreshAllSortIndices();
             };
             dpd.AddValueChanged(col, handler);

@@ -5,6 +5,7 @@ using WWSearchDataGrid.Modern.SampleApp.Views.Samples.Columns;
 using WWSearchDataGrid.Modern.SampleApp.Views.Samples.DataBinding;
 using WWSearchDataGrid.Modern.SampleApp.Views.Samples.Editing;
 using WWSearchDataGrid.Modern.SampleApp.Views.Samples.Filtering;
+using WWSearchDataGrid.Modern.SampleApp.Views.Samples.Grouping;
 using WWSearchDataGrid.Modern.SampleApp.Views.Samples.Usability;
 
 namespace WWSearchDataGrid.Modern.SampleApp.Views.Launcher
@@ -24,15 +25,9 @@ namespace WWSearchDataGrid.Modern.SampleApp.Views.Launcher
                         () => new AutoColumnsSampleView()),
 
                     new("Binding to Dynamic Object",
-                        "Bind a grid to a dynamic object with runtime add/remove columns and add-row support — also covers the DataTable dynamic columns/rows case.",
-                        new[] { "Dynamic", "Add/Remove" },
-                        () => PlannedSampleView.Planned(
-                            "Binding to Dynamic Object",
-                            "A grid bound to a dynamic object, with the ability to add new rows and add/remove columns at runtime. Doubles as the DataTable dynamic columns/rows demo.",
-                            "Support binding to a dynamic/expando-style item source",
-                            "Add/remove columns at runtime",
-                            "Add-new-row support",
-                            "Reuse the existing DataTableManual sample as the DataTable variant")),
+                        "Bind a grid to ExpandoObject rows — every column reaches its value via an explicit GridColumn.Binding (no FieldName). Add typed columns and rows at runtime; filtering works off the binding path.",
+                        new[] { "Dynamic", "Binding", "Runtime" },
+                        () => new BindingToDynamicObjectSampleView()),
                 }),
 
             new SampleCategory(
@@ -156,15 +151,9 @@ namespace WWSearchDataGrid.Modern.SampleApp.Views.Launcher
                         () => new FilteringHubSampleView()),
 
                     new("Grouping",
-                        "Group rows by one or more columns with a group panel and expand/animation options.",
-                        new[] { "Grouping", "GroupPanel" },
-                        () => PlannedSampleView.Planned(
-                            "Grouping",
-                            "Group rows by columns with a group panel and rich expand options.",
-                            "Implement grouping + group panel",
-                            "Options: Allow Fixed Groups, Show Group Panel, Show Grouped Columns",
-                            "Options: auto-expand all, animate expand, expand recursively",
-                            "Pre-set group-by presets")),
+                        "Group rows by one or more columns — declarative GroupIndex, the GroupBy / Ungroup API, and the header context menu. Each group is an expander with a value + row count; grouping leads sorting and coexists with the filter row. (Drag-to-group panel and group-value templates are planned.)",
+                        new[] { "Grouping", "GroupIndex" },
+                        () => new BasicGroupingSampleView()),
 
                     new("Total Summaries",
                         "Aggregate summaries (sum / avg / count) in a totals row or group footers.",

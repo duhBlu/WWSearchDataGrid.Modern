@@ -28,6 +28,8 @@ x86/
 [Aa][Rr][Mm]64/
 bld/
 [Bb]in/
+# Stray alternate build-output dirs (e.g. "bin-build 2Debug") from out-of-tree compiles
+[Bb]in-build*/
 [Oo]bj/
 [Oo]ut/
 [Ll]og/

@@ -67,7 +67,8 @@ namespace WWSearchDataGrid.Modern.WPF
             ApplyDisplayStyle(textBlock, EditSettingsThemeKeys.DisplayNumericTextBlock);
             ApplyTextAlignment(textBlock, column);
 
-            var binding = new Binding(column.FieldName) { Mode = BindingMode.OneWay };
+            var binding = column.CreateFieldBinding();
+            binding.Mode = BindingMode.OneWay;
             if (column.DisplayValueConverter != null)
             {
                 binding.Converter = column.DisplayValueConverter;
@@ -299,7 +300,7 @@ namespace WWSearchDataGrid.Modern.WPF
             var step = settings.Increment;
             var min = settings.Minimum;
             var max = settings.Maximum;
-            var fieldName = column.FieldName;
+            var fieldName = column.ResolveValuePath();
             double sign = isUp ? +1 : -1;
 
             if (isDisplayMode)

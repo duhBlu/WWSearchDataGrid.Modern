@@ -28,6 +28,9 @@
     <EmbeddedResource Include="Views\Samples\DataBinding\DataTableManualSampleView.xaml" />
     <EmbeddedResource Include="Views\Samples\DataBinding\DataTableManualSampleView.xaml.cs" />
     <EmbeddedResource Include="Views\Samples\DataBinding\DataTableManualSampleViewModel.cs" />
+    <EmbeddedResource Include="Views\Samples\DataBinding\BindingToDynamicObjectSampleView.xaml" />
+    <EmbeddedResource Include="Views\Samples\DataBinding\BindingToDynamicObjectSampleView.xaml.cs" />
+    <EmbeddedResource Include="Views\Samples\DataBinding\BindingToDynamicObjectSampleViewModel.cs" />
 
     <!-- Columns -->
     <EmbeddedResource Include="Views\Samples\Columns\ColumnConfigurationSampleView.xaml" />
@@ -76,6 +79,11 @@
     <EmbeddedResource Include="Views\Samples\FilterRow\CustomTemplatesSampleView.xaml" />
     <EmbeddedResource Include="Views\Samples\FilterRow\CustomTemplatesSampleView.xaml.cs" />
     <EmbeddedResource Include="Views\Samples\FilterRow\CustomTemplatesSampleViewModel.cs" />
+
+    <!-- Grouping -->
+    <EmbeddedResource Include="Views\Samples\Grouping\BasicGroupingSampleView.xaml" />
+    <EmbeddedResource Include="Views\Samples\Grouping\BasicGroupingSampleView.xaml.cs" />
+    <EmbeddedResource Include="Views\Samples\Grouping\BasicGroupingSampleViewModel.cs" />
 
     <!-- Editing -->
     <EmbeddedResource Include="Views\Samples\Editing\EditorTypesSampleView.xaml" />

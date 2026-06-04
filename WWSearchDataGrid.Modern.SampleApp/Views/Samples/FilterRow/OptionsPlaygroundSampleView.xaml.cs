@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Controls;
+using WWSearchDataGrid.Modern.WPF;
 
 namespace WWSearchDataGrid.Modern.SampleApp.Views.Samples.FilterRow
 {
@@ -27,6 +28,12 @@ namespace WWSearchDataGrid.Modern.SampleApp.Views.Samples.FilterRow
         private void OnClearAllFiltersClicked(object sender, RoutedEventArgs e)
         {
             Grid.ClearAllFilters();
+        }
+
+        private void OnNavigationOrderItemReordered(object sender, ItemReorderedEventArgs e)
+        {
+            if (DataContext is OptionsPlaygroundSampleViewModel vm)
+                vm.ApplyNavigationOrder(e.OldIndex, e.NewIndex);
         }
     }
 }

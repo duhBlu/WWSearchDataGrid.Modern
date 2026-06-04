@@ -11,7 +11,6 @@ namespace WWSearchDataGrid.Modern.WPF
     /// any future filter-host implementation without coupling to a specific control type.
     /// </summary>
     /// <remarks>
-    /// Phase 5 introduced this interface to replace the legacy <c>ColumnSearchBox</c>
     /// direct-type coupling. Members reflect the exact surface area
     /// <c>SearchDataGridFiltering</c> reads — adding members is a breaking change to every
     /// implementer, so keep the surface minimal: anything purely UI (focus, popup wiring,

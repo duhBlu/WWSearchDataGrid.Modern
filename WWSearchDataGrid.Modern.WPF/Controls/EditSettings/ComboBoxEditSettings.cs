@@ -95,11 +95,9 @@ namespace WWSearchDataGrid.Modern.WPF
             ApplyTextAlignment(factory, column);
             factory.SetValue(Grid.ColumnProperty, 0);
 
-            var binding = new Binding(column.FieldName)
-            {
-                Mode = BindingMode.OneWay,
-                Converter = new ComboBoxValueLookupConverter(ItemsSource, DisplayMemberPath, SelectedValuePath)
-            };
+            var binding = column.CreateFieldBinding();
+            binding.Mode = BindingMode.OneWay;
+            binding.Converter = new ComboBoxValueLookupConverter(ItemsSource, DisplayMemberPath, SelectedValuePath);
             factory.SetBinding(TextBlock.TextProperty, binding);
             // Display element validates against the INotifyDataErrorInfo row by default; the badge
             // is the library's error surface, so strip WPF's red adorner. See TextEditSettings.

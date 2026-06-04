@@ -28,6 +28,13 @@ namespace WWSearchDataGrid.Modern.Core
             if (obj == null || string.IsNullOrEmpty(propPath))
                 return null;
 
+            // Dynamic objects (ExpandoObject and other IDictionary<string, object> bags) expose
+            // their members as dictionary entries, not CLR properties — TypeDescriptor can't see
+            // them. Walk the path against the dictionary directly. A path segment may itself
+            // resolve to a non-dynamic object, so the walker falls back to TypeDescriptor per step.
+            if (obj is IDictionary<string, object>)
+                return GetDynamicPropValue(obj, propPath);
+
             var type = obj.GetType();
             var chain = _propertyChainCache.GetOrAdd((type, propPath), key => ResolvePropertyChain(obj, key.Item2));
 
@@ -49,6 +56,37 @@ namespace WWSearchDataGrid.Modern.Core
                 return null;
 
             return currentObj;
+        }
+
+        /// <summary>
+        /// Walks a (possibly dotted) property path where one or more segments may be backed by a
+        /// dynamic <see cref="IDictionary{TKey, TValue}"/> (e.g. <see cref="System.Dynamic.ExpandoObject"/>)
+        /// rather than a CLR property. Each segment reads from the dictionary when the current
+        /// object is one, otherwise from <see cref="TypeDescriptor"/>.
+        /// </summary>
+        private static object GetDynamicPropValue(object obj, string propPath)
+        {
+            object current = obj;
+            foreach (var segment in propPath.Split('.'))
+            {
+                if (current == null)
+                    return null;
+
+                if (current is IDictionary<string, object> dict)
+                {
+                    if (!dict.TryGetValue(segment, out current))
+                        return null;
+                }
+                else
+                {
+                    var pd = TypeDescriptor.GetProperties(current)[segment];
+                    if (pd == null)
+                        return null;
+                    current = pd.GetValue(current);
+                }
+            }
+
+            return current == DBNull.Value ? null : current;
         }
 
         /// <summary>
@@ -92,16 +130,29 @@ namespace WWSearchDataGrid.Modern.Core
             var props = propPath.Split('.');
             object currentObj = obj;
 
-            // Navigate to the parent object for nested properties.
+            // Navigate to the parent object for nested properties. A segment may resolve through a
+            // dynamic IDictionary<string, object> bag (ExpandoObject) or a CLR property.
             for (int i = 0; i < props.Length - 1; i++)
             {
                 if (currentObj == null) return;
+                if (currentObj is IDictionary<string, object> dict)
+                {
+                    if (!dict.TryGetValue(props[i], out currentObj)) return;
+                    continue;
+                }
                 var pd = TypeDescriptor.GetProperties(currentObj)[props[i]];
                 if (pd == null) return;
                 currentObj = pd.GetValue(currentObj);
             }
 
             if (currentObj == null) return;
+
+            // Dynamic leaf: assign the dictionary entry directly (creating it if absent).
+            if (currentObj is IDictionary<string, object> leafDict)
+            {
+                leafDict[props[props.Length - 1]] = value;
+                return;
+            }
 
             var finalPd = TypeDescriptor.GetProperties(currentObj)[props[props.Length - 1]];
             if (finalPd != null && !finalPd.IsReadOnly)

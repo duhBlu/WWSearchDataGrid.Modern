@@ -383,10 +383,10 @@
                            Placement="Bottom"
                            StaysOpen="False"
                            PopupAnimation="Slide"
-                           VerticalOffset="-4"
-                           HorizontalOffset="-4"
+                           VerticalOffset="-12"
+                           HorizontalOffset="-12"
                            PlacementTarget="{Binding ElementName=Background}">
-                            <Border Padding="4">
+                            <Border Padding="12">
                                 <Border Background="Transparent">
                                     <Border.Effect>
                                         <DropShadowEffect Color="#000000"

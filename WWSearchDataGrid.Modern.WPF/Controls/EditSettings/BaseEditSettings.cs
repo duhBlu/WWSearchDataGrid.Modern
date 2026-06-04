@@ -642,20 +642,22 @@ namespace WWSearchDataGrid.Modern.WPF
         };
 
         /// <summary>
-        /// Helper for subclasses: build a two-way binding to the column's <see cref="GridColumn.FieldName"/>,
-        /// updating the source when focus is lost (the standard editing UX).
+        /// Helper for subclasses: build a two-way binding to the column's effective value path,
+        /// updating the source when focus is lost (the standard editing UX). The path/source come
+        /// from <see cref="ColumnDataBase.CreateFieldBinding"/> — the column's explicit
+        /// <see cref="ColumnDataBase.Binding"/> override when set, otherwise its
+        /// <see cref="GridColumn.FieldName"/>. Validation stays keyed on <c>FieldName</c> (the
+        /// identity), independent of any binding-path override.
         /// </summary>
         protected static Binding CreateValueBinding(ColumnDataBase column, BindingMode mode = BindingMode.TwoWay)
         {
-            var binding = new Binding(column.FieldName)
-            {
-                Mode = mode,
-                UpdateSourceTrigger = UpdateSourceTrigger.LostFocus,
-                ValidatesOnDataErrors = true,
-                ValidatesOnExceptions = true
-            };
+            var binding = column.CreateFieldBinding();
+            binding.Mode = mode;
+            binding.UpdateSourceTrigger = UpdateSourceTrigger.LostFocus;
+            binding.ValidatesOnDataErrors = true;
+            binding.ValidatesOnExceptions = true;
 
-            // Phase 2.2: validate the edited value against the property's data-annotation
+            // validate the edited value against the property's data-annotation
             // attributes. The rule no-ops when the column resolves
             // ActualShowValidationAttributeErrors to false, so the grid/column toggle controls
             // whether errors surface. NotifyOnValidationError lets the grid raise Validation.Error

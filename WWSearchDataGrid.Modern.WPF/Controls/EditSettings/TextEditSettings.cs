@@ -119,7 +119,8 @@ namespace WWSearchDataGrid.Modern.WPF
             ApplyDisplayStyle(factory, EditSettingsThemeKeys.DisplayTextBlock);
             ApplyTextAlignment(factory, column);
 
-            var binding = new Binding(column.FieldName) { Mode = BindingMode.OneWay };
+            var binding = column.CreateFieldBinding();
+            binding.Mode = BindingMode.OneWay;
 
             var (effectiveMask, effectiveMaskType) = ResolveEffectiveMask(column);
 

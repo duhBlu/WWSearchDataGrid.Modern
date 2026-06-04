@@ -401,11 +401,15 @@ namespace WWSearchDataGrid.Modern.WPF
         public bool HasTemporaryTemplate => _temporarySearchTemplate != null;
 
         /// <summary>
-        /// Effective live-filtering state — reads <see cref="SearchDataGrid.EnableLiveFiltering"/>
-        /// from the hosting grid. Defaults to <c>true</c> until the grid is reachable.
+        /// Effective live-filtering state — the column's <see cref="ColumnDataBase.EnableLiveFiltering"/>
+        /// override when set, otherwise the grid's <see cref="SearchDataGrid.EnableLiveFiltering"/>.
+        /// Reads the descriptor's resolver directly (not the mirror DP) so it is never stale, and
+        /// falls back to the grid / <c>true</c> when no descriptor is attached yet.
         /// </summary>
         public bool EffectiveIsLiveFilteringEnabled
-            => SourceDataGrid?.EnableLiveFiltering ?? true;
+            => GridColumn?.ResolveEffectiveEnableLiveFiltering()
+               ?? SourceDataGrid?.EnableLiveFiltering
+               ?? true;
 
         #endregion
 
@@ -531,6 +535,7 @@ namespace WWSearchDataGrid.Modern.WPF
             // only re-binds here.
             RefreshEffectiveShowCriteria();
             RefreshFilterRowCellStyle();
+            RefreshFocusNav();
             UpdateEffectiveIsCellEnabled();
         }
 
@@ -1112,6 +1117,20 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
+        /// Pushes the descriptor's <see cref="ColumnDataBase.ActualAllowFocus"/> and
+        /// <see cref="ColumnDataBase.ActualTabStop"/> onto this filter cell. Called from
+        /// <see cref="RefreshEditor"/> when the descriptor binds and from the descriptor's
+        /// focus/nav DP change callback.
+        /// </summary>
+        internal void RefreshFocusNav()
+        {
+            bool allowFocus = GridColumn?.ActualAllowFocus ?? true;
+            bool tabStop = GridColumn?.ActualTabStop ?? true;
+            Focusable = allowFocus;
+            KeyboardNavigation.SetIsTabStop(this, allowFocus && tabStop);
+        }
+
+        /// <summary>
         /// Disables the cell when the column's default criteria is excluded from
         /// <see cref="SupportedSearchTypes"/> and the user hasn't picked an allowed type.
         /// Also combines with <see cref="IsFilterEnabled"/>.
@@ -1480,6 +1499,46 @@ namespace WWSearchDataGrid.Modern.WPF
             }
 
             HasEditorInputValue = hasEditorInput;
+
+            PushAutoFilterStateToDescriptor();
+        }
+
+        /// <summary>
+        /// Mirrors the auto-filter cell's current value, operator, and aggregate state onto the
+        /// persistent column descriptor's read-only DPs (<see cref="ColumnDataBase.AutoFilterValue"/>,
+        /// <see cref="ColumnDataBase.AutoFilterCondition"/>, <see cref="ColumnDataBase.AutoFilterHeaderState"/>)
+        /// so consumers can bind to filter-row state without holding a reference to this ephemeral,
+        /// virtualization-recycled control. Called from <see cref="UpdateHasActiveFilterState"/>,
+        /// which runs on every meaningful filter change (init, type, search-type swap, clear).
+        /// </summary>
+        private void PushAutoFilterStateToDescriptor()
+        {
+            var descriptor = GridColumn;
+            if (descriptor == null)
+                return;
+
+            descriptor.SetAutoFilterCondition(SelectedSearchType);
+
+            object currentValue = IsCheckboxColumn
+                ? FilterCheckboxState
+                : SearchValue ?? (string.IsNullOrEmpty(SearchText) ? null : SearchText);
+            descriptor.SetAutoFilterValue(currentValue);
+
+            descriptor.SetAutoFilterHeaderState(ResolveAutoFilterHeaderState());
+        }
+
+        /// <summary>
+        /// Collapses the cell's filter flags into the aggregate
+        /// <see cref="AutoFilterHeaderState"/>, with precedence Hidden &gt; Disabled &gt; Active
+        /// &gt; PendingInput &gt; Empty.
+        /// </summary>
+        private AutoFilterHeaderState ResolveAutoFilterHeaderState()
+        {
+            if (!IsFilterVisible) return AutoFilterHeaderState.Hidden;
+            if (!IsFilterEnabled) return AutoFilterHeaderState.Disabled;
+            if (HasActiveFilter) return AutoFilterHeaderState.Active;
+            if (HasEditorInputValue) return AutoFilterHeaderState.PendingInput;
+            return AutoFilterHeaderState.Empty;
         }
 
         public void ClearFilter()

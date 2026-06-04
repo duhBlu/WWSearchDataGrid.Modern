@@ -95,7 +95,7 @@ namespace WWSearchDataGrid.Modern.WPF
                 if (e.EditAction == DataGridEditAction.Cancel)
                     return;
 
-                // Phase 2.2 commit gate: unless commit-on-error is allowed, push the editor's
+                // unless commit-on-error is allowed, push the editor's
                 // bindings to source (which runs the data-annotation validation rules) and cancel
                 // the commit when any error remains — the editor stays open with its error chrome.
                 if (!AllowCommitOnValidationAttributeError && e.EditingElement != null)

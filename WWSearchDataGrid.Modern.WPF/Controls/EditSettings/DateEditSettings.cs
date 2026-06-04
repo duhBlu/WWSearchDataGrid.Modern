@@ -117,7 +117,8 @@ namespace WWSearchDataGrid.Modern.WPF
             ApplyTextAlignment(factory, column);
             factory.SetValue(Grid.ColumnProperty, 0);
 
-            var binding = new Binding(column.FieldName) { Mode = BindingMode.OneWay };
+            var binding = column.CreateFieldBinding();
+            binding.Mode = BindingMode.OneWay;
 
             string effectiveMask = !string.IsNullOrEmpty(Mask) ? Mask : column.DisplayMask;
             if (UseMaskAsDisplayFormat && !string.IsNullOrEmpty(effectiveMask))

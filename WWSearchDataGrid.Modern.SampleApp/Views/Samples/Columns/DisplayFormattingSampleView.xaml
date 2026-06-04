@@ -26,6 +26,8 @@
                 <Run FontWeight="SemiBold" Text="Display formatting" />
                 <LineBreak />
                 <Run Text="Three ways to shape what users see in a cell — DisplayStringFormat (.NET format strings: C2 / N0 / P1 / dates), DisplayValueConverter (turn a bool into 'Yes' / 'No'), and DisplayMask (digit / letter pattern). Side-by-side raw / formatted columns make the effect obvious." />
+                <LineBreak />
+                <Run Text="'Date (round)' uses RoundDateDisplayFormat instead of DisplayStringFormat: it renders date-only just the same, but because a date-only format carries no time tokens it also rounds this column's filtering to whole days — open its filter and a date-only match works even on rows whose timestamps carry a time the cell never shows." />
             </TextBlock>
 
             <sdg:SearchDataGrid x:Name="Grid"
@@ -55,6 +57,9 @@
                     <sdg:GridColumn Width="160" FieldName="OrderDate" Header="Date (long)" DisplayStringFormat="MM/dd/yyyy h:mm tt" />
                     <!-- Same date with short format -->
                     <sdg:GridColumn Width="110" FieldName="OrderDate" Header="Date (short)" DisplayStringFormat="MM/dd/yyyy" />
+                    <!-- RoundDateDisplayFormat: renders date-only like DisplayStringFormat, but also rounds this
+                         column's filtering to date-only (its date-only format auto-drives RoundDateTime=true). -->
+                    <sdg:GridColumn Width="120" FieldName="OrderDate" Header="Date (round)" RoundDateDisplayFormat="MM/dd/yyyy" />
 
                     <!-- Bool with custom converter (Yes/No) -->
                     <sdg:GridColumn Width="120" FieldName="Submitted" Header="Submitted (Yes/No)"

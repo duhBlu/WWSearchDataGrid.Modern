@@ -205,6 +205,8 @@ namespace WWSearchDataGrid.Modern.WPF.Commands
         /// <summary>
         /// Formats a raw value using the column's display configuration.
         /// Priority: DisplayValueProvider (mask/converter/format) > Binding.StringFormat > ToString.
+        /// A column with <see cref="ColumnDataBase.CopyValueAsDisplayText"/> set to <c>false</c>
+        /// short-circuits the display pipeline and copies the raw value's <c>ToString()</c>.
         /// </summary>
         private static string FormatDisplayValue(object rawVal, DataGridColumn column, SearchDataGrid grid)
         {
@@ -213,6 +215,11 @@ namespace WWSearchDataGrid.Modern.WPF.Commands
 
             // 1) Check GridColumn descriptor for display providers (DisplayMask > DisplayValueConverter > DisplayStringFormat)
             var descriptor = grid?.FindGridColumnDescriptor(column);
+
+            // Column opted out of display-text copy: emit the raw editing value verbatim.
+            if (descriptor is { CopyValueAsDisplayText: false })
+                return rawVal.ToString() ?? "NULL";
+
             var provider = DisplayValueProviderFactory.Create(descriptor);
             if (provider != null)
                 return provider.FormatValue(rawVal) ?? rawVal.ToString() ?? "NULL";

@@ -49,9 +49,17 @@
                     <LineBreak />
                     <Run Text="• Uncheck EnableLiveFiltering on the grid, then type — filter waits for Enter." />
                     <LineBreak />
+                    <Run Text="• Leave the grid's EnableLiveFiltering on, pick a column, set its EnableLiveFiltering override to Deferred — only that column waits for Enter while the rest stay live." />
+                    <LineBreak />
                     <Run Text="• Pick Cancelled, set AllowAutoFilter=false — cell greys but keeps its space." />
                     <LineBreak />
                     <Run Text="• Pick Cancelled, set AllowFiltering=false — cell collapses entirely." />
+                    <LineBreak />
+                    <Run Text="• Pick Status, set TabStop=false — Tab skips filter and data cells; Left/Right still reach them." />
+                    <LineBreak />
+                    <Run Text="• Pick Cancelled, set AllowFocus=false — Tab, arrows, and clicks all skip; the cell is keyboard-inert." />
+                    <LineBreak />
+                    <Run Text="• Drag rows in the Tab navigation order list — Tab visits columns in that order, ignoring DisplayIndex until you Reset." />
                 </TextBlock>
             </Border>
 
@@ -165,8 +173,70 @@
                                         <TextBlock Style="{StaticResource SectionLabelStyle}" Text="DefaultSearchType" />
                                         <ComboBox ItemsSource="{Binding DataContext.DefaultSearchTypeChoices, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                   SelectedItem="{Binding DefaultSearchType, Mode=TwoWay}" />
+
+                                        <TextBlock Style="{StaticResource SectionLabelStyle}" Text="EnableLiveFiltering override" />
+                                        <ComboBox ItemsSource="{Binding DataContext.EnableLiveFilteringChoices, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                  DisplayMemberPath="Label"
+                                                  SelectedValuePath="Value"
+                                                  SelectedValue="{Binding EnableLiveFiltering, Mode=TwoWay}"
+                                                  ToolTip="Per-column override of the grid's EnableLiveFiltering. Inherit = follow the grid; Live = always filter as you type; Deferred = wait for Enter/Tab/blur, even when the grid is live." />
+
+                                        <!--  focus toggles (per-column). NavigationIndex lives in its own group below since
+                                             it's a cross-column concern best edited by reordering rather than picking an int per column.  -->
+                                        <TextBlock Style="{StaticResource SectionLabelStyle}" Text="Focus" />
+                                        <CheckBox Content="AllowFocus  (Tab + arrow + click all skip when off)"
+                                                  IsChecked="{Binding AllowFocus, Mode=TwoWay}"
+                                                  ToolTip="When unchecked, the cell goes non-focusable. Native WPF skips it for Tab, arrow keys, and mouse clicks, and edit-mode entry is suppressed." />
+                                        <CheckBox Content="TabStop  (only Tab skips; arrows still reach the cell)"
+                                                  IsChecked="{Binding TabStop, Mode=TwoWay}"
+                                                  ToolTip="Sets KeyboardNavigation.IsTabStop=false on the cell when off, so Tab passes through but Left/Right still focus the cell." />
+
+                                        <TextBlock Style="{StaticResource SectionLabelStyle}">
+                                            <Run Text="NavigationIndex:" />
+                                            <Run Text="{Binding NavigationIndex, Mode=OneWay}" />
+                                            <Run Text="(edit via Tab order group below)" />
+                                        </TextBlock>
                                     </sdg:SimpleStackPanel>
                                 </Border>
+                            </sdg:SimpleStackPanel>
+                        </GroupBox>
+
+                        <GroupBox Header="Tab navigation order" Padding="6">
+                            <sdg:SimpleStackPanel Orientation="Vertical" Spacing="6">
+                                <TextBlock FontSize="11" Foreground="#666" TextWrapping="Wrap"
+                                           Text="Drag rows to reorder Tab traversal. Reordering assigns explicit NavigationIndex values (0, 1, 2, …) — columns with explicit indices are visited first, ascending. Click Reset to clear every NavigationIndex back to -1 (natural display order)." />
+                                <sdg:ReorderableListBox x:Name="NavigationOrderListBox"
+                                                        ItemsSource="{Binding NavigationOrder}"
+                                                        ItemReordered="OnNavigationOrderItemReordered"
+                                                        MaxHeight="200">
+                                    <sdg:ReorderableListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Grid.Column="0"
+                                                           Text="{Binding DisplayLabel}"
+                                                           VerticalAlignment="Center" />
+                                                <Border Grid.Column="1"
+                                                        Background="#EEE"
+                                                        CornerRadius="3"
+                                                        Padding="6,1"
+                                                        Margin="6,0,0,0">
+                                                    <TextBlock FontSize="10"
+                                                               Foreground="#555">
+                                                        <Run Text="idx " />
+                                                        <Run Text="{Binding NavigationIndex, Mode=OneWay}" />
+                                                    </TextBlock>
+                                                </Border>
+                                            </Grid>
+                                        </DataTemplate>
+                                    </sdg:ReorderableListBox.ItemTemplate>
+                                </sdg:ReorderableListBox>
+                                <Button Content="Reset to natural order"
+                                        HorizontalAlignment="Left"
+                                        Command="{Binding ResetNavigationOrderCommand}" />
                             </sdg:SimpleStackPanel>
                         </GroupBox>
                     </sdg:SimpleStackPanel>

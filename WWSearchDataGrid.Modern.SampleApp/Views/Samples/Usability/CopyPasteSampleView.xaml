@@ -25,7 +25,9 @@
                        TextWrapping="Wrap">
                 <Run FontWeight="SemiBold" Text="Copy / paste operations" />
                 <LineBreak />
-                <Run Text="Select cells or rows in the grid, then copy with Ctrl+C (values) or Ctrl+Shift+C (values with headers) — the same commands the built-in context menu uses. Output is tab-separated, so it pastes cleanly into the box below, Excel, or any editor. Display formatting (currency, dates) is preserved." />
+                <Run Text="Select cells or rows in the grid, then copy with Ctrl+C (values) or Ctrl+Shift+C (values with headers) — the same commands the built-in context menu uses. Output is tab-separated, so it pastes cleanly into the box below, Excel, or any editor. Display formatting (currency, dates) is preserved by default." />
+                <LineBreak />
+                <Run Text="The 'Total (raw copy)' column looks identical to 'Total' on screen — same C2 currency formatting — but sets CopyValueAsDisplayText=False, so it copies the underlying number (1234.56) instead of the formatted text ($1,234.56). Select cells from both Total columns and paste to compare." />
             </TextBlock>
 
             <Grid>
@@ -52,6 +54,8 @@
                         <sdg:GridColumn Width="150" FieldName="OrderDate" Header="Order Date" DisplayStringFormat="MM/dd/yyyy" />
                         <sdg:GridColumn Width="200" FieldName="CustomerName" Header="Customer" />
                         <sdg:GridColumn Width="110" FieldName="OrderItemsTotalPrice" Header="Total" DisplayStringFormat="C2" />
+                        <!-- Same C2 display as 'Total', but copies the raw value rather than the formatted text. -->
+                        <sdg:GridColumn Width="120" FieldName="OrderItemsTotalPrice" Header="Total (raw copy)" DisplayStringFormat="C2" CopyValueAsDisplayText="False" />
                         <sdg:GridColumn Width="90" FieldName="OrderCancelled" Header="Cancelled" />
                     </sdg:SearchDataGrid.GridColumns>
                 </sdg:SearchDataGrid>

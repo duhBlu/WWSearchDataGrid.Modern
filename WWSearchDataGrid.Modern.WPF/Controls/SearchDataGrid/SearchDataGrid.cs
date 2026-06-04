@@ -221,7 +221,7 @@ namespace WWSearchDataGrid.Modern.WPF
         /// </summary>
         public static readonly DependencyProperty EnableLiveFilteringProperty =
             DependencyProperty.Register(nameof(EnableLiveFiltering), typeof(bool), typeof(SearchDataGrid),
-                new FrameworkPropertyMetadata(true, FrameworkPropertyMetadataOptions.Inherits));
+                new FrameworkPropertyMetadata(true, FrameworkPropertyMetadataOptions.Inherits, OnEnableLiveFilteringChanged));
 
         /// <summary>
         /// Grid-wide policy for the per-cell clear (X) button visibility. Defaults to
@@ -578,6 +578,10 @@ namespace WWSearchDataGrid.Modern.WPF
             SetValue(GridColumnsPropertyKey, gridColumns);
             SubscribeToGridColumnsChanged(gridColumns);
 
+            // Expose the grouping engine's backing collection through the read-only
+            // GroupedColumns DP so the group panel can bind to it directly.
+            SetValue(GroupedColumnsPropertyKey, _groupedColumnsBacking);
+
             // Initialize context menu functionality
             this.InitializeContextMenu();
 
@@ -908,6 +912,14 @@ namespace WWSearchDataGrid.Modern.WPF
 
                 case Key.Tab:
                 {
+                    // when any column has GridColumn.NavigationIndex set, override
+                    // the native DisplayIndex-only Tab path and walk by NavigationIndex.
+                    if (TryHandleNavigationIndexTab(cell, e))
+                    {
+                        e.Handled = true;
+                        break;
+                    }
+
                     if (TryWrapTabWithinRow(cell, e))
                     {
                         // Within-row wrap — carry flag already set by the helper.
@@ -918,6 +930,8 @@ namespace WWSearchDataGrid.Modern.WPF
                     if (cell.IsEditing)
                         _carryEditStateOnNextFocus = true;
                     // Don't mark handled — DataGrid's native Tab handler commits + moves focus.
+                    // (Native handler honors cell-style KeyboardNavigation.IsTabStop=false from
+                    // descriptors with ActualTabStop=false, so the column is skipped naturally.)
                     break;
                 }
 
@@ -1087,6 +1101,156 @@ namespace WWSearchDataGrid.Modern.WPF
             if (row == null) return null;
 
             return GetCellAt(row, targetColumn);
+        }
+
+        /// <summary>
+        /// Tab/Shift+Tab handler that walks columns by
+        /// <see cref="ColumnDataBase.NavigationIndex"/> when at least one column has set a
+        /// non-default value. Returns <c>false</c> when no NavigationIndex is configured (so
+        /// the caller falls back to native handling); returns <c>true</c> and moves focus
+        /// otherwise. Skips columns with <see cref="ColumnDataBase.ActualTabStop"/>=<c>false</c>
+        /// or <see cref="ColumnDataBase.ActualAllowFocus"/>=<c>false</c>; falls off the end
+        /// of the row to the next/previous row, matching native Tab semantics.
+        /// </summary>
+        internal bool TryHandleNavigationIndexTab(DataGridCell sourceCell, KeyEventArgs e)
+        {
+            if (sourceCell == null) return false;
+
+            var tabOrder = GetColumnsInTabOrder();
+            if (tabOrder.Columns == null || tabOrder.Columns.Count == 0) return false;
+            // No-op when no column has set NavigationIndex — let native Tab handle it (and
+            // honor any cell-style IsTabStop setters our descriptors pushed).
+            if (!tabOrder.AnyNavigationIndexSet) return false;
+
+            int currentIdx = tabOrder.Columns.IndexOf(sourceCell.Column);
+            if (currentIdx < 0) return false;
+
+            bool isShift = (Keyboard.Modifiers & ModifierKeys.Shift) != 0;
+            int step = isShift ? -1 : 1;
+
+            DataGridCell targetCell = ResolveNavigationIndexTabTarget(sourceCell, tabOrder, currentIdx, step);
+            if (targetCell == null) return false;
+
+            // Carry edit state forward, matching the within-row Tab wrap helper:
+            //   • source was editing → commit + carry
+            //   • destination opts into auto-edit → carry (tab-through-editables semantics)
+            if (sourceCell.IsEditing)
+            {
+                CommitEdit();
+                _carryEditStateOnNextFocus = true;
+            }
+            else if (IsCellAutoEditEligible(targetCell))
+            {
+                _carryEditStateOnNextFocus = true;
+            }
+
+            return targetCell.Focus();
+        }
+
+        /// <summary>
+        /// Resolves the destination cell for a NavigationIndex-driven Tab step. Walks the Tab
+        /// order forward/backward from <paramref name="currentIdx"/>, falling off the row end
+        /// to the next/previous row when needed.
+        /// </summary>
+        private DataGridCell ResolveNavigationIndexTabTarget(
+            DataGridCell sourceCell,
+            TabOrderResult tabOrder,
+            int currentIdx,
+            int step)
+        {
+            // Within-row walk first.
+            var rowContainer = VisualTreeHelperMethods.FindVisualAncestor<DataGridRow>(sourceCell);
+            if (rowContainer != null)
+            {
+                int probe = currentIdx + step;
+                while (probe >= 0 && probe < tabOrder.Columns.Count)
+                {
+                    var cell = GetCellAt(rowContainer, tabOrder.Columns[probe]);
+                    if (cell != null) return cell;
+                    probe += step;
+                }
+            }
+
+            // Off the end of the row — hand to the next/previous row's first/last Tab cell.
+            int rowIdx = Items.IndexOf(sourceCell.DataContext);
+            if (rowIdx < 0) return null;
+
+            int targetRowIdx = rowIdx + step;
+            if (targetRowIdx < 0 || targetRowIdx >= Items.Count) return null;
+
+            var targetRow = Items[targetRowIdx];
+            ScrollIntoView(targetRow);
+            UpdateLayout();
+            if (ItemContainerGenerator.ContainerFromItem(targetRow) is not DataGridRow row) return null;
+
+            // Forward Tab → first in Tab order on next row; Shift+Tab → last on previous.
+            var landingColumn = step > 0 ? tabOrder.Columns[0] : tabOrder.Columns[tabOrder.Columns.Count - 1];
+            return GetCellAt(row, landingColumn);
+        }
+
+        /// <summary>
+        /// Visible columns ordered for Tab traversal. Columns with
+        /// <see cref="ColumnDataBase.NavigationIndex"/> >= 0 come first (ascending);
+        /// columns without an index follow in <see cref="DataGridColumn.DisplayIndex"/>
+        /// order. Skips columns whose descriptor has
+        /// <see cref="ColumnDataBase.ActualTabStop"/>=<c>false</c> or
+        /// <see cref="ColumnDataBase.ActualAllowFocus"/>=<c>false</c>. Used by the data-row
+        /// Tab handler and by <see cref="FilterRowNavigator"/>.
+        /// </summary>
+        internal TabOrderResult GetColumnsInTabOrder()
+        {
+            var indexed = new List<(int navIndex, int displayIndex, DataGridColumn col)>();
+            var unindexed = new List<(int displayIndex, DataGridColumn col)>();
+            bool anySet = false;
+
+            foreach (var column in Columns)
+            {
+                if (column == null) continue;
+                if (column.Visibility != Visibility.Visible) continue;
+
+                var descriptor = FindGridColumnDescriptor(column);
+                bool tabStop = descriptor?.ActualTabStop ?? true;
+                bool allowFocus = descriptor?.ActualAllowFocus ?? true;
+                if (!tabStop || !allowFocus) continue;
+
+                int navIndex = descriptor?.NavigationIndex ?? -1;
+                if (navIndex >= 0)
+                {
+                    anySet = true;
+                    indexed.Add((navIndex, column.DisplayIndex, column));
+                }
+                else
+                {
+                    unindexed.Add((column.DisplayIndex, column));
+                }
+            }
+
+            indexed.Sort(static (a, b) =>
+            {
+                int c = a.navIndex.CompareTo(b.navIndex);
+                return c != 0 ? c : a.displayIndex.CompareTo(b.displayIndex);
+            });
+            unindexed.Sort(static (a, b) => a.displayIndex.CompareTo(b.displayIndex));
+
+            var ordered = new List<DataGridColumn>(indexed.Count + unindexed.Count);
+            foreach (var entry in indexed) ordered.Add(entry.col);
+            foreach (var entry in unindexed) ordered.Add(entry.col);
+            return new TabOrderResult(ordered, anySet);
+        }
+
+        /// <summary>
+        /// Result of <see cref="GetColumnsInTabOrder"/>. <see cref="AnyNavigationIndexSet"/>
+        /// lets callers fall back to the native Tab path when nothing has opted in.
+        /// </summary>
+        internal readonly struct TabOrderResult
+        {
+            public TabOrderResult(IList<DataGridColumn> columns, bool anyNavigationIndexSet)
+            {
+                Columns = columns;
+                AnyNavigationIndexSet = anyNavigationIndexSet;
+            }
+            public IList<DataGridColumn> Columns { get; }
+            public bool AnyNavigationIndexSet { get; }
         }
 
         /// <summary>Returns the cell at <paramref name="column"/> inside <paramref name="row"/>, or null if not realized.</summary>
@@ -1441,6 +1605,9 @@ namespace WWSearchDataGrid.Modern.WPF
                             }
                         }
                         ApplyFixedColumnLayout();
+                        // A freshly-added descriptor may carry a GroupIndex (XAML/code) and shifts
+                        // the grouping order — rebuild once after the batch.
+                        RebuildGroupDescriptions();
                     }
                     break;
 
@@ -1451,6 +1618,7 @@ namespace WWSearchDataGrid.Modern.WPF
                         {
                             UnhookSortObservation(descriptor);
                             UnhookColumnStateObservation(descriptor);
+                            UnhookGroupObservation(descriptor);
                             if (descriptor.InternalColumn != null)
                             {
                                 Columns.Remove(descriptor.InternalColumn);
@@ -1459,6 +1627,8 @@ namespace WWSearchDataGrid.Modern.WPF
                             descriptor.SetView(null);
                         }
                         ApplyFixedColumnLayout();
+                        // Drop the removed columns' GroupDescriptions and renormalize the rest.
+                        RebuildGroupDescriptions();
                     }
                     break;
 
@@ -1470,6 +1640,7 @@ namespace WWSearchDataGrid.Modern.WPF
                         {
                             UnhookSortObservation(descriptor);
                             UnhookColumnStateObservation(descriptor);
+                            UnhookGroupObservation(descriptor);
                             if (descriptor.InternalColumn != null)
                             {
                                 Columns.Remove(descriptor.InternalColumn);
@@ -1497,6 +1668,7 @@ namespace WWSearchDataGrid.Modern.WPF
                         }
                     }
                     ApplyFixedColumnLayout();
+                    RebuildGroupDescriptions();
                     break;
 
                 case NotifyCollectionChangedAction.Reset:
@@ -1557,6 +1729,10 @@ namespace WWSearchDataGrid.Modern.WPF
             _gridColumnsGenerated = true;
 
             ApplyFixedColumnLayout();
+
+            // Build the grouping projection once all columns exist so GroupIndex values declared in
+            // XAML (or carried over from a prior generation) take effect in one pass.
+            RebuildGroupDescriptions();
         }
 
         /// <summary>
@@ -1648,6 +1824,7 @@ namespace WWSearchDataGrid.Modern.WPF
             {
                 UnhookSortObservation(descriptor);
                 UnhookColumnStateObservation(descriptor);
+                UnhookGroupObservation(descriptor);
                 if (descriptor.InternalColumn != null)
                 {
                     Columns.Remove(descriptor.InternalColumn);
@@ -1785,7 +1962,19 @@ namespace WWSearchDataGrid.Modern.WPF
                     return pd.PropertyType;
             }
 
-            // 3. Reflection on item type — supports dotted property paths for nested CLR objects.
+            // 3. Dynamic bag (ExpandoObject / other IDictionary<string, object>): dynamic members
+            //    are invisible to both TypeDescriptor and reflection, so infer the type from the
+            //    sample row's runtime value. Must run before the reflection step below — that step
+            //    early-returns (with null) for a dynamic item type. Type-driven auto-configuration
+            //    (EditSettings / styled cell + editor templates) then lights up for dynamic columns.
+            if (sampleItem is IDictionary<string, object> bag
+                && bag.TryGetValue(fieldName, out var sampleValue)
+                && sampleValue != null)
+            {
+                return sampleValue.GetType();
+            }
+
+            // 4. Reflection on item type — supports dotted property paths for nested CLR objects.
             if (itemType != null)
                 return ResolvePropertyTypeByPath(itemType, fieldName);
 
@@ -1903,7 +2092,7 @@ namespace WWSearchDataGrid.Modern.WPF
             this.RowEditEnding += OnRowEditEnding;
             this.CellEditEnding += OnCellEditEnding;
 
-            // Surface data-annotation validation messages (Phase 2.2) as editor tooltips.
+            // Surface data-annotation validation messages as editor tooltips.
             Validation.RemoveErrorHandler(this, OnValidationError);
             Validation.AddErrorHandler(this, OnValidationError);
 
@@ -2078,6 +2267,18 @@ namespace WWSearchDataGrid.Modern.WPF
             {
                 grid.RefreshColumnFilterStates();
             }
+        }
+
+        private static void OnEnableLiveFilteringChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            if (d is not SearchDataGrid grid)
+                return;
+
+            // Re-resolve every column's ActualEnableLiveFiltering. Inheriting columns (no local
+            // override) pick up the new grid value; explicitly-set columns keep their override —
+            // ResolveEffectiveEnableLiveFiltering handles both, so refresh unconditionally.
+            foreach (var column in grid.GridColumns)
+                column?.RefreshActualEnableLiveFiltering();
         }
 
         private static void OnEnableLiveScrollingChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
