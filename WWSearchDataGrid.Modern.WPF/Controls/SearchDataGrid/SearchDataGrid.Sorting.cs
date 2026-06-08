@@ -90,52 +90,32 @@ namespace WWSearchDataGrid.Modern.WPF
         /// </summary>
         private void ApplyColumnSort(DataGridColumn col, ListSortDirection? direction, bool multiColumn)
         {
+            // When grouped, order is shaped upstream of the displayed projection; route the header
+            // click there instead of mutating the projection's SortDescriptions.
+            if (_groupingActive) { ApplyGroupedColumnSort(col, direction, multiColumn); return; }
+
+            // Ungrouped: sort the displayed view directly via its SortDescriptions.
             SortDescriptionCollection descriptions = Items?.SortDescriptions;
             if (descriptions == null) return;
 
             string path = col.SortMemberPath;
             if (string.IsNullOrEmpty(path)) return;
 
-            // Grouping owns a leading SortDescription for each grouped column's path (D2 — grouping
-            // leads sorting). A header click on a grouped column re-orders that group: update the
-            // grouping-owned entry in place rather than clearing it or adding a competing user sort.
-            // Grouping always carries an order, so a "clear" falls back to ascending.
-            if (IsGroupSortPath(path))
-            {
-                for (int i = 0; i < descriptions.Count; i++)
-                {
-                    if (descriptions[i].PropertyName != path) continue;
-                    var groupDir = direction ?? ListSortDirection.Ascending;
-                    descriptions[i] = new SortDescription(path, groupDir);
-                    col.SortDirection = groupDir;
-                    return;
-                }
-            }
-
             if (!multiColumn)
             {
-                // Clear only user (non-group) sorts; grouping-owned leading sorts stay put.
-                for (int i = descriptions.Count - 1; i >= 0; i--)
-                {
-                    if (!IsGroupSortPath(descriptions[i].PropertyName))
-                        descriptions.RemoveAt(i);
-                }
+                descriptions.Clear();
                 foreach (var other in Columns)
                 {
                     if (other == col) continue;
-                    // Don't clear the sort arrow on grouped columns — their group sort persists.
-                    var otherDescriptor = FindGridColumnDescriptor(other);
-                    if (otherDescriptor != null && otherDescriptor.IsGrouped) continue;
                     other.SortDirection = null;
                 }
             }
             else
             {
-                // Drop any existing user entry for this column's path so we don't end up with
-                // duplicate descriptions when the user re-clicks an already-sorted column.
+                // Drop any existing entry for this column's path so a re-click doesn't duplicate it.
                 for (int i = descriptions.Count - 1; i >= 0; i--)
                 {
-                    if (descriptions[i].PropertyName == path && !IsGroupSortPath(descriptions[i].PropertyName))
+                    if (descriptions[i].PropertyName == path)
                         descriptions.RemoveAt(i);
                 }
             }
@@ -184,30 +164,11 @@ namespace WWSearchDataGrid.Modern.WPF
 
             EventHandler handler = (s, e) =>
             {
-                var newDir = col.SortDirection;
-                // Grouping owns this column's sort direction (D2). If something post-rebuild
-                // clears it to null while the column is still grouped (WPF resync after
-                // ItemsSource init or a later layout pass — observed only at load time on the
-                // declaratively-grouped column), restore the direction from the surviving
-                // group SortDescription. The recursive set re-enters this handler with a
-                // non-null value and falls through to the normal mirror.
-                if (newDir == null && _groupSortDescriptors.Contains(descriptor))
-                {
-                    string path = descriptor.ResolveGroupPath();
-                    var sorts = Items?.SortDescriptions;
-                    if (sorts != null && !string.IsNullOrEmpty(path))
-                    {
-                        for (int i = 0; i < sorts.Count; i++)
-                        {
-                            if (sorts[i].PropertyName == path)
-                            {
-                                col.SortDirection = sorts[i].Direction;
-                                return;
-                            }
-                        }
-                    }
-                }
-                descriptor.SetSortOrder(MapSortDirection(newDir));
+                // Mirror the generated column's SortDirection onto the descriptor's SortOrder (the
+                // property pill / header styles bind to). For grouped columns the projection sets
+                // SortDirection directly (ApplyGroupSortDirections), so this just keeps SortOrder
+                // in sync — there is no CollectionView resync to defend against.
+                descriptor.SetSortOrder(MapSortDirection(col.SortDirection));
                 RefreshAllSortIndices();
             };
             dpd.AddValueChanged(col, handler);
@@ -252,16 +213,36 @@ namespace WWSearchDataGrid.Modern.WPF
 
         private void RefreshAllSortIndices()
         {
-            var descriptions = Items?.SortDescriptions;
-            if (descriptions == null) return;
-
             // Build a path → ordinal lookup once per pass so each descriptor lookup is O(1).
             var pathToIndex = new Dictionary<string, int>(StringComparer.Ordinal);
-            for (int i = 0; i < descriptions.Count; i++)
+
+            if (_groupingActive)
             {
-                string name = descriptions[i].PropertyName;
-                if (!string.IsNullOrEmpty(name) && !pathToIndex.ContainsKey(name))
-                    pathToIndex[name] = i;
+                // Grouped mode keeps no sort on the displayed view: the effective order is the group
+                // paths (in level order) followed by the user sorts. Mirror that ordinal sequence.
+                int idx = 0;
+                foreach (var grouped in _groupColumns)
+                {
+                    string path = grouped?.ResolveGroupPath();
+                    if (!string.IsNullOrEmpty(path) && !pathToIndex.ContainsKey(path))
+                        pathToIndex[path] = idx++;
+                }
+                foreach (var sort in _withinGroupSorts)
+                {
+                    if (!string.IsNullOrEmpty(sort.PropertyName) && !pathToIndex.ContainsKey(sort.PropertyName))
+                        pathToIndex[sort.PropertyName] = idx++;
+                }
+            }
+            else
+            {
+                var descriptions = Items?.SortDescriptions;
+                if (descriptions == null) return;
+                for (int i = 0; i < descriptions.Count; i++)
+                {
+                    string name = descriptions[i].PropertyName;
+                    if (!string.IsNullOrEmpty(name) && !pathToIndex.ContainsKey(name))
+                        pathToIndex[name] = i;
+                }
             }
 
             foreach (var descriptor in _sortHooksByDescriptor.Keys)

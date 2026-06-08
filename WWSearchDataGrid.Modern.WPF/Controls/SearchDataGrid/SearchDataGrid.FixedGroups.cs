@@ -58,74 +58,26 @@ namespace WWSearchDataGrid.Modern.WPF
         #region Resolver
 
         /// <summary>
-        /// Recomputes the active group chain — the ordered list of <see cref="CollectionViewGroup"/>
-        /// ancestors of the topmost visible row — and applies it to
-        /// <see cref="_fixedGroupHeadersBacking"/> via minimal in-place mutation (so existing
-        /// entries keep their realized <see cref="FixedGroupHeaderEntry.RepresentedGroupItem"/>
-        /// references and the strip's per-item containers stay in place across no-op scrolls).
+        /// Recomputes the active group chain — the pinned-header entries for the topmost visible
+        /// row's enclosing groups — and applies it to <see cref="_fixedGroupHeadersBacking"/> via
+        /// minimal in-place mutation (so unchanged slots keep their per-item containers across no-op
+        /// scrolls). Cheaply bails when the feature is off or the grid is ungrouped; safe to call
+        /// from any point that could change the active chain (scroll changes, grouping rebuilds,
+        /// layout updates). The chain is computed by <see cref="BuildFixedGroupChain"/>.
         /// </summary>
-        /// <remarks>
-        /// <para>
-        /// Bails out cheaply when the feature is off or the grid is ungrouped. The resolver is
-        /// safe to call from any point that could change the active chain — scroll changes,
-        /// grouping rebuilds, layout updates.
-        /// </para>
-        /// <para>
-        /// Algorithm: locate the topmost realized <see cref="DataGridRow"/> or
-        /// <see cref="GroupItem"/> in the viewport (see <see cref="FindTopmostVisibleRowOrGroup"/>
-        /// for the largest-Y-straddle selection), then walk up to collect every
-        /// <see cref="GroupItem"/> ancestor that is BOTH expanded AND has its own header scrolled
-        /// above the viewport top. A collapsed group is never pinned — it has no content to
-        /// scroll through, so once its header passes the top the user is effectively scrolling
-        /// the parent's content, not the collapsed group's. When the filtered chain is empty —
-        /// e.g., scrolling through collapsed top-level headers with no expanded ancestor — the
-        /// strip and its drop shadow stay hidden.
-        /// </para>
-        /// </remarks>
         internal void UpdateFixedGroupHeaders()
         {
-            // Both gates cheap: AllowFixedGroups is a DP read, GroupCount is the read-only DP the
-            // engine maintains. Skipping when ungrouped means the resolver never walks the visual
-            // tree on a non-grouped grid even if the scroll handler is wired up.
-            if (!AllowFixedGroups || GroupCount == 0)
+            // All cheap gates: AllowFixedGroups is a DP read, GroupCount is the read-only DP the
+            // engine maintains, and _groupingActive is true exactly when the projection owns the
+            // ItemsSource. Skipping when ungrouped means the resolver never walks the visual tree on
+            // a non-grouped grid even if the scroll handler is wired up.
+            if (!AllowFixedGroups || GroupCount == 0 || !_groupingActive)
             {
                 ClearStrip();
                 return;
             }
 
-            var host = ResolveScrollContentPresenter();
-            if (host == null)
-            {
-                ClearStrip();
-                return;
-            }
-
-            FrameworkElement topmost = FindTopmostVisibleRowOrGroup(host);
-            if (topmost == null)
-            {
-                ClearStrip();
-                return;
-            }
-
-            // Pin an ancestor only when it is expanded AND its in-place header has scrolled above
-            // the viewport top (Y < 0). The Y<0 gate drops headers still visible in-place (pinning
-            // those would stack a duplicate over a header the user already sees). The expanded gate
-            // drops collapsed groups: a collapsed group has no content beneath its header to scroll,
-            // so scrolling past its header means we're inside the PARENT, not the collapsed group —
-            // pinning it (and its drop shadow) would be meaningless. When the filtered chain is
-            // empty, ClearStrip leaves the strip and its shadow collapsed.
-            var ancestors = CollectGroupItemAncestors(topmost, host);
-            if (ancestors.Count == 0)
-            {
-                ClearStrip();
-                return;
-            }
-
-            // Outermost first matches the GroupLevel projection the resolver produces and the
-            // top-down stair-step the strip renders.
-            ancestors.Reverse();
-
-            ApplyActiveChain(ancestors);
+            BuildFixedGroupChain();
         }
 
         /// <summary>
@@ -140,30 +92,21 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
-        /// Reduces the realized <see cref="GroupItem"/> chain into the projected
-        /// <see cref="FixedGroupHeaderEntry"/> sequence and writes it into the backing collection
-        /// in place. Entries that haven't moved (same level, same <see cref="CollectionViewGroup"/>
-        /// identity) are reused — only the trailing slots that differ get replaced — so the strip's
-        /// per-item containers don't get torn down on every scroll change.
+        /// Writes <paramref name="outerToInner"/> into <see cref="_fixedGroupHeadersBacking"/> in
+        /// place: slots whose entry hasn't moved (<see cref="FixedGroupHeaderEntry.Equals"/> — same
+        /// level + same group identity) are reused so the strip's per-item containers stay alive
+        /// across no-op scrolls; differing slots are replaced and trailing slots beyond the new
+        /// chain length are trimmed.
         /// </summary>
-        private void ApplyActiveChain(List<GroupItem> outerToInner)
+        private void ApplyEntries(List<FixedGroupHeaderEntry> outerToInner)
         {
             int target = outerToInner.Count;
             for (int level = 0; level < target; level++)
             {
-                var groupItem = outerToInner[level];
-                var cvg = groupItem.DataContext as System.Windows.Data.CollectionViewGroup;
-                var column = GetGroupedColumnAtLevel(level);
-                var entry = new FixedGroupHeaderEntry(level, cvg, column, groupItem);
-
+                var entry = outerToInner[level];
                 if (level < _fixedGroupHeadersBacking.Count)
                 {
-                    var existing = _fixedGroupHeadersBacking[level];
-                    // Reuse the slot when the (Level, Group) pair hasn't moved — keeps the per-item
-                    // container in the strip alive across no-op scrolls. Replace when the group has
-                    // changed (sibling-group transition) so the new entry's RepresentedGroupItem
-                    // reference is fresh.
-                    if (existing.Equals(entry)) continue;
+                    if (_fixedGroupHeadersBacking[level].Equals(entry)) continue;
                     _fixedGroupHeadersBacking[level] = entry;
                 }
                 else
@@ -176,6 +119,81 @@ namespace WWSearchDataGrid.Modern.WPF
             // scrolled out of a nested group into a shallower part of the hierarchy.
             for (int i = _fixedGroupHeadersBacking.Count - 1; i >= target; i--)
                 _fixedGroupHeadersBacking.RemoveAt(i);
+        }
+
+        /// <summary>
+        /// Resolver: computes the pinned chain by index into
+        /// <see cref="_groupRows"/> instead of walking the visual tree for <see cref="GroupItem"/>
+        /// ancestors. Finds the topmost realized row straddling the viewport top (the "anchor"),
+        /// then collects the nearest preceding <see cref="GroupHeaderRow"/> at each level shallower
+        /// than the anchor's own. Those headers are, by list order, exactly the anchor's ancestors
+        /// scrolled above the top — so no per-ancestor geometry or expand-state probing is needed
+        /// (an ancestor of a visible data row is necessarily expanded). When the anchor is a
+        /// top-level header (no shallower ancestor), the chain is empty and the strip hides — the
+        /// flat equivalent of "scrolling through collapsed top-level headers."
+        /// </summary>
+        private void BuildFixedGroupChain()
+        {
+            var host = ResolveScrollContentPresenter();
+            if (host == null)
+            {
+                ClearStrip();
+                return;
+            }
+
+            // Every flat row materializes as a SearchDataGridRow : DataGridRow, so the existing
+            // largest-Y-straddle walk returns the row rendering at the viewport top (no GroupItems
+            // exist in flat mode for it to pick up).
+            FrameworkElement topmost = FindTopmostVisibleRowOrGroup(host);
+            if (topmost == null)
+            {
+                ClearStrip();
+                return;
+            }
+
+            object anchorItem = ItemContainerGenerator.ItemFromContainer(topmost);
+            int anchorIndex = anchorItem == null ? -1 : _groupRows.IndexOf(anchorItem);
+            if (anchorIndex < 0)
+            {
+                ClearStrip();
+                return;
+            }
+
+            // The deepest ancestor level we still need: one above the anchor header's own level, or
+            // the innermost group level when the anchor is a data row (all enclosing headers pin).
+            int needed = _groupRows[anchorIndex] is GroupHeaderRow anchorHeader
+                ? anchorHeader.Level - 1
+                : GroupCount - 1;
+            if (needed < 0)
+            {
+                ClearStrip();
+                return;
+            }
+
+            // Walk back collecting the nearest preceding header at each successively-shallower level.
+            var chain = new List<GroupHeaderRow>(needed + 1);
+            for (int i = anchorIndex - 1; i >= 0 && needed >= 0; i--)
+            {
+                if (_groupRows[i] is GroupHeaderRow h && h.Level == needed)
+                {
+                    chain.Add(h);
+                    needed--;
+                }
+            }
+
+            if (chain.Count == 0)
+            {
+                ClearStrip();
+                return;
+            }
+
+            chain.Reverse(); // outermost first, matching the strip's top-down stair-step
+
+            var entries = new List<FixedGroupHeaderEntry>(chain.Count);
+            foreach (var h in chain)
+                entries.Add(new FixedGroupHeaderEntry(h.Level, h.Node, h.OwningColumn, this));
+
+            ApplyEntries(entries);
         }
 
         /// <summary>
@@ -240,51 +258,6 @@ namespace WWSearchDataGrid.Modern.WPF
 
                 WalkForTopmost(child, host, ref best, ref bestY);
             }
-        }
-
-        /// <summary>
-        /// Walks the visual tree upward from <paramref name="start"/> (inclusive) and collects
-        /// every <see cref="GroupItem"/> ancestor that qualifies for pinning — innermost first.
-        /// A group qualifies when BOTH:
-        /// <list type="bullet">
-        ///   <item>its in-place header has scrolled above the viewport top (top Y in
-        ///         <paramref name="host"/> coordinates is strictly less than 0) — headers still
-        ///         visible in-place are skipped so the strip doesn't pin a duplicate over a
-        ///         header the user already sees; and</item>
-        ///   <item>it is expanded — a collapsed group has no content beneath its header to
-        ///         scroll, so once its header passes the top the user is scrolling the parent's
-        ///         content, not the collapsed group's. Pinning a collapsed group (and its drop
-        ///         shadow) would be meaningless.</item>
-        /// </list>
-        /// Caller reverses for outer-to-inner ordering when building the pinned chain.
-        /// </summary>
-        private static List<GroupItem> CollectGroupItemAncestors(DependencyObject start, ScrollContentPresenter host)
-        {
-            var result = new List<GroupItem>();
-            var current = start;
-            while (current != null)
-            {
-                if (current is GroupItem gi)
-                {
-                    double y = gi.TranslatePoint(new Point(0, 0), host).Y;
-                    if (y < 0 && IsGroupItemExpanded(gi)) result.Add(gi);
-                }
-                current = VisualTreeHelper.GetParent(current);
-            }
-            return result;
-        }
-
-        /// <summary>
-        /// Reads the expand state of a <see cref="GroupItem"/>'s own <see cref="Expander"/> —
-        /// the first <see cref="Expander"/> in its template subtree (the group's chrome), found
-        /// before any nested group's expander on a depth-first walk. Defaults to <c>true</c>
-        /// when no expander is realized yet, matching the
-        /// <see cref="SearchDataGrid.AutoExpandAllGroups"/> default.
-        /// </summary>
-        private static bool IsGroupItemExpanded(GroupItem groupItem)
-        {
-            var expander = VisualTreeHelperMethods.FindVisualDescendant<Expander>(groupItem);
-            return expander?.IsExpanded ?? true;
         }
 
         #endregion

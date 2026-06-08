@@ -1,32 +1,30 @@
-using System.Windows.Controls;
-using System.Windows.Data;
-
 namespace WWSearchDataGrid.Modern.WPF
 {
     /// <summary>
     /// One pinned-header view-model in the sticky strip rendered by
     /// <see cref="FixedGroupHeadersPresenter"/>. Carries everything the per-item template needs to
-    /// mirror the in-place group header at <see cref="Level"/>: the live
-    /// <see cref="CollectionViewGroup"/> (for <c>Name</c>, <c>ItemCount</c>, expand-state routing),
-    /// the owning <see cref="GridColumn"/> (for column-driven <c>GroupHeaderTemplate</c> /
-    /// <c>GroupValueTemplate</c> resolution), and a weak reference to the realized
-    /// <see cref="GroupItem"/> if one currently exists in the visual tree (so click + scroll-into-view
-    /// routing in later steps can find it without an ItemContainerGenerator walk).
+    /// mirror the in-place group header at <see cref="Level"/>: the group's display
+    /// <see cref="Name"/> / <see cref="ItemCount"/>, the owning <see cref="GridColumn"/> (for
+    /// column-driven <c>GroupHeaderTemplate</c> / <c>GroupValueTemplate</c> resolution), and the
+    /// routing handle (<see cref="Node"/> + <see cref="OwnerGrid"/>) for expand-state reads and
+    /// toggle commands.
     /// </summary>
     /// <remarks>
-    /// Entries are recomputed by the grid's active-chain resolver on every scroll change (step 3).
-    /// They are value-shaped — two entries with the same <see cref="Level"/> and reference-identical
-    /// <see cref="Group"/> compare equal, so the resolver can skip no-op updates against the current
-    /// collection cheaply.
+    /// Entries are recomputed by the grid's active-chain resolver on every scroll change. They are
+    /// value-shaped — two entries with the same <see cref="Level"/> and the same
+    /// <see cref="GroupNode.PathKey"/> compare equal — so the resolver can skip no-op updates
+    /// against the current collection cheaply. (The backing <see cref="GroupNode"/> is rebuilt on
+    /// every reprojection, so the stable <see cref="GroupNode.PathKey"/> is the group's identity,
+    /// not reference equality.)
     /// </remarks>
     public sealed class FixedGroupHeaderEntry
     {
-        public FixedGroupHeaderEntry(int level, CollectionViewGroup group, GridColumn column, GroupItem representedGroupItem)
+        internal FixedGroupHeaderEntry(int level, GroupNode node, GridColumn column, SearchDataGrid ownerGrid)
         {
             Level = level;
-            Group = group;
+            Node = node;
             Column = column;
-            RepresentedGroupItem = representedGroupItem;
+            OwnerGrid = ownerGrid;
         }
 
         /// <summary>
@@ -35,45 +33,33 @@ namespace WWSearchDataGrid.Modern.WPF
         /// </summary>
         public int Level { get; }
 
-        /// <summary>
-        /// The live <see cref="CollectionViewGroup"/> whose chain currently contains the topmost
-        /// visible row. Bind to <c>Name</c> / <c>ItemCount</c> from the per-item template.
-        /// </summary>
-        public CollectionViewGroup Group { get; }
+        /// <summary>The projection node this entry mirrors. Drives <see cref="Name"/> / <see cref="ItemCount"/> / expand-state.</summary>
+        internal GroupNode Node { get; }
 
         /// <summary>
-        /// The grouped <see cref="GridColumn"/> at <see cref="Level"/>, resolved via
-        /// <see cref="SearchDataGrid.GetGroupedColumnAtLevel"/>. The per-item template uses this to
-        /// pick up the column's <c>GroupHeaderTemplate</c> / <c>GroupValueTemplate</c> instead of
-        /// the chain-depth walk used by the in-place selectors (which has no <see cref="GroupItem"/>
-        /// ancestor to read from in the strip).
+        /// The owning grid, so the is-expanded converter and the toggle / expand / collapse /
+        /// ungroup commands can route through the grid's path-keyed expand state.
+        /// </summary>
+        internal SearchDataGrid OwnerGrid { get; }
+
+        /// <summary>
+        /// The grouped <see cref="GridColumn"/> at <see cref="Level"/>. The per-item template uses
+        /// this to pick up the column's <c>GroupHeaderTemplate</c> / <c>GroupValueTemplate</c>.
         /// </summary>
         public GridColumn Column { get; }
 
-        /// <summary>
-        /// The realized <see cref="GroupItem"/> this pinned entry mirrors when one currently
-        /// exists in the visual tree. <c>null</c> when the represented group has been virtualized
-        /// past the viewport or has not yet realized; later steps re-resolve as needed rather than
-        /// keeping a stale reference.
-        /// </summary>
-        public GroupItem RepresentedGroupItem { get; }
+        /// <summary>Convenience accessor for the group's display name — what most per-item templates bind to.</summary>
+        public object Name => Node?.DisplayValue;
 
-        /// <summary>
-        /// Convenience accessor for the group's display name — what most per-item templates bind to.
-        /// </summary>
-        public object Name => Group?.Name;
-
-        /// <summary>
-        /// Convenience accessor for the group's row count — what most per-item templates bind to.
-        /// </summary>
-        public int ItemCount => Group?.ItemCount ?? 0;
+        /// <summary>Convenience accessor for the group's row count — what most per-item templates bind to.</summary>
+        public int ItemCount => Node?.Count ?? 0;
 
         public override bool Equals(object obj)
             => obj is FixedGroupHeaderEntry other
                 && other.Level == Level
-                && ReferenceEquals(other.Group, Group);
+                && other.Node?.PathKey == Node?.PathKey;
 
         public override int GetHashCode()
-            => System.HashCode.Combine(Level, Group is null ? 0 : System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(Group));
+            => System.HashCode.Combine(Level, Node?.PathKey);
     }
 }

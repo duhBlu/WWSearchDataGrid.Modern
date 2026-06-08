@@ -125,38 +125,20 @@ namespace WWSearchDataGrid.Modern.WPF
         public static ComponentResourceKey GridSearchDataGridRowHeader { get; } =
             new ComponentResourceKey(typeof(ThemeKeys), nameof(GridSearchDataGridRowHeader));
 
+        /// <summary>
+        /// <see cref="ControlTemplate"/> for an in-body group-header row — the full-width header
+        /// rendered in place of cells when a <see cref="SearchDataGridRow.IsGroupHeader"/> container
+        /// materializes. Renders the row-header gutter, per-level indent, chevron, column-prefixed
+        /// value, and count chip, reading the level / owning column straight off the
+        /// <see cref="GroupHeaderRow"/>. The default <c>GridSearchDataGridRow</c> style swaps to this
+        /// via an <c>IsGroupHeader</c> trigger.
+        /// </summary>
+        public static ComponentResourceKey GridSearchDataGridGroupHeaderRow { get; } =
+            new ComponentResourceKey(typeof(ThemeKeys), nameof(GridSearchDataGridGroupHeaderRow));
+
         /// <summary>Default style applied to <see cref="DataGridColumnHeader"/>.</summary>
         public static ComponentResourceKey GridSearchDataGridColumnHeader { get; } =
             new ComponentResourceKey(typeof(ThemeKeys), nameof(GridSearchDataGridColumnHeader));
-
-        /// <summary>
-        /// Default <see cref="System.Windows.Controls.GroupStyle"/> attached to the grid the first
-        /// time it is grouped — an expander group header showing the group value and item count.
-        /// The grid pulls it by this key and adds it to its <c>GroupStyle</c> collection lazily;
-        /// a consumer that supplies its own <c>GroupStyle</c> opts out.
-        /// </summary>
-        public static ComponentResourceKey GridSearchDataGridGroupStyle { get; } =
-            new ComponentResourceKey(typeof(ThemeKeys), nameof(GridSearchDataGridGroupStyle));
-
-        /// <summary>
-        /// <see cref="ControlTemplate"/> applied to every group <see cref="Expander"/>. Renders
-        /// the row-header gutter, chevron, and group header, and hosts the content via
-        /// <see cref="GroupExpansionAnimator"/>. The animator drives a Height animation on the
-        /// content host when <see cref="SearchDataGrid.UseGroupExpansionAnimation"/> is <c>true</c>
-        /// and snaps the host's Visibility instantly when it is <c>false</c>, so this single
-        /// template serves both the animated and non-animated modes.
-        /// </summary>
-        public static ComponentResourceKey GridSearchDataGridGroupExpanderTemplate { get; } =
-            new ComponentResourceKey(typeof(ThemeKeys), nameof(GridSearchDataGridGroupExpanderTemplate));
-
-        /// <summary>
-        /// Shared <see cref="ContextMenu"/> resource (declared with <c>x:Shared="False"</c> so
-        /// every Expander gets its own instance) that hosts the group-header right-click menu —
-        /// Expand / Collapse this group, Expand / Collapse all at this level, Ungroup at this
-        /// level. Attached to each group Expander via the default <c>GroupExpanderStyle</c>.
-        /// </summary>
-        public static ComponentResourceKey GridSearchDataGridGroupHeaderContextMenu { get; } =
-            new ComponentResourceKey(typeof(ThemeKeys), nameof(GridSearchDataGridGroupHeaderContextMenu));
 
         /// <summary>
         /// Default <see cref="Style"/> for the <see cref="GroupPanel"/> — the strip above the
@@ -197,6 +179,16 @@ namespace WWSearchDataGrid.Modern.WPF
         /// </summary>
         public static ComponentResourceKey GridSearchDataGridFixedGroupHeaderContextMenu { get; } =
             new ComponentResourceKey(typeof(ThemeKeys), nameof(GridSearchDataGridFixedGroupHeaderContextMenu));
+
+        /// <summary>
+        /// Right-click <see cref="ContextMenu"/> attached to the in-body group-header rows —
+        /// Expand / Collapse this group, Expand / Collapse all at this level, Ungroup at this level.
+        /// Its commands take a <c>GroupHeaderRow</c> (the row template's DataContext); the
+        /// <see cref="GridSearchDataGridFixedGroupHeaderContextMenu"/> sibling takes a
+        /// <see cref="FixedGroupHeaderEntry"/> for the pinned strip.
+        /// </summary>
+        public static ComponentResourceKey GridSearchDataGridGroupHeaderContextMenu { get; } =
+            new ComponentResourceKey(typeof(ThemeKeys), nameof(GridSearchDataGridGroupHeaderContextMenu));
 
         /// <summary>
         /// Shared <see cref="ContextMenu"/> resource (declared with

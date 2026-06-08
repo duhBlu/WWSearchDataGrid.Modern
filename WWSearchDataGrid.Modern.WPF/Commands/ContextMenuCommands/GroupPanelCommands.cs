@@ -37,6 +37,15 @@ namespace WWSearchDataGrid.Modern.WPF.Commands
                     {
                         if (column?.View == null || !column.IsGrouped) return;
                         var grid = column.View;
+
+                        // Grouping has no group SortDescription to flip — toggle the column's
+                        // direction and reflatten through the projection instead.
+                        if (grid.IsGroupingActive)
+                        {
+                            grid.ToggleGroupSort(column);
+                            return;
+                        }
+
                         var path = column.ResolveGroupPath();
                         if (string.IsNullOrEmpty(path)) return;
 
@@ -167,56 +176,21 @@ namespace WWSearchDataGrid.Modern.WPF.Commands
                 grid => grid != null);
 
         /// <summary>
-        /// Shared body for the pill's Full Expand / Full Collapse commands. Walks every realized
-        /// <see cref="GroupItem"/> in the grid whose nesting depth matches the column's
-        /// <see cref="GridColumn.GroupLevel"/>, and toggles its Expander.
+        /// Shared body for the pill's Full Expand / Full Collapse commands. Routes to the grid's
+        /// path-keyed level expansion, which reaches every group at the column's
+        /// <see cref="GridColumn.GroupLevel"/> — including those currently spliced out of the
+        /// projection under a collapsed parent.
         /// </summary>
         private static void ApplyAtColumnLevel(GridColumn column, bool expanded)
         {
             try
             {
                 if (column?.View == null || !column.IsGrouped) return;
-                int targetLevel = column.GroupLevel;
-                var grid = column.View;
-
-                foreach (var groupItem in EnumerateGroupItemDescendants(grid))
-                {
-                    int depth = GetGroupItemDepth(groupItem);
-                    if (depth != targetLevel) continue;
-                    var expander = VisualTreeHelperMethods.FindVisualDescendant<Expander>(groupItem);
-                    if (expander != null && expander.IsExpanded != expanded)
-                        expander.IsExpanded = expanded;
-                }
+                column.View.SetLevelExpanded(column.GroupLevel, expanded);
             }
             catch (Exception ex)
             {
                 Debug.WriteLine($"Error in ApplyAtColumnLevel: {ex.Message}");
-            }
-        }
-
-        private static int GetGroupItemDepth(GroupItem groupItem)
-        {
-            int depth = -1;
-            System.Windows.DependencyObject current = groupItem;
-            while (current != null)
-            {
-                if (current is GroupItem) depth++;
-                current = VisualTreeHelper.GetParent(current);
-            }
-            return depth;
-        }
-
-        private static System.Collections.Generic.IEnumerable<GroupItem> EnumerateGroupItemDescendants(
-            System.Windows.DependencyObject root)
-        {
-            if (root == null) yield break;
-            int count = VisualTreeHelper.GetChildrenCount(root);
-            for (int i = 0; i < count; i++)
-            {
-                var child = VisualTreeHelper.GetChild(root, i);
-                if (child is GroupItem gi) yield return gi;
-                foreach (var nested in EnumerateGroupItemDescendants(child))
-                    yield return nested;
             }
         }
 

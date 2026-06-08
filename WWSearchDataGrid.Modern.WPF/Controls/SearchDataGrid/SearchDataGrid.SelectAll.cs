@@ -183,7 +183,11 @@ namespace WWSearchDataGrid.Modern.WPF
         /// </summary>
         private void OnSelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            try { RefreshSelectedRowsSelectAllHeaders(); }
+            try
+            {
+                ScrubHeaderSelection();
+                RefreshSelectedRowsSelectAllHeaders();
+            }
             catch (Exception ex) { Debug.WriteLine($"Error in OnSelectionChanged: {ex.Message}"); }
         }
 
@@ -193,7 +197,11 @@ namespace WWSearchDataGrid.Modern.WPF
         /// </summary>
         private void OnSelectedCellsChanged(object sender, SelectedCellsChangedEventArgs e)
         {
-            try { RefreshSelectedRowsSelectAllHeaders(); }
+            try
+            {
+                ScrubHeaderSelection();
+                RefreshSelectedRowsSelectAllHeaders();
+            }
             catch (Exception ex) { Debug.WriteLine($"Error in OnSelectedCellsChanged: {ex.Message}"); }
         }
 
@@ -298,7 +306,8 @@ namespace WWSearchDataGrid.Modern.WPF
             switch (scope)
             {
                 case SelectAllScope.FilteredRows:
-                    return Items.Cast<object>();
+                    // Items carries group-header sentinels in flat mode — keep only real rows.
+                    return Items.Cast<object>().Where(o => !IsHeaderItem(o));
 
                 case SelectAllScope.SelectedRows:
                     if (SelectionUnit == DataGridSelectionUnit.Cell || SelectionUnit == DataGridSelectionUnit.CellOrRowHeader)
@@ -306,12 +315,12 @@ namespace WWSearchDataGrid.Modern.WPF
                         var selectedItems = new HashSet<object>();
                         foreach (var cell in SelectedCells)
                         {
-                            if (cell.Item != null)
+                            if (cell.Item != null && !IsHeaderItem(cell.Item))
                                 selectedItems.Add(cell.Item);
                         }
                         return selectedItems;
                     }
-                    return SelectedItems.Cast<object>();
+                    return SelectedItems.Cast<object>().Where(o => !IsHeaderItem(o));
 
                 case SelectAllScope.AllItems:
                     if (originalItemsSource != null)
@@ -319,7 +328,7 @@ namespace WWSearchDataGrid.Modern.WPF
                     return Enumerable.Empty<object>();
 
                 default:
-                    return Items.Cast<object>();
+                    return Items.Cast<object>().Where(o => !IsHeaderItem(o));
             }
         }
 

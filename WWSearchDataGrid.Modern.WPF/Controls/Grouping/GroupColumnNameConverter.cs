@@ -43,9 +43,12 @@ namespace WWSearchDataGrid.Modern.WPF
         {
             if (values == null || values.Length < 1) return string.Empty;
 
-            // Pinned-strip header: the entry carries its owning column directly.
+            // Pinned-strip header / flat-grouping header row: each carries its owning column
+            // directly (no GroupItem ancestor to walk).
             if (values[0] is FixedGroupHeaderEntry entry)
                 return Format(entry.Column?.HeaderCaption);
+            if (values[0] is GroupHeaderRow header)
+                return Format(header.OwningColumn?.HeaderCaption);
 
             if (values.Length < 3) return string.Empty;
             if (values[1] is not GroupItem groupItem) return string.Empty;

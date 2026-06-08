@@ -12,7 +12,8 @@
         <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF.Themes.Default;component/Themes/Controls/SearchDataGrid/Cell/DataGridCell.xaml" />
         <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF.Themes.Default;component/Themes/Controls/SearchDataGrid/Row/DataGridRow.xaml" />
         <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF.Themes.Default;component/Themes/Controls/SearchDataGrid/Column/DataGridColumnHeader.xaml" />
-        <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF.Themes.Default;component/Themes/Controls/SearchDataGrid/Grid/GroupStyle.xaml" />
+        <!--  GroupStyle.xaml is merged transitively via Row/DataGridRow.xaml (its flat group-header
+              row template is referenced by the row style), so it is not merged again here.  -->
         <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF.Themes.Default;component/Themes/Controls/SearchDataGrid/Grid/GroupPanel.xaml" />
     </ResourceDictionary.MergedDictionaries>
 
@@ -179,11 +180,11 @@
                                                                Visibility="{Binding FixedGroupHeaders.Count, RelativeSource={RelativeSource AncestorType={x:Type sdg:SearchDataGrid}}, Converter={StaticResource IntToVisibilityConverter}}">
                                                         <Border DockPanel.Dock="Left"
                                                                 Width="{Binding RowHeaderActualWidth, RelativeSource={RelativeSource AncestorType={x:Type sdg:SearchDataGrid}}}" />
-                                                        <Rectangle Height="6">
+                                                        <Rectangle Height="10">
                                                             <Rectangle.Fill>
                                                                 <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                                                                    <GradientStop Color="#33000000" Offset="0" />
-                                                                    <GradientStop Color="#00000000" Offset="1" />
+                                                                    <GradientStop Color="#99d0d0d0" Offset="0" />
+                                                                    <GradientStop Color="#00d0d0d0" Offset="1" />
                                                                 </LinearGradientBrush>
                                                             </Rectangle.Fill>
                                                         </Rectangle>

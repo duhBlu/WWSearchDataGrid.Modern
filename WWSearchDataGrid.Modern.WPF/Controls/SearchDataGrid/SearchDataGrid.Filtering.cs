@@ -106,8 +106,7 @@ namespace WWSearchDataGrid.Modern.WPF
 
                     if (treePredicate != null)
                     {
-                        Items.Filter = item => treePredicate(item);
-                        SearchFilter = Items.Filter;
+                        ApplyDisplayFilter(item => treePredicate(item));
                     }
                     else
                     {
@@ -131,22 +130,19 @@ namespace WWSearchDataGrid.Modern.WPF
                             else
                             {
                                 // Use synchronous filtering for small datasets
-                                Items.Filter = item => EvaluateUnifiedFilter(item, activeFilters);
-                                SearchFilter = Items.Filter;
+                                ApplyDisplayFilter(item => EvaluateUnifiedFilter(item, activeFilters));
                             }
                         }
                         else
                         {
-                            Items.Filter = null;
-                            SearchFilter = null;
+                            ApplyDisplayFilter(null);
                         }
                     }
                 }
                 else
                 {
                     // Filters are disabled - clear filter but preserve definitions
-                    Items.Filter = null;
-                    SearchFilter = null;
+                    ApplyDisplayFilter(null);
                 }
 
                 UpdateFilterSummaryPanel();
@@ -533,8 +529,7 @@ namespace WWSearchDataGrid.Modern.WPF
                     }
                 }, cancellationToken);
 
-                Items.Filter = item => EvaluateUnifiedFilter(item, activeFilters);
-                SearchFilter = Items.Filter;
+                ApplyDisplayFilter(item => EvaluateUnifiedFilter(item, activeFilters));
             }
             catch (OperationCanceledException)
             {
@@ -559,8 +554,7 @@ namespace WWSearchDataGrid.Modern.WPF
                 control.ClearFilter();
             }
 
-            Items.Filter = null;
-            SearchFilter = null;
+            ApplyDisplayFilter(null);
 
             // Restore normal scrollbar if empty-state override was active
             InjectPlaceholderRowIfEmpty();
@@ -1114,8 +1108,7 @@ namespace WWSearchDataGrid.Modern.WPF
                 }
                 else
                 {
-                    Items.Filter = null;
-                    SearchFilter = null;
+                    ApplyDisplayFilter(null);
                     ClearPlaceholderState();
                 }
             }

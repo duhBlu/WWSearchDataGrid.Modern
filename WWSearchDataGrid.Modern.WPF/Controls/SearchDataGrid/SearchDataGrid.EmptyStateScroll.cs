@@ -22,6 +22,16 @@ namespace WWSearchDataGrid.Modern.WPF
         {
             try
             {
+                // Grouping shapes the displayed view upstream and fills it with header
+                // sentinels; the Items.Filter swap this method uses would re-filter that flat list
+                // (and the sentinel isn't even in it, so the leak-through can't work anyway). The
+                // empty-grouped-grid horizontal-scroll nicety is deferred — bail cleanly.
+                if (_groupingActive)
+                {
+                    ClearPlaceholderState();
+                    return;
+                }
+
                 if (CanUserAddRows)
                 {
                     ClearPlaceholderState();

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -248,6 +248,14 @@ namespace WWSearchDataGrid.Modern.WPF.Commands
         {
             try
             {
+                // Grouping owns ordering through its projection; clear user sorts there and
+                // leave grouped columns' group sort intact (D2).
+                if (context.Grid.IsGroupingActive)
+                {
+                    context.Grid.ClearColumnSortsFromMenu();
+                    return;
+                }
+
                 var view = CollectionViewSource.GetDefaultView(context.Grid.ItemsSource);
                 if(view != null)
                 {
@@ -295,6 +303,14 @@ namespace WWSearchDataGrid.Modern.WPF.Commands
         {
             if (grid?.Items == null || column == null || string.IsNullOrEmpty(column.SortMemberPath))
                 return;
+
+            // Grouping shapes order upstream — mutating the displayed view's SortDescriptions
+            // would re-sort the header sentinels. Route through the projection instead.
+            if (grid.IsGroupingActive)
+            {
+                grid.SortColumnFromMenu(column, direction);
+                return;
+            }
 
             try
             {

@@ -25,6 +25,13 @@ namespace WWSearchDataGrid.Modern.WPF
         {
             try
             {
+                // Group-header sentinels are not user rows — never editable.
+                if (e.Row?.Item is GroupHeaderRow)
+                {
+                    e.Cancel = true;
+                    return;
+                }
+
                 // Cancel stock DataGridCell mouse-down BeginEdit when EditorShowMode wants edit
                 // deferred (MouseUp/MouseUpFocused) or gated on prior focus (MouseDownFocused) or
                 // suppressed entirely (Default/None). Keyboard and programmatic BeginEdit fall through.

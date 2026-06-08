@@ -2,6 +2,34 @@
 
 ## [Unreleased]
 
+### Changed — Grouping rebuilt on a flat row projection (replaces `GroupItem`/`Expander`)
+- Grouping no longer uses WPF's `CollectionView` `GroupDescriptions` → `GroupStyle`/`GroupItem`/
+  `Expander` hierarchical virtualization. When a grid is grouped, the group tree is now projected
+  into a single flat list of group-header sentinels (`GroupHeaderRow`) interleaved with the raw
+  data rows and set as the DataGrid's effective `ItemsSource`, so the rows panel virtualizes it as
+  one uniform list. This removes the per-`GroupItem` realize/measure cost that made grouped
+  scrolling stutter at depth and with collapsed nested groups; grouped scrolling now matches
+  ungrouped smoothness.
+- This is the only grouping engine — there is no opt-in flag. (The transitional `UseFlatGrouping`
+  switch added earlier in this unreleased cycle is gone.)
+- All grouping behaviors are preserved: declarative `GroupIndex`, `GroupBy`/`Ungroup`/
+  `ClearGrouping`, group-leads-sorting, `ShowGroupedColumns`, `GroupInterval` buckets, per-group
+  expansion persistence, Expand/Collapse all, recursive expand (`ExpandGroupsRecursively`), the
+  sticky fixed-group strip (`AllowFixedGroups`), the group panel, and the filter row while grouped.
+- Group headers render as full-width `DataGridRow`s (via `SearchDataGridRow` + an `IsGroupHeader`
+  trigger) and are non-selectable / non-editable / skipped by keyboard navigation and copy. The
+  in-body header right-click menu is preserved (`ExpandGroupCommand` / `CollapseGroupCommand` /
+  `ExpandAllAtLevelCommand` / `CollapseAllAtLevelCommand` / `UngroupAtLevelCommand`, taking a
+  `GroupHeaderRow`). The sticky strip's resolver is now an index lookup into the projected rows
+  rather than a visual-tree `GroupItem` walk.
+
+### Removed
+- `SearchDataGrid.UseGroupExpansionAnimation` and the animated group-`Expander` template /
+  `GroupExpansionAnimator` — there is no `Expander` chrome to animate.
+- `SearchDataGrid.TrackGroupExpansion` attached property — expansion state now persists in the
+  engine's path-keyed map, not per-`Expander`.
+- The default `GroupStyle` (`GroupItem`/`Expander`) chrome and its legacy group-header context menu.
+
 ### Added — Allow Fixed Groups (sticky group headers)
 - `SearchDataGrid.AllowFixedGroups` (bool, default `false`). When `true` on a grouped grid the
   group header(s) for the topmost visible row stay pinned to the top of the data area; as the

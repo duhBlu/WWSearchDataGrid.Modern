@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
@@ -865,6 +865,19 @@ namespace WWSearchDataGrid.Modern.WPF
             bool candidateExitKey = IsCellExitNavigationKey(e.Key, Keyboard.Modifiers)
                 || (focusOnCellShell && IsArrowKey(e.Key));
             if (candidateExitKey && IsEditLockActive())
+            {
+                e.Handled = true;
+                return;
+            }
+
+            // Flat grouping: a plain Up/Down that would step onto a cell-less group-header row
+            // crosses focus to that header (tree highlight) instead of stalling. Data→data moves
+            // return false here and fall through to the DataGrid's native navigation below.
+            if (_groupingActive
+                && (e.Key == Key.Up || e.Key == Key.Down)
+                && Keyboard.Modifiers == ModifierKeys.None
+                && !cell.IsEditing
+                && TryHandleDataCellHeaderCrossing(cell, e.Key == Key.Down))
             {
                 e.Handled = true;
                 return;
@@ -2300,6 +2313,15 @@ namespace WWSearchDataGrid.Modern.WPF
         /// </summary>
         protected override void OnItemsSourceChanged(IEnumerable oldValue, IEnumerable newValue)
         {
+            // Grouping swaps the DataGrid's ItemsSource to/from its internal flat projection.
+            // That's an internal display swap, not a real source change — keep originalItemsSource,
+            // column generation, source registration, and filter re-application untouched.
+            if (_applyingProjectionSource)
+            {
+                base.OnItemsSourceChanged(oldValue, newValue);
+                return;
+            }
+
             // BindingListCollectionView throws on predicate Items.Filter; wrap in
             // ListCollectionView so our filter pipeline works.
             if (!_isRewrappingItemsSource && newValue != null && RequiresPredicateWrap(newValue))
@@ -2392,6 +2414,10 @@ namespace WWSearchDataGrid.Modern.WPF
                         FilterItemsSource();
                     }
 
+                    // Grouping renders a projection of the source; (re)build it now that the source
+                    // and columns are in place. Restores the plain source when nothing is grouped.
+                    RebuildGroupDescriptions();
+
                     UpdateLayout();
 
                     // Update select-all checkbox states after items source changes
@@ -2461,6 +2487,10 @@ namespace WWSearchDataGrid.Modern.WPF
                 // Full reset - clear all cached data
                 ClearAllCachedData();
             }
+
+            // Grouping renders a projection of the source — re-project on any source change.
+            if (_groupingActive)
+                RebuildRowProjection();
 
             CollectionChanged?.Invoke(this, e);
         }

@@ -141,8 +141,7 @@
                             Group expansion knobs (Phase 3.1.c):
                             · AutoExpandAllGroups (default true) — initial state for newly-materialized
                               groups. Toggling at runtime also expands/collapses every realized group.
-                            · ExpandGroupsRecursively — a parent expander cascades its state to nested groups.
-                            · UseGroupExpansionAnimation — animated chrome (rotating chevron + content ScaleY).
+                            · ExpandGroupsRecursively — expanding/collapsing a parent cascades its state to nested groups.
                         -->
                         <TextBlock Style="{StaticResource SectionHeaderText}" Text="OPTIONS" />
                         <CheckBox IsChecked="{Binding ShowGroupedColumns, ElementName=Grid}"
@@ -153,8 +152,6 @@
                                   Content="Auto-expand all groups" />
                         <CheckBox IsChecked="{Binding ExpandGroupsRecursively, ElementName=Grid}"
                                   Content="Expand groups recursively" />
-                        <CheckBox IsChecked="{Binding UseGroupExpansionAnimation, ElementName=Grid}"
-                                  Content="Use group expansion animation" />
                         <!--
                             AllowFixedGroups (Phase 3.1.f): the group header(s) for the topmost
                             visible row stay pinned to the top of the data area as the grid

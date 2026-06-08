@@ -4,6 +4,8 @@
 
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF.Themes.Default;component/Themes/Controls/SearchDataGrid/Row/RowHeaderContextMenu.xaml" />
+        <!--  Supplies the flat-grouping header-row template referenced by the IsGroupHeader trigger below.  -->
+        <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF.Themes.Default;component/Themes/Controls/SearchDataGrid/Grid/GroupStyle.xaml" />
     </ResourceDictionary.MergedDictionaries>
 
     <Style x:Key="{x:Static sdg:ThemeKeys.GridSelectAllButton}" TargetType="{x:Type Button}">
@@ -135,6 +137,17 @@
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
+        <Style.Triggers>
+            <!--
+                Flat-grouping header sentinel: swap the cells template for the full-width
+                group-header chrome. IsGroupHeader lives on the SearchDataGridRow the grid
+                generates for every row; it stays false for data rows, so they keep the template
+                above. Bound off Self so the trigger reads the runtime container instance.
+            -->
+            <DataTrigger Binding="{Binding IsGroupHeader, RelativeSource={RelativeSource Self}}" Value="True">
+                <Setter Property="Template" Value="{StaticResource {x:Static sdg:ThemeKeys.GridSearchDataGridGroupHeaderRow}}" />
+            </DataTrigger>
+        </Style.Triggers>
     </Style>
 
 </ResourceDictionary>

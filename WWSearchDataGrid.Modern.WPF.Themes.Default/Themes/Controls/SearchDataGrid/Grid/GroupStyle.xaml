@@ -77,225 +77,6 @@
     <sdg:GroupHeaderTemplateSelector x:Key="GroupHeaderTemplateSelector" DefaultTemplate="{StaticResource DefaultGroupHeaderTemplate}" />
     <sdg:GroupHeaderMarginConverter x:Key="GroupHeaderMarginConverter" />
     
-    <ControlTemplate x:Key="{x:Static sdg:ThemeKeys.GridSearchDataGridGroupExpanderTemplate}" TargetType="{x:Type Expander}">
-        <Border Background="{TemplateBinding Background}"
-                Padding="{TemplateBinding Padding}"
-                UseLayoutRounding="True"
-                SnapsToDevicePixels="True">
-            <DockPanel>
-                <Border DockPanel.Dock="Top"
-                        BorderBrush="{TemplateBinding BorderBrush}"
-                        BorderThickness="{TemplateBinding BorderThickness}">
-                    <Grid>
-                        <Border Background="#FFf9f9f9"
-                                BorderBrush="#FFd0d0d0"
-                                BorderThickness="0,0,1,0"
-                                HorizontalAlignment="Left"
-                                Width="{Binding RowHeaderActualWidth, RelativeSource={RelativeSource AncestorType={x:Type sdg:SearchDataGrid}}}"
-                                UseLayoutRounding="True"
-                                SnapsToDevicePixels="True" />
-                        <ToggleButton x:Name="HeaderToggle"
-                                      Background="Transparent"
-                                      BorderThickness="0"
-                                      IsChecked="{Binding IsExpanded, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}"
-                                      Focusable="False"
-                                      Cursor="Hand"
-                                      HorizontalAlignment="Stretch"
-                                      HorizontalContentAlignment="Left">
-                            <ToggleButton.Margin>
-                                <MultiBinding Converter="{StaticResource GroupHeaderMarginConverter}">
-                                    <Binding RelativeSource="{RelativeSource AncestorType={x:Type GroupItem}}" />
-                                    <Binding RelativeSource="{RelativeSource AncestorType={x:Type sdg:SearchDataGrid}}" Path="RowHeaderActualWidth" />
-                                    <Binding RelativeSource="{RelativeSource AncestorType={x:Type sdg:SearchDataGrid}}" Path="GroupIndentWidth" />
-                                </MultiBinding>
-                            </ToggleButton.Margin>
-                            <ToggleButton.Template>
-                                <ControlTemplate TargetType="{x:Type ToggleButton}">
-                                    <Border Background="{TemplateBinding Background}" Padding="0,1,0,1">
-                                        <sdg:SimpleStackPanel Orientation="Horizontal"
-                                                              Margin="6,0,0,0"
-                                                              Spacing="8">
-                                            <sdg:Icon x:Name="Chevron"
-                                                      VerticalAlignment="Center"
-                                                      Width="9"
-                                                      Height="9"
-                                                      Margin="0,1,0,0"
-                                                      IconSource="{StaticResource {x:Static sdg:IconKeys.IconChevronRight}}"
-                                                      RenderTransformOrigin="0.5,0.5">
-                                                <sdg:Icon.RenderTransform>
-                                                    <RotateTransform x:Name="ChevronRotate" Angle="0" />
-                                                </sdg:Icon.RenderTransform>
-                                            </sdg:Icon>
-                                            <ContentPresenter VerticalAlignment="Center" />
-                                        </sdg:SimpleStackPanel>
-                                    </Border>
-                                    <ControlTemplate.Triggers>
-                                        <Trigger Property="IsChecked" Value="True">
-                                            <Trigger.EnterActions>
-                                                <BeginStoryboard>
-                                                    <Storyboard>
-                                                        <DoubleAnimation Storyboard.TargetName="ChevronRotate"
-                                                                         Storyboard.TargetProperty="Angle"
-                                                                         To="90"
-                                                                         Duration="0:0:0.18" />
-                                                    </Storyboard>
-                                                </BeginStoryboard>
-                                            </Trigger.EnterActions>
-                                            <Trigger.ExitActions>
-                                                <BeginStoryboard>
-                                                    <Storyboard>
-                                                        <DoubleAnimation Storyboard.TargetName="ChevronRotate"
-                                                                         Storyboard.TargetProperty="Angle"
-                                                                         To="0"
-                                                                         Duration="0:0:0.18" />
-                                                    </Storyboard>
-                                                </BeginStoryboard>
-                                            </Trigger.ExitActions>
-                                        </Trigger>
-                                    </ControlTemplate.Triggers>
-                                </ControlTemplate>
-                            </ToggleButton.Template>
-                            <ContentPresenter Content="{TemplateBinding Header}"
-                                              ContentTemplate="{TemplateBinding HeaderTemplate}"
-                                              ContentTemplateSelector="{TemplateBinding HeaderTemplateSelector}" />
-                        </ToggleButton>
-                    </Grid>
-                </Border>
-                <!--
-                    Content host. ClipToBounds keeps mid-animation height transitions
-                    from leaking row pixels past the host's bounds; the Height itself is
-                    driven by sdg:GroupExpansionAnimator (which also toggles Visibility
-                    so the inner virtualizing panel doesn't measure when the group is
-                    fully collapsed).
-                -->
-                <Border x:Name="ContentClip"
-                        sdg:GroupExpansionAnimator.IsHost="True"
-                        ClipToBounds="True">
-                    <ContentPresenter />
-                </Border>
-            </DockPanel>
-        </Border>
-    </ControlTemplate>
-
-    <!--
-        Style applied to every group's Expander. The IsExpanded setter binds OneWay to the grid's
-        AutoExpandAllGroups, so each newly-materialized group starts with that initial state.
-        Every Expander uses the single GroupExpanderTemplate above; the grid's
-        UseGroupExpansionAnimation is honored inside that template by sdg:GroupExpansionAnimator
-        (animate vs. snap) rather than by swapping templates here.
-        Runtime AutoExpandAllGroups toggles are pushed actively by the grid (see
-        OnAutoExpandAllGroupsChanged in SearchDataGrid.Grouping.cs) so already-realized groups
-        also respond.
-    -->
-    <!--
-        Right-click menu for the group header. Attached to every group Expander via the Style
-        below (x:Shared="False" so each Expander gets its own ContextMenu instance).
-        CommandParameter on each item binds to PlacementTarget, which WPF sets to the originating
-        Expander when the menu opens. The Expand / Collapse "this group" items are
-        visibility-gated via a DataTrigger on PlacementTarget.IsExpanded so only one of them is
-        ever shown.
-    -->
-    <ContextMenu x:Key="{x:Static sdg:ThemeKeys.GridSearchDataGridGroupHeaderContextMenu}"
-                 AutomationProperties.AutomationId="cmuGroupHeader"
-                 Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesContextMenu}}"
-                 x:Shared="False">
-        <MenuItem Command="{x:Static commands:ContextMenuCommands.ExpandGroupCommand}"
-                  CommandParameter="{Binding PlacementTarget, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}"
-                  Header="Expand this group">
-            <MenuItem.Icon>
-                <sdg:Icon Width="14"
-                          Height="14"
-                          IconSource="{StaticResource {x:Static sdg:IconKeys.IconExpandGroups}}" />
-            </MenuItem.Icon>
-            <MenuItem.Style>
-                <Style TargetType="{x:Type MenuItem}">
-                    <Style.Triggers>
-                        <DataTrigger Binding="{Binding PlacementTarget.IsExpanded, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}" Value="True">
-                            <Setter Property="Visibility" Value="Collapsed" />
-                        </DataTrigger>
-                    </Style.Triggers>
-                </Style>
-            </MenuItem.Style>
-        </MenuItem>
-        <MenuItem Command="{x:Static commands:ContextMenuCommands.CollapseGroupCommand}"
-                  CommandParameter="{Binding PlacementTarget, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}"
-                  Header="Collapse this group">
-            <MenuItem.Icon>
-                <sdg:Icon Width="14"
-                          Height="14"
-                          IconSource="{StaticResource {x:Static sdg:IconKeys.IconCollapseGroups}}" />
-            </MenuItem.Icon>
-            <MenuItem.Style>
-                <Style TargetType="{x:Type MenuItem}">
-                    <Style.Triggers>
-                        <DataTrigger Binding="{Binding PlacementTarget.IsExpanded, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}" Value="False">
-                            <Setter Property="Visibility" Value="Collapsed" />
-                        </DataTrigger>
-                    </Style.Triggers>
-                </Style>
-            </MenuItem.Style>
-        </MenuItem>
-        <Separator />
-        <MenuItem Command="{x:Static commands:ContextMenuCommands.ExpandAllAtLevelCommand}"
-                  CommandParameter="{Binding PlacementTarget, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}"
-                  Header="Expand all at this level">
-            <MenuItem.Icon>
-                <sdg:Icon Width="14"
-                          Height="14"
-                          IconSource="{StaticResource {x:Static sdg:IconKeys.IconExpandGroups}}" />
-            </MenuItem.Icon>
-        </MenuItem>
-        <MenuItem Command="{x:Static commands:ContextMenuCommands.CollapseAllAtLevelCommand}"
-                  CommandParameter="{Binding PlacementTarget, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}"
-                  Header="Collapse all at this level">
-            <MenuItem.Icon>
-                <sdg:Icon Width="14"
-                          Height="14"
-                          IconSource="{StaticResource {x:Static sdg:IconKeys.IconCollapseGroups}}" />
-            </MenuItem.Icon>
-        </MenuItem>
-        <Separator />
-        <MenuItem Command="{x:Static commands:ContextMenuCommands.UngroupAtLevelCommand}"
-                  CommandParameter="{Binding PlacementTarget, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}"
-                  Header="Ungroup at this level">
-            <MenuItem.Icon>
-                <sdg:Icon Width="14"
-                          Height="14"
-                          IconSource="{StaticResource {x:Static sdg:IconKeys.IconUngroup}}" />
-            </MenuItem.Icon>
-        </MenuItem>
-    </ContextMenu>
-
-    <Style x:Key="GroupExpanderStyle" TargetType="{x:Type Expander}">
-        <!--
-            Opt every group expander into the grid's state-persistence map (see
-            SearchDataGrid.TrackGroupExpansion). The attached property hooks Loaded per instance
-            so the grid replays user-toggled state across Items.Refresh and container recycling.
-        -->
-        <Setter Property="sdg:SearchDataGrid.TrackGroupExpansion" Value="True" />
-        <!--
-            x:Shared="False" on the ContextMenu resource above means each StaticResource lookup
-            here returns a fresh instance — so every Expander that picks up this Style gets its
-            own ContextMenu rather than fighting over a shared logical parent.
-        -->
-        <Setter Property="ContextMenu" Value="{StaticResource {x:Static sdg:ThemeKeys.GridSearchDataGridGroupHeaderContextMenu}}" />
-        <!--
-            The Expander spans the GroupItem's full width — no horizontal margin. Per-level
-            indent lives on the header (ToggleButton) inside GroupExpanderTemplate, applied via
-            GroupHeaderMarginConverter, so the chevron+label shift right while the Expander's
-            content area (data rows / nested groups) stays flush with the GroupItem's left edge.
-            That keeps each DataGridRowHeader pinned at the grid's x=0 regardless of group depth.
-        -->
-        <Setter Property="Template" Value="{StaticResource {x:Static sdg:ThemeKeys.GridSearchDataGridGroupExpanderTemplate}}" />
-        <Setter Property="IsExpanded" Value="{Binding RelativeSource={RelativeSource AncestorType={x:Type sdg:SearchDataGrid}}, Path=AutoExpandAllGroups, Mode=OneWay}" />
-        <Setter Property="Background" Value="#FFF3F3F3" />
-        <Setter Property="BorderBrush" Value="#FFd0d0d0" />
-        <Setter Property="BorderThickness" Value="0,0,0,1" />
-        <Setter Property="Padding" Value="0" />
-        <Setter Property="UseLayoutRounding" Value="True" />
-        <Setter Property="SnapsToDevicePixels" Value="True" />
-    </Style>
-
     <!--
         Sticky group-header strip applied via implicit style to every FixedGroupHeadersPresenter.
         The scroll-driven resolver (SearchDataGrid.FixedGroups.cs) populates ItemsSource with the
@@ -315,6 +96,150 @@
     -->
     <sdg:FixedGroupIndentConverter x:Key="FixedGroupIndentConverter" />
     <sdg:FixedGroupEntryIsExpandedConverter x:Key="FixedGroupEntryIsExpandedConverter" />
+
+    <!--
+        Right-click menu for the in-body flat group-header rows. Mirrors the legacy
+        GridSearchDataGridGroupHeaderContextMenu, but its commands take the GroupHeaderRow (the row
+        template's DataContext, reached via PlacementTarget.DataContext) instead of an Expander —
+        flat headers render as DataGridRows with no GroupItem/Expander. The Expand / Collapse "this
+        group" items are visibility-gated on the row's IsExpanded snapshot (fresh: the sentinel is
+        rebuilt on every reflatten and the menu opens against the current instance).
+    -->
+    <ContextMenu x:Key="{x:Static sdg:ThemeKeys.GridSearchDataGridGroupHeaderContextMenu}"
+                 AutomationProperties.AutomationId="cmuGroupHeader"
+                 Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesContextMenu}}"
+                 x:Shared="False">
+        <MenuItem Command="{x:Static commands:ContextMenuCommands.ExpandGroupCommand}"
+                  CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}"
+                  Header="Expand this group">
+            <MenuItem.Icon>
+                <sdg:Icon Width="14"
+                          Height="14"
+                          IconSource="{StaticResource {x:Static sdg:IconKeys.IconExpandGroups}}" />
+            </MenuItem.Icon>
+            <MenuItem.Style>
+                <Style TargetType="{x:Type MenuItem}">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding PlacementTarget.DataContext.IsExpanded, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}" Value="True">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </MenuItem.Style>
+        </MenuItem>
+        <MenuItem Command="{x:Static commands:ContextMenuCommands.CollapseGroupCommand}"
+                  CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}"
+                  Header="Collapse this group">
+            <MenuItem.Icon>
+                <sdg:Icon Width="14"
+                          Height="14"
+                          IconSource="{StaticResource {x:Static sdg:IconKeys.IconCollapseGroups}}" />
+            </MenuItem.Icon>
+            <MenuItem.Style>
+                <Style TargetType="{x:Type MenuItem}">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding PlacementTarget.DataContext.IsExpanded, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}" Value="False">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </MenuItem.Style>
+        </MenuItem>
+        <Separator />
+        <MenuItem Command="{x:Static commands:ContextMenuCommands.ExpandAllAtLevelCommand}"
+                  CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}"
+                  Header="Expand all at this level">
+            <MenuItem.Icon>
+                <sdg:Icon Width="14"
+                          Height="14"
+                          IconSource="{StaticResource {x:Static sdg:IconKeys.IconExpandGroups}}" />
+            </MenuItem.Icon>
+        </MenuItem>
+        <MenuItem Command="{x:Static commands:ContextMenuCommands.CollapseAllAtLevelCommand}"
+                  CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}"
+                  Header="Collapse all at this level">
+            <MenuItem.Icon>
+                <sdg:Icon Width="14"
+                          Height="14"
+                          IconSource="{StaticResource {x:Static sdg:IconKeys.IconCollapseGroups}}" />
+            </MenuItem.Icon>
+        </MenuItem>
+        <Separator />
+        <MenuItem Command="{x:Static commands:ContextMenuCommands.UngroupAtLevelCommand}"
+                  CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}"
+                  Header="Ungroup at this level">
+            <MenuItem.Icon>
+                <sdg:Icon Width="14"
+                          Height="14"
+                          IconSource="{StaticResource {x:Static sdg:IconKeys.IconUngroup}}" />
+            </MenuItem.Icon>
+        </MenuItem>
+    </ContextMenu>
+
+    <!--
+        Flat-grouping header row. Rendered by the themed DataGridRow style (via its IsGroupHeader
+        trigger) when the grid materializes a SearchDataGridRow for a GroupHeaderRow sentinel. It
+        deliberately mirrors the in-place GroupExpanderTemplate look — the row-header gutter strip,
+        per-level indent, chevron, and the SAME GroupHeaderTemplateSelector content (column-prefixed
+        value + count chip) — so a flat-mode header is visually indistinguishable from a legacy one.
+        The DataContext is the GroupHeaderRow, so Level / IsExpanded / Name / ItemCount bind directly
+        and the indent reuses FixedGroupIndentConverter (which takes the level as a primitive, with
+        no GroupItem ancestor to walk). Clicks / Space-Enter are handled by SearchDataGridRow itself.
+    -->
+    <ControlTemplate x:Key="{x:Static sdg:ThemeKeys.GridSearchDataGridGroupHeaderRow}" TargetType="{x:Type DataGridRow}">
+        <!--  #FFF3F3F3 matches the legacy GroupExpanderStyle background; the row's own
+              (white / alternating) Background is intentionally ignored here.  -->
+        <Border x:Name="HeaderBorder"
+                Background="#FFF3F3F3"
+                BorderBrush="#FFd0d0d0"
+                BorderThickness="0,0,0,1"
+                Cursor="Hand"
+                ContextMenu="{StaticResource {x:Static sdg:ThemeKeys.GridSearchDataGridGroupHeaderContextMenu}}"
+                UseLayoutRounding="True"
+                SnapsToDevicePixels="True">
+            <Grid>
+                <!--  Row-header gutter strip, kept flush at x=0 regardless of group depth.  -->
+                <Border Background="#FFf9f9f9"
+                        BorderBrush="#FFd0d0d0"
+                        BorderThickness="0,0,1,0"
+                        HorizontalAlignment="Left"
+                        Width="{Binding RowHeaderActualWidth, RelativeSource={RelativeSource AncestorType={x:Type sdg:SearchDataGrid}}}"
+                        UseLayoutRounding="True"
+                        SnapsToDevicePixels="True" />
+                <sdg:SimpleStackPanel Orientation="Horizontal"
+                                      VerticalAlignment="Center"
+                                      Spacing="8">
+                    <sdg:SimpleStackPanel.Margin>
+                        <MultiBinding Converter="{StaticResource FixedGroupIndentConverter}">
+                            <Binding Path="Level" />
+                            <Binding RelativeSource="{RelativeSource AncestorType={x:Type sdg:SearchDataGrid}}" Path="RowHeaderActualWidth" />
+                            <Binding RelativeSource="{RelativeSource AncestorType={x:Type sdg:SearchDataGrid}}" Path="GroupIndentWidth" />
+                        </MultiBinding>
+                    </sdg:SimpleStackPanel.Margin>
+                    <sdg:Icon x:Name="Chevron"
+                              VerticalAlignment="Center"
+                              Width="9"
+                              Height="9"
+                              Margin="6,0,0,0"
+                              IconSource="{StaticResource {x:Static sdg:IconKeys.IconChevronRight}}" />
+                    <ContentControl VerticalAlignment="Center"
+                                    Content="{Binding}"
+                                    ContentTemplateSelector="{StaticResource GroupHeaderTemplateSelector}" />
+                </sdg:SimpleStackPanel>
+            </Grid>
+        </Border>
+        <ControlTemplate.Triggers>
+            <DataTrigger Binding="{Binding IsExpanded}" Value="True">
+                <Setter TargetName="Chevron" Property="IconSource" Value="{StaticResource {x:Static sdg:IconKeys.IconChevronDown}}" />
+            </DataTrigger>
+            <!--  Keyboard-focus highlight: header rows are focusable, tree-navigable rows. The
+                  highlight tracks keyboard focus, not selection — headers never enter SelectedItems.  -->
+            <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                <Setter TargetName="HeaderBorder" Property="Background" Value="#FFD7E8FB" />
+                <Setter TargetName="HeaderBorder" Property="BorderBrush" Value="#FF7FB0E6" />
+            </Trigger>
+        </ControlTemplate.Triggers>
+    </ControlTemplate>
 
     <ContextMenu x:Key="{x:Static sdg:ThemeKeys.GridSearchDataGridFixedGroupHeaderContextMenu}"
                  AutomationProperties.AutomationId="cmuFixedGroupHeader"
@@ -474,23 +399,5 @@
     </Style>
 
     <Style BasedOn="{StaticResource {x:Static sdg:ThemeKeys.GridSearchDataGridFixedGroupHeadersPresenter}}" TargetType="{x:Type sdg:FixedGroupHeadersPresenter}" />
-
-    <GroupStyle x:Key="{x:Static sdg:ThemeKeys.GridSearchDataGridGroupStyle}">
-        <GroupStyle.ContainerStyle>
-            <Style TargetType="{x:Type GroupItem}">
-                <Setter Property="Template">
-                    <Setter.Value>
-                        <ControlTemplate TargetType="{x:Type GroupItem}">
-                            <Expander Style="{StaticResource GroupExpanderStyle}"
-                                      Header="{Binding}"
-                                      HeaderTemplateSelector="{StaticResource GroupHeaderTemplateSelector}">
-                                <ItemsPresenter />
-                            </Expander>
-                        </ControlTemplate>
-                    </Setter.Value>
-                </Setter>
-            </Style>
-        </GroupStyle.ContainerStyle>
-    </GroupStyle>
 
 </ResourceDictionary>
