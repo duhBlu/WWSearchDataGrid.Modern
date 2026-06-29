@@ -498,17 +498,16 @@ namespace WWSearchDataGrid.Modern.WPF
             if (searchGrid != null)
                 searchGrid.SetCarryEditStateOnNextFocus();
 
-            // Row-edge wrap for Left / Right: Right on the rightmost cell loops to the
-            // FIRST cell of the NEXT row (and Left on the leftmost loops to the LAST cell
-            // of the PREVIOUS row). Done here instead of letting the synthesized arrow
-            // KeyDown bubble to DataGrid's native handler — the native handler stops at
-            // the row edge rather than wrapping. Falls through (helper returns false) at
-            // the grid's outer edge so there's no destination to jump to. Up / Down still
-            // fall through so DataGrid's native row navigation moves focus to the adjacent
-            // row in the same column.
+            // Row-edge wrap for Left / Right: Right on the rightmost cell loops to the FIRST cell
+            // of the SAME row (and Left on the leftmost loops to the LAST cell of the same row).
+            // Done here instead of letting the synthesized arrow KeyDown bubble to DataGrid's native
+            // handler — the native handler stops at the row edge rather than wrapping. Falls through
+            // (helper returns false) when not at a row edge. Up / Down still fall through so
+            // DataGrid's native row navigation moves focus to the adjacent row; Tab (not arrows)
+            // crosses to the next/previous row.
             if (searchGrid != null && (e.Key == Key.Left || e.Key == Key.Right))
             {
-                if (searchGrid.TryWrapArrowAtRowEdge(cell, forward: e.Key == Key.Right))
+                if (searchGrid.TryWrapArrowWithinRow(cell, forward: e.Key == Key.Right))
                     return;
             }
 

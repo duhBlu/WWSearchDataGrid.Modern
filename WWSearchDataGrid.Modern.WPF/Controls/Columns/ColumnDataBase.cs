@@ -1822,9 +1822,10 @@ namespace WWSearchDataGrid.Modern.WPF
         /// <summary>
         /// True when any user-supplied cell template / selector is set. Used by
         /// <see cref="CreateDataGridColumn"/> to force a <see cref="DataGridTemplateColumn"/>
-        /// even when no <see cref="EditSettings"/> is present.
+        /// even when no <see cref="EditSettings"/> is present, and by the best-fit engine to
+        /// detect columns whose content can't be text-measured.
         /// </summary>
-        private bool HasUserCellTemplate =>
+        internal bool HasUserCellTemplate =>
             CellDisplayTemplate != null
             || CellTemplate != null
             || CellEditTemplate != null

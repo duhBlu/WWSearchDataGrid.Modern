@@ -164,12 +164,12 @@ namespace WWSearchDataGrid.Modern.WPF
 
             // First pass: collect the resolved bounds. Bail out without mutating any
             // child arrangement if a single visible column doesn't resolve cleanly.
-            var arrangements = new List<(UIElement child, Rect bounds, bool hidden)>(pairs.Count);
+            var arrangements = new List<(DataGridColumn column, UIElement child, Rect bounds, bool hidden)>(pairs.Count);
             foreach (var (column, child) in pairs)
             {
                 if (!IsColumnVisible(column))
                 {
-                    arrangements.Add((child, default, true));
+                    arrangements.Add((column, child, default, true));
                     continue;
                 }
 
@@ -187,28 +187,68 @@ namespace WWSearchDataGrid.Modern.WPF
                     return false;
                 }
 
-                arrangements.Add((child, new Rect(origin.X, 0, header.ActualWidth, finalSize.Height), false));
+                arrangements.Add((column, child, new Rect(origin.X, 0, header.ActualWidth, finalSize.Height), false));
             }
 
-            foreach (var (child, bounds, hidden) in arrangements)
+            // Band boundaries from the mirrored geometry itself: scrollable cells may only
+            // paint between the left band's trailing edge and the right band's leading edge.
+            // The headers carry their own band-boundary clips (native frozen on the left, the
+            // FixedColumnsCellsPanel overlay on the right), but the mirror copies X/width
+            // only, so the window has to be re-applied here.
+            double windowStart = double.NegativeInfinity;
+            double windowEnd = double.PositiveInfinity;
+            foreach (var (column, _, bounds, hidden) in arrangements)
+            {
+                if (hidden) continue;
+                switch (grid.GetFixedColumnPosition(column))
+                {
+                    case FixedColumnPosition.Left:
+                        windowStart = Math.Max(windowStart, bounds.Right);
+                        break;
+                    case FixedColumnPosition.Right:
+                        windowEnd = Math.Min(windowEnd, bounds.X);
+                        break;
+                }
+            }
+
+            // The separator strips occupy the space just past each band edge — pull the
+            // window in by one strip per band so scrollable cells clip where the cells do.
+            double separator = grid.GetSeparatorWidth();
+            if (!double.IsNegativeInfinity(windowStart)) windowStart += separator;
+            if (!double.IsPositiveInfinity(windowEnd)) windowEnd -= separator;
+
+            foreach (var (column, child, bounds, hidden) in arrangements)
             {
                 if (hidden)
                 {
                     HideChild(child);
                     continue;
                 }
-                // Clipping is handled by the outer ClipToBounds on the FilterRowPresenter
-                // template — no need to compute per-cell clips like the cumulative path does.
-                ArrangeChild(child, bounds, clip: null);
+
+                if (grid.GetFixedColumnPosition(column) == FixedColumnPosition.None)
+                {
+                    // Viewport-edge clipping is handled by the outer ClipToBounds on the
+                    // presenter template; only the band window needs per-cell clips.
+                    child.ClearValue(Panel.ZIndexProperty);
+                    ArrangeChild(child, bounds, FixedColumnLayout.ComputeClipToWindow(
+                        bounds.X, bounds.Width, finalSize.Height, windowStart, windowEnd));
+                }
+                else
+                {
+                    Panel.SetZIndex(child, 1);
+                    ArrangeChild(child, bounds, clip: null);
+                }
             }
             return true;
         }
 
         /// <summary>
-        /// Fallback arrangement used until the column headers are materialized. Each cell's
-        /// X / right is snapped via banker's rounding (matching WPF's UseLayoutRounding) so
-        /// the panel at least lines up on integer pixels when the headers aren't available
-        /// to mirror.
+        /// Fallback arrangement used until the column headers are materialized. Three regions
+        /// in panel (viewport) space: the left band pinned at 0, the scrollable middle at
+        /// cumulative-minus-offset clipped to the window between the bands, and the right
+        /// band anchored at the panel's right edge. Each cell's X / right is snapped via
+        /// banker's rounding (matching WPF's UseLayoutRounding) so the panel lines up on
+        /// integer pixels when the headers aren't available to mirror.
         /// </summary>
         private void ArrangeFromCumulativeWidths(
             List<(DataGridColumn column, UIElement child)> pairs,
@@ -250,9 +290,29 @@ namespace WWSearchDataGrid.Modern.WPF
                 frozenCursorSnapped = nextSnapped;
             }
 
+            // Right band width — right-pinned pairs sit at the end of the display order.
+            double rightBandWidth = 0;
+            for (int i = frozenCount; i < pairs.Count; i++)
+            {
+                var (column, _) = pairs[i];
+                if (!IsColumnVisible(column)) continue;
+                if (grid.GetFixedColumnPosition(column) == FixedColumnPosition.Right)
+                    rightBandWidth += ResolveArrangedWidth(column, fallbackWidth);
+            }
+            // Separator strips consume one strip of window per non-empty band; the scrollable
+            // run shifts right past the left strip, mirroring the cells panel.
+            double separator = grid.GetSeparatorWidth();
+            double leftSeparator = frozenCursorSnapped > 0 ? separator : 0;
+            double rightSeparator = rightBandWidth > 0 ? separator : 0;
+
+            double rightBandStart = SnapToPixel(FixedColumnLayout.ComputeRightBandStart(
+                0, finalSize.Width, frozenCursorSnapped + leftSeparator + rightSeparator, rightBandWidth));
+
             double scroll = HorizontalOffset;
             double nonFrozenCursor = frozenCursor;
             double nonFrozenCursorSnapped = frozenCursorSnapped;
+            double rightCursor = rightBandStart;
+            double rightCursorSnapped = rightBandStart;
 
             for (int i = frozenCount; i < pairs.Count; i++)
             {
@@ -264,20 +324,29 @@ namespace WWSearchDataGrid.Modern.WPF
                 }
 
                 double width = ResolveArrangedWidth(column, fallbackWidth);
+
+                if (rightBandWidth > 0 && grid.GetFixedColumnPosition(column) == FixedColumnPosition.Right)
+                {
+                    rightCursor += width;
+                    double nextRight = SnapToPixel(rightCursor);
+                    double bandCellWidth = nextRight - rightCursorSnapped;
+                    Panel.SetZIndex(child, 1);
+                    ArrangeChild(child, new Rect(rightCursorSnapped, 0, bandCellWidth, finalSize.Height),
+                        FixedColumnLayout.ComputeClipAtBoundary(rightCursorSnapped, bandCellWidth, finalSize.Height, finalSize.Width));
+                    rightCursorSnapped = nextRight;
+                    continue;
+                }
+
                 nonFrozenCursor += width;
                 double nextSnapped = SnapToPixel(nonFrozenCursor);
                 double snappedWidth = nextSnapped - nonFrozenCursorSnapped;
-                double x = nonFrozenCursorSnapped - scroll;
-                var bounds = new Rect(x, 0, snappedWidth, finalSize.Height);
+                double x = nonFrozenCursorSnapped - scroll + leftSeparator;
 
-                double leftClip = Math.Max(0, frozenCursorSnapped - x);
-                Geometry clip = null;
-                if (leftClip > 0 && leftClip < snappedWidth)
-                    clip = new RectangleGeometry(new Rect(leftClip, 0, snappedWidth - leftClip, finalSize.Height));
-                else if (leftClip >= snappedWidth)
-                    clip = Geometry.Empty;
-
-                ArrangeChild(child, bounds, clip);
+                child.ClearValue(Panel.ZIndexProperty);
+                ArrangeChild(child, new Rect(x, 0, snappedWidth, finalSize.Height),
+                    FixedColumnLayout.ComputeClipToWindow(x, snappedWidth, finalSize.Height,
+                        frozenCursorSnapped + leftSeparator,
+                        rightBandWidth > 0 ? rightBandStart - rightSeparator : double.PositiveInfinity));
                 nonFrozenCursorSnapped = nextSnapped;
             }
         }
@@ -289,7 +358,11 @@ namespace WWSearchDataGrid.Modern.WPF
         /// </summary>
         private static Dictionary<DataGridColumn, DataGridColumnHeader> BuildHeaderLookup(SearchDataGrid grid)
         {
-            var presenter = grid.Template?.FindName("PART_ColumnHeadersPresenter", grid) as DataGridColumnHeadersPresenter;
+            // The presenter is named inside DG_ScrollViewer's own template — the grid
+            // template's namescope only knows DG_ScrollViewer itself.
+            var scrollViewer = grid.Template?.FindName("DG_ScrollViewer", grid) as ScrollViewer;
+            var presenter = scrollViewer?.Template?.FindName("PART_ColumnHeadersPresenter", scrollViewer)
+                as DataGridColumnHeadersPresenter;
             if (presenter == null) return null;
 
             var result = new Dictionary<DataGridColumn, DataGridColumnHeader>(grid.Columns.Count);

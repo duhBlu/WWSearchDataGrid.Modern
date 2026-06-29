@@ -161,6 +161,34 @@ namespace WWSearchDataGrid.Modern.WPF.Commands
                 },
                 column => column?.View != null);
 
+        private static ICommand _sortGroupsBySummaryCommand;
+        /// <summary>
+        /// Applies (or clears) the sort-groups-by-summary order from one "Sort By Summary"
+        /// menu option — built per open by
+        /// <see cref="SearchDataGrid.BuildGroupSummarySortOptions"/> from the grid's configured
+        /// group summaries. Routes to <see cref="SearchDataGrid.SortGroupsBySummary"/> /
+        /// <see cref="SearchDataGrid.ClearGroupSummarySort"/>.
+        /// </summary>
+        public static ICommand SortGroupsBySummaryCommand => _sortGroupsBySummaryCommand ??=
+            new RelayCommand<GroupSummarySortOption>(
+                option =>
+                {
+                    try
+                    {
+                        if (option?.Grid == null) return;
+                        if (option.IsClear)
+                            option.Grid.ClearGroupSummarySort();
+                        else
+                            option.Grid.SortGroupsBySummary(option.SummaryType, option.FieldName, option.Direction);
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine($"Error in SortGroupsBySummaryCommand: {ex.Message}");
+                    }
+                },
+                option => option?.Grid != null
+                    && (!option.IsClear || option.Grid.IsGroupSummarySortActive));
+
         private static ICommand _toggleGroupPanelVisibilityCommand;
         /// <summary>
         /// Flips <see cref="SearchDataGrid.IsGroupPanelVisible"/>. Backs the "Show / Hide Group

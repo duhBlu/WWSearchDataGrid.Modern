@@ -6,6 +6,8 @@
         <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF.Themes.Default;component/Themes/Controls/SearchDataGrid/Row/RowHeaderContextMenu.xaml" />
         <!--  Supplies the flat-grouping header-row template referenced by the IsGroupHeader trigger below.  -->
         <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF.Themes.Default;component/Themes/Controls/SearchDataGrid/Grid/GroupStyle.xaml" />
+        <!--  Supplies the group-footer-row template referenced by the IsGroupFooter trigger below.  -->
+        <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF.Themes.Default;component/Themes/Controls/SearchDataGrid/Grid/GroupFooterRow.xaml" />
     </ResourceDictionary.MergedDictionaries>
 
     <Style x:Key="{x:Static sdg:ThemeKeys.GridSelectAllButton}" TargetType="{x:Type Button}">
@@ -54,7 +56,7 @@
         <Setter Property="Foreground" Value="#FF444444" />
         <Setter Property="Background" Value="#F9F9F9" />
         <Setter Property="BorderBrush" Value="#FFd0d0d0" />
-        <Setter Property="BorderThickness" Value="1,0,1,1" />
+        <Setter Property="BorderThickness" Value="1,1,1,0" />
         <Setter Property="ContextMenu" Value="{StaticResource {x:Static sdg:ThemeKeys.GridSearchDataGridRowHeaderContextMenu}}" />
         <Setter Property="Template">
             <Setter.Value>
@@ -64,7 +66,7 @@
                                 Background="{TemplateBinding Background}"
                                 BorderBrush="{TemplateBinding BorderBrush}"
                                 BorderThickness="{TemplateBinding BorderThickness}"
-                                Margin="-1,0,0,0"
+                                Margin="-1,-1,0,0"
                                 Padding="0,0,20,0">
                             <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
                         </Border>
@@ -122,7 +124,16 @@
                                 <RowDefinition Height="Auto" />
                             </SelectiveScrollingGrid.RowDefinitions>
 
-                            <DataGridCellsPresenter Grid.Column="1" ItemsPanel="{TemplateBinding ItemsPanel}"  />
+                            <!--  FixedColumnsCellsPanel overlays right-pinned columns at the
+                                  viewport's right edge; with no right pins it is byte-for-byte
+                                  the native DataGridCellsPanel arrangement.  -->
+                            <DataGridCellsPresenter Grid.Column="1">
+                                <DataGridCellsPresenter.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <sdg:FixedColumnsCellsPanel />
+                                    </ItemsPanelTemplate>
+                                </DataGridCellsPresenter.ItemsPanel>
+                            </DataGridCellsPresenter>
 
                             <DataGridDetailsPresenter Grid.Row="1"
                                                       Grid.Column="1"
@@ -146,6 +157,14 @@
             -->
             <DataTrigger Binding="{Binding IsGroupHeader, RelativeSource={RelativeSource Self}}" Value="True">
                 <Setter Property="Template" Value="{StaticResource {x:Static sdg:ThemeKeys.GridSearchDataGridGroupHeaderRow}}" />
+            </DataTrigger>
+            <!--
+                Group-footer sentinel: swap to the full-width footer chrome (one GroupFooterCell
+                per column). IsGroupFooter lives on the SearchDataGridRow the grid generates;
+                stays false for data and header rows.
+            -->
+            <DataTrigger Binding="{Binding IsGroupFooter, RelativeSource={RelativeSource Self}}" Value="True">
+                <Setter Property="Template" Value="{StaticResource {x:Static sdg:ThemeKeys.GridSearchDataGridGroupFooterRow}}" />
             </DataTrigger>
         </Style.Triggers>
     </Style>

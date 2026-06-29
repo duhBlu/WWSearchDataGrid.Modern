@@ -27,8 +27,8 @@ namespace WWSearchDataGrid.Modern.Core.Tests
         [Theory]
         [InlineData(LogicalOperator.And, "And")]
         [InlineData(LogicalOperator.Or, "Or")]
-        [InlineData(LogicalOperator.NotAnd, "NotAnd")]
-        [InlineData(LogicalOperator.NotOr, "NotOr")]
+        [InlineData(LogicalOperator.NotAnd, "Not And")]
+        [InlineData(LogicalOperator.NotOr, "Not Or")]
         public void ToTokenString_matches_persisted_form(LogicalOperator op, string expected)
         {
             Assert.Equal(expected, op.ToTokenString());

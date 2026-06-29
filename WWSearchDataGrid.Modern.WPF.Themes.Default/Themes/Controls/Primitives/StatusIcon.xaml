@@ -30,7 +30,6 @@
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type sdg:StatusIcon}">
                     <Border x:Name="PART_Badge"
-                            Background="#C42B1C"
                             Width="{TemplateBinding Width}"
                             Height="{TemplateBinding Height}"
                             CornerRadius="8"
@@ -68,6 +67,7 @@
                         <Trigger Property="Status" Value="Warning">
                             <Setter TargetName="PART_Badge" Property="Background" Value="#C77700" />
                             <Setter TargetName="PART_Glyph" Property="IconSource" Value="{StaticResource {x:Static sdg:IconKeys.IconStatusWarning}}" />
+                            
                         </Trigger>
                         <Trigger Property="Status" Value="Error">
                             <Setter TargetName="PART_Badge" Property="Background" Value="#C42B1C" />

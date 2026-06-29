@@ -52,6 +52,81 @@ namespace WWSearchDataGrid.Modern.WPF
         private Point? _dragStartPoint;
         private bool _dragStarted;
 
+        // Resize grippers, re-resolved on each template apply so the best-fit double-click
+        // intercept survives re-templating.
+        private Thumb _leftGripper;
+        private Thumb _rightGripper;
+
+        public override void OnApplyTemplate()
+        {
+            if (_leftGripper != null)
+                _leftGripper.PreviewMouseDoubleClick -= OnGripperPreviewMouseDoubleClick;
+            if (_rightGripper != null)
+                _rightGripper.PreviewMouseDoubleClick -= OnGripperPreviewMouseDoubleClick;
+
+            base.OnApplyTemplate();
+
+            _leftGripper = GetTemplateChild("PART_LeftHeaderGripper") as Thumb;
+            _rightGripper = GetTemplateChild("PART_RightHeaderGripper") as Thumb;
+            if (_leftGripper != null)
+                _leftGripper.PreviewMouseDoubleClick += OnGripperPreviewMouseDoubleClick;
+            if (_rightGripper != null)
+                _rightGripper.PreviewMouseDoubleClick += OnGripperPreviewMouseDoubleClick;
+        }
+
+        /// <summary>
+        /// Double-click on a resize gripper runs the measurement-based best-fit instead of the
+        /// stock <c>Width = Auto</c> (which only fits realized cells). Handling the tunneling
+        /// double-click suppresses the base header's gripper handler. Columns with
+        /// <see cref="ColumnLayoutBase.ActualAllowBestFit"/> <c>false</c> are left to the stock
+        /// behavior — best-fit opt-out disables the smarter fit, not resizing itself. The left
+        /// gripper targets the previous visible column, matching the stock semantics.
+        /// </summary>
+        private void OnGripperPreviewMouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            if (e.ChangedButton != MouseButton.Left)
+                return;
+
+            var grid = VisualTreeHelperMethods.FindVisualAncestor<SearchDataGrid>(this);
+            if (grid == null)
+                return;
+
+            var targetColumn = ReferenceEquals(sender, _leftGripper)
+                ? FindPreviousVisibleColumn(grid)
+                : Column;
+            if (targetColumn == null || !targetColumn.CanUserResize)
+                return;
+
+            var descriptor = grid.FindGridColumnDescriptor(targetColumn);
+            if (descriptor == null || !descriptor.ActualAllowBestFit)
+                return;
+
+            grid.BestFitColumn(descriptor);
+            e.Handled = true;
+        }
+
+        private DataGridColumn FindPreviousVisibleColumn(SearchDataGrid grid)
+        {
+            if (Column == null)
+                return null;
+
+            DataGridColumn previous = null;
+            foreach (var candidate in grid.Columns)
+            {
+                if (candidate == null
+                    || candidate.Visibility != Visibility.Visible
+                    || candidate.DisplayIndex >= Column.DisplayIndex)
+                {
+                    continue;
+                }
+
+                if (previous == null || candidate.DisplayIndex > previous.DisplayIndex)
+                    previous = candidate;
+            }
+
+            return previous;
+        }
+
         protected override void OnPreviewMouseLeftButtonDown(MouseButtonEventArgs e)
         {
             _clickFromChildButton = IsClickFromChildButton(e.OriginalSource as DependencyObject);

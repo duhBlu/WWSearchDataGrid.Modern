@@ -10,10 +10,6 @@
     <UserControl.DataContext>
         <local:DataValidationSampleViewModel />
     </UserControl.DataContext>
-    <UserControl.Resources>
-        <Style TargetType="{x:Type ComboBox}" BasedOn="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesComboBox}}" />
-        <Style TargetType="{x:Type CheckBox}" BasedOn="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesCheckBox}}" />
-    </UserControl.Resources>
 
     <sampleControls:SampleHostControl Sources="{x:Static sampleControls:SampleSources.DataValidation}">
         <DockPanel>
@@ -24,45 +20,69 @@
                        TextWrapping="Wrap">
                 <Run FontWeight="SemiBold" Text="Data-annotation validation + smart columns" />
                 <LineBreak />
-                <Run Text="Every column is IsSmart=True, so it reads its property's data annotations to pick a header, editor, and mask (currency on Salary, date mask on Hire Date, phone mask on Phone, a ComboBox on Status). Edit a cell to an invalid value — clear a Required name, push Salary above 1,000,000, type a 4-digit Zip, or set a future Hire Date — to see the validation error and have the commit blocked. Use the toggles below to allow commit-on-error or turn error display off entirely." />
+                <Run Text="Every column is IsSmart=True, so its header, editor, and mask come from the property's data annotations. Commit an invalid value to see the validation error and have the commit blocked." />
             </TextBlock>
 
-            <Border DockPanel.Dock="Bottom"
-                    Margin="16,4,16,12"
-                    Padding="12,8"
-                    Background="#F5F5F5"
-                    CornerRadius="4">
-                <StackPanel Orientation="Horizontal">
-                    <CheckBox Content="Allow commit on validation attribute errors"
-                              Margin="0,0,20,0"
-                              VerticalAlignment="Center"
-                              IsChecked="{Binding AllowCommitOnValidationAttributeError, ElementName=Grid, Mode=TwoWay}" />
-                    <CheckBox Content="Show validation attribute errors"
-                              VerticalAlignment="Center"
-                              IsChecked="{Binding ShowValidationAttributeErrors, ElementName=Grid, Mode=TwoWay}" />
-                </StackPanel>
-            </Border>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="320" />
+                </Grid.ColumnDefinitions>
 
-            <sdg:SearchDataGrid x:Name="Grid"
-                                Margin="8"
-                                ItemsSource="{Binding Employees}"
-                                AutoGenerateColumns="False"
-                                CanUserAddRows="False"
-                                CanUserDeleteRows="False"
-                                ShowValidationAttributeErrors="True"
-                                AllowCommitOnValidationAttributeError="True">
-                <sdg:SearchDataGrid.GridColumns>
-                    <sdg:GridColumn FieldName="FirstName" IsSmart="True" Width="110" />
-                    <sdg:GridColumn FieldName="LastName"  IsSmart="True" Width="110" />
-                    <sdg:GridColumn FieldName="Title"     IsSmart="True" Width="160" />
-                    <sdg:GridColumn FieldName="Status"    IsSmart="True" Width="110" />
-                    <sdg:GridColumn FieldName="HireDate"  IsSmart="True" Width="110" />
-                    <sdg:GridColumn FieldName="Salary"    IsSmart="True" Width="100" />
-                    <sdg:GridColumn FieldName="ZipCode"   IsSmart="True" Width="90" />
-                    <sdg:GridColumn FieldName="Phone"     IsSmart="True" Width="130" />
-                    <sdg:GridColumn FieldName="Email"     IsSmart="True" Width="200" />
-                </sdg:SearchDataGrid.GridColumns>
-            </sdg:SearchDataGrid>
+                <sdg:SearchDataGrid x:Name="Grid"
+                                    Grid.Column="0"
+                                    Margin="10"
+                                    ItemsSource="{Binding Employees}"
+                                    AutoGenerateColumns="False"
+                                    CanUserAddRows="False"
+                                    CanUserDeleteRows="False"
+                                    ShowValidationAttributeErrors="True"
+                                    AllowCommitOnValidationAttributeError="True">
+                    <sdg:SearchDataGrid.GridColumns>
+                        <sdg:GridColumn FieldName="FirstName" IsSmart="True" Width="110" />
+                        <sdg:GridColumn FieldName="LastName"  IsSmart="True" Width="110" />
+                        <sdg:GridColumn FieldName="Title"     IsSmart="True" Width="160" />
+                        <sdg:GridColumn FieldName="Status"    IsSmart="True" Width="110" />
+                        <sdg:GridColumn FieldName="HireDate"  IsSmart="True" Width="110" />
+                        <sdg:GridColumn FieldName="Salary"    IsSmart="True" Width="100" />
+                        <sdg:GridColumn FieldName="ZipCode"   IsSmart="True" Width="90" />
+                        <sdg:GridColumn FieldName="Phone"     IsSmart="True" Width="130" />
+                        <sdg:GridColumn FieldName="Email"     IsSmart="True" Width="200" />
+                    </sdg:SearchDataGrid.GridColumns>
+                </sdg:SearchDataGrid>
+
+                <GridSplitter Grid.Column="1" HorizontalAlignment="Stretch" Width="5" Background="#CCCCCC" />
+
+                <ScrollViewer Grid.Column="2" Background="#FFFFFF" VerticalScrollBarVisibility="Auto" Padding="8,4">
+                    <sdg:SimpleStackPanel Orientation="Vertical" Spacing="8">
+
+                        <Expander Header="Validation behavior">
+                            <sdg:SimpleStackPanel Margin="4" Orientation="Vertical" Spacing="6">
+                                <CheckBox Content="Allow commit on validation attribute errors"
+                                          IsChecked="{Binding AllowCommitOnValidationAttributeError, ElementName=Grid, Mode=TwoWay}" />
+                                <CheckBox Content="Show validation attribute errors"
+                                          IsChecked="{Binding ShowValidationAttributeErrors, ElementName=Grid, Mode=TwoWay}" />
+                            </sdg:SimpleStackPanel>
+                        </Expander>
+
+                        <Expander Header="Try it" IsExpanded="False">
+                            <TextBlock Margin="4" FontSize="11" Foreground="#666" TextWrapping="Wrap">
+                                <Run Text="• Clear a Required First or Last name." />
+                                <LineBreak />
+                                <Run Text="• Push Salary above 1,000,000." />
+                                <LineBreak />
+                                <Run Text="• Type a 4-digit Zip." />
+                                <LineBreak />
+                                <Run Text="• Set a future Hire Date." />
+                                <LineBreak />
+                                <Run Text="Smart editors in play: currency on Salary, date mask on Hire Date, phone mask on Phone, a ComboBox on Status." />
+                            </TextBlock>
+                        </Expander>
+
+                    </sdg:SimpleStackPanel>
+                </ScrollViewer>
+            </Grid>
         </DockPanel>
     </sampleControls:SampleHostControl>
 </UserControl>

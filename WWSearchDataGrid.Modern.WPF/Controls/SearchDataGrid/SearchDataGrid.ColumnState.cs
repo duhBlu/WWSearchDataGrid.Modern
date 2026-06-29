@@ -143,6 +143,12 @@ namespace WWSearchDataGrid.Modern.WPF
 
                 descriptor.SetColumnPosition(pos);
             }
+
+            // Aligned group-summary layers lay their cells out by display order + visibility —
+            // rebuild every realized header's cells so they track the change (widths track via
+            // binding). Group footer rows lay out the same way.
+            InvalidateGroupSummaryPresenters();
+            InvalidateGroupFooterPresenters();
         }
 
         #endregion

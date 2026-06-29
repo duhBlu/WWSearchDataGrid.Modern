@@ -171,13 +171,15 @@
         own outer wrapper in list mode so these pills sit inline with the other row chips.
     -->
     <DataTemplate x:Key="SearchTextBoxListTemplate">
-        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+        <!--  WrapPanel so value pills wrap to the next line at the viewport edge instead of
+             stretching the condition row horizontally. The trailing + button follows the pills.  -->
+        <WrapPanel Orientation="Horizontal" VerticalAlignment="Center">
 
             <!--  Sibling pill per value — text + × remove  -->
             <ItemsControl ItemsSource="{Binding SelectedValues}">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
-                        <StackPanel Orientation="Horizontal" />
+                        <WrapPanel Orientation="Horizontal" />
                     </ItemsPanelTemplate>
                 </ItemsControl.ItemsPanel>
                 <ItemsControl.ItemTemplate>
@@ -293,7 +295,7 @@
                     </Style>
                 </Button.Style>
             </Button>
-        </StackPanel>
+        </WrapPanel>
     </DataTemplate>
 
     <!--  DateTime Picker List Template  -->

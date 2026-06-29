@@ -176,6 +176,67 @@
 
     <!--#endregion-->
 
+    <!--#region ToggleButton Style-->
+
+    <!--
+        Pill toggle — same chrome language as PrimitivesButton, but the checked state fills with
+        the accent (white glyph) so an on/off state reads at a glance. Used by the summary
+        text-styling editor's Bold / Italic / Underline toggles.
+    -->
+    <Style x:Key="{x:Static sdg:ThemeKeys.PrimitivesToggleButton}" TargetType="{x:Type ToggleButton}">
+        <Setter Property="Background" Value="#FFFFFF" />
+        <Setter Property="Foreground" Value="#1C1C1C" />
+        <Setter Property="BorderBrush" Value="#e3e3e3" />
+        <Setter Property="Padding" Value="6,2" />
+        <Setter Property="MinHeight" Value="26" />
+        <Setter Property="MinWidth" Value="30" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type ToggleButton}">
+                    <Border x:Name="border"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="1"
+                            CornerRadius="4">
+                        <ContentPresenter Margin="{TemplateBinding Padding}"
+                                          HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                          VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="border" Property="Background" Value="#f0f0f0" />
+                            <Setter TargetName="border" Property="BorderBrush" Value="#d6d6d6" />
+                        </Trigger>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="border" Property="Background" Value="#0078D4" />
+                            <Setter TargetName="border" Property="BorderBrush" Value="#0078D4" />
+                            <Setter Property="Foreground" Value="#FFFFFF" />
+                        </Trigger>
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="IsChecked" Value="True" />
+                                <Condition Property="IsMouseOver" Value="True" />
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="border" Property="Background" Value="#005A9E" />
+                            <Setter TargetName="border" Property="BorderBrush" Value="#005A9E" />
+                        </MultiTrigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="border" Property="Background" Value="#F5F5F5" />
+                            <Setter Property="Foreground" Value="#999999" />
+                            <Setter Property="Cursor" Value="Arrow" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!--#endregion-->
+
     <!--#region Dropdown Item Styles-->
 
     <!--
@@ -317,7 +378,7 @@
                             Background="Transparent"
                             BorderBrush="#bfbfbf"
                             BorderThickness="0,0,0,0.8"
-                            Margin="0,0,0,-1"
+                            Margin="0,0,0,0"
                             CornerRadius="3"
                             IsHitTestVisible="False" />
 
@@ -366,15 +427,40 @@
                                  IconSource="{StaticResource {x:Static sdg:IconKeys.IconChevronDown}}"
                                  IconBrush="{TemplateBinding Foreground}" />
 
-                        <!--  Editable text (hidden for standard combo)  -->
+                        <!--
+                            Editable text — shown by the IsEditable trigger below (an editable
+                            ComboBox renders its Text through this part; SelectionBoxItem stays
+                            empty, so the ContentPresenter alone would show nothing). Chromeless
+                            template: the combo's own Background/InnerBorder provide the chrome.
+                            Declared after the ToggleButton so column-0 clicks reach the caret;
+                            the chevron column still toggles the dropdown.
+                        -->
                         <TextBox x:Name="PART_EditableTextBox"
-                             Style="{x:Null}"
                              Grid.Column="0"
                              Background="Transparent"
                              Visibility="Hidden"
                              IsReadOnly="{TemplateBinding IsReadOnly}"
                              Focusable="True"
-                             Margin="{TemplateBinding Padding}" />
+                             VerticalContentAlignment="Center"
+                             Margin="4,2,0,2">
+                            <TextBox.Style>
+                                <Style TargetType="{x:Type TextBox}">
+                                    <Setter Property="OverridesDefaultStyle" Value="True" />
+                                    <Setter Property="SelectionBrush" Value="#0078D4" />
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="{x:Type TextBox}">
+                                                <ScrollViewer x:Name="PART_ContentHost"
+                                                              Background="Transparent"
+                                                              Focusable="False"
+                                                              HorizontalScrollBarVisibility="Hidden"
+                                                              VerticalScrollBarVisibility="Hidden" />
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </TextBox.Style>
+                        </TextBox>
 
                         <!--  Dropdown  -->
                         <Popup x:Name="PART_Popup"
@@ -412,6 +498,12 @@
                     </Grid>
 
                     <ControlTemplate.Triggers>
+                        <!--  Editable: text renders through PART_EditableTextBox instead of the
+                              SelectionBoxItem presenter (which WPF leaves empty when editable).  -->
+                        <Trigger Property="IsEditable" Value="True">
+                            <Setter TargetName="PART_EditableTextBox" Property="Visibility" Value="Visible" />
+                            <Setter TargetName="ContentPresenter" Property="Visibility" Value="Hidden" />
+                        </Trigger>
                         <!--  Hover — mirrors PrimitivesButton IsMouseOver  -->
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter TargetName="Background" Property="Background" Value="#f0f0f0" />
@@ -434,6 +526,78 @@
             </Setter.Value>
         </Setter>
     </Style>
+    <!--#endregion-->
+
+    <!--#region TextBox Style-->
+
+    <!--
+        Plain text input matching the PrimitivesComboBox chrome — same border, corner radius,
+        bottom-lip depth cue, and metrics. Focus swaps the lip for an accent underline
+        (the same #0078D4 the tab strip and selection tints derive from).
+    -->
+    <Style x:Key="{x:Static sdg:ThemeKeys.PrimitivesTextBox}" TargetType="{x:Type TextBox}">
+        <Setter Property="Background" Value="#FFFFFF" />
+        <Setter Property="Foreground" Value="#1C1C1C" />
+        <Setter Property="BorderBrush" Value="#e3e3e3" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Padding" Value="6,2" />
+        <Setter Property="MinHeight" Value="24" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="SelectionBrush" Value="#0078D4" />
+        <Setter Property="CaretBrush" Value="#1C1C1C" />
+        <Setter Property="SnapsToDevicePixels" Value="True" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type TextBox}">
+                    <Grid>
+                        <!--  Background — top/left/right only, bottom drawn by InnerBorder  -->
+                        <Border x:Name="Background"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="1,1,1,0"
+                                CornerRadius="3" />
+
+                        <!--  Inner border — subtle bottom lip for depth (mirrors PrimitivesComboBox)  -->
+                        <Border x:Name="InnerBorder"
+                                Background="Transparent"
+                                BorderBrush="#bfbfbf"
+                                BorderThickness="0,0,0,1"
+                                Margin="0,0,0,0"
+                                CornerRadius="0,0,4,4"
+                                Height="2"
+                                VerticalAlignment="Bottom"
+                                IsHitTestVisible="False" />
+
+                        <ScrollViewer x:Name="PART_ContentHost"
+                                      Margin="{TemplateBinding Padding}"
+                                      VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                      Background="Transparent"
+                                      Focusable="False"
+                                      HorizontalScrollBarVisibility="Hidden"
+                                      VerticalScrollBarVisibility="Hidden" />
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Background" Property="BorderBrush" Value="#d6d6d6" />
+                            <Setter TargetName="InnerBorder" Property="BorderBrush" Value="#b4b4b4" />
+                        </Trigger>
+                        <!--  Focus accent underline; listed after hover so it wins while typing  -->
+                        <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                            <Setter TargetName="Background" Property="BorderBrush" Value="#d6d6d6" />
+                            <Setter TargetName="InnerBorder" Property="Background" Value="#0179d4" />
+                            <Setter TargetName="InnerBorder" Property="BorderBrush" Value="#0078D4" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="Background" Property="Background" Value="#F5F5F5" />
+                            <Setter Property="Foreground" Value="#999999" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
     <!--#endregion-->
 
     <!--#region TabControl & TabItem Style-->
@@ -537,7 +701,7 @@
                                 Grid.RowSpan="3"
                                 Background="#FFFFFF"
                                 BorderBrush="#CCCCCC"
-                                CornerRadius="4" />
+                                CornerRadius="0" />
 
                         <!--  Line-Up button  -->
                         <RepeatButton x:Name="PART_LineUpButton"
@@ -549,12 +713,7 @@
                             <RepeatButton.Template>
                                 <ControlTemplate TargetType="{x:Type RepeatButton}">
                                     <Border Background="Transparent" CornerRadius="4,4,0,0">
-                                        <TextBlock Foreground="#646464"
-                                                   Text="&#xEDDB;"
-                                                   HorizontalAlignment="Center"
-                                                   VerticalAlignment="Center"
-                                                   FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
-                                                   FontSize="8" />
+                                        <sdg:Icon IconSource="{StaticResource {x:Static sdg:IconKeys.IconCaretUp}}" IconBrush="#646464" Width="8" Height="8" />
                                     </Border>
                                 </ControlTemplate>
                             </RepeatButton.Template>
@@ -642,12 +801,7 @@
                             <RepeatButton.Template>
                                 <ControlTemplate TargetType="{x:Type RepeatButton}">
                                     <Border Background="Transparent" CornerRadius="0,0,4,4">
-                                        <TextBlock Foreground="#646464"
-                                                   Text="&#xEDDC;"
-                                                   HorizontalAlignment="Center"
-                                                   VerticalAlignment="Center"
-                                                   FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
-                                                   FontSize="8" />
+                                        <sdg:Icon IconSource="{StaticResource {x:Static sdg:IconKeys.IconCaretDown}}" IconBrush="#646464" Width="8" Height="8" />
                                     </Border>
                                 </ControlTemplate>
                             </RepeatButton.Template>
@@ -719,12 +873,7 @@
                                     <RepeatButton.Template>
                                         <ControlTemplate TargetType="{x:Type RepeatButton}">
                                             <Border Background="Transparent" CornerRadius="4,0,0,4">
-                                                <TextBlock Foreground="#646464"
-                                                           Text="&#xEDD9;"
-                                                           HorizontalAlignment="Center"
-                                                           VerticalAlignment="Center"
-                                                           FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
-                                                           FontSize="8" />
+                                                <sdg:Icon IconSource="{StaticResource {x:Static sdg:IconKeys.IconCaretLeft}}" IconBrush="#646464" Width="8" Height="8" />
                                             </Border>
                                         </ControlTemplate>
                                     </RepeatButton.Template>
@@ -812,12 +961,7 @@
                                     <RepeatButton.Template>
                                         <ControlTemplate TargetType="{x:Type RepeatButton}">
                                             <Border Background="Transparent" CornerRadius="0,4,4,0">
-                                                <TextBlock Foreground="#646464"
-                                                           Text="&#xEDDA;"
-                                                           HorizontalAlignment="Center"
-                                                           VerticalAlignment="Center"
-                                                           FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
-                                                           FontSize="8" />
+                                                <sdg:Icon IconSource="{StaticResource {x:Static sdg:IconKeys.IconCaretRight}}" IconBrush="#646464" Width="8" Height="8" />
                                             </Border>
                                         </ControlTemplate>
                                     </RepeatButton.Template>

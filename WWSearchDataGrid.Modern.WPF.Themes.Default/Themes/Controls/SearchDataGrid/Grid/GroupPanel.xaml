@@ -13,6 +13,37 @@
          existing column-header commands without a parallel set of GridColumn-typed twins. -->
     <commands:GridColumnToContextMenuContextConverter x:Key="GridColumnToContextMenuContextConverter" />
 
+    <!-- Builds the Sort By Summary listing (Ascending/Descending per configured group-summary
+         aggregate + Clear) from the pill's column → owning grid. -->
+    <commands:GroupSummarySortOptionsConverter x:Key="GroupSummarySortOptionsConverter" />
+
+    <!--
+        Header content for one Sort By Summary option. The Primitives menu style has no
+        IsChecked visual, so the active option carries its own check glyph; the glyph box is
+        Hidden (not Collapsed) when unchecked so every option's text stays aligned.
+    -->
+    <DataTemplate x:Key="GroupSummarySortOptionTemplate">
+        <StackPanel Orientation="Horizontal">
+            <sdg:Icon Width="11"
+                      Height="11"
+                      Margin="0,0,6,0"
+                      VerticalAlignment="Center"
+                      IconSource="{StaticResource {x:Static sdg:IconKeys.IconCheck}}">
+                <sdg:Icon.Style>
+                    <Style TargetType="{x:Type sdg:Icon}">
+                        <Setter Property="Visibility" Value="Hidden" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsChecked}" Value="True">
+                                <Setter Property="Visibility" Value="Visible" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </sdg:Icon.Style>
+            </sdg:Icon>
+            <TextBlock VerticalAlignment="Center" Text="{Binding Header}" />
+        </StackPanel>
+    </DataTemplate>
+
     <!-- Cascade-down indent for nested pills: Margin.Top = GroupLevel × GroupIndentWidth,
          plus a small Left gap between consecutive pills. Pairs with the horizontal ItemsPanel
          so deeper levels step down while the strip stays compact horizontally. -->
@@ -114,7 +145,62 @@
                           IconSource="{StaticResource {x:Static sdg:IconKeys.IconSortDescending}}" />
             </MenuItem.Icon>
         </MenuItem>
-        <Separator />
+        <!--
+            Sort By Summary — orders the GROUPS by a summary aggregate instead of the group key
+            (SearchDataGrid.SortGroupsBySummary). Options derive from the grid's configured
+            group-summary content: one Ascending/Descending pair per GroupSummaries aggregate
+            (e.g. Sum by 'Total') plus Row Count when enabled, and a trailing Clear. Hidden
+            entirely when no group summaries are configured. The extra MultiBinding inputs
+            re-evaluate the listing when the definitions or the active sort change; the active
+            option renders check-marked via the header template.
+        -->
+        <MenuItem Header="Sort By Summary"
+                  ItemTemplate="{StaticResource GroupSummarySortOptionTemplate}">
+            <MenuItem.ItemsSource>
+                <MultiBinding Converter="{StaticResource GroupSummarySortOptionsConverter}">
+                    <Binding Path="." />
+                    <Binding Path="View.GroupSummaries" />
+                    <Binding Path="View.GroupSummaries.Count" />
+                    <Binding Path="View.ShowGroupRowCount" />
+                    <Binding Path="View.ActiveGroupSummarySort" />
+                </MultiBinding>
+            </MenuItem.ItemsSource>
+            <MenuItem.ItemContainerStyle>
+                <Style TargetType="{x:Type MenuItem}" BasedOn="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesMenuItem}}">
+                    <Setter Property="Command" Value="{x:Static commands:ContextMenuCommands.SortGroupsBySummaryCommand}" />
+                    <Setter Property="CommandParameter" Value="{Binding}" />
+                </Style>
+            </MenuItem.ItemContainerStyle>
+            <MenuItem.Style>
+                <Style TargetType="{x:Type MenuItem}" BasedOn="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesMenuItem}}">
+                    <Setter Property="Visibility" Value="Visible" />
+                    <Style.Triggers>
+                        <Trigger Property="HasItems" Value="False">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                        </Trigger>
+                    </Style.Triggers>
+                </Style>
+            </MenuItem.Style>
+        </MenuItem>
+        <!--  Best-fit items hide (not disable) when gated off; the leading separator collapses
+              with them so two separators don't stack. Pill DataContext is the GridColumn
+              descriptor, so the paths are direct.  -->
+        <Separator>
+            <Separator.Style>
+                <Style TargetType="Separator" BasedOn="{StaticResource {x:Static MenuItem.SeparatorStyleKey}}">
+                    <Setter Property="Visibility" Value="Visible" />
+                    <Style.Triggers>
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding ActualAllowBestFit}" Value="False" />
+                                <Condition Binding="{Binding View.AllowBestFit}" Value="False" />
+                            </MultiDataTrigger.Conditions>
+                            <Setter Property="Visibility" Value="Collapsed" />
+                        </MultiDataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Separator.Style>
+        </Separator>
         <MenuItem Header="Best Fit Column"
                   Command="{x:Static commands:ContextMenuCommands.BestFitColumnCommand}"
                   CommandParameter="{Binding ., Converter={StaticResource GridColumnToContextMenuContextConverter}}">
@@ -122,10 +208,31 @@
                 <sdg:Icon Width="14" Height="14"
                           IconSource="{StaticResource {x:Static sdg:IconKeys.IconBestFit}}" />
             </MenuItem.Icon>
+            <MenuItem.Style>
+                <Style TargetType="MenuItem" BasedOn="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesMenuItem}}">
+                    <Setter Property="Visibility" Value="Visible" />
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding ActualAllowBestFit}" Value="False">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </MenuItem.Style>
         </MenuItem>
         <MenuItem Header="Best Fit All Columns"
                   Command="{x:Static commands:ContextMenuCommands.BestFitAllColumnsCommand}"
-                  CommandParameter="{Binding ., Converter={StaticResource GridColumnToContextMenuContextConverter}}" />
+                  CommandParameter="{Binding ., Converter={StaticResource GridColumnToContextMenuContextConverter}}">
+            <MenuItem.Style>
+                <Style TargetType="MenuItem" BasedOn="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesMenuItem}}">
+                    <Setter Property="Visibility" Value="Visible" />
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding View.AllowBestFit}" Value="False">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </MenuItem.Style>
+        </MenuItem>
         <Separator />
         <MenuItem Header="Hide Column"
                   Command="{x:Static commands:ContextMenuCommands.HideSelectedColumnCommand}"

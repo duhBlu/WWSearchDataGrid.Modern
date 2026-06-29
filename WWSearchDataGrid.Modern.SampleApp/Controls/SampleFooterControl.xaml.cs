@@ -21,26 +21,6 @@ namespace WWSearchDataGrid.Modern.SampleApp.Controls
             set => SetValue(RowCountProperty, value);
         }
 
-        public static readonly DependencyProperty TotalCountProperty = DependencyProperty.Register(
-            nameof(TotalCount), typeof(int), typeof(SampleFooterControl),
-            new PropertyMetadata(0));
-
-        public int TotalCount
-        {
-            get => (int)GetValue(TotalCountProperty);
-            set => SetValue(TotalCountProperty, value);
-        }
-
-        public static readonly DependencyProperty FilteredCountProperty = DependencyProperty.Register(
-            nameof(FilteredCount), typeof(int), typeof(SampleFooterControl),
-            new PropertyMetadata(0));
-
-        public int FilteredCount
-        {
-            get => (int)GetValue(FilteredCountProperty);
-            set => SetValue(FilteredCountProperty, value);
-        }
-
         public static readonly DependencyProperty GenerateCommandProperty = DependencyProperty.Register(
             nameof(GenerateCommand), typeof(ICommand), typeof(SampleFooterControl),
             new PropertyMetadata(null));

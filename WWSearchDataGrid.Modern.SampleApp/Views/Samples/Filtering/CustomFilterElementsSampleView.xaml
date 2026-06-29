@@ -31,25 +31,14 @@
                        TextWrapping="Wrap">
                 <Run FontWeight="SemiBold" Text="Custom filter elements — one per column" />
                 <LineBreak />
-                <Run Text="Each column below supplies a single ColumnFilterTab from one of the FilterElementBase subclasses — providing CustomColumnFilterTabs is enough; no FilterPopupMode change is required. Click any column's funnel icon to see its element. The right-hand panel lists which element each column maps to, and the column header keeps a tinted funnel icon for as long as the filter is applied." />
+                <Run Text="Each column supplies a single ColumnFilterTab built from one FilterElementBase subclass — no FilterPopupMode change required. Click a column's funnel icon to see its element; Employee keeps the default tabbed popup for comparison." />
             </TextBlock>
-
-            <Border DockPanel.Dock="Bottom"
-                    Background="#FAFAFA"
-                    BorderBrush="#DDDDDD"
-                    BorderThickness="0,1,0,0"
-                    Padding="12,8">
-                <TextBlock FontSize="11" Foreground="#666" TextWrapping="Wrap">
-                    <Run FontWeight="SemiBold" Text="Try:" />
-                    <Run Text="Open Status → CheckedListFilterElement (Excel-style picker). Open Order Date → DateTreeFilterElement (Year/Month/Day tree). Open Order Period → DatePeriodsFilterElement (Today / This Week / etc.). Open Total → RangeFilterElement (slider + numeric inputs). Open Customer → MultiFilterElement (single-rule editor — Contains, StartsWith, etc.). Compare against Employee, which uses the Default tabbed UI." />
-                </TextBlock>
-            </Border>
 
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="260" />
+                    <ColumnDefinition Width="320" />
                 </Grid.ColumnDefinitions>
 
                 <sdg:SearchDataGrid x:Name="Grid"
@@ -168,47 +157,62 @@
                               Background="#CCCCCC" />
 
                 <ScrollViewer Grid.Column="2"
-                              Padding="10,8"
+                              Padding="8,4"
                               Background="#FFFFFF"
                               VerticalScrollBarVisibility="Auto">
-                    <sdg:SimpleStackPanel Orientation="Vertical" Spacing="6">
-                        <TextBlock FontWeight="SemiBold" FontSize="12" Text="Filter element per column" />
-                        <TextBlock FontSize="10"
-                                   Foreground="#777"
-                                   TextWrapping="Wrap">
-                            <Run Text="Each column wires a single ColumnFilterTab containing the named FilterElementBase subclass. Open the funnel icon to see the corresponding popup." />
-                        </TextBlock>
+                    <sdg:SimpleStackPanel Orientation="Vertical" Spacing="8">
 
-                        <Border Style="{StaticResource ColumnLegendChip}">
-                            <TextBlock FontSize="12">
-                                <Run FontWeight="SemiBold" Text="Status" />
-                                <Run Text=" — CheckedList" />
+                        <Expander Header="Filter element per column">
+                            <sdg:SimpleStackPanel Margin="4" Orientation="Vertical" Spacing="2">
+                                <Border Style="{StaticResource ColumnLegendChip}">
+                                    <TextBlock FontSize="12">
+                                        <Run FontWeight="SemiBold" Text="Status" />
+                                        <Run Text=" — CheckedList" />
+                                    </TextBlock>
+                                </Border>
+                                <Border Style="{StaticResource ColumnLegendChip}">
+                                    <TextBlock FontSize="12">
+                                        <Run FontWeight="SemiBold" Text="Order Date" />
+                                        <Run Text=" — DateTree" />
+                                    </TextBlock>
+                                </Border>
+                                <Border Style="{StaticResource ColumnLegendChip}">
+                                    <TextBlock FontSize="12">
+                                        <Run FontWeight="SemiBold" Text="Order Period" />
+                                        <Run Text=" — DatePeriods" />
+                                    </TextBlock>
+                                </Border>
+                                <Border Style="{StaticResource ColumnLegendChip}">
+                                    <TextBlock FontSize="12">
+                                        <Run FontWeight="SemiBold" Text="Total" />
+                                        <Run Text=" — Range" />
+                                    </TextBlock>
+                                </Border>
+                                <Border Style="{StaticResource ColumnLegendChip}">
+                                    <TextBlock FontSize="12">
+                                        <Run FontWeight="SemiBold" Text="Customer" />
+                                        <Run Text=" — Multi (single-rule)" />
+                                    </TextBlock>
+                                </Border>
+                            </sdg:SimpleStackPanel>
+                        </Expander>
+
+                        <Expander Header="Try it" IsExpanded="False">
+                            <TextBlock Margin="4" FontSize="11" Foreground="#666" TextWrapping="Wrap">
+                                <Run Text="• Open Status → CheckedListFilterElement (Excel-style picker)." />
+                                <LineBreak />
+                                <Run Text="• Open Order Date → DateTreeFilterElement (Year/Month/Day tree)." />
+                                <LineBreak />
+                                <Run Text="• Open Order Period → DatePeriodsFilterElement (Today / This Week / etc.)." />
+                                <LineBreak />
+                                <Run Text="• Open Total → RangeFilterElement (slider + numeric inputs)." />
+                                <LineBreak />
+                                <Run Text="• Open Customer → MultiFilterElement (single-rule editor — Contains, StartsWith, etc.)." />
+                                <LineBreak />
+                                <Run Text="• Compare against Employee, which uses the default tabbed UI. The column header keeps a tinted funnel icon for as long as a filter is applied." />
                             </TextBlock>
-                        </Border>
-                        <Border Style="{StaticResource ColumnLegendChip}">
-                            <TextBlock FontSize="12">
-                                <Run FontWeight="SemiBold" Text="Order Date" />
-                                <Run Text=" — DateTree" />
-                            </TextBlock>
-                        </Border>
-                        <Border Style="{StaticResource ColumnLegendChip}">
-                            <TextBlock FontSize="12">
-                                <Run FontWeight="SemiBold" Text="Order Period" />
-                                <Run Text=" — DatePeriods" />
-                            </TextBlock>
-                        </Border>
-                        <Border Style="{StaticResource ColumnLegendChip}">
-                            <TextBlock FontSize="12">
-                                <Run FontWeight="SemiBold" Text="Total" />
-                                <Run Text=" — Range" />
-                            </TextBlock>
-                        </Border>
-                        <Border Style="{StaticResource ColumnLegendChip}">
-                            <TextBlock FontSize="12">
-                                <Run FontWeight="SemiBold" Text="Customer" />
-                                <Run Text=" — Multi (single-rule)" />
-                            </TextBlock>
-                        </Border>
+                        </Expander>
+
                     </sdg:SimpleStackPanel>
                 </ScrollViewer>
             </Grid>

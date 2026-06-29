@@ -53,6 +53,15 @@ namespace WWSearchDataGrid.Modern.WPF
         /// </summary>
         private ScrollContentPresenter _scrollContentPresenter;
 
+        /// <summary>
+        /// The sticky strip's entry presenter (<c>PART_FixedGroupHeaders</c>) and the drop-shadow
+        /// panel (<c>PART_FixedGroupShadow</c>) that rides the strip's visible bottom edge. Both
+        /// live inside the inner scroll-viewer's template, so they're descendant-resolved (like
+        /// <see cref="_scrollContentPresenter"/>) and cached for the template's lifetime.
+        /// </summary>
+        private FixedGroupHeadersPresenter _fixedGroupHeadersPresenter;
+        private FrameworkElement _fixedGroupShadow;
+
         #endregion
 
         #region Resolver
@@ -89,6 +98,7 @@ namespace WWSearchDataGrid.Modern.WPF
         private void ClearStrip()
         {
             if (_fixedGroupHeadersBacking.Count > 0) _fixedGroupHeadersBacking.Clear();
+            ResetStripPush();
         }
 
         /// <summary>
@@ -127,11 +137,19 @@ namespace WWSearchDataGrid.Modern.WPF
         /// ancestors. Finds the topmost realized row straddling the viewport top (the "anchor"),
         /// then collects the nearest preceding <see cref="GroupHeaderRow"/> at each level shallower
         /// than the anchor's own. Those headers are, by list order, exactly the anchor's ancestors
-        /// scrolled above the top — so no per-ancestor geometry or expand-state probing is needed
-        /// (an ancestor of a visible data row is necessarily expanded). When the anchor is a
-        /// top-level header (no shallower ancestor), the chain is empty and the strip hides — the
-        /// flat equivalent of "scrolling through collapsed top-level headers."
+        /// scrolled above the top — so no per-ancestor geometry is needed (an ancestor of a visible
+        /// data row is necessarily expanded).
         /// </summary>
+        /// <remarks>
+        /// When the anchor is itself a header that has begun scrolling off the top (its top is above
+        /// the viewport top) and is expanded — so its own content lies below it — the header is
+        /// pinned too, holding it at the line instead of letting it scroll past for a header-height
+        /// before the next chain snaps in. A header still resting exactly at the top, or a collapsed
+        /// header, pins only its ancestors; so a flat run of collapsed top-level headers scrolls past
+        /// freely (chain empty, strip hidden), unchanged from before. Headers still below the
+        /// viewport top but inside the strip's stair-step are docked by the forward pass
+        /// (<see cref="ResolveUpcomingHeaders"/>), which also yields the push translate.
+        /// </remarks>
         private void BuildFixedGroupChain()
         {
             var host = ResolveScrollContentPresenter();
@@ -159,19 +177,33 @@ namespace WWSearchDataGrid.Modern.WPF
                 return;
             }
 
-            // The deepest ancestor level we still need: one above the anchor header's own level, or
-            // the innermost group level when the anchor is a data row (all enclosing headers pin).
-            int needed = _groupRows[anchorIndex] is GroupHeaderRow anchorHeader
-                ? anchorHeader.Level - 1
-                : GroupCount - 1;
-            if (needed < 0)
+            // Seed the chain and decide the deepest ancestor level still needed. For a data-row
+            // anchor, every enclosing header pins (needed = innermost level). For a header anchor,
+            // pin its ancestors (needed = its level − 1); additionally pin the header itself once it
+            // has scrolled above the top with its own content below it (expanded) — that's what
+            // holds the incoming group at the line instead of letting it scroll past before the swap.
+            // The < 0 test treats a header resting exactly at the top as not-yet-scrolled-off.
+            var chain = new List<GroupHeaderRow>(GroupCount);
+            int needed;
+            if (_groupRows[anchorIndex] is GroupHeaderRow anchorHeader)
+            {
+                double anchorTop = topmost.TranslatePoint(new Point(0, 0), host).Y;
+                if (anchorHeader.IsExpanded && anchorTop < -0.5)
+                    chain.Add(anchorHeader);
+                needed = anchorHeader.Level - 1;
+            }
+            else
+            {
+                needed = GroupCount - 1;
+            }
+
+            if (needed < 0 && chain.Count == 0)
             {
                 ClearStrip();
                 return;
             }
 
             // Walk back collecting the nearest preceding header at each successively-shallower level.
-            var chain = new List<GroupHeaderRow>(needed + 1);
             for (int i = anchorIndex - 1; i >= 0 && needed >= 0; i--)
             {
                 if (_groupRows[i] is GroupHeaderRow h && h.Level == needed)
@@ -189,11 +221,14 @@ namespace WWSearchDataGrid.Modern.WPF
 
             chain.Reverse(); // outermost first, matching the strip's top-down stair-step
 
+            double pushY = ResolveUpcomingHeaders(host, anchorIndex, chain, out int pushLevel);
+
             var entries = new List<FixedGroupHeaderEntry>(chain.Count);
             foreach (var h in chain)
                 entries.Add(new FixedGroupHeaderEntry(h.Level, h.Node, h.OwningColumn, this));
 
             ApplyEntries(entries);
+            ApplyStripPush(pushLevel, pushY);
         }
 
         /// <summary>
@@ -211,6 +246,185 @@ namespace WWSearchDataGrid.Modern.WPF
                 _scrollViewer, "PART_ScrollContentPresenter");
             return _scrollContentPresenter;
         }
+
+        /// <summary>
+        /// Forward pass over the headers below the anchor: docks every header that has crossed its
+        /// per-level pin line into <paramref name="chain"/> (mutated in place), and returns the
+        /// push translate for the first header still short of its line — the boundary. The pin
+        /// line for a level-N header is the bottom edge of the pinned entries above it (cumulative
+        /// height of levels 0..N−1), so an incoming header docks the instant its real row touches
+        /// the chain's stair-step — its pinned copy renders exactly where the real row sits at that
+        /// moment — instead of sliding on under the strip to the viewport top and snapping in late.
+        /// </summary>
+        /// <remarks>
+        /// A header that crossed its line owns its level: any deeper entries belong to the group it
+        /// just ended and are dropped, and the header itself is appended only when expanded (a
+        /// collapsed header has no content below it, so it scrolls on under the strip like a data
+        /// row). The boundary's push slides the chain suffix at indices ≥ its level so the suffix's
+        /// bottom edge rides the incoming header's top: 0 when the header's top is at the strip's
+        /// bottom, −(suffix height) at its pin line — by which point the dock swap has replaced the
+        /// suffix and the transform rests. A level-0 boundary pushes the whole chain, which is the
+        /// old whole-strip behavior. Symmetric on the way back up: the outgoing header descending
+        /// through the band slides the freshly-resolved suffix back down from under the entries
+        /// above it. Pixel-scroll only — item-mode offsets jump a whole row at a time, so there the
+        /// suffix snaps (translate stays 0); docking applies in both modes. Driven from
+        /// <c>ScrollChanged</c>, which fires per frame during smooth scrolling, so the transform
+        /// and the chain resolve stay on the same tick — no separate render loop, no
+        /// content/transform desync.
+        /// </remarks>
+        private double ResolveUpcomingHeaders(ScrollContentPresenter host, int anchorIndex, List<GroupHeaderRow> chain, out int pushLevel)
+        {
+            pushLevel = -1;
+
+            // A header interacting with the strip sits within a few rows below the viewport top
+            // (the anchor), so cap the forward scan — without it, scrolling deep inside one huge
+            // group (no following header for thousands of rows) would walk to the group's end
+            // every frame. Anything past the cap is far below the strip and never docks or pushes.
+            const int maxLookahead = 128;
+            int scanEnd = Math.Min(_groupRows.Count, anchorIndex + 1 + maxLookahead);
+
+            for (int i = anchorIndex + 1; i < scanEnd; i++)
+            {
+                if (!(_groupRows[i] is GroupHeaderRow header)) continue;
+
+                // An unrealized container means the row is below the realization window, far
+                // outside the strip's reach — and so is every row after it.
+                if (!(ItemContainerGenerator.ContainerFromItem(header) is FrameworkElement container) || !container.IsVisible)
+                    break;
+
+                // Document order guarantees a header's parent precedes it, so a level deeper than
+                // the chain can only follow a collapsed (undocked) parent — out of the strip's reach.
+                if (header.Level > chain.Count) break;
+
+                double top = container.TranslatePoint(new Point(0, 0), host).Y;
+                double pinLine = PinnedEntryHeightAbove(header.Level);
+
+                if (top < pinLine - 0.5)
+                {
+                    if (chain.Count > header.Level)
+                        chain.RemoveRange(header.Level, chain.Count - header.Level);
+                    if (header.IsExpanded)
+                        chain.Add(header);
+                    continue;
+                }
+
+                // First header short of its pin line is the push boundary; nothing below it can
+                // touch the strip this frame.
+                if (AllowPerPixelScrolling && header.Level < chain.Count)
+                {
+                    double stripHeight = PinnedEntryHeightAbove(chain.Count);
+                    if (stripHeight > 0 && top < stripHeight)
+                    {
+                        pushLevel = header.Level;
+                        return top - stripHeight;
+                    }
+                }
+                break;
+            }
+
+            return 0;
+        }
+
+        /// <summary>
+        /// Cumulative rendered height of the pinned entries at indices below
+        /// <paramref name="level"/> — the stair-step pin line a level-N header docks against, and,
+        /// passed the full chain length, the strip's content height (excluding the drop shadow).
+        /// An entry whose container hasn't rendered yet (docked this pass, generated on the next
+        /// layout) borrows the last rendered height seen, exact in practice since every entry
+        /// shares the strip's item template.
+        /// </summary>
+        private double PinnedEntryHeightAbove(int level)
+        {
+            var presenter = ResolveFixedGroupHeadersPresenter();
+            if (presenter == null) return 0;
+
+            var generator = presenter.ItemContainerGenerator;
+            double sum = 0, lastRendered = 0;
+            for (int i = 0; i < level; i++)
+            {
+                double height = (generator.ContainerFromIndex(i) as FrameworkElement)?.ActualHeight ?? 0;
+                if (height > 0) lastRendered = height; else height = lastRendered;
+                sum += height;
+            }
+            return sum;
+        }
+
+        /// <summary>
+        /// Lazily resolves and caches the strip's entry presenter (<c>PART_FixedGroupHeaders</c>)
+        /// inside the inner scroll viewer's template — the source of the pinned-entry containers
+        /// the pin-line heights and push transforms are read from and written to.
+        /// </summary>
+        private FixedGroupHeadersPresenter ResolveFixedGroupHeadersPresenter()
+        {
+            if (_fixedGroupHeadersPresenter != null) return _fixedGroupHeadersPresenter;
+            if (_scrollViewer == null) return null;
+
+            _fixedGroupHeadersPresenter = VisualTreeHelperMethods.FindVisualDescendant<FixedGroupHeadersPresenter>(
+                _scrollViewer, "PART_FixedGroupHeaders");
+            return _fixedGroupHeadersPresenter;
+        }
+
+        /// <summary>
+        /// Lazily resolves and caches the drop-shadow panel (<c>PART_FixedGroupShadow</c>) below the
+        /// pinned entries — translated with the pushed suffix so the shadow stays on the strip's
+        /// visible bottom edge instead of floating where the resting bottom was.
+        /// </summary>
+        private FrameworkElement ResolveFixedGroupShadow()
+        {
+            if (_fixedGroupShadow != null) return _fixedGroupShadow;
+            if (_scrollViewer == null) return null;
+
+            _fixedGroupShadow = VisualTreeHelperMethods.FindVisualDescendant<DockPanel>(
+                _scrollViewer, "PART_FixedGroupShadow");
+            return _fixedGroupShadow;
+        }
+
+        /// <summary>
+        /// Applies the push to the chain suffix: every pinned entry at index ≥
+        /// <paramref name="pushLevel"/>, plus the drop shadow, is translated by
+        /// <paramref name="translateY"/>; entries above the boundary's level hold still. Z-order is
+        /// stamped outermost-on-top so a pushed suffix tucks under the entry above it instead of
+        /// drawing over it (a StackPanel renders later children on top). Transforms are written
+        /// only on change so an unchanged scroll frame triggers no re-render; a
+        /// <paramref name="pushLevel"/> of −1 rests the whole strip.
+        /// </summary>
+        private void ApplyStripPush(int pushLevel, double translateY)
+        {
+            var presenter = ResolveFixedGroupHeadersPresenter();
+            if (presenter == null) return;
+
+            var generator = presenter.ItemContainerGenerator;
+            int count = _fixedGroupHeadersBacking.Count;
+            for (int i = 0; i < count; i++)
+            {
+                if (!(generator.ContainerFromIndex(i) is FrameworkElement entry)) continue;
+                Panel.SetZIndex(entry, count - i);
+                SetTranslateY(entry, pushLevel >= 0 && i >= pushLevel ? translateY : 0);
+            }
+
+            var shadow = ResolveFixedGroupShadow();
+            if (shadow != null)
+                SetTranslateY(shadow, pushLevel >= 0 ? translateY : 0);
+        }
+
+        /// <summary>
+        /// Writes a vertical render translate, materializing the element's
+        /// <see cref="TranslateTransform"/> on first non-zero use and skipping the write when the
+        /// value is already current.
+        /// </summary>
+        private static void SetTranslateY(FrameworkElement element, double y)
+        {
+            if (!(element.RenderTransform is TranslateTransform transform))
+            {
+                if (y == 0) return;
+                transform = new TranslateTransform();
+                element.RenderTransform = transform;
+            }
+            if (transform.Y != y) transform.Y = y;
+        }
+
+        /// <summary>Returns every pinned entry and the shadow to rest.</summary>
+        private void ResetStripPush() => ApplyStripPush(-1, 0);
 
         /// <summary>
         /// Depth-first walks <paramref name="host"/>'s visual descendants and returns the

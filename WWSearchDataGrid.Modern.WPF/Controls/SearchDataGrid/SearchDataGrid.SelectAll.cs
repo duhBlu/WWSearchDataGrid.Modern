@@ -307,7 +307,7 @@ namespace WWSearchDataGrid.Modern.WPF
             {
                 case SelectAllScope.FilteredRows:
                     // Items carries group-header sentinels in flat mode — keep only real rows.
-                    return Items.Cast<object>().Where(o => !IsHeaderItem(o));
+                    return Items.Cast<object>().Where(o => !IsSentinelRow(o));
 
                 case SelectAllScope.SelectedRows:
                     if (SelectionUnit == DataGridSelectionUnit.Cell || SelectionUnit == DataGridSelectionUnit.CellOrRowHeader)
@@ -315,12 +315,12 @@ namespace WWSearchDataGrid.Modern.WPF
                         var selectedItems = new HashSet<object>();
                         foreach (var cell in SelectedCells)
                         {
-                            if (cell.Item != null && !IsHeaderItem(cell.Item))
+                            if (cell.Item != null && !IsSentinelRow(cell.Item))
                                 selectedItems.Add(cell.Item);
                         }
                         return selectedItems;
                     }
-                    return SelectedItems.Cast<object>().Where(o => !IsHeaderItem(o));
+                    return SelectedItems.Cast<object>().Where(o => !IsSentinelRow(o));
 
                 case SelectAllScope.AllItems:
                     if (originalItemsSource != null)
@@ -328,7 +328,7 @@ namespace WWSearchDataGrid.Modern.WPF
                     return Enumerable.Empty<object>();
 
                 default:
-                    return Items.Cast<object>().Where(o => !IsHeaderItem(o));
+                    return Items.Cast<object>().Where(o => !IsSentinelRow(o));
             }
         }
 

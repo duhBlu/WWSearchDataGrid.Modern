@@ -42,7 +42,7 @@ namespace WWSearchDataGrid.Modern.WPF.Display
                 {
                     if (item == null) continue;
                     var idValue = ReadProperty(item, _selectedValuePath);
-                    if (Equals(idValue, rawValue))
+                    if (IdMatches(idValue, rawValue))
                     {
                         return string.IsNullOrEmpty(_displayMemberPath)
                             ? item.ToString()
@@ -63,6 +63,19 @@ namespace WWSearchDataGrid.Modern.WPF.Display
         public bool CanParse => false;
 
         public bool UseRawComparison => false;
+
+        /// <summary>
+        /// Matches a lookup id against a raw cell value. Tries typed equality first, then falls
+        /// back to comparing string forms so an id supplied as text (e.g. "1" from a filter-string
+        /// or a multi-value chip whose values are stored as strings) still resolves against an
+        /// integer key.
+        /// </summary>
+        private static bool IdMatches(object idValue, object rawValue)
+        {
+            if (Equals(idValue, rawValue)) return true;
+            if (idValue == null || rawValue == null) return false;
+            return string.Equals(idValue.ToString(), rawValue.ToString(), System.StringComparison.Ordinal);
+        }
 
         private static object ReadProperty(object item, string path)
         {

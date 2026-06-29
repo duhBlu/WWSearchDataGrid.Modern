@@ -41,6 +41,17 @@ namespace WWSearchDataGrid.Modern.WPF.Commands
                 },
                 row => row?.Node is { IsExpanded: true } && GridOf(row) != null);
 
+        private static ICommand _toggleGroupCommand;
+        /// <summary>Expands or collapses the single flat group whose in-body header chevron was clicked.</summary>
+        public static ICommand ToggleGroupCommand => _toggleGroupCommand ??=
+            new RelayCommand<GroupHeaderRow>(
+                row =>
+                {
+                    try { GridOf(row)?.ToggleGroup(row); }
+                    catch (Exception ex) { Debug.WriteLine($"Error in ToggleGroupCommand: {ex.Message}"); }
+                },
+                row => row?.Node != null && GridOf(row) != null);
+
         private static ICommand _expandAllAtLevelCommand;
         /// <summary>Expands every flat group at the same nesting depth as the originating header row.</summary>
         public static ICommand ExpandAllAtLevelCommand => _expandAllAtLevelCommand ??=
@@ -86,6 +97,31 @@ namespace WWSearchDataGrid.Modern.WPF.Commands
                     var grid = GridOf(row);
                     return grid != null && grid.GetGroupedColumnAtLevel(row.Level) != null;
                 });
+
+        private static ICommand _openGroupSummaryEditorCommand;
+        /// <summary>
+        /// Opens the "View Totals" editor for the grid's group-header summaries — one shared
+        /// set rendered at every level.
+        /// </summary>
+        public static ICommand OpenGroupSummaryEditorCommand => _openGroupSummaryEditorCommand ??=
+            new RelayCommand<GroupHeaderRow>(
+                row =>
+                {
+                    try { GroupSummaryEditor.ShowGroupDialog(GridOf(row)); }
+                    catch (Exception ex) { Debug.WriteLine($"Error in OpenGroupSummaryEditorCommand: {ex.Message}"); }
+                },
+                row => GridOf(row) != null);
+
+        private static ICommand _openGroupSummaryEditorFixedCommand;
+        /// <summary>Opens the "View Totals" group-summary editor from a pinned strip entry.</summary>
+        public static ICommand OpenGroupSummaryEditorFixedCommand => _openGroupSummaryEditorFixedCommand ??=
+            new RelayCommand<FixedGroupHeaderEntry>(
+                entry =>
+                {
+                    try { GroupSummaryEditor.ShowGroupDialog(entry?.OwnerGrid); }
+                    catch (Exception ex) { Debug.WriteLine($"Error in OpenGroupSummaryEditorFixedCommand: {ex.Message}"); }
+                },
+                entry => entry?.OwnerGrid != null);
 
         #endregion
     }

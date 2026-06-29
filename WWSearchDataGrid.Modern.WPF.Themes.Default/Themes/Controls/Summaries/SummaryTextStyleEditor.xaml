@@ -1,0 +1,120 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:converters="clr-namespace:WWSearchDataGrid.Modern.WPF.Converters;assembly=WWSearchDataGrid.Modern.WPF"
+                    xmlns:sdg="clr-namespace:WWSearchDataGrid.Modern.WPF;assembly=WWSearchDataGrid.Modern.WPF">
+
+    <!--
+        ═══════════════════════════════════════════════════════════════════════
+        SummaryTextStyleEditor — the Prefix / Value / Suffix text-styling dialog
+        opened from the summary editor's Order tab. DataContext is a
+        SummaryTextStyleEditorViewModel; each tab edits one segment's working-copy
+        SummaryTextStyle in place. Done just closes — the parent editor's OK/Cancel
+        decides persistence.
+        ═══════════════════════════════════════════════════════════════════════
+    -->
+
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF.Themes.Default;component/Themes/Controls/Primitives/DefaultControls.xaml" />
+        <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF.Themes.Default;component/Themes/Controls/Primitives/WWColorPicker.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+
+    <converters:BrushToUnsetConverter x:Key="SummaryStyleBrushToUnsetConverter" />
+
+    <Style x:Key="SummaryStyleFieldLabel" TargetType="{x:Type TextBlock}">
+        <Setter Property="Foreground" Value="#FF444444" />
+        <Setter Property="FontSize" Value="11" />
+        <Setter Property="Margin" Value="0,12,0,3" />
+    </Style>
+
+    <!--  One segment tab: B / I / U toggles + color picker + live preview.  -->
+    <DataTemplate x:Key="SummarySegmentStyleTemplate">
+        <StackPanel Margin="10,8">
+            <TextBlock Style="{StaticResource SummaryStyleFieldLabel}" Margin="0,0,0,3" Text="Style" />
+            <sdg:SimpleStackPanel Orientation="Horizontal" Spacing="6">
+                <ToggleButton Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesToggleButton}}"
+                              IsChecked="{Binding IsBold, Mode=TwoWay}"
+                              MinWidth="34"
+                              ToolTip="Bold">
+                    <TextBlock Text="B" FontWeight="Bold" FontSize="14" />
+                </ToggleButton>
+                <ToggleButton Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesToggleButton}}"
+                              IsChecked="{Binding IsItalic, Mode=TwoWay}"
+                              MinWidth="34"
+                              ToolTip="Italic">
+                    <TextBlock Text="I" FontStyle="Italic" FontSize="14" />
+                </ToggleButton>
+                <ToggleButton Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesToggleButton}}"
+                              IsChecked="{Binding IsUnderline, Mode=TwoWay}"
+                              MinWidth="34"
+                              ToolTip="Underline">
+                    <TextBlock Text="U" TextDecorations="Underline" FontSize="14" />
+                </ToggleButton>
+            </sdg:SimpleStackPanel>
+
+            <TextBlock Style="{StaticResource SummaryStyleFieldLabel}" Text="Color" />
+            <sdg:WWColorPicker SelectedColor="{Binding Color, Mode=TwoWay}"
+                               DisplayColorAndName="True"
+                               Height="26"
+                               Width="170"
+                               HorizontalAlignment="Left" />
+
+            <TextBlock Style="{StaticResource SummaryStyleFieldLabel}" Text="Preview" />
+            <Border Background="#FFFFFF"
+                    BorderBrush="#CCCCCC"
+                    BorderThickness="1"
+                    CornerRadius="4"
+                    Padding="8,6">
+                <TextBlock FontSize="14">
+                    <Run Text="{Binding SampleText, Mode=OneWay}"
+                         FontWeight="{Binding Style.FontWeight}"
+                         FontStyle="{Binding Style.FontStyle}"
+                         TextDecorations="{Binding Style.TextDecorations}"
+                         Foreground="{Binding Style.Foreground, Converter={StaticResource SummaryStyleBrushToUnsetConverter}}" />
+                </TextBlock>
+            </Border>
+        </StackPanel>
+    </DataTemplate>
+
+    <Style x:Key="{x:Static sdg:ThemeKeys.SummaryTextStyleEditor}" TargetType="{x:Type sdg:SummaryTextStyleEditor}">
+        <Setter Property="Background" Value="#f4f4f4" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type sdg:SummaryTextStyleEditor}">
+                    <Border Background="{TemplateBinding Background}" Padding="12">
+                        <DockPanel>
+
+                            <!--  Done — edits are already live; closing returns to the parent editor.  -->
+                            <StackPanel DockPanel.Dock="Bottom"
+                                        Orientation="Horizontal"
+                                        Margin="0,12,0,0"
+                                        HorizontalAlignment="Right">
+                                <Button Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesButton}}"
+                                        IsDefault="True"
+                                        IsCancel="True"
+                                        Command="{Binding CloseCommand, RelativeSource={RelativeSource TemplatedParent}}"
+                                        MinWidth="80"
+                                        Content="Done" />
+                            </StackPanel>
+
+                            <TabControl Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesTabControl}}"
+                                        ContentTemplate="{StaticResource SummarySegmentStyleTemplate}">
+                                <TabItem Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesTabItem}}"
+                                         Header="Prefix"
+                                         Content="{Binding Prefix}" />
+                                <TabItem Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesTabItem}}"
+                                         Header="Value"
+                                         Content="{Binding Value}" />
+                                <TabItem Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesTabItem}}"
+                                         Header="Suffix"
+                                         Content="{Binding Suffix}" />
+                            </TabControl>
+                        </DockPanel>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style BasedOn="{StaticResource {x:Static sdg:ThemeKeys.SummaryTextStyleEditor}}" TargetType="{x:Type sdg:SummaryTextStyleEditor}" />
+
+</ResourceDictionary>

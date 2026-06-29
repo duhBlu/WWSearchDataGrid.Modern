@@ -413,6 +413,139 @@ namespace WWSearchDataGrid.Modern.WPF
         internal void SetActualWidth(double value)
             => SetValue(ActualWidthPropertyKey, value);
 
+        private static readonly DependencyPropertyKey ActualDataWidthPropertyKey =
+            DependencyProperty.RegisterReadOnly(
+                nameof(ActualDataWidth),
+                typeof(double),
+                typeof(ColumnLayoutBase),
+                new PropertyMetadata(0.0));
+
+        /// <summary>
+        /// Read-only dependency property exposing <see cref="ActualDataWidth"/> for bindings.
+        /// </summary>
+        public static readonly DependencyProperty ActualDataWidthProperty = ActualDataWidthPropertyKey.DependencyProperty;
+
+        /// <summary>
+        /// Width of the column's widest measured data content, including cell chrome (padding /
+        /// borders). Pushed by <see cref="SearchDataGrid"/> best-fit runs; <c>0</c> until the
+        /// column has been best-fit at least once. Not live-tracked on data changes.
+        /// </summary>
+        public double ActualDataWidth => (double)GetValue(ActualDataWidthProperty);
+
+        internal void SetActualDataWidth(double value)
+            => SetValue(ActualDataWidthPropertyKey, value);
+
+        /// <summary>
+        /// Column-level override for the grid's <see cref="SearchDataGrid.AllowBestFit"/>.
+        /// <c>null</c> (default) inherits the grid value; <c>true</c>/<c>false</c> overrides it
+        /// for this column only. The resolved value is exposed by
+        /// <see cref="ActualAllowBestFit"/> and gates the best-fit UI surfaces (context-menu
+        /// items, gripper double-click) — not the explicit
+        /// <see cref="SearchDataGrid.BestFitColumn(GridColumn)"/> API.
+        /// </summary>
+        public static readonly DependencyProperty AllowBestFitProperty =
+            DependencyProperty.Register(
+                nameof(AllowBestFit),
+                typeof(bool?),
+                typeof(ColumnLayoutBase),
+                new PropertyMetadata(null, OnAllowBestFitChanged));
+
+        public bool? AllowBestFit
+        {
+            get => (bool?)GetValue(AllowBestFitProperty);
+            set => SetValue(AllowBestFitProperty, value);
+        }
+
+        private static readonly DependencyPropertyKey ActualAllowBestFitPropertyKey =
+            DependencyProperty.RegisterReadOnly(
+                nameof(ActualAllowBestFit),
+                typeof(bool),
+                typeof(ColumnLayoutBase),
+                new PropertyMetadata(true));
+
+        public static readonly DependencyProperty ActualAllowBestFitProperty = ActualAllowBestFitPropertyKey.DependencyProperty;
+
+        /// <summary>
+        /// Resolved best-fit availability for this column: the explicit
+        /// <see cref="AllowBestFit"/> when set, otherwise the grid-level
+        /// <see cref="SearchDataGrid.AllowBestFit"/> (defaulting to <c>true</c> when no grid is
+        /// attached).
+        /// </summary>
+        public bool ActualAllowBestFit => (bool)GetValue(ActualAllowBestFitProperty);
+
+        /// <summary>
+        /// Resolves the effective best-fit availability — column override first, then the grid,
+        /// then <c>true</c>.
+        /// </summary>
+        internal bool ResolveEffectiveAllowBestFit()
+            => AllowBestFit ?? View?.AllowBestFit ?? true;
+
+        /// <summary>
+        /// Recomputes <see cref="ActualAllowBestFit"/>. Called when the column override changes,
+        /// when the column attaches to a grid (<see cref="View"/> change), and when the grid's
+        /// <see cref="SearchDataGrid.AllowBestFit"/> changes (the grid walks columns).
+        /// </summary>
+        internal void RefreshActualAllowBestFit()
+            => SetValue(ActualAllowBestFitPropertyKey, ResolveEffectiveAllowBestFit());
+
+        private static void OnAllowBestFitChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            if (d is ColumnLayoutBase col)
+                col.RefreshActualAllowBestFit();
+        }
+
+        /// <summary>
+        /// How many rows this column's best-fit measures.
+        /// <see cref="WPF.BestFitMode.Default"/> (the default) inherits the grid's
+        /// <see cref="SearchDataGrid.BestFitMode"/>.
+        /// </summary>
+        public static readonly DependencyProperty BestFitModeProperty =
+            DependencyProperty.Register(
+                nameof(BestFitMode),
+                typeof(BestFitMode),
+                typeof(ColumnLayoutBase),
+                new PropertyMetadata(BestFitMode.Default));
+
+        public BestFitMode BestFitMode
+        {
+            get => (BestFitMode)GetValue(BestFitModeProperty);
+            set => SetValue(BestFitModeProperty, value);
+        }
+
+        /// <summary>
+        /// Which parts of the column participate in best-fit: header, data rows, or both
+        /// (default).
+        /// </summary>
+        public static readonly DependencyProperty BestFitAreaProperty =
+            DependencyProperty.Register(
+                nameof(BestFitArea),
+                typeof(BestFitArea),
+                typeof(ColumnLayoutBase),
+                new PropertyMetadata(BestFitArea.All));
+
+        public BestFitArea BestFitArea
+        {
+            get => (BestFitArea)GetValue(BestFitAreaProperty);
+            set => SetValue(BestFitAreaProperty, value);
+        }
+
+        /// <summary>
+        /// Cap on the rows scanned by an <see cref="WPF.BestFitMode.AllRows"/> best-fit pass.
+        /// Negative (default) = unlimited.
+        /// </summary>
+        public static readonly DependencyProperty BestFitMaxRowCountProperty =
+            DependencyProperty.Register(
+                nameof(BestFitMaxRowCount),
+                typeof(int),
+                typeof(ColumnLayoutBase),
+                new PropertyMetadata(-1));
+
+        public int BestFitMaxRowCount
+        {
+            get => (int)GetValue(BestFitMaxRowCountProperty);
+            set => SetValue(BestFitMaxRowCountProperty, value);
+        }
+
         #endregion
 
         #region Visibility & Position
@@ -563,8 +696,9 @@ namespace WWSearchDataGrid.Modern.WPF
         /// Gets or sets the column's pinned position. <see cref="FixedColumnPosition.Left"/>
         /// pins the column to the left edge of the grid via
         /// <see cref="System.Windows.Controls.DataGrid.FrozenColumnCount"/>;
-        /// <see cref="FixedColumnPosition.Right"/> orders the column after every
-        /// unpinned column so it stays anchored at the right end; <see cref="FixedColumnPosition.None"/>
+        /// <see cref="FixedColumnPosition.Right"/> pins the column to the right edge of the
+        /// viewport — ordered after every unpinned column and anchored while they scroll
+        /// beneath it; <see cref="FixedColumnPosition.None"/>
         /// (the default) leaves the column in the normal flow.
         /// </summary>
         /// <remarks>
@@ -673,7 +807,16 @@ namespace WWSearchDataGrid.Modern.WPF
                 nameof(View),
                 typeof(SearchDataGrid),
                 typeof(ColumnLayoutBase),
-                new PropertyMetadata(null, (d, e) => ((ColumnLayoutBase)d).OnViewChanged()));
+                new PropertyMetadata(null, OnViewPropertyChanged));
+
+        private static void OnViewPropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            var col = (ColumnLayoutBase)d;
+            // Base-tier resolved mirrors that fall back to grid-level defaults — refreshed here
+            // rather than inside OnViewChanged so derived overrides can't skip them.
+            col.RefreshActualAllowBestFit();
+            col.OnViewChanged();
+        }
 
         /// <summary>
         /// Called when <see cref="View"/> is set or cleared. Derived tiers override to refresh

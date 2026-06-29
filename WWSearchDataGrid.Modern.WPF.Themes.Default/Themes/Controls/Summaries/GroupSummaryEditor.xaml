@@ -1,0 +1,377 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:converters="clr-namespace:WWSearchDataGrid.Modern.WPF.Converters;assembly=WWSearchDataGrid.Modern.WPF"
+                    xmlns:sdg="clr-namespace:WWSearchDataGrid.Modern.WPF;assembly=WWSearchDataGrid.Modern.WPF">
+
+    <!--
+        ═══════════════════════════════════════════════════════════════════════
+        GroupSummaryEditor — the "View Totals" dialog body.
+        
+        DataContext is a GroupSummaryEditorViewModel working copy. Items tab:
+        column list + per-function checkboxes + Show row count. Order and
+        Alignment tab: Left/Right side entry lists with reorder / re-side
+        arrows and per-entry Prefix / Display format / Suffix + live example.
+        OK / Cancel are commands on the templated GroupSummaryEditor itself.
+        ═══════════════════════════════════════════════════════════════════════
+    -->
+
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF.Themes.Default;component/Themes/Controls/Primitives/DefaultControls.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+
+    <converters:BooleanToVisibilityCollapsedConverter x:Key="SummaryEditorBooleanToVisibilityConverter" />
+    <converters:BooleanToGridLengthConverter x:Key="SummaryEditorBooleanToGridLengthConverter" />
+    <converters:BrushToUnsetConverter x:Key="SummaryEditorBrushToUnsetConverter" />
+
+    <Style x:Key="{x:Static sdg:ThemeKeys.GroupSummaryEditor}" TargetType="{x:Type sdg:GroupSummaryEditor}">
+        <!--
+            Same surface language as the ColumnFilterPopup: light-gray panel with white
+            rounded cards for list content.
+        -->
+        <Setter Property="Background" Value="#f4f4f4" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type sdg:GroupSummaryEditor}">
+                    <Border Background="{TemplateBinding Background}" Padding="12">
+                        <DockPanel>
+
+                            <!--  OK / Cancel  -->
+                            <StackPanel DockPanel.Dock="Bottom"
+                                        Orientation="Horizontal"
+                                        Margin="0,12,0,0"
+                                        HorizontalAlignment="Right">
+                                <Button Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesButton}}"
+                                        IsDefault="True"
+                                        Command="{Binding OkCommand, RelativeSource={RelativeSource TemplatedParent}}"
+                                        Margin="0,0,8,0"
+                                        MinWidth="80"
+                                        Content="OK" />
+                                <Button Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesButton}}"
+                                        IsCancel="True"
+                                        Command="{Binding CancelCommand, RelativeSource={RelativeSource TemplatedParent}}"
+                                        MinWidth="80"
+                                        Content="Cancel" />
+                            </StackPanel>
+
+                            <TabControl Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesTabControl}}">
+
+                                <!--  ITEMS  -->
+                                <TabItem Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesTabItem}}" Header="Columns">
+                                    <DockPanel Margin="8">
+                                        <!--  Row count only applies to group headers — hidden in totals mode.  -->
+                                        <CheckBox Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesCheckBox}}"
+                                                  DockPanel.Dock="Bottom"
+                                                  Visibility="{Binding IsRowCountVisible, Converter={StaticResource SummaryEditorBooleanToVisibilityConverter}}"
+                                                  IsChecked="{Binding ShowRowCount, Mode=TwoWay}"
+                                                  Margin="0,10,0,0"
+                                                  Content="Show row count" />
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+
+                                            <!--
+                                                Column list, wrapped in a rounded white card (same
+                                                treatment as the filter popup's value list).
+                                            -->
+                                            <Border Grid.Column="0"
+                                                    Background="#FFFFFF"
+                                                    BorderBrush="#CCCCCC"
+                                                    BorderThickness="1"
+                                                    CornerRadius="4"
+                                                    ClipToBounds="True">
+                                                <ListBox Background="Transparent"
+                                                         BorderThickness="0"
+                                                         Margin="1"
+                                                         Padding="2"
+                                                         ItemsSource="{Binding Columns}"
+                                                         SelectedItem="{Binding SelectedColumn, Mode=TwoWay}">
+                                                    <ListBox.ItemContainerStyle>
+                                                        <Style BasedOn="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesListBoxItem}}" TargetType="{x:Type ListBoxItem}" />
+                                                    </ListBox.ItemContainerStyle>
+                                                    <ListBox.ItemTemplate>
+                                                        <!--  Columns with configured summaries in this editor's scope render bold.  -->
+                                                        <DataTemplate>
+                                                            <TextBlock Text="{Binding Caption}">
+                                                                <TextBlock.Style>
+                                                                    <Style TargetType="{x:Type TextBlock}">
+                                                                        <Style.Triggers>
+                                                                            <DataTrigger Binding="{Binding HasConfiguredSummaries}" Value="True">
+                                                                                <Setter Property="FontWeight" Value="Bold" />
+                                                                            </DataTrigger>
+                                                                        </Style.Triggers>
+                                                                    </Style>
+                                                                </TextBlock.Style>
+                                                            </TextBlock>
+                                                        </DataTemplate>
+                                                    </ListBox.ItemTemplate>
+                                                </ListBox>
+                                            </Border>
+                                            <!--
+                                                Function toggles for the selected column. Functions the
+                                                column's type can't compute are disabled (greyed), matching
+                                                the gating the totals-cell picker applies.
+                                            -->
+                                            <StackPanel Grid.Column="1"
+                                                        Margin="16,2,4,0"
+                                                        MinWidth="90">
+                                                <CheckBox Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesCheckBox}}"
+                                                          IsEnabled="{Binding SelectedColumn.CanMax}"
+                                                          IsChecked="{Binding SelectedColumn.IsMaxChecked, Mode=TwoWay}"
+                                                          Margin="0,4"
+                                                          Content="Max" />
+                                                <CheckBox Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesCheckBox}}"
+                                                          IsEnabled="{Binding SelectedColumn.CanMin}"
+                                                          IsChecked="{Binding SelectedColumn.IsMinChecked, Mode=TwoWay}"
+                                                          Margin="0,4"
+                                                          Content="Min" />
+                                                <CheckBox Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesCheckBox}}"
+                                                          IsEnabled="{Binding SelectedColumn.CanAverage}"
+                                                          IsChecked="{Binding SelectedColumn.IsAverageChecked, Mode=TwoWay}"
+                                                          Margin="0,4"
+                                                          Content="Average" />
+                                                <CheckBox Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesCheckBox}}"
+                                                          IsEnabled="{Binding SelectedColumn.CanSum}"
+                                                          IsChecked="{Binding SelectedColumn.IsSumChecked, Mode=TwoWay}"
+                                                          Margin="0,4"
+                                                          Content="Sum" />
+                                            </StackPanel>
+                                        </Grid>
+                                    </DockPanel>
+                                </TabItem>
+
+                                <!--  ORDER AND ALIGNMENT ("Order" in column-totals mode)  -->
+                                <TabItem Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesTabItem}}" Header="{Binding OrderTabHeader}">
+                                    <DockPanel Margin="8">
+
+                                        <!--  Prefix / Display format / Suffix + example, for the selected entry.  -->
+                                        <StackPanel DockPanel.Dock="Bottom" Margin="0,10,0,0">
+                                            <Grid IsEnabled="{Binding HasSelectedEntry}">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="8" />
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="8" />
+                                                    <ColumnDefinition Width="*" />
+                                                </Grid.ColumnDefinitions>
+                                                <Grid.RowDefinitions>
+                                                    <RowDefinition Height="Auto" />
+                                                    <RowDefinition Height="Auto" />
+                                                </Grid.RowDefinitions>
+                                                <TextBlock Grid.Row="0"
+                                                           Grid.Column="0"
+                                                           Foreground="#FF444444"
+                                                           Text="Prefix:"
+                                                           Margin="0,0,0,2" />
+                                                <TextBlock Grid.Row="0"
+                                                           Grid.Column="2"
+                                                           Foreground="#FF444444"
+                                                           Text="Display format text:"
+                                                           Margin="0,0,0,2" />
+                                                <TextBlock Grid.Row="0"
+                                                           Grid.Column="4"
+                                                           Foreground="#FF444444"
+                                                           Text="Suffix:"
+                                                           Margin="0,0,0,2" />
+                                                <TextBox Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesTextBox}}"
+                                                         Grid.Row="1"
+                                                         Grid.Column="0"
+                                                         Text="{Binding SelectedEntry.Prefix, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                         Padding="2"
+                                                         VerticalContentAlignment="Center" />
+                                                <!--
+                                                    Editable: presets come from the VM (the entry's
+                                                    current custom format first, then the target
+                                                    column's display format, then type-matched
+                                                    suggestions), but any format string can be typed.
+                                                -->
+                                                <ComboBox Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesComboBox}}"
+                                                          Grid.Row="1"
+                                                          Grid.Column="2"
+                                                          Text="{Binding SelectedEntry.DisplayFormat, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                          IsEditable="True"
+                                                          ItemsSource="{Binding DisplayFormatOptions}">
+                                                    <ComboBox.ItemContainerStyle>
+                                                        <Style BasedOn="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesComboBoxItem}}" TargetType="{x:Type ComboBoxItem}" />
+                                                    </ComboBox.ItemContainerStyle>
+                                                </ComboBox>
+                                                <TextBox Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesTextBox}}"
+                                                         Grid.Row="1"
+                                                         Grid.Column="4"
+                                                         Text="{Binding SelectedEntry.Suffix, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                         Padding="2"
+                                                         VerticalContentAlignment="Center" />
+                                            </Grid>
+                                            <Grid Margin="0,8,0,0">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <!--  Live example, rendered with the selected entry's per-segment styles.  -->
+                                                <TextBlock Grid.Column="0"
+                                                           Foreground="#FF6F7A8C"
+                                                           VerticalAlignment="Center"
+                                                           TextTrimming="CharacterEllipsis">
+                                                    <Run Text="Example: " />
+                                                    <Run Text="{Binding SelectedEntry.ExamplePrefix, Mode=OneWay}"
+                                                         FontWeight="{Binding SelectedEntry.PrefixStyle.FontWeight}"
+                                                         FontStyle="{Binding SelectedEntry.PrefixStyle.FontStyle}"
+                                                         TextDecorations="{Binding SelectedEntry.PrefixStyle.TextDecorations}"
+                                                         Foreground="{Binding SelectedEntry.PrefixStyle.Foreground, Converter={StaticResource SummaryEditorBrushToUnsetConverter}}" />
+                                                    <Run Text="{Binding SelectedEntry.ExampleValue, Mode=OneWay}"
+                                                         FontWeight="{Binding SelectedEntry.ValueStyle.FontWeight}"
+                                                         FontStyle="{Binding SelectedEntry.ValueStyle.FontStyle}"
+                                                         TextDecorations="{Binding SelectedEntry.ValueStyle.TextDecorations}"
+                                                         Foreground="{Binding SelectedEntry.ValueStyle.Foreground, Converter={StaticResource SummaryEditorBrushToUnsetConverter}}" />
+                                                    <Run Text="{Binding SelectedEntry.ExampleSuffix, Mode=OneWay}"
+                                                         FontWeight="{Binding SelectedEntry.SuffixStyle.FontWeight}"
+                                                         FontStyle="{Binding SelectedEntry.SuffixStyle.FontStyle}"
+                                                         TextDecorations="{Binding SelectedEntry.SuffixStyle.TextDecorations}"
+                                                         Foreground="{Binding SelectedEntry.SuffixStyle.Foreground, Converter={StaticResource SummaryEditorBrushToUnsetConverter}}" />
+                                                </TextBlock>
+                                                <Button Grid.Column="1"
+                                                        Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesButton}}"
+                                                        Margin="8,0,0,0"
+                                                        IsEnabled="{Binding HasSelectedEntry}"
+                                                        Command="{Binding EditTextStylingCommand}"
+                                                        CommandParameter="{Binding RelativeSource={RelativeSource AncestorType={x:Type sdg:GroupSummaryEditor}}}"
+                                                        Content="Edit text styling…" />
+                                            </Grid>
+                                        </StackPanel>
+
+                                        <!--
+                                            Side lists + move arrows. ColumnTotals mode has no
+                                            alignment (cell entries stack vertically), so the left
+                                            side and the ◀▶ arrows hide AND the left column
+                                            collapses to zero width — the single "Order:" list
+                                            takes the full row with ▲▼ only.
+                                        -->
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="{Binding IsAlignmentVisible, Converter={StaticResource SummaryEditorBooleanToGridLengthConverter}}" />
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto" />
+                                                <RowDefinition Height="*" />
+                                            </Grid.RowDefinitions>
+                                            <TextBlock Grid.Row="0"
+                                                       Grid.Column="0"
+                                                       Foreground="#FF444444"
+                                                       Text="Left side:"
+                                                       Visibility="{Binding IsAlignmentVisible, Converter={StaticResource SummaryEditorBooleanToVisibilityConverter}}"
+                                                       Margin="0,0,0,4" />
+                                            <TextBlock Grid.Row="0"
+                                                       Grid.Column="2"
+                                                       Foreground="#FF444444"
+                                                       Text="{Binding OrderListHeader}"
+                                                       Margin="0,0,0,4" />
+                                            <!--
+                                                Each side list binds its OWN selection property — a single
+                                                shared SelectedItem across two lists self-clears in WPF
+                                                (the list that doesn't contain the item pushes null back).
+                                            -->
+                                            <Border Grid.Row="1"
+                                                    Grid.Column="0"
+                                                    Background="#FFFFFF"
+                                                    BorderBrush="#CCCCCC"
+                                                    BorderThickness="1"
+                                                    Visibility="{Binding IsAlignmentVisible, Converter={StaticResource SummaryEditorBooleanToVisibilityConverter}}"
+                                                    CornerRadius="4"
+                                                    ClipToBounds="True">
+                                                <ListBox Background="Transparent"
+                                                         BorderThickness="0"
+                                                         Margin="1"
+                                                         Padding="2"
+                                                         ItemsSource="{Binding LeftEntries}"
+                                                         SelectedItem="{Binding SelectedLeftEntry, Mode=TwoWay}"
+                                                         DisplayMemberPath="DisplayName">
+                                                    <ListBox.ItemContainerStyle>
+                                                        <Style BasedOn="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesListBoxItem}}" TargetType="{x:Type ListBoxItem}" />
+                                                    </ListBox.ItemContainerStyle>
+                                                </ListBox>
+                                            </Border>
+                                            <sdg:SimpleStackPanel Grid.Row="1"
+                                                                  Grid.Column="1"
+                                                                  Orientation="Vertical"
+                                                                  Margin="10,0"
+                                                                  VerticalAlignment="Center"
+                                                                  Spacing="2">
+                                                <Button Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesButton}}"
+                                                        Command="{Binding MoveUpCommand}"
+                                                        Width="24"
+                                                        Height="24"
+                                                        ToolTip="Move up within its side">
+                                                    <sdg:Icon Width="8"
+                                                              Height="8"
+                                                              IconBrush="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}"
+                                                              IconSource="{StaticResource {x:Static sdg:IconKeys.IconCaretUp}}" />
+                                                </Button>
+                                                <Button Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesButton}}"
+                                                        Command="{Binding MoveDownCommand}"
+                                                        Width="24"
+                                                        Height="24"
+                                                        ToolTip="Move down within its side">
+                                                    <sdg:Icon Width="8"
+                                                              Height="8"
+                                                              IconBrush="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}"
+                                                              IconSource="{StaticResource {x:Static sdg:IconKeys.IconCaretDown}}" />
+                                                </Button>
+                                                <Button Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesButton}}"
+                                                        Visibility="{Binding IsAlignmentVisible, Converter={StaticResource SummaryEditorBooleanToVisibilityConverter}}"
+                                                        Command="{Binding MoveToLeftCommand}"
+                                                        Width="24"
+                                                        Height="24"
+                                                        ToolTip="Move to the left side (inline after the group text)">
+                                                    <sdg:Icon Width="10"
+                                                              Height="10"
+                                                              IconBrush="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}"
+                                                              IconSource="{StaticResource {x:Static sdg:IconKeys.IconCaretLeft}}" />
+                                                </Button>
+                                                <Button Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesButton}}"
+                                                        Visibility="{Binding IsAlignmentVisible, Converter={StaticResource SummaryEditorBooleanToVisibilityConverter}}"
+                                                        Command="{Binding MoveToRightCommand}"
+                                                        Width="24"
+                                                        Height="24"
+                                                        ToolTip="Move to the right side (right-aligned)">
+                                                    <sdg:Icon Width="10"
+                                                              Height="10"
+                                                              IconBrush="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}"
+                                                              IconSource="{StaticResource {x:Static sdg:IconKeys.IconCaretRight}}" />
+                                                </Button>
+                                            </sdg:SimpleStackPanel>
+                                            <Border Grid.Row="1"
+                                                    Grid.Column="2"
+                                                    Background="#FFFFFF"
+                                                    BorderBrush="#CCCCCC"
+                                                    BorderThickness="1"
+                                                    CornerRadius="4"
+                                                    ClipToBounds="True">
+                                                <ListBox Background="Transparent"
+                                                         BorderThickness="0"
+                                                         Margin="1"
+                                                         Padding="2"
+                                                         ItemsSource="{Binding RightEntries}"
+                                                         SelectedItem="{Binding SelectedRightEntry, Mode=TwoWay}"
+                                                         DisplayMemberPath="DisplayName">
+                                                    <ListBox.ItemContainerStyle>
+                                                        <Style BasedOn="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesListBoxItem}}" TargetType="{x:Type ListBoxItem}" />
+                                                    </ListBox.ItemContainerStyle>
+                                                </ListBox>
+                                            </Border>
+                                        </Grid>
+                                    </DockPanel>
+                                </TabItem>
+                            </TabControl>
+                        </DockPanel>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style BasedOn="{StaticResource {x:Static sdg:ThemeKeys.GroupSummaryEditor}}" TargetType="{x:Type sdg:GroupSummaryEditor}" />
+
+</ResourceDictionary>

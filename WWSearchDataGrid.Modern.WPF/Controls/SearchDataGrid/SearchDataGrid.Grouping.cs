@@ -24,8 +24,10 @@ namespace WWSearchDataGrid.Modern.WPF
 
         /// <summary>
         /// Grid-level gate for grouping. <c>true</c> (default) lets columns be grouped subject to
-        /// their own <see cref="GridColumn.AllowGrouping"/>; <c>false</c> blocks grouping for the
-        /// whole grid and ungroups any currently-grouped columns. Each column resolves
+        /// their own <see cref="GridColumn.AllowGrouping"/>. <c>false</c> turns the feature off:
+        /// the current grouping is cleared (every <see cref="GridColumn.GroupIndex"/> resets, so
+        /// re-enabling later starts ungrouped), the group panel collapses, and the column-header
+        /// menu's grouping items are removed. Each column resolves
         /// <see cref="GridColumn.ActualAllowGrouping"/> from this AND its own value.
         /// </summary>
         public static readonly DependencyProperty AllowGroupingProperty =
@@ -72,7 +74,21 @@ namespace WWSearchDataGrid.Modern.WPF
                 foreach (var descriptor in descriptors)
                     descriptor?.RefreshActualAllowGrouping();
             }
-            // A column that just lost permission must be ungrouped — the engine clears it.
+
+            if (e.NewValue is false)
+            {
+                // Gating the feature off is destructive by design: clear the grouping outright —
+                // merely filtering grouped columns out of the projection would leave stale
+                // GroupIndex / IsGrouped state that re-groups the grid (and keeps grouped-hidden
+                // columns collapsed) the moment the gate reopens. ClearGrouping rebuilds when
+                // anything was grouped; when nothing was, there is no projection to tear down.
+                grid.ClearGrouping();
+                // Collapse the panel with the feature. SetCurrentValue so a consumer's binding or
+                // local IsGroupPanelVisible value isn't destroyed, only its current value changed.
+                grid.SetCurrentValue(IsGroupPanelVisibleProperty, false);
+                return;
+            }
+
             grid.RebuildGroupDescriptions();
         }
 
@@ -149,6 +165,30 @@ namespace WWSearchDataGrid.Modern.WPF
         {
             get => (bool)GetValue(ExpandGroupsRecursivelyProperty);
             set => SetValue(ExpandGroupsRecursivelyProperty, value);
+        }
+
+        /// <summary>
+        /// When <c>true</c>, expanding or collapsing a single group animates: the header's chevron
+        /// rotates between right (collapsed) and down (expanded), and the group's rows slide open /
+        /// closed. Animated toggles splice the group's row block in and out of the flat projection
+        /// in place instead of reflattening, so the header container (and its chevron) survives the
+        /// toggle. Default <c>false</c> — toggles snap exactly as before. Bulk operations
+        /// (expand/collapse all, level-wide, <see cref="AutoExpandAllGroups"/> flips, filter/sort
+        /// rebuilds) never animate, and a toggle whose row block exceeds the splice limit falls back
+        /// to the plain reflatten.
+        /// </summary>
+        public static readonly DependencyProperty AllowGroupExpandAnimationProperty =
+            DependencyProperty.Register(
+                nameof(AllowGroupExpandAnimation),
+                typeof(bool),
+                typeof(SearchDataGrid),
+                new PropertyMetadata(false));
+
+        /// <inheritdoc cref="AllowGroupExpandAnimationProperty"/>
+        public bool AllowGroupExpandAnimation
+        {
+            get => (bool)GetValue(AllowGroupExpandAnimationProperty);
+            set => SetValue(AllowGroupExpandAnimationProperty, value);
         }
 
         /// <summary>

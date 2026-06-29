@@ -1,4 +1,5 @@
 using System.Windows;
+using System.Windows.Input;
 using ICSharpCode.AvalonEdit;
 using ICSharpCode.AvalonEdit.Highlighting;
 
@@ -56,6 +57,45 @@ namespace WWSearchDataGrid.Modern.SampleApp.Controls
             editor.SyntaxHighlighting = string.IsNullOrEmpty(name)
                 ? null
                 : HighlightingManager.Instance.GetDefinition(name);
+        }
+
+        /// <summary>
+        /// Overrides the mouse cursor shown over the editor. AvalonEdit's SelectionMouseHandler
+        /// forces <see cref="Cursors.IBeam"/> via the TextArea's <c>QueryCursor</c> event and marks
+        /// it handled, so setting <see cref="UIElement.Cursor"/> normally has no effect. This hooks
+        /// <c>QueryCursor</c> with <c>handledEventsToo</c> so it runs after AvalonEdit and wins.
+        /// </summary>
+        public static readonly DependencyProperty OverrideCursorProperty = DependencyProperty.RegisterAttached(
+            "OverrideCursor",
+            typeof(Cursor),
+            typeof(AvalonEditHelper),
+            new PropertyMetadata(null, OnOverrideCursorChanged));
+
+        public static void SetOverrideCursor(DependencyObject obj, Cursor value) =>
+            obj.SetValue(OverrideCursorProperty, value);
+
+        public static Cursor GetOverrideCursor(DependencyObject obj) =>
+            (Cursor)obj.GetValue(OverrideCursorProperty);
+
+        private static void OnOverrideCursorChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            if (d is not TextEditor editor) return;
+
+            // Idempotent: drop any prior hook before deciding whether to re-add.
+            editor.RemoveHandler(Mouse.QueryCursorEvent, (QueryCursorEventHandler)OnEditorQueryCursor);
+            if (e.NewValue is Cursor)
+                editor.AddHandler(Mouse.QueryCursorEvent, (QueryCursorEventHandler)OnEditorQueryCursor, handledEventsToo: true);
+        }
+
+        private static void OnEditorQueryCursor(object sender, QueryCursorEventArgs e)
+        {
+            if (sender is not DependencyObject d) return;
+            var cursor = GetOverrideCursor(d);
+            if (cursor != null)
+            {
+                e.Cursor = cursor;
+                e.Handled = true;
+            }
         }
     }
 }

@@ -1,3 +1,6 @@
+using System.Collections.Generic;
+using System.ComponentModel;
+
 namespace WWSearchDataGrid.Modern.WPF
 {
     /// <summary>
@@ -17,7 +20,7 @@ namespace WWSearchDataGrid.Modern.WPF
     /// every reprojection, so the stable <see cref="GroupNode.PathKey"/> is the group's identity,
     /// not reference equality.)
     /// </remarks>
-    public sealed class FixedGroupHeaderEntry
+    public sealed class FixedGroupHeaderEntry : INotifyPropertyChanged, IAlignedGroupSummarySource
     {
         internal FixedGroupHeaderEntry(int level, GroupNode node, GridColumn column, SearchDataGrid ownerGrid)
         {
@@ -53,6 +56,66 @@ namespace WWSearchDataGrid.Modern.WPF
 
         /// <summary>Convenience accessor for the group's row count — what most per-item templates bind to.</summary>
         public int ItemCount => Node?.Count ?? 0;
+
+        /// <summary>
+        /// Left-side group-summary run for the mirrored group, so the pinned strip's shared
+        /// header chrome renders the same summaries as the in-body header row.
+        /// </summary>
+        public string GroupSummaryLeftText => Node?.SummaryLeftText;
+
+        /// <summary>Right-side group-summary run for the mirrored group. See <see cref="GroupSummaryLeftText"/>.</summary>
+        public string GroupSummaryRightText => Node?.SummaryRightText;
+
+        /// <summary>Structured left-side run for the mirrored group — styled per-segment rendering. See <see cref="GroupSummaryLeftText"/>.</summary>
+        public IReadOnlyList<SummaryResult> GroupSummaryLeftInfo => Node?.SummaryLeftInfo;
+
+        /// <summary>Structured right-side run for the mirrored group — styled per-segment rendering. See <see cref="GroupSummaryLeftText"/>.</summary>
+        public IReadOnlyList<SummaryResult> GroupSummaryRightInfo => Node?.SummaryRightInfo;
+
+        /// <summary>
+        /// Column-aligned summary results for the mirrored group (AlignByColumns mode), so the
+        /// pinned strip renders the same aligned values as the in-body header row. Reads the
+        /// node live; <see cref="NotifySummaryTextsChanged"/> announces in-place recomputes.
+        /// </summary>
+        IReadOnlyList<SummaryResult> IAlignedGroupSummarySource.GetAlignedResultsFor(GridColumn descriptor)
+        {
+            if (descriptor == null) return null;
+            var results = Node?.AlignedSummaryResults;
+            return results != null && results.TryGetValue(descriptor, out var list) ? list : null;
+        }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        /// <summary>
+        /// Raises change notification for both summary runs after the grid recomputes the mirrored
+        /// node's texts in place. Needed because the strip's resolver skips slots whose entry
+        /// compares equal (same level + path key), so a surviving entry instance must announce
+        /// the node-backed values changed underneath it.
+        /// </summary>
+        internal void NotifySummaryTextsChanged()
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(GroupSummaryLeftText)));
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(GroupSummaryRightText)));
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(GroupSummaryLeftInfo)));
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(GroupSummaryRightInfo)));
+        }
+
+        /// <summary>
+        /// The mirrored group's expansion state, so the pinned chevron binds expand-state the same
+        /// way the in-body header row does (<c>GroupHeaderRow.IsExpanded</c>). Reads the node live:
+        /// a reflatten replaces the node (and the resolver's next pass rebinds against fresh
+        /// entries), while an animated splice toggle flips the surviving node in place and pings
+        /// reused entries via <see cref="NotifyIsExpandedChanged"/>.
+        /// </summary>
+        public bool IsExpanded => Node?.IsExpanded ?? true;
+
+        /// <summary>
+        /// Raises change notification for <see cref="IsExpanded"/> after a splice toggle flipped
+        /// the backing node underneath a reused entry (the resolver skips slots whose entry
+        /// compares equal, so the surviving instance must announce the change itself).
+        /// </summary>
+        internal void NotifyIsExpandedChanged()
+            => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsExpanded)));
 
         public override bool Equals(object obj)
             => obj is FixedGroupHeaderEntry other

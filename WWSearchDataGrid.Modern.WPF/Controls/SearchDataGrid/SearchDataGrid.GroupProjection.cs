@@ -121,18 +121,22 @@ namespace WWSearchDataGrid.Modern.WPF
                 if (grouped.Count == 0)
                 {
                     DetachProjection();
-                    return;
                 }
-
-                _groupFilterPredicate = SearchFilter;
-                RebuildRowProjection();
-                AttachProjection();
+                else
+                {
+                    _groupFilterPredicate = SearchFilter;
+                    RebuildRowProjection();
+                    AttachProjection();
+                }
             }
             finally
             {
                 _rebuildingGroups = false;
             }
 
+            // Re-run the resolver on every grouping change, grouped or not. On the ungroup-to-zero
+            // path DetachProjection has cleared _groupingActive / GroupCount, so the resolver's gate
+            // empties the strip; otherwise it recomputes the pinned chain for the new grouping.
             UpdateFixedGroupHeaders();
         }
 
@@ -146,6 +150,10 @@ namespace WWSearchDataGrid.Modern.WPF
         /// </summary>
         private void RebuildRowProjection()
         {
+            // A reflatten replaces the whole projection: finish any in-flight slide first — a
+            // collapse's deferred removal is captured against the current list.
+            CompleteActiveGroupSlide();
+
             var grouped = _groupColumns;
             if (grouped == null || grouped.Count == 0)
             {
@@ -201,7 +209,14 @@ namespace WWSearchDataGrid.Modern.WPF
 
             var orderedList = (ordered ?? src.OrderBy(o => 0)).ToList();
 
+            // Resolved once per projection: BuildNodes only pays the per-node leaf walk +
+            // aggregate pass when the row count is on or the grid defines group / footer summaries.
+            _projectGroupSummaries = HasAnyGroupSummaryContent();
+            _alignGroupSummariesByColumns = ResolveAlignGroupSummaries();
+            _projectGroupFooterSummaries = HasAnyGroupFooterContent();
+
             var roots = BuildNodes(orderedList, descs, grouped, culture, level: 0, parentPath: null);
+            ApplyGroupSummarySort(roots);
             _groupRoots = roots;
 
             var flat = new List<object>(orderedList.Count + roots.Count);
@@ -259,23 +274,45 @@ namespace WWSearchDataGrid.Modern.WPF
                     count = node.Items.Count;
                 }
                 node.Count = count;
+
+                if (_projectGroupSummaries || _projectGroupFooterSummaries)
+                {
+                    // Parent levels re-walk their descendant leaves; the innermost level reads
+                    // its own Items directly. Every level renders the same grid-level set, and
+                    // each level's footer aggregates that level's own leaves.
+                    var leaves = node.Children.Count > 0
+                        ? EnumerateLeafRows(node).ToList()
+                        : node.Items;
+                    ComputeNodeSummaries(node, leaves);
+                }
+
                 nodes.Add(node);
             }
 
             return nodes;
         }
 
-        private static void FlattenInto(List<GroupNode> nodes, List<object> sink)
+        private void FlattenInto(List<GroupNode> nodes, List<object> sink)
         {
+            bool footers = _projectGroupFooterSummaries;
             foreach (var node in nodes)
             {
                 sink.Add(new GroupHeaderRow(node));
-                if (!node.IsExpanded) continue;
+                if (!node.IsExpanded)
+                {
+                    // Collapsed: the footer pins directly beneath the header so the group's
+                    // totals stay visible without expanding it.
+                    if (footers) sink.Add(new GroupFooterRow(node));
+                    continue;
+                }
 
                 if (node.Children.Count > 0)
                     FlattenInto(node.Children, sink);
                 else
                     sink.AddRange(node.Items);
+
+                // Expanded: the footer docks at the bottom of the group's content.
+                if (footers) sink.Add(new GroupFooterRow(node));
             }
         }
 
@@ -338,6 +375,9 @@ namespace WWSearchDataGrid.Modern.WPF
                 // Mirrors onto the descriptor's SortOrder via HookSortObservation; the projection's
                 // ResolveGroupDescending then reads it back on reflatten.
                 if (col.SortDirection != groupDir) col.SortDirection = groupDir;
+                // A direct sort on the grouped column is an explicit ordering choice — drop any
+                // active sort-by-summary, which would otherwise keep overriding the key order.
+                ClearGroupSummarySortCore();
                 RebuildRowProjection();
                 return;
             }
@@ -383,12 +423,14 @@ namespace WWSearchDataGrid.Modern.WPF
             => ApplyGroupedColumnSort(col, direction, multiColumn: false);
 
         /// <summary>
-        /// "Clear Sorting": drops every user (non-group) sort and clears the header arrow
-        /// on non-grouped columns, then reflattens. Grouped columns keep their group sort (D2).
+        /// "Clear Sorting": drops every user (non-group) sort — including an active
+        /// sort-by-summary — and clears the header arrow on non-grouped columns, then
+        /// reflattens. Grouped columns keep their group sort (D2).
         /// </summary>
         internal void ClearColumnSortsFromMenu()
         {
             _withinGroupSorts.Clear();
+            ClearGroupSummarySortCore();
             foreach (var col in Columns)
             {
                 var descriptor = FindGridColumnDescriptor(col);
@@ -402,7 +444,8 @@ namespace WWSearchDataGrid.Modern.WPF
         /// <summary>
         /// Flips a grouped column's sort direction from the group-panel pill while flat mode is
         /// active. Grouping leads sorting (D2), so there is no unsorted state — Ascending ↔
-        /// Descending only.
+        /// Descending only. Supersedes any active sort-by-summary, same as a header-click sort
+        /// on the grouped column.
         /// </summary>
         internal void ToggleGroupSort(GridColumn column)
         {
@@ -412,6 +455,7 @@ namespace WWSearchDataGrid.Modern.WPF
                 : ListSortDirection.Descending;
             if (column.InternalColumn.SortDirection != next)
                 column.InternalColumn.SortDirection = next; // mirrors to SortOrder
+            ClearGroupSummarySortCore();
             RebuildRowProjection();
         }
 
@@ -474,6 +518,9 @@ namespace WWSearchDataGrid.Modern.WPF
         private void DetachProjection()
         {
             if (!_groupingActive) return;
+
+            CompleteActiveGroupSlide();
+
             _groupingActive = false;
 
             var restore = originalItemsSource;
@@ -503,22 +550,33 @@ namespace WWSearchDataGrid.Modern.WPF
 
         #region Expansion / filter hooks
 
-        /// <summary>Toggles one group's expansion and reflattens. Used by the header row's toggle.</summary>
+        /// <summary>Toggles one group's expansion. Used by the header row's toggle.</summary>
         public void ToggleGroup(GroupHeaderRow header)
         {
             if (header?.Node == null || !_groupingActive) return;
-            if (ApplyGroupExpansion(header.Node, !header.Node.IsExpanded))
-                RebuildRowProjection();
+            ToggleGroupCore(header.Node, !header.Node.IsExpanded, header);
         }
 
         /// <summary>
-        /// Sets one group's expansion and reflattens. The strip-routing counterpart to
-        /// <see cref="ToggleGroup"/>, used by the pinned fixed-group chrome whose commands carry
-        /// a <see cref="GroupNode"/> rather than a header row.
+        /// Sets one group's expansion. The strip-routing counterpart to <see cref="ToggleGroup"/>,
+        /// used by the pinned fixed-group chrome whose commands carry a <see cref="GroupNode"/>
+        /// rather than a header row.
         /// </summary>
         internal void SetGroupExpanded(GroupNode node, bool expanded)
         {
             if (node == null || !_groupingActive) return;
+            ToggleGroupCore(node, expanded, null);
+        }
+
+        /// <summary>
+        /// Single-group toggle chokepoint. The animated splice path
+        /// (<see cref="TryToggleGroupSpliced"/>) handles it in place when
+        /// <see cref="AllowGroupExpandAnimation"/> is on and the toggle qualifies; otherwise the
+        /// classic apply-state-then-reflatten runs unchanged.
+        /// </summary>
+        private void ToggleGroupCore(GroupNode node, bool expanded, GroupHeaderRow header)
+        {
+            if (TryToggleGroupSpliced(node, expanded, header)) return;
             if (ApplyGroupExpansion(node, expanded))
                 RebuildRowProjection();
         }
@@ -605,6 +663,10 @@ namespace WWSearchDataGrid.Modern.WPF
             {
                 Items.Filter = predicate;
             }
+
+            // Single chokepoint for every filter path (sync, async, editor-tree, clear), so the
+            // filtered count stays in step with whatever was just applied.
+            UpdateFilteredItemCount();
         }
 
         #endregion
@@ -616,6 +678,13 @@ namespace WWSearchDataGrid.Modern.WPF
 
         /// <summary>True when <paramref name="item"/> is a flat-grouping group-header sentinel.</summary>
         internal static bool IsHeaderItem(object item) => item is GroupHeaderRow;
+
+        /// <summary>
+        /// True when <paramref name="item"/> is any full-width grouping sentinel (group header or
+        /// group footer) rather than a real user row — neither carries data cells, so both are
+        /// excluded from selection, select-all, and best-fit measurement.
+        /// </summary>
+        internal static bool IsSentinelRow(object item) => item is GroupHeaderRow or GroupFooterRow;
 
         /// <summary>
         /// Removes any group-header sentinel from the live selection so <see cref="Selector.SelectedItem"/>,
@@ -633,13 +702,13 @@ namespace WWSearchDataGrid.Modern.WPF
             bool hasHeaderItem = false;
             for (int i = 0; i < SelectedItems.Count; i++)
             {
-                if (SelectedItems[i] is GroupHeaderRow) { hasHeaderItem = true; break; }
+                if (IsSentinelRow(SelectedItems[i])) { hasHeaderItem = true; break; }
             }
 
             List<DataGridCellInfo> headerCells = null;
             foreach (var cell in SelectedCells)
             {
-                if (cell.Item is GroupHeaderRow)
+                if (IsSentinelRow(cell.Item))
                     (headerCells ??= new List<DataGridCellInfo>()).Add(cell);
             }
 
@@ -652,7 +721,7 @@ namespace WWSearchDataGrid.Modern.WPF
                 {
                     for (int i = SelectedItems.Count - 1; i >= 0; i--)
                     {
-                        if (SelectedItems[i] is GroupHeaderRow) SelectedItems.RemoveAt(i);
+                        if (IsSentinelRow(SelectedItems[i])) SelectedItems.RemoveAt(i);
                     }
                 }
 
@@ -692,7 +761,13 @@ namespace WWSearchDataGrid.Modern.WPF
         protected override void PrepareContainerForItemOverride(DependencyObject element, object item)
         {
             if (element is SearchDataGridRow row)
+            {
                 row.SetGroupHeader(item as GroupHeaderRow);
+                row.SetGroupFooter(item as GroupFooterRow);
+            }
+            // A recycled container may still carry the active slide's transform; reset it before
+            // the container takes on its new item.
+            ClearSlideOnContainer(element);
             base.PrepareContainerForItemOverride(element, item);
         }
 
@@ -704,7 +779,11 @@ namespace WWSearchDataGrid.Modern.WPF
         protected override void ClearContainerForItemOverride(DependencyObject element, object item)
         {
             if (element is SearchDataGridRow row)
+            {
                 row.SetGroupHeader(null);
+                row.SetGroupFooter(null);
+            }
+            ClearSlideOnContainer(element);
             base.ClearContainerForItemOverride(element, item);
         }
 

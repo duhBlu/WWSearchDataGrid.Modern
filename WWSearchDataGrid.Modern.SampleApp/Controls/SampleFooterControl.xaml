@@ -4,34 +4,9 @@
              xmlns:sdg="clr-namespace:WWSearchDataGrid.Modern.WPF;assembly=WWSearchDataGrid.Modern.WPF"
              x:Name="Root">
     <Grid Background="#F0F0F0">
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="*" />
-            <ColumnDefinition Width="Auto" />
-        </Grid.ColumnDefinitions>
-
-        <StackPanel Grid.Column="0"
-                    Orientation="Horizontal"
-                    Margin="15,0,0,0"
-                    VerticalAlignment="Center">
-            <TextBlock Foreground="#1C1C1C"
-                       Text="Total: "
-                       VerticalAlignment="Center"
-                       FontWeight="Bold" />
-            <TextBlock Foreground="#444444"
-                       Text="{Binding TotalCount, ElementName=Root, StringFormat={}{0:N0}}"
-                       VerticalAlignment="Center" />
-
-            <TextBlock Foreground="#1C1C1C"
-                       Text="Filtered: "
-                       Margin="10,0,0,0"
-                       VerticalAlignment="Center"
-                       FontWeight="Bold" />
-            <TextBlock Foreground="#444444"
-                       Text="{Binding FilteredCount, ElementName=Root, StringFormat={}{0:N0}}"
-                       VerticalAlignment="Center" />
-        </StackPanel>
-
-        <StackPanel Grid.Column="1" Orientation="Horizontal">
+        <!-- Row counts moved to the shared chrome status bar (SampleHostControl). This footer is
+             now just the data-generation controls used by generatable samples. -->
+        <StackPanel HorizontalAlignment="Right" Orientation="Horizontal">
             <sdg:NumericUpDown VerticalContentAlignment="Center"
                                Increment="1000"
                                Value="{Binding RowCount, ElementName=Root, Mode=TwoWay}" />

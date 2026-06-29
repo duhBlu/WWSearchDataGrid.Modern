@@ -4,16 +4,19 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:launcher="clr-namespace:WWSearchDataGrid.Modern.SampleApp.Views.Launcher"
+        xmlns:sdg="clr-namespace:WWSearchDataGrid.Modern.WPF;assembly=WWSearchDataGrid.Modern.WPF"
         Title="WWSearchDataGrid — Sample Browser"
-        Style="{DynamicResource SampleAppWindowStyle}"
+        Style="{DynamicResource {x:Static sdg:ThemeKeys.PrimitivesWindow}}"
         Width="1500"
         Height="880"
         ResizeMode="CanResize"
         WindowStartupLocation="CenterScreen"
         mc:Ignorable="d">
     <Window.Resources>
-        <!-- Chevron icon style for the navigator collapse/expand button. Glyph swaps with IsChecked
-             on the templated parent ToggleButton: ◀ when expanded, ▶ when collapsed. -->
+        <!--
+            Chevron icon style for the navigator collapse/expand button. Glyph swaps with IsChecked
+            on the templated parent ToggleButton: ◀ when expanded, ▶ when collapsed.
+        -->
         <Style x:Key="NavigatorChevronStyle" TargetType="{x:Type TextBlock}">
             <Setter Property="FontFamily" Value="Segoe Fluent Icons, Segoe MDL2 Assets" />
             <Setter Property="FontSize" Value="12" />
@@ -28,7 +31,7 @@
             </Style.Triggers>
         </Style>
 
-        <!-- Borderless toggle button style for the navigator collapse handle. -->
+        <!--  Borderless toggle button style for the navigator collapse handle.  -->
         <Style x:Key="NavigatorToggleButtonStyle" TargetType="{x:Type ToggleButton}">
             <Setter Property="Width" Value="24" />
             <Setter Property="Height" Value="24" />
@@ -53,29 +56,47 @@
                 </Setter.Value>
             </Setter>
         </Style>
+
+        <Style BasedOn="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesComboBox}}" TargetType="{x:Type ComboBox}" />
+        <Style BasedOn="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesButton}}" TargetType="{x:Type Button}" />
+        <Style BasedOn="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesCheckBox}}" TargetType="{x:Type CheckBox}" />
+        <Style BasedOn="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesTextBox}}" TargetType="{x:Type TextBox}" />
+        <Style BasedOn="{StaticResource SampleRadioButtonStyle}" TargetType="{x:Type RadioButton}" />
+        <Style BasedOn="{StaticResource SampleSliderStyle}" TargetType="{x:Type Slider}" />
+        <Style BasedOn="{StaticResource SampleExpanderStyle}" TargetType="{x:Type Expander}" />
     </Window.Resources>
 
     <Grid Background="#FAFAFA">
         <Grid.ColumnDefinitions>
-            <!-- Navigator column. Width is driven from code-behind: a stored "expanded" width when
-                 NavigatorToggle.IsChecked, or a thin strip (just wide enough for the expand chevron)
-                 when collapsed. User drags on the splitter overwrite the stored expanded width. -->
-            <ColumnDefinition x:Name="NavigatorColumn" Width="240" MinWidth="32" />
+            <!--
+                Navigator column. Width is driven from code-behind: a stored "expanded" width when
+                NavigatorToggle.IsChecked, or a thin strip (just wide enough for the expand chevron)
+                when collapsed. User drags on the splitter overwrite the stored expanded width.
+            -->
+            <ColumnDefinition x:Name="NavigatorColumn"
+                              Width="240"
+                              MinWidth="32" />
             <ColumnDefinition x:Name="SplitterColumn" Width="5" />
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
 
         <!--  Master: header + sample tree  -->
-        <DockPanel x:Name="NavigatorPane" Grid.Column="0" Background="#F4F4F4">
-            <!-- Title + collapse toggle. When collapsed, the title block is hidden and only the
-                 chevron toggle remains visible, centered in the thin strip. -->
+        <DockPanel x:Name="NavigatorPane"
+                   Grid.Column="0"
+                   Background="#F4F4F4">
+            <!--
+                Title + collapse toggle. When collapsed, the title block is hidden and only the
+                chevron toggle remains visible, centered in the thin strip.
+            -->
             <Grid DockPanel.Dock="Top">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
 
-                <StackPanel x:Name="NavigatorHeader" Grid.Column="0" Margin="12,12,4,8">
+                <StackPanel x:Name="NavigatorHeader"
+                            Grid.Column="0"
+                            Margin="12,12,4,8">
                     <TextBlock Foreground="#1C1C1C"
                                Text="WWSearchDataGrid Samples"
                                FontSize="15"
@@ -89,8 +110,8 @@
                 </StackPanel>
 
                 <ToggleButton x:Name="NavigatorToggle"
-                              Grid.Column="1"
                               Style="{StaticResource NavigatorToggleButtonStyle}"
+                              Grid.Column="1"
                               IsChecked="True"
                               Margin="0,8,4,0"
                               VerticalAlignment="Top"
@@ -124,6 +145,7 @@
                         <Border Padding="0" ToolTip="{Binding Description}">
                             <TextBlock Foreground="#1C1C1C"
                                        Text="{Binding Name}"
+                                       IsHitTestVisible="False"
                                        FontSize="12"
                                        TextTrimming="CharacterEllipsis" />
                         </Border>
@@ -240,16 +262,18 @@
             </TreeView>
         </DockPanel>
 
-        <!-- Splitter between navigator and detail. Hidden (zero-width column) while the navigator is
-             collapsed so there's nothing to drag from a closed pane. ShowsPreview defers the actual
-             resize to mouse-up so the live SearchDataGrid on the right doesn't re-realize row
-             containers on every drag-tick when the user is expanding the detail pane. -->
+        <!--
+            Splitter between navigator and detail. Hidden (zero-width column) while the navigator is
+            collapsed so there's nothing to drag from a closed pane. ShowsPreview defers the actual
+            resize to mouse-up so the live SearchDataGrid on the right doesn't re-realize row
+            containers on every drag-tick when the user is expanding the detail pane.
+        -->
         <GridSplitter x:Name="NavigatorSplitter"
                       Grid.Column="1"
-                      Width="5"
+                      Background="#E0E0E0"
                       HorizontalAlignment="Stretch"
                       VerticalAlignment="Stretch"
-                      Background="#E0E0E0"
+                      Width="5"
                       ShowsPreview="True"
                       ResizeBehavior="PreviousAndNext"
                       ResizeDirection="Columns" />

@@ -60,6 +60,13 @@ namespace WWSearchDataGrid.Modern.SampleApp.Controls
             "Models/OrderItem.cs",
             "SampleData/Generators/OrderGenerator.cs");
 
+        public static IReadOnlyList<SampleSourceFile> BestFit { get; } = SampleSourceLoader.LoadFiles(
+            "Views/Samples/Columns/BestFitSampleView.xaml",
+            "Views/Samples/Columns/BestFitSampleView.xaml.cs",
+            "Views/Samples/Columns/BestFitSampleViewModel.cs",
+            "Models/OrderItem.cs",
+            "SampleData/Generators/OrderGenerator.cs");
+
         // ── Selection and Usability ──────────────────────────────────────────
         public static IReadOnlyList<SampleSourceFile> CopyPaste { get; } = SampleSourceLoader.LoadFiles(
             "Views/Samples/Usability/CopyPasteSampleView.xaml",
@@ -135,6 +142,14 @@ namespace WWSearchDataGrid.Modern.SampleApp.Controls
             "Models/OrderItem.cs",
             "SampleData/Generators/OrderGenerator.cs");
 
+        // ── Summaries ────────────────────────────────────────────────────────
+        public static IReadOnlyList<SampleSourceFile> TotalSummaries { get; } = SampleSourceLoader.LoadFiles(
+            "Views/Samples/Summaries/TotalSummariesSampleView.xaml",
+            "Views/Samples/Summaries/TotalSummariesSampleView.xaml.cs",
+            "Views/Samples/Summaries/TotalSummariesSampleViewModel.cs",
+            "Models/OrderItem.cs",
+            "SampleData/Generators/OrderGenerator.cs");
+
         // ── Editing ──────────────────────────────────────────────────────────
         public static IReadOnlyList<SampleSourceFile> EditorTypes { get; } = SampleSourceLoader.LoadFiles(
             "Views/Samples/Editing/EditorTypesSampleView.xaml",
@@ -168,6 +183,12 @@ namespace WWSearchDataGrid.Modern.SampleApp.Controls
             "Views/Samples/Editing/DataErrorIndicationSampleView.xaml.cs",
             "Views/Samples/Editing/DataErrorIndicationSampleViewModel.cs",
             "Models/PersonInfo.cs");
+
+        public static IReadOnlyList<SampleSourceFile> NewItemRow { get; } = SampleSourceLoader.LoadFiles(
+            "Views/Samples/Editing/NewItemRowSampleView.xaml",
+            "Views/Samples/Editing/NewItemRowSampleView.xaml.cs",
+            "Views/Samples/Editing/NewItemRowSampleViewModel.cs",
+            "Models/TaskItem.cs");
 
         // ── Animation & Performance ──────────────────────────────────────────
         public static IReadOnlyList<SampleSourceFile> ScrollingAnimation { get; } = SampleSourceLoader.LoadFiles(

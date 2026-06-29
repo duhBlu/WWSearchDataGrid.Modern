@@ -16,9 +16,9 @@
         rebind DataContext per opening so a single instance is fine here.
     -->
     <ContextMenu x:Key="{x:Static sdg:ThemeKeys.GridSearchDataGridColumnHeaderContextMenu}"
+                 AutomationProperties.AutomationId="cmuColumnHeader"
                  Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesContextMenu}}"
-                 StaysOpen="True"
-                 AutomationProperties.AutomationId="cmuColumnHeader">
+                 StaysOpen="True">
         <!--  Column-specific Copy Operations  -->
         <MenuItem x:Name="miCopy"
                   Command="{x:Static commands:ContextMenuCommands.CopySelectedCellValuesCommand}"
@@ -26,8 +26,8 @@
                   Header="Copy">
             <MenuItem.Icon>
                 <sdg:Icon Width="14"
-                             Height="14"
-                             IconSource="{StaticResource {x:Static sdg:IconKeys.IconCopy}}"/>
+                          Height="14"
+                          IconSource="{StaticResource {x:Static sdg:IconKeys.IconCopy}}" />
             </MenuItem.Icon>
         </MenuItem>
         <MenuItem x:Name="miCopyWithHeaders"
@@ -43,9 +43,8 @@
                   Header="Sort Ascending">
             <MenuItem.Icon>
                 <sdg:Icon Width="14"
-                             Height="14"
-                             
-                             IconSource="{StaticResource {x:Static sdg:IconKeys.IconSortAscending}}"/>
+                          Height="14"
+                          IconSource="{StaticResource {x:Static sdg:IconKeys.IconSortAscending}}" />
             </MenuItem.Icon>
         </MenuItem>
         <MenuItem x:Name="miSortDescending"
@@ -54,8 +53,8 @@
                   Header="Sort Descending">
             <MenuItem.Icon>
                 <sdg:Icon Width="14"
-                             Height="14"
-                             IconSource="{StaticResource {x:Static sdg:IconKeys.IconSortDescending}}" />
+                          Height="14"
+                          IconSource="{StaticResource {x:Static sdg:IconKeys.IconSortDescending}}" />
             </MenuItem.Icon>
         </MenuItem>
         <MenuItem x:Name="miClearSorting"
@@ -69,6 +68,8 @@
             Group Panel itself. Per-column Ungroup / Full Expand / Full Collapse moved to the
             group-panel pill (right-click a pill); grid-wide Expand / Collapse / Clear Grouping
             moved to the panel context menu (right-click the empty panel).
+            Both items hide (not disable) when gated off — Group By via the descriptor's resolved
+            ActualAllowGrouping (column AND grid), the panel toggle via the grid-level AllowGrouping.
         -->
         <MenuItem x:Name="miGroupByColumn"
                   Command="{x:Static commands:ContextMenuCommands.GroupByColumnCommand}"
@@ -76,42 +77,229 @@
                   Header="Group By This Column">
             <MenuItem.Icon>
                 <sdg:Icon Width="14"
-                             Height="14"
-                             IconSource="{StaticResource {x:Static sdg:IconKeys.IconGroup}}" />
+                          Height="14"
+                          IconSource="{StaticResource {x:Static sdg:IconKeys.IconGroup}}" />
             </MenuItem.Icon>
-        </MenuItem>
-        <MenuItem x:Name="miToggleGroupPanel"
-                  Command="{x:Static commands:ContextMenuCommands.ToggleGroupPanelVisibilityCommand}"
-                  CommandParameter="{Binding Grid}">
             <MenuItem.Style>
-                <Style TargetType="MenuItem" BasedOn="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesMenuItem}}">
-                    <Setter Property="Header" Value="Show Group Panel" />
+                <Style BasedOn="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesMenuItem}}" TargetType="MenuItem">
+                    <Setter Property="Visibility" Value="Visible" />
                     <Style.Triggers>
-                        <DataTrigger Binding="{Binding Grid.IsGroupPanelVisible}" Value="True">
-                            <Setter Property="Header" Value="Hide Group Panel" />
+                        <DataTrigger Binding="{Binding Column.(sdg:SearchDataGridColumnHeader.Descriptor).ActualAllowGrouping}" Value="False">
+                            <Setter Property="Visibility" Value="Collapsed" />
                         </DataTrigger>
                     </Style.Triggers>
                 </Style>
             </MenuItem.Style>
         </MenuItem>
-        <Separator />
+        <MenuItem x:Name="miToggleGroupPanel"
+                  Command="{x:Static commands:ContextMenuCommands.ToggleGroupPanelVisibilityCommand}"
+                  CommandParameter="{Binding Grid}">
+            <MenuItem.Style>
+                <Style BasedOn="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesMenuItem}}" TargetType="MenuItem">
+                    <Setter Property="Header" Value="Show Group Panel" />
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding Grid.IsGroupPanelVisible}" Value="True">
+                            <Setter Property="Header" Value="Hide Group Panel" />
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding Grid.AllowGrouping}" Value="False">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </MenuItem.Style>
+        </MenuItem>
+        <!--  Collapses with the grouping section so two separators don't stack when the grid gates it off.  -->
+        <Separator>
+            <Separator.Style>
+                <Style BasedOn="{StaticResource {x:Static MenuItem.SeparatorStyleKey}}" TargetType="Separator">
+                    <Setter Property="Visibility" Value="Visible" />
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding Grid.AllowGrouping}" Value="False">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Separator.Style>
+        </Separator>
 
-        <!--  Column Operations  -->
+        <!--
+            Total summaries. These live on the header menu (not just the totals row's own
+            right-click) because both summary surfaces can be hidden — a collapsed totals row
+            and a hidden fixed panel have no surface to right-click, so this is the always-
+            reachable path to show them and to open the totals editor.
+        -->
+        <MenuItem x:Name="miTotalSummaries" Header="Total Summaries">
+            <MenuItem.Style>
+                <Style BasedOn="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesMenuItem}}" TargetType="MenuItem">
+                    <Style.Triggers>
+                        <!--  Read-only gate: hide the whole summary submenu when disabled.  -->
+                        <DataTrigger Binding="{Binding Grid.SummaryContextMenusEnabled}" Value="False">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                        </DataTrigger>
+                        <!--  Both summary surfaces gated off → the submenu has nothing to offer.  -->
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding Grid.AllowTotalSummary}" Value="False" />
+                                <Condition Binding="{Binding Grid.AllowFixedTotalSummary}" Value="False" />
+                            </MultiDataTrigger.Conditions>
+                            <Setter Property="Visibility" Value="Collapsed" />
+                        </MultiDataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </MenuItem.Style>
+            <MenuItem x:Name="miToggleTotalSummaryRow"
+                      Command="{x:Static commands:ContextMenuCommands.ToggleTotalSummaryRowCommand}"
+                      CommandParameter="{Binding Grid}">
+                <MenuItem.Style>
+                    <Style BasedOn="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesMenuItem}}" TargetType="MenuItem">
+                        <Setter Property="Header" Value="Hide Total Summary Row" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding Grid.ShowTotalSummary}" Value="False">
+                                <Setter Property="Header" Value="Show Total Summary Row" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding Grid.TotalSummaryPosition}" Value="None">
+                                <Setter Property="Header" Value="Show Total Summary Row" />
+                            </DataTrigger>
+                            <!--  Removed entirely when the totals-row feature is gated off.  -->
+                            <DataTrigger Binding="{Binding Grid.AllowTotalSummary}" Value="False">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </MenuItem.Style>
+            </MenuItem>
+            <MenuItem x:Name="miToggleFixedTotalSummary"
+                      Command="{x:Static commands:ContextMenuCommands.ToggleFixedTotalSummaryCommand}"
+                      CommandParameter="{Binding Grid}">
+                <MenuItem.Style>
+                    <Style BasedOn="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesMenuItem}}" TargetType="MenuItem">
+                        <Setter Property="Header" Value="Show Fixed Total Summary" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding Grid.ShowFixedTotalSummary}" Value="True">
+                                <Setter Property="Header" Value="Hide Fixed Total Summary" />
+                            </DataTrigger>
+                            <!--  Removed entirely when the fixed-panel feature is gated off.  -->
+                            <DataTrigger Binding="{Binding Grid.AllowFixedTotalSummary}" Value="False">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </MenuItem.Style>
+            </MenuItem>
+            <!--  Collapses with the Customize Totals… item below it when the totals-row feature is gated off.  -->
+            <Separator>
+                <Separator.Style>
+                    <Style BasedOn="{StaticResource {x:Static MenuItem.SeparatorStyleKey}}" TargetType="Separator">
+                        <Setter Property="Visibility" Value="Visible" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding Grid.AllowTotalSummary}" Value="False">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Separator.Style>
+            </Separator>
+            <!--  Column-scoped totals editor ("Totals for 'X'") — takes the whole context so the command can resolve this column's descriptor.  -->
+            <MenuItem x:Name="miCustomizeTotals"
+                      Command="{x:Static commands:ContextMenuCommands.OpenTotalSummaryEditorCommand}"
+                      CommandParameter="{Binding}"
+                      Header="Customize Totals…">
+                <MenuItem.Icon>
+                    <Grid>
+                        <Border Style="{StaticResource FooterSummaryFunctionActivePillStyle}" />
+                        <sdg:Icon Style="{StaticResource FooterSummaryFunctionIconStyle}" IconSource="{StaticResource {x:Static sdg:IconKeys.IconCustomizeSummary}}" />
+                    </Grid>
+                </MenuItem.Icon>
+                <MenuItem.Style>
+                    <Style BasedOn="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesMenuItem}}" TargetType="MenuItem">
+                        <Style.Triggers>
+                            <!--  Removed entirely when the totals-row feature is gated off.  -->
+                            <DataTrigger Binding="{Binding Grid.AllowTotalSummary}" Value="False">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </MenuItem.Style>
+            </MenuItem>
+        </MenuItem>
+        <!--  Collapses with the Total Summaries submenu so two separators don't stack when it's hidden.  -->
+        <Separator>
+            <Separator.Style>
+                <Style BasedOn="{StaticResource {x:Static MenuItem.SeparatorStyleKey}}" TargetType="Separator">
+                    <Setter Property="Visibility" Value="Visible" />
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding Grid.SummaryContextMenusEnabled}" Value="False">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                        </DataTrigger>
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding Grid.AllowTotalSummary}" Value="False" />
+                                <Condition Binding="{Binding Grid.AllowFixedTotalSummary}" Value="False" />
+                            </MultiDataTrigger.Conditions>
+                            <Setter Property="Visibility" Value="Collapsed" />
+                        </MultiDataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Separator.Style>
+        </Separator>
+
+        <!--
+            Column Operations. Best-fit items hide (not disable) when gated off —
+            per-column via the descriptor's resolved ActualAllowBestFit, All Columns via the
+            grid-level AllowBestFit.
+        -->
         <MenuItem x:Name="miBestFitColumn"
                   Command="{x:Static commands:ContextMenuCommands.BestFitColumnCommand}"
                   CommandParameter="{Binding}"
                   Header="Best Fit Column">
             <MenuItem.Icon>
                 <sdg:Icon Width="14"
-                             Height="14"
-                             IconSource="{StaticResource {x:Static sdg:IconKeys.IconBestFit}}" />
+                          Height="14"
+                          IconSource="{StaticResource {x:Static sdg:IconKeys.IconBestFit}}" />
             </MenuItem.Icon>
+            <MenuItem.Style>
+                <Style BasedOn="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesMenuItem}}" TargetType="MenuItem">
+                    <Setter Property="Visibility" Value="Visible" />
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding Column.(sdg:SearchDataGridColumnHeader.Descriptor).ActualAllowBestFit}" Value="False">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </MenuItem.Style>
         </MenuItem>
         <MenuItem x:Name="miBestFitAllColumns"
                   Command="{x:Static commands:ContextMenuCommands.BestFitAllColumnsCommand}"
                   CommandParameter="{Binding}"
-                  Header="Best Fit All Columns" />
-        <Separator />
+                  Header="Best Fit All Columns">
+            <MenuItem.Style>
+                <Style BasedOn="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesMenuItem}}" TargetType="MenuItem">
+                    <Setter Property="Visibility" Value="Visible" />
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding Grid.AllowBestFit}" Value="False">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </MenuItem.Style>
+        </MenuItem>
+        <!--  Collapses with the best-fit section so two separators don't stack when both items hide.  -->
+        <Separator>
+            <Separator.Style>
+                <Style BasedOn="{StaticResource {x:Static MenuItem.SeparatorStyleKey}}" TargetType="Separator">
+                    <Setter Property="Visibility" Value="Visible" />
+                    <Style.Triggers>
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding Grid.AllowBestFit}" Value="False" />
+                                <Condition Binding="{Binding Column.(sdg:SearchDataGridColumnHeader.Descriptor).ActualAllowBestFit}" Value="False" />
+                            </MultiDataTrigger.Conditions>
+                            <Setter Property="Visibility" Value="Collapsed" />
+                        </MultiDataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Separator.Style>
+        </Separator>
 
         <!--  Visibility and Layout  -->
         <MenuItem x:Name="miShowColumnChooser"
@@ -120,11 +308,11 @@
                   Header="Column Chooser">
             <MenuItem.Icon>
                 <sdg:Icon Width="14"
-                             Height="14"
-                             IconSource="{StaticResource {x:Static sdg:IconKeys.IconColumnChooser}}" />
+                          Height="14"
+                          IconSource="{StaticResource {x:Static sdg:IconKeys.IconColumnChooser}}" />
             </MenuItem.Icon>
             <MenuItem.Style>
-                <Style TargetType="MenuItem" BasedOn="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesMenuItem}}">
+                <Style BasedOn="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesMenuItem}}" TargetType="MenuItem">
                     <Setter Property="Visibility" Value="Visible" />
                     <Style.Triggers>
                         <DataTrigger Binding="{Binding Grid.IsColumnChooserEnabled}" Value="False">
@@ -140,16 +328,15 @@
                   Header="Hide Column">
             <MenuItem.Icon>
                 <sdg:Icon Width="14"
-                             Height="14"
-                             IconSource="{StaticResource {x:Static sdg:IconKeys.IconHideColumn}}"
-                              />
+                          Height="14"
+                          IconSource="{StaticResource {x:Static sdg:IconKeys.IconHideColumn}}" />
             </MenuItem.Icon>
         </MenuItem>
 
         <!--  Fixed (pinned) column controls — gated by SearchDataGrid.AllowFixedColumnMenu  -->
         <MenuItem x:Name="miFixedColumn" Header="Fixed">
             <MenuItem.Style>
-                <Style TargetType="MenuItem" BasedOn="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesMenuItem}}">
+                <Style BasedOn="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesMenuItem}}" TargetType="MenuItem">
                     <Setter Property="Visibility" Value="Collapsed" />
                     <Style.Triggers>
                         <DataTrigger Binding="{Binding Grid.AllowFixedColumnMenu}" Value="True">
@@ -164,9 +351,8 @@
                       Header="Pin Left">
                 <MenuItem.Icon>
                     <sdg:Icon Width="14"
-                                 Height="14"
-                                 IconSource="{StaticResource {x:Static sdg:IconKeys.IconPinLeft}}"
-                                  />
+                              Height="14"
+                              IconSource="{StaticResource {x:Static sdg:IconKeys.IconPinLeft}}" />
                 </MenuItem.Icon>
             </MenuItem>
             <MenuItem x:Name="miPinColumnRight"
@@ -175,8 +361,8 @@
                       Header="Pin Right">
                 <MenuItem.Icon>
                     <sdg:Icon Width="14"
-                                 Height="14"
-                                 IconSource="{StaticResource {x:Static sdg:IconKeys.IconPinRight}}"/>
+                              Height="14"
+                              IconSource="{StaticResource {x:Static sdg:IconKeys.IconPinRight}}" />
                 </MenuItem.Icon>
             </MenuItem>
             <MenuItem x:Name="miUnpinColumn"
@@ -185,8 +371,8 @@
                       Header="Unpin">
                 <MenuItem.Icon>
                     <sdg:Icon Width="14"
-                                 Height="14"
-                                 IconSource="{StaticResource {x:Static sdg:IconKeys.IconUnpin}}" />
+                              Height="14"
+                              IconSource="{StaticResource {x:Static sdg:IconKeys.IconUnpin}}" />
                 </MenuItem.Icon>
             </MenuItem>
         </MenuItem>
@@ -194,7 +380,7 @@
         <!--  Conditional Filtering (only shows when there's an active filter)  -->
         <Separator>
             <Separator.Style>
-                <Style TargetType="Separator" BasedOn="{StaticResource {x:Static MenuItem.SeparatorStyleKey}}">
+                <Style BasedOn="{StaticResource {x:Static MenuItem.SeparatorStyleKey}}" TargetType="Separator">
                     <Setter Property="Visibility" Value="Collapsed" />
                     <Style.Triggers>
                         <DataTrigger Binding="{Binding HasActiveFilter}" Value="True">
@@ -210,12 +396,11 @@
                   Header="Clear Column Filter">
             <MenuItem.Icon>
                 <sdg:Icon Width="14"
-                             Height="14"
-                             IconSource="{StaticResource {x:Static sdg:IconKeys.IconClearFilter}}"
-                              />
+                          Height="14"
+                          IconSource="{StaticResource {x:Static sdg:IconKeys.IconClearFilter}}" />
             </MenuItem.Icon>
             <MenuItem.Style>
-                <Style TargetType="MenuItem" BasedOn="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesMenuItem}}">
+                <Style BasedOn="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesMenuItem}}" TargetType="MenuItem">
                     <Setter Property="Visibility" Value="Collapsed" />
                     <Style.Triggers>
                         <DataTrigger Binding="{Binding HasActiveFilter}" Value="True">
@@ -231,9 +416,8 @@
                   Header="Open Filter Editor…">
             <MenuItem.Icon>
                 <sdg:Icon Width="14"
-                             Height="14"
-                             IconSource="{StaticResource {x:Static sdg:IconKeys.IconFilterEditor}}"
-                              />
+                          Height="14"
+                          IconSource="{StaticResource {x:Static sdg:IconKeys.IconFilterEditor}}" />
             </MenuItem.Icon>
         </MenuItem>
     </ContextMenu>

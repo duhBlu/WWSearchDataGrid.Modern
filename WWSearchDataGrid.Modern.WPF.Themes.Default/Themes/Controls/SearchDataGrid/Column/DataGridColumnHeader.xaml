@@ -24,6 +24,15 @@
         stock DataGridColumnHeader filler would fail the strict TargetType check.
     -->
     <Style TargetType="{x:Type sdg:SearchDataGridColumnHeadersPresenter}">
+        <!--  Same panel the row cells use (Row/DataGridRow.xaml), so headers and data cells
+              share one arrangement — including the right-fixed band overlay.  -->
+        <Setter Property="ItemsPanel">
+            <Setter.Value>
+                <ItemsPanelTemplate>
+                    <sdg:FixedColumnsCellsPanel />
+                </ItemsPanelTemplate>
+            </Setter.Value>
+        </Setter>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type sdg:SearchDataGridColumnHeadersPresenter}">
@@ -49,21 +58,7 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type sdg:SearchDataGridColumnHeader}">
-                    <!--
-                        Phase 5: the embedded ColumnSearchBox is removed entirely. The
-                        DataGridColumnHeader template now hosts only the header chrome
-                        (select-all checkbox, header text, sort arrow, gripper). The
-                        per-column filter editor lives in the pinned FilterRowPresenter
-                        below the headers.
-                    -->
                     <ControlTemplate.Resources>
-                        <!--
-                            Wider hit area for the column resizers without the default Thumb
-                            chrome. Hit-test surface is the transparent Border; the visible
-                            1px separator is drawn by the inner Border via TemplateBinding,
-                            so each gripper's own BorderBrush/BorderThickness decide which
-                            edge (if any) shows a line.
-                        -->
                         <Style x:Key="ColumnHeaderGripperThumbStyle" TargetType="{x:Type Thumb}">
                             <Setter Property="Background" Value="Transparent" />
                             <Setter Property="Template">
@@ -85,15 +80,6 @@
                                 BorderThickness="0,0,1,1"
                                 Margin="0,0,0,0"
                                 Padding="{TemplateBinding Padding}">
-                            <!--
-                                Layout: [select-all][header text Auto][filter button Auto][spacer *][sort arrow Auto].
-                                Header text sizes to its content (Auto), filter button sits
-                                immediately to its right at a fixed width, the * spacer absorbs
-                                remaining horizontal space, and the sort arrow stays at the far
-                                right. Whether the button is Opacity 0 or 1, the Auto column
-                                still reserves its 22px slot — header text and sort arrow stay
-                                put across hover transitions.
-                            -->
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="Auto" />
@@ -103,17 +89,7 @@
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
 
-                                <!--
-                                    Select All Checkbox. Visibility and IsChecked are bound to
-                                    the column's GridColumn descriptor (pinned via
-                                    SearchDataGridColumnHeader.Descriptor at column-creation
-                                    time). The checkbox is two-way bound to IsChecked so user
-                                    clicks flow through the descriptor's DP callback into
-                                    SearchDataGrid.ApplyHeaderCheckedValue. IsThreeState is
-                                    false so the click cycle is true ↔ false only; the
-                                    indeterminate visual still renders when the grid pushes
-                                    IsChecked=null after detecting mixed state.
-                                -->
+                                <!-- Select All CheckBox -->
                                 <StackPanel Grid.Column="0"
                                             Orientation="Horizontal"
                                             Margin="0,0,4,0"
@@ -184,16 +160,6 @@
                                                 <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType={x:Type sdg:SearchDataGridColumnHeader}}}" Value="True">
                                                     <Setter Property="Opacity" Value="1" />
                                                 </DataTrigger>
-                                                <!--
-                                                    "Column is filtered" highlight. Walks:
-                                                    header → Column (DataGridColumn) →
-                                                    SearchDataGridColumnHeader.Descriptor
-                                                    (attached ColumnDataBase pinned at column-creation
-                                                    time) → IsFiltered (read-only DP driven from
-                                                    SearchTemplateController.HasCustomExpression).
-                                                    Every step is a DP that fires change
-                                                    notifications, so no C# subscription is needed.
-                                                -->
                                                 <DataTrigger Binding="{Binding Column.(sdg:SearchDataGridColumnHeader.Descriptor).IsFiltered, RelativeSource={RelativeSource AncestorType={x:Type sdg:SearchDataGridColumnHeader}}}" Value="True">
                                                     <Setter Property="Opacity" Value="1" />
                                                     <Setter Property="Foreground" Value="#0078D4" />
@@ -209,14 +175,7 @@
                                     </Button.Style>
                                 </Button>
 
-                                <!--  Sort Arrow (Grid.Column=4, with the *-spacer at Column=3 pushing it right)  -->
-                                <!--<TextBlock x:Name="SortArrow"
-                                           Grid.Column="4"
-                                           Foreground="{TemplateBinding Foreground}"
-                                           Visibility="Collapsed"
-                                           VerticalAlignment="Center"
-                                           FontFamily="Segoe Fluent Icons" />-->
-
+                                <!--  Sort Arrow -->
                                 <sdg:Icon x:Name="SortArrow"
                                              Grid.Column="4"
                                              Width="10"
@@ -226,14 +185,7 @@
                             </Grid>
                         </Border>
 
-                        <!--
-                            Column Resizers. Width is the grab target; the visible 1px
-                            separator is drawn by the gripper's BorderBrush + BorderThickness
-                            (see ColumnHeaderGripperThumbStyle above). Only the right gripper
-                            draws a line — the boundary between cols N and N+1 is rendered by
-                            col N's right gripper; col N+1's left gripper provides extra grab
-                            area but stays invisible.
-                        -->
+                        <!--  Grippers -->
                         <Thumb x:Name="PART_LeftHeaderGripper"
                                Style="{StaticResource ColumnHeaderGripperThumbStyle}"
                                Cursor="SizeWE"
@@ -255,23 +207,17 @@
                         <DataTrigger Binding="{Binding ActualHasItems, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type sdg:SearchDataGrid}}}" Value="False">
                             <Setter TargetName="HeaderBorder" Property="BorderThickness" Value="0,0,0,1" />
                         </DataTrigger>
-
-                        <!--  Sort Direction  -->
                         <Trigger Property="SortDirection" Value="Ascending">
                             <Setter TargetName="SortArrow" Property="Visibility" Value="Visible" />
                             <Setter TargetName="SortArrow" Property="IconSource" Value="{StaticResource {x:Static sdg:IconKeys.IconChevronUp}}" />
                         </Trigger>
-
                         <Trigger Property="SortDirection" Value="Descending">
                             <Setter TargetName="SortArrow" Property="Visibility" Value="Visible" />
                             <Setter TargetName="SortArrow" Property="IconSource" Value="{StaticResource {x:Static sdg:IconKeys.IconChevronDown}}" />
                         </Trigger>
-
-                        <!--  Mouse States  -->
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter TargetName="HeaderBorder" Property="Background" Value="#FFF0F0F0" />
                         </Trigger>
-
                         <Trigger Property="IsPressed" Value="True">
                             <Setter TargetName="HeaderBorder" Property="Background" Value="#FFE0E0E0" />
                         </Trigger>

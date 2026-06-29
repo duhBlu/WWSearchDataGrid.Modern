@@ -102,6 +102,13 @@ namespace WWSearchDataGrid.Modern.WPF
                 if (e.EditAction == DataGridEditAction.Cancel)
                     return;
 
+                // A committed cell edit can change any total or group summary — recompute once
+                // the binding lands (both schedules fire at Background priority, after DataBind).
+                // The group pass refreshes header texts in place, never reflattening under the
+                // editing session.
+                ScheduleSummaryUpdate();
+                RequestGroupSummaryRefresh();
+
                 // unless commit-on-error is allowed, push the editor's
                 // bindings to source (which runs the data-annotation validation rules) and cancel
                 // the commit when any error remains — the editor stays open with its error chrome.
@@ -164,7 +171,13 @@ namespace WWSearchDataGrid.Modern.WPF
                             finalValue = ReflectionHelper.GetPropValue(e.Row.Item, bindingPath);
                         }
 
-                        if (!EqualityComparer<object>.Default.Equals(originalValue, finalValue))
+                        // Skip the new-item row: its cells start at their type defaults and the
+                        // committed row registers every column value wholesale via the source
+                        // CollectionChanged Add. Running the per-cell delta here too would
+                        // double-count the value in the column caches (and remove a default that
+                        // was never cached). CellValueChanged is for edits to existing rows.
+                        if (!EqualityComparer<object>.Default.Equals(originalValue, finalValue)
+                            && !IsItemBeingAdded(e.Row.Item))
                         {
                             OnCellValueChangedInternal(e.Row.Item, e.Column, bindingPath,
                                 originalValue, finalValue, rowIndex, columnIndex);
@@ -289,6 +302,18 @@ namespace WWSearchDataGrid.Modern.WPF
 
         #region Cell Value Change Detection
 
+
+        /// <summary>
+        /// True when <paramref name="item"/> is the row the user is currently adding through the
+        /// new-item row. While an add transaction is open the editable view exposes that row as its
+        /// <see cref="System.ComponentModel.IEditableCollectionView.CurrentAddItem"/>; its column
+        /// values get registered in one shot via the source CollectionChanged Add on commit, so the
+        /// per-cell cache delta must be skipped to avoid double-counting.
+        /// </summary>
+        private bool IsItemBeingAdded(object item)
+            => Items is System.ComponentModel.IEditableCollectionView ecv
+               && ecv.IsAddingNew
+               && ReferenceEquals(ecv.CurrentAddItem, item);
 
         /// <summary>
         /// Property path for a column. Descriptor-first chain (FilterMemberPath → FieldName →

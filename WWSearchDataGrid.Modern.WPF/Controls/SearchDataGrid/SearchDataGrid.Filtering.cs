@@ -359,18 +359,32 @@ namespace WWSearchDataGrid.Modern.WPF
             {
                 var template = group.SearchTemplates[i];
 
-                // Raw vs display per template: non-text types always raw; text types use display
-                // for string-typed selected values, raw for typed-object values (FilterValues/picker
-                // store typed objects, search box stores display strings).
-                object valueToEvaluate;
-                if (SearchEngine.IsTextBasedSearchType(template.SearchType) && !TemplateStoresRawValues(template))
-                    valueToEvaluate = displayValue;
+                bool templateResult;
+                if (template.SearchType == SearchType.IsAnyOf || template.SearchType == SearchType.IsNoneOf)
+                {
+                    // IsAnyOf/IsNoneOf keep their operands in SelectedValues, not in SearchCondition's
+                    // single RawPrimaryValue — so SearchEngine.EvaluateCondition can't see them and
+                    // would reject every row. Match the raw cell value's string form against the
+                    // stored value strings, identical to SearchTemplate.BuildIsAnyOfExpression, so
+                    // value-picker selections on a display-provider column (e.g. a foreign-key
+                    // lookup) filter the same way they do without a provider.
+                    templateResult = EvaluateValueSetMembership(rawValue, template);
+                }
                 else
-                    valueToEvaluate = rawValue;
+                {
+                    // Raw vs display per template: non-text types always raw; text types use display
+                    // for string-typed selected values, raw for typed-object values (FilterValues/picker
+                    // store typed objects, search box stores display strings).
+                    object valueToEvaluate;
+                    if (SearchEngine.IsTextBasedSearchType(template.SearchType) && !TemplateStoresRawValues(template))
+                        valueToEvaluate = displayValue;
+                    else
+                        valueToEvaluate = rawValue;
 
-                bool templateResult = template.SearchCondition != null
-                    ? SearchEngine.EvaluateCondition(valueToEvaluate, template.SearchCondition)
-                    : true;
+                    templateResult = template.SearchCondition != null
+                        ? SearchEngine.EvaluateCondition(valueToEvaluate, template.SearchCondition)
+                        : true;
+                }
 
                 if (i == 0)
                 {
@@ -386,6 +400,32 @@ namespace WWSearchDataGrid.Modern.WPF
             }
 
             return groupResult;
+        }
+
+        /// <summary>
+        /// Membership test for IsAnyOf/IsNoneOf that mirrors
+        /// <c>SearchTemplate.BuildIsAnyOfExpression</c>: compares the raw cell value's string form
+        /// against the template's stored value strings. IsAnyOf is true when the value is present
+        /// (a null value is never "any of"); IsNoneOf is true when it is absent (a null value is
+        /// always "none of").
+        /// </summary>
+        private static bool EvaluateValueSetMembership(object rawValue, WWSearchDataGrid.Modern.Core.SearchTemplate template)
+        {
+            bool contains = false;
+            if (rawValue != null && template.SelectedValues != null)
+            {
+                string valueString = rawValue.ToString();
+                foreach (var item in template.SelectedValues)
+                {
+                    if (item != null && !string.IsNullOrEmpty(item.Value) && string.Equals(item.Value, valueString))
+                    {
+                        contains = true;
+                        break;
+                    }
+                }
+            }
+
+            return template.SearchType == SearchType.IsAnyOf ? contains : !contains;
         }
 
         /// <summary>

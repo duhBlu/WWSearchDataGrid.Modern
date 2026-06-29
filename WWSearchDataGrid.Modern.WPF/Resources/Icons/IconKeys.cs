@@ -56,7 +56,17 @@ namespace WWSearchDataGrid.Modern.WPF
         
         public static ComponentResourceKey IconChevronRight { get; } =
             new ComponentResourceKey(typeof(IconKeys), nameof(IconChevronRight));
-        
+
+        public static ComponentResourceKey IconCaretRight { get; } =
+            new ComponentResourceKey(typeof(IconKeys), nameof(IconCaretRight));
+        public static ComponentResourceKey IconCaretLeft { get; } =
+            new ComponentResourceKey(typeof(IconKeys), nameof(IconCaretLeft));
+        public static ComponentResourceKey IconCaretUp { get; } =
+            new ComponentResourceKey(typeof(IconKeys), nameof(IconCaretUp));
+        public static ComponentResourceKey IconCaretDown { get; } =
+            new ComponentResourceKey(typeof(IconKeys), nameof(IconCaretDown));
+
+
         public static ComponentResourceKey IconEdit { get; } =
             new ComponentResourceKey(typeof(IconKeys), nameof(IconEdit));
         
@@ -144,7 +154,10 @@ namespace WWSearchDataGrid.Modern.WPF
 
         public static ComponentResourceKey IconAddCondition { get; } =
             new ComponentResourceKey(typeof(IconKeys), nameof(IconAddCondition));
-        
+
+        public static ComponentResourceKey IconCustomizeSummary { get; } =
+            new ComponentResourceKey(typeof(IconKeys), nameof(IconCustomizeSummary));
+
         public static ComponentResourceKey IconLogicalAnd { get; } =
             new ComponentResourceKey(typeof(IconKeys), nameof(IconLogicalAnd));
         
@@ -184,5 +197,21 @@ namespace WWSearchDataGrid.Modern.WPF
         /// <summary>Error glyph ("✕") — paired with <see cref="StatusKind.Error"/>.</summary>
         public static ComponentResourceKey IconStatusError { get; } =
             new ComponentResourceKey(typeof(IconKeys), nameof(IconStatusError));
+
+
+        public static ComponentResourceKey IconCount { get; } =
+            new ComponentResourceKey(typeof(IconKeys), nameof(IconCount));
+        
+        public static ComponentResourceKey IconMin { get; } =
+            new ComponentResourceKey(typeof(IconKeys), nameof(IconMin));
+        
+        public static ComponentResourceKey IconMax { get; } =
+            new ComponentResourceKey(typeof(IconKeys), nameof(IconMax));
+        
+        public static ComponentResourceKey IconSum { get; } =
+            new ComponentResourceKey(typeof(IconKeys), nameof(IconSum));
+        
+        public static ComponentResourceKey IconAverage { get; } =
+            new ComponentResourceKey(typeof(IconKeys), nameof(IconAverage));
     }
 }

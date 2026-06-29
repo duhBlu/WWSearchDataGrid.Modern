@@ -17,6 +17,7 @@
             </ResourceDictionary.MergedDictionaries>
 
             <converters:EnumToBooleanConverter x:Key="EnumToBool" />
+            <BooleanToVisibilityConverter x:Key="BoolToVis" />
 
             <!-- Implicit style for the source-viewer editor. Setters here apply more reliably than
                  per-instance attribute values inside the SampleHostControl ControlTemplate — WPF's
@@ -29,6 +30,7 @@
                 <Setter Property="TextOptions.TextRenderingMode" Value="ClearType" />
                 <Setter Property="Typography.StandardLigatures" Value="True" />
                 <Setter Property="Typography.ContextualLigatures" Value="True" />
+                <Setter Property="controls:AvalonEditHelper.OverrideCursor" Value="Arrow" />
             </Style>
 
             <!-- RadioButton styled as a compact icon toggle for the layout-mode picker. Rendered as a
@@ -150,6 +152,38 @@
                 </Setter>
             </Style>
 
+            <!-- Row-count status bar shown at the bottom of every sample's Live pane. Authored as a
+                 ContentControl Style (mirroring LayoutToggleBarStyle) so one definition can be dropped
+                 into all three layout templates — a single visual instance can't live in more than one.
+                 It binds up to the hosting SampleHostControl's auto-discovered TrackedGrid, whose
+                 TotalItemCount / FilteredItemCount DPs are grouping-aware (header sentinels excluded,
+                 collapse-independent). Collapses itself when no grid was discovered. -->
+            <Style x:Key="RowCountBarStyle" TargetType="{x:Type ContentControl}">
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="{x:Type ContentControl}">
+                            <Border Background="#F0F0F0" BorderBrush="#E0E0E0" BorderThickness="0,1,0,0" Padding="14,3"
+                                    Visibility="{Binding HasTrackedGrid,
+                                                 RelativeSource={RelativeSource AncestorType={x:Type controls:SampleHostControl}},
+                                                 Converter={StaticResource BoolToVis}}">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Foreground="#1C1C1C" FontWeight="SemiBold" Text="Total: " VerticalAlignment="Center" />
+                                    <TextBlock Foreground="#444444" VerticalAlignment="Center"
+                                               Text="{Binding TrackedGrid.TotalItemCount,
+                                                      RelativeSource={RelativeSource AncestorType={x:Type controls:SampleHostControl}},
+                                                      StringFormat={}{0:N0}}" />
+                                    <TextBlock Foreground="#1C1C1C" FontWeight="SemiBold" Text="Filtered: " Margin="16,0,0,0" VerticalAlignment="Center" />
+                                    <TextBlock Foreground="#444444" VerticalAlignment="Center"
+                                               Text="{Binding TrackedGrid.FilteredItemCount,
+                                                      RelativeSource={RelativeSource AncestorType={x:Type controls:SampleHostControl}},
+                                                      StringFormat={}{0:N0}}" />
+                                </StackPanel>
+                            </Border>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
             <!-- Tab-icon glyph style used inside the Live/Source headers. -->
             <Style x:Key="SampleTabHeaderIconStyle" TargetType="TextBlock">
                 <Setter Property="FontFamily" Value="Segoe Fluent Icons, Segoe MDL2 Assets" />
@@ -171,11 +205,14 @@
                                     <TextBlock VerticalAlignment="Center" Text="Live" />
                                 </StackPanel>
                             </TabItem.Header>
-                            <Grid>
-                                <ContentPresenter />
-                                <controls:SampleLoadingOverlay IsBusy="{Binding IsBusy, FallbackValue=False, TargetNullValue=False}"
-                                                               Status="{Binding Status, FallbackValue='', TargetNullValue=''}" />
-                            </Grid>
+                            <DockPanel LastChildFill="True">
+                                <ContentControl DockPanel.Dock="Bottom" Style="{StaticResource RowCountBarStyle}" />
+                                <Grid>
+                                    <ContentPresenter />
+                                    <controls:SampleLoadingOverlay IsBusy="{Binding IsBusy, FallbackValue=False, TargetNullValue=False}"
+                                                                   Status="{Binding Status, FallbackValue='', TargetNullValue=''}" />
+                                </Grid>
+                            </DockPanel>
                         </TabItem>
 
                         <!-- Source -->
@@ -223,11 +260,14 @@
                         </Grid.ColumnDefinitions>
 
                         <!-- Live -->
-                        <Grid Grid.Column="0">
-                            <ContentPresenter />
-                            <controls:SampleLoadingOverlay IsBusy="{Binding IsBusy, FallbackValue=False, TargetNullValue=False}"
-                                                           Status="{Binding Status, FallbackValue='', TargetNullValue=''}" />
-                        </Grid>
+                        <DockPanel Grid.Column="0" LastChildFill="True">
+                            <ContentControl DockPanel.Dock="Bottom" Style="{StaticResource RowCountBarStyle}" />
+                            <Grid>
+                                <ContentPresenter />
+                                <controls:SampleLoadingOverlay IsBusy="{Binding IsBusy, FallbackValue=False, TargetNullValue=False}"
+                                                               Status="{Binding Status, FallbackValue='', TargetNullValue=''}" />
+                            </Grid>
+                        </DockPanel>
 
                         <!-- ShowsPreview="True": defer the actual column resize until mouse-up. During
                              drag WPF renders only a translucent adorner, which means the live
@@ -259,7 +299,6 @@
                                                    controls:AvalonEditHelper.BoundSyntaxName="{Binding SelectedSource.Language, RelativeSource={RelativeSource TemplatedParent}, Mode=OneWay}"
                                                    IsReadOnly="True"
                                                    ShowLineNumbers="True"
-                                                   SyntaxHighlighting=""
                                                    Background="#FAFAFA" />
                         </DockPanel>
                     </Grid>
@@ -279,11 +318,14 @@
                         </Grid.RowDefinitions>
 
                         <!-- Live -->
-                        <Grid Grid.Row="0">
-                            <ContentPresenter />
-                            <controls:SampleLoadingOverlay IsBusy="{Binding IsBusy, FallbackValue=False, TargetNullValue=False}"
-                                                           Status="{Binding Status, FallbackValue='', TargetNullValue=''}" />
-                        </Grid>
+                        <DockPanel Grid.Row="0" LastChildFill="True">
+                            <ContentControl DockPanel.Dock="Bottom" Style="{StaticResource RowCountBarStyle}" />
+                            <Grid>
+                                <ContentPresenter />
+                                <controls:SampleLoadingOverlay IsBusy="{Binding IsBusy, FallbackValue=False, TargetNullValue=False}"
+                                                               Status="{Binding Status, FallbackValue='', TargetNullValue=''}" />
+                            </Grid>
+                        </DockPanel>
 
                         <!-- ShowsPreview="True": see the matching note in the vertical-split template
                              above — defers the resize to mouse-up so the SearchDataGrid only realizes

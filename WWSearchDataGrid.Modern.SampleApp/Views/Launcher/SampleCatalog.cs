@@ -6,6 +6,7 @@ using WWSearchDataGrid.Modern.SampleApp.Views.Samples.DataBinding;
 using WWSearchDataGrid.Modern.SampleApp.Views.Samples.Editing;
 using WWSearchDataGrid.Modern.SampleApp.Views.Samples.Filtering;
 using WWSearchDataGrid.Modern.SampleApp.Views.Samples.Grouping;
+using WWSearchDataGrid.Modern.SampleApp.Views.Samples.Summaries;
 using WWSearchDataGrid.Modern.SampleApp.Views.Samples.Usability;
 
 namespace WWSearchDataGrid.Modern.SampleApp.Views.Launcher
@@ -55,6 +56,11 @@ namespace WWSearchDataGrid.Modern.SampleApp.Views.Launcher
                         new[] { "Fixed", "Pinned" },
                         () => new FixedColumnsSampleView()),
 
+                    new("Best Fit (Auto-Width)",
+                        "Measurement-based column auto-sizing: VisibleRows vs AllRows, per-column AllowBestFit / BestFitArea overrides, gripper double-click, and auto-fit on source change.",
+                        new[] { "BestFit", "Auto-width", "Sizing" },
+                        () => new BestFitSampleView()),
+
                     new("Save and Restore Layout",
                         "Persist and reload column layouts (order, width, visibility, pinning, grouping, totals).",
                         new[] { "Layout", "Persistence" },
@@ -103,13 +109,9 @@ namespace WWSearchDataGrid.Modern.SampleApp.Views.Launcher
                         () => new InputMaskingSampleView()),
 
                     new("New Item Row",
-                        "Place the new-item row at top / bottom / none (adding disabled).",
+                        "NewRowPosition places the add-new-row at top / bottom / none (adding disabled). New rows auto-fill their Id; Delete removes a selected row.",
                         new[] { "NewRow", "AddRow" },
-                        () => PlannedSampleView.Planned(
-                            "New Item Row",
-                            "Position the new-item row at the top or bottom of the grid, or disable adding rows entirely.",
-                            "Implement NewRowPosition (Top / Bottom / None)",
-                            "Harden add-new-row commit flow")),
+                        () => new NewItemRowSampleView()),
 
                     new("Data Validation",
                         "Smart columns validate edits against DataAnnotations (Required / Range / StringLength / RegularExpression / CustomValidation). Invalid edits show a red border + message tooltip and are blocked; toggle commit-on-error and validation on/off.",
@@ -156,14 +158,9 @@ namespace WWSearchDataGrid.Modern.SampleApp.Views.Launcher
                         () => new BasicGroupingSampleView()),
 
                     new("Total Summaries",
-                        "Aggregate summaries (sum / avg / count) in a totals row or group footers.",
-                        new[] { "Totals", "Aggregate" },
-                        () => PlannedSampleView.Planned(
-                            "Total Summaries",
-                            "Show aggregate summaries in a totals row and/or group footers.",
-                            "Implement a totals/summary row",
-                            "Aggregate functions (sum / avg / count / min / max)",
-                            "Group-level summary footers")),
+                        "Aggregate summaries across four surfaces — the column-aligned total summary row, the fixed total summary panel (feature-gated by AllowFixedTotalSummary), per-group GroupSummaries in the headers (inline or aligned-by-column), and per-group GroupFooterSummaries that dock at the bottom of a group and pin beneath the header when collapsed. Each carries a runtime right-click picker + Customize editor, all suppressible via SummaryContextMenusEnabled.",
+                        new[] { "Totals", "Aggregate", "Footer" },
+                        () => new TotalSummariesSampleView()),
                 }),
 
             new SampleCategory(

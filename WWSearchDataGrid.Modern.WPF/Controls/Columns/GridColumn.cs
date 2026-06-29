@@ -1,6 +1,8 @@
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
+using WWSearchDataGrid.Modern.Core;
 
 namespace WWSearchDataGrid.Modern.WPF
 {
@@ -27,6 +29,16 @@ namespace WWSearchDataGrid.Modern.WPF
     /// </remarks>
     public class GridColumn : ColumnDataBase
     {
+        public GridColumn()
+        {
+            // Seed the summary collection at construction so XAML property-element syntax
+            // (`<sdg:GridColumn.TotalSummaries><sdg:SummaryItem .../></...>`) can add entries —
+            // the XAML reader calls GetValue directly to find the target list and fails when
+            // it's null (same convention as ColumnDataBase's CustomColumnFilterTabs).
+            SetValue(TotalSummariesProperty, new FreezableCollection<SummaryItem>());
+            SetValue(GroupFooterSummariesProperty, new FreezableCollection<SummaryItem>());
+        }
+
         #region Grouping
 
         /// <summary>
@@ -162,7 +174,7 @@ namespace WWSearchDataGrid.Modern.WPF
         /// <summary>
         /// Column-level gate for whether this column may participate in grouping. <c>true</c> (the
         /// default) allows it; <c>false</c> blocks the column from being grouped (the
-        /// "Group By This Column" menu item disables and <see cref="SearchDataGrid.GroupBy(GridColumn)"/>
+        /// "Group By This Column" menu item is removed and <see cref="SearchDataGrid.GroupBy(GridColumn)"/>
         /// refuses). The resolved value — this gate AND the grid's
         /// <see cref="SearchDataGrid.AllowGrouping"/> — is exposed by <see cref="ActualAllowGrouping"/>.
         /// </summary>
@@ -493,6 +505,282 @@ namespace WWSearchDataGrid.Modern.WPF
 
         #endregion
 
+        #region Total Summaries
+
+        /// <summary>
+        /// Summary definitions computed over the grid's <em>filtered</em> rows and rendered in
+        /// THIS column's cell of the total summary row (stacked vertically). Each entry may
+        /// target another column's field via <see cref="SummaryItem.FieldName"/> — foreign
+        /// targets render caption-qualified (<c>Min(Discount)=…</c>), so one cell can mix
+        /// aggregates from several columns (the "Totals for 'X'" editor configures this).
+        /// Seeded with an empty collection at construction; the runtime picker on the summary
+        /// cell writes here too. The grid recomputes on filter / source / grouping changes and
+        /// on cell edit commits — see <see cref="SearchDataGrid.RefreshSummaries"/> for the
+        /// explicit trigger.
+        /// </summary>
+        public static readonly DependencyProperty TotalSummariesProperty =
+            DependencyProperty.Register(
+                nameof(TotalSummaries),
+                typeof(FreezableCollection<SummaryItem>),
+                typeof(GridColumn),
+                new PropertyMetadata(null, OnTotalSummariesChanged));
+
+        public FreezableCollection<SummaryItem> TotalSummaries
+        {
+            get => (FreezableCollection<SummaryItem>)GetValue(TotalSummariesProperty);
+            set => SetValue(TotalSummariesProperty, value);
+        }
+
+        private static void OnTotalSummariesChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            if (d is not GridColumn col) return;
+            // Freezable.Changed fires for both collection mutations and item DP edits, so a
+            // single subscription keeps the computed results in step with the definitions.
+            if (e.OldValue is FreezableCollection<SummaryItem> oldItems)
+                oldItems.Changed -= col.OnTotalSummaryDefinitionsChanged;
+            if (e.NewValue is FreezableCollection<SummaryItem> newItems)
+                newItems.Changed += col.OnTotalSummaryDefinitionsChanged;
+            col.OnTotalSummaryDefinitionsChanged(col, System.EventArgs.Empty);
+        }
+
+        private void OnTotalSummaryDefinitionsChanged(object sender, System.EventArgs e)
+        {
+            SetValue(HasTotalSummariesPropertyKey, TotalSummaries is { Count: > 0 });
+            View?.OnColumnTotalSummariesChanged(this);
+        }
+
+        private static readonly DependencyPropertyKey HasTotalSummariesPropertyKey =
+            DependencyProperty.RegisterReadOnly(
+                nameof(HasTotalSummaries),
+                typeof(bool),
+                typeof(GridColumn),
+                new PropertyMetadata(false));
+
+        /// <summary>Read-only dependency property exposing <see cref="HasTotalSummaries"/> for bindings.</summary>
+        public static readonly DependencyProperty HasTotalSummariesProperty = HasTotalSummariesPropertyKey.DependencyProperty;
+
+        /// <summary>True when <see cref="TotalSummaries"/> holds at least one definition.</summary>
+        public bool HasTotalSummaries => (bool)GetValue(HasTotalSummariesProperty);
+
+        /// <summary>
+        /// Which aggregate functions the runtime summary picker (the total-summary cell's
+        /// context menu) offers for this column. Defaults to <see cref="AllowedSummaries.All"/>;
+        /// functions the column's <see cref="ColumnDataBase.FieldType"/> can't compute (e.g. Sum
+        /// on a string column) are gated off regardless. Declarative <see cref="TotalSummaries"/>
+        /// entries are not validated against this — it gates the runtime UX only.
+        /// </summary>
+        public static readonly DependencyProperty AllowedTotalSummariesProperty =
+            DependencyProperty.Register(
+                nameof(AllowedTotalSummaries),
+                typeof(AllowedSummaries),
+                typeof(GridColumn),
+                new PropertyMetadata(AllowedSummaries.All));
+
+        public AllowedSummaries AllowedTotalSummaries
+        {
+            get => (AllowedSummaries)GetValue(AllowedTotalSummariesProperty);
+            set => SetValue(AllowedTotalSummariesProperty, value);
+        }
+
+        private static readonly DependencyPropertyKey TotalSummaryTextPropertyKey =
+            DependencyProperty.RegisterReadOnly(
+                nameof(TotalSummaryText),
+                typeof(string),
+                typeof(GridColumn),
+                new PropertyMetadata(null));
+
+        /// <summary>Read-only dependency property exposing <see cref="TotalSummaryText"/> for bindings.</summary>
+        public static readonly DependencyProperty TotalSummaryTextProperty = TotalSummaryTextPropertyKey.DependencyProperty;
+
+        /// <summary>
+        /// The formatted text of every computed total summary for this column, joined for
+        /// display in the total summary cell (e.g. <c>"Sum=1,234.50  Max=99"</c>). Null when
+        /// the column defines no total summaries. Pushed by the grid's summary engine.
+        /// </summary>
+        public string TotalSummaryText => (string)GetValue(TotalSummaryTextProperty);
+
+        internal void SetTotalSummaryText(string value) => SetValue(TotalSummaryTextPropertyKey, value);
+
+        private static readonly DependencyPropertyKey TotalSummaryTextInfoPropertyKey =
+            DependencyProperty.RegisterReadOnly(
+                nameof(TotalSummaryTextInfo),
+                typeof(IReadOnlyList<SummaryResult>),
+                typeof(GridColumn),
+                new PropertyMetadata(null));
+
+        /// <summary>Read-only dependency property exposing <see cref="TotalSummaryTextInfo"/> for bindings.</summary>
+        public static readonly DependencyProperty TotalSummaryTextInfoProperty = TotalSummaryTextInfoPropertyKey.DependencyProperty;
+
+        /// <summary>
+        /// The computed total summaries as structured per-item results (function, raw value,
+        /// formatted text) — the data behind <see cref="TotalSummaryText"/>, for templates that
+        /// render summaries individually. Null when the column defines no total summaries.
+        /// </summary>
+        public IReadOnlyList<SummaryResult> TotalSummaryTextInfo => (IReadOnlyList<SummaryResult>)GetValue(TotalSummaryTextInfoProperty);
+
+        internal void SetTotalSummaryTextInfo(IReadOnlyList<SummaryResult> value) => SetValue(TotalSummaryTextInfoPropertyKey, value);
+
+        /// <summary>
+        /// Style applied to each summary-entry <see cref="System.Windows.Controls.TextBlock"/>
+        /// in this column's total summary cell (entries stack vertically, one per
+        /// <see cref="SummaryItem"/>). When unset, inherits the grid's
+        /// <see cref="SearchDataGrid.TotalSummaryContentStyle"/>; the resolved value is exposed
+        /// by <see cref="ActualTotalSummaryContentStyle"/>.
+        /// </summary>
+        public static readonly DependencyProperty TotalSummaryContentStyleProperty =
+            DependencyProperty.Register(
+                nameof(TotalSummaryContentStyle),
+                typeof(Style),
+                typeof(GridColumn),
+                new PropertyMetadata(null, OnTotalSummaryContentStyleChanged));
+
+        public Style TotalSummaryContentStyle
+        {
+            get => (Style)GetValue(TotalSummaryContentStyleProperty);
+            set => SetValue(TotalSummaryContentStyleProperty, value);
+        }
+
+        private static readonly DependencyPropertyKey ActualTotalSummaryContentStylePropertyKey =
+            DependencyProperty.RegisterReadOnly(
+                nameof(ActualTotalSummaryContentStyle),
+                typeof(Style),
+                typeof(GridColumn),
+                new PropertyMetadata(null));
+
+        /// <summary>Read-only dependency property exposing <see cref="ActualTotalSummaryContentStyle"/> for bindings.</summary>
+        public static readonly DependencyProperty ActualTotalSummaryContentStyleProperty = ActualTotalSummaryContentStylePropertyKey.DependencyProperty;
+
+        /// <summary>
+        /// Resolved total-summary content style: the column-level
+        /// <see cref="TotalSummaryContentStyle"/> when set, otherwise the grid's
+        /// <see cref="SearchDataGrid.TotalSummaryContentStyle"/>.
+        /// </summary>
+        public Style ActualTotalSummaryContentStyle => (Style)GetValue(ActualTotalSummaryContentStyleProperty);
+
+        /// <summary>
+        /// Recomputes <see cref="ActualTotalSummaryContentStyle"/>. Called on the column change,
+        /// on grid attach (<see cref="OnViewChanged"/>), and when the grid's default changes
+        /// (the grid walks columns).
+        /// </summary>
+        internal void RefreshActualTotalSummaryContentStyle()
+            => SetValue(ActualTotalSummaryContentStylePropertyKey,
+                TotalSummaryContentStyle ?? View?.TotalSummaryContentStyle);
+
+        private static void OnTotalSummaryContentStyleChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            if (d is GridColumn col)
+                col.RefreshActualTotalSummaryContentStyle();
+        }
+
+        private static readonly DependencyPropertyKey IsSortedBySummaryPropertyKey =
+            DependencyProperty.RegisterReadOnly(
+                nameof(IsSortedBySummary),
+                typeof(bool),
+                typeof(GridColumn),
+                new PropertyMetadata(false));
+
+        /// <summary>Read-only dependency property exposing <see cref="IsSortedBySummary"/> for bindings.</summary>
+        public static readonly DependencyProperty IsSortedBySummaryProperty = IsSortedBySummaryPropertyKey.DependencyProperty;
+
+        /// <summary>
+        /// True when the grid's groups are ordered by a summary aggregate over this column's
+        /// field — see <see cref="SearchDataGrid.SortGroupsBySummary"/>. Pushed by the grid when
+        /// the summary sort is set or cleared.
+        /// </summary>
+        public bool IsSortedBySummary => (bool)GetValue(IsSortedBySummaryProperty);
+
+        internal void SetIsSortedBySummary(bool value) => SetValue(IsSortedBySummaryPropertyKey, value);
+
+        /// <summary>
+        /// Resolves the property path summaries aggregate on: <see cref="ColumnDataBase.FieldName"/>,
+        /// then the cell <c>Binding</c>'s path for binding-only columns. Deliberately NOT
+        /// <see cref="ColumnDataBase.SortMemberPath"/> — a column sorted by a surrogate member
+        /// still summarizes its displayed value.
+        /// </summary>
+        internal string ResolveSummaryPath()
+        {
+            if (!string.IsNullOrEmpty(FieldName)) return FieldName;
+            return ResolveValuePath();
+        }
+
+        #endregion
+
+        #region Group Footer Summaries
+
+        /// <summary>
+        /// Summary definitions computed per group over that group's leaf rows and rendered in
+        /// THIS column's cell of the group's footer row (stacked vertically) — the per-group
+        /// counterpart of <see cref="TotalSummaries"/>. The footer row docks at the bottom of an
+        /// expanded group and pins directly beneath the header of a collapsed one; each cell
+        /// aligns under its column and scrolls horizontally with the data. Seeded with an empty
+        /// collection at construction; the runtime picker on a footer cell writes here too. The
+        /// grid recomputes on filter / source / grouping changes and on cell edit commits.
+        /// </summary>
+        public static readonly DependencyProperty GroupFooterSummariesProperty =
+            DependencyProperty.Register(
+                nameof(GroupFooterSummaries),
+                typeof(FreezableCollection<SummaryItem>),
+                typeof(GridColumn),
+                new PropertyMetadata(null, OnGroupFooterSummariesChanged));
+
+        public FreezableCollection<SummaryItem> GroupFooterSummaries
+        {
+            get => (FreezableCollection<SummaryItem>)GetValue(GroupFooterSummariesProperty);
+            set => SetValue(GroupFooterSummariesProperty, value);
+        }
+
+        private static void OnGroupFooterSummariesChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            if (d is not GridColumn col) return;
+            // Freezable.Changed fires for both collection mutations and item DP edits, so a
+            // single subscription keeps the projected footers in step with the definitions.
+            if (e.OldValue is FreezableCollection<SummaryItem> oldItems)
+                oldItems.Changed -= col.OnGroupFooterSummaryDefinitionsChanged;
+            if (e.NewValue is FreezableCollection<SummaryItem> newItems)
+                newItems.Changed += col.OnGroupFooterSummaryDefinitionsChanged;
+            col.OnGroupFooterSummaryDefinitionsChanged(col, System.EventArgs.Empty);
+        }
+
+        private void OnGroupFooterSummaryDefinitionsChanged(object sender, System.EventArgs e)
+        {
+            SetValue(HasGroupFooterSummariesPropertyKey, GroupFooterSummaries is { Count: > 0 });
+            View?.OnColumnGroupFooterSummariesChanged(this);
+        }
+
+        private static readonly DependencyPropertyKey HasGroupFooterSummariesPropertyKey =
+            DependencyProperty.RegisterReadOnly(
+                nameof(HasGroupFooterSummaries),
+                typeof(bool),
+                typeof(GridColumn),
+                new PropertyMetadata(false));
+
+        /// <summary>Read-only dependency property exposing <see cref="HasGroupFooterSummaries"/> for bindings.</summary>
+        public static readonly DependencyProperty HasGroupFooterSummariesProperty = HasGroupFooterSummariesPropertyKey.DependencyProperty;
+
+        /// <summary>True when <see cref="GroupFooterSummaries"/> holds at least one definition.</summary>
+        public bool HasGroupFooterSummaries => (bool)GetValue(HasGroupFooterSummariesProperty);
+
+        /// <summary>
+        /// Which aggregate functions the runtime picker on this column's footer cell offers.
+        /// Defaults to <see cref="AllowedSummaries.All"/>; functions the column's
+        /// <see cref="ColumnDataBase.FieldType"/> can't compute are gated off regardless.
+        /// Mirrors <see cref="AllowedTotalSummaries"/> for the footer surface.
+        /// </summary>
+        public static readonly DependencyProperty AllowedGroupFooterSummariesProperty =
+            DependencyProperty.Register(
+                nameof(AllowedGroupFooterSummaries),
+                typeof(AllowedSummaries),
+                typeof(GridColumn),
+                new PropertyMetadata(AllowedSummaries.All));
+
+        public AllowedSummaries AllowedGroupFooterSummaries
+        {
+            get => (AllowedSummaries)GetValue(AllowedGroupFooterSummariesProperty);
+            set => SetValue(AllowedGroupFooterSummariesProperty, value);
+        }
+
+        #endregion
+
         #region View Attach
 
         /// <inheritdoc/>
@@ -507,6 +795,13 @@ namespace WWSearchDataGrid.Modern.WPF
             SetValue(ActualGroupValueTemplateSelectorPropertyKey, GroupValueTemplateSelector);
             // Same for the whole-header selector mirror.
             SetValue(ActualGroupHeaderTemplateSelectorPropertyKey, GroupHeaderTemplateSelector);
+            // Summary content style inherits a grid-level default — resolve on attach, and let
+            // the engine pick up any declaratively-defined summaries.
+            RefreshActualTotalSummaryContentStyle();
+            if (HasTotalSummaries)
+                View?.OnColumnTotalSummariesChanged(this);
+            if (HasGroupFooterSummaries)
+                View?.OnColumnGroupFooterSummariesChanged(this);
         }
 
         #endregion

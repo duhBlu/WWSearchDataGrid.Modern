@@ -1,12 +1,20 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:sdg="clr-namespace:WWSearchDataGrid.Modern.WPF;assembly=WWSearchDataGrid.Modern.WPF"
+                    xmlns:converters="clr-namespace:WWSearchDataGrid.Modern.WPF.Converters;assembly=WWSearchDataGrid.Modern.WPF"
                     xmlns:commands="clr-namespace:WWSearchDataGrid.Modern.WPF.Commands;assembly=WWSearchDataGrid.Modern.WPF">
 
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF.Themes.Default;component/Resources/Icons/Icons.xaml" />
         <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF.Themes.Default;component/Themes/Controls/Primitives/ContextMenu.xaml" />
     </ResourceDictionary.MergedDictionaries>
+
+    <!--  Per-segment styling: an unset weight / style / color falls back to the entry's base look.  -->
+    <converters:BrushToUnsetConverter x:Key="SummaryStyleForeground" />
+    <converters:FontWeightToUnsetConverter x:Key="SummaryStyleFontWeight" />
+    <converters:FontStyleToUnsetConverter x:Key="SummaryStyleFontStyle" />
+    <!--  Collapses a horizontal summary run when its side has no entries.  -->
+    <converters:HasValueToVisibilityConverter x:Key="SummaryRunHasValueToVisibility" />
 
     <!--
         Default group rendering for a grouped SearchDataGrid. The grid attaches this GroupStyle
@@ -18,7 +26,7 @@
 
     <!--  Fallback group-value rendering when a column declares no GroupValueTemplate.  -->
     <DataTemplate x:Key="DefaultGroupValueTemplate">
-        <TextBlock Foreground="#FF222222"
+        <TextBlock Foreground="#FF262626"
                    Text="{Binding Name}"
                    FontWeight="SemiBold" />
     </DataTemplate>
@@ -30,18 +38,20 @@
     <sdg:GroupValueTemplateSelector x:Key="GroupValueTemplateSelector" DefaultTemplate="{StaticResource DefaultGroupValueTemplate}" />
 
     <!--
-        Resolves the owning column's HeaderCaption (by group nesting level) into the "ColumnName: "
-        prefix rendered ahead of the value in DefaultGroupHeaderTemplate.
+        Resolves the header item's owning-column HeaderCaption into the "ColumnName: " prefix
+        rendered ahead of the value in DefaultGroupHeaderTemplate.
     -->
     <sdg:GroupColumnNameConverter x:Key="GroupColumnNameConverter" />
 
     <!--
         Default whole-header rendering. Used as the fallback by GroupHeaderTemplateSelector when
         the owning column declares no GroupHeaderTemplate. Lays out the column's
-        GroupValueTemplate-rendered value followed by the row count chip — exactly what the
-        Expander.Header used to host inline. A column-level GroupHeaderTemplate replaces this
-        wholesale (including the count chip); GroupValueTemplate alone customizes only the value
-        slot and keeps this chrome.
+        GroupValueTemplate-rendered value after the column-name prefix. The row count is NOT
+        default chrome — it's an opt-in summary entry (SearchDataGrid.ShowGroupRowCount, "Show
+        row count" in the View Totals editor), rendered with the other group summaries in the
+        header's left/right summary runs (owned by the row chrome, not this template). A
+        column-level GroupHeaderTemplate replaces this template wholesale; summaries persist
+        either way.
     -->
     <DataTemplate x:Key="DefaultGroupHeaderTemplate">
         <StackPanel Orientation="Horizontal"
@@ -49,31 +59,68 @@
                     Margin="2,3"
                     VerticalAlignment="Center">
             <!--
-                Column-name prefix: the owning column's HeaderCaption followed by ": ", resolved
-                from the group's nesting level via GroupColumnNameConverter. Renders nothing (empty
+                Column-name prefix: the owning column's HeaderCaption followed by ": ", read
+                directly off the header item via GroupColumnNameConverter. Renders nothing (empty
                 string) when the column or caption can't be resolved, so the value slot stands alone.
             -->
-            <TextBlock Foreground="#FF808080" VerticalAlignment="Center">
-                <TextBlock.Text>
-                    <MultiBinding Converter="{StaticResource GroupColumnNameConverter}">
-                        <Binding />
-                        <Binding RelativeSource="{RelativeSource AncestorType={x:Type GroupItem}}" />
-                        <Binding RelativeSource="{RelativeSource AncestorType={x:Type sdg:SearchDataGrid}}" />
-                    </MultiBinding>
-                </TextBlock.Text>
-            </TextBlock>
+            <TextBlock Foreground="#FF1C1C1C"
+                       FontWeight="Bold"
+                       VerticalAlignment="Center"
+                       Text="{Binding Converter={StaticResource GroupColumnNameConverter}}" />
             <!--  Value: per-column GroupValueTemplate, resolved by level.  -->
             <ContentControl VerticalAlignment="Center"
                             Content="{Binding}"
                             ContentTemplateSelector="{StaticResource GroupValueTemplateSelector}" />
-            <!--  Count: always rendered by the chrome, after the value.  -->
-            <TextBlock Foreground="#FF808080"
-                       Text="{Binding ItemCount, StringFormat=' ({0})'}"
-                       Margin="6,0,0,0"
-                       VerticalAlignment="Center" />
         </StackPanel>
     </DataTemplate>
-    
+
+    <!--
+        Group-summary run text — shared look for the left (inline after content) and right
+        (right-aligned) runs on both header surfaces. Collapses when its run is empty so the
+        slot costs nothing on summary-free grids.
+    -->
+    <Style x:Key="GroupSummaryRunTextStyle" TargetType="{x:Type TextBlock}">
+        <Setter Property="Foreground" Value="#FF555555" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding Text, RelativeSource={RelativeSource Self}}" Value="{x:Null}">
+                <Setter Property="Visibility" Value="Collapsed" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding Text, RelativeSource={RelativeSource Self}}" Value="">
+                <Setter Property="Visibility" Value="Collapsed" />
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+
+    <!--  One styled entry inside a horizontal group-summary run (collapse is handled by the run's ItemsControl).  -->
+    <Style x:Key="GroupSummaryRunEntryTextStyle" TargetType="{x:Type TextBlock}">
+        <Setter Property="Foreground" Value="#FF555555" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+    </Style>
+
+    <!--  Prefix / value / suffix run entry, each segment carrying its own per-segment style.  -->
+    <DataTemplate x:Key="HeaderRunSummaryResultTemplate" DataType="{x:Type sdg:SummaryResult}">
+        <TextBlock Style="{StaticResource GroupSummaryRunEntryTextStyle}">
+            <Run Text="{Binding PrefixText, Mode=OneWay}"
+                 FontWeight="{Binding PrefixStyle.FontWeight, Converter={StaticResource SummaryStyleFontWeight}}"
+                 FontStyle="{Binding PrefixStyle.FontStyle, Converter={StaticResource SummaryStyleFontStyle}}"
+                 TextDecorations="{Binding PrefixStyle.TextDecorations}"
+                 Foreground="{Binding PrefixStyle.Foreground, Converter={StaticResource SummaryStyleForeground}}" />
+            <Run Text="{Binding ValueText, Mode=OneWay}"
+                 FontWeight="{Binding ValueStyle.FontWeight, Converter={StaticResource SummaryStyleFontWeight}}"
+                 FontStyle="{Binding ValueStyle.FontStyle, Converter={StaticResource SummaryStyleFontStyle}}"
+                 TextDecorations="{Binding ValueStyle.TextDecorations}"
+                 Foreground="{Binding ValueStyle.Foreground, Converter={StaticResource SummaryStyleForeground}}" />
+            <Run Text="{Binding SuffixText, Mode=OneWay}"
+                 FontWeight="{Binding SuffixStyle.FontWeight, Converter={StaticResource SummaryStyleFontWeight}}"
+                 FontStyle="{Binding SuffixStyle.FontStyle, Converter={StaticResource SummaryStyleFontStyle}}"
+                 TextDecorations="{Binding SuffixStyle.TextDecorations}"
+                 Foreground="{Binding SuffixStyle.Foreground, Converter={StaticResource SummaryStyleForeground}}" />
+        </TextBlock>
+    </DataTemplate>
+
     <sdg:GroupHeaderTemplateSelector x:Key="GroupHeaderTemplateSelector" DefaultTemplate="{StaticResource DefaultGroupHeaderTemplate}" />
     <sdg:GroupHeaderMarginConverter x:Key="GroupHeaderMarginConverter" />
     
@@ -174,6 +221,38 @@
                           IconSource="{StaticResource {x:Static sdg:IconKeys.IconUngroup}}" />
             </MenuItem.Icon>
         </MenuItem>
+        <Separator x:Name="sepGroupSummaries">
+            <Separator.Style>
+                <Style TargetType="Separator" BasedOn="{StaticResource {x:Static MenuItem.SeparatorStyleKey}}">
+                    <Setter Property="Visibility" Value="Visible" />
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding PlacementTarget.DataContext.OwningColumn.View.SummaryContextMenusEnabled, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}" Value="False">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Separator.Style>
+        </Separator>
+        <MenuItem Command="{x:Static commands:ContextMenuCommands.OpenGroupSummaryEditorCommand}"
+                  CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}"
+                  Header="Customize Group Summaries">
+            <MenuItem.Icon>
+                <Grid>
+                    <Border Style="{StaticResource FooterSummaryFunctionActivePillStyle}" />
+                    <sdg:Icon Style="{StaticResource FooterSummaryFunctionIconStyle}" IconSource="{StaticResource {x:Static sdg:IconKeys.IconCustomizeSummary}}" />
+                </Grid>
+            </MenuItem.Icon>
+            <MenuItem.Style>
+                <Style TargetType="MenuItem" BasedOn="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesMenuItem}}">
+                    <Style.Triggers>
+                        <!--  Read-only gate: the group-header DataContext exposes its owning column's grid.  -->
+                        <DataTrigger Binding="{Binding PlacementTarget.DataContext.OwningColumn.View.SummaryContextMenusEnabled, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}" Value="False">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </MenuItem.Style>
+        </MenuItem>
     </ContextMenu>
 
     <!--
@@ -186,6 +265,139 @@
         and the indent reuses FixedGroupIndentConverter (which takes the level as a primitive, with
         no GroupItem ancestor to walk). Clicks / Space-Enter are handled by SearchDataGridRow itself.
     -->
+    <!--
+        Expand/collapse chevron for a group header, shared by the in-body flat header row and the
+        pinned strip's per-entry template (both reference it by ThemeKey, so the chevron is identical
+        fixed or unfixed). The Button supplies a padded, transparent hit target around the 9x9 glyph
+        plus the IsMouseOver / IsPressed states the bare Icon couldn't; IconBrush tracks Foreground so
+        those triggers recolor the glyph (DarkGray idle, Gray hover, Black pressed). The glyph is a single
+        right-pointing caret rotated by the GroupChevron behavior — 0° when collapsed, 90° (= caret-down)
+        when expanded — keyed off the DataContext's IsExpanded (a GroupHeaderRow or a
+        FixedGroupHeaderEntry, both of which expose it). The rotation animates only on a genuine
+        in-place toggle while the grid's AllowGroupExpandAnimation is on; initial realization and
+        recycled-container rebinds snap. The toggle command is supplied by each call site
+        (ToggleGroupCommand in body, ToggleFixedGroupCommand in the strip).
+    -->
+    <Style x:Key="{x:Static sdg:ThemeKeys.GridSearchDataGridGroupHeaderChevronButton}" TargetType="{x:Type Button}">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Foreground" Value="DarkGray" />
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Padding" Value="6" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type Button}">
+                    <Border Background="{TemplateBinding Background}"
+                            Padding="{TemplateBinding Padding}"
+                            SnapsToDevicePixels="True">
+                        <sdg:Icon x:Name="Chevron"
+                                  Width="7"
+                                  Height="7"
+                                  VerticalAlignment="Center"
+                                  RenderTransformOrigin="0.5,0.5"
+                                  sdg:GroupChevron.Attach="True"
+                                  sdg:GroupChevron.IsExpanded="{Binding IsExpanded}"
+                                  IconBrush="{TemplateBinding Foreground}"
+                                  IconSource="{StaticResource {x:Static sdg:IconKeys.IconCaretRight}}" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter Property="Foreground" Value="Gray" />
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter Property="Foreground" Value="Black" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!--
+        ═══════════════════════════════════════════════════════════════════════
+        Column-aligned group summaries (SearchDataGrid.GroupSummaryDisplayMode =
+        AlignByColumns) — a layer INSIDE the group header row, beneath the pinned
+        content, whose per-column cells scroll with the columns.
+        ═══════════════════════════════════════════════════════════════════════
+    -->
+
+    <!--  One aligned summary line. Mirrors the summary-run foreground so aligned values
+          read as group chrome, not grid totals.  -->
+    <Style x:Key="DefaultGroupSummaryCellEntryTextStyle" TargetType="{x:Type TextBlock}">
+        <Setter Property="Foreground" Value="#FF555555" />
+        <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+        <Setter Property="HorizontalAlignment" Value="Right" />
+    </Style>
+
+    <!--  Per-column slot: the column's results stack vertically, right-aligned under the
+          column (entries already carry their formatted text). Empty for columns without
+          entries — and in Header mode the presenter builds no cells at all.  -->
+    <Style x:Key="{x:Static sdg:ThemeKeys.GridSearchDataGridGroupSummaryCell}" TargetType="{x:Type sdg:GroupSummaryCell}">
+        <Setter Property="IsTabStop" Value="False" />
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type sdg:GroupSummaryCell}">
+                    <Border Background="Transparent">
+                        <ItemsControl ItemsSource="{Binding Results, RelativeSource={RelativeSource TemplatedParent}}"
+                                      Margin="4,2"
+                                      HorizontalAlignment="Right"
+                                      VerticalAlignment="Center"
+                                      IsTabStop="False"
+                                      Focusable="False">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <StackPanel Orientation="Vertical" />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="{x:Type sdg:SummaryResult}">
+                                    <TextBlock Style="{StaticResource DefaultGroupSummaryCellEntryTextStyle}">
+                                        <Run Text="{Binding PrefixText, Mode=OneWay}"
+                                             FontWeight="{Binding PrefixStyle.FontWeight, Converter={StaticResource SummaryStyleFontWeight}}"
+                                             FontStyle="{Binding PrefixStyle.FontStyle, Converter={StaticResource SummaryStyleFontStyle}}"
+                                             TextDecorations="{Binding PrefixStyle.TextDecorations}"
+                                             Foreground="{Binding PrefixStyle.Foreground, Converter={StaticResource SummaryStyleForeground}}" />
+                                        <Run Text="{Binding ValueText, Mode=OneWay}"
+                                             FontWeight="{Binding ValueStyle.FontWeight, Converter={StaticResource SummaryStyleFontWeight}}"
+                                             FontStyle="{Binding ValueStyle.FontStyle, Converter={StaticResource SummaryStyleFontStyle}}"
+                                             TextDecorations="{Binding ValueStyle.TextDecorations}"
+                                             Foreground="{Binding ValueStyle.Foreground, Converter={StaticResource SummaryStyleForeground}}" />
+                                        <Run Text="{Binding SuffixText, Mode=OneWay}"
+                                             FontWeight="{Binding SuffixStyle.FontWeight, Converter={StaticResource SummaryStyleFontWeight}}"
+                                             FontStyle="{Binding SuffixStyle.FontStyle, Converter={StaticResource SummaryStyleFontStyle}}"
+                                             TextDecorations="{Binding SuffixStyle.TextDecorations}"
+                                             Foreground="{Binding SuffixStyle.Foreground, Converter={StaticResource SummaryStyleForeground}}" />
+                                    </TextBlock>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    <Style BasedOn="{StaticResource {x:Static sdg:ThemeKeys.GridSearchDataGridGroupSummaryCell}}" TargetType="{x:Type sdg:GroupSummaryCell}" />
+
+    <!--  Cells host: per-column run in display order in the same extent space as the data
+          cells; FixedColumnAlignedPanel additionally anchors pinned columns' cells to the
+          viewport edges (and clips scrollable cells sliding under the bands), matching the
+          data cells' fixed-column behavior.  -->
+    <Style x:Key="{x:Static sdg:ThemeKeys.GridSearchDataGridGroupSummaryCellsPresenter}" TargetType="{x:Type sdg:GroupSummaryCellsPresenter}">
+        <Setter Property="IsTabStop" Value="False" />
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type sdg:GroupSummaryCellsPresenter}">
+                    <sdg:FixedColumnAlignedPanel x:Name="PART_SummaryCellsPanel" />
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    <Style BasedOn="{StaticResource {x:Static sdg:ThemeKeys.GridSearchDataGridGroupSummaryCellsPresenter}}" TargetType="{x:Type sdg:GroupSummaryCellsPresenter}" />
+
     <ControlTemplate x:Key="{x:Static sdg:ThemeKeys.GridSearchDataGridGroupHeaderRow}" TargetType="{x:Type DataGridRow}">
         <!--  #FFF3F3F3 matches the legacy GroupExpanderStyle background; the row's own
               (white / alternating) Background is intentionally ignored here.  -->
@@ -197,7 +409,32 @@
                 ContextMenu="{StaticResource {x:Static sdg:ThemeKeys.GridSearchDataGridGroupHeaderContextMenu}}"
                 UseLayoutRounding="True"
                 SnapsToDevicePixels="True">
-            <Grid>
+          <Grid>
+            <!--
+                Column-aligned summary layer (AlignByColumns mode). Lives in EXTENT space — a
+                row-header-width spacer then one cell per visible column — so each value sits
+                under its target column and scrolls with it, unlike the pinned content above it.
+                Hit-test-transparent: clicks fall through to the header row's own handlers. In
+                Header mode the presenter builds no cells, so this costs nothing.
+            -->
+            <DockPanel HorizontalAlignment="Left" IsHitTestVisible="False">
+                <Border DockPanel.Dock="Left" Width="{Binding RowHeaderActualWidth, RelativeSource={RelativeSource AncestorType={x:Type sdg:SearchDataGrid}}}" />
+                <sdg:GroupSummaryCellsPresenter VerticalAlignment="Center" />
+            </DockPanel>
+            <!--
+                Viewport-pinned content. Group header rows are extent-wide (they live in the
+                scrolling row panel), so a right-aligned summary run at the extent edge would sit
+                offscreen whenever the columns overflow. Clamping this inner grid to the
+                ScrollViewer's ViewportWidth and counter-translating by HorizontalOffset keeps
+                the header text, gutter, and both summary runs pinned in view during horizontal
+                scroll (the HeaderBorder behind it stays extent-wide so the chrome never ends
+                mid-row). The counter-translation is owned by ViewportPinBehavior — a
+                RelativeSource binding on the TranslateTransform itself targets a Freezable with
+                no governing FrameworkElement and silently fails to resolve in row templates.
+            -->
+            <Grid HorizontalAlignment="Left"
+                  sdg:ViewportPinBehavior.IsPinned="True"
+                  Width="{Binding ViewportWidth, RelativeSource={RelativeSource AncestorType={x:Type ScrollViewer}}}">
                 <!--  Row-header gutter strip, kept flush at x=0 regardless of group depth.  -->
                 <Border Background="#FFf9f9f9"
                         BorderBrush="#FFd0d0d0"
@@ -206,37 +443,66 @@
                         Width="{Binding RowHeaderActualWidth, RelativeSource={RelativeSource AncestorType={x:Type sdg:SearchDataGrid}}}"
                         UseLayoutRounding="True"
                         SnapsToDevicePixels="True" />
-                <sdg:SimpleStackPanel Orientation="Horizontal"
-                                      VerticalAlignment="Center"
-                                      Spacing="8">
-                    <sdg:SimpleStackPanel.Margin>
-                        <MultiBinding Converter="{StaticResource FixedGroupIndentConverter}">
-                            <Binding Path="Level" />
-                            <Binding RelativeSource="{RelativeSource AncestorType={x:Type sdg:SearchDataGrid}}" Path="RowHeaderActualWidth" />
-                            <Binding RelativeSource="{RelativeSource AncestorType={x:Type sdg:SearchDataGrid}}" Path="GroupIndentWidth" />
-                        </MultiBinding>
-                    </sdg:SimpleStackPanel.Margin>
-                    <sdg:Icon x:Name="Chevron"
-                              VerticalAlignment="Center"
-                              Width="9"
-                              Height="9"
-                              Margin="6,0,0,0"
-                              IconSource="{StaticResource {x:Static sdg:IconKeys.IconChevronRight}}" />
-                    <ContentControl VerticalAlignment="Center"
-                                    Content="{Binding}"
-                                    ContentTemplateSelector="{StaticResource GroupHeaderTemplateSelector}" />
-                </sdg:SimpleStackPanel>
+                <DockPanel>
+                    <!--  Right-aligned group-summary run (GroupSummaries with Alignment=Right + the opt-in row count).  -->
+                    <ItemsControl DockPanel.Dock="Right"
+                                  Margin="12,0,12,0"
+                                  VerticalAlignment="Center"
+                                  IsTabStop="False"
+                                  Focusable="False"
+                                  ItemsSource="{Binding GroupSummaryRightInfo}"
+                                  ItemTemplate="{StaticResource HeaderRunSummaryResultTemplate}"
+                                  Visibility="{Binding GroupSummaryRightInfo, Converter={StaticResource SummaryRunHasValueToVisibility}}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <sdg:SimpleStackPanel Orientation="Horizontal" Spacing="12" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                    </ItemsControl>
+                    <sdg:SimpleStackPanel Orientation="Horizontal"
+                                          HorizontalAlignment="Left"
+                                          VerticalAlignment="Center"
+                                          Spacing="0">
+                        <sdg:SimpleStackPanel.Margin>
+                            <MultiBinding Converter="{StaticResource FixedGroupIndentConverter}">
+                                <Binding Path="Level" />
+                                <Binding RelativeSource="{RelativeSource AncestorType={x:Type sdg:SearchDataGrid}}" Path="RowHeaderActualWidth" />
+                                <Binding RelativeSource="{RelativeSource AncestorType={x:Type sdg:SearchDataGrid}}" Path="GroupIndentWidth" />
+                            </MultiBinding>
+                        </sdg:SimpleStackPanel.Margin>
+                        <Button Style="{StaticResource {x:Static sdg:ThemeKeys.GridSearchDataGridGroupHeaderChevronButton}}"
+                                Command="{x:Static commands:ContextMenuCommands.ToggleGroupCommand}"
+                                CommandParameter="{Binding}" />
+                        <ContentControl VerticalAlignment="Center"
+                                        Content="{Binding}"
+                                        ContentTemplateSelector="{StaticResource GroupHeaderTemplateSelector}" />
+                        <!--  Left-side group-summary run, inline after the header content.  -->
+                        <ItemsControl VerticalAlignment="Center"
+                                      Margin="6,0,0,0"
+                                      IsTabStop="False"
+                                      Focusable="False"
+                                      ItemsSource="{Binding GroupSummaryLeftInfo}"
+                                      ItemTemplate="{StaticResource HeaderRunSummaryResultTemplate}"
+                                      Visibility="{Binding GroupSummaryLeftInfo, Converter={StaticResource SummaryRunHasValueToVisibility}}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <sdg:SimpleStackPanel Orientation="Horizontal" Spacing="12" />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                        </ItemsControl>
+                    </sdg:SimpleStackPanel>
+                </DockPanel>
             </Grid>
+          </Grid>
         </Border>
         <ControlTemplate.Triggers>
-            <DataTrigger Binding="{Binding IsExpanded}" Value="True">
-                <Setter TargetName="Chevron" Property="IconSource" Value="{StaticResource {x:Static sdg:IconKeys.IconChevronDown}}" />
-            </DataTrigger>
             <!--  Keyboard-focus highlight: header rows are focusable, tree-navigable rows. The
                   highlight tracks keyboard focus, not selection — headers never enter SelectedItems.  -->
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="HeaderBorder" Property="Background" Value="#FFE8E8E8" />
+            </Trigger>
             <Trigger Property="IsKeyboardFocusWithin" Value="True">
                 <Setter TargetName="HeaderBorder" Property="Background" Value="#FFD7E8FB" />
-                <Setter TargetName="HeaderBorder" Property="BorderBrush" Value="#FF7FB0E6" />
             </Trigger>
         </ControlTemplate.Triggers>
     </ControlTemplate>
@@ -310,6 +576,38 @@
                           IconSource="{StaticResource {x:Static sdg:IconKeys.IconUngroup}}" />
             </MenuItem.Icon>
         </MenuItem>
+        <Separator>
+            <Separator.Style>
+                <Style TargetType="Separator" BasedOn="{StaticResource {x:Static MenuItem.SeparatorStyleKey}}">
+                    <Setter Property="Visibility" Value="Visible" />
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding PlacementTarget.DataContext.Column.View.SummaryContextMenusEnabled, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}" Value="False">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Separator.Style>
+        </Separator>
+        <MenuItem Command="{x:Static commands:ContextMenuCommands.OpenGroupSummaryEditorFixedCommand}"
+                  CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}"
+                  Header="Customize Group Summaries">
+            <MenuItem.Icon>
+                <Grid>
+                    <Border Style="{StaticResource FooterSummaryFunctionActivePillStyle}" />
+                    <sdg:Icon Style="{StaticResource FooterSummaryFunctionIconStyle}" IconSource="{StaticResource {x:Static sdg:IconKeys.IconCustomizeSummary}}" />
+                </Grid>
+            </MenuItem.Icon>
+            <MenuItem.Style>
+                <Style TargetType="MenuItem" BasedOn="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesMenuItem}}">
+                    <Style.Triggers>
+                        <!--  Read-only gate: the pinned entry exposes its column's grid via Column.View.  -->
+                        <DataTrigger Binding="{Binding PlacementTarget.DataContext.Column.View.SummaryContextMenusEnabled, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}" Value="False">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </MenuItem.Style>
+        </MenuItem>
     </ContextMenu>
 
     <Style x:Key="{x:Static sdg:ThemeKeys.GridSearchDataGridFixedGroupHeadersPresenter}" TargetType="{x:Type sdg:FixedGroupHeadersPresenter}">
@@ -329,57 +627,74 @@
                     <Border Background="#FFF3F3F3"
                             BorderBrush="#FFd0d0d0"
                             BorderThickness="0,0,0,1"
+                            Cursor="Hand"
                             ContextMenu="{StaticResource {x:Static sdg:ThemeKeys.GridSearchDataGridFixedGroupHeaderContextMenu}}"
                             UseLayoutRounding="True"
                             SnapsToDevicePixels="True">
+                        <!--  Click anywhere on the pinned entry toggles the group; the chevron button
+                              marks its own clicks handled, so they don't double-fire this binding.  -->
+                        <Border.InputBindings>
+                            <MouseBinding MouseAction="LeftClick"
+                                          Command="{x:Static commands:ContextMenuCommands.ToggleFixedGroupCommand}"
+                                          CommandParameter="{Binding}" />
+                        </Border.InputBindings>
                         <Grid>
                             <Border Background="#FFf9f9f9"
                                     BorderBrush="#FFd0d0d0"
                                     BorderThickness="0,0,1,0"
-                                    Margin="0,0,0,0"
                                     HorizontalAlignment="Left"
                                     Width="{Binding RowHeaderActualWidth, RelativeSource={RelativeSource AncestorType={x:Type sdg:SearchDataGrid}}}"
                                     UseLayoutRounding="True"
                                     SnapsToDevicePixels="True" />
-                            <Button Background="Transparent"
-                                    BorderThickness="0"
-                                    Focusable="False"
-                                    Cursor="Hand"
-                                    Command="{x:Static commands:ContextMenuCommands.ToggleFixedGroupCommand}"
-                                    CommandParameter="{Binding}"
-                                    HorizontalAlignment="Stretch"
-                                    HorizontalContentAlignment="Left">
-                                <Button.Margin>
-                                    <MultiBinding Converter="{StaticResource FixedGroupIndentConverter}">
-                                        <Binding Path="Level" />
-                                        <Binding RelativeSource="{RelativeSource AncestorType={x:Type sdg:SearchDataGrid}}" Path="RowHeaderActualWidth" />
-                                        <Binding RelativeSource="{RelativeSource AncestorType={x:Type sdg:SearchDataGrid}}" Path="GroupIndentWidth" />
-                                    </MultiBinding>
-                                </Button.Margin>
-                                <Button.Template>
-                                    <ControlTemplate TargetType="{x:Type Button}">
-                                        <Border Background="{TemplateBinding Background}">
-                                            <sdg:SimpleStackPanel Orientation="Horizontal"
-                                                                  Margin="6,0,0,0"
-                                                                  Spacing="8">
-                                                <sdg:Icon x:Name="Chevron"
-                                                          VerticalAlignment="Center"
-                                                          Width="9"
-                                                          Height="9"
-                                                          IconSource="{StaticResource {x:Static sdg:IconKeys.IconChevronRight}}" />
-                                                <ContentControl VerticalAlignment="Center"
-                                                                Content="{Binding}"
-                                                                ContentTemplateSelector="{StaticResource GroupHeaderTemplateSelector}" />
-                                            </sdg:SimpleStackPanel>
-                                        </Border>
-                                        <ControlTemplate.Triggers>
-                                            <DataTrigger Binding="{Binding Converter={StaticResource FixedGroupEntryIsExpandedConverter}}" Value="True">
-                                                <Setter TargetName="Chevron" Property="IconSource" Value="{StaticResource {x:Static sdg:IconKeys.IconChevronDown}}" />
-                                            </DataTrigger>
-                                        </ControlTemplate.Triggers>
-                                    </ControlTemplate>
-                                </Button.Template>
-                            </Button>
+                            <!--  The strip is already viewport-width, so the summary runs dock without the
+                                  in-body template's viewport pinning.  -->
+                            <DockPanel>
+                                <ItemsControl DockPanel.Dock="Right"
+                                              Margin="12,0,12,0"
+                                              VerticalAlignment="Center"
+                                              IsTabStop="False"
+                                              Focusable="False"
+                                              ItemsSource="{Binding GroupSummaryRightInfo}"
+                                              ItemTemplate="{StaticResource HeaderRunSummaryResultTemplate}"
+                                              Visibility="{Binding GroupSummaryRightInfo, Converter={StaticResource SummaryRunHasValueToVisibility}}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <sdg:SimpleStackPanel Orientation="Horizontal" Spacing="12" />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                </ItemsControl>
+                                <sdg:SimpleStackPanel Orientation="Horizontal"
+                                                      HorizontalAlignment="Left"
+                                                      VerticalAlignment="Center"
+                                                      Spacing="0">
+                                    <sdg:SimpleStackPanel.Margin>
+                                        <MultiBinding Converter="{StaticResource FixedGroupIndentConverter}">
+                                            <Binding Path="Level" />
+                                            <Binding RelativeSource="{RelativeSource AncestorType={x:Type sdg:SearchDataGrid}}" Path="RowHeaderActualWidth" />
+                                            <Binding RelativeSource="{RelativeSource AncestorType={x:Type sdg:SearchDataGrid}}" Path="GroupIndentWidth" />
+                                        </MultiBinding>
+                                    </sdg:SimpleStackPanel.Margin>
+                                    <Button Style="{StaticResource {x:Static sdg:ThemeKeys.GridSearchDataGridGroupHeaderChevronButton}}"
+                                            Command="{x:Static commands:ContextMenuCommands.ToggleFixedGroupCommand}"
+                                            CommandParameter="{Binding}" />
+                                    <ContentControl VerticalAlignment="Center"
+                                                    Content="{Binding}"
+                                                    ContentTemplateSelector="{StaticResource GroupHeaderTemplateSelector}" />
+                                    <ItemsControl VerticalAlignment="Center"
+                                                  Margin="6,0,0,0"
+                                                  IsTabStop="False"
+                                                  Focusable="False"
+                                                  ItemsSource="{Binding GroupSummaryLeftInfo}"
+                                                  ItemTemplate="{StaticResource HeaderRunSummaryResultTemplate}"
+                                                  Visibility="{Binding GroupSummaryLeftInfo, Converter={StaticResource SummaryRunHasValueToVisibility}}">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <sdg:SimpleStackPanel Orientation="Horizontal" Spacing="12" />
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                    </ItemsControl>
+                                </sdg:SimpleStackPanel>
+                            </DockPanel>
                         </Grid>
                     </Border>
                 </DataTemplate>

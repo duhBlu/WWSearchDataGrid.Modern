@@ -11,12 +11,6 @@
         <local:ColumnChooserSampleViewModel />
     </UserControl.DataContext>
 
-    <UserControl.Resources>
-        <Style BasedOn="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesButton}}" TargetType="{x:Type Button}" />
-        <Style BasedOn="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesCheckBox}}" TargetType="{x:Type CheckBox}" />
-        <Style BasedOn="{StaticResource SampleExpanderStyle}" TargetType="{x:Type Expander}" />
-    </UserControl.Resources>
-
     <sampleControls:SampleHostControl Sources="{x:Static sampleControls:SampleSources.ColumnChooser}">
         <DockPanel>
             <TextBlock DockPanel.Dock="Top"
@@ -26,14 +20,14 @@
                        TextWrapping="Wrap">
                 <Run FontWeight="SemiBold" Text="Column Chooser" />
                 <LineBreak />
-                <Run Text="A floating window listing every column with a visibility checkbox. Toggle Enabled to gate the feature, Show Window to open / close, and Confine to Grid to keep the chooser inside the grid bounds. The 'Notes' column has ShowInColumnChooser=False so it never appears in the chooser even though it's visible in the grid." />
+                <Run Text="A floating, non-modal window listing every column with a visibility checkbox. The 'Notes' column sets ShowInColumnChooser=False, so it never appears in the chooser even though it's visible in the grid." />
             </TextBlock>
 
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="260" />
+                    <ColumnDefinition Width="320" />
                 </Grid.ColumnDefinitions>
 
                 <sdg:SearchDataGrid x:Name="Grid"
@@ -60,20 +54,27 @@
                 <GridSplitter Grid.Column="1" HorizontalAlignment="Stretch" Width="5" Background="#CCCCCC" />
 
                 <ScrollViewer Grid.Column="2" Background="#FFFFFF" VerticalScrollBarVisibility="Auto" Padding="8,4">
-                    <sdg:SimpleStackPanel Orientation="Vertical" Spacing="6" Margin="4">
-                        <CheckBox IsChecked="{Binding ElementName=Grid, Path=IsColumnChooserEnabled}" Content="Enabled"
-                                  ToolTip="Master switch. When off, the chooser cannot be opened and the right-click 'Show Column Chooser' menu item disappears." />
-                        <CheckBox IsEnabled="{Binding ElementName=Grid, Path=IsColumnChooserEnabled}"
-                                  IsChecked="{Binding ElementName=Grid, Path=IsColumnChooserVisible}" Content="Show Window"
-                                  ToolTip="Opens / closes the chooser window. The window is non-modal — interact with the grid while it's open." />
-                        <CheckBox IsEnabled="{Binding ElementName=Grid, Path=IsColumnChooserEnabled}"
-                                  IsChecked="{Binding ElementName=Grid, Path=IsColumnChooserConfinedToGrid}" Content="Confine to Grid"
-                                  ToolTip="Constrains the chooser window's position so it can't be dragged outside the grid bounds." />
+                    <sdg:SimpleStackPanel Orientation="Vertical" Spacing="8">
 
-                        <TextBlock Margin="0,16,0,0" FontSize="11" Foreground="#666" TextWrapping="Wrap">
-                            <Run FontWeight="SemiBold" Text="Tip:" />
-                            <Run Text="Right-click any column header to find the 'Show Column Chooser' menu item — same effect as toggling Show Window." />
-                        </TextBlock>
+                        <Expander Header="Chooser options">
+                            <sdg:SimpleStackPanel Margin="4" Orientation="Vertical" Spacing="6">
+                                <CheckBox IsChecked="{Binding ElementName=Grid, Path=IsColumnChooserEnabled}" Content="Enabled"
+                                          ToolTip="Master switch. When off, the chooser cannot be opened and the right-click 'Show Column Chooser' menu item disappears." />
+                                <CheckBox IsEnabled="{Binding ElementName=Grid, Path=IsColumnChooserEnabled}"
+                                          IsChecked="{Binding ElementName=Grid, Path=IsColumnChooserVisible}" Content="Show Window"
+                                          ToolTip="Opens / closes the chooser window. The window is non-modal — interact with the grid while it's open." />
+                                <CheckBox IsEnabled="{Binding ElementName=Grid, Path=IsColumnChooserEnabled}"
+                                          IsChecked="{Binding ElementName=Grid, Path=IsColumnChooserConfinedToGrid}" Content="Confine to Grid"
+                                          ToolTip="Constrains the chooser window's position so it can't be dragged outside the grid bounds." />
+                            </sdg:SimpleStackPanel>
+                        </Expander>
+
+                        <Expander Header="Try it" IsExpanded="False">
+                            <TextBlock Margin="4" FontSize="11" Foreground="#666" TextWrapping="Wrap">
+                                <Run Text="Right-click any column header to find the 'Show Column Chooser' menu item — same effect as toggling Show Window." />
+                            </TextBlock>
+                        </Expander>
+
                     </sdg:SimpleStackPanel>
                 </ScrollViewer>
             </Grid>

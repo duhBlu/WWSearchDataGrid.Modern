@@ -54,9 +54,14 @@ See `MIGRATION_PLAN.md` for the full category map.
 ## Editing
 
 ### New Item Row  *(Editing › New Item Row)*
-- [ ] Library: `NewRowPosition` (Top / Bottom / None).
-- [ ] Library: harden the add-new-row commit flow.
-- [ ] Sample: position toggle (top / bottom / none) over a writable grid.
+- [x] Library: `NewRowPosition` (Top / Bottom / None). Drives `CanUserAddRows` + the editable
+      view's `NewItemPlaceholderPosition`; the base grid only maintains AtEnd/None off
+      `CanUserAddRows`, so `Top` is overridden to `AtBeginning` and re-asserted on source change.
+- [x] Library: hardened the add-new-row commit flow — dropped the mid-add `FilterItemsSource`
+      that committed the empty new row, and stopped double-counting the in-progress add item in the
+      column-value caches.
+- [x] Sample: position toggle (top / bottom / none) over a writable task grid; new rows auto-fill
+      their Id, Delete removes a row.
 
 ### Data Validation  *(Editing › Data Validation)*
 - [ ] Library: validation-attribute evaluation.

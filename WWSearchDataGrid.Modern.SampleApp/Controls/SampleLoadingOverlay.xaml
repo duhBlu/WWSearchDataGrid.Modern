@@ -6,7 +6,7 @@
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
     </UserControl.Resources>
-    <Border Background="#80FFFFFF"
+    <Border Background="#88FFFFFF"
             Visibility="{Binding IsBusy, ElementName=Root, Converter={StaticResource BoolToVisibility}}"
             Panel.ZIndex="50">
         <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">

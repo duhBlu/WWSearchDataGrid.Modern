@@ -45,6 +45,9 @@
     <EmbeddedResource Include="Views\Samples\Columns\FixedColumnsSampleView.xaml" />
     <EmbeddedResource Include="Views\Samples\Columns\FixedColumnsSampleView.xaml.cs" />
     <EmbeddedResource Include="Views\Samples\Columns\FixedColumnsSampleViewModel.cs" />
+    <EmbeddedResource Include="Views\Samples\Columns\BestFitSampleView.xaml" />
+    <EmbeddedResource Include="Views\Samples\Columns\BestFitSampleView.xaml.cs" />
+    <EmbeddedResource Include="Views\Samples\Columns\BestFitSampleViewModel.cs" />
 
     <!-- Selection and Usability -->
     <EmbeddedResource Include="Views\Samples\Usability\CopyPasteSampleView.xaml" />
@@ -85,6 +88,11 @@
     <EmbeddedResource Include="Views\Samples\Grouping\BasicGroupingSampleView.xaml.cs" />
     <EmbeddedResource Include="Views\Samples\Grouping\BasicGroupingSampleViewModel.cs" />
 
+    <!-- Summaries -->
+    <EmbeddedResource Include="Views\Samples\Summaries\TotalSummariesSampleView.xaml" />
+    <EmbeddedResource Include="Views\Samples\Summaries\TotalSummariesSampleView.xaml.cs" />
+    <EmbeddedResource Include="Views\Samples\Summaries\TotalSummariesSampleViewModel.cs" />
+
     <!-- Editing -->
     <EmbeddedResource Include="Views\Samples\Editing\EditorTypesSampleView.xaml" />
     <EmbeddedResource Include="Views\Samples\Editing\EditorTypesSampleView.xaml.cs" />
@@ -101,6 +109,9 @@
     <EmbeddedResource Include="Views\Samples\Editing\DataErrorIndicationSampleView.xaml" />
     <EmbeddedResource Include="Views\Samples\Editing\DataErrorIndicationSampleView.xaml.cs" />
     <EmbeddedResource Include="Views\Samples\Editing\DataErrorIndicationSampleViewModel.cs" />
+    <EmbeddedResource Include="Views\Samples\Editing\NewItemRowSampleView.xaml" />
+    <EmbeddedResource Include="Views\Samples\Editing\NewItemRowSampleView.xaml.cs" />
+    <EmbeddedResource Include="Views\Samples\Editing\NewItemRowSampleViewModel.cs" />
 
     <!-- Animation & Performance -->
     <EmbeddedResource Include="Views\Samples\AnimationPerformance\ScrollingAnimationSampleView.xaml" />

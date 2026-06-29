@@ -73,6 +73,48 @@ namespace WWSearchDataGrid.Modern.WPF
                 ClearValue(FocusableProperty);
         }
 
+        private static readonly DependencyPropertyKey IsGroupFooterPropertyKey =
+            DependencyProperty.RegisterReadOnly(
+                nameof(IsGroupFooter),
+                typeof(bool),
+                typeof(SearchDataGridRow),
+                new PropertyMetadata(false));
+
+        /// <summary>
+        /// Identifies the read-only <see cref="IsGroupFooter"/> dependency property. The themed
+        /// <c>GridSearchDataGridRow</c> style keys its template-swap <c>DataTrigger</c> on this.
+        /// </summary>
+        public static readonly DependencyProperty IsGroupFooterProperty = IsGroupFooterPropertyKey.DependencyProperty;
+
+        /// <summary>True when this container is rendering a <see cref="GroupFooterRow"/> sentinel.</summary>
+        public bool IsGroupFooter => (bool)GetValue(IsGroupFooterProperty);
+
+        private static readonly DependencyPropertyKey GroupFooterPropertyKey =
+            DependencyProperty.RegisterReadOnly(
+                nameof(GroupFooter),
+                typeof(GroupFooterRow),
+                typeof(SearchDataGridRow),
+                new PropertyMetadata(null));
+
+        /// <summary>Identifies the read-only <see cref="GroupFooter"/> dependency property.</summary>
+        public static readonly DependencyProperty GroupFooterProperty = GroupFooterPropertyKey.DependencyProperty;
+
+        /// <summary>The group-footer sentinel this row represents, or <c>null</c> for any other row.</summary>
+        public GroupFooterRow GroupFooter => (GroupFooterRow)GetValue(GroupFooterProperty);
+
+        /// <summary>
+        /// Sets (or clears) the group-footer state for the item this container is being prepared
+        /// for. Called by the grid from <c>PrepareContainerForItemOverride</c>. Footer rows are
+        /// display-only — their cells carry the right-click summary picker, but the row itself
+        /// never enters selection (see <see cref="OnMouseLeftButtonDown"/> /
+        /// <see cref="SearchDataGrid.ScrubHeaderSelection"/>).
+        /// </summary>
+        internal void SetGroupFooter(GroupFooterRow footer)
+        {
+            SetValue(GroupFooterPropertyKey, footer);
+            SetValue(IsGroupFooterPropertyKey, footer != null);
+        }
+
         protected override void OnMouseLeftButtonDown(MouseButtonEventArgs e)
         {
             if (IsGroupHeader)
@@ -91,6 +133,13 @@ namespace WWSearchDataGrid.Modern.WPF
                     VisualTreeHelperMethods.FindVisualAncestor<SearchDataGrid>(this)?.UnselectAll();
                     Focus();
                 }
+                e.Handled = true;
+                return;
+            }
+            if (IsGroupFooter)
+            {
+                // Display-only: swallow the click so the footer sentinel never enters selection
+                // (right-click still reaches the footer cells' summary picker).
                 e.Handled = true;
                 return;
             }

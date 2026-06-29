@@ -25,9 +25,7 @@
                        TextWrapping="Wrap">
                 <Run FontWeight="SemiBold" Text="Display formatting" />
                 <LineBreak />
-                <Run Text="Three ways to shape what users see in a cell — DisplayStringFormat (.NET format strings: C2 / N0 / P1 / dates), DisplayValueConverter (turn a bool into 'Yes' / 'No'), and DisplayMask (digit / letter pattern). Side-by-side raw / formatted columns make the effect obvious." />
-                <LineBreak />
-                <Run Text="'Date (round)' uses RoundDateDisplayFormat instead of DisplayStringFormat: it renders date-only just the same, but because a date-only format carries no time tokens it also rounds this column's filtering to whole days — open its filter and a date-only match works even on rows whose timestamps carry a time the cell never shows." />
+                <Run Text="Three ways to shape cell text — DisplayStringFormat, DisplayValueConverter, and DisplayMask — with raw / formatted columns side by side. 'Date (round)' uses RoundDateDisplayFormat, which renders the same but also rounds that column's filtering to whole days." />
             </TextBlock>
 
             <sdg:SearchDataGrid x:Name="Grid"

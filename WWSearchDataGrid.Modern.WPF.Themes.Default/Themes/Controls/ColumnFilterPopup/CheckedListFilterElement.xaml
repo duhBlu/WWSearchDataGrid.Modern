@@ -42,10 +42,10 @@
                                           Content="Select All"
                                           FontSize="11" />
 
-                                <TextBox Grid.Column="1"
+                                <TextBox Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesTextBox}}"
+                                         Grid.Column="1"
                                          Text="{Binding FilterValueManager.SearchText, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, Delay=200}"
                                          Padding="4,2"
-                                         VerticalContentAlignment="Center"
                                          FontSize="11" />
                             </Grid>
 

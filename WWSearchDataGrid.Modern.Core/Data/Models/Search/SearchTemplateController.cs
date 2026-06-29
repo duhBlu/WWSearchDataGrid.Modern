@@ -1124,6 +1124,21 @@ namespace WWSearchDataGrid.Modern.Core
             return null;
         }
 
+        /// <summary>
+        /// Resolves the chip text for one <see cref="SelectableValueItem"/> in an IsAnyOf/IsNoneOf
+        /// list. Prefers the typed <see cref="SelectableValueItem.SelectedItem"/> the item was built
+        /// from so a <see cref="DisplayValueProvider"/> that keys on the raw type — e.g. a
+        /// foreign-key id lookup — matches, exactly as the single-value chip path passes the typed
+        /// <c>SelectedValue</c>. Falls back to the string <see cref="SelectableValueItem.Value"/>
+        /// when no typed object was captured (values parsed from a filter string).
+        /// </summary>
+        private string FormatSelectableValue(SelectableValueItem item)
+        {
+            if (item == null) return null;
+            object raw = item.SelectedItem ?? item.Value;
+            return HasDisplayValueProvider ? GetDisplayValue(raw) : raw?.ToString();
+        }
+
         private string FormatMultiValueFilter(string prefix, IEnumerable selectedValues)
         {
             if (selectedValues == null)
@@ -1352,16 +1367,14 @@ namespace WWSearchDataGrid.Modern.Core
                     case SearchType.IsAnyOf:
                         components.SearchTypeText = "In";
                         // Extract actual values from SelectableValueItem wrappers, formatting through display provider
-                        var anyOfValues = template.SelectedValues?.Select(v =>
-                            HasDisplayValueProvider ? GetDisplayValue(v?.Value) : v?.Value).Where(v => !string.IsNullOrEmpty(v));
+                        var anyOfValues = template.SelectedValues?.Select(FormatSelectableValue).Where(v => !string.IsNullOrEmpty(v));
                         components.PrimaryValue = FormatMultiValueFilter("", anyOfValues);
                         PopulateValueItems(components, anyOfValues);
                         break;
                     case SearchType.IsNoneOf:
                         components.SearchTypeText = "Not in";
                         // Extract actual values from SelectableValueItem wrappers, formatting through display provider
-                        var noneOfValues = template.SelectedValues?.Select(v =>
-                            HasDisplayValueProvider ? GetDisplayValue(v?.Value) : v?.Value).Where(v => !string.IsNullOrEmpty(v));
+                        var noneOfValues = template.SelectedValues?.Select(FormatSelectableValue).Where(v => !string.IsNullOrEmpty(v));
                         components.PrimaryValue = FormatMultiValueFilter("", noneOfValues);
                         PopulateValueItems(components, noneOfValues);
                         break;

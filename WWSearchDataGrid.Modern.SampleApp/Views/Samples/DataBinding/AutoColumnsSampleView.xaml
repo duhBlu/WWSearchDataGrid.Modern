@@ -15,59 +15,74 @@
     <UserControl.Resources>
         <sampleConverters:EnumToBooleanConverter x:Key="EnumToBool" />
         <BooleanToVisibilityConverter x:Key="BoolToVis" />
-        <Style BasedOn="{StaticResource SampleRadioButtonStyle}" TargetType="{x:Type RadioButton}" />
     </UserControl.Resources>
 
     <sampleControls:SampleHostControl Sources="{x:Static sampleControls:SampleSources.AutoColumns}">
         <DockPanel>
-            <StackPanel DockPanel.Dock="Top" Margin="16,12,16,4">
-                <TextBlock FontSize="13" Foreground="#444" TextWrapping="Wrap">
-                    <Run FontWeight="SemiBold" Text="Auto-generated columns from attributes vs schema" />
-                    <LineBreak />
-                    <Run Text="AutoGenerateColumns=True with no GridColumns declared. Switch the item-source type to compare how columns are generated from POCO attributes versus a DataTable's schema." />
-                </TextBlock>
+            <TextBlock DockPanel.Dock="Top"
+                       Margin="16,12,16,4"
+                       FontSize="13"
+                       Foreground="#444"
+                       TextWrapping="Wrap">
+                <Run FontWeight="SemiBold" Text="Auto-generated columns from attributes vs schema" />
+                <LineBreak />
+                <Run Text="AutoGenerateColumns=True with no GridColumns declared. Switch the item-source type to compare how columns are generated from POCO attributes versus a DataTable's schema." />
+            </TextBlock>
 
-                <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
-                    <TextBlock Text="Item source:"
-                               VerticalAlignment="Center"
-                               Margin="0,0,8,0"
-                               Foreground="#333" />
-                    <RadioButton Content="POCO + Attributes"
-                                 Margin="0,0,12,0"
-                                 IsChecked="{Binding SourceKind, Converter={StaticResource EnumToBool}, ConverterParameter=Poco}" />
-                    <RadioButton Content="DataTable"
-                                 IsChecked="{Binding SourceKind, Converter={StaticResource EnumToBool}, ConverterParameter=DataTable}" />
-                </StackPanel>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="320" />
+                </Grid.ColumnDefinitions>
 
-                <TextBlock Margin="0,8,0,0"
-                           FontSize="12"
-                           Foreground="#666"
-                           TextWrapping="Wrap"
-                           Text="{Binding ActiveDescription}" />
-            </StackPanel>
+                <Grid Grid.Column="0" Margin="10">
+                    <sdg:SearchDataGrid x:Name="PocoGrid"
+                                        Visibility="{Binding IsPoco, Converter={StaticResource BoolToVis}}"
+                                        ItemsSource="{Binding Customers}"
+                                        AutoGenerateColumns="True"
+                                        CanUserAddRows="False"
+                                        FilterEditorPlacement="Row"
+                                        ShowFilterRow="True"
+                                        CanUserDeleteRows="False"
+                                        ShowCriteriaInFilterRow="True"
+                                        IsReadOnly="True" />
 
-            <Grid Margin="8,4">
-                <sdg:SearchDataGrid x:Name="PocoGrid"
-                                    Visibility="{Binding IsPoco, Converter={StaticResource BoolToVis}}"
-                                    ItemsSource="{Binding Customers}"
-                                    AutoGenerateColumns="True"
-                                    CanUserAddRows="False"
-                                    FilterEditorPlacement="Row"
-                                    ShowFilterRow="True"
-                                    CanUserDeleteRows="False"
-                                    ShowCriteriaInFilterRow="True"
-                                    IsReadOnly="True" />
+                    <sdg:SearchDataGrid x:Name="TableGrid"
+                                        Visibility="{Binding IsDataTable, Converter={StaticResource BoolToVis}}"
+                                        ItemsSource="{Binding VendorTableView}"
+                                        AutoGenerateColumns="True"
+                                        CanUserAddRows="False"
+                                        FilterEditorPlacement="Row"
+                                        ShowFilterRow="True"
+                                        CanUserDeleteRows="False"
+                                        ShowCriteriaInFilterRow="True"
+                                        IsReadOnly="True" />
+                </Grid>
 
-                <sdg:SearchDataGrid x:Name="TableGrid"
-                                    Visibility="{Binding IsDataTable, Converter={StaticResource BoolToVis}}"
-                                    ItemsSource="{Binding VendorTableView}"
-                                    AutoGenerateColumns="True"
-                                    CanUserAddRows="False"
-                                    FilterEditorPlacement="Row"
-                                    ShowFilterRow="True"
-                                    CanUserDeleteRows="False"
-                                    ShowCriteriaInFilterRow="True"
-                                    IsReadOnly="True" />
+                <GridSplitter Grid.Column="1" HorizontalAlignment="Stretch" Width="5" Background="#CCCCCC" />
+
+                <ScrollViewer Grid.Column="2" Background="#FFFFFF" VerticalScrollBarVisibility="Auto" Padding="8,4">
+                    <sdg:SimpleStackPanel Orientation="Vertical" Spacing="8">
+
+                        <Expander Header="Item source">
+                            <sdg:SimpleStackPanel Margin="4" Orientation="Vertical" Spacing="4">
+                                <RadioButton Content="POCO + Attributes"
+                                             GroupName="ItemSourceKind"
+                                             IsChecked="{Binding SourceKind, Converter={StaticResource EnumToBool}, ConverterParameter=Poco}" />
+                                <RadioButton Content="DataTable"
+                                             GroupName="ItemSourceKind"
+                                             IsChecked="{Binding SourceKind, Converter={StaticResource EnumToBool}, ConverterParameter=DataTable}" />
+                                <TextBlock Margin="0,4,0,0"
+                                           FontSize="11"
+                                           Foreground="#666"
+                                           TextWrapping="Wrap"
+                                           Text="{Binding ActiveDescription}" />
+                            </sdg:SimpleStackPanel>
+                        </Expander>
+
+                    </sdg:SimpleStackPanel>
+                </ScrollViewer>
             </Grid>
         </DockPanel>
     </sampleControls:SampleHostControl>

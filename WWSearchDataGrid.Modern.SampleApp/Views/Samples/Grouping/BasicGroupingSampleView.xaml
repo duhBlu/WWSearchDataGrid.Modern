@@ -13,17 +13,8 @@
 
     <UserControl.Resources>
         <Style BasedOn="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesButton}}" TargetType="{x:Type Button}">
-            <!--  Rail buttons share a uniform width.  -->
+            <!--  Panel buttons share a uniform width.  -->
             <Setter Property="HorizontalAlignment" Value="Stretch" />
-        </Style>
-        <Style BasedOn="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesCheckBox}}" TargetType="{x:Type CheckBox}" />
-
-        <!--  Small muted label for the rail section dividers.  -->
-        <Style x:Key="SectionHeaderText" TargetType="{x:Type TextBlock}">
-            <Setter Property="Foreground" Value="#6F7A8C" />
-            <Setter Property="FontSize" Value="11" />
-            <Setter Property="FontWeight" Value="SemiBold" />
-            <Setter Property="Margin" Value="0,10,0,2" />
         </Style>
 
         <!--
@@ -106,36 +97,114 @@
                        TextWrapping="Wrap">
                 <Run Text="Basic grouping" FontWeight="SemiBold" />
                 <LineBreak />
-                <Run Text="The grid groups its rows by every column whose GridColumn.GroupIndex is &gt;= 0, ordered by that index. The Status column below declares GroupIndex=&quot;0&quot; in XAML, so the grid loads pre-grouped by status. Each group renders as an expander showing the group value and its row count." />
-                <LineBreak />
-                <Run Text="Use the buttons (or right-click a column header → Group By This Column) to add nested group levels at runtime via GroupBy / Ungroup / ClearGrouping. Grouping leads sorting: a group sort sits ahead of any header-click sort, and the filter row keeps working while grouped." />
+                <Run Text="The grid groups its rows by every column whose GroupIndex is &gt;= 0; Status declares GroupIndex=0 in XAML, so it loads pre-grouped. Add nested levels at runtime from the panel or a column header's right-click → Group By This Column." />
             </TextBlock>
 
-            <!--  Controls rail — docked right of the grid, organized into sections.  -->
-            <Border DockPanel.Dock="Right"
-                    Width="230"
-                    Margin="0,8,10,10">
-                <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="12,0,12,0">
-                    <sdg:SimpleStackPanel Spacing="6">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="320" />
+                </Grid.ColumnDefinitions>
 
-                        <TextBlock Style="{StaticResource SectionHeaderText}" Text="GROUP BY" />
-                        <Button Click="GroupByStatus_Click" Content="Status" />
-                        <Button Click="GroupByProductLine_Click" Content="Product Line" />
-                        <Button Click="GroupByState_Click" Content="State" />
-                        <Button Click="GroupByMonth_Click" Content="Month (Date)" />
-                        <Button Click="ClearGrouping_Click" Content="Clear Grouping" />
-
-                        <TextBlock Style="{StaticResource SectionHeaderText}" Text="EXPANSION" />
-                        <Button Click="ExpandAll_Click" Content="Expand All" />
-                        <Button Click="CollapseAll_Click" Content="Collapse All" />
+                <sdg:SearchDataGrid x:Name="Grid"
+                                    Grid.Column="0"
+                                    IsReadOnly="True"
+                                    Margin="10"
+                                    ItemsSource="{Binding Items}"
+                                    AutoGenerateColumns="False"
+                                    CanUserAddRows="False"
+                                    CanUserDeleteRows="False"
+                                    AllowScrollAnimation="True"
+                                    AllowPerPixelScrolling="True"
+                                    AllowFixedGroups="True"
+                                    ShowGroupRowCount="True"
+                                    IsGroupPanelVisible="True">
+                    <sdg:SearchDataGrid.GridColumns>
+                        <!--  Declarative grouping: the grid loads pre-grouped by status.  -->
+                        <sdg:GridColumn Width="140"
+                                        FieldName="OrderStatusName"
+                                        Header="Status"
+                                        GroupIndex="0"
+                                        GroupValueTemplate="{StaticResource StatusGroupValueTemplate}" />
+                        <sdg:GridColumn Width="100"
+                                        FieldName="OrderNumber"
+                                        Header="Order #" />
+                        <sdg:GridColumn Width="160"
+                                        FieldName="CustomerName"
+                                        Header="Customer" />
                         <!--
-                            Refresh recycles every GroupItem container. With expansion-state
-                            persistence in play (see SearchDataGrid.TrackGroupExpansion), per-group
-                            user toggles survive the refresh and replay on the next realization.
+                            GroupHeaderTemplate replaces the WHOLE group header (including the count
+                            chip). Compare with the Status column above, which only customizes the
+                            value slot via GroupValueTemplate while keeping the default chrome.
                         -->
-                        <Button Click="RefreshItems_Click"
-                                Content="Refresh Items"
-                                ToolTip="Calls Items.Refresh — exercises the per-group expansion-state persistence." />
+                        <sdg:GridColumn Width="140"
+                                        FieldName="ProductLineName"
+                                        Header="Product Line"
+                                        GroupHeaderTemplate="{StaticResource ProductLineGroupHeaderTemplate}" />
+                        <sdg:GridColumn Width="60"
+                                        FieldName="State"
+                                        Header="State" />
+                        <sdg:GridColumn Width="120"
+                                        FieldName="OrderItemsTotalPrice"
+                                        Header="Total"
+                                        DisplayStringFormat="C2" />
+                        <!--  GroupInterval=DateMonth buckets this date column by calendar month when grouped.  -->
+                        <sdg:GridColumn Width="150"
+                                        FieldName="OrderDate"
+                                        Header="Order Date"
+                                        DisplayStringFormat="MM/dd/yyyy"
+                                        GroupInterval="DateMonth" />
+                    </sdg:SearchDataGrid.GridColumns>
+                </sdg:SearchDataGrid>
+
+                <GridSplitter Grid.Column="1" HorizontalAlignment="Stretch" Width="5" Background="#CCCCCC" />
+
+                <ScrollViewer Grid.Column="2" Background="#FFFFFF" VerticalScrollBarVisibility="Auto" Padding="8,4">
+                    <sdg:SimpleStackPanel Orientation="Vertical" Spacing="8">
+
+                        <!--
+                            Live row injection. Each button appends its increment to the bound
+                            ObservableCollection, so the grouped grid grows on screen and the chrome's
+                            Total / Filtered counters tick up. +100K is deliberately included to stress
+                            grouping + virtualization at scale (the view-model generates off-thread
+                            behind the busy overlay and replaces the collection in one shot).
+                        -->
+                        <Expander Header="Add rows (live)">
+                            <UniformGrid Margin="4" Rows="2" Columns="3">
+                                <Button Click="AddRows_Click" Tag="1"       Content="+1"   Margin="0,0,3,3" />
+                                <Button Click="AddRows_Click" Tag="10"      Content="+10"  Margin="3,0,3,3" />
+                                <Button Click="AddRows_Click" Tag="100"     Content="+100" Margin="3,0,0,3" />
+                                <Button Click="AddRows_Click" Tag="1000"    Content="+1K"  Margin="0,0,3,0" />
+                                <Button Click="AddRows_Click" Tag="10000"   Content="+10K" Margin="3,0,3,0" />
+                                <Button Click="AddRows_Click" Tag="100000"  Content="+100K"  Margin="3,0,0,0" />
+                            </UniformGrid>
+                        </Expander>
+
+                        <Expander Header="Group by">
+                            <sdg:SimpleStackPanel Margin="4" Orientation="Vertical" Spacing="4">
+                                <Button Click="GroupByStatus_Click" Content="Status" />
+                                <Button Click="GroupByProductLine_Click" Content="Product Line" />
+                                <Button Click="GroupByState_Click" Content="State" />
+                                <Button Click="GroupByMonth_Click" Content="Month (Date)" />
+                                <Button Click="ClearGrouping_Click" Content="Clear Grouping" />
+                            </sdg:SimpleStackPanel>
+                        </Expander>
+
+                        <Expander Header="Expansion">
+                            <sdg:SimpleStackPanel Margin="4" Orientation="Vertical" Spacing="4">
+                                <Button Click="ExpandAll_Click" Content="Expand All" />
+                                <Button Click="CollapseAll_Click" Content="Collapse All" />
+                                <!--
+                                    Refresh recycles every GroupItem container. With expansion-state
+                                    persistence in play (see SearchDataGrid.TrackGroupExpansion), per-group
+                                    user toggles survive the refresh and replay on the next realization.
+                                -->
+                                <Button Click="RefreshItems_Click"
+                                        Content="Refresh Items"
+                                        ToolTip="Calls Items.Refresh — exercises the per-group expansion-state persistence." />
+                            </sdg:SimpleStackPanel>
+                        </Expander>
 
                         <!--
                             Group expansion knobs (Phase 3.1.c):
@@ -143,78 +212,47 @@
                               groups. Toggling at runtime also expands/collapses every realized group.
                             · ExpandGroupsRecursively — expanding/collapsing a parent cascades its state to nested groups.
                         -->
-                        <TextBlock Style="{StaticResource SectionHeaderText}" Text="OPTIONS" />
-                        <CheckBox IsChecked="{Binding ShowGroupedColumns, ElementName=Grid}"
-                                  Content="Show grouped columns" />
-                        <CheckBox IsChecked="{Binding AllowGrouping, ElementName=Grid}"
-                                  Content="Allow grouping" />
-                        <CheckBox IsChecked="{Binding AutoExpandAllGroups, ElementName=Grid}"
-                                  Content="Auto-expand all groups" />
-                        <CheckBox IsChecked="{Binding ExpandGroupsRecursively, ElementName=Grid}"
-                                  Content="Expand groups recursively" />
-                        <!--
-                            AllowFixedGroups (Phase 3.1.f): the group header(s) for the topmost
-                            visible row stay pinned to the top of the data area as the grid
-                            scrolls. Sibling-group transitions slide the topmost pinned row up
-                            to make room (push transition). Add nested levels via the GROUP BY
-                            buttons above to see multi-level stair-stepped pinning.
-                        -->
-                        <CheckBox IsChecked="{Binding AllowFixedGroups, ElementName=Grid}"
-                                  Content="Allow fixed groups"
-                                  ToolTip="Pin the current group chain to the top of the data area while scrolling." />
+                        <Expander Header="Options">
+                            <sdg:SimpleStackPanel Margin="4" Orientation="Vertical" Spacing="4">
+                                <!--
+                                    The row count is an opt-in summary entry now (not default chrome) —
+                                    right-click a group header → View Totals… to reorder / re-side /
+                                    reformat it alongside any GroupSummaries.
+                                -->
+                                <CheckBox IsChecked="{Binding ShowGroupRowCount, ElementName=Grid}"
+                                          Content="Show row count" />
+                                <CheckBox IsChecked="{Binding ShowGroupedColumns, ElementName=Grid}"
+                                          Content="Show grouped columns" />
+                                <CheckBox IsChecked="{Binding AllowGrouping, ElementName=Grid}"
+                                          Content="Allow grouping" />
+                                <CheckBox IsChecked="{Binding AutoExpandAllGroups, ElementName=Grid}"
+                                          Content="Auto-expand all groups" />
+                                <CheckBox IsChecked="{Binding ExpandGroupsRecursively, ElementName=Grid}"
+                                          Content="Expand groups recursively" />
+                                <!--
+                                    AllowGroupExpandAnimation: a single-group toggle slides its rows
+                                    open/closed and rotates the header chevron instead of snapping.
+                                    Bulk expand/collapse and oversized groups still snap.
+                                -->
+                                <CheckBox IsChecked="{Binding AllowGroupExpandAnimation, ElementName=Grid}"
+                                          Content="Animate expand/collapse"
+                                          ToolTip="Slide a group's rows open/closed and rotate the chevron on toggle." />
+                                <!--
+                                    AllowFixedGroups (Phase 3.1.f): the group header(s) for the topmost
+                                    visible row stay pinned to the top of the data area as the grid
+                                    scrolls. Sibling-group transitions slide the topmost pinned row up
+                                    to make room (push transition). Add nested levels via the GROUP BY
+                                    buttons above to see multi-level stair-stepped pinning.
+                                -->
+                                <CheckBox IsChecked="{Binding AllowFixedGroups, ElementName=Grid}"
+                                          Content="Allow fixed groups"
+                                          ToolTip="Pin the current group chain to the top of the data area while scrolling." />
+                            </sdg:SimpleStackPanel>
+                        </Expander>
 
                     </sdg:SimpleStackPanel>
                 </ScrollViewer>
-            </Border>
-
-            <sdg:SearchDataGrid x:Name="Grid"
-                                IsReadOnly="True"
-                                Margin="10,8,0,10"
-                                ItemsSource="{Binding Items}"
-                                AutoGenerateColumns="False"
-                                CanUserAddRows="False"
-                                CanUserDeleteRows="False"
-                                AllowScrollAnimation="True"
-                                AllowPerPixelScrolling="True"
-                                AllowFixedGroups="True"
-                                IsGroupPanelVisible="True">
-                <sdg:SearchDataGrid.GridColumns>
-                    <!--  Declarative grouping: the grid loads pre-grouped by status.  -->
-                    <sdg:GridColumn Width="140"
-                                    FieldName="OrderStatusName"
-                                    Header="Status"
-                                    GroupIndex="0"
-                                    GroupValueTemplate="{StaticResource StatusGroupValueTemplate}" />
-                    <sdg:GridColumn Width="100"
-                                    FieldName="OrderNumber"
-                                    Header="Order #" />
-                    <sdg:GridColumn Width="160"
-                                    FieldName="CustomerName"
-                                    Header="Customer" />
-                    <!--
-                        GroupHeaderTemplate replaces the WHOLE group header (including the count
-                        chip). Compare with the Status column above, which only customizes the
-                        value slot via GroupValueTemplate while keeping the default chrome.
-                    -->
-                    <sdg:GridColumn Width="140"
-                                    FieldName="ProductLineName"
-                                    Header="Product Line"
-                                    GroupHeaderTemplate="{StaticResource ProductLineGroupHeaderTemplate}" />
-                    <sdg:GridColumn Width="60"
-                                    FieldName="State"
-                                    Header="State" />
-                    <sdg:GridColumn Width="120"
-                                    FieldName="OrderItemsTotalPrice"
-                                    Header="Total"
-                                    DisplayStringFormat="C2" />
-                    <!--  GroupInterval=DateMonth buckets this date column by calendar month when grouped.  -->
-                    <sdg:GridColumn Width="150"
-                                    FieldName="OrderDate"
-                                    Header="Order Date"
-                                    DisplayStringFormat="MM/dd/yyyy"
-                                    GroupInterval="DateMonth" />
-                </sdg:SearchDataGrid.GridColumns>
-            </sdg:SearchDataGrid>
+            </Grid>
         </DockPanel>
     </sampleControls:SampleHostControl>
 </UserControl>

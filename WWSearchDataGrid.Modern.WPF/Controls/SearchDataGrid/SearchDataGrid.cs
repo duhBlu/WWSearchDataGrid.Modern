@@ -241,6 +241,76 @@ namespace WWSearchDataGrid.Modern.WPF
             DependencyProperty.Register(nameof(AllowFixedColumnMenu), typeof(bool), typeof(SearchDataGrid),
                 new FrameworkPropertyMetadata(false));
 
+        /// <summary>
+        /// Thickness of the separator strip at each fixed-band boundary (between the left
+        /// band and the scrollable cells, and between the scrollable cells and the right
+        /// band). The strip consumes layout space — the scrollable window shrinks by it and
+        /// the scroll extent grows to compensate, so cell content is never covered. The
+        /// separators collapse on their own when the corresponding band is empty.
+        /// </summary>
+        public static readonly DependencyProperty FixedColumnSeparatorWidthProperty =
+            DependencyProperty.Register(nameof(FixedColumnSeparatorWidth), typeof(double), typeof(SearchDataGrid),
+                new FrameworkPropertyMetadata(1.0, OnFixedColumnSeparatorWidthChanged));
+
+        /// <summary>
+        /// Fill of the fixed-band separator strips. Defaults to the chrome gray used by the
+        /// header surfaces.
+        /// </summary>
+        public static readonly DependencyProperty FixedColumnSeparatorBackgroundProperty =
+            DependencyProperty.Register(nameof(FixedColumnSeparatorBackground), typeof(Brush), typeof(SearchDataGrid),
+                new FrameworkPropertyMetadata(DefaultFixedColumnSeparatorBackground));
+
+        /// <summary>
+        /// Brush of the 1px vertical edges of the fixed-band separator strips. Defaults to
+        /// the grid-line gray.
+        /// </summary>
+        public static readonly DependencyProperty FixedColumnSeparatorBorderBrushProperty =
+            DependencyProperty.Register(nameof(FixedColumnSeparatorBorderBrush), typeof(Brush), typeof(SearchDataGrid),
+                new FrameworkPropertyMetadata(DefaultFixedColumnSeparatorBorderBrush));
+
+        private static readonly Brush DefaultFixedColumnSeparatorBackground = CreateFrozenBrush(0xf3, 0xf3, 0xf3);
+        private static readonly Brush DefaultFixedColumnSeparatorBorderBrush = CreateFrozenBrush(0xd0, 0xd0, 0xd0);
+
+        private static void OnFixedColumnSeparatorWidthChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            // The separator consumes layout space between each band and the scrollable
+            // cells, so a width change re-measures every band-aware panel.
+            if (d is SearchDataGrid grid && grid.HasFixedColumns)
+                FixedColumnsCellsPanel.InvalidateBandLayout(grid);
+        }
+
+        private static Brush CreateFrozenBrush(byte r, byte g, byte b)
+        {
+            var brush = new SolidColorBrush(Color.FromRgb(r, g, b));
+            brush.Freeze();
+            return brush;
+        }
+
+        private static readonly DependencyPropertyKey LeftFixedColumnsWidthPropertyKey =
+            DependencyProperty.RegisterReadOnly(nameof(LeftFixedColumnsWidth), typeof(double), typeof(SearchDataGrid),
+                new FrameworkPropertyMetadata(0.0));
+
+        /// <summary>
+        /// Summed <see cref="DataGridColumn.ActualWidth"/> of the visible left-pinned columns.
+        /// Drives the left separator overlay position. Refreshed by the headers
+        /// <see cref="FixedColumnsCellsPanel"/> after each arrange (column resizes) and by
+        /// <see cref="ApplyFixedColumnLayout"/> (pin changes).
+        /// </summary>
+        public static readonly DependencyProperty LeftFixedColumnsWidthProperty =
+            LeftFixedColumnsWidthPropertyKey.DependencyProperty;
+
+        private static readonly DependencyPropertyKey RightFixedColumnsWidthPropertyKey =
+            DependencyProperty.RegisterReadOnly(nameof(RightFixedColumnsWidth), typeof(double), typeof(SearchDataGrid),
+                new FrameworkPropertyMetadata(0.0));
+
+        /// <summary>
+        /// Summed <see cref="DataGridColumn.ActualWidth"/> of the visible right-pinned columns.
+        /// Drives the right separator overlay position and the horizontal scrollbar's trailing
+        /// spacer. Refreshed the same way as <see cref="LeftFixedColumnsWidthProperty"/>.
+        /// </summary>
+        public static readonly DependencyProperty RightFixedColumnsWidthProperty =
+            RightFixedColumnsWidthPropertyKey.DependencyProperty;
+
         /// <summary>Re-resolves effective ShowCriteria on each filter cell when the grid DP changes.</summary>
         private static void OnShowCriteriaInFilterRowChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
@@ -504,6 +574,33 @@ namespace WWSearchDataGrid.Modern.WPF
             set => SetValue(AllowFixedColumnMenuProperty, value);
         }
 
+        /// <inheritdoc cref="FixedColumnSeparatorWidthProperty"/>
+        public double FixedColumnSeparatorWidth
+        {
+            get => (double)GetValue(FixedColumnSeparatorWidthProperty);
+            set => SetValue(FixedColumnSeparatorWidthProperty, value);
+        }
+
+        /// <inheritdoc cref="FixedColumnSeparatorBackgroundProperty"/>
+        public Brush FixedColumnSeparatorBackground
+        {
+            get => (Brush)GetValue(FixedColumnSeparatorBackgroundProperty);
+            set => SetValue(FixedColumnSeparatorBackgroundProperty, value);
+        }
+
+        /// <inheritdoc cref="FixedColumnSeparatorBorderBrushProperty"/>
+        public Brush FixedColumnSeparatorBorderBrush
+        {
+            get => (Brush)GetValue(FixedColumnSeparatorBorderBrushProperty);
+            set => SetValue(FixedColumnSeparatorBorderBrushProperty, value);
+        }
+
+        /// <inheritdoc cref="LeftFixedColumnsWidthProperty"/>
+        public double LeftFixedColumnsWidth => (double)GetValue(LeftFixedColumnsWidthProperty);
+
+        /// <inheritdoc cref="RightFixedColumnsWidthProperty"/>
+        public double RightFixedColumnsWidth => (double)GetValue(RightFixedColumnsWidthProperty);
+
         /// <inheritdoc cref="EnableLiveFilteringProperty"/>
         public bool EnableLiveFiltering
         {
@@ -560,6 +657,26 @@ namespace WWSearchDataGrid.Modern.WPF
         // Track template FilterSummaryPanel reference for event cleanup on re-template
         private FilterSummaryPanel _templateFilterSummaryPanel;
 
+        static SearchDataGrid()
+        {
+            // Coercion (not a one-shot SetCurrentValue) so the constraint holds no matter
+            // when the theme style's EnableColumnVirtualization=True setter lands relative
+            // to column generation, and releases on its own once the last right pin is
+            // removed. Right-pinned cells must always be realized — column virtualization
+            // would never generate containers for columns parked at the trailing edge of
+            // the display order. OverrideMetadata merges with the base metadata, so the
+            // native change callback that rebuilds the cells panels stays intact.
+            EnableColumnVirtualizationProperty.OverrideMetadata(
+                typeof(SearchDataGrid),
+                new FrameworkPropertyMetadata(
+                    false,
+                    propertyChangedCallback: null,
+                    coerceValueCallback: CoerceEnableColumnVirtualization));
+        }
+
+        private static object CoerceEnableColumnVirtualization(DependencyObject d, object baseValue)
+            => ((SearchDataGrid)d).HasRightFixedColumns ? false : baseValue;
+
         public SearchDataGrid() : base()
         {
             // Watch the base DataGrid.IsReadOnly DP via DependencyPropertyDescriptor so a
@@ -577,6 +694,13 @@ namespace WWSearchDataGrid.Modern.WPF
             var gridColumns = new FreezableCollection<GridColumn>();
             SetValue(GridColumnsPropertyKey, gridColumns);
             SubscribeToGridColumnsChanged(gridColumns);
+
+            // Seed the grid-level summary collections so XAML property-element syntax
+            // (`<sdg:SearchDataGrid.GroupSummaries><sdg:SummaryItem .../></...>`) can add
+            // entries — the XAML reader calls GetValue directly to find the target list and
+            // fails when it's null (same convention as GridColumn.TotalSummaries).
+            SetValue(GroupSummariesProperty, new FreezableCollection<SummaryItem>());
+            SetValue(FixedTotalSummariesProperty, new FreezableCollection<SummaryItem>());
 
             // Expose the grouping engine's backing collection through the read-only
             // GroupedColumns DP so the group panel can bind to it directly.
@@ -938,18 +1062,28 @@ namespace WWSearchDataGrid.Modern.WPF
                         break;
                     }
 
-                    if (TryWrapTabWithinRow(cell, e))
+                    // Forward-Tab off the last cell of the row being added: commit the add now so a
+                    // fresh placeholder row reappears immediately. Otherwise it only returns when the
+                    // row loses focus — and with the placeholder at the bottom there's no next row
+                    // for native Tab to move to, so nothing commits at all. Focus then lands on the
+                    // new placeholder for continuous entry.
+                    bool isShiftTab = (Keyboard.Modifiers & ModifierKeys.Shift) != 0;
+                    if (!isShiftTab
+                        && IsItemBeingAdded(cell.DataContext)
+                        && IsLastCellInTabOrder(cell)
+                        && TryCommitNewRowAndReopen())
                     {
-                        // Within-row wrap — carry flag already set by the helper.
                         e.Handled = true;
                         break;
                     }
 
                     if (cell.IsEditing)
                         _carryEditStateOnNextFocus = true;
-                    // Don't mark handled — DataGrid's native Tab handler commits + moves focus.
-                    // (Native handler honors cell-style KeyboardNavigation.IsTabStop=false from
-                    // descriptors with ActualTabStop=false, so the column is skipped naturally.)
+                    // Don't mark handled — DataGrid's native Tab handler commits + advances focus,
+                    // crossing into the next/previous row at a row edge and onto the new-item row
+                    // off the last cell (so Tab can start a new row). Arrow keys, not Tab, wrap
+                    // within the row. (Native handler honors cell-style
+                    // KeyboardNavigation.IsTabStop=false from descriptors with ActualTabStop=false.)
                     break;
                 }
 
@@ -970,10 +1104,10 @@ namespace WWSearchDataGrid.Modern.WPF
                 case Key.Down:
                     break;
 
-                // Left/Right wrap at row edges — Right at last cell → first cell of next row,
-                // Left at first cell → last cell of previous row (Tab wraps within same row).
-                // Fully-settled editing cells route through ExitCellViaArrow → same helper;
-                // the two transitional cases below cover press-and-hold focus-on-cell states.
+                // Left/Right wrap WITHIN the same row — Right at last cell → first cell of the same
+                // row, Left at first cell → last cell of the same row (Tab, not arrows, crosses to
+                // the next/previous row). Fully-settled editing cells route through ExitCellViaArrow
+                // → same helper; the two transitional cases below cover press-and-hold focus states.
                 case Key.Left:
                 case Key.Right:
                 {
@@ -995,7 +1129,7 @@ namespace WWSearchDataGrid.Modern.WPF
 
                     if (!cell.IsEditing || inFlightEdit)
                     {
-                        if (TryWrapArrowAtRowEdge(cell, e.Key == Key.Right))
+                        if (TryWrapArrowWithinRow(cell, e.Key == Key.Right))
                             e.Handled = true;
                     }
                     break;
@@ -1013,41 +1147,14 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
-        /// Within-row Tab wrap: Tab at last cell → first cell of same row, Shift+Tab at first
-        /// → last. Sets the carry flag so the destination auto-edits like a normal Tab move.
-        /// Returns false (no wrap) when the cell isn't at a row edge.
+        /// Within-row arrow wrap at row edges: Right at the last cell → first cell of the same row,
+        /// Left at the first cell → last cell of the same row. Returns false when the cell isn't at
+        /// the relevant edge (caller falls back to native arrow handling). Tab, not arrows, crosses
+        /// to the next/previous row.
         /// </summary>
-        private bool TryWrapTabWithinRow(DataGridCell cell, KeyEventArgs e)
+        internal bool TryWrapArrowWithinRow(DataGridCell cell, bool forward)
         {
-            bool isShift = (Keyboard.Modifiers & ModifierKeys.Shift) != 0;
-            var targetCell = GetWrapTargetAtRowEdge(cell, forward: !isShift, crossRow: false);
-            if (targetCell == null) return false;
-
-            // Commit before navigating so the bound source updates (matching native Tab).
-            if (cell.IsEditing)
-            {
-                CommitEdit();
-                _carryEditStateOnNextFocus = true;
-            }
-            else if (IsCellAutoEditEligible(targetCell))
-            {
-                // Source wasn't editing, but destination opts into auto-edit — carry forward
-                // so wrap matches "tab through editable cells".
-                _carryEditStateOnNextFocus = true;
-            }
-
-            targetCell.Focus();
-            return true;
-        }
-
-        /// <summary>
-        /// Cross-row arrow wrap at row edges: Right at last cell → first cell of next row,
-        /// Left at first cell → last cell of previous row. Returns false at grid edges or
-        /// when not at a row edge (caller falls back to native arrow handling).
-        /// </summary>
-        internal bool TryWrapArrowAtRowEdge(DataGridCell cell, bool forward)
-        {
-            var targetCell = GetWrapTargetAtRowEdge(cell, forward, crossRow: true);
+            var targetCell = GetWrapTargetAtRowEdge(cell, forward);
             if (targetCell == null) return false;
 
             // Carry only when source was editing — arrow-from-display stays focus-only at
@@ -1060,11 +1167,11 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
-        /// Shared wrap-target resolution. <paramref name="crossRow"/>=false for Tab (within
-        /// same row), true for arrow (next/previous row). Virtualized adjacent rows are
-        /// realized via ScrollIntoView before the cell lookup.
+        /// Resolves the within-row wrap target at a row edge: forward at the last visible column →
+        /// first column of the same row; backward at the first column → last column. Returns null
+        /// when the cell isn't at the relevant edge.
         /// </summary>
-        private DataGridCell GetWrapTargetAtRowEdge(DataGridCell cell, bool forward, bool crossRow)
+        private DataGridCell GetWrapTargetAtRowEdge(DataGridCell cell, bool forward)
         {
             var visibleCols = Columns
                 .Where(c => c.Visibility == Visibility.Visible)
@@ -1079,46 +1186,63 @@ namespace WWSearchDataGrid.Modern.WPF
             bool wrapBackward = !forward && currentIdx == 0;
             if (!wrapForward && !wrapBackward) return null;
 
-            DataGridColumn targetColumn;
-            object targetRowItem;
+            var targetColumn = wrapForward ? visibleCols[0] : visibleCols[visibleCols.Count - 1];
 
-            if (crossRow)
-            {
-                // Use Items (filtered/sorted view), not ItemsSource, so wrap follows what the
-                // user sees.
-                int rowIdx = Items.IndexOf(cell.DataContext);
-                if (rowIdx < 0) return null;
-
-                if (wrapForward)
-                {
-                    if (rowIdx >= Items.Count - 1) return null; // last row — no wrap target
-                    targetRowItem = Items[rowIdx + 1];
-                    targetColumn = visibleCols[0];
-                }
-                else
-                {
-                    if (rowIdx <= 0) return null; // first row — no wrap target
-                    targetRowItem = Items[rowIdx - 1];
-                    targetColumn = visibleCols[visibleCols.Count - 1];
-                }
-            }
-            else
-            {
-                targetRowItem = cell.DataContext;
-                targetColumn = wrapForward ? visibleCols[0] : visibleCols[visibleCols.Count - 1];
-            }
-
-            var row = ItemContainerGenerator.ContainerFromItem(targetRowItem) as DataGridRow;
-            if (row == null && crossRow)
-            {
-                // Force synchronous realization so Focus lands before native nav resumes.
-                ScrollIntoView(targetRowItem);
-                UpdateLayout();
-                row = ItemContainerGenerator.ContainerFromItem(targetRowItem) as DataGridRow;
-            }
+            // Target is the same row, already realized — no ScrollIntoView needed.
+            var row = VisualTreeHelperMethods.FindVisualAncestor<DataGridRow>(cell);
             if (row == null) return null;
 
             return GetCellAt(row, targetColumn);
+        }
+
+        /// <summary>
+        /// True when <paramref name="cell"/> sits in the last column of the row's Tab order — the
+        /// cell a forward Tab would step off the end of the row from.
+        /// </summary>
+        private bool IsLastCellInTabOrder(DataGridCell cell)
+        {
+            if (cell?.Column == null) return false;
+            var order = GetColumnsInTabOrder().Columns;
+            return order.Count > 0 && ReferenceEquals(order[order.Count - 1], cell.Column);
+        }
+
+        /// <summary>
+        /// Commits the in-progress new-item row (so WPF re-inserts a fresh placeholder) and moves
+        /// focus to the new placeholder's first cell for continuous keyboard entry. Returns false —
+        /// caller falls back to native Tab — when there's no add in progress or the row commit fails
+        /// (e.g. a validation error keeps the editor open).
+        /// </summary>
+        private bool TryCommitNewRowAndReopen()
+        {
+            if (!CanUserAddRows) return false;
+            if (Items is not IEditableCollectionView editableView || !editableView.IsAddingNew) return false;
+
+            // Row-level commit finalizes the add (CommitNew); a fresh placeholder follows.
+            if (!CommitEdit(DataGridEditingUnit.Row, true)) return false;
+
+            // The placeholder container isn't realized synchronously after the commit — defer the
+            // focus to the next layout pass.
+            Dispatcher.BeginInvoke(new Action(FocusNewItemPlaceholderFirstCell), DispatcherPriority.Background);
+            return true;
+        }
+
+        /// <summary>
+        /// Moves focus to the first Tab-order cell of the new-item placeholder row, realizing its
+        /// container first if virtualization hasn't generated it yet.
+        /// </summary>
+        private void FocusNewItemPlaceholderFirstCell()
+        {
+            if (!CanUserAddRows) return;
+
+            var placeholder = CollectionView.NewItemPlaceholder;
+            ScrollIntoView(placeholder);
+            UpdateLayout();
+            if (ItemContainerGenerator.ContainerFromItem(placeholder) is not DataGridRow row) return;
+
+            var order = GetColumnsInTabOrder().Columns;
+            if (order.Count == 0) return;
+
+            GetCellAt(row, order[0])?.Focus();
         }
 
         /// <summary>
@@ -1468,6 +1592,13 @@ namespace WWSearchDataGrid.Modern.WPF
 
             if (!string.IsNullOrEmpty(FilterString))
                 ApplyFilterString();
+
+            // A Top new-item row applied during binding is lost because columns aren't generated
+            // until now — re-assert it once the grid has its columns. Run it synchronously (so the
+            // view carries the right position into the first row generation) and again at ContextIdle
+            // (which runs after the grid's own load-time refreshes, so our position is the last word).
+            ReassertNewRowPosition();
+            Dispatcher.BeginInvoke(new Action(ReassertNewRowPosition), DispatcherPriority.ContextIdle);
         }
 
         /// <summary>
@@ -1759,7 +1890,9 @@ namespace WWSearchDataGrid.Modern.WPF
         /// (preserving their existing relative order), then right-pinned columns. Updates
         /// <see cref="DataGrid.FrozenColumnCount"/> to the number of left-pinned columns so
         /// WPF's native left-frozen layout takes effect, and resets it to 0 when no
-        /// columns are pinned left.
+        /// columns are pinned left. Also rebuilds the column → pinned-position map that
+        /// <see cref="FixedColumnsCellsPanel"/> reads to anchor right-pinned columns at the
+        /// viewport's right edge.
         /// </summary>
         /// <remarks>
         /// Called whenever <see cref="GridColumn.Fixed"/> changes on any descriptor and once
@@ -1819,6 +1952,8 @@ namespace WWSearchDataGrid.Modern.WPF
                 _applyingFixedColumnLayout = false;
             }
 
+            RebuildFixedColumnState(entries);
+
             // Keep an open ColumnChooser in sync with the new pinning state — its
             // visual order (Left → None → Right) and per-row pin glyphs are derived
             // from each descriptor's Fixed value, so a context-menu-driven Pin
@@ -1828,6 +1963,116 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         private bool _applyingFixedColumnLayout;
+
+        /// <summary>
+        /// Column → pinned-position map captured on the last <see cref="ApplyFixedColumnLayout"/>
+        /// pass. Read by <see cref="FixedColumnsCellsPanel"/> on every arrange, so lookups stay
+        /// allocation-free. Unpinned columns are simply absent.
+        /// </summary>
+        private readonly Dictionary<DataGridColumn, FixedColumnPosition> _fixedPositionByColumn = new();
+
+        /// <summary>Whether any visible-or-not column is currently pinned right.</summary>
+        internal bool HasRightFixedColumns { get; private set; }
+
+        /// <summary>Whether any column is pinned to either side.</summary>
+        internal bool HasFixedColumns => _fixedPositionByColumn.Count > 0;
+
+        /// <summary>The pinned position recorded for <paramref name="column"/> on the last layout pass.</summary>
+        internal FixedColumnPosition GetFixedColumnPosition(DataGridColumn column)
+            => column != null && _fixedPositionByColumn.TryGetValue(column, out var position)
+                ? position
+                : FixedColumnPosition.None;
+
+        private void RebuildFixedColumnState(
+            List<(DataGridColumn Column, FixedColumnPosition Position, int CurrentDisplayIndex)> entries)
+        {
+            bool hadFixed = _fixedPositionByColumn.Count > 0;
+            _fixedPositionByColumn.Clear();
+            bool hasRight = false;
+            foreach (var entry in entries)
+            {
+                if (entry.Position == FixedColumnPosition.None)
+                    continue;
+                _fixedPositionByColumn[entry.Column] = entry.Position;
+                if (entry.Position == FixedColumnPosition.Right)
+                    hasRight = true;
+            }
+
+            bool hadRight = HasRightFixedColumns;
+            HasRightFixedColumns = hasRight;
+
+            // Re-run the static coercion that pins EnableColumnVirtualization to false while
+            // right-pinned columns exist (and releases it when the last one is removed).
+            if (hasRight != hadRight)
+                CoerceValue(EnableColumnVirtualizationProperty);
+
+            // A pin change that doesn't move any DisplayIndex (e.g. unpinning the trailing
+            // right column) produces no layout invalidation of its own — re-run the
+            // band-aware panels whenever any band state is or was in play.
+            if (HasFixedColumns || hadFixed)
+                FixedColumnsCellsPanel.InvalidateBandLayout(this);
+
+            UpdateFixedBandWidths();
+        }
+
+        /// <summary>
+        /// Effective separator thickness consumed at each non-empty band boundary —
+        /// non-negative and pixel-snapped, ready for layout math.
+        /// </summary>
+        internal double GetSeparatorWidth()
+        {
+            double width = FixedColumnSeparatorWidth;
+            return double.IsNaN(width) || width <= 0 ? 0 : FixedColumnLayout.SnapToPixel(width);
+        }
+
+        /// <summary>
+        /// Recomputes <see cref="LeftFixedColumnsWidth"/> / <see cref="RightFixedColumnsWidth"/>
+        /// from the visible pinned columns. Called on pin changes and by the headers
+        /// <see cref="FixedColumnsCellsPanel"/> after each arrange so column resizes track.
+        /// </summary>
+        internal void UpdateFixedBandWidths()
+        {
+            double left = 0, right = 0;
+            if (_fixedPositionByColumn.Count > 0)
+            {
+                foreach (var column in Columns)
+                {
+                    if (column.Visibility != Visibility.Visible) continue;
+                    switch (GetFixedColumnPosition(column))
+                    {
+                        case FixedColumnPosition.Left: left += column.ActualWidth; break;
+                        case FixedColumnPosition.Right: right += column.ActualWidth; break;
+                    }
+                }
+            }
+
+            if (Math.Abs(LeftFixedColumnsWidth - left) > 0.1)
+                SetValue(LeftFixedColumnsWidthPropertyKey, left);
+            if (Math.Abs(RightFixedColumnsWidth - right) > 0.1)
+                SetValue(RightFixedColumnsWidthPropertyKey, right);
+        }
+
+        /// <summary>
+        /// Width of the cells viewport — the column headers presenter's arranged width, which
+        /// spans the visible column area excluding the row-header gutter and the vertical
+        /// scrollbar. Both the headers panel and every row's cells panel anchor the right
+        /// fixed band against this same number, keeping the surfaces pixel-aligned.
+        /// </summary>
+        internal double GetCellsViewportWidth()
+        {
+            if (_columnHeadersPresenter == null)
+            {
+                // The presenter is named inside DG_ScrollViewer's own template, so the
+                // lookup has to go through that nested namescope — the grid template's
+                // namescope only knows DG_ScrollViewer itself.
+                var scrollViewer = Template?.FindName("DG_ScrollViewer", this) as ScrollViewer;
+                _columnHeadersPresenter = scrollViewer?.Template?.FindName("PART_ColumnHeadersPresenter", scrollViewer)
+                    as DataGridColumnHeadersPresenter;
+            }
+            return _columnHeadersPresenter?.ActualWidth ?? 0.0;
+        }
+
+        private DataGridColumnHeadersPresenter _columnHeadersPresenter;
 
         /// <summary>
         /// Removes all columns that were generated from <see cref="GridColumn"/> descriptors.
@@ -2101,6 +2346,9 @@ namespace WWSearchDataGrid.Modern.WPF
         {
             base.OnApplyTemplate();
 
+            // Template re-application produces a fresh headers presenter.
+            _columnHeadersPresenter = null;
+
             // Re-subscribe editing events (template can re-apply at runtime).
             this.BeginningEdit -= OnBeginningEdit;
             this.RowEditEnding -= OnRowEditEnding;
@@ -2191,11 +2439,11 @@ namespace WWSearchDataGrid.Modern.WPF
         {
             base.OnAddingNewItem(e);
 
-            if (Items.Filter != null)
-            {
-                FilterItemsSource();
-            }
-
+            // Deliberately do NOT re-run the filter here. FilterItemsSource commits the open row
+            // edit (CommitEdit(Row, true)) and re-applies the predicate — which, mid-add, commits
+            // the still-empty new row and immediately filters it back out, breaking adds while a
+            // filter is active. The view evaluates the filter against the new item on its own once
+            // the add actually commits, and OnCollectionChanged refreshes caches/counts then.
             ItemsSourceChanged?.Invoke(this, EventArgs.Empty);
             UpdateLayout();
 
@@ -2418,6 +2666,13 @@ namespace WWSearchDataGrid.Modern.WPF
                     // and columns are in place. Restores the plain source when nothing is grouped.
                     RebuildGroupDescriptions();
 
+                    // The new view defaults its placeholder to AtEnd off CanUserAddRows; re-assert a
+                    // Top new-item row (the only position the base grid won't maintain on its own).
+                    ReassertNewRowPosition();
+
+                    // Source + filters + projection are settled — publish the row counts.
+                    UpdateFilteredItemCount();
+
                     UpdateLayout();
 
                     // Update select-all checkbox states after items source changes
@@ -2425,11 +2680,17 @@ namespace WWSearchDataGrid.Modern.WPF
                     {
                         RefreshAllSelectAllHeaders();
                     }), DispatcherPriority.Background);
+
+                    // Auto best-fit on real source changes (BestFitModeOnSourceChange) — runs at
+                    // idle, after columns generate and rows realize.
+                    ScheduleBestFitOnSourceChange();
                 }
                 else
                 {
                     // If items source is null, set ActualHasItems to false and clear cached data
                     ActualHasItems = false;
+                    UpdateTotalItemCount();
+                    UpdateFilteredItemCount();
                     ClearAllCachedData();
                 }
             }
@@ -2491,6 +2752,9 @@ namespace WWSearchDataGrid.Modern.WPF
             // Grouping renders a projection of the source — re-project on any source change.
             if (_groupingActive)
                 RebuildRowProjection();
+
+            // Recompute after any projection rebuild so the grouped path reads fresh _groupRoots.
+            UpdateFilteredItemCount();
 
             CollectionChanged?.Invoke(this, e);
         }
@@ -2601,6 +2865,8 @@ namespace WWSearchDataGrid.Modern.WPF
             bool hasAnyItems = originalItemsSource != null;
             if (ActualHasItems != hasAnyItems)
                 ActualHasItems = hasAnyItems;
+
+            UpdateTotalItemCount();
         }
 
         #endregion

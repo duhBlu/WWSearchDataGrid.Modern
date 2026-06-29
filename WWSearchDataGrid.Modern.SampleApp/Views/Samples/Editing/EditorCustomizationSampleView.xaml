@@ -336,26 +336,21 @@
                        FontSize="13"
                        Foreground="#444"
                        TextWrapping="Wrap">
-                <Run FontWeight="SemiBold" Text="Editor customization — four surfaces" />
+                <Run FontWeight="SemiBold" Text="Editor customization" />
                 <LineBreak />
-                <Run FontWeight="SemiBold" Text="DisplayStyle:" />
-                <Run Text="restyle the default display TextBlock. Title strikes through when complete; Due turns red-bold when overdue." />
-                <LineBreak />
-                <Run FontWeight="SemiBold" Text="EditorStyle:" />
-                <Run Text="restyle the default editor without replacing it. Hours uses an amber-accented TextBox in edit mode." />
-                <LineBreak />
-                <Run FontWeight="SemiBold" Text="DisplayTemplate:" />
-                <Run Text="full takeover of the read-only cell. Status renders as a colored pill; Assigned shows an initial-stamped avatar circle." />
-                <LineBreak />
-                <Run FontWeight="SemiBold" Text="EditTemplate:" />
-                <Run Text="full takeover of the in-place editor. Status, Priority, and Assigned each wrap a ComboBox with a chip ItemTemplate so the dropdown matches the cell display." />
-                <LineBreak />
-                <Run FontWeight="SemiBold" Text="FilterRowEditTemplate:" />
-                <Run Text="GridColumn-level hook that swaps the per-column filter editor. Reuses the same chip ItemTemplates so the filter row visually mirrors the cell editor — DataContext is EditGridCellData with {Binding Value} ↔ SearchValue." />
+                <Run Text="Restyle or fully replace a column's cell display, in-place editor, and filter-row editor. Each column demonstrates one customization surface — the panel maps them." />
             </TextBlock>
 
-            <sdg:SearchDataGrid x:Name="Grid"
-                                Margin="8"
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="320" />
+                </Grid.ColumnDefinitions>
+
+                <sdg:SearchDataGrid x:Name="Grid"
+                                Grid.Column="0"
+                                Margin="10"
                                 ItemsSource="{Binding Tasks}"
                                 AutoGenerateColumns="False"
                                 CanUserAddRows="False"
@@ -445,7 +440,35 @@
                         </sdg:GridColumn.EditSettings>
                     </sdg:GridColumn>
                 </sdg:SearchDataGrid.GridColumns>
-            </sdg:SearchDataGrid>
+                </sdg:SearchDataGrid>
+
+                <GridSplitter Grid.Column="1" Width="5" HorizontalAlignment="Stretch" Background="#CCCCCC" />
+
+                <ScrollViewer Grid.Column="2" Padding="8,4" Background="#FFFFFF" VerticalScrollBarVisibility="Auto">
+                    <sdg:SimpleStackPanel Orientation="Vertical" Spacing="8">
+
+                        <Expander Style="{StaticResource SampleExpanderStyle}" Header="Surface per column">
+                            <TextBlock Margin="4" FontSize="11" Foreground="#666" TextWrapping="Wrap">
+                                <Run FontWeight="SemiBold" Text="DisplayStyle" />
+                                <Run Text="— restyle the default display TextBlock. Title strikes through when complete; Due turns red-bold when overdue." />
+                                <LineBreak />
+                                <Run FontWeight="SemiBold" Text="EditorStyle" />
+                                <Run Text="— restyle the default editor without replacing it. Hours uses an amber-accented TextBox in edit mode." />
+                                <LineBreak />
+                                <Run FontWeight="SemiBold" Text="DisplayTemplate" />
+                                <Run Text="— full takeover of the read-only cell. Status renders as a colored pill; Assigned shows an initial-stamped avatar circle." />
+                                <LineBreak />
+                                <Run FontWeight="SemiBold" Text="EditTemplate" />
+                                <Run Text="— full takeover of the in-place editor. Status, Priority, and Assigned each wrap a ComboBox with a chip ItemTemplate so the dropdown matches the cell display." />
+                                <LineBreak />
+                                <Run FontWeight="SemiBold" Text="FilterRowEditTemplate" />
+                                <Run Text="— swaps the per-column filter editor. Reuses the same chip ItemTemplates so the filter row mirrors the cell editor — DataContext is EditGridCellData with {Binding Value} ↔ SearchValue." />
+                            </TextBlock>
+                        </Expander>
+
+                    </sdg:SimpleStackPanel>
+                </ScrollViewer>
+            </Grid>
         </DockPanel>
     </sampleControls:SampleHostControl>
 </UserControl>

@@ -69,8 +69,18 @@ namespace WWSearchDataGrid.Modern.WPF
 
             Core.CommandManager.InvalidateRequerySuggested();
 
-            // Determine context from the source element
             var sourceElement = e.OriginalSource as FrameworkElement;
+
+            // Group-header and group-footer rows carry their own self-contained ContextMenu — the
+            // header on an inner border (bound via PlacementTarget.DataContext), the footer on each
+            // cell (bound via PlacementTarget) — so they need no column/cell/row context injected
+            // here. Bail without handling so WPF opens that menu natively; otherwise the target
+            // lookup below resolves the enclosing DataGridRow (whose own ContextMenu is null) and
+            // suppresses it.
+            if (IsWithinGroupSentinelRow(sourceElement))
+                return;
+
+            // Determine context from the source element
             var context = DetermineContextMenuContext(grid, sourceElement);
 
             if (context == null)
@@ -108,6 +118,19 @@ namespace WWSearchDataGrid.Modern.WPF
         #endregion
 
         #region Helper Methods
+
+        /// <summary>
+        /// True when the right-click originated inside a flat group sentinel row — a group header or
+        /// group footer. Those rows attach their ContextMenu to their own chrome (the header to an
+        /// inner border, the footer to each cell) while the row container's own <c>ContextMenu</c> is
+        /// null, so the context-injection path here would otherwise resolve the
+        /// <see cref="DataGridRow"/> and suppress the menu. The pinned summary strip already opens
+        /// natively (it sits outside any row).
+        /// </summary>
+        private static bool IsWithinGroupSentinelRow(FrameworkElement source)
+            => source != null
+               && VisualTreeHelperMethods.FindVisualAncestor<SearchDataGridRow>(source) is { } row
+               && (row.IsGroupHeader || row.IsGroupFooter);
 
         /// <summary>
         /// Gets the ContextMenu from an element

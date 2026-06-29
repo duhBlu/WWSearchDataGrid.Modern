@@ -86,7 +86,7 @@ namespace WWSearchDataGrid.Modern.WPF
 
         /// <summary>
         /// Opens the Filter Editor as a modal dialog over the given grid. The host window picks
-        /// up the library's custom chrome via <see cref="ThemeKeys.FilterEditorWindow"/> —
+        /// up the library's shared chrome via <see cref="ThemeKeys.PrimitivesWindow"/> —
         /// resolved through <see cref="ComponentResourceKey"/> against the assembly's
         /// <c>Themes/Generic.xaml</c>, matching how <see cref="ColumnChooser"/> styles its host.
         /// </summary>
@@ -115,14 +115,9 @@ namespace WWSearchDataGrid.Modern.WPF
                 ResizeMode = ResizeMode.CanResize,
             };
 
-            // Resolve the library default Window style by ComponentResourceKey. The lookup
-            // walks element scope → app scope → the assembly's Themes/Generic.xaml courtesy
-            // of [ThemeInfo], so consumers get the default with no manual merge.
-            var defaultStyle = editor.TryFindResource(ThemeKeys.FilterEditorWindow) as Style;
-            if (defaultStyle != null)
-            {
-                host.Style = defaultStyle;
-            }
+            // Closing via the chrome's X (SystemCommands.CloseWindow) leaves DialogResult
+            // false — the same discard-pending-edits outcome as the footer Cancel button.
+            WindowHostHelper.ApplyDefaultChrome(host, editor);
 
             return host.ShowDialog();
         }

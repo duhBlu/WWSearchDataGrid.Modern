@@ -20,111 +20,152 @@
                        TextWrapping="Wrap">
                 <Run FontWeight="SemiBold" Text="Input masking" />
                 <LineBreak />
-                <Run Text="Each column declares a Mask pattern interpreted by MaskType (Simple / Numeric / DateTime / TimeSpan). UseMaskAsDisplayFormat=True applies the mask to display too. Tab cycles between regions, paste is mask-aware, Backspace / Delete respect literals." />
-                <LineBreak />
-                <Run FontWeight="SemiBold" Text="Grammar:" />
-                <Run Text="0=required digit, 9=optional digit, L=required letter, ?=optional letter, A=required alphanumeric, a=optional alphanumeric, +=one-or-more, *=zero-or-more, \=escape-as-literal." />
+                <Run Text="Each column declares a Mask pattern interpreted by MaskType (Simple / Numeric / DateTime / TimeSpan); UseMaskAsDisplayFormat=True applies the mask to display too. Tab cycles regions, paste is mask-aware, Backspace / Delete respect literals." />
             </TextBlock>
 
-            <sdg:SearchDataGrid x:Name="Grid"
-                                Margin="8"
-                                ItemsSource="{Binding Contacts}"
-                                AutoGenerateColumns="False"
-                                CanUserAddRows="False"
-                                CanUserDeleteRows="False"
-                                EditorShowMode="MouseDown">
-                <sdg:SearchDataGrid.GridColumns>
-                    <sdg:GridColumn Width="40" FieldName="Id" Header="#" IsReadOnly="True" />
-                    <sdg:GridColumn Width="140" FieldName="FullName" Header="Name" />
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="320" />
+                </Grid.ColumnDefinitions>
 
-                    <sdg:GridColumn Width="140" FieldName="Phone" Header="Phone">
-                        <sdg:GridColumn.EditSettings>
-                            <sdg:TextEditSettings Mask="(000) 000-0000" UseMaskAsDisplayFormat="True" />
-                        </sdg:GridColumn.EditSettings>
-                    </sdg:GridColumn>
+                <sdg:SearchDataGrid x:Name="Grid"
+                                    Grid.Column="0"
+                                    Margin="10"
+                                    ItemsSource="{Binding Contacts}"
+                                    AutoGenerateColumns="False"
+                                    CanUserAddRows="False"
+                                    CanUserDeleteRows="False"
+                                    EditorShowMode="MouseDown">
+                    <sdg:SearchDataGrid.GridColumns>
+                        <sdg:GridColumn Width="40" FieldName="Id" Header="#" IsReadOnly="True" />
+                        <sdg:GridColumn Width="140" FieldName="FullName" Header="Name" />
 
-                    <sdg:GridColumn Width="120" FieldName="Ssn" Header="SSN">
-                        <sdg:GridColumn.EditSettings>
-                            <sdg:TextEditSettings Mask="000-00-0000" UseMaskAsDisplayFormat="True" />
-                        </sdg:GridColumn.EditSettings>
-                    </sdg:GridColumn>
+                        <sdg:GridColumn Width="140" FieldName="Phone" Header="Phone">
+                            <sdg:GridColumn.EditSettings>
+                                <sdg:TextEditSettings Mask="(000) 000-0000" UseMaskAsDisplayFormat="True" />
+                            </sdg:GridColumn.EditSettings>
+                        </sdg:GridColumn>
 
-                    <sdg:GridColumn Width="120" FieldName="ZipPlus4" Header="ZIP+4">
-                        <sdg:GridColumn.EditSettings>
-                            <sdg:TextEditSettings Mask="00000-9999" UseMaskAsDisplayFormat="True" />
-                        </sdg:GridColumn.EditSettings>
-                    </sdg:GridColumn>
+                        <sdg:GridColumn Width="120" FieldName="Ssn" Header="SSN">
+                            <sdg:GridColumn.EditSettings>
+                                <sdg:TextEditSettings Mask="000-00-0000" UseMaskAsDisplayFormat="True" />
+                            </sdg:GridColumn.EditSettings>
+                        </sdg:GridColumn>
 
-                    <sdg:GridColumn Width="100" FieldName="LicensePlate" Header="Plate">
-                        <sdg:GridColumn.EditSettings>
-                            <sdg:TextEditSettings Mask="LLL-000" UseMaskAsDisplayFormat="True" />
-                        </sdg:GridColumn.EditSettings>
-                    </sdg:GridColumn>
+                        <sdg:GridColumn Width="120" FieldName="ZipPlus4" Header="ZIP+4">
+                            <sdg:GridColumn.EditSettings>
+                                <sdg:TextEditSettings Mask="00000-9999" UseMaskAsDisplayFormat="True" />
+                            </sdg:GridColumn.EditSettings>
+                        </sdg:GridColumn>
 
-                    <sdg:GridColumn Width="180" FieldName="AccountNumber" Header="Account #">
-                        <sdg:GridColumn.EditSettings>
-                            <sdg:TextEditSettings Mask="0000-0000-0000-0000" UseMaskAsDisplayFormat="True" />
-                        </sdg:GridColumn.EditSettings>
-                    </sdg:GridColumn>
+                        <sdg:GridColumn Width="100" FieldName="LicensePlate" Header="Plate">
+                            <sdg:GridColumn.EditSettings>
+                                <sdg:TextEditSettings Mask="LLL-000" UseMaskAsDisplayFormat="True" />
+                            </sdg:GridColumn.EditSettings>
+                        </sdg:GridColumn>
 
-                    <sdg:GridColumn Width="120" FieldName="Birthday" Header="Birthday" />
+                        <sdg:GridColumn Width="180" FieldName="AccountNumber" Header="Account #">
+                            <sdg:GridColumn.EditSettings>
+                                <sdg:TextEditSettings Mask="0000-0000-0000-0000" UseMaskAsDisplayFormat="True" />
+                            </sdg:GridColumn.EditSettings>
+                        </sdg:GridColumn>
 
-                    <sdg:GridColumn Width="180" FieldName="LastSeen" Header="Last Seen">
-                        <sdg:GridColumn.EditSettings>
-                            <sdg:DateEditSettings Mask="G" UseMaskAsDisplayFormat="True" />
-                        </sdg:GridColumn.EditSettings>
-                    </sdg:GridColumn>
+                        <sdg:GridColumn Width="120" FieldName="Birthday" Header="Birthday" />
 
-                    <!-- Editable month-name + AM/PM. Press a letter on the month segment to jump
-                         to the next month starting with that letter (J→Jan, J→Jun, J→Jul). Press
-                         A/P on the AM/PM segment to toggle. -->
-                    <sdg:GridColumn Width="200" FieldName="Logged" Header="Logged">
-                        <sdg:GridColumn.EditSettings>
-                            <sdg:DateEditSettings Mask="MMM d, yyyy h:mm tt" UseMaskAsDisplayFormat="True" />
-                        </sdg:GridColumn.EditSettings>
-                    </sdg:GridColumn>
+                        <sdg:GridColumn Width="180" FieldName="LastSeen" Header="Last Seen">
+                            <sdg:GridColumn.EditSettings>
+                                <sdg:DateEditSettings Mask="G" UseMaskAsDisplayFormat="True" />
+                            </sdg:GridColumn.EditSettings>
+                        </sdg:GridColumn>
 
-                    <!-- Computed day-name + editable full month-name + day digit. The "Tuesday"
-                         segment is skipped by Tab and auto-updates when the date changes. -->
-                    <sdg:GridColumn Width="240" FieldName="Day" Header="Day">
-                        <sdg:GridColumn.EditSettings>
-                            <sdg:DateEditSettings Mask="dddd, MMMM d, yyyy" UseMaskAsDisplayFormat="True" />
-                        </sdg:GridColumn.EditSettings>
-                    </sdg:GridColumn>
+                        <!-- Editable month-name + AM/PM. Press a letter on the month segment to jump
+                             to the next month starting with that letter (J→Jan, J→Jun, J→Jul). Press
+                             A/P on the AM/PM segment to toggle. -->
+                        <sdg:GridColumn Width="200" FieldName="Logged" Header="Logged">
+                            <sdg:GridColumn.EditSettings>
+                                <sdg:DateEditSettings Mask="MMM d, yyyy h:mm tt" UseMaskAsDisplayFormat="True" />
+                            </sdg:GridColumn.EditSettings>
+                        </sdg:GridColumn>
 
-                    <!-- Computed timezone (zzz) — rendered as fixed text from the system-local
-                         offset, skipped by Tab. All digit segments edit normally. -->
-                    <sdg:GridColumn Width="200" FieldName="Iso" Header="ISO" >
-                        <sdg:GridColumn.EditSettings>
-                            <sdg:DateEditSettings Mask="yyyy-MM-ddTHH:mm:sszzz" UseMaskAsDisplayFormat="True" />
-                        </sdg:GridColumn.EditSettings>
-                    </sdg:GridColumn>
+                        <!-- Computed day-name + editable full month-name + day digit. The "Tuesday"
+                             segment is skipped by Tab and auto-updates when the date changes. -->
+                        <sdg:GridColumn Width="240" FieldName="Day" Header="Day">
+                            <sdg:GridColumn.EditSettings>
+                                <sdg:DateEditSettings Mask="dddd, MMMM d, yyyy" UseMaskAsDisplayFormat="True" />
+                            </sdg:GridColumn.EditSettings>
+                        </sdg:GridColumn>
 
-                    <sdg:GridColumn Width="120" FieldName="Balance" Header="Balance">
-                        <sdg:GridColumn.EditSettings>
-                            <sdg:TextEditSettings Mask="C" MaskType="Numeric" UseMaskAsDisplayFormat="True" />
-                        </sdg:GridColumn.EditSettings>
-                    </sdg:GridColumn>
+                        <!-- Computed timezone (zzz) — rendered as fixed text from the system-local
+                             offset, skipped by Tab. All digit segments edit normally. -->
+                        <sdg:GridColumn Width="200" FieldName="Iso" Header="ISO" >
+                            <sdg:GridColumn.EditSettings>
+                                <sdg:DateEditSettings Mask="yyyy-MM-ddTHH:mm:sszzz" UseMaskAsDisplayFormat="True" />
+                            </sdg:GridColumn.EditSettings>
+                        </sdg:GridColumn>
 
-                    <sdg:GridColumn Width="100" FieldName="Discount" Header="Discount">
-                        <sdg:GridColumn.EditSettings>
-                            <sdg:TextEditSettings Mask="P2" MaskType="Numeric" UseMaskAsDisplayFormat="True" />
-                        </sdg:GridColumn.EditSettings>
-                    </sdg:GridColumn>
+                        <sdg:GridColumn Width="120" FieldName="Balance" Header="Balance">
+                            <sdg:GridColumn.EditSettings>
+                                <sdg:TextEditSettings Mask="C" MaskType="Numeric" UseMaskAsDisplayFormat="True" />
+                            </sdg:GridColumn.EditSettings>
+                        </sdg:GridColumn>
 
-                    <sdg:GridColumn Width="100" FieldName="Margin" Header="Margin">
-                        <sdg:GridColumn.EditSettings>
-                            <sdg:TextEditSettings Mask="F2" MaskType="Numeric" UseMaskAsDisplayFormat="True" />
-                        </sdg:GridColumn.EditSettings>
-                    </sdg:GridColumn>
+                        <sdg:GridColumn Width="100" FieldName="Discount" Header="Discount">
+                            <sdg:GridColumn.EditSettings>
+                                <sdg:TextEditSettings Mask="P2" MaskType="Numeric" UseMaskAsDisplayFormat="True" />
+                            </sdg:GridColumn.EditSettings>
+                        </sdg:GridColumn>
 
-                    <sdg:GridColumn Width="120" FieldName="CallDuration" Header="Duration">
-                        <sdg:GridColumn.EditSettings>
-                            <sdg:TextEditSettings Mask="c" MaskType="TimeSpan" UseMaskAsDisplayFormat="True" />
-                        </sdg:GridColumn.EditSettings>
-                    </sdg:GridColumn>
-                </sdg:SearchDataGrid.GridColumns>
-            </sdg:SearchDataGrid>
+                        <sdg:GridColumn Width="100" FieldName="Margin" Header="Margin">
+                            <sdg:GridColumn.EditSettings>
+                                <sdg:TextEditSettings Mask="F2" MaskType="Numeric" UseMaskAsDisplayFormat="True" />
+                            </sdg:GridColumn.EditSettings>
+                        </sdg:GridColumn>
+
+                        <sdg:GridColumn Width="120" FieldName="CallDuration" Header="Duration">
+                            <sdg:GridColumn.EditSettings>
+                                <sdg:TextEditSettings Mask="c" MaskType="TimeSpan" UseMaskAsDisplayFormat="True" />
+                            </sdg:GridColumn.EditSettings>
+                        </sdg:GridColumn>
+                    </sdg:SearchDataGrid.GridColumns>
+                </sdg:SearchDataGrid>
+
+                <GridSplitter Grid.Column="1" HorizontalAlignment="Stretch" Width="5" Background="#CCCCCC" />
+
+                <ScrollViewer Grid.Column="2" Background="#FFFFFF" VerticalScrollBarVisibility="Auto" Padding="8,4">
+                    <sdg:SimpleStackPanel Orientation="Vertical" Spacing="8">
+
+                        <Expander Header="Mask grammar">
+                            <TextBlock Margin="4"
+                                       FontFamily="Consolas"
+                                       FontSize="11"
+                                       Foreground="#333"
+                                       TextWrapping="Wrap">
+                                0  required digit<LineBreak />
+                                9  optional digit<LineBreak />
+                                L  required letter<LineBreak />
+                                ?  optional letter<LineBreak />
+                                A  required alphanumeric<LineBreak />
+                                a  optional alphanumeric<LineBreak />
+                                +  one-or-more<LineBreak />
+                                *  zero-or-more<LineBreak />
+                                \  escape-as-literal</TextBlock>
+                        </Expander>
+
+                        <Expander Header="Try it" IsExpanded="False">
+                            <TextBlock Margin="4" FontSize="11" Foreground="#666" TextWrapping="Wrap">
+                                <Run Text="• On Logged, press a letter on the month segment to jump to the next month starting with that letter (J→Jan, J→Jun, J→Jul); press A/P on the AM/PM segment to toggle." />
+                                <LineBreak />
+                                <Run Text="• On Day, the day-name segment is computed — Tab skips it and it auto-updates when the date changes." />
+                                <LineBreak />
+                                <Run Text="• On ISO, the timezone segment renders as fixed text from the system-local offset." />
+                            </TextBlock>
+                        </Expander>
+
+                    </sdg:SimpleStackPanel>
+                </ScrollViewer>
+            </Grid>
         </DockPanel>
     </sampleControls:SampleHostControl>
 </UserControl>

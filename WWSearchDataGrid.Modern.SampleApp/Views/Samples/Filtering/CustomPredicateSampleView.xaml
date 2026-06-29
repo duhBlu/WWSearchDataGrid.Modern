@@ -11,11 +11,6 @@
         <local:CustomPredicateSampleViewModel />
     </UserControl.DataContext>
 
-    <UserControl.Resources>
-        <Style BasedOn="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesCheckBox}}" TargetType="{x:Type CheckBox}" />
-        <Style BasedOn="{StaticResource SampleExpanderStyle}" TargetType="{x:Type Expander}" />
-    </UserControl.Resources>
-
     <sampleControls:SampleHostControl Sources="{x:Static sampleControls:SampleSources.CustomPredicate}">
         <DockPanel>
             <TextBlock DockPanel.Dock="Top"
@@ -57,31 +52,30 @@
 
                 <GridSplitter Grid.Column="1" HorizontalAlignment="Stretch" Width="5" Background="#CCCCCC" />
 
-                <DockPanel Grid.Column="2" Background="#FFFFFF">
-                    <ScrollViewer DockPanel.Dock="Top" VerticalScrollBarVisibility="Auto" Padding="8,4">
-                        <sdg:SimpleStackPanel Orientation="Vertical" Spacing="8">
+                <ScrollViewer Grid.Column="2" Background="#FFFFFF" VerticalScrollBarVisibility="Auto" Padding="8,4">
+                    <sdg:SimpleStackPanel Orientation="Vertical" Spacing="8">
 
-                            <Expander Header="Custom SearchFilter predicate" IsExpanded="True"
-                                      ToolTip="A Predicate&lt;object&gt; applied alongside column filters. Receives each OrderItem; return true to keep.">
-                                <sdg:SimpleStackPanel Orientation="Vertical" Spacing="6" Margin="4">
-                                    <TextBlock Text="Notes contain:" FontWeight="Bold" />
-                                    <TextBox Text="{Binding CustomPredicateText, UpdateSourceTrigger=PropertyChanged}" />
-                                    <CheckBox IsChecked="{Binding CustomPredicateActive}" Content="Apply predicate"
-                                              ToolTip="When checked, only rows whose SpecialInstructionsText contains the entered substring (case-insensitive) are kept. Leave the textbox blank to filter to rows with notes only." />
-                                </sdg:SimpleStackPanel>
-                            </Expander>
+                        <Expander Header="Custom SearchFilter predicate"
+                                  ToolTip="A Predicate&lt;object&gt; applied alongside column filters. Receives each OrderItem; return true to keep.">
+                            <sdg:SimpleStackPanel Orientation="Vertical" Spacing="6" Margin="4">
+                                <TextBlock Text="Notes contain:" FontWeight="Bold" />
+                                <TextBox Text="{Binding CustomPredicateText, UpdateSourceTrigger=PropertyChanged}" />
+                                <CheckBox IsChecked="{Binding CustomPredicateActive}" Content="Apply predicate"
+                                          ToolTip="When checked, only rows whose SpecialInstructionsText contains the entered substring (case-insensitive) are kept. Leave the textbox blank to filter to rows with notes only." />
+                            </sdg:SimpleStackPanel>
+                        </Expander>
 
-                            <Expander Header="FilterSummaryPanel events" IsExpanded="True"
-                                      ToolTip="Live log of FiltersEnabledChanged, FilterRemoved, ValueRemovedFromToken, OperatorToggled, ClearAllFiltersRequested.">
-                                <ListBox ItemsSource="{Binding EventLog}"
-                                         Height="240"
-                                         FontFamily="Consolas"
-                                         FontSize="11" />
-                            </Expander>
+                        <Expander Header="FilterSummaryPanel events"
+                                  ToolTip="Live log of FiltersEnabledChanged, FilterRemoved, ValueRemovedFromToken, OperatorToggled, ClearAllFiltersRequested.">
+                            <ListBox ItemsSource="{Binding EventLog}"
+                                     Margin="4"
+                                     Height="240"
+                                     FontFamily="Consolas"
+                                     FontSize="11" />
+                        </Expander>
 
-                        </sdg:SimpleStackPanel>
-                    </ScrollViewer>
-                </DockPanel>
+                    </sdg:SimpleStackPanel>
+                </ScrollViewer>
             </Grid>
         </DockPanel>
     </sampleControls:SampleHostControl>

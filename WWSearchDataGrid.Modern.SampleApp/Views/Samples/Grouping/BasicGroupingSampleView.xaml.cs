@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -6,6 +7,19 @@ namespace WWSearchDataGrid.Modern.SampleApp.Views.Samples.Grouping
     public partial class BasicGroupingSampleView : UserControl
     {
         public BasicGroupingSampleView() => InitializeComponent();
+
+        // The "+N" rail buttons carry their increment in Tag; append that many rows to the live
+        // collection (the view-model handles generation + the busy overlay off the UI thread).
+        private void AddRows_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is FrameworkElement fe
+                && fe.Tag is string tag
+                && int.TryParse(tag, NumberStyles.Integer, CultureInfo.InvariantCulture, out int count)
+                && DataContext is BasicGroupingSampleViewModel vm)
+            {
+                vm.AddRows(count);
+            }
+        }
 
         // Each handler demonstrates the string-based GroupBy API. Repeated clicks on different
         // columns build nested group levels; Ungroup is reached via the column-header context menu.

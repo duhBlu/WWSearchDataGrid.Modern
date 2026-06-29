@@ -14,12 +14,6 @@
 
     <UserControl.Resources>
         <sampleConverters:EnumToBooleanConverter x:Key="EnumToBooleanConverter" />
-
-        <Style BasedOn="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesButton}}" TargetType="{x:Type Button}" />
-        <Style BasedOn="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesCheckBox}}" TargetType="{x:Type CheckBox}" />
-        <Style BasedOn="{StaticResource SampleRadioButtonStyle}" TargetType="{x:Type RadioButton}" />
-        <Style BasedOn="{StaticResource SampleSliderStyle}" TargetType="{x:Type Slider}" />
-        <Style BasedOn="{StaticResource SampleExpanderStyle}" TargetType="{x:Type Expander}" />
     </UserControl.Resources>
 
     <sampleControls:SampleHostControl Sources="{x:Static sampleControls:SampleSources.ScrollingAnimation}">
@@ -31,17 +25,14 @@
                        TextWrapping="Wrap">
                 <Run FontWeight="SemiBold" Text="Scrolling animation" />
                 <LineBreak />
-                <Run Text="Mouse-wheel momentum / inertia. Per-pixel scrolling switches from row-stepping to smooth sub-row positioning — required for animation. ScrollAnimationMode picks the deceleration curve; Custom routes to a Storyboard built in OnCustomScrollAnimation in code-behind." />
-                <LineBreak />
-                <Run FontWeight="SemiBold" Foreground="#A04040" Text="Note:" />
-                <Run Text="These features have a performance cost — best suited to modest datasets (≤ 100k rows). For large-dataset tuning see the Large Datasets sample." />
+                <Run Text="Mouse-wheel momentum / inertia. Per-pixel scrolling is required for animation; ScrollAnimationMode picks the deceleration curve (Custom routes to code-behind). These features cost performance — best suited to datasets ≤ 100k rows." />
             </TextBlock>
 
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="280" />
+                    <ColumnDefinition Width="320" />
                 </Grid.ColumnDefinitions>
 
                 <sdg:SearchDataGrid x:Name="Grid"

@@ -13,7 +13,9 @@
     </UserControl.DataContext>
 
     <UserControl.Resources>
-        <Style BasedOn="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesButton}}" TargetType="{x:Type Button}" />
+        <Style BasedOn="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesButton}}" TargetType="{x:Type Button}">
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+        </Style>
     </UserControl.Resources>
 
     <sampleControls:SampleHostControl Sources="{x:Static sampleControls:SampleSources.CopyPaste}">
@@ -25,22 +27,19 @@
                        TextWrapping="Wrap">
                 <Run FontWeight="SemiBold" Text="Copy / paste operations" />
                 <LineBreak />
-                <Run Text="Select cells or rows in the grid, then copy with Ctrl+C (values) or Ctrl+Shift+C (values with headers) — the same commands the built-in context menu uses. Output is tab-separated, so it pastes cleanly into the box below, Excel, or any editor. Display formatting (currency, dates) is preserved by default." />
-                <LineBreak />
-                <Run Text="The 'Total (raw copy)' column looks identical to 'Total' on screen — same C2 currency formatting — but sets CopyValueAsDisplayText=False, so it copies the underlying number (1234.56) instead of the formatted text ($1,234.56). Select cells from both Total columns and paste to compare." />
+                <Run Text="Select cells or rows, then copy with Ctrl+C (values) or Ctrl+Shift+C (values with headers). Output is tab-separated and preserves display formatting by default; 'Total (raw copy)' sets CopyValueAsDisplayText=False, so it copies 1234.56 instead of $1,234.56." />
             </TextBlock>
 
             <Grid>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="*" />
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="160" />
-                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="320" />
+                </Grid.ColumnDefinitions>
 
                 <sdg:SearchDataGrid x:Name="Grid"
-                                    Grid.Row="0"
-                                    Margin="10,4,10,0"
+                                    Grid.Column="0"
+                                    Margin="10"
                                     ItemsSource="{Binding Items}"
                                     AutoGenerateColumns="False"
                                     CanUserAddRows="False"
@@ -60,30 +59,45 @@
                     </sdg:SearchDataGrid.GridColumns>
                 </sdg:SearchDataGrid>
 
-                <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="10,8">
-                    <Button Content="Copy"
-                            Margin="0,0,8,0"
-                            Command="{x:Static commands:ContextMenuCommands.CopySelectedCellValuesCommand}"
-                            CommandParameter="{Binding ElementName=Grid}" />
-                    <Button Content="Copy With Headers"
-                            Command="{x:Static commands:ContextMenuCommands.CopySelectedCellValuesWithHeadersCommand}"
-                            CommandParameter="{Binding ElementName=Grid}" />
-                </StackPanel>
+                <GridSplitter Grid.Column="1" HorizontalAlignment="Stretch" Width="5" Background="#CCCCCC" />
 
-                <TextBlock Grid.Row="2"
-                           Margin="10,0,10,4"
-                           FontSize="11"
-                           Foreground="#666"
-                           Text="Paste target (Ctrl+V):" />
+                <ScrollViewer Grid.Column="2" Background="#FFFFFF" VerticalScrollBarVisibility="Auto" Padding="8,4">
+                    <sdg:SimpleStackPanel Orientation="Vertical" Spacing="8">
 
-                <TextBox Grid.Row="3"
-                         Margin="10,0,10,10"
-                         AcceptsReturn="True"
-                         AcceptsTab="True"
-                         FontFamily="Consolas"
-                         VerticalScrollBarVisibility="Auto"
-                         HorizontalScrollBarVisibility="Auto"
-                         TextWrapping="NoWrap" />
+                        <Expander Header="Copy">
+                            <sdg:SimpleStackPanel Margin="4" Orientation="Vertical" Spacing="4">
+                                <Button Content="Copy"
+                                        Command="{x:Static commands:ContextMenuCommands.CopySelectedCellValuesCommand}"
+                                        CommandParameter="{Binding ElementName=Grid}" />
+                                <Button Content="Copy With Headers"
+                                        Command="{x:Static commands:ContextMenuCommands.CopySelectedCellValuesWithHeadersCommand}"
+                                        CommandParameter="{Binding ElementName=Grid}" />
+                                <TextBlock FontSize="11"
+                                           Foreground="#666"
+                                           TextWrapping="Wrap"
+                                           Text="Same commands the built-in cell context menu uses." />
+                            </sdg:SimpleStackPanel>
+                        </Expander>
+
+                        <Expander Header="Paste target (Ctrl+V)">
+                            <TextBox Margin="4"
+                                     Height="200"
+                                     AcceptsReturn="True"
+                                     AcceptsTab="True"
+                                     FontFamily="Consolas"
+                                     VerticalScrollBarVisibility="Auto"
+                                     HorizontalScrollBarVisibility="Auto"
+                                     TextWrapping="NoWrap" />
+                        </Expander>
+
+                        <Expander Header="Try it" IsExpanded="False">
+                            <TextBlock Margin="4" FontSize="11" Foreground="#666" TextWrapping="Wrap">
+                                <Run Text="Select cells from both Total columns, copy, and paste into the box (or Excel) to compare formatted vs raw values." />
+                            </TextBlock>
+                        </Expander>
+
+                    </sdg:SimpleStackPanel>
+                </ScrollViewer>
             </Grid>
         </DockPanel>
     </sampleControls:SampleHostControl>

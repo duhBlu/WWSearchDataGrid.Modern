@@ -116,71 +116,41 @@ namespace WWSearchDataGrid.Modern.WPF.Commands
 
         private static ICommand _bestFitColumnCommand;
         /// <summary>
-        /// Auto-sizes the current column to fit content
+        /// Auto-sizes the current column to fit content. Disabled when the column resolves
+        /// <see cref="ColumnLayoutBase.ActualAllowBestFit"/> to <c>false</c>.
         /// </summary>
         public static ICommand BestFitColumnCommand => _bestFitColumnCommand ??= new RelayCommand<ContextMenuContext>(context =>
         {
             try
             {
-                BestFitColumn(context.Grid, context.Column);
+                var descriptor = ResolveDescriptor(context);
+                if (descriptor != null)
+                    context.Grid.BestFitColumn(descriptor);
             }
             catch (Exception ex)
             {
                 Debug.WriteLine($"BestFitColumn error: {ex}");
             }
-        }, context => context.Grid != null && context.Column != null);
+        }, context => context?.Grid != null && context.Column != null
+            && ResolveDescriptor(context) is { ActualAllowBestFit: true });
 
         private static ICommand _bestFitAllColumnsCommand;
         /// <summary>
-        /// Auto-sizes all columns to fit content
+        /// Auto-sizes all columns to fit content (columns opted out via
+        /// <see cref="ColumnLayoutBase.AllowBestFit"/> are skipped). Disabled when the grid-level
+        /// <see cref="SearchDataGrid.AllowBestFit"/> is <c>false</c>.
         /// </summary>
         public static ICommand BestFitAllColumnsCommand => _bestFitAllColumnsCommand ??= new RelayCommand<ContextMenuContext>(context =>
         {
             try
             {
-                foreach (var col in context.Grid.Columns)
-                {
-                    BestFitColumn(context.Grid, col);
-                }
+                context.Grid.BestFitAllColumns();
             }
             catch (Exception ex)
             {
                 Debug.WriteLine($"BestFitAllColumns error: {ex}");
             }
-        }, context => context.Grid != null && context.Grid.Columns != null);
-
-        /// <summary>
-        /// Best-fit a single column (header + realized cells), then freeze to pixel width.
-        /// </summary>
-        public static void BestFitColumn(DataGrid grid, DataGridColumn column)
-        {
-            if (grid == null || column == null) return;
-
-            // Keep current constraints
-            double min = column.MinWidth;
-            double max = double.IsNaN(column.MaxWidth) || column.MaxWidth <= 0 ? double.PositiveInfinity : column.MaxWidth;
-
-            // Measure header
-            column.Width = new DataGridLength(1, DataGridLengthUnitType.SizeToHeader);
-            grid.UpdateLayout();
-            double headerWidth = column.ActualWidth;
-
-            // Measure realized cells (visible rows)
-            column.Width = new DataGridLength(1, DataGridLengthUnitType.SizeToCells);
-            grid.UpdateLayout();
-            double cellsWidth = column.ActualWidth;
-
-            // Choose the larger, clamp to min/max
-            double target = Math.Max(headerWidth, cellsWidth);
-            target = Math.Max(target, min);
-            if (!double.IsPositiveInfinity(max))
-                target = Math.Min(target, max);
-
-            // Freeze as pixel width so it doesn't reflow later
-            column.Width = new DataGridLength(target);
-
-            grid.UpdateLayout();
-        }
+        }, context => context?.Grid is { AllowBestFit: true });
 
         #endregion
 

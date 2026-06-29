@@ -21,6 +21,11 @@ Extends `System.Windows.Controls.DataGrid`. All standard DataGrid properties, me
 | `EnableLiveFiltering` | `bool` | `true` | Grid-wide live-filtering toggle. When `false`, popup edits and filter-row typing defer until commit (Enter / Tab / focus loss / popup close). Inherits to cells. |
 | `FilterClearButtonMode` | `FilterClearButtonMode` | `Always` | Controls when the per-cell clear button is visible. `Never`, `Always` (any active filter), `Display` (only on the read-only display surface), `Edit` (only on the edit surface). Inherits to cells. |
 | `AllowFixedColumnMenu` | `bool` | `false` | When `true`, the column-header context menu surfaces a `Fixed` submenu with `Pin Left`, `Pin Right`, and `Unpin` items so end users can change a column's `GridColumn.Fixed` value at runtime. When `false`, pinning can only be set declaratively in XAML. |
+| `FixedColumnSeparatorWidth` | `double` | `1` | Thickness of the separator strip at each fixed-band boundary (left band ↔ scrollable cells, scrollable cells ↔ right band). The strip consumes layout space — the scrollable window shrinks by it and the scroll extent grows to compensate, so it never covers cell content. Separators collapse automatically when the corresponding band is empty. |
+| `FixedColumnSeparatorBackground` | `Brush` | chrome gray (`#FFF3F3F3`) | Fill of the fixed-band separator strips. |
+| `FixedColumnSeparatorBorderBrush` | `Brush` | grid-line gray (`#FFD0D0D0`) | Brush of the 1px vertical edges of the fixed-band separator strips. |
+| `LeftFixedColumnsWidth` | `double` (read-only) | `0` | Summed `ActualWidth` of the visible left-pinned columns. |
+| `RightFixedColumnsWidth` | `double` (read-only) | `0` | Summed `ActualWidth` of the visible right-pinned columns. |
 
 ### Properties
 
@@ -91,7 +96,7 @@ A `FrameworkContentElement` that describes a column. Declared inside `SearchData
 | `MaxWidth` | `double` | `+Infinity` | Maximum column width. |
 | `Visible` | `bool` | `true` | Column visibility. |
 | `VisibleIndex` | `int` | `-1` | Position among visible columns (-1 = auto). |
-| `Fixed` | `FixedColumnPosition` | `None` | Pinned column position: `None`, `Left`, or `Right`. `Left` uses `DataGrid.FrozenColumnCount`; `Right` anchors the column to the right end of the grid. Set declaratively in XAML, or let users change it at runtime via the column-header context menu when [`SearchDataGrid.AllowFixedColumnMenu`](#searchdatagrid-properties) is `true`. |
+| `Fixed` | `FixedColumnPosition` | `None` | Pinned column position: `None`, `Left`, or `Right`. `Left` uses `DataGrid.FrozenColumnCount`; `Right` pins the column to the right edge of the viewport — unpinned columns scroll beneath it. Set declaratively in XAML, or let users change it at runtime via the column-header context menu when [`SearchDataGrid.AllowFixedColumnMenu`](#searchdatagrid-properties) is `true`. |
 | `AllowMoving` | `bool` | `true` | User can drag-reorder. |
 | `AllowResizing` | `bool` | `true` | User can resize. |
 | `ShowInColumnChooser` | `bool` | `true` | Appears in column chooser. |

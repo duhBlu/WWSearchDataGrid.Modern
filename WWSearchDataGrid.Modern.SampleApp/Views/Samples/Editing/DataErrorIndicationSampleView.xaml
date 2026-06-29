@@ -20,7 +20,7 @@
                        TextWrapping="Wrap">
                 <Run FontWeight="SemiBold" Text="Severity-aware error badges from a self-reporting row" />
                 <LineBreak />
-                <Run Text="Each row is a PersonInfo deriving from ObservableValidator, so it reports its own errors through INotifyDataErrorInfo — the grid reads them directly instead of reflecting over attributes. Implementing IValidationSeverityProvider turns the single red badge into three tones: a missing First/Last name is a blocking Error (red), a missing Address or Email is an advisory Info (blue), and a badly formatted Phone or Email is a Warning (amber). Edit a cell and commit — the badge re-evaluates the moment the row revalidates. Commit-on-error is on, so advisory badges never block an edit." />
+                <Run Text="Rows report their own errors through INotifyDataErrorInfo; IValidationSeverityProvider maps each to a red Error (missing name), amber Warning (badly formatted Phone / Email), or blue Info (missing Address / Email) badge. Edit a cell and commit — the badge re-evaluates, and advisory badges never block the edit." />
             </TextBlock>
 
             <sdg:SearchDataGrid x:Name="Grid"

@@ -11,11 +11,6 @@
         <local:SearchModesSampleViewModel />
     </UserControl.DataContext>
 
-    <UserControl.Resources>
-        <Style BasedOn="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesCheckBox}}" TargetType="{x:Type CheckBox}" />
-        <Style BasedOn="{StaticResource SampleExpanderStyle}" TargetType="{x:Type Expander}" />
-    </UserControl.Resources>
-
     <sampleControls:SampleHostControl Sources="{x:Static sampleControls:SampleSources.SearchModes}">
         <DockPanel>
             <TextBlock DockPanel.Dock="Top"
@@ -25,14 +20,14 @@
                        TextWrapping="Wrap">
                 <Run FontWeight="SemiBold" Text="Per-column search modes" />
                 <LineBreak />
-                <Run Text="DefaultSearchType chooses how a column's search box matches: StartsWith / EndsWith for prefix / suffix (string columns default to StartsWith), Contains for matches anywhere, Equals for exact match. UseCheckBoxInSearchBox swaps the text box for a tri-state checkbox on bool columns. AllowFiltering=False hides the search box entirely. AllowFilterPopup toggles the funnel-icon rule popup." />
+                <Run Text="DefaultSearchType chooses how each column's search box matches: StartsWith (string default), EndsWith, Contains, or Equals. UseCheckBoxInSearchBox, AllowFilterPopup, and AllowAutoFilter tune or remove the per-column editors." />
             </TextBlock>
 
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="280" />
+                    <ColumnDefinition Width="320" />
                 </Grid.ColumnDefinitions>
 
                 <sdg:SearchDataGrid x:Name="Grid"
@@ -62,27 +57,29 @@
 
                 <ScrollViewer Grid.Column="2" Background="#FFFFFF" VerticalScrollBarVisibility="Auto" Padding="8,4">
                     <sdg:SimpleStackPanel Orientation="Vertical" Spacing="8">
-                        <Expander Header="Grid-level filtering" IsExpanded="True">
-                            <sdg:SimpleStackPanel Orientation="Vertical" Spacing="4" Margin="4">
+
+                        <Expander Header="Grid-level filtering">
+                            <sdg:SimpleStackPanel Margin="4" Orientation="Vertical" Spacing="4">
                                 <CheckBox IsChecked="{Binding ElementName=Grid, Path=AllowFilterPopup}"
                                           Content="Allow Filter Popup"
                                           ToolTip="Master switch for the funnel-icon rule popup. When off, columns fall back to plain text search." />
                             </sdg:SimpleStackPanel>
                         </Expander>
 
-                        <TextBlock Margin="4" FontSize="11" Foreground="#666" TextWrapping="Wrap">
-                            <Run FontWeight="SemiBold" Text="Try:" />
-                            <LineBreak />
-                            <Run Text="• Type '500' in Order # — matches anchor at the start (StartsWith)." />
-                            <LineBreak />
-                            <Run Text="• Type 'Submitted' in Status — exact match only (Equals)." />
-                            <LineBreak />
-                            <Run Text="• Type a partial name in Customer — anchored at the start (string default StartsWith). Override to Contains on a column when you want match-anywhere." />
-                            <LineBreak />
-                            <Run Text="• State has rule-filtering OFF — only the simple search box, no funnel icon." />
-                            <LineBreak />
-                            <Run Text="• Notes has filtering disabled entirely — no search box at all." />
-                        </TextBlock>
+                        <Expander Header="Try it" IsExpanded="False">
+                            <TextBlock Margin="4" FontSize="11" Foreground="#666" TextWrapping="Wrap">
+                                <Run Text="• Type '500' in Order # — matches anchor at the start (StartsWith)." />
+                                <LineBreak />
+                                <Run Text="• Type 'Submitted' in Status — exact match only (Equals)." />
+                                <LineBreak />
+                                <Run Text="• Type a partial name in Customer — anchored at the start (string default StartsWith). Override to Contains on a column when you want match-anywhere." />
+                                <LineBreak />
+                                <Run Text="• State has rule-filtering OFF — only the simple search box, no funnel icon." />
+                                <LineBreak />
+                                <Run Text="• Notes has filtering disabled entirely — no search box at all." />
+                            </TextBlock>
+                        </Expander>
+
                     </sdg:SimpleStackPanel>
                 </ScrollViewer>
             </Grid>

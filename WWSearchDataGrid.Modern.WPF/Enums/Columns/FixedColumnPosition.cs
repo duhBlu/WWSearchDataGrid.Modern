@@ -19,11 +19,9 @@ namespace WWSearchDataGrid.Modern.WPF
         Left = 1,
 
         /// <summary>
-        /// The column is placed at the right end of the grid, after all
-        /// unpinned columns. Provides a stable right-anchored display position;
-        /// note that WPF's <c>DataGrid</c> only natively freezes from the left,
-        /// so right-pinned columns participate in horizontal scrolling but
-        /// remain ordered to the right of every unpinned column.
+        /// The column is pinned to the right edge of the grid's viewport: ordered after all
+        /// unpinned columns and anchored in place while they scroll beneath it
+        /// (via <see cref="FixedColumnsCellsPanel"/>'s right-band overlay).
         /// </summary>
         Right = 2
     }

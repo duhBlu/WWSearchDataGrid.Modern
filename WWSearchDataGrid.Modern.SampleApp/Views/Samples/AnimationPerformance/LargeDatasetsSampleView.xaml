@@ -11,13 +11,6 @@
         <local:LargeDatasetsSampleViewModel />
     </UserControl.DataContext>
 
-    <UserControl.Resources>
-        <Style BasedOn="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesButton}}" TargetType="{x:Type Button}" />
-        <Style BasedOn="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesCheckBox}}" TargetType="{x:Type CheckBox}" />
-        <Style BasedOn="{StaticResource SampleSliderStyle}" TargetType="{x:Type Slider}" />
-        <Style BasedOn="{StaticResource SampleExpanderStyle}" TargetType="{x:Type Expander}" />
-    </UserControl.Resources>
-
     <sampleControls:SampleHostControl Sources="{x:Static sampleControls:SampleSources.LargeDatasets}">
         <DockPanel>
             <TextBlock DockPanel.Dock="Top"
@@ -27,13 +20,11 @@
                        TextWrapping="Wrap">
                 <Run FontWeight="SemiBold" Text="Large datasets &amp; virtualization" />
                 <LineBreak />
-                <Run Text="Use the quick-scale buttons to push the grid up to 1M rows. Tune virtualization, live scrolling, and filter-row debounce — the settings that decide whether scrolling and typing stay smooth at scale. No animation toggles here; those settings are antithetical to smooth scaling. See the Scrolling Animation sample for momentum / per-pixel scrolling." />
+                <Run Text="Push the grid up to 1M rows, then tune virtualization, live scrolling, and filter-row debounce to keep scrolling and typing smooth. For momentum / per-pixel scrolling see the Scrolling Animation sample." />
             </TextBlock>
 
             <sampleControls:SampleFooterControl DockPanel.Dock="Bottom"
                                                 RowCount="{Binding RowCount, Mode=TwoWay}"
-                                                TotalCount="{Binding Items.Count}"
-                                                FilteredCount="{Binding ElementName=Grid, Path=Items.Count}"
                                                 GenerateCommand="{Binding GenerateCommand}"
                                                 ClearCommand="{Binding ClearCommand}" />
 
@@ -41,7 +32,7 @@
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="280" />
+                    <ColumnDefinition Width="320" />
                 </Grid.ColumnDefinitions>
 
                 <sdg:SearchDataGrid x:Name="Grid"

@@ -4,11 +4,13 @@ using System.Windows;
 using System.Windows.Interop;
 using System.Windows.Media;
 
-namespace WWSearchDataGrid.Modern.SampleApp.Helpers
+namespace WWSearchDataGrid.Modern.WPF
 {
     /// <summary>
-    /// Provides attached properties for configuring DWM (Desktop Window Manager) features on WPF windows.
-    /// Adapted from wpfCabinetDesigner.
+    /// Attached properties for configuring DWM (Desktop Window Manager) features on WPF windows —
+    /// drop shadow, native border color (active/inactive), corner rounding, and taskbar-respecting
+    /// maximize bounds for borderless (<c>WindowStyle=None</c>) windows. Consumed by the
+    /// <see cref="ThemeKeys.PrimitivesWindow"/> chrome; usable on any consumer window.
     /// </summary>
     public static class DwmWindowHelper
     {
@@ -119,7 +121,7 @@ namespace WWSearchDataGrid.Modern.SampleApp.Helpers
             }
         }
 
-        private static void Window_SourceInitialized(object? sender, EventArgs e)
+        private static void Window_SourceInitialized(object sender, EventArgs e)
         {
             if (sender is Window window)
             {
@@ -251,7 +253,7 @@ namespace WWSearchDataGrid.Modern.SampleApp.Helpers
             activeDescriptor?.RemoveValueChanged(window, OnWindowActiveChanged);
         }
 
-        private static void OnWindowStateChanged(object? sender, EventArgs e)
+        private static void OnWindowStateChanged(object sender, EventArgs e)
         {
             if (sender is Window window && GetIsEnabled(window))
             {
@@ -263,7 +265,7 @@ namespace WWSearchDataGrid.Modern.SampleApp.Helpers
             }
         }
 
-        private static void OnWindowActiveChanged(object? sender, EventArgs e)
+        private static void OnWindowActiveChanged(object sender, EventArgs e)
         {
             if (sender is Window window && GetIsEnabled(window))
             {

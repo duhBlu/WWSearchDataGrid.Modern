@@ -601,6 +601,8 @@ namespace WWSearchDataGrid.Modern.WPF
             var ownerWindow = GetOwnerWindow();
             _ownerWindow = ownerWindow;
 
+            // No local WindowStyle assignment — the chrome style sets WindowStyle=None, and a
+            // local value here would override the style setter and break the custom chrome.
             _parentWindow = new Window
             {
                 Title = WindowTitle,
@@ -611,7 +613,6 @@ namespace WWSearchDataGrid.Modern.WPF
                 MinHeight = WindowMinHeight,
                 ResizeMode = ResizeMode.CanResize,
                 ShowInTaskbar = false,
-                WindowStyle = System.Windows.WindowStyle.ToolWindow,
                 Owner = ownerWindow,
             };
 
@@ -621,21 +622,16 @@ namespace WWSearchDataGrid.Modern.WPF
                 _lastOwnerPosition = new Point(_ownerWindow.Left, _ownerWindow.Top);
             }
 
-            // Apply custom window style if provided
+            // Apply custom window style if provided; otherwise the shared PrimitivesWindow
+            // chrome. Either way the caption-button SystemCommands get instance bindings.
             if (WindowStyle != null)
             {
                 _parentWindow.Style = WindowStyle;
+                WindowHostHelper.WireSystemCommands(_parentWindow);
             }
             else
             {
-                // Resolve the library default Window style by ComponentResourceKey. The lookup
-                // walks element scope → app scope → the assembly's Themes/Generic.xaml courtesy
-                // of [ThemeInfo], so consumers get the default with no manual merge.
-                var defaultStyle = TryFindResource(ThemeKeys.ColumnChooserWindow) as Style;
-                if (defaultStyle != null)
-                {
-                    _parentWindow.Style = defaultStyle;
-                }
+                WindowHostHelper.ApplyDefaultChrome(_parentWindow, this);
             }
 
             PositionWindow(ownerWindow);

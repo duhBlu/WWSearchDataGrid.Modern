@@ -3,6 +3,7 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using WWSearchDataGrid.Modern.SampleApp.SampleData;
+using WWSearchDataGrid.Modern.WPF;
 
 namespace WWSearchDataGrid.Modern.SampleApp.Controls
 {
@@ -21,6 +22,63 @@ namespace WWSearchDataGrid.Modern.SampleApp.Controls
         {
             DefaultStyleKeyProperty.OverrideMetadata(typeof(SampleHostControl),
                 new FrameworkPropertyMetadata(typeof(SampleHostControl)));
+        }
+
+        public SampleHostControl()
+        {
+            // The status bar in the chrome shows the live row counts of the sample's grid. Samples
+            // don't wire it up — discover the grid from the hosted content's logical tree once it's
+            // loaded. A sample may set TrackedGrid explicitly to override (e.g. to pick one of several).
+            Loaded += (_, _) =>
+            {
+                if (TrackedGrid == null)
+                    TrackedGrid = FindLogicalDescendant<SearchDataGrid>(Content as DependencyObject);
+            };
+        }
+
+        /// <summary>
+        /// The grid whose row counts the chrome status bar reflects. Auto-discovered on load from the
+        /// hosted content; settable in XAML to override when a sample hosts more than one grid.
+        /// </summary>
+        public static readonly DependencyProperty TrackedGridProperty = DependencyProperty.Register(
+            nameof(TrackedGrid), typeof(SearchDataGrid), typeof(SampleHostControl),
+            new PropertyMetadata(null, OnTrackedGridChanged));
+
+        public SearchDataGrid TrackedGrid
+        {
+            get => (SearchDataGrid)GetValue(TrackedGridProperty);
+            set => SetValue(TrackedGridProperty, value);
+        }
+
+        private static readonly DependencyPropertyKey HasTrackedGridPropertyKey = DependencyProperty.RegisterReadOnly(
+            nameof(HasTrackedGrid), typeof(bool), typeof(SampleHostControl), new PropertyMetadata(false));
+
+        /// <summary>True once a grid is being tracked — drives the status bar's visibility.</summary>
+        public static readonly DependencyProperty HasTrackedGridProperty = HasTrackedGridPropertyKey.DependencyProperty;
+
+        public bool HasTrackedGrid
+        {
+            get => (bool)GetValue(HasTrackedGridProperty);
+            private set => SetValue(HasTrackedGridPropertyKey, value);
+        }
+
+        private static void OnTrackedGridChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            if (d is SampleHostControl host)
+                host.HasTrackedGrid = e.NewValue != null;
+        }
+
+        /// <summary>Depth-first logical-tree search for the first descendant of type <typeparamref name="T"/>.</summary>
+        private static T FindLogicalDescendant<T>(DependencyObject root) where T : DependencyObject
+        {
+            if (root == null) return null;
+            foreach (var child in LogicalTreeHelper.GetChildren(root))
+            {
+                if (child is T match) return match;
+                if (child is DependencyObject d && FindLogicalDescendant<T>(d) is T found)
+                    return found;
+            }
+            return null;
         }
 
         /// <summary>
