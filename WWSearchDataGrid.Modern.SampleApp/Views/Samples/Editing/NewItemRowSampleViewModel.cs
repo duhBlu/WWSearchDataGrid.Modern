@@ -35,7 +35,7 @@ namespace WWSearchDataGrid.Modern.SampleApp.Views.Samples.Editing
         /// above the data — is visible the moment the sample opens.
         /// </summary>
         [ObservableProperty]
-        private NewRowPosition _newRowPosition = NewRowPosition.Top;
+        private NewRowPosition _newRowPosition = NewRowPosition.Bottom;
 
         /// <summary>
         /// Whether <see cref="PrepareNewTask"/> seeds freshly-added rows. Drives the sample's

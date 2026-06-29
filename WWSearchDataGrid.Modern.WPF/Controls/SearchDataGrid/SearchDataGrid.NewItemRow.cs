@@ -11,13 +11,6 @@ namespace WWSearchDataGrid.Modern.WPF
         #region New Item Row
 
         /// <summary>
-        /// True once <see cref="NewRowPosition"/> has been explicitly set (the change callback fired).
-        /// Gates the load/source re-assert so a consumer that never touches the property — and drives
-        /// <see cref="DataGrid.CanUserAddRows"/> directly — is left completely alone.
-        /// </summary>
-        private bool _newRowPositionEngaged;
-
-        /// <summary>
         /// Where the new-item row sits — <see cref="NewRowPosition.Top"/>,
         /// <see cref="NewRowPosition.Bottom"/>, or <see cref="NewRowPosition.None"/> (adding disabled).
         /// A high-level wrapper over the base <see cref="DataGrid.CanUserAddRows"/> and the editable
@@ -41,11 +34,19 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         private static void OnNewRowPositionChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
-        {
-            var grid = (SearchDataGrid)d;
-            grid._newRowPositionEngaged = true;
-            grid.ApplyNewRowPosition();
-        }
+            => ((SearchDataGrid)d).ApplyNewRowPosition();
+
+        /// <summary>
+        /// True when <see cref="NewRowPosition"/> has been explicitly set — locally, by a binding, or
+        /// by a style. Read from the value *source* (not the change callback) because WPF doesn't fire
+        /// the callback when a binding resolves to the property's default (<see cref="NewRowPosition.Bottom"/>),
+        /// so a grid bound to Bottom must still be managed. A grid that never touches the property
+        /// (source == Default) is left alone so a consumer driving <see cref="DataGrid.CanUserAddRows"/>
+        /// directly is unaffected.
+        /// </summary>
+        private bool IsNewRowPositionManaged()
+            => DependencyPropertyHelper.GetValueSource(this, NewRowPositionProperty).BaseValueSource
+               != BaseValueSource.Default;
 
         /// <summary>
         /// Translates <see cref="NewRowPosition"/> into the base grid's <see cref="DataGrid.CanUserAddRows"/>
@@ -142,13 +143,29 @@ namespace WWSearchDataGrid.Modern.WPF
         /// during binding is lost when the grid first builds its rows, and CanUserAddRows may not have
         /// coerced to its final value yet). Re-runs the full <see cref="ApplyNewRowPosition"/> so it
         /// behaves exactly like a runtime change — which is known to work. Gated on
-        /// <see cref="_newRowPositionEngaged"/> so untouched grids are left alone, and skipped while
+        /// <see cref="IsNewRowPositionManaged"/> so untouched grids are left alone, and skipped while
         /// grouping is active (the grid then shows a flat projection, not the editable collection).
+        /// <para>
+        /// <paramref name="forceRebuild"/> (used at load) cycles <see cref="DataGrid.CanUserAddRows"/>
+        /// off→on to make the base grid tear down and rebuild its placeholder row. At load a bare
+        /// re-assert the DataGrid already agrees with renders nothing — only a real CanUserAddRows /
+        /// position transition does, which is exactly why the runtime position toggle works.
+        /// </para>
         /// </summary>
-        private void ReassertNewRowPosition()
+        private void ReassertNewRowPosition(bool forceRebuild = false)
         {
-            if (_groupingActive || !_newRowPositionEngaged)
+            if (_groupingActive || !IsNewRowPositionManaged())
                 return;
+
+            if (forceRebuild
+                && NewRowPosition != NewRowPosition.None
+                && Items is IEditableCollectionView ev
+                && !ev.IsAddingNew && !ev.IsEditingItem)
+            {
+                Debug.WriteLine("[NewRowDbg] Reassert: forcing CanUserAddRows off→on to rebuild placeholder");
+                SetCurrentValue(CanUserAddRowsProperty, false);
+                SetCurrentValue(CanUserAddRowsProperty, true);
+            }
 
             ApplyNewRowPosition();
         }

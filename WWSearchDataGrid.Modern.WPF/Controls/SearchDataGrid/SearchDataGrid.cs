@@ -1593,12 +1593,14 @@ namespace WWSearchDataGrid.Modern.WPF
             if (!string.IsNullOrEmpty(FilterString))
                 ApplyFilterString();
 
-            // A Top new-item row applied during binding is lost because columns aren't generated
-            // until now — re-assert it once the grid has its columns. Run it synchronously (so the
-            // view carries the right position into the first row generation) and again at ContextIdle
-            // (which runs after the grid's own load-time refreshes, so our position is the last word).
+            // The new-row position applied during binding is lost because columns aren't generated
+            // until now, and CanUserAddRows may not have coerced to its final value yet. Re-assert
+            // once synchronously, then again at ContextIdle with a forced rebuild — that runs after
+            // the grid's own load-time refreshes and makes the base grid actually (re)build the
+            // placeholder row, which a bare re-assert at load won't.
             ReassertNewRowPosition();
-            Dispatcher.BeginInvoke(new Action(ReassertNewRowPosition), DispatcherPriority.ContextIdle);
+            Dispatcher.BeginInvoke(new Action(() => ReassertNewRowPosition(forceRebuild: true)),
+                DispatcherPriority.ContextIdle);
         }
 
         /// <summary>
