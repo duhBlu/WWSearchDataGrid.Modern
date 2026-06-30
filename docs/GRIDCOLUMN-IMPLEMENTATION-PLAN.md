@@ -367,7 +367,7 @@ GridColumn    ───►  DataGridTextColumn
 
 **Goal:** Extract the inheritance hierarchy and create shared base project.
 
-### 3.1 New Project: WWSearchDataGrid.Modern.Controls
+### 3.1 New Project: WWControls.Controls
 
 **Description:** Create a new class library for base classes reusable outside the DataGrid.
 

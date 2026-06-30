@@ -1,22 +1,22 @@
-﻿# WWSearchDataGrid.Modern - Agent Navigation Guide
+﻿# WWControls - Agent Navigation Guide
 
 > **Human developers**: See [README.md](README.md) for getting started, [docs/getting-started.md](docs/getting-started.md) for usage guides, and [docs/api-reference.md](docs/api-reference.md) for the public API. This document is for AI code assistants.
 
 ## Overview
-WWSearchDataGrid.Modern is a comprehensive WPF data grid library with advanced search and filtering capabilities. This document provides a complete guide for AI agents to efficiently navigate and understand the codebase without reading the entire project.
+WWControls is a comprehensive WPF data grid library with advanced search and filtering capabilities. This document provides a complete guide for AI agents to efficiently navigate and understand the codebase without reading the entire project.
 
 ## Solution Structure
 
 ```
-WWSearchDataGrid.Modern.sln
-├── WWSearchDataGrid.Modern.Core/         (Core logic - .NET Standard 2.0)
-├── WWSearchDataGrid.Modern.WPF/          (WPF controls - .NET 9.0-windows)
-├── WWSearchDataGrid.Modern.SampleApp/    (Demo application - .NET 9.0-windows)
+WWControls.sln
+├── WWControls.Core/         (Core logic - .NET Standard 2.0)
+├── WWControls.Wpf/          (WPF controls - .NET 9.0-windows)
+├── WWControls.SampleApp/    (Demo application - .NET 9.0-windows)
 └── Samples/                              (Solution folder)
 ```
 
 
-## Core Architecture (WWSearchDataGrid.Modern.Core)
+## Core Architecture (WWControls.Core)
 
 ### Key Classes & Their Responsibilities
 
@@ -55,7 +55,7 @@ DateInterval, BetweenDates, IsOnAnyOfDates, Yesterday, Today, Tomorrow,
 TopN, BottomN, AboveAverage, BelowAverage, Unique, Duplicate
 ```
 
-## WPF Implementation (WWSearchDataGrid.Modern.WPF)
+## WPF Implementation (WWControls.Wpf)
 
 ### 📁 **Project Structure** (WPF Best Practices)
 
@@ -111,7 +111,7 @@ SearchText    Manages State     Builds Expressions    Evaluates Items   Compiles
 
 **Column Descriptor Pattern:** `GridColumn` is a `FrameworkContentElement` that *describes* a column. `SearchDataGrid` reads descriptors from its `GridColumns` collection and generates the real WPF `DataGridColumn` instances internally. `ColumnSearchBox` resolves its configuration from the `GridColumnDescriptor` first, then falls back to `GridColumnSettings` attached properties for legacy columns.
 
-## Sample Application (WWSearchDataGrid.Modern.SampleApp)
+## Sample Application (WWControls.SampleApp)
 
 ### Key Files for Understanding Usage
 
@@ -156,19 +156,19 @@ SearchText    Manages State     Builds Expressions    Evaluates Items   Compiles
 ## 🚨 **Important File Paths for Common Issues**
 
 ### Filter Logic Problems
-- **Core evaluation**: `WWSearchDataGrid.Modern.Core/Search/SearchEngine.cs`
-- **Expression building**: `WWSearchDataGrid.Modern.Core/Data/Models/Search/SearchTemplate.cs`
-- **Controller logic**: `WWSearchDataGrid.Modern.Core/Data/Models/Search/SearchTemplateController.cs`
+- **Core evaluation**: `WWControls.Core/Search/SearchEngine.cs`
+- **Expression building**: `WWControls.Core/Data/Models/Search/SearchTemplate.cs`
+- **Controller logic**: `WWControls.Core/Data/Models/Search/SearchTemplateController.cs`
 
 ### UI Issues
-- **Main DataGrid**: `WWSearchDataGrid.Modern.WPF/Controls/SearchDataGrid.cs`
-- **Column filters**: `WWSearchDataGrid.Modern.WPF/Controls/ColumnSearchBox.cs`
-- **Advanced dialog**: `WWSearchDataGrid.Modern.WPF/Controls/ColumnFilterEditor.cs`
-- **Filter chips**: `WWSearchDataGrid.Modern.WPF/Controls/FilterSummaryPanel.cs`
+- **Main DataGrid**: `WWControls.Wpf/Controls/SearchDataGrid.cs`
+- **Column filters**: `WWControls.Wpf/Controls/ColumnSearchBox.cs`
+- **Advanced dialog**: `WWControls.Wpf/Controls/ColumnFilterEditor.cs`
+- **Filter chips**: `WWControls.Wpf/Controls/FilterSummaryPanel.cs`
 
 ### Styling Problems
-- **Default styles**: `WWSearchDataGrid.Modern.WPF/Themes/Generic.xaml`
-- **Individual controls**: `WWSearchDataGrid.Modern.WPF/Themes/Controls/*.xaml`
+- **Default styles**: `WWControls.Wpf/Themes/Generic.xaml`
+- **Individual controls**: `WWControls.Wpf/Themes/Controls/*.xaml`
 
 ### Performance Issues
 - **Expression compilation**: `SearchTemplateController.UpdateFilterExpression()`

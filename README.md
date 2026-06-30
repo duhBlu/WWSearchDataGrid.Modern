@@ -1,4 +1,4 @@
-# WWSearchDataGrid.Modern
+# WWControls
 
 A WPF DataGrid control with built-in per-column search, advanced multi-criteria filtering, filter panel, column chooser, and context menus. Drop-in replacement for the standard `DataGrid`.
 
@@ -6,7 +6,7 @@ A WPF DataGrid control with built-in per-column search, advanced multi-criteria 
 
 ```xml
 <!-- Add the namespace -->
-xmlns:sdg="clr-namespace:WWSearchDataGrid.Modern.WPF;assembly=WWSearchDataGrid.Modern.WPF"
+xmlns:sdg="clr-namespace:WWControls.Wpf;assembly=WWControls.Wpf"
 
 <!-- Replace <DataGrid> with <sdg:SearchDataGrid> -->
 <sdg:SearchDataGrid ItemsSource="{Binding Items}"
@@ -40,10 +40,10 @@ That's it. `FieldName` auto-generates the Binding, SortMemberPath, and FilterMem
 ## Project Structure
 
 ```
-WWSearchDataGrid.Modern.sln
-  WWSearchDataGrid.Modern.Core/     .NET Standard 2.0 - search engine, evaluators, models
-  WWSearchDataGrid.Modern.WPF/      .NET 9.0-windows  - controls, themes, converters
-  WWSearchDataGrid.Modern.SampleApp/ .NET 9.0-windows  - demo application
+WWControls.sln
+  WWControls.Core/     .NET Standard 2.0 - search engine, evaluators, models
+  WWControls.Wpf/      .NET 9.0-windows  - controls, themes, converters
+  WWControls.SampleApp/ .NET 9.0-windows  - demo application
 ```
 
 ## Documentation

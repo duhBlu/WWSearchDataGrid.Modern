@@ -1,0 +1,244 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sdg="clr-namespace:WWControls.Wpf;assembly=WWControls.Wpf">
+
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Resources/Icons/Icons.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+
+    <!--
+        Separator inside a Menu/ContextMenu — WPF auto-looks up MenuItem.SeparatorStyleKey
+        on every <Separator /> placed in a menu's items collection, so defining the style
+        under that key automatically restyles every separator inside our menus.
+    -->
+    <Style x:Key="{x:Static MenuItem.SeparatorStyleKey}" TargetType="{x:Type Separator}">
+        <Setter Property="Background" Value="#FFE5E7EB" />
+        <Setter Property="Margin" Value="6,4" />
+        <Setter Property="Height" Value="1" />
+        <Setter Property="SnapsToDevicePixels" Value="True" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type Separator}">
+                    <Border Background="{TemplateBinding Background}" Height="{TemplateBinding Height}" />
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!--
+        Modern flat MenuItem template for items hosted in an SDG context menu.
+        
+        Layout columns:  [ Icon (20) | Header (*) | Gesture (Auto) | SubmenuChevron (Auto) ]
+        
+        Roles handled:
+        • SubmenuItem    — default leaf, no chevron, no popup
+        • SubmenuHeader  — chevron visible, Popup carries nested ItemsPresenter
+        
+        Visual states:
+        • IsHighlighted  — light gray pill background, 4px corner radius
+        • IsEnabled=False — muted foreground and chevron
+        
+        Note: the icon column keeps its 20px reservation even when MenuItem.Icon is null,
+        so every item in a menu — iconned or not — lines up on the same vertical guideline.
+    -->
+    <Style x:Key="{x:Static sdg:ThemeKeys.PrimitivesMenuItem}" TargetType="{x:Type MenuItem}">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Foreground" Value="#1C1C1C" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="Padding" Value="8,5" />
+        <Setter Property="SnapsToDevicePixels" Value="True" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type MenuItem}">
+                    <Grid>
+                        <Border x:Name="HighlightBorder"
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="4"
+                                SnapsToDevicePixels="True" />
+                        <Grid Margin="{TemplateBinding Padding}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition x:Name="IconCol" Width="20" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <!--  Icon column. Templated Icon content (MenuItem.Icon) plugs in here.  -->
+                            <ContentPresenter x:Name="IconHost"
+                                              Grid.Column="0"
+                                              HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"
+                                              Width="14"
+                                              Height="14"
+                                              ContentSource="Icon"
+                                              SnapsToDevicePixels="True" />
+
+                            <!--  Header text. RecognizesAccessKey enables _Mnemonics in the header.  -->
+                            <ContentPresenter Grid.Column="1"
+                                              Margin="8,0,16,0"
+                                              VerticalAlignment="Center"
+                                              RecognizesAccessKey="True"
+                                              ContentSource="Header"
+                                              SnapsToDevicePixels="True" />
+
+                            <!--  Optional gesture text (Ctrl+C, etc.) — muted, right-aligned.  -->
+                            <TextBlock x:Name="GestureText"
+                                       Grid.Column="2"
+                                       Foreground="#888888"
+                                       Text="{TemplateBinding InputGestureText}"
+                                       Margin="0,0,8,0"
+                                       VerticalAlignment="Center" />
+
+                            <!--  Submenu chevron — visible only on SubmenuHeader role.  -->
+                            <sdg:Icon x:Name="SubmenuChevron"
+                                      Grid.Column="3"
+                                      Visibility="Collapsed"
+                                      Margin="0,0,2,0"
+                                      HorizontalAlignment="Right"
+                                      VerticalAlignment="Center"
+                                      Width="8"
+                                      Height="8"
+                                      IconSource="{StaticResource {x:Static sdg:IconKeys.IconCaretRight}}"
+                                      IconBrush="#888888" />
+                        </Grid>
+
+                        <!--  Submenu popup. Rendered only when this item is a SubmenuHeader.  -->
+                        <Popup x:Name="SubMenuPopup"
+                               AllowsTransparency="True"
+                               IsOpen="{TemplateBinding IsSubmenuOpen}"
+                               Focusable="False"
+                               Placement="Right"
+                               HorizontalOffset="-4"
+                               VerticalOffset="-4"
+                               PopupAnimation="Fade">
+                            <Grid Margin="0,0,8,8">
+                                <Border Background="#FFFFFFFF"
+                                        BorderBrush="#FFE0E0E0"
+                                        BorderThickness="1"
+                                        Padding="4"
+                                        CornerRadius="6"
+                                        SnapsToDevicePixels="True">
+                                    <Border.Effect>
+                                        <DropShadowEffect Color="#000000"
+                                                          Opacity="0.18"
+                                                          BlurRadius="10"
+                                                          ShadowDepth="2" />
+                                    </Border.Effect>
+                                    <ItemsPresenter KeyboardNavigation.DirectionalNavigation="Cycle" SnapsToDevicePixels="True" />
+                                </Border>
+                            </Grid>
+                        </Popup>
+                    </Grid>
+
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="Role" Value="SubmenuHeader">
+                            <Setter TargetName="SubmenuChevron" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                        <Trigger Property="IsHighlighted" Value="True">
+                            <Setter TargetName="HighlightBorder" Property="Background" Value="#FFF0F0F0" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Foreground" Value="#FF9CA3AF" />
+                            <Setter TargetName="GestureText" Property="Foreground" Value="#FFC4C7CC" />
+                            <Setter TargetName="SubmenuChevron" Property="IconBrush" Value="#FFC4C7CC" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!--
+        Shared icon behavior for any sdg:Icon dropped into a MenuItem's icon slot: dim to 35%
+        opacity while the owning MenuItem is disabled, so the glyph tracks the item's enabled
+        state. Trigger-only — the icon element sets its own Width/Height, or a sized glyph layers
+        a BasedOn style (see FooterSummaryFunctionIconStyle below). PrimitivesContextMenu applies
+        this implicitly to every icon in its menus; it's also exposed as a key for standalone use.
+    -->
+    <Style x:Key="{x:Static sdg:ThemeKeys.PrimitivesMenuItemIcon}" TargetType="{x:Type sdg:Icon}">
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding IsEnabled, RelativeSource={RelativeSource AncestorType={x:Type MenuItem}}}" Value="False">
+                <Setter Property="Opacity" Value="0.35" />
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+
+    <!--
+        Modern flat ContextMenu shell. AllowsTransparency=True (inherited via HasDropShadow=False
+        below) lets the rounded Border + drop shadow render without the popup clipping them.
+    -->
+    <Style x:Key="{x:Static sdg:ThemeKeys.PrimitivesContextMenu}" TargetType="{x:Type ContextMenu}">
+        <!--
+            Implicit MenuItem and Icon styles scoped to this ContextMenu only. We can't use
+            ItemContainerStyle here because the ContextMenu's items collection holds both
+            MenuItem and Separator instances, and a MenuItem-typed ItemContainerStyle will
+            throw when WPF tries to apply it to a Separator. The Style.Resources approach
+            keeps the styling targeted: MenuItem children pick it up via implicit lookup;
+            Separator continues to use MenuItem.SeparatorStyleKey from the merged dictionary.
+            The implicit Icon style dims any menu glyph in step with its owning item's enabled state.
+        -->
+        <Style.Resources>
+            <Style BasedOn="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesMenuItem}}" TargetType="{x:Type MenuItem}" />
+            <Style BasedOn="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesMenuItemIcon}}" TargetType="{x:Type sdg:Icon}" />
+        </Style.Resources>
+        <Setter Property="Background" Value="#FFFFFFFF" />
+        <Setter Property="BorderBrush" Value="#FFE0E0E0" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Foreground" Value="#1C1C1C" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="Padding" Value="4" />
+        <Setter Property="HasDropShadow" Value="False" />
+        <Setter Property="SnapsToDevicePixels" Value="True" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type ContextMenu}">
+                    <!--  Outer margin gives the shadow room to render inside the popup surface.  -->
+                    <Grid Margin="0,0,8,8">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                Padding="{TemplateBinding Padding}"
+                                CornerRadius="6"
+                                SnapsToDevicePixels="True">
+                            <Border.Effect>
+                                <DropShadowEffect Color="#000000"
+                                                  Opacity="0.18"
+                                                  BlurRadius="10"
+                                                  ShadowDepth="2" />
+                            </Border.Effect>
+                            <ItemsPresenter KeyboardNavigation.DirectionalNavigation="Cycle" SnapsToDevicePixels="True" />
+                        </Border>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!--
+        Summary-function picker decorations for menu-item icons: the active-state pill that sits
+        behind the function glyph (visible when the owning MenuItem is checked) and the glyph
+        itself. Shared by the group-footer, group-header, and column-header context menus.
+    -->
+    <Style x:Key="FooterSummaryFunctionIconStyle"
+           TargetType="{x:Type sdg:Icon}"
+           BasedOn="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesMenuItemIcon}}">
+        <Setter Property="Width" Value="12" />
+        <Setter Property="Height" Value="12" />
+        <Setter Property="StrokeThickness" Value="2.5" />
+    </Style>
+
+    <Style x:Key="FooterSummaryFunctionActivePillStyle" TargetType="{x:Type Border}">
+        <Setter Property="Background" Value="#fbfbfb" />
+        <Setter Property="CornerRadius" Value="3" />
+        <Setter Property="Margin" Value="-2" />
+        <Setter Property="Visibility" Value="Collapsed" />
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding IsChecked, RelativeSource={RelativeSource AncestorType={x:Type MenuItem}}}" Value="True">
+                <Setter Property="Visibility" Value="Visible" />
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+
+</ResourceDictionary>

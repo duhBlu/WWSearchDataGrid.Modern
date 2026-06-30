@@ -7,14 +7,14 @@
 
 ## Installation
 
-Add project references to both `WWSearchDataGrid.Modern.Core` and `WWSearchDataGrid.Modern.WPF`, or reference the NuGet packages when available.
+Add project references to both `WWControls.Core` and `WWControls.Wpf`, or reference the NuGet packages when available.
 
 ## Basic Setup
 
 ### 1. Add the XML namespace
 
 ```xml
-<Window xmlns:sdg="clr-namespace:WWSearchDataGrid.Modern.WPF;assembly=WWSearchDataGrid.Modern.WPF">
+<Window xmlns:sdg="clr-namespace:WWControls.Wpf;assembly=WWControls.Wpf">
 ```
 
 ### 2. Define columns with GridColumn descriptors

@@ -2,7 +2,7 @@
 
 ## Context
 
-The `FilterEditor` modal dialog in `WWSearchDataGrid.Modern.WPF` currently exists only as a scaffold: it shows the read-only `FilterTokens` from `FilterPanel` as a placeholder, with the subtitle "Multi-column filter composition coming soon." It needs to become an authoring surface where the user composes multi-column, multi-group filter expressions visually — using chip-style tokens that swap between Display and Edit modes — matching the two reference screenshots at `C:\Users\jacobjthieret\Desktop\Temp\ClaudeImages\sdg\`.
+The `FilterEditor` modal dialog in `WWControls.Wpf` currently exists only as a scaffold: it shows the read-only `FilterTokens` from `FilterPanel` as a placeholder, with the subtitle "Multi-column filter composition coming soon." It needs to become an authoring surface where the user composes multi-column, multi-group filter expressions visually — using chip-style tokens that swap between Display and Edit modes — matching the two reference screenshots at `C:\Users\jacobjthieret\Desktop\Temp\ClaudeImages\sdg\`.
 
 Distinct chip token types: **Group Operator** (And/Or/NotAnd/NotOr), **Column Name** (orange), **Search Type** (light blue), **Value** (light green). Each chip's Display Template hides editor affordances when not focused, mirroring the existing `IsKeyboardFocusWithin` pattern used in `AutoFilterRow.xaml`.
 
@@ -18,7 +18,7 @@ User-confirmed decisions:
 8. Cross-column OR groups: warn but allow (lossy round-trip flagged inline).
 9. Operator chip interaction: dropdown popup listing 4 options (matches the chevron in the screenshot).
 
-Project: `WWSearchDataGrid.Modern` (this solution). SampleApp is the only consumer so deprecation cycles can be short.
+Project: `WWControls` (this solution). SampleApp is the only consumer so deprecation cycles can be short.
 
 ---
 
@@ -44,12 +44,12 @@ These Core changes are invisible to the existing per-column popup `ColumnFilterE
 
 ### Created (Core)
 
-- `WWSearchDataGrid.Modern.Core/Data/Enums/LogicalOperator.cs` — `enum LogicalOperator { And, Or, NotAnd, NotOr }`.
-- `WWSearchDataGrid.Modern.Core/Services/LogicalOperatorExtensions.cs` — `Parse(string)`, `ToTokenString()`, `InnerComposer()` returning `Expression.AndAlso` for And/NotAnd, `Expression.OrElse` for Or/NotOr, `IsNegated()`, `DisplayText()` returning `"And"`/`"Or"`/`"Not And"`/`"Not Or"`.
+- `WWControls.Core/Data/Enums/LogicalOperator.cs` — `enum LogicalOperator { And, Or, NotAnd, NotOr }`.
+- `WWControls.Core/Services/LogicalOperatorExtensions.cs` — `Parse(string)`, `ToTokenString()`, `InnerComposer()` returning `Expression.AndAlso` for And/NotAnd, `Expression.OrElse` for Or/NotOr, `IsNegated()`, `DisplayText()` returning `"And"`/`"Or"`/`"Not And"`/`"Not Or"`.
 
 ### Created (WPF — editor-time view models)
 
-Folder: `WWSearchDataGrid.Modern.WPF/Controls/FilterEditor/`
+Folder: `WWControls.Wpf/Controls/FilterEditor/`
 
 - `FilterEditorNode.cs` — abstract `INotifyPropertyChanged` base with `Parent: FilterGroupNode`, `Id: Guid`, `Depth: int`.
 - `FilterGroupNode.cs` — derives from `FilterEditorNode`. Has `Operator: LogicalOperator`, `Children: ObservableCollection<FilterEditorNode>` (heterogeneous), `AddConditionCommand`, `AddGroupCommand`, `RemoveCommand`. Exposes `HasMixedColumnsWithOrOperator: bool` (drives the inline warning banner — true when `Operator` is `Or` or `NotOr` and `Children` contains conditions from more than one column).
@@ -62,7 +62,7 @@ Folder: `WWSearchDataGrid.Modern.WPF/Controls/FilterEditor/`
 
 ### Created (WPF — chip controls)
 
-All under `WWSearchDataGrid.Modern.WPF/Controls/FilterEditor/`, with `.xaml` partners in `WWSearchDataGrid.Modern.WPF/Themes/Controls/FilterEditor/`.
+All under `WWControls.Wpf/Controls/FilterEditor/`, with `.xaml` partners in `WWControls.Wpf/Themes/Controls/FilterEditor/`.
 
 - `EditableTokenBase.cs` — shared base `Control` with DPs: `DisplayText: string`, `ChipBackground: Brush`, `IsEditing: bool` (driven by `IsKeyboardFocusWithin` via a template trigger; settable externally for testing). Template parts `PART_Display` (TextBlock) and `PART_Editor` (ContentPresenter). Applies `TokenConfirmationBehavior.IsEnabled="True"` to its outer Grid for hover-× removal.
 - `ColumnNameTokenEditor.cs` (orange, `#ffc69b`) — DPs: `SelectedColumn: GridColumn` (two-way), `AvailableColumns: IEnumerable<GridColumn>`. `DisplayText` derived from `SelectedColumn?.HeaderCaption ?? SelectedColumn?.ColumnDisplayName`. Editor template = `ComboBox` styled with `{x:Static sdg:SdgThemeKeys.PrimitivesComboBox}`, `ItemTemplate` shows header text. + XAML partner.
@@ -72,7 +72,7 @@ All under `WWSearchDataGrid.Modern.WPF/Controls/FilterEditor/`, with `.xaml` par
 
 ### Created (WPF — XAML templates)
 
-Folder: `WWSearchDataGrid.Modern.WPF/Themes/Controls/FilterEditor/`
+Folder: `WWControls.Wpf/Themes/Controls/FilterEditor/`
 
 - `ColumnNameTokenEditor.xaml` — control template (display + editor swap via `IsEditing` trigger).
 - `SearchTypeTokenEditor.xaml` — same pattern.
@@ -86,29 +86,29 @@ Folder: `WWSearchDataGrid.Modern.WPF/Themes/Controls/FilterEditor/`
 
 ### Modified (Core)
 
-- `WWSearchDataGrid.Modern.Core/Data/Models/Search/SearchTemplateGroup.cs`
+- `WWControls.Core/Data/Models/Search/SearchTemplateGroup.cs`
   - Add `public ObservableCollection<SearchTemplateGroup> ChildGroups { get; } = new();`
   - Extend `OperatorName` setter to accept `"NotAnd"` / `"NotOr"` (case-insensitive). `OperatorFunction` continues to hold only the inner combiner (`Expression.AndAlso` for And/NotAnd, `Expression.OrElse` for Or/NotOr).
   - Add `public bool IsNegated => OperatorName?.Equals("NotAnd", StringComparison.OrdinalIgnoreCase) == true || OperatorName?.Equals("NotOr", StringComparison.OrdinalIgnoreCase) == true;`
-- `WWSearchDataGrid.Modern.Core/Services/FilterExpressionBuilder.cs`
+- `WWControls.Core/Services/FilterExpressionBuilder.cs`
   - Extract per-group body construction into a private `BuildGroupExpression(SearchTemplateGroup group, Type targetColumnType, bool forceTargetTypeAsString)` method.
   - Inside it: build the existing templates' combined expression; then recursively call `BuildGroupExpression` for each `ChildGroups` entry and combine via that child's `OperatorFunction`. After combining, if `group.IsNegated`, wrap the combined body in `Expression.Not(...)`.
   - The existing outer loop (around lines 37-91) calls `BuildGroupExpression` for top-level groups.
 
 ### Modified (WPF)
 
-- `WWSearchDataGrid.Modern.WPF/Controls/FilterEditor.cs`
+- `WWControls.Wpf/Controls/FilterEditor.cs`
   - Replace the placeholder `ActiveFilters` / `FilterTokens` DPs with new DPs: `RootGroup: FilterGroupNode`, `AvailableColumns: ObservableCollection<GridColumn>`.
   - Remove `RebuildTokens()` and `OnActiveFiltersChanged`; replace with `BuildEditorTree()` that calls `FilterEditorTreeBuilder.BuildFromGrid(OwnerGrid)`.
   - In `ShowDialog(SearchDataGrid grid)`: set `OwnerGrid`, `AvailableColumns = new(grid.GridColumns)`, `RootGroup = FilterEditorTreeBuilder.BuildFromGrid(grid)`. If `RootGroup.Children.Count == 0`, prepend a default `FilterConditionNode` with the first grid column pre-selected.
   - `ExecuteApply()`: `FilterEditorTreeBuilder.WriteBackToGrid(RootGroup, OwnerGrid); OwnerGrid.FilterItemsSource();`. Does not close.
   - `OkCommand`: Apply + close. `CancelCommand`: close.
-- `WWSearchDataGrid.Modern.WPF/Themes/Controls/FilterEditor.xaml`
+- `WWControls.Wpf/Themes/Controls/FilterEditor.xaml`
   - Replace placeholder body (WrapPanel `ItemsControl`) with a `ScrollViewer` containing a `ContentControl` bound to `{TemplateBinding RootGroup}` using `FilterGroupTemplate`.
   - Keep header/footer rows; reorder footer buttons to OK / Cancel / Apply (right-aligned) per the screenshot.
-- `WWSearchDataGrid.Modern.WPF/Themes/SdgThemeKeys.cs`
+- `WWControls.Wpf/Themes/SdgThemeKeys.cs`
   - Add `ColumnNameTokenEditor`, `SearchTypeTokenEditor`, `ValueTokenEditor`, `GroupOperatorChip` ComponentResourceKey entries (matching existing pattern at lines 75-89).
-- `WWSearchDataGrid.Modern.WPF/Themes/Generic.xaml`
+- `WWControls.Wpf/Themes/Generic.xaml`
   - Add merged dictionaries for the new XAML files in this order: `GroupOperatorChip.xaml`, `ColumnNameTokenEditor.xaml`, `SearchTypeTokenEditor.xaml`, `ValueTokenEditor.xaml`, `FilterEditorTemplates.xaml`.
 
 ---
@@ -128,7 +128,7 @@ Folder: `WWSearchDataGrid.Modern.WPF/Themes/Controls/FilterEditor/`
 
 ## Verification
 
-Run the SampleApp (`WWSearchDataGrid.Modern.SampleApp`) and exercise the editor end-to-end:
+Run the SampleApp (`WWControls.SampleApp`) and exercise the editor end-to-end:
 
 1. **Open flow** — Apply a single-column auto-filter on the grid; confirm a chip appears in `FilterPanel`. Click the FilterPanel button that fires `OpenFilterEditorRequested`. The editor opens with that filter visible as a `FilterConditionNode` inside a `FilterGroupNode { Operator = And }`.
 2. **Add a condition** — Click `[+]` → "Add Condition". A new row appears with the first column pre-selected. The orange chip is in Display mode showing the column name.
@@ -142,7 +142,7 @@ Run the SampleApp (`WWSearchDataGrid.Modern.SampleApp`) and exercise the editor 
 10. **Reopen** — Close the editor (OK). Reopen via the FilterPanel button. The tree reconstructs from per-column controllers and matches what was applied (limited by cross-column-OR slicing per item 8).
 11. **Cancel** — Make edits; click Cancel. Confirm nothing changed in per-column controllers or grid filtering.
 12. **NotAnd / NotOr in evaluation** — Build a filter `Not(ColumnA = X AND ColumnA = Y)` using a nested group with `Operator = NotAnd`. Apply. Confirm grid rows where the inner predicate is true are EXCLUDED (`FilterExpressionBuilder.BuildGroupExpression` honored the `Expression.Not` wrap).
-13. **Tests** — Run `WWSearchDataGrid.Modern.Core.Tests` to confirm no regressions in `FilterExpressionBuilder` against the existing And/Or-only suite. Add focused unit tests for: `BuildGroupExpression` with `NotAnd` produces a NOT-wrapped AndAlso; `BuildGroupExpression` recurses into `ChildGroups`; `LogicalOperatorExtensions.Parse` handles the 4 strings + unknown.
+13. **Tests** — Run `WWControls.Core.Tests` to confirm no regressions in `FilterExpressionBuilder` against the existing And/Or-only suite. Add focused unit tests for: `BuildGroupExpression` with `NotAnd` produces a NOT-wrapped AndAlso; `BuildGroupExpression` recurses into `ChildGroups`; `LogicalOperatorExtensions.Parse` handles the 4 strings + unknown.
 14. **Per-column popup smoke** — Open the auto-filter row's per-column popup (`ColumnFilterEditor`) on a column whose controller now contains `ChildGroups` from an editor write-back. Confirm the popup still renders only the top-level `SearchTemplates` (its XAML doesn't iterate `ChildGroups`) and the user can still add/edit rules there without crashes.
 
 ---

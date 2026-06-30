@@ -1,0 +1,28 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace WWControls.Core
+{
+    /// <summary>
+    /// Metadata for a filter type including which data types it supports
+    /// </summary>
+    public class SearchTypeMetadata
+    {
+        public SearchType SearchType { get; set; }
+        public string DisplayName { get; set; }
+        public FilterInputTemplate InputTemplate { get; set; }
+        public HashSet<ColumnDataType> SupportedDataTypes { get; set; }
+        public bool RequiresCollection { get; set; }
+
+        public SearchTypeMetadata(SearchType searchType, string displayName,
+            FilterInputTemplate inputTemplate, params ColumnDataType[] supportedTypes)
+        {
+            SearchType = searchType;
+            DisplayName = displayName;
+            InputTemplate = inputTemplate;
+            SupportedDataTypes = new HashSet<ColumnDataType>(supportedTypes);
+            RequiresCollection = false;
+        }
+    }
+}

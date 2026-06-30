@@ -1,9 +1,9 @@
-# WWSearchDataGrid.Modern - Complete Project Structure & Architecture
+# WWControls - Complete Project Structure & Architecture
 
 > **For getting started quickly**, see [README.md](README.md) and [docs/getting-started.md](docs/getting-started.md). This document is a deep architectural reference.
 
 ## Overview
-WWSearchDataGrid.Modern is a comprehensive WPF data grid library with advanced search and filtering capabilities. This document provides a complete architectural overview including class hierarchies, data flows, and integration patterns.
+WWControls is a comprehensive WPF data grid library with advanced search and filtering capabilities. This document provides a complete architectural overview including class hierarchies, data flows, and integration patterns.
 
 **Last Updated**: 2026-03-30
 
@@ -11,8 +11,8 @@ WWSearchDataGrid.Modern is a comprehensive WPF data grid library with advanced s
 
 ## Table of Contents
 1. [Solution Structure](#solution-structure)
-2. [Core Architecture (WWSearchDataGrid.Modern.Core)](#core-architecture)
-3. [WPF Implementation (WWSearchDataGrid.Modern.WPF)](#wpf-implementation)
+2. [Core Architecture (WWControls.Core)](#core-architecture)
+3. [WPF Implementation (WWControls.Wpf)](#wpf-implementation)
 4. [Sample Application](#sample-application)
 5. [Data Flow Architecture](#data-flow-architecture)
 6. [Design Patterns](#design-patterns)
@@ -23,8 +23,8 @@ WWSearchDataGrid.Modern is a comprehensive WPF data grid library with advanced s
 ## Solution Structure
 
 ```
-WWSearchDataGrid.Modern.sln
-├── WWSearchDataGrid.Modern.Core/         (Core logic - .NET Standard 2.0)
+WWControls.sln
+├── WWControls.Core/         (Core logic - .NET Standard 2.0)
 │   ├── Common/
 │   │   ├── Commands/RelayCommand.cs      (ICommand implementation)
 │   │   └── Helpers/
@@ -56,7 +56,7 @@ WWSearchDataGrid.Modern.sln
 │   └── Registry/
 │       └── SearchTypeRegistry.cs         (Metadata registry)
 │
-├── WWSearchDataGrid.Modern.WPF/          (WPF controls - .NET 9.0-windows)
+├── WWControls.Wpf/          (WPF controls - .NET 9.0-windows)
 │   ├── Controls/                         (Custom controls - .cs only)
 │   │   ├── SearchDataGrid.cs            (Main DataGrid control)
 │   │   ├── ColumnSearchBox.cs           (Per-column filter)
@@ -99,7 +99,7 @@ WWSearchDataGrid.Modern.sln
 │               ├── SearchTextBox.xaml
 │               └── NumericUpDown.xaml
 │
-└── WWSearchDataGrid.Modern.SampleApp/    (Demo app - .NET 9.0-windows)
+└── WWControls.SampleApp/    (Demo app - .NET 9.0-windows)
     ├── Models/
     │   ├── DataItem.cs                   (25+ property types)
     │   └── Enums.cs                      (Priority, OrderStatus)
@@ -113,7 +113,7 @@ WWSearchDataGrid.Modern.sln
 
 ---
 
-## Core Architecture (WWSearchDataGrid.Modern.Core)
+## Core Architecture (WWControls.Core)
 
 ### Class Hierarchy
 
@@ -303,7 +303,7 @@ RESULT: Func<object, bool> FilterExpression
 
 ---
 
-## WPF Implementation (WWSearchDataGrid.Modern.WPF)
+## WPF Implementation (WWControls.Wpf)
 
 ### Control Hierarchy
 
@@ -572,7 +572,7 @@ Command logic runs (often delegates to control methods)
 
 ## Sample Application
 
-**File**: `/WWSearchDataGrid.Modern.SampleApp/`
+**File**: `/WWControls.SampleApp/`
 
 ### Architecture
 
@@ -848,9 +848,9 @@ Operator token click → FilterSummaryPanel.ToggleOperatorCommand
 
 **Dependency Flow**:
 ```
-WWSearchDataGrid.Modern.WPF (UI Layer)
+WWControls.Wpf (UI Layer)
   ↓ References
-WWSearchDataGrid.Modern.Core (Business Logic)
+WWControls.Core (Business Logic)
   ↓ References
 .NET Standard 2.0 BCL + System.Text.Json
 ```
@@ -1046,21 +1046,21 @@ WWSearchDataGrid.Modern.Core (Business Logic)
 
 ```bash
 # Build entire solution
-dotnet build WWSearchDataGrid.Modern.sln --configuration Release
+dotnet build WWControls.sln --configuration Release
 
 # Run sample application
-dotnet run --project WWSearchDataGrid.Modern.SampleApp
+dotnet run --project WWControls.SampleApp
 
 # Build specific project
-dotnet build WWSearchDataGrid.Modern.Core/WWSearchDataGrid.Modern.Core.csproj
-dotnet build WWSearchDataGrid.Modern.WPF/WWSearchDataGrid.Modern.WPF.csproj
+dotnet build WWControls.Core/WWControls.Core.csproj
+dotnet build WWControls.Wpf/WWControls.Wpf.csproj
 ```
 
 ---
 
 ## Summary
 
-WWSearchDataGrid.Modern is a **professionally architected WPF data grid library** featuring:
+WWControls is a **professionally architected WPF data grid library** featuring:
 
 - **27 search types** with extensible Strategy pattern
 - **Expression compilation** for native-speed filtering
@@ -1079,4 +1079,4 @@ WWSearchDataGrid.Modern is a **professionally architected WPF data grid library*
 - Maintainable (Clear responsibilities, documented patterns)
 - Professional (WPF conventions, Generic.xaml, attached properties)
 
-This document serves as a complete architectural reference for developers and AI agents working with the WWSearchDataGrid.Modern codebase.
+This document serves as a complete architectural reference for developers and AI agents working with the WWControls codebase.

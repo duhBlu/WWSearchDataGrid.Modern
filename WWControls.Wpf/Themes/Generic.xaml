@@ -1,0 +1,12 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- Shim: the default theme lives in WWControls.Wpf.Themes.Default.
+         This file exists so [ThemeInfo(GenericDictionaryLocation = SourceAssembly)]
+         resolves to a valid Generic.xaml inside the controls assembly. The actual
+         resources are pulled from the satellite theme assembly via pack URI. -->
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="pack://application:,,,/WWControls.Wpf.Themes.Default;component/Themes/Generic.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+
+</ResourceDictionary>

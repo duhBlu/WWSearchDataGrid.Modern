@@ -1,0 +1,380 @@
+<Application x:Class="WWControls.SampleApp.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:WWControls.SampleApp"
+             xmlns:controls="clr-namespace:WWControls.SampleApp.Controls"
+             xmlns:converters="clr-namespace:WWControls.SampleApp.Converters"
+             xmlns:avalonEdit="clr-namespace:ICSharpCode.AvalonEdit;assembly=ICSharpCode.AvalonEdit"
+             StartupUri="Views/Launcher/LauncherWindow.xaml">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <!-- Window chrome style -->
+                <ResourceDictionary Source="/Styles/WindowStyle.xaml"/>
+
+                <!-- SDG default theme. Swap the .Themes.Default assembly suffix to switch themes. -->
+                <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Theme.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+
+            <converters:EnumToBooleanConverter x:Key="EnumToBool" />
+            <BooleanToVisibilityConverter x:Key="BoolToVis" />
+
+            <!-- Implicit style for the source-viewer editor. Setters here apply more reliably than
+                 per-instance attribute values inside the SampleHostControl ControlTemplate — WPF's
+                 property-inheritance fallback for FontFamily down through AvalonEdit's TextArea /
+                 TextView can drop the value when set directly on the templated TextEditor. -->
+            <Style TargetType="{x:Type avalonEdit:TextEditor}">
+                <Setter Property="FontFamily" Value="Fira Code Medium, Cascadia Code, Cascadia Mono, Consolas" />
+                <Setter Property="FontSize" Value="13" />
+                <Setter Property="TextOptions.TextFormattingMode" Value="Ideal" />
+                <Setter Property="TextOptions.TextRenderingMode" Value="ClearType" />
+                <Setter Property="Typography.StandardLigatures" Value="True" />
+                <Setter Property="Typography.ContextualLigatures" Value="True" />
+                <Setter Property="controls:AvalonEditHelper.OverrideCursor" Value="Arrow" />
+            </Style>
+
+            <!-- RadioButton styled as a compact icon toggle for the layout-mode picker. Rendered as a
+                 borderless square that fills with an accent background when checked; hover gives a
+                 subtle gray. Single ControlTemplate, no system chrome. -->
+            <Style x:Key="LayoutToggleButtonStyle" TargetType="{x:Type RadioButton}">
+                <Setter Property="Width" Value="26" />
+                <Setter Property="Height" Value="22" />
+                <Setter Property="Margin" Value="2,0,0,0" />
+                <Setter Property="Cursor" Value="Hand" />
+                <Setter Property="Focusable" Value="False" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="{x:Type RadioButton}">
+                            <Border x:Name="Bd"
+                                    Background="Transparent"
+                                    BorderBrush="Transparent"
+                                    BorderThickness="1"
+                                    CornerRadius="3"
+                                    SnapsToDevicePixels="True">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Bd" Property="Background" Value="#EFEFEF" />
+                                </Trigger>
+                                <Trigger Property="IsChecked" Value="True">
+                                    <Setter TargetName="Bd" Property="Background" Value="#E0EFFC" />
+                                    <Setter TargetName="Bd" Property="BorderBrush" Value="#0078D4" />
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <!-- Icon geometry for the three layout modes. Each is a 14×14 grid of rectangles depicting
+                 the resulting layout (two side-by-side panes, two stacked panes, a tab strip). Defined
+                 once as keyed Visual resources so the bar can be reused across all three templates. -->
+            <Style x:Key="LayoutIconRectStyle" TargetType="{x:Type Rectangle}">
+                <Setter Property="Fill" Value="#444" />
+                <Setter Property="SnapsToDevicePixels" Value="True" />
+            </Style>
+
+            <!-- The toggle bar — three RadioButtons that drive the singleton SampleHostSettings.LayoutMode.
+                 Inlined into each layout template below via this Style applied to a Border. We use a Style
+                 (not a ContentTemplate) because a single visual instance cannot live in multiple templates;
+                 the Style makes WPF instantiate a fresh visual tree per template. -->
+            <Style x:Key="LayoutToggleBarStyle" TargetType="{x:Type ContentControl}">
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="{x:Type ContentControl}">
+                            <Border Background="#F8F8F8" BorderBrush="#E0E0E0" BorderThickness="0,0,0,1" Padding="8,4">
+                                <Grid>
+                                    <StackPanel HorizontalAlignment="Right" Orientation="Horizontal">
+                                        <!-- Tabbed -->
+                                        <RadioButton GroupName="SampleHostLayout"
+                                                     Style="{StaticResource LayoutToggleButtonStyle}"
+                                                     ToolTip="Tabbed layout"
+                                                     IsChecked="{Binding LayoutMode,
+                                                                 Source={x:Static controls:SampleHostSettings.Instance},
+                                                                 Converter={StaticResource EnumToBool},
+                                                                 ConverterParameter=Tabbed,
+                                                                 Mode=TwoWay}">
+                                            <Grid Width="14" Height="14">
+                                                <!-- two small tabs on top -->
+                                                <Rectangle Style="{StaticResource LayoutIconRectStyle}"
+                                                           HorizontalAlignment="Left" VerticalAlignment="Top"
+                                                           Width="5" Height="3" Margin="0,0,0,0" />
+                                                <Rectangle Style="{StaticResource LayoutIconRectStyle}"
+                                                           HorizontalAlignment="Left" VerticalAlignment="Top"
+                                                           Width="5" Height="3" Margin="6,0,0,0"
+                                                           Fill="#AAA" />
+                                                <!-- content area below -->
+                                                <Rectangle Style="{StaticResource LayoutIconRectStyle}"
+                                                           VerticalAlignment="Bottom"
+                                                           Height="10" />
+                                            </Grid>
+                                        </RadioButton>
+
+                                        <!-- Vertical split (side-by-side panes, vertical divider) -->
+                                        <RadioButton GroupName="SampleHostLayout"
+                                                     Style="{StaticResource LayoutToggleButtonStyle}"
+                                                     ToolTip="Vertical split (side-by-side)"
+                                                     IsChecked="{Binding LayoutMode,
+                                                                 Source={x:Static controls:SampleHostSettings.Instance},
+                                                                 Converter={StaticResource EnumToBool},
+                                                                 ConverterParameter=VerticalSplit,
+                                                                 Mode=TwoWay}">
+                                            <Grid Width="14" Height="14">
+                                                <Rectangle Style="{StaticResource LayoutIconRectStyle}"
+                                                           HorizontalAlignment="Left" Width="6" />
+                                                <Rectangle Style="{StaticResource LayoutIconRectStyle}"
+                                                           HorizontalAlignment="Right" Width="6" />
+                                            </Grid>
+                                        </RadioButton>
+
+                                        <!-- Horizontal split (stacked panes, horizontal divider) -->
+                                        <RadioButton GroupName="SampleHostLayout"
+                                                     Style="{StaticResource LayoutToggleButtonStyle}"
+                                                     ToolTip="Horizontal split (stacked)"
+                                                     IsChecked="{Binding LayoutMode,
+                                                                 Source={x:Static controls:SampleHostSettings.Instance},
+                                                                 Converter={StaticResource EnumToBool},
+                                                                 ConverterParameter=HorizontalSplit,
+                                                                 Mode=TwoWay}">
+                                            <Grid Width="14" Height="14">
+                                                <Rectangle Style="{StaticResource LayoutIconRectStyle}"
+                                                           VerticalAlignment="Top" Height="6" />
+                                                <Rectangle Style="{StaticResource LayoutIconRectStyle}"
+                                                           VerticalAlignment="Bottom" Height="6" />
+                                            </Grid>
+                                        </RadioButton>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <!-- Row-count status bar shown at the bottom of every sample's Live pane. Authored as a
+                 ContentControl Style (mirroring LayoutToggleBarStyle) so one definition can be dropped
+                 into all three layout templates — a single visual instance can't live in more than one.
+                 It binds up to the hosting SampleHostControl's auto-discovered TrackedGrid, whose
+                 TotalItemCount / FilteredItemCount DPs are grouping-aware (header sentinels excluded,
+                 collapse-independent). Collapses itself when no grid was discovered. -->
+            <Style x:Key="RowCountBarStyle" TargetType="{x:Type ContentControl}">
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="{x:Type ContentControl}">
+                            <Border Background="#F0F0F0" BorderBrush="#E0E0E0" BorderThickness="0,1,0,0" Padding="14,3"
+                                    Visibility="{Binding HasTrackedGrid,
+                                                 RelativeSource={RelativeSource AncestorType={x:Type controls:SampleHostControl}},
+                                                 Converter={StaticResource BoolToVis}}">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Foreground="#1C1C1C" FontWeight="SemiBold" Text="Total: " VerticalAlignment="Center" />
+                                    <TextBlock Foreground="#444444" VerticalAlignment="Center"
+                                               Text="{Binding TrackedGrid.TotalItemCount,
+                                                      RelativeSource={RelativeSource AncestorType={x:Type controls:SampleHostControl}},
+                                                      StringFormat={}{0:N0}}" />
+                                    <TextBlock Foreground="#1C1C1C" FontWeight="SemiBold" Text="Filtered: " Margin="16,0,0,0" VerticalAlignment="Center" />
+                                    <TextBlock Foreground="#444444" VerticalAlignment="Center"
+                                               Text="{Binding TrackedGrid.FilteredItemCount,
+                                                      RelativeSource={RelativeSource AncestorType={x:Type controls:SampleHostControl}},
+                                                      StringFormat={}{0:N0}}" />
+                                </StackPanel>
+                            </Border>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <!-- Tab-icon glyph style used inside the Live/Source headers. -->
+            <Style x:Key="SampleTabHeaderIconStyle" TargetType="TextBlock">
+                <Setter Property="FontFamily" Value="Segoe Fluent Icons, Segoe MDL2 Assets" />
+                <Setter Property="FontSize" Value="14" />
+                <Setter Property="VerticalAlignment" Value="Center" />
+                <Setter Property="Margin" Value="0,0,6,0" />
+            </Style>
+
+            <!-- Tabbed template — original layout. Toggle bar sits above the TabControl. -->
+            <ControlTemplate x:Key="SampleHost_TabbedTemplate" TargetType="{x:Type controls:SampleHostControl}">
+                <DockPanel LastChildFill="True">
+                    <ContentControl DockPanel.Dock="Top" Style="{StaticResource LayoutToggleBarStyle}" />
+                    <TabControl Padding="0">
+                        <!-- Live -->
+                        <TabItem>
+                            <TabItem.Header>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Style="{StaticResource SampleTabHeaderIconStyle}" Text="&#xE9D9;" />
+                                    <TextBlock VerticalAlignment="Center" Text="Live" />
+                                </StackPanel>
+                            </TabItem.Header>
+                            <DockPanel LastChildFill="True">
+                                <ContentControl DockPanel.Dock="Bottom" Style="{StaticResource RowCountBarStyle}" />
+                                <Grid>
+                                    <ContentPresenter />
+                                    <controls:SampleLoadingOverlay IsBusy="{Binding IsBusy, FallbackValue=False, TargetNullValue=False}"
+                                                                   Status="{Binding Status, FallbackValue='', TargetNullValue=''}" />
+                                </Grid>
+                            </DockPanel>
+                        </TabItem>
+
+                        <!-- Source -->
+                        <TabItem>
+                            <TabItem.Header>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Style="{StaticResource SampleTabHeaderIconStyle}" Text="&#xE7C3;" />
+                                    <TextBlock VerticalAlignment="Center" Text="Source" />
+                                </StackPanel>
+                            </TabItem.Header>
+                            <DockPanel LastChildFill="True">
+                                <Grid DockPanel.Dock="Top" Margin="8,8,8,4">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="File:" Margin="0,0,8,0" VerticalAlignment="Center" />
+                                    <ComboBox Grid.Column="1"
+                                              DisplayMemberPath="Name"
+                                              ItemsSource="{Binding Sources, RelativeSource={RelativeSource TemplatedParent}, Mode=OneWay}"
+                                              SelectedItem="{Binding SelectedSource, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}" />
+                                </Grid>
+                                <avalonEdit:TextEditor controls:AvalonEditHelper.BoundText="{Binding SelectedSource.Content, RelativeSource={RelativeSource TemplatedParent}, Mode=OneWay}"
+                                                       controls:AvalonEditHelper.BoundSyntaxName="{Binding SelectedSource.Language, RelativeSource={RelativeSource TemplatedParent}, Mode=OneWay}"
+                                                       IsReadOnly="True"
+                                                       ShowLineNumbers="True"
+                                                       SyntaxHighlighting=""
+                                                       Background="#FAFAFA" />
+                            </DockPanel>
+                        </TabItem>
+                    </TabControl>
+                </DockPanel>
+            </ControlTemplate>
+
+            <!-- Vertical split template — Live on the left, Source on the right, with a vertical
+                 GridSplitter between them. The toggle bar still sits across the top. -->
+            <ControlTemplate x:Key="SampleHost_VerticalSplitTemplate" TargetType="{x:Type controls:SampleHostControl}">
+                <DockPanel LastChildFill="True">
+                    <ContentControl DockPanel.Dock="Top" Style="{StaticResource LayoutToggleBarStyle}" />
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" MinWidth="200" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" MinWidth="200" />
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Live -->
+                        <DockPanel Grid.Column="0" LastChildFill="True">
+                            <ContentControl DockPanel.Dock="Bottom" Style="{StaticResource RowCountBarStyle}" />
+                            <Grid>
+                                <ContentPresenter />
+                                <controls:SampleLoadingOverlay IsBusy="{Binding IsBusy, FallbackValue=False, TargetNullValue=False}"
+                                                               Status="{Binding Status, FallbackValue='', TargetNullValue=''}" />
+                            </Grid>
+                        </DockPanel>
+
+                        <!-- ShowsPreview="True": defer the actual column resize until mouse-up. During
+                             drag WPF renders only a translucent adorner, which means the live
+                             SearchDataGrid only re-measures (and realizes new row containers) once at
+                             the end instead of on every drag-tick — the latter would stutter badly
+                             when growing the grid, since row realization is far more expensive than
+                             recycling. -->
+                        <GridSplitter Grid.Column="1"
+                                      Width="5"
+                                      Background="#E0E0E0"
+                                      HorizontalAlignment="Stretch"
+                                      VerticalAlignment="Stretch"
+                                      ShowsPreview="True" />
+
+                        <!-- Source -->
+                        <DockPanel Grid.Column="2" LastChildFill="True" Background="#FAFAFA">
+                            <Grid DockPanel.Dock="Top" Margin="8,8,8,4">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="File:" Margin="0,0,8,0" VerticalAlignment="Center" />
+                                <ComboBox Grid.Column="1"
+                                          DisplayMemberPath="Name"
+                                          ItemsSource="{Binding Sources, RelativeSource={RelativeSource TemplatedParent}, Mode=OneWay}"
+                                          SelectedItem="{Binding SelectedSource, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}" />
+                            </Grid>
+                            <avalonEdit:TextEditor controls:AvalonEditHelper.BoundText="{Binding SelectedSource.Content, RelativeSource={RelativeSource TemplatedParent}, Mode=OneWay}"
+                                                   controls:AvalonEditHelper.BoundSyntaxName="{Binding SelectedSource.Language, RelativeSource={RelativeSource TemplatedParent}, Mode=OneWay}"
+                                                   IsReadOnly="True"
+                                                   ShowLineNumbers="True"
+                                                   Background="#FAFAFA" />
+                        </DockPanel>
+                    </Grid>
+                </DockPanel>
+            </ControlTemplate>
+
+            <!-- Horizontal split template — Live on top, Source on bottom, with a horizontal
+                 GridSplitter between them. -->
+            <ControlTemplate x:Key="SampleHost_HorizontalSplitTemplate" TargetType="{x:Type controls:SampleHostControl}">
+                <DockPanel LastChildFill="True">
+                    <ContentControl DockPanel.Dock="Top" Style="{StaticResource LayoutToggleBarStyle}" />
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*" MinHeight="150" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" MinHeight="150" />
+                        </Grid.RowDefinitions>
+
+                        <!-- Live -->
+                        <DockPanel Grid.Row="0" LastChildFill="True">
+                            <ContentControl DockPanel.Dock="Bottom" Style="{StaticResource RowCountBarStyle}" />
+                            <Grid>
+                                <ContentPresenter />
+                                <controls:SampleLoadingOverlay IsBusy="{Binding IsBusy, FallbackValue=False, TargetNullValue=False}"
+                                                               Status="{Binding Status, FallbackValue='', TargetNullValue=''}" />
+                            </Grid>
+                        </DockPanel>
+
+                        <!-- ShowsPreview="True": see the matching note in the vertical-split template
+                             above — defers the resize to mouse-up so the SearchDataGrid only realizes
+                             new row containers once per drag instead of per frame. -->
+                        <GridSplitter Grid.Row="1"
+                                      Height="5"
+                                      Background="#E0E0E0"
+                                      HorizontalAlignment="Stretch"
+                                      VerticalAlignment="Stretch"
+                                      ShowsPreview="True" />
+
+                        <!-- Source -->
+                        <DockPanel Grid.Row="2" LastChildFill="True" Background="#FAFAFA">
+                            <Grid DockPanel.Dock="Top" Margin="8,8,8,4">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="File:" Margin="0,0,8,0" VerticalAlignment="Center" />
+                                <ComboBox Grid.Column="1"
+                                          DisplayMemberPath="Name"
+                                          ItemsSource="{Binding Sources, RelativeSource={RelativeSource TemplatedParent}, Mode=OneWay}"
+                                          SelectedItem="{Binding SelectedSource, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}" />
+                            </Grid>
+                            <avalonEdit:TextEditor controls:AvalonEditHelper.BoundText="{Binding SelectedSource.Content, RelativeSource={RelativeSource TemplatedParent}, Mode=OneWay}"
+                                                   controls:AvalonEditHelper.BoundSyntaxName="{Binding SelectedSource.Language, RelativeSource={RelativeSource TemplatedParent}, Mode=OneWay}"
+                                                   IsReadOnly="True"
+                                                   ShowLineNumbers="True"
+                                                   SyntaxHighlighting=""
+                                                   Background="#FAFAFA" />
+                        </DockPanel>
+                    </Grid>
+                </DockPanel>
+            </ControlTemplate>
+
+            <!-- Default Style for SampleHostControl. The Template setter picks one of the three keyed
+                 ControlTemplates based on the singleton SampleHostSettings.LayoutMode. Changing the
+                 enum on the singleton triggers a Template swap on every live SampleHostControl. -->
+            <Style TargetType="{x:Type controls:SampleHostControl}">
+                <Setter Property="Template" Value="{StaticResource SampleHost_TabbedTemplate}" />
+                <Style.Triggers>
+                    <DataTrigger Binding="{Binding LayoutMode, Source={x:Static controls:SampleHostSettings.Instance}}" Value="VerticalSplit">
+                        <Setter Property="Template" Value="{StaticResource SampleHost_VerticalSplitTemplate}" />
+                    </DataTrigger>
+                    <DataTrigger Binding="{Binding LayoutMode, Source={x:Static controls:SampleHostSettings.Instance}}" Value="HorizontalSplit">
+                        <Setter Property="Template" Value="{StaticResource SampleHost_HorizontalSplitTemplate}" />
+                    </DataTrigger>
+                </Style.Triggers>
+            </Style>
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>

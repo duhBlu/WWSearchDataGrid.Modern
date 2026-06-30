@@ -1,0 +1,635 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:converters="clr-namespace:WWControls.Wpf.Converters;assembly=WWControls.Wpf"
+                    xmlns:sdg="clr-namespace:WWControls.Wpf;assembly=WWControls.Wpf">
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Controls/Primitives/DefaultControls.xaml" />
+        <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Controls/SearchDataGrid/Column/ColumnHeaderContextMenu.xaml" />
+        <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Controls/SearchDataGrid/Cell/CellContextMenu.xaml" />
+        <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Controls/SearchDataGrid/Row/RowHeaderContextMenu.xaml" />
+        <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Controls/SearchDataGrid/Grid/GridContextMenu.xaml" />
+        <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Controls/FilterSummaryPanel/FilterSummaryPanel.xaml" />
+        <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Controls/SearchDataGrid/Cell/DataGridCell.xaml" />
+        <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Controls/SearchDataGrid/Row/DataGridRow.xaml" />
+        <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Controls/SearchDataGrid/Row/RowEditPresenter.xaml" />
+        <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Controls/SearchDataGrid/Row/EditFormPresenter.xaml" />
+        <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Controls/SearchDataGrid/Column/DataGridColumnHeader.xaml" />
+        <!--  GroupStyle.xaml is merged transitively via Row/DataGridRow.xaml (its flat group-header
+              row template is referenced by the row style), so it is not merged again here.  -->
+        <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Controls/SearchDataGrid/Grid/GroupPanel.xaml" />
+        <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Controls/SearchDataGrid/Grid/TotalSummaryRow.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+
+    <converters:NullOrEmptyToBooleanConverter x:Key="NullOrEmptyToBooleanConverter" />
+    <converters:FilterRowVisibilityConverter x:Key="FilterRowVisibilityConverter" />
+    <converters:BooleanToVisibilityCollapsedConverter x:Key="BooleanToVisibilityCollapsedConverter" />
+    <converters:IntToVisibilityConverter x:Key="IntToVisibilityConverter" />
+    <converters:NegativeDoubleConverter x:Key="NegativeDoubleConverter" />
+    <converters:FixedBandSpacerWidthConverter x:Key="FixedBandSpacerWidthConverter" />
+
+    <!--  Fixed total summary panel: per-segment styling + per-side run collapse.  -->
+    <converters:BrushToUnsetConverter x:Key="SummaryStyleForeground" />
+    <converters:FontWeightToUnsetConverter x:Key="SummaryStyleFontWeight" />
+    <converters:FontStyleToUnsetConverter x:Key="SummaryStyleFontStyle" />
+    <converters:HasValueToVisibilityConverter x:Key="SummaryRunHasValueToVisibility" />
+
+    <!--  One fixed-panel entry; SemiBold base matches the panel's emphasis (segment overrides win).  -->
+    <Style x:Key="FixedTotalSummaryEntryTextStyle" TargetType="{x:Type TextBlock}">
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="#FF333333" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+    </Style>
+
+    <DataTemplate x:Key="FixedTotalSummaryResultTemplate" DataType="{x:Type sdg:SummaryResult}">
+        <TextBlock Style="{StaticResource FixedTotalSummaryEntryTextStyle}">
+            <Run Text="{Binding PrefixText, Mode=OneWay}"
+                 FontWeight="{Binding PrefixStyle.FontWeight, Converter={StaticResource SummaryStyleFontWeight}}"
+                 FontStyle="{Binding PrefixStyle.FontStyle, Converter={StaticResource SummaryStyleFontStyle}}"
+                 TextDecorations="{Binding PrefixStyle.TextDecorations}"
+                 Foreground="{Binding PrefixStyle.Foreground, Converter={StaticResource SummaryStyleForeground}}" />
+            <Run Text="{Binding ValueText, Mode=OneWay}"
+                 FontWeight="{Binding ValueStyle.FontWeight, Converter={StaticResource SummaryStyleFontWeight}}"
+                 FontStyle="{Binding ValueStyle.FontStyle, Converter={StaticResource SummaryStyleFontStyle}}"
+                 TextDecorations="{Binding ValueStyle.TextDecorations}"
+                 Foreground="{Binding ValueStyle.Foreground, Converter={StaticResource SummaryStyleForeground}}" />
+            <Run Text="{Binding SuffixText, Mode=OneWay}"
+                 FontWeight="{Binding SuffixStyle.FontWeight, Converter={StaticResource SummaryStyleFontWeight}}"
+                 FontStyle="{Binding SuffixStyle.FontStyle, Converter={StaticResource SummaryStyleFontStyle}}"
+                 TextDecorations="{Binding SuffixStyle.TextDecorations}"
+                 Foreground="{Binding SuffixStyle.Foreground, Converter={StaticResource SummaryStyleForeground}}" />
+        </TextBlock>
+    </DataTemplate>
+
+    <Style x:Key="{x:Static sdg:ThemeKeys.GridSearchDataGrid}" TargetType="{x:Type sdg:SearchDataGrid}">
+        <Setter Property="CellStyle" Value="{StaticResource {x:Static sdg:ThemeKeys.GridSearchDataGridCell}}" />
+        <Setter Property="RowStyle" Value="{StaticResource {x:Static sdg:ThemeKeys.GridSearchDataGridRow}}" />
+        <Setter Property="ContextMenu" Value="{StaticResource {x:Static sdg:ThemeKeys.GridSearchDataGridContextMenu}}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type sdg:SearchDataGrid}">
+                    <Border Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}">
+                        <Grid ClipToBounds="True">
+                            <Grid.RowDefinitions>
+                                <!-- Group panel strip (collapsed when IsGroupPanelVisible=false) -->
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                                <!-- Fixed total summary panel (collapsed until enabled + a column defines a total summary) -->
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <!--
+                                Group Panel — stair-stepped pills for grouped columns. Sits
+                                outside the ScrollViewer so it stays fixed during horizontal
+                                scroll. Collapsed by default; IsGroupPanelVisible toggles it.
+                            -->
+                            <sdg:GroupPanel x:Name="PART_GroupPanel"
+                                            Grid.Row="0"
+                                            ItemsSource="{Binding GroupedColumns, RelativeSource={RelativeSource AncestorType={x:Type sdg:SearchDataGrid}}}"
+                                            Visibility="{Binding IsGroupPanelVisible, RelativeSource={RelativeSource AncestorType={x:Type sdg:SearchDataGrid}}, Converter={StaticResource BooleanToVisibilityCollapsedConverter}}" />
+                            <ScrollViewer x:Name="DG_ScrollViewer"
+                                          Grid.Row="1"
+                                          Focusable="false"
+                                          Padding="0,0,1,1"
+                                          sdg:HorizontalScrollBehavior.EnableShiftMouseWheelScroll="True"
+                                          sdg:PanScrollBehavior.EnableMiddleClickPan="True"
+                                          CanContentScroll="true">
+                                <ScrollViewer.Template>
+                                    <ControlTemplate TargetType="ScrollViewer">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto" />
+                                                <RowDefinition Height="Auto" />
+                                                <!--  Total summary row slot when TotalSummaryPosition=Top  -->
+                                                <RowDefinition Height="Auto" />
+                                                <RowDefinition Height="*" />
+                                                <!--  Total summary row slot when TotalSummaryPosition=Bottom (default)  -->
+                                                <RowDefinition Height="Auto" />
+                                                <RowDefinition Height="Auto" />
+                                            </Grid.RowDefinitions>
+
+
+                                            <!--  Per-Column Select All  -->
+                                            <Button Style="{StaticResource {x:Static sdg:ThemeKeys.GridSelectAllButton}}"
+                                                    Focusable="false"
+                                                    Command="{x:Static DataGrid.SelectAllCommand}"
+                                                    Panel.ZIndex="2" />
+
+                                            <!--
+                                                Filler under the SelectAllButton, aligned with the pinned
+                                                FilterRowPresenter. Without this, Row 1 / Column 0
+                                                renders empty (SearchDataGrid Background bleeds through),
+                                                leaving a visible gap to the left of the filter row at the
+                                                row-header column. Visibility mirrors the filter row so the
+                                                gap is only filled when the filter row is showing.
+                                            -->
+                                            <Border Grid.Row="1"
+                                                    Grid.Column="0"
+                                                    Background="#FFf9f9f9"
+                                                    BorderBrush="#FFd0d0d0"
+                                                    BorderThickness="0,0,1,1"
+                                                    UseLayoutRounding="True"
+                                                    SnapsToDevicePixels="True">
+                                                <Border.Visibility>
+                                                    <MultiBinding Converter="{StaticResource FilterRowVisibilityConverter}">
+                                                        <Binding RelativeSource="{RelativeSource AncestorType={x:Type sdg:SearchDataGrid}}" Path="ShowFilterRow" />
+                                                        <Binding RelativeSource="{RelativeSource AncestorType={x:Type sdg:SearchDataGrid}}" Path="FilterEditorPlacement" />
+                                                    </MultiBinding>
+                                                </Border.Visibility>
+                                                <sdg:Icon Width="12"
+                                                          Height="12"
+                                                          IconSource="{StaticResource {x:Static sdg:IconKeys.IconFilter}}"
+                                                          IconBrush="Gray" />
+                                            </Border>
+
+                                            <!--
+                                                Column Headers. The custom header type carries the OnClick
+                                                override that suppresses sort when the click originated on an
+                                                interactive child (the filter-popup button).
+                                            -->
+                                            <sdg:SearchDataGridColumnHeadersPresenter x:Name="PART_ColumnHeadersPresenter"
+                                                                                      Grid.Column="1"
+                                                                                      Margin="0,0,0,0" />
+
+                                            <!--
+                                                Pinned filter row. Lives in the same template grid-column
+                                                as PART_ColumnHeadersPresenter so the horizontal scroll
+                                                view applied by the ScrollViewer's clip and the
+                                                FilterRowPanel's own offset binding stay aligned at the
+                                                frozen-column boundary.
+                                            -->
+                                            <sdg:FilterRowPresenter x:Name="PART_FilterRow"
+                                                                    Style="{StaticResource {x:Static sdg:ThemeKeys.FilterRowPresenter}}"
+                                                                    Grid.Row="1"
+                                                                    Grid.Column="1">
+                                                <sdg:FilterRowPresenter.Visibility>
+                                                    <MultiBinding Converter="{StaticResource FilterRowVisibilityConverter}">
+                                                        <Binding RelativeSource="{RelativeSource AncestorType={x:Type sdg:SearchDataGrid}}" Path="ShowFilterRow" />
+                                                        <Binding RelativeSource="{RelativeSource AncestorType={x:Type sdg:SearchDataGrid}}" Path="FilterEditorPlacement" />
+                                                    </MultiBinding>
+                                                </sdg:FilterRowPresenter.Visibility>
+                                            </sdg:FilterRowPresenter>
+
+                                            <!--
+                                                Header-bottom separator. Sits at the top edge of the
+                                                content row, spanning BOTH the row-header gutter and the
+                                                data columns so the seam is continuous across the full
+                                                width. ZIndex is above the fixed-group strip (ZIndex 5)
+                                                so the pinned strip slides UNDER this line instead of
+                                                overdrawing it — without that, the strip covered the
+                                                gutter's seam on pin/unpin (flicker) and the -1 overlap
+                                                rounded inconsistently, nudging the pinned row down 1px.
+                                            -->
+                                            <Border x:Name="PART_ColumnHeaderBottomBorder"
+                                                    Grid.Row="3"
+                                                    Grid.Column="0"
+                                                    Grid.ColumnSpan="2"
+                                                    Background="#d0d0d0"
+                                                    Margin="0,-1,0,0"
+                                                    VerticalAlignment="Top"
+                                                    Panel.ZIndex="6"
+                                                    Height="1"
+                                                    UseLayoutRounding="True"
+                                                    SnapsToDevicePixels="True" />
+
+                                            <!--  Rows  -->
+                                            <ScrollContentPresenter x:Name="PART_ScrollContentPresenter"
+                                                                    Grid.Row="3"
+                                                                    Grid.ColumnSpan="2"
+                                                                    Margin="0,0,0,0"
+                                                                    CanContentScroll="{TemplateBinding CanContentScroll}" />
+
+                                            <Border Grid.Row="3"
+                                                    Grid.ColumnSpan="2"
+                                                    Margin="0,0,0,0"
+                                                    VerticalAlignment="Top"
+                                                    Panel.ZIndex="5"
+                                                    ClipToBounds="True"
+                                                    Visibility="{Binding AllowFixedGroups, RelativeSource={RelativeSource AncestorType={x:Type sdg:SearchDataGrid}}, Converter={StaticResource BooleanToVisibilityCollapsedConverter}}">
+                                                <StackPanel x:Name="PART_FixedGroupStrip">
+                                                    <sdg:FixedGroupHeadersPresenter x:Name="PART_FixedGroupHeaders"
+                                                                                    ItemsSource="{Binding FixedGroupHeaders, RelativeSource={RelativeSource AncestorType={x:Type sdg:SearchDataGrid}}}" />
+                                                    <!--
+                                                        Drop shadow under the pinned strip. The left spacer holds the
+                                                        row-header gutter width so the shadow rectangle starts at the
+                                                        cell-content edge — the shadow falls only under the group row,
+                                                        never under the row headers.
+                                                    -->
+                                                    <DockPanel x:Name="PART_FixedGroupShadow"
+                                                               IsHitTestVisible="False"
+                                                               Visibility="{Binding FixedGroupHeaders.Count, RelativeSource={RelativeSource AncestorType={x:Type sdg:SearchDataGrid}}, Converter={StaticResource IntToVisibilityConverter}}">
+                                                        <Border DockPanel.Dock="Left"
+                                                                Width="{Binding RowHeaderActualWidth, RelativeSource={RelativeSource AncestorType={x:Type sdg:SearchDataGrid}}}" />
+                                                        <Rectangle Height="10" Margin="0,0,0,0">
+                                                            <Rectangle.Fill>
+                                                                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                                                    <GradientStop Color="#30000000" Offset="0" />
+                                                                    <GradientStop Color="#18000000" Offset="0.25" />
+                                                                    <GradientStop Color="#0A000000" Offset="0.5" />
+                                                                    <GradientStop Color="#03000000" Offset="0.75" />
+                                                                    <GradientStop Color="#00000000" Offset="1" />
+                                                                </LinearGradientBrush>
+                                                            </Rectangle.Fill>
+                                                        </Rectangle>
+                                                    </DockPanel>
+                                                </StackPanel>
+                                            </Border>
+
+                                            <!--
+                                                Fixed-band separator strips — one continuous strip per band
+                                                spanning headers, filter row, rows, and pinned summary rows
+                                                (template rows 0–4, never the scrollbar row). The strips sit in
+                                                the layout gap the band-aware panels reserve (scrollable cells
+                                                shift/clip around them), so they never cover cell content.
+                                                Positioned by render transform off the band-width DPs: the left
+                                                strip starts at the left band's trailing edge, the right strip
+                                                ends at the right band's leading edge. Each renders as a
+                                                background fill with 1px vertical border edges, and collapses
+                                                when its band is empty.
+                                            -->
+                                            <Border x:Name="PART_LeftFixedSeparator"
+                                                    Grid.Row="0"
+                                                    Grid.RowSpan="5"
+                                                    Grid.Column="1"
+                                                    HorizontalAlignment="Left"
+                                                    IsHitTestVisible="False"
+                                                    Margin="-2,0,0,0"
+                                                    Panel.ZIndex="7"
+                                                    Width="{Binding FixedColumnSeparatorWidth, RelativeSource={RelativeSource AncestorType={x:Type sdg:SearchDataGrid}}}"
+                                                    Background="{Binding FixedColumnSeparatorBackground, RelativeSource={RelativeSource AncestorType={x:Type sdg:SearchDataGrid}}}"
+                                                    BorderBrush="{Binding FixedColumnSeparatorBorderBrush, RelativeSource={RelativeSource AncestorType={x:Type sdg:SearchDataGrid}}}"
+                                                    BorderThickness="1,0"
+                                                    UseLayoutRounding="True"
+                                                    SnapsToDevicePixels="True">
+                                                <Border.RenderTransform>
+                                                    <TranslateTransform X="{Binding LeftFixedColumnsWidth, RelativeSource={RelativeSource AncestorType={x:Type sdg:SearchDataGrid}}}" />
+                                                </Border.RenderTransform>
+                                                <Border.Style>
+                                                    <Style TargetType="Border">
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding LeftFixedColumnsWidth, RelativeSource={RelativeSource AncestorType={x:Type sdg:SearchDataGrid}}}" Value="0">
+                                                                <Setter Property="Visibility" Value="Collapsed" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Border.Style>
+                                            </Border>
+                                            <Border x:Name="PART_RightFixedSeparator"
+                                                    Grid.Row="0"
+                                                    Grid.RowSpan="5"
+                                                    Grid.Column="1"
+                                                    HorizontalAlignment="Right"
+                                                    IsHitTestVisible="False"
+                                                    Panel.ZIndex="7"
+                                                    Width="{Binding FixedColumnSeparatorWidth, RelativeSource={RelativeSource AncestorType={x:Type sdg:SearchDataGrid}}}"
+                                                    Background="{Binding FixedColumnSeparatorBackground, RelativeSource={RelativeSource AncestorType={x:Type sdg:SearchDataGrid}}}"
+                                                    BorderBrush="{Binding FixedColumnSeparatorBorderBrush, RelativeSource={RelativeSource AncestorType={x:Type sdg:SearchDataGrid}}}"
+                                                    BorderThickness="1,0"
+                                                    UseLayoutRounding="True"
+                                                    SnapsToDevicePixels="True">
+                                                <Border.RenderTransform>
+                                                    <TranslateTransform X="{Binding RightFixedColumnsWidth, RelativeSource={RelativeSource AncestorType={x:Type sdg:SearchDataGrid}}, Converter={StaticResource NegativeDoubleConverter}}" />
+                                                </Border.RenderTransform>
+                                                <Border.Style>
+                                                    <Style TargetType="Border">
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding RightFixedColumnsWidth, RelativeSource={RelativeSource AncestorType={x:Type sdg:SearchDataGrid}}}" Value="0">
+                                                                <Setter Property="Visibility" Value="Collapsed" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Border.Style>
+                                            </Border>
+
+                                            <!--
+                                                Placeholder: top-right gap above the vertical scrollbar.
+                                            -->
+                                            <Border Grid.Row="0"
+                                                    Grid.Column="2"
+                                                    Background="#F9F9F9"
+                                                    BorderBrush="#FFd0d0d0"
+                                                    BorderThickness="1,0,0,1"
+                                                    Visibility="{TemplateBinding ComputedVerticalScrollBarVisibility}"
+                                                    Margin="-1,0,0,0"
+                                                    UseLayoutRounding="True"
+                                                    SnapsToDevicePixels="True" />
+                                            <Border Grid.Row="1"
+                                                    Grid.Column="2"
+                                                    Background="#ffffff"
+                                                    BorderBrush="#FFd0d0d0"
+                                                    BorderThickness="1,0,0,1"
+                                                    Visibility="{TemplateBinding ComputedVerticalScrollBarVisibility}"
+                                                    Margin="-1,0,0,0"
+                                                    UseLayoutRounding="True"
+                                                    SnapsToDevicePixels="True" />
+
+
+                                            <!--
+                                                Pinned total summary row. Same alignment contract as the
+                                                filter row (column-aligned panel in the headers' template
+                                                grid-column); sits below the scrolling content so it stays
+                                                fixed while rows scroll. Shown iff ShowTotalSummary AND
+                                                TotalSummaryPosition ≠ None (ActualShowTotalSummaryRow) —
+                                                never content-collapsed, so an empty row stays reachable
+                                                for adding summaries via right-click.
+                                            -->
+                                            <Border x:Name="TotalSummaryGutter"
+                                                    Grid.Row="4"
+                                                    Grid.Column="0"
+                                                    Background="#FFf9f9f9"
+                                                    BorderBrush="#FFd0d0d0"
+                                                    BorderThickness="0,1,1,0"
+                                                    UseLayoutRounding="True"
+                                                    SnapsToDevicePixels="True"
+                                                    Visibility="{Binding ActualShowTotalSummaryRow, RelativeSource={RelativeSource AncestorType={x:Type sdg:SearchDataGrid}}, Converter={StaticResource BooleanToVisibilityCollapsedConverter}}" />
+                                            <sdg:TotalSummaryRowPresenter x:Name="PART_TotalSummaryRow"
+                                                                          Style="{StaticResource {x:Static sdg:ThemeKeys.GridSearchDataGridTotalSummaryRow}}"
+                                                                          Grid.Row="4"
+                                                                          Grid.Column="1"
+                                                                          Visibility="{Binding ActualShowTotalSummaryRow, RelativeSource={RelativeSource AncestorType={x:Type sdg:SearchDataGrid}}, Converter={StaticResource BooleanToVisibilityCollapsedConverter}}" />
+                                            <Border x:Name="TotalSummaryScrollFiller"
+                                                    Grid.Row="4"
+                                                    Grid.Column="2"
+                                                    Background="#F9F9F9"
+                                                    BorderBrush="#FFd0d0d0"
+                                                    BorderThickness="1,1,0,0"
+                                                    Margin="-1,0,0,0"
+                                                    UseLayoutRounding="True"
+                                                    SnapsToDevicePixels="True"
+                                                    Visibility="{Binding ActualShowTotalSummaryRow, RelativeSource={RelativeSource AncestorType={x:Type sdg:SearchDataGrid}}, Converter={StaticResource BooleanToVisibilityCollapsedConverter}}" />
+
+                                            <!--  Scrollbars  -->
+                                            <ScrollBar x:Name="PART_VerticalScrollBar"
+                                                       Grid.Row="3"
+                                                       Grid.Column="2"
+                                                       Orientation="Vertical"
+                                                       Visibility="{TemplateBinding ComputedVerticalScrollBarVisibility}"
+                                                       Maximum="{TemplateBinding ScrollableHeight}"
+                                                       ViewportSize="{TemplateBinding ViewportHeight}"
+                                                       Value="{Binding VerticalOffset, Mode=OneWay, RelativeSource={RelativeSource TemplatedParent}}" />
+                                            <!--
+                                                Leading spacer = native frozen (left band) width; trailing
+                                                spacer = right band width, so the scrollbar spans only the
+                                                scrollable middle region.
+                                            -->
+                                            <Grid Grid.Row="5" Grid.Column="1">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition>
+                                                        <ColumnDefinition.Width>
+                                                            <MultiBinding Converter="{StaticResource FixedBandSpacerWidthConverter}">
+                                                                <Binding Path="LeftFixedColumnsWidth" RelativeSource="{RelativeSource AncestorType={x:Type sdg:SearchDataGrid}}" />
+                                                                <Binding Path="FixedColumnSeparatorWidth" RelativeSource="{RelativeSource AncestorType={x:Type sdg:SearchDataGrid}}" />
+                                                            </MultiBinding>
+                                                        </ColumnDefinition.Width>
+                                                    </ColumnDefinition>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition>
+                                                        <ColumnDefinition.Width>
+                                                            <MultiBinding Converter="{StaticResource FixedBandSpacerWidthConverter}">
+                                                                <Binding Path="RightFixedColumnsWidth" RelativeSource="{RelativeSource AncestorType={x:Type sdg:SearchDataGrid}}" />
+                                                                <Binding Path="FixedColumnSeparatorWidth" RelativeSource="{RelativeSource AncestorType={x:Type sdg:SearchDataGrid}}" />
+                                                            </MultiBinding>
+                                                        </ColumnDefinition.Width>
+                                                    </ColumnDefinition>
+                                                </Grid.ColumnDefinitions>
+                                                <ScrollBar x:Name="PART_HorizontalScrollBar"
+                                                           Grid.Column="1"
+                                                           Orientation="Horizontal"
+                                                           Visibility="{TemplateBinding ComputedHorizontalScrollBarVisibility}"
+                                                           Maximum="{TemplateBinding ScrollableWidth}"
+                                                           ViewportSize="{TemplateBinding ViewportWidth}"
+                                                           Value="{Binding HorizontalOffset, Mode=OneWay, RelativeSource={RelativeSource TemplatedParent}}" />
+                                            </Grid>
+
+                                            <!--
+                                                Placeholder: bottom-left gap (below row header area, left of horizontal scrollbar).
+                                            -->
+                                            <Border Grid.Row="5"
+                                                    Grid.Column="0"
+                                                    Background="#F9F9F9"
+                                                    BorderBrush="#FFd0d0d0"
+                                                    BorderThickness="0,1,1,0"
+                                                    Visibility="{TemplateBinding ComputedHorizontalScrollBarVisibility}"
+                                                    Margin="0,-1,0,0" />
+                                            <!--
+                                                Placeholder: bottom-right corner (intersection of both scrollbars).
+                                            -->
+                                            <Border Grid.Row="5"
+                                                    Grid.Column="2"
+                                                    Background="#F9F9F9"
+                                                    BorderBrush="#FFd0d0d0"
+                                                    BorderThickness="1,1,0,0"
+                                                    Margin="-1,-1,0,0">
+                                                <Border.Style>
+                                                    <Style TargetType="Border">
+                                                        <Setter Property="Visibility" Value="Collapsed" />
+                                                        <Style.Triggers>
+                                                            <MultiDataTrigger>
+                                                                <MultiDataTrigger.Conditions>
+                                                                    <Condition Binding="{Binding ComputedVerticalScrollBarVisibility, RelativeSource={RelativeSource TemplatedParent}}" Value="Visible" />
+                                                                    <Condition Binding="{Binding ComputedHorizontalScrollBarVisibility, RelativeSource={RelativeSource TemplatedParent}}" Value="Visible" />
+                                                                </MultiDataTrigger.Conditions>
+                                                                <Setter Property="Visibility" Value="Visible" />
+                                                            </MultiDataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Border.Style>
+                                            </Border>
+                                            <!-- Bottom Border of the grid when content extends offscreen -->
+                                            <Border Grid.Row="5"
+                                                    Grid.ColumnSpan="2"
+                                                    BorderBrush="#FFd0d0d0"
+                                                    BorderThickness="0,1,0,0"
+                                                    Margin="0,0,0,-1">
+                                                <Border.Style>
+                                                    <Style TargetType="Border">
+                                                        <Setter Property="Visibility" Value="Collapsed" />
+                                                        <Style.Triggers>
+                                                            <MultiDataTrigger>
+                                                                <MultiDataTrigger.Conditions>
+                                                                    <Condition Binding="{Binding ComputedVerticalScrollBarVisibility, RelativeSource={RelativeSource TemplatedParent}}" Value="Visible" />
+                                                                    <Condition Binding="{Binding ComputedHorizontalScrollBarVisibility, RelativeSource={RelativeSource TemplatedParent}}" Value="Collapsed" />
+                                                                </MultiDataTrigger.Conditions>
+                                                                <Setter Property="Visibility" Value="Visible" />
+                                                            </MultiDataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Border.Style>
+                                            </Border>
+                                            
+                                            <!-- Right  Border of the grid when content extends offscreen -->
+                                            <Border Grid.RowSpan="5"
+                                                    Grid.Column="3"
+                                                    BorderBrush="#FFd0d0d0"
+                                                    BorderThickness="0,0,1,0"
+                                                    Margin="0,0,-1,0">
+                                                <Border.Style>
+                                                    <Style TargetType="Border">
+                                                        <Setter Property="Visibility" Value="Collapsed" />
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding ComputedVerticalScrollBarVisibility, RelativeSource={RelativeSource TemplatedParent}}" Value="Collapsed" >
+                                                                <Setter Property="Visibility" Value="Visible" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Border.Style>
+                                            </Border>
+                                        </Grid>
+                                        <ControlTemplate.Triggers>
+                                            <!--
+                                                TotalSummaryPosition=Top relocates the summary row (and its
+                                                gutter / scrollbar fillers) to the slot between the filter
+                                                row and the data area, flipping the seam border from a top
+                                                edge to a bottom edge. Bottom (default) renders in row 4;
+                                                None is handled by ActualShowTotalSummaryRow.
+                                            -->
+                                            <DataTrigger Binding="{Binding TotalSummaryPosition, RelativeSource={RelativeSource AncestorType={x:Type sdg:SearchDataGrid}}}" Value="Top">
+                                                <Setter TargetName="TotalSummaryGutter" Property="Grid.Row" Value="2" />
+                                                <Setter TargetName="TotalSummaryGutter" Property="BorderThickness" Value="0,0,1,1" />
+                                                <Setter TargetName="PART_TotalSummaryRow" Property="Grid.Row" Value="2" />
+                                                <Setter TargetName="PART_TotalSummaryRow" Property="BorderThickness" Value="0,0,0,1" />
+                                                <Setter TargetName="TotalSummaryScrollFiller" Property="Grid.Row" Value="2" />
+                                                <Setter TargetName="TotalSummaryScrollFiller" Property="BorderThickness" Value="1,0,0,1" />
+                                            </DataTrigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </ScrollViewer.Template>
+                                <ItemsPresenter />
+                            </ScrollViewer>
+
+                            <!--
+                                Fixed total summary panel — one horizontal, non-scrolling run
+                                beneath the items rendering the grid's OWN FixedTotalSummaries
+                                definitions (caption-qualified entries, split into left / right
+                                runs per each SummaryItem's Alignment). Independent of the
+                                column-aligned summary row above. Deliberately visible while
+                                empty when ShowFixedTotalSummary is on, so its right-click menu
+                                (Count toggle / Customize…) stays reachable.
+                            -->
+                            <Border x:Name="PART_FixedTotalSummary"
+                                    Grid.Row="2"
+                                    Background="#FFF3F3F3"
+                                    BorderBrush="#FFd0d0d0"
+                                    BorderThickness="0,1,0,0"
+                                    Padding="10,4"
+                                    MinHeight="24"
+                                    UseLayoutRounding="True"
+                                    SnapsToDevicePixels="True"
+                                    Visibility="{Binding ActualShowFixedTotalSummary, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource BooleanToVisibilityCollapsedConverter}}">
+                                <!--  Right-click picker, dropped when the grid disables summary context menus.  -->
+                                <Border.Style>
+                                    <Style TargetType="{x:Type Border}">
+                                        <Setter Property="ContextMenu" Value="{StaticResource {x:Static sdg:ThemeKeys.GridSearchDataGridFixedTotalSummaryContextMenu}}" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding SummaryContextMenusEnabled, RelativeSource={RelativeSource AncestorType={x:Type sdg:SearchDataGrid}}}" Value="False">
+                                                <Setter Property="ContextMenu" Value="{x:Null}" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                                <DockPanel>
+                                    <ItemsControl DockPanel.Dock="Right"
+                                                  VerticalAlignment="Center"
+                                                  IsHitTestVisible="False"
+                                                  IsTabStop="False"
+                                                  Focusable="False"
+                                                  ItemsSource="{Binding FixedTotalSummaryRightInfo, RelativeSource={RelativeSource TemplatedParent}}"
+                                                  ItemTemplate="{StaticResource FixedTotalSummaryResultTemplate}"
+                                                  Visibility="{Binding FixedTotalSummaryRightInfo, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource SummaryRunHasValueToVisibility}}">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <sdg:SimpleStackPanel Orientation="Horizontal" Spacing="12" />
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                    </ItemsControl>
+                                    <ItemsControl HorizontalAlignment="Left"
+                                                  VerticalAlignment="Center"
+                                                  IsHitTestVisible="False"
+                                                  IsTabStop="False"
+                                                  Focusable="False"
+                                                  Margin="0,0,12,0"
+                                                  ItemsSource="{Binding FixedTotalSummaryLeftInfo, RelativeSource={RelativeSource TemplatedParent}}"
+                                                  ItemTemplate="{StaticResource FixedTotalSummaryResultTemplate}"
+                                                  Visibility="{Binding FixedTotalSummaryLeftInfo, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource SummaryRunHasValueToVisibility}}">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <sdg:SimpleStackPanel Orientation="Horizontal" Spacing="12" />
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                    </ItemsControl>
+                                </DockPanel>
+                            </Border>
+
+                            <!--  FilterSummaryPanel  -->
+                            <sdg:FilterSummaryPanel x:Name="PART_FilterSummaryPanel"
+                                                    Style="{StaticResource {x:Static sdg:ThemeKeys.FilterSummaryPanel}}"
+                                                    Grid.Row="3" />
+
+                            <!--
+                                Full-row ("edit entire row") edit overlay. Spans the whole grid and
+                                sits above every other layer (ZIndex 50 > the fixed-group strip / seam
+                                borders / separators). Collapsed until RowEditTrigger promotes a row,
+                                at which point the grid positions PART_RowEditPresenter over that row
+                                via the host Canvas. PART_RowEditDim greys the rest of the grid; the
+                                grid swallows clicks / wheel landing outside the bright strip so the
+                                row stays open until Update / Cancel.
+                            -->
+                            <Grid x:Name="PART_RowEditOverlay"
+                                  Grid.Row="0"
+                                  Grid.RowSpan="4"
+                                  Panel.ZIndex="50"
+                                  Background="Transparent"
+                                  Visibility="Collapsed">
+                                <Rectangle x:Name="PART_RowEditDim" Fill="#59000000" />
+                                <Canvas x:Name="PART_RowEditHost" Background="Transparent">
+                                    <sdg:RowEditPresenter x:Name="PART_RowEditPresenter"
+                                                          Style="{StaticResource {x:Static sdg:ThemeKeys.GridSearchDataGridRowEditPresenter}}" />
+                                </Canvas>
+                            </Grid>
+                        </Grid>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="Background" Value="White" />
+        <Setter Property="RowHeaderStyle" Value="{StaticResource {x:Static sdg:ThemeKeys.GridSearchDataGridRowHeader}}" />
+        <Setter Property="ColumnHeaderStyle" Value="{StaticResource {x:Static sdg:ThemeKeys.GridSearchDataGridColumnHeader}}" />
+        <Setter Property="RowHeaderWidth" Value="24" />
+        <Setter Property="BorderBrush" Value="#FFd0d0d0" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="UseLayoutRounding" Value="True" />
+        <Setter Property="RowBackground" Value="White" />
+        <Setter Property="AlternatingRowBackground" Value="#FFF9F9F9" />
+        <Setter Property="HorizontalGridLinesBrush" Value="#FFd0d0d0" />
+        <Setter Property="VerticalGridLinesBrush" Value="#FFd0d0d0" />
+        <Setter Property="HeadersVisibility" Value="All" />
+        <Setter Property="GridLinesVisibility" Value="None" />
+        <Setter Property="CanUserAddRows" Value="False" />
+        <Setter Property="CanUserDeleteRows" Value="False" />
+        <Setter Property="CanUserResizeRows" Value="False" />
+        <Setter Property="CanUserReorderColumns" Value="True" />
+        <Setter Property="CanUserResizeColumns" Value="True" />
+        <Setter Property="CanUserSortColumns" Value="True" />
+        <Setter Property="IsSynchronizedWithCurrentItem" Value="True" />
+        <Setter Property="AutoGenerateColumns" Value="False" />
+        <Setter Property="SelectionMode" Value="Extended" />
+        <Setter Property="SelectionUnit" Value="FullRow" />
+        <Setter Property="EnableRowVirtualization" Value="True" />
+        <Setter Property="EnableColumnVirtualization" Value="True" />
+        <Setter Property="VirtualizingPanel.IsVirtualizing" Value="True" />
+        <Setter Property="VirtualizingPanel.IsVirtualizingWhenGrouping" Value="True" />
+        <Setter Property="VirtualizingPanel.VirtualizationMode" Value="Recycling" />
+        <Setter Property="VirtualizingPanel.ScrollUnit" Value="Item" />
+        <Setter Property="ScrollViewer.IsDeferredScrollingEnabled" Value="False" />
+        <Setter Property="ScrollViewer.CanContentScroll" Value="True" />
+    </Style>
+
+    <Style BasedOn="{StaticResource {x:Static sdg:ThemeKeys.GridSearchDataGrid}}" TargetType="{x:Type sdg:SearchDataGrid}" />
+</ResourceDictionary>

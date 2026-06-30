@@ -1,0 +1,99 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sdg="clr-namespace:WWControls.Wpf;assembly=WWControls.Wpf">
+
+    <!--
+        ═══════════════════════════════════════════════════════════════════════
+        Editors — shared chrome for the WWBaseEdit-derived editor controls
+        ═══════════════════════════════════════════════════════════════════════
+        WWBaseEdit owns the editor chrome in ONE place: the outer border, background,
+        padding, focus accent, disabled visual, the PART_ContentHost that presents the
+        concrete input, and the trailing decoration-button slot. Concrete editors
+        (WWTextEdit, and the spin / combo / date / check editors that follow) point their
+        default style key at WWBaseEdit, so they reuse this template and the border problem
+        is solved once rather than per editor.
+
+        Border policy:
+        — Flat (no border) by default — the in-cell / filter-row look.
+        — A 1px #CCCCCC edge when ShowBorder is true (edit form, standalone), gaining an
+          accent #0078D4 edge while focused.
+    -->
+
+    <Style x:Key="{x:Static sdg:ThemeKeys.EditorsBaseEdit}" TargetType="{x:Type sdg:WWBaseEdit}">
+        <Setter Property="Background" Value="#FFFFFF" />
+        <Setter Property="Foreground" Value="#1C1C1C" />
+        <Setter Property="BorderBrush" Value="#CCCCCC" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Padding" Value="4,2" />
+        <!-- Focusable so a host can Keyboard.Focus the editor and have it forward to the input
+             (WWBaseEdit.OnGotKeyboardFocus); IsTabStop=False keeps the chrome out of the tab order
+             so Tab lands on the inner input directly. -->
+        <Setter Property="Focusable" Value="True" />
+        <Setter Property="IsTabStop" Value="False" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type sdg:WWBaseEdit}">
+                    <Border x:Name="ChromeBorder"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="3"
+                            SnapsToDevicePixels="True">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <ContentPresenter x:Name="PART_ContentHost"
+                                              Grid.Column="0"
+                                              Margin="{TemplateBinding Padding}"
+                                              Content="{TemplateBinding EditContent}"
+                                              VerticalAlignment="Stretch"
+                                              HorizontalAlignment="Stretch" />
+
+                            <ContentPresenter x:Name="PART_ButtonHost"
+                                              Grid.Column="1"
+                                              Content="{TemplateBinding ButtonContent}"
+                                              VerticalAlignment="Center"
+                                              Visibility="Collapsed" />
+                        </Grid>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="ShowBorder" Value="True">
+                            <Setter TargetName="ChromeBorder" Property="BorderThickness" Value="1" />
+                        </Trigger>
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="ShowBorder" Value="True" />
+                                <Condition Property="IsKeyboardFocusWithin" Value="True" />
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="ChromeBorder" Property="BorderBrush" Value="#0078D4" />
+                        </MultiTrigger>
+                        <Trigger Property="ShowButtons" Value="True">
+                            <Setter TargetName="PART_ButtonHost" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="ChromeBorder" Property="Opacity" Value="0.6" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Implicit default so WWBaseEdit and every editor whose default style key points at it
+         (WWTextEdit, …) pick up the chrome without an explicit Style reference. -->
+    <Style BasedOn="{StaticResource {x:Static sdg:ThemeKeys.EditorsBaseEdit}}" TargetType="{x:Type sdg:WWBaseEdit}" />
+
+    <!-- WWCheckEdit is a glyph, not a bordered input: transparent background so the cell's own
+         fill / selection shows through, no padding, border stays off. Reuses the base chrome
+         template via BasedOn. -->
+    <Style BasedOn="{StaticResource {x:Static sdg:ThemeKeys.EditorsBaseEdit}}" TargetType="{x:Type sdg:WWCheckEdit}">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Padding" Value="0" />
+    </Style>
+
+</ResourceDictionary>

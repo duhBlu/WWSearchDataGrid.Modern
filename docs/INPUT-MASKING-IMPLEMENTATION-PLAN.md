@@ -78,11 +78,11 @@ Without this seam, every subsequent phase ends up duplicating `MaskInputBehavior
 
 ### Deliverables
 
-1. Define `IMaskFormatter` in `WWSearchDataGrid.Modern.Core.Display` with the surface above.
+1. Define `IMaskFormatter` in `WWControls.Core.Display` with the surface above.
 2. Rename `MaskFormatter` → `SimpleMaskFormatter`. Implement `IMaskFormatter`. Keep public class name available via type forward or `[Obsolete]` partial if external consumers exist (today: none).
 3. Add `MaskFormatterFactory.Create(MaskType type, string mask, char promptChar, CultureInfo culture)`. Throws `NotSupportedException` for unimplemented types — same diagnostic as today, but in one place. `EnsureMaskTypeImplemented` in `TextEditSettings` collapses to a single factory call.
 4. Update `MaskInputBehavior.Attach` to call the factory instead of `new MaskFormatter(...)`.
-5. **Add a test project** (`WWSearchDataGrid.Modern.Core.Tests` if it doesn't exist). Lock down current `SimpleMaskFormatter` behavior: every example pattern in the docs (`(000) 000-0000`, `00/00/0000`, `0+\.00`, `LLL-000`, `00000-9999`, `LLL-000`, `0000-0000-0000-0000`) tested for Format / Parse / InsertChar / DeleteChar / Paste / Finalize round-trips. **This is the safety net for every subsequent phase.**
+5. **Add a test project** (`WWControls.Core.Tests` if it doesn't exist). Lock down current `SimpleMaskFormatter` behavior: every example pattern in the docs (`(000) 000-0000`, `00/00/0000`, `0+\.00`, `LLL-000`, `00000-9999`, `LLL-000`, `0000-0000-0000-0000`) tested for Format / Parse / InsertChar / DeleteChar / Paste / Finalize round-trips. **This is the safety net for every subsequent phase.**
 
 ### Effort
 
@@ -92,7 +92,7 @@ Without this seam, every subsequent phase ends up duplicating `MaskInputBehavior
 
 - `dotnet build` clean.
 - All sample columns in `InputMaskingSample` render and behave identically to before.
-- `WWSearchDataGrid.Modern.Core.Tests` runs green.
+- `WWControls.Core.Tests` runs green.
 
 ---
 

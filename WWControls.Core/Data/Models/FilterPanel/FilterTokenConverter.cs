@@ -1,0 +1,205 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
+
+namespace WWControls.Core
+{
+    /// <summary>
+    /// Utility class for converting ColumnFilterInfo objects to filter tokens
+    /// </summary>
+    public static class FilterTokenConverter
+    {
+        /// <summary>
+        /// Converts a collection of ColumnFilterInfo objects to filter tokens
+        /// </summary>
+        /// <param name="filters">The filters to convert</param>
+        /// <returns>A flat list of filter tokens that can wrap independently</returns>
+        public static List<IFilterToken> ConvertToTokens(IEnumerable<ColumnFilterInfo> filters)
+        {
+            var tokens = new List<IFilterToken>();
+            
+            if (filters == null || !filters.Any())
+                return tokens;
+
+            var filterList = filters.ToList();
+            
+            for (int filterIndex = 0; filterIndex < filterList.Count; filterIndex++)
+            {
+                var filter = filterList[filterIndex];
+                var filterId = Guid.NewGuid().ToString();
+                var orderIndex = 0;
+
+                // Add logical connector for non-first filters
+                if (filterIndex > 0 && !string.IsNullOrEmpty(filter.Operator))
+                {
+                    tokens.Add(new GroupLogicalConnectorToken(filter.Operator, filterId, orderIndex++, filter, filterIndex));
+                }
+
+                // Add opening bracket token
+                tokens.Add(new OpenBracketToken(filterId, orderIndex++, filter));
+
+                // Process filter components. Each component emits its own column-name token so
+                // chips read naturally when a group contains multiple templates (e.g.
+                // "[Total = 10000 OR Total = 2000]" instead of "[Total = 10000 OR = 2000]"),
+                // and so future mixed-column groups can show different column names per template
+                // without further changes to the token shape.
+                foreach (var component in filter.FilterComponents)
+                {
+                    tokens.AddRange(ConvertComponentToTokens(component, filterId, ref orderIndex, filter));
+                }
+
+                // Add closing bracket token
+                tokens.Add(new CloseBracketToken(filterId, orderIndex++, filter));
+
+                // Add remove action token at the end of each logical filter
+                tokens.Add(new RemoveActionToken(filterId, orderIndex++, filter));
+            }
+
+            return tokens;
+        }
+
+        /// <summary>
+        /// Converts a FilterChipComponents object to tokens
+        /// </summary>
+        /// <param name="component">The component containing filter information and indices</param>
+        /// <param name="filterId">The unique filter ID</param>
+        /// <param name="orderIndex">The current order index (will be incremented)</param>
+        /// <param name="sourceFilter">The source filter info</param>
+        private static List<IFilterToken> ConvertComponentToTokens(FilterChipComponents component, string filterId, ref int orderIndex, ColumnFilterInfo sourceFilter)
+        {
+            var tokens = new List<IFilterToken>();
+
+            // Add operator if present
+            if (!string.IsNullOrEmpty(component.Operator))
+            {
+                // Determine if this is a group-level or template-level operator
+                if (component.IsGroupLevelOperator)
+                {
+                    tokens.Add(new GroupLogicalConnectorToken(component.Operator, filterId, orderIndex++, sourceFilter, component.GroupIndex));
+                }
+                else
+                {
+                    tokens.Add(new TemplateLogicalConnectorToken(component.Operator, filterId, orderIndex++, sourceFilter, component.GroupIndex, component.TemplateIndex));
+                }
+            }
+
+            // Add column name token for this component. Falls back to the parent filter's column
+            // when the component-level value isn't populated (e.g. legacy callers).
+            var componentColumnName = !string.IsNullOrEmpty(component.ColumnName)
+                ? component.ColumnName
+                : sourceFilter?.ColumnName;
+            if (!string.IsNullOrEmpty(componentColumnName))
+            {
+                tokens.Add(new ColumnNameToken(componentColumnName, filterId, orderIndex++, sourceFilter));
+            }
+
+            // Add search type token
+            if (!string.IsNullOrEmpty(component.SearchTypeText))
+            {
+                if (!component.HasNoInputValues)
+                {
+                    tokens.Add(new SearchTypeToken(component.SearchTypeText, filterId, orderIndex++, sourceFilter));
+                }
+                else
+                {
+                    // UnarySearchType tokens can be removed entirely
+                    var unaryRemovalContext = CreateValueRemovalContext(sourceFilter, ValueType.UnarySearchType, component.SearchTypeText, null, component.GroupIndex, component.TemplateIndex, component.SourceTemplate);
+                    tokens.Add(new UnarySearchTypeToken(component.SearchTypeText, filterId, orderIndex++, sourceFilter, unaryRemovalContext));
+                }
+            }
+
+            // Handle multiple values
+            if (component.HasMultipleValues)
+            {
+                component.ParsePrimaryValueAsMultipleValues(); // Ensure ValueItems is populated
+
+                for (int i = 0; i < component.ValueItems.Count; i++)
+                {
+                    var value = component.ValueItems[i];
+                    var removalContext = CreateValueRemovalContext(sourceFilter, ValueType.CollectionItem, value, i, component.GroupIndex, component.TemplateIndex, component.SourceTemplate);
+                    tokens.Add(new ValueToken(value, filterId, orderIndex++, sourceFilter, removalContext));
+                }
+            }
+            else
+            {
+                // Handle single or dual values
+                if (!string.IsNullOrEmpty(component.PrimaryValue) && !component.HasNoInputValues)
+                {
+                    var primaryRemovalContext = CreateValueRemovalContext(sourceFilter, ValueType.Primary, component.PrimaryValue, null, component.GroupIndex, component.TemplateIndex, component.SourceTemplate);
+                    tokens.Add(new ValueToken(component.PrimaryValue, filterId, orderIndex++, sourceFilter, primaryRemovalContext));
+                }
+
+                // Add operator between values if present
+                if (!string.IsNullOrEmpty(component.ValueOperatorText))
+                {
+                    tokens.Add(new OperatorToken(component.ValueOperatorText, filterId, orderIndex++, sourceFilter));
+                }
+
+                // Add secondary value if present
+                if (!string.IsNullOrEmpty(component.SecondaryValue))
+                {
+                    var secondaryRemovalContext = CreateValueRemovalContext(sourceFilter, ValueType.Secondary, component.SecondaryValue, null, component.GroupIndex, component.TemplateIndex, component.SourceTemplate);
+                    tokens.Add(new ValueToken(component.SecondaryValue, filterId, orderIndex++, sourceFilter, secondaryRemovalContext));
+                }
+            }
+
+            return tokens;
+        }
+
+        /// <summary>
+        /// Builds a <see cref="ValueRemovalContext"/> for a token. Prefers the direct
+        /// <paramref name="sourceTemplate"/> reference attached to the component when present —
+        /// editor-tree chips populate that field because their <see cref="ColumnFilterInfo.FilterData"/>
+        /// (a multi-column handle) doesn't expose a <see cref="SearchTemplateController"/>.
+        /// Falls back to reflection-based controller lookup for legacy callers that build chips
+        /// without setting <see cref="FilterChipComponents.SourceTemplate"/>.
+        /// </summary>
+        /// <param name="sourceFilter">The source filter info containing the template reference</param>
+        /// <param name="valueType">The type of value being represented</param>
+        /// <param name="originalValue">The original value being displayed</param>
+        /// <param name="valueIndex">The index of the value in collections (optional)</param>
+        /// <param name="groupIndex">The index of the SearchTemplateGroup this value belongs to</param>
+        /// <param name="templateIndex">The index of the SearchTemplate within the group</param>
+        /// <param name="sourceTemplate">Direct template reference from the chip component, when available</param>
+        /// <returns>A ValueRemovalContext if the template can be accessed, null otherwise</returns>
+        private static ValueRemovalContext CreateValueRemovalContext(ColumnFilterInfo sourceFilter, ValueType valueType, object originalValue, int? valueIndex, int groupIndex, int templateIndex, SearchTemplate sourceTemplate = null)
+        {
+            var template = sourceTemplate;
+
+            // Fallback: reflect on FilterData for the column-host case when SourceTemplate wasn't
+            // populated by the caller.
+            if (template == null && sourceFilter?.FilterData != null)
+            {
+                var filterData = sourceFilter.FilterData;
+                var searchTemplateControllerProperty = filterData.GetType().GetProperty("SearchTemplateController");
+                if (searchTemplateControllerProperty != null)
+                {
+                    var controller = searchTemplateControllerProperty.GetValue(filterData) as SearchTemplateController;
+
+                    if (controller?.SearchGroups != null && groupIndex >= 0 && groupIndex < controller.SearchGroups.Count)
+                    {
+                        var group = controller.SearchGroups[groupIndex];
+                        var templatesWithFilter = group.SearchTemplates.Where(t => t.HasCustomFilter).ToList();
+
+                        if (templateIndex >= 0 && templateIndex < templatesWithFilter.Count)
+                        {
+                            template = templatesWithFilter[templateIndex];
+                        }
+                    }
+                }
+            }
+
+            if (template == null)
+                return null;
+
+            return new ValueRemovalContext
+            {
+                ParentTemplate = template,
+                ValueType = valueType,
+                OriginalValue = originalValue,
+                ValueIndex = valueIndex
+            };
+        }
+    }
+}

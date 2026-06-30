@@ -1,6 +1,6 @@
 # Column Filter Mode
 
-This page explains how `WWSearchDataGrid.Modern` decides whether to compare a user's filter input against a column's **raw value** or its **display-formatted value** — and how to opt into display-text filtering for a column.
+This page explains how `WWControls` decides whether to compare a user's filter input against a column's **raw value** or its **display-formatted value** — and how to opt into display-text filtering for a column.
 
 The library does not expose a `ColumnFilterMode` enum. The mode is inferred automatically from the column's display configuration. Configure display formatting, and filtering follows along.
 
@@ -101,7 +101,7 @@ The cell displays the `C2`-formatted `DisplayTotal`, but the filter pipeline rea
 
 ## See it work
 
-Run `WWSearchDataGrid.Modern.SampleApp`, open **Columns / Display Formatting**. The sample places raw and formatted columns side-by-side over the same underlying property so the filtering difference is obvious — type `$1,000` into the `Total (C2)` column and only formatted matches pass; the raw `Total (raw)` column accepts only the raw decimal.
+Run `WWControls.SampleApp`, open **Columns / Display Formatting**. The sample places raw and formatted columns side-by-side over the same underlying property so the filtering difference is obvious — type `$1,000` into the `Total (C2)` column and only formatted matches pass; the raw `Total (raw)` column accepts only the raw decimal.
 
 ---
 

@@ -1,0 +1,202 @@
+<UserControl x:Class="WWControls.SampleApp.Views.Samples.Filtering.FilterStringSampleView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:sdg="clr-namespace:WWControls.Wpf;assembly=WWControls.Wpf"
+             xmlns:sampleControls="clr-namespace:WWControls.SampleApp.Controls"
+             xmlns:local="clr-namespace:WWControls.SampleApp.Views.Samples.Filtering"
+             mc:Ignorable="d">
+    <UserControl.DataContext>
+        <local:FilterStringSampleViewModel />
+    </UserControl.DataContext>
+
+    <sampleControls:SampleHostControl Sources="{x:Static sampleControls:SampleSources.FilterString}">
+        <DockPanel>
+            <TextBlock DockPanel.Dock="Top"
+                       Foreground="#444"
+                       Margin="16,12,16,4"
+                       FontSize="13"
+                       TextWrapping="Wrap">
+                <Run Text="FilterString DP — declarative initial filter" FontWeight="SemiBold" />
+                <LineBreak />
+                <Run Text="Set SearchDataGrid.FilterString in XAML (or bind it at runtime) to pre-seed filters using DevExpress-style criteria syntax: bracketed field names, And/Or keywords, parenthesised grouping, and function-call predicates such as IsNull / Contains / IsOutlookIntervalToday." />
+            </TextBlock>
+
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="320" />
+                </Grid.ColumnDefinitions>
+
+                <sdg:SearchDataGrid x:Name="Grid"
+                                    Grid.Column="0"
+                                    IsReadOnly="True"
+                                    Margin="10"
+                                    ItemsSource="{Binding Items}"
+                                    FilterString="{Binding FilterString, UpdateSourceTrigger=PropertyChanged}"
+                                    AutoGenerateColumns="False"
+                                    ShowFilterRow="True"
+                                    CanUserAddRows="False"
+                                    CanUserDeleteRows="False"
+                                    SelectionMode="Extended"
+                                    SelectionUnit="FullRow">
+                    <sdg:SearchDataGrid.GridColumns>
+                        <sdg:GridColumn Width="80"
+                                        FieldName="OrderNumber"
+                                        Header="Order #" />
+                        <sdg:GridColumn Width="120"
+                                        FieldName="OrderStatusName"
+                                        Header="Status"
+                                        DefaultSearchType="Equals" />
+                        <sdg:GridColumn Width="200"
+                                        FieldName="CustomerName"
+                                        Header="Customer" />
+                        <sdg:GridColumn Width="160"
+                                        FieldName="EmployeeName"
+                                        Header="Employee" />
+                        <sdg:GridColumn Width="100"
+                                        FieldName="OrderItemsTotalPrice"
+                                        Header="Total"
+                                        DisplayStringFormat="C2" />
+                        <sdg:GridColumn Width="110"
+                                        FieldName="OrderDate"
+                                        Header="Ordered"
+                                        DisplayStringFormat="yyyy-MM-dd" />
+                        <sdg:GridColumn Width="200"
+                                        FieldName="SpecialInstructionsText"
+                                        Header="Notes" />
+                    </sdg:SearchDataGrid.GridColumns>
+                </sdg:SearchDataGrid>
+
+                <GridSplitter Grid.Column="1"
+                              Background="#CCCCCC"
+                              HorizontalAlignment="Stretch"
+                              Width="5" />
+
+                <ScrollViewer Grid.Column="2"
+                              Background="#FFFFFF"
+                              Padding="8,4"
+                              VerticalScrollBarVisibility="Auto">
+                    <sdg:SimpleStackPanel Orientation="Vertical" Spacing="8">
+
+                            <Expander Header="FilterString (editable)"
+                                      IsExpanded="True"
+                                      ToolTip="Two-way bound to SearchDataGrid.FilterString. Edits apply live.">
+                                <sdg:SimpleStackPanel Orientation="Vertical"
+                                                      Margin="4"
+                                                      Spacing="6">
+                                    <TextBox Text="{Binding FilterString, UpdateSourceTrigger=PropertyChanged}"
+                                             MinHeight="80"
+                                             AcceptsReturn="True"
+                                             TextWrapping="Wrap"
+                                             Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesTextBox}}"
+                                             VerticalScrollBarVisibility="Auto"
+                                             FontFamily="Consolas"
+                                             FontSize="12" />
+                                    <Button Command="{Binding ClearCommand}"
+                                            HorizontalAlignment="Left"
+                                            Content="Clear FilterString" />
+                                </sdg:SimpleStackPanel>
+                            </Expander>
+
+                            <Expander Header="Presets"
+                                      IsExpanded="True"
+                                      ToolTip="Click a preset to overwrite the FilterString. Note: changing FilterString resets all filter state on touched columns.">
+                                <sdg:SimpleStackPanel Orientation="Vertical"
+                                                      Margin="4"
+                                                      Spacing="4">
+                                    <Button Command="{Binding ApplyPresetCommand}"
+                                            CommandParameter="[OrderStatusName] = 'Submitted'"
+                                            HorizontalAlignment="Stretch"
+                                            Content="Status = 'Submitted'" />
+                                    <Button Command="{Binding ApplyPresetCommand}"
+                                            CommandParameter="[OrderStatusName] = 'Shipped' Or [OrderStatusName] = 'In Progress'"
+                                            HorizontalAlignment="Stretch"
+                                            Content="Status = 'Shipped' Or 'In Progress'" />
+                                    <Button Command="{Binding ApplyPresetCommand}"
+                                            CommandParameter="[OrderItemsTotalPrice] Between 1000 And 5000"
+                                            HorizontalAlignment="Stretch"
+                                            Content="Total Between 1000 And 5000" />
+                                    <Button Command="{Binding ApplyPresetCommand}"
+                                            CommandParameter="Contains([SpecialInstructionsText], 'rush')"
+                                            HorizontalAlignment="Stretch"
+                                            Content="Notes Contains 'rush'" />
+                                    <Button Command="{Binding ApplyPresetCommand}"
+                                            CommandParameter="IsOutlookIntervalToday([OrderDate]) Or IsOutlookIntervalYesterday([OrderDate])"
+                                            HorizontalAlignment="Stretch"
+                                            Content="Ordered today or yesterday" />
+                                    <Button Command="{Binding ApplyPresetCommand}"
+                                            CommandParameter="([OrderItemsTotalPrice] &gt;= 1000 And [OrderItemsTotalPrice] &lt;= 5000) And (IsOutlookIntervalToday([OrderDate]) Or IsOutlookIntervalYesterday([OrderDate]))"
+                                            HorizontalAlignment="Stretch"
+                                            Content="(price 1k..5k) And (today Or yesterday)" />
+                                    <Button Command="{Binding ApplyPresetCommand}"
+                                            CommandParameter="IsNull([SpecialInstructionsText])"
+                                            HorizontalAlignment="Stretch"
+                                            Content="Notes Is Null" />
+                                </sdg:SimpleStackPanel>
+                            </Expander>
+
+                            <Expander Header="Multi-column groups"
+                                      IsExpanded="True"
+                                      ToolTip="Examples that combine clauses from different columns inside a single criteria expression. The parser supports up to 2 levels of nesting: a flat list of groups, each containing one or more leaf clauses joined by a uniform And/Or.">
+                                <sdg:SimpleStackPanel Orientation="Vertical"
+                                                      Margin="4"
+                                                      Spacing="4">
+                                    <TextBlock Foreground="#666"
+                                               FontSize="11"
+                                               TextWrapping="Wrap"
+                                               Margin="0,0,0,4"
+                                               Text="Each preset spans two or more columns. The first group's operator anchors the result; subsequent groups join via their own And/Or." />
+                                    <Button Command="{Binding ApplyPresetCommand}"
+                                            CommandParameter="[OrderStatusName] = 'Submitted' And [OrderItemsTotalPrice] &gt; 5000"
+                                            HorizontalAlignment="Stretch"
+                                            Content="Status = 'Submitted' And Total &gt; 5000" />
+                                    <Button Command="{Binding ApplyPresetCommand}"
+                                            CommandParameter="[OrderStatusName] = 'Submitted' Or [CustomerName] Like '%Acme%'"
+                                            HorizontalAlignment="Stretch"
+                                            Content="Status = 'Submitted' Or Customer Like 'Acme'" />
+                                    <Button Command="{Binding ApplyPresetCommand}"
+                                            CommandParameter="([OrderStatusName] = 'Shipped' And [OrderItemsTotalPrice] &gt; 5000) Or [CustomerName] Like '%VIP%'"
+                                            HorizontalAlignment="Stretch"
+                                            Content="(Shipped And &gt;5000) Or Customer Like 'VIP'" />
+                                    <Button Command="{Binding ApplyPresetCommand}"
+                                            CommandParameter="[OrderStatusName] = 'Submitted' And [OrderItemsTotalPrice] &gt; 1000 And Contains([SpecialInstructionsText], 'rush')"
+                                            HorizontalAlignment="Stretch"
+                                            Content="3-column And: Submitted, &gt;1000, Notes 'rush'" />
+                                    <Button Command="{Binding ApplyPresetCommand}"
+                                            CommandParameter="[OrderStatusName] = 'Submitted' And [OrderItemsTotalPrice] &gt; 5000 Or [CustomerName] Like '%VIP%'"
+                                            HorizontalAlignment="Stretch"
+                                            Content="And binds tighter: Submitted+&gt;5000, Or VIP" />
+                                </sdg:SimpleStackPanel>
+                            </Expander>
+
+                            <Expander Header="Grammar quick reference" IsExpanded="False">
+                                <TextBlock Foreground="#333"
+                                           Margin="4"
+                                           TextWrapping="Wrap"
+                                           FontFamily="Consolas"
+                                           FontSize="11">
+                                    Fields:    [FieldName]<LineBreak />
+                                    Strings:   'with ''doubled'' single quotes'<LineBreak />
+                                    Dates:     #2025-05-18#<LineBreak />
+                                    Operators: =  &lt;&gt;  !=  &lt;  &lt;=  &gt;  &gt;=<LineBreak />
+                                    Like  Between X And Y  In (...)<LineBreak />
+                                    Is Null / Is Not Null<LineBreak />
+                                    Functions: IsNull([F])  IsNotNull([F])<LineBreak />
+                                    Contains([F], 'x')  StartsWith([F], 'x')  EndsWith([F], 'x')<LineBreak />
+                                    IsOutlookIntervalToday([F])  IsOutlookIntervalYesterday([F])<LineBreak />
+                                    IsTomorrow([F])  IsLastWeek([F])  IsNextWeek([F])<LineBreak />
+                                    AboveAverage([F])  BelowAverage([F])  Unique([F])  Duplicate([F])<LineBreak />
+                                    Logic:     And  Or  Not  (parens)<LineBreak />
+                                    Precedence: And binds tighter than Or.<LineBreak />
+                                    Nesting limit: 2 levels (groups × templates).</TextBlock>
+                            </Expander>
+
+                    </sdg:SimpleStackPanel>
+                </ScrollViewer>
+            </Grid>
+        </DockPanel>
+    </sampleControls:SampleHostControl>
+</UserControl>

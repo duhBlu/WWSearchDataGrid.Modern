@@ -302,7 +302,7 @@
   accent border (active `#0078D4`, inactive `#DDDDDD`), 30px caption, Segoe UI Variable, and an
   `AdornerDecorator` around the content (the old per-dialog templates lacked one, breaking
   adorner lookups inside the hosted content).
-- `DwmWindowHelper` moved from the SampleApp into `WWSearchDataGrid.Modern.WPF` (attached
+- `DwmWindowHelper` moved from the SampleApp into `WWControls.Wpf` (attached
   properties for DWM shadow / border color / corner rounding / taskbar-respecting maximize);
   the SampleApp consumes the library copy and its `SampleAppWindowStyle` is gone —
   `LauncherWindow` uses `PrimitivesWindow`.

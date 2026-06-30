@@ -2,9 +2,9 @@
 
 ## Context
 
-A documentation spec for an **Automatic Filter Row** (DevExpress-style API) was supplied and the current `WWSearchDataGrid.Modern` implementation was flagged as "missing and incorrectly implementing some aspects." An audit confirmed gaps across grid-level DPs, column-level DPs, default-criteria behavior, template plumbing, and the absence of an `EditGridCellData`-style data-context hierarchy for template authors.
+A documentation spec for an **Automatic Filter Row** (DevExpress-style API) was supplied and the current `WWControls` implementation was flagged as "missing and incorrectly implementing some aspects." An audit confirmed gaps across grid-level DPs, column-level DPs, default-criteria behavior, template plumbing, and the absence of an `EditGridCellData`-style data-context hierarchy for template authors.
 
-The work is split across **separate chat sessions** by phase, so each phase is independently shippable, bounded to one session, and clearly preceded by its prerequisites. The only external consumer of the affected API surface is the in-solution `WWSearchDataGrid.Modern.SampleApp`, so deprecation ceremony is internal-facing only: `[Obsolete]` markings serve to track migration scope rather than to warn third-party consumers, and they get removed in a dedicated cleanup phase (Phase 5) once the sample app is verified working.
+The work is split across **separate chat sessions** by phase, so each phase is independently shippable, bounded to one session, and clearly preceded by its prerequisites. The only external consumer of the affected API surface is the in-solution `WWControls.SampleApp`, so deprecation ceremony is internal-facing only: `[Obsolete]` markings serve to track migration scope rather than to warn third-party consumers, and they get removed in a dedicated cleanup phase (Phase 5) once the sample app is verified working.
 
 Confirmed direction:
 
@@ -25,7 +25,7 @@ These resolve recurring ambiguities once so individual phases don't relitigate t
 **`bool?` on `GridColumn`; `null` = inherit from grid.** Mirrors the existing `IsLiveFilteringOverride` precedent at `ColumnFilterControl.cs:130-133`. One property, one DP — no separate `IsOverridden` flag.
 
 ### D2. `AutoFilterRowClearButtonMode` enum
-**New file:** `WWSearchDataGrid.Modern.WPF\Controls\Enums\AutoFilterRowClearButtonMode.cs`
+**New file:** `WWControls.Wpf\Controls\Enums\AutoFilterRowClearButtonMode.cs`
 
 ```csharp
 public enum AutoFilterRowClearButtonMode
@@ -55,7 +55,7 @@ This matches the spec's "disable the AutomaticFilter Row cell" wording. Do not m
 **Pick:** single shared `DependencyProperty` (rename storage to `DefaultSearchTypeProperty`, keep `DefaultSearchModeProperty` as a `[Obsolete]` static alias pointing at the same DP). Both CLR wrappers read/write the same DP — no synchronization needed.
 
 ### D5. `EditGridCellData` hierarchy location
-**WPF assembly only.** The hierarchy derives from `DispatcherObject`/`DependencyObject` (WPF). Keep all 8 types in `WWSearchDataGrid.Modern.WPF\Data\` (new folder). No core-side abstraction needed; consumers binding to these types are XAML template authors who already live in WPF.
+**WPF assembly only.** The hierarchy derives from `DispatcherObject`/`DependencyObject` (WPF). Keep all 8 types in `WWControls.Wpf\Data\` (new folder). No core-side abstraction needed; consumers binding to these types are XAML template authors who already live in WPF.
 
 ### D6. `EditGridCellData` for filter-row context
 **Use the full type as-is; `RowData` is `null` in filter-row context.** Spec describes it for cell editors generally; XAML bindings against `RowData.Row.X` will simply fall silent (binding error suppressed by `BindingValidationError` setup). Do not introduce a separate `FilterCellData` subclass — the same template should work in both filter and cell contexts.
@@ -78,12 +78,12 @@ The `DispatcherTimer` is reset on each keystroke; commit handlers (Enter/Tab/blu
 Add the spec's DP surface for grid- and column-level settings that don't require pipeline changes. Fix the string default. Implement the spec rule that a column whose default criteria is excluded from `AllowedSearchTypes` has its filter row cell disabled.
 
 ### Files modified
-- `WWSearchDataGrid.Modern.WPF\Controls\SearchDataGrid\SearchDataGrid.cs`
-- `WWSearchDataGrid.Modern.WPF\Controls\GridColumn.cs`
-- `WWSearchDataGrid.Modern.WPF\Controls\FilterRow\ColumnFilterControl.cs`
-- `WWSearchDataGrid.Modern.WPF\Controls\FilterRow\IColumnFilterHost.cs` (mirror DPs if applicable)
-- `WWSearchDataGrid.Modern.WPF\Themes\Controls\FilterRow\AutoFilterRow.xaml`
-- `WWSearchDataGrid.Modern.SampleApp\Views\Samples\Filtering\SearchModesSampleView.xaml` (smoke-test the new DPs in the sample app)
+- `WWControls.Wpf\Controls\SearchDataGrid\SearchDataGrid.cs`
+- `WWControls.Wpf\Controls\GridColumn.cs`
+- `WWControls.Wpf\Controls\FilterRow\ColumnFilterControl.cs`
+- `WWControls.Wpf\Controls\FilterRow\IColumnFilterHost.cs` (mirror DPs if applicable)
+- `WWControls.Wpf\Themes\Controls\FilterRow\AutoFilterRow.xaml`
+- `WWControls.SampleApp\Views\Samples\Filtering\SearchModesSampleView.xaml` (smoke-test the new DPs in the sample app)
 
 ### Detailed changes
 
@@ -141,7 +141,7 @@ Or — simpler — resolve in `ColumnFilterControl.OnApplyTemplate` and assign `
 - Rename `DefaultSearchModeProperty` storage internally to `DefaultSearchTypeProperty`.
 - Keep `DefaultSearchModeProperty` as a `public static readonly DependencyProperty DefaultSearchModeProperty = DefaultSearchTypeProperty;` alias with `[Obsolete]` on the CLR wrapper.
 - Add `public DefaultSearchType DefaultSearchType { ... }` CLR wrapper.
-- The `DefaultSearchType` enum is the new name for `DefaultSearchMode`; add it in `WWSearchDataGrid.Modern.WPF\Controls\Enums\DefaultSearchType.cs` (or core) with values `Contains`, `StartsWith` (alias `BeginsWith` static field), `EndsWith`, `Equals`. Mark the old `DefaultSearchMode` enum `[Obsolete]` if it's a separate type, or keep it and add the new enum as a structural duplicate with bidirectional cast operators.
+- The `DefaultSearchType` enum is the new name for `DefaultSearchMode`; add it in `WWControls.Wpf\Controls\Enums\DefaultSearchType.cs` (or core) with values `Contains`, `StartsWith` (alias `BeginsWith` static field), `EndsWith`, `Equals`. Mark the old `DefaultSearchMode` enum `[Obsolete]` if it's a separate type, or keep it and add the new enum as a structural duplicate with bidirectional cast operators.
 
 **Recommended:** keep `DefaultSearchMode` enum, add `DefaultSearchType` as an alias type with implicit conversions. The DP storage is unified.
 
@@ -182,13 +182,13 @@ Invoke from `RefreshEditor`, from `OnSupportedSearchTypesChanged`, and from `OnD
 - `AutoFilterRow.xaml:166-351` — style resolution honoring `AutoFilterRowCellStyle`
 
 ### Verification
-1. Run `WWSearchDataGrid.Modern.SampleApp`, open `Filtering / Search Modes`. Add columns with mixed `ShowCriteriaInAutoFilterRow` settings; verify the selector button appears/disappears per cell.
+1. Run `WWControls.SampleApp`, open `Filtering / Search Modes`. Add columns with mixed `ShowCriteriaInAutoFilterRow` settings; verify the selector button appears/disappears per cell.
 2. Bind `<SearchDataGrid ShowCriteriaInAutoFilterRow="True">` and verify all columns show criteria selector by default; override one column with `ShowCriteriaInAutoFilterRow="False"` and verify only that cell hides its selector.
 3. Set `AllowAutoFilter="False"` on one column and verify the cell is greyed (takes space) — distinct from `AllowFiltering="False"` (cell collapsed entirely).
 4. Set `AutoFilterRowCellStyle` on grid and on one column; verify column override wins.
 5. Confirm string column now defaults to `StartsWith`: open the sample, type "A" in a name column, only `A*` matches should appear (not `*A*`).
 6. Set `AllowedSearchTypes` (existing `SupportedSearchTypes`) on a column to a list that excludes the column's default; confirm cell is disabled per spec.
-7. Build the WPF project — no XAML or C# compilation errors. Run any existing unit tests in `WWSearchDataGrid.Modern.Tests` (if present).
+7. Build the WPF project — no XAML or C# compilation errors. Run any existing unit tests in `WWControls.Tests` (if present).
 
 ### Out of scope
 - `FilterRowDelay`, debounce, `AutoFilterRowClearButtonMode`, `ImmediateUpdateAutoFilter` — Phase 2.
@@ -207,13 +207,13 @@ Invoke from `RefreshEditor`, from `OnSupportedSearchTypesChanged`, and from `OnD
 Replace the dead `System.Timers.Timer` infrastructure with a working `DispatcherTimer`-based debounce keyed off `FilterRowDelay`. Promote `IsLiveFilteringOverride` to the spec-named `ImmediateUpdateAutoFilter`. Replace hardcoded clear-button visibility with `AutoFilterRowClearButtonMode`.
 
 ### Files modified
-- `WWSearchDataGrid.Modern.WPF\Controls\SearchDataGrid\SearchDataGrid.cs` — add `FilterRowDelayProperty`, `AutoFilterRowClearButtonModeProperty`
-- `WWSearchDataGrid.Modern.WPF\Controls\GridColumn.cs` — add `ImmediateUpdateAutoFilter`
-- `WWSearchDataGrid.Modern.WPF\Controls\FilterRow\ColumnFilterControl.cs` — replace dead `_changeTimer` with `DispatcherTimer`; mark `IsLiveFilteringOverride` `[Obsolete]`
-- `WWSearchDataGrid.Modern.WPF\Controls\FilterRow\ColumnFilterControlTextFilter.cs` — wire debounce into the keystroke path; remove `Application.Current?.Dispatcher.Invoke` from `OnChangeTimerElapsed`
-- `WWSearchDataGrid.Modern.WPF\Controls\Enums\AutoFilterRowClearButtonMode.cs` — new file (D2)
-- `WWSearchDataGrid.Modern.WPF\Converters\ClearButtonModeToVisibilityConverter.cs` — new file (multi-value converter)
-- `WWSearchDataGrid.Modern.WPF\Themes\Controls\FilterRow\AutoFilterRow.xaml` — replace hardcoded clear-button triggers with binding to the mode enum
+- `WWControls.Wpf\Controls\SearchDataGrid\SearchDataGrid.cs` — add `FilterRowDelayProperty`, `AutoFilterRowClearButtonModeProperty`
+- `WWControls.Wpf\Controls\GridColumn.cs` — add `ImmediateUpdateAutoFilter`
+- `WWControls.Wpf\Controls\FilterRow\ColumnFilterControl.cs` — replace dead `_changeTimer` with `DispatcherTimer`; mark `IsLiveFilteringOverride` `[Obsolete]`
+- `WWControls.Wpf\Controls\FilterRow\ColumnFilterControlTextFilter.cs` — wire debounce into the keystroke path; remove `Application.Current?.Dispatcher.Invoke` from `OnChangeTimerElapsed`
+- `WWControls.Wpf\Controls\Enums\AutoFilterRowClearButtonMode.cs` — new file (D2)
+- `WWControls.Wpf\Converters\ClearButtonModeToVisibilityConverter.cs` — new file (multi-value converter)
+- `WWControls.Wpf\Themes\Controls\FilterRow\AutoFilterRow.xaml` — replace hardcoded clear-button triggers with binding to the mode enum
 
 ### Detailed changes
 
@@ -343,17 +343,17 @@ Returns:
 Introduce the full `EditGridCellData` data-context hierarchy. Add `AutoFilterRowDisplayTemplate` and `AutoFilterRowEditTemplate` DPs on `GridColumn`. Refactor `ColumnFilterControl.RefreshEditor()` to honor a user-supplied template (replacing the `BaseEditSettings.CreateFilterEditor()` UIElement) and to set the new `EditGridCellData` instance as the cell content's `DataContext`.
 
 ### Files added
-- `WWSearchDataGrid.Modern.WPF\Data\DataObjectBase.cs`
-- `WWSearchDataGrid.Modern.WPF\Data\EditableDataObject.cs`
-- `WWSearchDataGrid.Modern.WPF\Data\GridDataBase.cs`
-- `WWSearchDataGrid.Modern.WPF\Data\GridColumnData.cs`
-- `WWSearchDataGrid.Modern.WPF\Data\GridCellData.cs`
-- `WWSearchDataGrid.Modern.WPF\Data\EditGridCellData.cs`
+- `WWControls.Wpf\Data\DataObjectBase.cs`
+- `WWControls.Wpf\Data\EditableDataObject.cs`
+- `WWControls.Wpf\Data\GridDataBase.cs`
+- `WWControls.Wpf\Data\GridColumnData.cs`
+- `WWControls.Wpf\Data\GridCellData.cs`
+- `WWControls.Wpf\Data\EditGridCellData.cs`
 
 ### Files modified
-- `WWSearchDataGrid.Modern.WPF\Controls\GridColumn.cs` — add `AutoFilterRowDisplayTemplate`, `AutoFilterRowEditTemplate` DPs
-- `WWSearchDataGrid.Modern.WPF\Controls\FilterRow\ColumnFilterControl.cs` — `RefreshEditor()` template branch; expose `FilterCellData` (the `EditGridCellData` instance) as a read-only DP for binding
-- `WWSearchDataGrid.Modern.WPF\Themes\Controls\FilterRow\AutoFilterRow.xaml` — `PART_EditorHost` honors `ContentTemplate` when set
+- `WWControls.Wpf\Controls\GridColumn.cs` — add `AutoFilterRowDisplayTemplate`, `AutoFilterRowEditTemplate` DPs
+- `WWControls.Wpf\Controls\FilterRow\ColumnFilterControl.cs` — `RefreshEditor()` template branch; expose `FilterCellData` (the `EditGridCellData` instance) as a read-only DP for binding
+- `WWControls.Wpf\Themes\Controls\FilterRow\AutoFilterRow.xaml` — `PART_EditorHost` honors `ContentTemplate` when set
 
 ### Detailed changes
 
@@ -417,7 +417,7 @@ public sealed class EditGridCellData : GridCellData, IDataErrorInfo
 }
 ```
 
-`SelectionState` enum: add to `WWSearchDataGrid.Modern.WPF\Controls\Enums\SelectionState.cs` (None, Selected, Focused) if it doesn't already exist.
+`SelectionState` enum: add to `WWControls.Wpf\Controls\Enums\SelectionState.cs` (None, Selected, Focused) if it doesn't already exist.
 
 #### 3.2 `AutoFilterRowDisplayTemplate`, `AutoFilterRowEditTemplate` on `GridColumn`
 ```csharp
@@ -509,16 +509,16 @@ Already supported by `ContentPresenter` natively when both `Content` and `Conten
 Decide whether to add `ColumnFilterMode` (Value / DisplayText) as a new public-API DP on `GridColumn`, or to document the existing `IDisplayValueProvider` chain as the answer. Either way, ship a single deliverable that closes the spec gap.
 
 ### Files modified (if enum is added)
-- `WWSearchDataGrid.Modern.WPF\Controls\Enums\ColumnFilterMode.cs` (new)
-- `WWSearchDataGrid.Modern.WPF\Controls\GridColumn.cs`
-- `WWSearchDataGrid.Modern.WPF\Display\DisplayValueProviderFactory.cs` — honor explicit `ColumnFilterMode` override
-- `WWSearchDataGrid.Modern.WPF\Controls\FilterRow\ColumnFilterControl.cs:717-718` — pass mode to factory
+- `WWControls.Wpf\Controls\Enums\ColumnFilterMode.cs` (new)
+- `WWControls.Wpf\Controls\GridColumn.cs`
+- `WWControls.Wpf\Display\DisplayValueProviderFactory.cs` — honor explicit `ColumnFilterMode` override
+- `WWControls.Wpf\Controls\FilterRow\ColumnFilterControl.cs:717-718` — pass mode to factory
 
 ### Audit checklist (do this first)
 
-1. Read `WWSearchDataGrid.Modern.Core\Display\IDisplayValueProvider.cs` (full interface).
-2. Read `WWSearchDataGrid.Modern.WPF\Display\DisplayValueProviderFactory.cs` (the priority chain: DisplayMask > DisplayValueConverter > DisplayStringFormat > ComboBoxLookup > null).
-3. Read `WWSearchDataGrid.Modern.WPF\Controls\SearchDataGrid\SearchDataGridFiltering.cs:259-280` — the predicate path that consults `controller.DisplayValueProvider.UseRawComparison`.
+1. Read `WWControls.Core\Display\IDisplayValueProvider.cs` (full interface).
+2. Read `WWControls.Wpf\Display\DisplayValueProviderFactory.cs` (the priority chain: DisplayMask > DisplayValueConverter > DisplayStringFormat > ComboBoxLookup > null).
+3. Read `WWControls.Wpf\Controls\SearchDataGrid\SearchDataGridFiltering.cs:259-280` — the predicate path that consults `controller.DisplayValueProvider.UseRawComparison`.
 4. Trace `SearchTemplateController.cs:1161` and surrounding lines — confirm mask-based providers correctly compare raw values while text-formatter providers compare display values.
 5. Set a column's `DisplayStringFormat="{}{0:C}"` (currency). Type "$1,000" in the filter cell. Confirm display-text matching works **today** without `ColumnFilterMode`.
 
@@ -561,18 +561,18 @@ public static readonly DependencyProperty ColumnFilterModeProperty =
 Delete the `[Obsolete]` symbols introduced in earlier phases. The only consumer of the old API surface is the in-solution sample app, which gets migrated to the new names in each prior phase. After Phase 4 ships, the deprecated members serve no further purpose; this phase removes them in one clean diff so the library's public surface matches the spec exactly.
 
 ### Files modified
-- `WWSearchDataGrid.Modern.WPF\Controls\GridColumn.cs` — remove `DefaultSearchMode` CLR wrapper, `DefaultSearchModeProperty` alias field, `SetAutoDefaultSearchMode`/`IsDefaultSearchModeExplicit` if their names changed; remove the `DefaultSearchMode` enum if it duplicates `DefaultSearchType`
-- `WWSearchDataGrid.Modern.WPF\Controls\FilterRow\ColumnFilterControl.cs` — remove `IsLiveFilteringOverride` CLR wrapper and `IsLiveFilteringOverrideProperty` DP; `EffectiveIsLiveFilteringEnabled` now reads `GridColumn.ImmediateUpdateAutoFilter` directly (or its writethrough target on the host)
-- `WWSearchDataGrid.Modern.WPF\Controls\FilterRow\IColumnFilterHost.cs` — drop any obsoleted interface members; rename to match the new API surface
-- `WWSearchDataGrid.Modern.SampleApp\Views\Samples\Filtering\SearchModesSampleView.xaml` — verify zero residual references to old names (should already be migrated in Phase 1/2)
-- `WWSearchDataGrid.Modern.SampleApp\Views\Launcher\SampleCatalog.cs` — same
+- `WWControls.Wpf\Controls\GridColumn.cs` — remove `DefaultSearchMode` CLR wrapper, `DefaultSearchModeProperty` alias field, `SetAutoDefaultSearchMode`/`IsDefaultSearchModeExplicit` if their names changed; remove the `DefaultSearchMode` enum if it duplicates `DefaultSearchType`
+- `WWControls.Wpf\Controls\FilterRow\ColumnFilterControl.cs` — remove `IsLiveFilteringOverride` CLR wrapper and `IsLiveFilteringOverrideProperty` DP; `EffectiveIsLiveFilteringEnabled` now reads `GridColumn.ImmediateUpdateAutoFilter` directly (or its writethrough target on the host)
+- `WWControls.Wpf\Controls\FilterRow\IColumnFilterHost.cs` — drop any obsoleted interface members; rename to match the new API surface
+- `WWControls.SampleApp\Views\Samples\Filtering\SearchModesSampleView.xaml` — verify zero residual references to old names (should already be migrated in Phase 1/2)
+- `WWControls.SampleApp\Views\Launcher\SampleCatalog.cs` — same
 - `docs\getting-started.md` — replace `AllowFiltering` examples with `AllowAutoFilter` where the intent matches the spec; remove residual `DefaultSearchMode` references
 - `docs\GRIDCOLUMN-IMPLEMENTATION-PLAN.md` — update the table at line 106 to reflect renamed properties
 - `docs\api-reference.md` — update table at line 115 and any other DP references
 
 ### Pre-phase verification (do this first; it gates Phase 5)
 1. `dotnet build` the entire solution at zero `[Obsolete]` warnings. Every consumer must already be on the new API.
-2. `Grep` the entire repo (including `WWSearchDataGrid.Modern.SampleApp` and `docs/`) for the deprecated symbols:
+2. `Grep` the entire repo (including `WWControls.SampleApp` and `docs/`) for the deprecated symbols:
    - `\bDefaultSearchMode\b` (both enum and property name)
    - `\bIsLiveFilteringOverride\b`
    - Any other `[Obsolete]` markings introduced in Phases 1-4 (search the `Controls/` tree for `\[Obsolete\b`)
@@ -621,7 +621,7 @@ Per Phase 1's D3 decision, `AllowFiltering` was kept distinct from `AllowAutoFil
 ### Verification
 1. `dotnet build` — zero `[Obsolete]` warnings (because zero `[Obsolete]` symbols remain).
 2. `Grep` the entire repo for the deprecated symbol names — zero hits.
-3. Run `WWSearchDataGrid.Modern.SampleApp` end-to-end smoke test (same scenarios as Phases 1-4 verification). Behavior must match exactly — Phase 5 is a no-runtime-change diff.
+3. Run `WWControls.SampleApp` end-to-end smoke test (same scenarios as Phases 1-4 verification). Behavior must match exactly — Phase 5 is a no-runtime-change diff.
 4. `Grep` `\[Obsolete\b` across the WPF project — zero hits (every deprecation introduced in this plan has been cleaned up).
 
 ### Out of scope
@@ -635,7 +635,7 @@ Per Phase 1's D3 decision, `AllowFiltering` was kept distinct from `AllowAutoFil
 
 # Sample-app coverage (Phases 6-8)
 
-Phases 1-5 land the library surface. The existing `WWSearchDataGrid.Modern.SampleApp` `Filtering` category (`Search Modes`, `Custom Predicate & Events`, `Rule Filter Popup`) demonstrates the *pre-existing* search-mode and rule-popup concepts, but none of them expose the new auto-filter-row DPs at runtime. Without runtime tweakability, the new surface is invisible to anyone exploring the sample app.
+Phases 1-5 land the library surface. The existing `WWControls.SampleApp` `Filtering` category (`Search Modes`, `Custom Predicate & Events`, `Rule Filter Popup`) demonstrates the *pre-existing* search-mode and rule-popup concepts, but none of them expose the new auto-filter-row DPs at runtime. Without runtime tweakability, the new surface is invisible to anyone exploring the sample app.
 
 Phases 6-8 add a dedicated `Auto Filter Row` sample category with three focused sample views, each pairing a `<sdg:SearchDataGrid>` with a right-side `<sdg:SimpleStackPanel DockPanel.Dock="Right">` settings sidebar that mutates the new DPs as the user interacts. The pattern matches `EditorTypesSampleView` (sidebar of `GroupBox`-wrapped `ComboBox` / `CheckBox` / `Slider` controls bound to a view-model exposing the runtime state).
 
@@ -643,15 +643,15 @@ These phases are sample-only — they touch no library code. Each phase is indep
 
 ## Shared scaffolding (applies to Phases 6-8)
 
-Each new sample is a triplet under `WWSearchDataGrid.Modern.SampleApp\Views\Samples\AutoFilterRow\`:
+Each new sample is a triplet under `WWControls.SampleApp\Views\Samples\AutoFilterRow\`:
 - `<Name>SampleView.xaml` — UserControl wrapped in `<sampleControls:SampleHostControl>`, DockPanel layout (top blurb / right sidebar / center grid).
 - `<Name>SampleView.xaml.cs` — minimal code-behind. Hosts a `Loaded` handler that wires the VM to the grid's `GridColumns` collection (see "GridColumn lookup pattern" below).
 - `<Name>SampleViewModel.cs` — `INotifyPropertyChanged` VM exposing runtime state + choice collections for the sidebar bindings.
 
 Catalog wiring:
-- New category `Auto Filter Row` added to `SampleCatalog.Categories` in `WWSearchDataGrid.Modern.SampleApp\Views\Launcher\SampleCatalog.cs`. Place after `Filtering` so the auto-filter-row work groups visually alongside the related basic filtering samples without polluting their concise definitions.
-- One `SampleSources` entry per sample in `WWSearchDataGrid.Modern.SampleApp\Controls\SampleSources.cs` (file paths for the code-viewer panel — at minimum, the View / VM / data model used).
-- No `using` aliases to invent; reuse the existing `WWSearchDataGrid.Modern.SampleApp.Views.Samples.AutoFilterRow` namespace registered in the new files.
+- New category `Auto Filter Row` added to `SampleCatalog.Categories` in `WWControls.SampleApp\Views\Launcher\SampleCatalog.cs`. Place after `Filtering` so the auto-filter-row work groups visually alongside the related basic filtering samples without polluting their concise definitions.
+- One `SampleSources` entry per sample in `WWControls.SampleApp\Controls\SampleSources.cs` (file paths for the code-viewer panel — at minimum, the View / VM / data model used).
+- No `using` aliases to invent; reuse the existing `WWControls.SampleApp.Views.Samples.AutoFilterRow` namespace registered in the new files.
 
 **GridColumn lookup pattern.** The new DPs live on `GridColumn` descriptors declared inline inside `<sdg:SearchDataGrid.GridColumns>` — they aren't reachable via `ElementName` from the sidebar without either naming each `GridColumn` with `x:Name` or finding them at runtime. The recommended approach (cleaner VM, no XAML clutter):
 
@@ -670,14 +670,14 @@ Catalog wiring:
 A single grid plus a settings sidebar exposing **every** grid-level and column-level auto-filter-row DP added in Phases 1-2 at runtime. The user picks a target column from a dropdown, then sees / tweaks that column's per-column settings; grid-level settings live in a separate sidebar group always bound to the grid. Covers ~80% of the new public-API surface in one view.
 
 ### Files added
-- `WWSearchDataGrid.Modern.SampleApp\Views\Samples\AutoFilterRow\OptionsPlaygroundSampleView.xaml`
-- `WWSearchDataGrid.Modern.SampleApp\Views\Samples\AutoFilterRow\OptionsPlaygroundSampleView.xaml.cs`
-- `WWSearchDataGrid.Modern.SampleApp\Views\Samples\AutoFilterRow\OptionsPlaygroundSampleViewModel.cs`
-- `WWSearchDataGrid.Modern.SampleApp\Views\Samples\AutoFilterRow\ColumnPlaygroundConfig.cs` — POCO with `INotifyPropertyChanged`, holds runtime state for one column.
+- `WWControls.SampleApp\Views\Samples\AutoFilterRow\OptionsPlaygroundSampleView.xaml`
+- `WWControls.SampleApp\Views\Samples\AutoFilterRow\OptionsPlaygroundSampleView.xaml.cs`
+- `WWControls.SampleApp\Views\Samples\AutoFilterRow\OptionsPlaygroundSampleViewModel.cs`
+- `WWControls.SampleApp\Views\Samples\AutoFilterRow\ColumnPlaygroundConfig.cs` — POCO with `INotifyPropertyChanged`, holds runtime state for one column.
 
 ### Files modified
-- `WWSearchDataGrid.Modern.SampleApp\Views\Launcher\SampleCatalog.cs` — register the new `Auto Filter Row` category with this sample as its first entry.
-- `WWSearchDataGrid.Modern.SampleApp\Controls\SampleSources.cs` — add `OptionsPlayground` source list.
+- `WWControls.SampleApp\Views\Launcher\SampleCatalog.cs` — register the new `Auto Filter Row` category with this sample as its first entry.
+- `WWControls.SampleApp\Controls\SampleSources.cs` — add `OptionsPlayground` source list.
 
 ### Detailed changes
 
@@ -755,13 +755,13 @@ One paragraph explaining what the sample demonstrates plus a short "Try this" li
 Demonstrate `GridColumn.AutoFilterRowDisplayTemplate` / `AutoFilterRowEditTemplate` plus the `EditGridCellData` data-context hierarchy via three template-driven filter cells, each replacing the default editor with a different WPF control. The sample is read-only — the value here is showing the *recipe*, not tweaking it at runtime.
 
 ### Files added
-- `WWSearchDataGrid.Modern.SampleApp\Views\Samples\AutoFilterRow\CustomTemplatesSampleView.xaml`
-- `WWSearchDataGrid.Modern.SampleApp\Views\Samples\AutoFilterRow\CustomTemplatesSampleView.xaml.cs`
-- `WWSearchDataGrid.Modern.SampleApp\Views\Samples\AutoFilterRow\CustomTemplatesSampleViewModel.cs`
+- `WWControls.SampleApp\Views\Samples\AutoFilterRow\CustomTemplatesSampleView.xaml`
+- `WWControls.SampleApp\Views\Samples\AutoFilterRow\CustomTemplatesSampleView.xaml.cs`
+- `WWControls.SampleApp\Views\Samples\AutoFilterRow\CustomTemplatesSampleViewModel.cs`
 
 ### Files modified
-- `WWSearchDataGrid.Modern.SampleApp\Views\Launcher\SampleCatalog.cs` — second entry in the `Auto Filter Row` category.
-- `WWSearchDataGrid.Modern.SampleApp\Controls\SampleSources.cs` — add `CustomTemplates` source list.
+- `WWControls.SampleApp\Views\Launcher\SampleCatalog.cs` — second entry in the `Auto Filter Row` category.
+- `WWControls.SampleApp\Controls\SampleSources.cs` — add `CustomTemplates` source list.
 
 ### Detailed changes
 
@@ -854,13 +854,13 @@ A read-only sidebar showing the XAML for each template inside a syntax-highlight
 Demonstrate how `SearchDataGrid.FilterRowDelay`, `GridColumn.ImmediateUpdateAutoFilter`, and `SearchDataGrid.LiveFilteringRowCountThreshold` interact across dataset sizes. The signature demo: feel the difference between debounce off, debounce 500ms, and immediate-update off — on the same dataset — then swap to a 100k-row dataset and watch the auto-threshold engage.
 
 ### Files added
-- `WWSearchDataGrid.Modern.SampleApp\Views\Samples\AutoFilterRow\DebounceBehaviorSampleView.xaml`
-- `WWSearchDataGrid.Modern.SampleApp\Views\Samples\AutoFilterRow\DebounceBehaviorSampleView.xaml.cs`
-- `WWSearchDataGrid.Modern.SampleApp\Views\Samples\AutoFilterRow\DebounceBehaviorSampleViewModel.cs`
+- `WWControls.SampleApp\Views\Samples\AutoFilterRow\DebounceBehaviorSampleView.xaml`
+- `WWControls.SampleApp\Views\Samples\AutoFilterRow\DebounceBehaviorSampleView.xaml.cs`
+- `WWControls.SampleApp\Views\Samples\AutoFilterRow\DebounceBehaviorSampleViewModel.cs`
 
 ### Files modified
-- `WWSearchDataGrid.Modern.SampleApp\Views\Launcher\SampleCatalog.cs` — third entry in the `Auto Filter Row` category.
-- `WWSearchDataGrid.Modern.SampleApp\Controls\SampleSources.cs` — add `DebounceBehavior` source list.
+- `WWControls.SampleApp\Views\Launcher\SampleCatalog.cs` — third entry in the `Auto Filter Row` category.
+- `WWControls.SampleApp\Controls\SampleSources.cs` — add `DebounceBehavior` source list.
 
 ### Detailed changes
 
@@ -870,7 +870,7 @@ Three datasets generated on demand:
 - 100,000 rows (auto-threshold triggers; immediate-update auto-off unless overridden)
 - 1,000,000 rows (heavy; immediate-update off; explicit override demonstrates the cost)
 
-Reuse `LargeDatasetsSampleView`'s generator (in `WWSearchDataGrid.Modern.SampleApp\Views\Samples\AnimationPerformance\`) — confirm the generator is shared or copy-adapt it. The dataset switch must not freeze the UI; do the generation on a background thread and swap the `ItemsSource` on completion. Show a `SampleLoadingOverlay` during regeneration.
+Reuse `LargeDatasetsSampleView`'s generator (in `WWControls.SampleApp\Views\Samples\AnimationPerformance\`) — confirm the generator is shared or copy-adapt it. The dataset switch must not freeze the UI; do the generation on a background thread and swap the `ItemsSource` on completion. Show a `SampleLoadingOverlay` during regeneration.
 
 #### 8.2 Right sidebar
 A single `GroupBox` titled `Filter behavior` containing:
@@ -941,9 +941,9 @@ If the necessary events don't exist, drop the telemetry strip — the radio / sl
 ## Verification across all phases
 
 After each phase:
-1. `dotnet build` the entire solution at `WWSearchDataGrid.Modern.sln` — no compilation errors.
-2. Run `WWSearchDataGrid.Modern.SampleApp` (Windows Desktop). Walk the sample views, especially `Filtering / Search Modes` and any view that uses `AllowFiltering=False`, to spot regressions.
-3. Run existing tests if any are present in `WWSearchDataGrid.Modern.Tests` (check via `Glob` for `*Tests.csproj`).
+1. `dotnet build` the entire solution at `WWControls.sln` — no compilation errors.
+2. Run `WWControls.SampleApp` (Windows Desktop). Walk the sample views, especially `Filtering / Search Modes` and any view that uses `AllowFiltering=False`, to spot regressions.
+3. Run existing tests if any are present in `WWControls.Tests` (check via `Glob` for `*Tests.csproj`).
 4. Check that any `docs/*.md` referenced by the changes (e.g., `docs/GRIDCOLUMN-IMPLEMENTATION-PLAN.md:106`, `docs/api-reference.md:115`) reflect the new behavior — these are existing documentation that needs to track DP renames.
 5. Verify `[Obsolete]` build warnings appear when consumers use deprecated names (intentional — drives migration). Phase 5 closes this loop.
 
