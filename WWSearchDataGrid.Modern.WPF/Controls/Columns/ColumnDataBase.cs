@@ -1492,6 +1492,125 @@ namespace WWSearchDataGrid.Modern.WPF
 
         #endregion
 
+        #region Edit Form
+
+        /// <summary>
+        /// Gets or sets whether this column appears in the grid's edit form (see
+        /// <see cref="SearchDataGrid.EditFormShowMode"/>). <c>null</c> (the default) inherits the
+        /// column's <see cref="ColumnLayoutBase.Visible"/> state; <c>true</c> / <c>false</c>
+        /// forces the field into or out of the form independently of grid visibility. Resolved by
+        /// <see cref="ResolveEffectiveEditFormVisible"/>.
+        /// </summary>
+        public static readonly DependencyProperty EditFormVisibleProperty =
+            DependencyProperty.Register(
+                nameof(EditFormVisible),
+                typeof(bool?),
+                typeof(ColumnDataBase),
+                new PropertyMetadata(null));
+
+        public bool? EditFormVisible
+        {
+            get => (bool?)GetValue(EditFormVisibleProperty);
+            set => SetValue(EditFormVisibleProperty, value);
+        }
+
+        /// <summary>
+        /// Gets or sets the caption shown beside this field's editor in the edit form. When unset,
+        /// the form falls back to the column's <see cref="ColumnLayoutBase.HeaderCaption"/>.
+        /// Resolved by <see cref="ResolveEffectiveEditFormCaption"/>.
+        /// </summary>
+        public static readonly DependencyProperty EditFormCaptionProperty =
+            DependencyProperty.Register(
+                nameof(EditFormCaption),
+                typeof(string),
+                typeof(ColumnDataBase),
+                new PropertyMetadata(null));
+
+        public string EditFormCaption
+        {
+            get => (string)GetValue(EditFormCaptionProperty);
+            set => SetValue(EditFormCaptionProperty, value);
+        }
+
+        /// <summary>
+        /// Gets or sets how many layout columns this field's editor spans in the auto-generated
+        /// edit form. Default <c>1</c>. Honored only by the auto layout — a custom
+        /// <see cref="SearchDataGrid.EditFormTemplate"/> places editors itself.
+        /// </summary>
+        public static readonly DependencyProperty EditFormColumnSpanProperty =
+            DependencyProperty.Register(
+                nameof(EditFormColumnSpan),
+                typeof(int),
+                typeof(ColumnDataBase),
+                new PropertyMetadata(1));
+
+        public int EditFormColumnSpan
+        {
+            get => (int)GetValue(EditFormColumnSpanProperty);
+            set => SetValue(EditFormColumnSpanProperty, value);
+        }
+
+        /// <summary>
+        /// Gets or sets how many layout rows this field's editor spans in the auto-generated edit
+        /// form. Default <c>1</c>. Honored only by the auto layout.
+        /// </summary>
+        public static readonly DependencyProperty EditFormRowSpanProperty =
+            DependencyProperty.Register(
+                nameof(EditFormRowSpan),
+                typeof(int),
+                typeof(ColumnDataBase),
+                new PropertyMetadata(1));
+
+        public int EditFormRowSpan
+        {
+            get => (int)GetValue(EditFormRowSpanProperty);
+            set => SetValue(EditFormRowSpanProperty, value);
+        }
+
+        /// <summary>
+        /// Optional per-field editor template used in the edit form, overriding the column's
+        /// normal cell edit template for the form only. When unset, the form reuses the column's
+        /// effective cell edit template (see <see cref="ResolveEffectiveEditFormCellTemplate"/>),
+        /// so the in-grid editor and the form editor stay in sync by default.
+        /// </summary>
+        public static readonly DependencyProperty EditFormCellTemplateProperty =
+            DependencyProperty.Register(
+                nameof(EditFormCellTemplate),
+                typeof(DataTemplate),
+                typeof(ColumnDataBase),
+                new PropertyMetadata(null));
+
+        public DataTemplate EditFormCellTemplate
+        {
+            get => (DataTemplate)GetValue(EditFormCellTemplateProperty);
+            set => SetValue(EditFormCellTemplateProperty, value);
+        }
+
+        /// <summary>
+        /// Resolves whether this column appears in the edit form: the explicit
+        /// <see cref="EditFormVisible"/> when set, otherwise the column's
+        /// <see cref="ColumnLayoutBase.Visible"/> state.
+        /// </summary>
+        internal bool ResolveEffectiveEditFormVisible() => EditFormVisible ?? Visible;
+
+        /// <summary>
+        /// Resolves the edit-form caption: <see cref="EditFormCaption"/> when set, otherwise the
+        /// column's <see cref="ColumnLayoutBase.HeaderCaption"/>.
+        /// </summary>
+        internal string ResolveEffectiveEditFormCaption()
+            => !string.IsNullOrEmpty(EditFormCaption) ? EditFormCaption : HeaderCaption;
+
+        /// <summary>
+        /// Resolves the edit-form editor template for this field: <see cref="EditFormCellTemplate"/>
+        /// when set, otherwise the column's effective cell edit template
+        /// (<see cref="ResolveEffectiveCellEditTemplate"/>). Read-only columns fall back to the
+        /// display template at the presenter level.
+        /// </summary>
+        internal DataTemplate ResolveEffectiveEditFormCellTemplate()
+            => EditFormCellTemplate ?? ResolveEffectiveCellEditTemplate();
+
+        #endregion
+
         #region Validation
 
         /// <summary>

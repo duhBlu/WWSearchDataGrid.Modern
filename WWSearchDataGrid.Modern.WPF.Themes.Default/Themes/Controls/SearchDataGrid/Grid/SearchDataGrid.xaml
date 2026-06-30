@@ -11,6 +11,8 @@
         <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF.Themes.Default;component/Themes/Controls/FilterSummaryPanel/FilterSummaryPanel.xaml" />
         <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF.Themes.Default;component/Themes/Controls/SearchDataGrid/Cell/DataGridCell.xaml" />
         <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF.Themes.Default;component/Themes/Controls/SearchDataGrid/Row/DataGridRow.xaml" />
+        <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF.Themes.Default;component/Themes/Controls/SearchDataGrid/Row/RowEditPresenter.xaml" />
+        <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF.Themes.Default;component/Themes/Controls/SearchDataGrid/Row/EditFormPresenter.xaml" />
         <ResourceDictionary Source="/WWSearchDataGrid.Modern.WPF.Themes.Default;component/Themes/Controls/SearchDataGrid/Column/DataGridColumnHeader.xaml" />
         <!--  GroupStyle.xaml is merged transitively via Row/DataGridRow.xaml (its flat group-header
               row template is referenced by the row style), so it is not merged again here.  -->
@@ -569,6 +571,28 @@
                             <sdg:FilterSummaryPanel x:Name="PART_FilterSummaryPanel"
                                                     Style="{StaticResource {x:Static sdg:ThemeKeys.FilterSummaryPanel}}"
                                                     Grid.Row="3" />
+
+                            <!--
+                                Full-row ("edit entire row") edit overlay. Spans the whole grid and
+                                sits above every other layer (ZIndex 50 > the fixed-group strip / seam
+                                borders / separators). Collapsed until RowEditTrigger promotes a row,
+                                at which point the grid positions PART_RowEditPresenter over that row
+                                via the host Canvas. PART_RowEditDim greys the rest of the grid; the
+                                grid swallows clicks / wheel landing outside the bright strip so the
+                                row stays open until Update / Cancel.
+                            -->
+                            <Grid x:Name="PART_RowEditOverlay"
+                                  Grid.Row="0"
+                                  Grid.RowSpan="4"
+                                  Panel.ZIndex="50"
+                                  Background="Transparent"
+                                  Visibility="Collapsed">
+                                <Rectangle x:Name="PART_RowEditDim" Fill="#59000000" />
+                                <Canvas x:Name="PART_RowEditHost" Background="Transparent">
+                                    <sdg:RowEditPresenter x:Name="PART_RowEditPresenter"
+                                                          Style="{StaticResource {x:Static sdg:ThemeKeys.GridSearchDataGridRowEditPresenter}}" />
+                                </Canvas>
+                            </Grid>
                         </Grid>
                     </Border>
                 </ControlTemplate>

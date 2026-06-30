@@ -180,7 +180,7 @@
                             </ItemsControl.ItemsPanel>
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate DataType="{x:Type sdg:SummaryResult}">
-                                    <TextBlock Style="{StaticResource DefaultGroupFooterEntryTextStyle}">
+                                    <TextBlock Style="{StaticResource DefaultGroupFooterEntryTextStyle}" IsHitTestVisible="False">
                                         <Run Text="{Binding PrefixText, Mode=OneWay}"
                                              FontWeight="{Binding PrefixStyle.FontWeight, Converter={StaticResource SummaryStyleFontWeight}}"
                                              FontStyle="{Binding PrefixStyle.FontStyle, Converter={StaticResource SummaryStyleFontStyle}}"

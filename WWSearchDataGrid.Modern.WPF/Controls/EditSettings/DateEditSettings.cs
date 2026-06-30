@@ -243,17 +243,23 @@ namespace WWSearchDataGrid.Modern.WPF
             if (!string.IsNullOrEmpty(effectiveMask))
                 MaskFormatterFactory.EnsureSupported(MaskType);
 
-            // Single SegmentedDateTimeEditor element — its ControlTemplate (in EditSettings.xaml)
-            // owns the entire layout (DockPanel, TextBox, ToggleButton, Popup, Calendar).
-            // Per-instance / per-column values flow through the control's DPs.
-            var factory = new FrameworkElementFactory(typeof(SegmentedDateTimeEditor));
-            ApplyTextAlignment(factory, column);
-            factory.SetBinding(SegmentedDateTimeEditor.ValueProperty, CreateValueBinding(column));
+            // WWDateEdit wraps the SegmentedDateTimeEditor (masked segments + calendar popup) so the
+            // chrome (border, focus accent) is owned once by WWBaseEdit. ShowBorder follows the
+            // inherited host-context flag — bordered in the edit form, flat in a grid cell.
+            var factory = new FrameworkElementFactory(typeof(WWDateEdit));
+            factory.SetBinding(WWBaseEdit.ShowBorderProperty, new Binding
+            {
+                RelativeSource = new RelativeSource(RelativeSourceMode.Self),
+                Path = new PropertyPath(ShowEditorBorderProperty),
+                Mode = BindingMode.OneWay,
+            });
+            factory.SetValue(WWDateEdit.TextAlignmentProperty, column.TextAlignment);
+            factory.SetBinding(WWBaseEdit.ValueProperty, CreateValueBinding(column));
             SuppressValidationErrorAdorner(factory);
-            factory.SetValue(SegmentedDateTimeEditor.MaskProperty, effectiveMask);
-            factory.SetValue(SegmentedDateTimeEditor.MaskTypeProperty, MaskType);
-            if (MinDate.HasValue) factory.SetValue(SegmentedDateTimeEditor.MinDateProperty, MinDate.Value);
-            if (MaxDate.HasValue) factory.SetValue(SegmentedDateTimeEditor.MaxDateProperty, MaxDate.Value);
+            factory.SetValue(WWDateEdit.MaskProperty, effectiveMask);
+            factory.SetValue(WWDateEdit.MaskTypeProperty, MaskType);
+            if (MinDate.HasValue) factory.SetValue(WWDateEdit.MinDateProperty, MinDate.Value);
+            if (MaxDate.HasValue) factory.SetValue(WWDateEdit.MaxDateProperty, MaxDate.Value);
 
             return new DataTemplate { VisualTree = factory };
         }

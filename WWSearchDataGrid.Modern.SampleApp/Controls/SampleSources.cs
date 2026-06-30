@@ -190,6 +190,18 @@ namespace WWSearchDataGrid.Modern.SampleApp.Controls
             "Views/Samples/Editing/NewItemRowSampleViewModel.cs",
             "Models/TaskItem.cs");
 
+        public static IReadOnlyList<SampleSourceFile> EditEntireRow { get; } = SampleSourceLoader.LoadFiles(
+            "Views/Samples/Editing/EditEntireRowSampleView.xaml",
+            "Views/Samples/Editing/EditEntireRowSampleView.xaml.cs",
+            "Views/Samples/Editing/EditEntireRowSampleViewModel.cs",
+            "Models/EditRowItem.cs");
+
+        public static IReadOnlyList<SampleSourceFile> EditForm { get; } = SampleSourceLoader.LoadFiles(
+            "Views/Samples/Editing/EditFormSampleView.xaml",
+            "Views/Samples/Editing/EditFormSampleView.xaml.cs",
+            "Views/Samples/Editing/EditFormSampleViewModel.cs",
+            "Models/EditRowItem.cs");
+
         // ── Animation & Performance ──────────────────────────────────────────
         public static IReadOnlyList<SampleSourceFile> ScrollingAnimation { get; } = SampleSourceLoader.LoadFiles(
             "Views/Samples/AnimationPerformance/ScrollingAnimationSampleView.xaml",

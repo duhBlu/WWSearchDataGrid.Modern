@@ -180,22 +180,12 @@
                                                          Text="{Binding SelectedEntry.Prefix, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                                          Padding="2"
                                                          VerticalContentAlignment="Center" />
-                                                <!--
-                                                    Editable: presets come from the VM (the entry's
-                                                    current custom format first, then the target
-                                                    column's display format, then type-matched
-                                                    suggestions), but any format string can be typed.
-                                                -->
-                                                <ComboBox Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesComboBox}}"
-                                                          Grid.Row="1"
-                                                          Grid.Column="2"
-                                                          Text="{Binding SelectedEntry.DisplayFormat, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                                          IsEditable="True"
-                                                          ItemsSource="{Binding DisplayFormatOptions}">
-                                                    <ComboBox.ItemContainerStyle>
-                                                        <Style BasedOn="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesComboBoxItem}}" TargetType="{x:Type ComboBoxItem}" />
-                                                    </ComboBox.ItemContainerStyle>
-                                                </ComboBox>
+                                                <sdg:SearchTextBox Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesSearchTextBox}}"
+                                                                   Grid.Row="1"
+                                                                   Grid.Column="2"
+                                                                   ShowClearButton="False"
+                                                                   Text="{Binding SelectedEntry.DisplayFormat, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                                   ItemsSource="{Binding DisplayFormatOptions}" />
                                                 <TextBox Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesTextBox}}"
                                                          Grid.Row="1"
                                                          Grid.Column="4"

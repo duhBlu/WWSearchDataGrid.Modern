@@ -29,47 +29,58 @@
     <!--  One segment tab: B / I / U toggles + color picker + live preview.  -->
     <DataTemplate x:Key="SummarySegmentStyleTemplate">
         <StackPanel Margin="10,8">
-            <TextBlock Style="{StaticResource SummaryStyleFieldLabel}" Margin="0,0,0,3" Text="Style" />
+            <TextBlock Style="{StaticResource SummaryStyleFieldLabel}"
+                       Text="Style"
+                       Margin="0,0,0,3" />
             <sdg:SimpleStackPanel Orientation="Horizontal" Spacing="6">
                 <ToggleButton Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesToggleButton}}"
                               IsChecked="{Binding IsBold, Mode=TwoWay}"
                               MinWidth="34"
                               ToolTip="Bold">
-                    <TextBlock Text="B" FontWeight="Bold" FontSize="14" />
+                    <sdg:Icon Width="11"
+                              Height="11"
+                              IconSource="{StaticResource {x:Static sdg:IconKeys.IconTextBold}}"
+                              IconBrush="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type ToggleButton}}}" />
                 </ToggleButton>
                 <ToggleButton Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesToggleButton}}"
                               IsChecked="{Binding IsItalic, Mode=TwoWay}"
                               MinWidth="34"
                               ToolTip="Italic">
-                    <TextBlock Text="I" FontStyle="Italic" FontSize="14" />
+                    <sdg:Icon Width="11"
+                              Height="11"
+                              IconSource="{StaticResource {x:Static sdg:IconKeys.IconTextItalic}}"
+                              IconBrush="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type ToggleButton}}}" />
                 </ToggleButton>
                 <ToggleButton Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesToggleButton}}"
                               IsChecked="{Binding IsUnderline, Mode=TwoWay}"
                               MinWidth="34"
                               ToolTip="Underline">
-                    <TextBlock Text="U" TextDecorations="Underline" FontSize="14" />
+                    <sdg:Icon Width="11"
+                              Height="11"
+                              IconSource="{StaticResource {x:Static sdg:IconKeys.IconTextUnderline}}"
+                              IconBrush="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type ToggleButton}}}" />
                 </ToggleButton>
             </sdg:SimpleStackPanel>
 
             <TextBlock Style="{StaticResource SummaryStyleFieldLabel}" Text="Color" />
-            <sdg:WWColorPicker SelectedColor="{Binding Color, Mode=TwoWay}"
-                               DisplayColorAndName="True"
-                               Height="26"
+            <sdg:WWColorPicker HorizontalAlignment="Left"
                                Width="170"
-                               HorizontalAlignment="Left" />
+                               Height="26"
+                               SelectedColor="{Binding Color, Mode=TwoWay}"
+                               DisplayColorAndName="True" />
 
             <TextBlock Style="{StaticResource SummaryStyleFieldLabel}" Text="Preview" />
             <Border Background="#FFFFFF"
                     BorderBrush="#CCCCCC"
                     BorderThickness="1"
-                    CornerRadius="4"
-                    Padding="8,6">
+                    Padding="8,6"
+                    CornerRadius="4">
                 <TextBlock FontSize="14">
-                    <Run Text="{Binding SampleText, Mode=OneWay}"
+                    <Run FontStyle="{Binding Style.FontStyle}"
+                         Foreground="{Binding Style.Foreground, Converter={StaticResource SummaryStyleBrushToUnsetConverter}}"
+                         Text="{Binding SampleText, Mode=OneWay}"
                          FontWeight="{Binding Style.FontWeight}"
-                         FontStyle="{Binding Style.FontStyle}"
-                         TextDecorations="{Binding Style.TextDecorations}"
-                         Foreground="{Binding Style.Foreground, Converter={StaticResource SummaryStyleBrushToUnsetConverter}}" />
+                         TextDecorations="{Binding Style.TextDecorations}" />
                 </TextBlock>
             </Border>
         </StackPanel>
@@ -89,15 +100,14 @@
                                         Margin="0,12,0,0"
                                         HorizontalAlignment="Right">
                                 <Button Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesButton}}"
-                                        IsDefault="True"
                                         IsCancel="True"
+                                        IsDefault="True"
                                         Command="{Binding CloseCommand, RelativeSource={RelativeSource TemplatedParent}}"
                                         MinWidth="80"
                                         Content="Done" />
                             </StackPanel>
 
-                            <TabControl Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesTabControl}}"
-                                        ContentTemplate="{StaticResource SummarySegmentStyleTemplate}">
+                            <TabControl Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesTabControl}}" ContentTemplate="{StaticResource SummarySegmentStyleTemplate}">
                                 <TabItem Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesTabItem}}"
                                          Header="Prefix"
                                          Content="{Binding Prefix}" />

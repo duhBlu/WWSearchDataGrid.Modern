@@ -213,5 +213,14 @@ namespace WWSearchDataGrid.Modern.WPF
         
         public static ComponentResourceKey IconAverage { get; } =
             new ComponentResourceKey(typeof(IconKeys), nameof(IconAverage));
+        
+        public static ComponentResourceKey IconTextBold { get; } =
+            new ComponentResourceKey(typeof(IconKeys), nameof(IconTextBold));
+        
+        public static ComponentResourceKey IconTextItalic { get; } =
+            new ComponentResourceKey(typeof(IconKeys), nameof(IconTextItalic));
+        
+        public static ComponentResourceKey IconTextUnderline { get; } =
+            new ComponentResourceKey(typeof(IconKeys), nameof(IconTextUnderline));
     }
 }

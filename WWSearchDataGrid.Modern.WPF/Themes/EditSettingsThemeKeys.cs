@@ -15,8 +15,8 @@ namespace WWSearchDataGrid.Modern.WPF
     ///     &lt;Setter Property="FontFamily" Value="Consolas" /&gt;
     /// &lt;/Style&gt;
     /// </code>
-    /// Per-column overrides via <see cref="BaseEditSettings.DisplayStyle"/> /
-    /// <see cref="BaseEditSettings.EditorStyle"/> still beat the keyed default.
+    /// A per-column <see cref="BaseEditSettings.DisplayStyle"/> still beats the keyed default for
+    /// the display element.
     /// </summary>
     /// <remarks>
     /// <see cref="ComponentResourceKey"/> participates in WPF's themeing protocol: the assembly's
@@ -40,13 +40,14 @@ namespace WWSearchDataGrid.Modern.WPF
         public static ComponentResourceKey DisplayCheckBox { get; } =
             new ComponentResourceKey(typeof(EditSettingsThemeKeys), nameof(DisplayCheckBox));
 
-        /// <summary>Default style for the TextBox used by <see cref="TextEditSettings"/>'s edit template.</summary>
+        /// <summary>
+        /// Default style for a plain edit TextBox. Used by the masked <c>PART_TextBox</c> inside
+        /// <see cref="SegmentedDateTimeEditor"/> and by <see cref="BaseEditSettings"/>'s default
+        /// filter-row text editor (the fallback for editor subtypes that don't override
+        /// <see cref="BaseEditSettings.CreateFilterEditor"/>).
+        /// </summary>
         public static ComponentResourceKey EditTextBox { get; } =
             new ComponentResourceKey(typeof(EditSettingsThemeKeys), nameof(EditTextBox));
-
-        /// <summary>Right-aligned variant of <see cref="EditTextBox"/> used by <see cref="SpinEditSettings"/>'s edit template.</summary>
-        public static ComponentResourceKey EditNumericTextBox { get; } =
-            new ComponentResourceKey(typeof(EditSettingsThemeKeys), nameof(EditNumericTextBox));
 
         /// <summary>Default style for the ComboBox used by <see cref="ComboBoxEditSettings"/>'s edit template.</summary>
         public static ComponentResourceKey EditComboBox { get; } =

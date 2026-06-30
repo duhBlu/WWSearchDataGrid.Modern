@@ -15,7 +15,7 @@
     <UserControl.Resources>
 
         <!-- ============================================================== -->
-        <!-- LAYER 1: DisplayStyle / EditorStyle — re-style without replacing -->
+        <!-- LAYER 1: DisplayStyle — re-style the display cell, no replacement -->
         <!-- ============================================================== -->
 
         <!-- Title display: strikethrough + dim + italic when the task is complete. -->
@@ -49,17 +49,6 @@
                BasedOn="{StaticResource {x:Static sdg:EditSettingsThemeKeys.DisplayNumericTextBlock}}">
             <Setter Property="FontFamily" Value="Consolas" />
             <Setter Property="Foreground" Value="#5D4037" />
-            <Setter Property="FontWeight" Value="SemiBold" />
-        </Style>
-
-        <!-- Hours editor: amber accent chrome around the SpinEditSettings TextBox. -->
-        <Style x:Key="HoursEditorStyle" TargetType="TextBox"
-               BasedOn="{StaticResource {x:Static sdg:EditSettingsThemeKeys.EditNumericTextBox}}">
-            <Setter Property="Background" Value="#FFF8E1" />
-            <Setter Property="BorderBrush" Value="#FFB300" />
-            <Setter Property="BorderThickness" Value="1.5" />
-            <Setter Property="Foreground" Value="#5D4037" />
-            <Setter Property="FontFamily" Value="Consolas" />
             <Setter Property="FontWeight" Value="SemiBold" />
         </Style>
 
@@ -366,13 +355,12 @@
                         </sdg:GridColumn.EditSettings>
                     </sdg:GridColumn>
 
-                    <!-- EditorStyle + DisplayStyle: SpinEditSettings with custom chrome in both modes. -->
+                    <!-- DisplayStyle: SpinEditSettings with a custom monospace display TextBlock. -->
                     <sdg:GridColumn Width="90" FieldName="HoursEstimate" Header="Hours" DisplayStringFormat="N2">
                         <sdg:GridColumn.EditSettings>
                             <sdg:SpinEditSettings Minimum="0" Maximum="80"
                                                   Increment="0.25" LargeIncrement="1"
-                                                  DisplayStyle="{StaticResource HoursDisplayStyle}"
-                                                  EditorStyle="{StaticResource HoursEditorStyle}" />
+                                                  DisplayStyle="{StaticResource HoursDisplayStyle}" />
                         </sdg:GridColumn.EditSettings>
                     </sdg:GridColumn>
 
@@ -450,10 +438,7 @@
                         <Expander Style="{StaticResource SampleExpanderStyle}" Header="Surface per column">
                             <TextBlock Margin="4" FontSize="11" Foreground="#666" TextWrapping="Wrap">
                                 <Run FontWeight="SemiBold" Text="DisplayStyle" />
-                                <Run Text="— restyle the default display TextBlock. Title strikes through when complete; Due turns red-bold when overdue." />
-                                <LineBreak />
-                                <Run FontWeight="SemiBold" Text="EditorStyle" />
-                                <Run Text="— restyle the default editor without replacing it. Hours uses an amber-accented TextBox in edit mode." />
+                                <Run Text="— restyle the default display TextBlock. Title strikes through when complete; Due turns red-bold when overdue; Hours uses a monospace accent." />
                                 <LineBreak />
                                 <Run FontWeight="SemiBold" Text="DisplayTemplate" />
                                 <Run Text="— full takeover of the read-only cell. Status renders as a colored pill; Assigned shows an initial-stamped avatar circle." />

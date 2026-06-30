@@ -98,9 +98,14 @@ namespace WWSearchDataGrid.Modern.SampleApp.Views.Launcher
                         new[] { "EditSettings", "EditorShowMode" },
                         () => new EditorTypesSampleView()),
 
+                    new("Standalone Editors",
+                        "All five editor controls (WWTextEdit / WWSpinEdit / WWComboEdit / WWDateEdit / WWCheckEdit) used directly on a form (no grid) — flat vs bordered chrome owned by WWBaseEdit, each two-way bound.",
+                        new[] { "Editors", "Standalone" },
+                        () => new StandaloneEditorsSampleView()),
+
                     new("Cell Editor Customization",
-                        "Two layers — EditorStyle (re-style without replacing) and EditTemplate / DisplayTemplate (full takeover).",
-                        new[] { "EditorStyle", "Templates" },
+                        "Two layers — DisplayStyle (re-style the display cell) and EditTemplate / DisplayTemplate / FilterRowEditTemplate (full takeover).",
+                        new[] { "DisplayStyle", "Templates" },
                         () => new EditorCustomizationSampleView()),
 
                     new("Editor Input Masking",
@@ -124,22 +129,14 @@ namespace WWSearchDataGrid.Modern.SampleApp.Views.Launcher
                         () => new DataErrorIndicationSampleView()),
 
                     new("Inline Edit Form",
-                        "Edit a row through an inline form rather than in-cell.",
+                        "Edit a whole row through a caption/editor form (EditFormShowMode = Inline / InlineHideRow) hosted in the row's details area. Auto-generates a layout from the columns or uses a custom EditFormTemplate of EditFormEditor fields; per-column EditFormCaption / EditFormColumnSpan tune it. Reuses the row's IEditableObject transaction; an optional focus-leave confirmation guards unsaved changes.",
                         new[] { "Form", "Inline" },
-                        () => PlannedSampleView.Planned(
-                            "Inline Edit Form",
-                            "Edit the focused row via an inline form region instead of editing in-cell.",
-                            "Implement an inline edit-form host",
-                            "Field layout / template support")),
+                        () => new EditFormSampleView()),
 
                     new("Edit Entire Row",
-                        "Put the whole row into edit mode at once and commit/cancel together.",
+                        "Click a cell and the whole row opens for editing behind a dimming overlay with a row-scoped Update / Cancel bar. RowEditTrigger gates when it engages; Cancel reverts every field via IEditableObject.",
                         new[] { "Row", "Batch" },
-                        () => PlannedSampleView.Planned(
-                            "Edit Entire Row",
-                            "Edit every cell in a row simultaneously, committing or cancelling as a unit.",
-                            "Implement row-level edit mode",
-                            "Row-scoped commit/cancel")),
+                        () => new EditEntireRowSampleView()),
                 }),
 
             new SampleCategory(

@@ -2,9 +2,7 @@ using System;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
-using System.Windows.Input;
 using WWSearchDataGrid.Modern.Core.Display;
-using WWSearchDataGrid.Modern.WPF.Behaviors;
 using WWSearchDataGrid.Modern.WPF.Converters;
 
 namespace WWSearchDataGrid.Modern.WPF
@@ -158,113 +156,75 @@ namespace WWSearchDataGrid.Modern.WPF
 
         public override DataTemplate CreateEditTemplate(ColumnDataBase column)
         {
-            var factory = new FrameworkElementFactory(typeof(TextBox));
-            ApplyEditorStyle(factory, EditSettingsThemeKeys.EditTextBox);
-            ApplyTextAlignment(factory, column);
+            var factory = new FrameworkElementFactory(typeof(WWTextEdit));
 
-            // Wire MaskInputBehavior when a mask resolves. Resolution order: explicit Mask >
-            // column.DisplayMask > column.DisplayStringFormat (auto-adopted with Numeric type
-            // when the format is C/N/F/P). The third hop lets a single DisplayStringFormat
-            // declaration cover both the read-only display (via Binding.StringFormat) and the
-            // edit-time mask, without the consumer having to also configure Mask.
+            // Chrome (border, background, padding, focus accent) is owned once by WWBaseEdit's
+            // style. ShowBorder tracks the inherited host-context flag, so the editor is bordered
+            // in the edit form and flat in a grid cell / filter row — the control stays
+            // grid-agnostic and the adapter wires the signal.
+            factory.SetBinding(WWBaseEdit.ShowBorderProperty, new Binding
+            {
+                RelativeSource = new RelativeSource(RelativeSourceMode.Self),
+                Path = new PropertyPath(ShowEditorBorderProperty),
+                Mode = BindingMode.OneWay,
+            });
+
+            factory.SetValue(WWTextEdit.TextAlignmentProperty, column.TextAlignment);
+
+            // Mask resolution order: explicit Mask > column.DisplayMask > column.DisplayStringFormat
+            // (auto-adopted with Numeric type when the format is C/N/F/P). The third hop lets a
+            // single DisplayStringFormat declaration cover both the read-only display (via
+            // Binding.StringFormat) and the edit-time mask. WWTextEdit owns the mask wiring on its
+            // inner TextBox; the adapter just hands it the resolved pattern/type.
             var (effectiveMask, effectiveMaskType) = ResolveEffectiveMask(column);
             var editBinding = CreateValueBinding(column);
             if (!string.IsNullOrEmpty(effectiveMask))
             {
                 MaskFormatterFactory.EnsureSupported(effectiveMaskType);
                 // Numeric masks render chrome (currency symbol, group separators, percent sign)
-                // that the default string→decimal binding parser can't handle. Route the edit
-                // binding through MaskFormatConverter so ConvertBack strips chrome and returns
-                // the underlying value before WPF converts to the target property type.
+                // the default string→decimal parser can't handle. Route the value binding through
+                // MaskFormatConverter so ConvertBack strips chrome and returns the underlying value
+                // before WPF converts to the target property type.
                 if (effectiveMaskType == Core.Display.MaskType.Numeric)
                 {
                     editBinding.Converter = new MaskFormatConverter(effectiveMaskType);
                     editBinding.ConverterParameter = effectiveMask;
                 }
-                // Set MaskType BEFORE Mask so the MaskInputBehavior.OnMaskChanged callback
-                // reads the right type when constructing the formatter through the factory.
-                // Reversing this order means OnMaskChanged sees the default Simple type and
-                // builds a SimpleMaskFormatter against (e.g.) "C" or "P2" — the literal collapses
-                // the textbox display to the bare format-string character on focus enter.
-                factory.SetValue(MaskInputBehavior.MaskTypeProperty, effectiveMaskType);
-                factory.SetValue(MaskInputBehavior.MaskProperty, effectiveMask);
+                factory.SetValue(WWTextEdit.MaskTypeProperty, effectiveMaskType);
+                factory.SetValue(WWTextEdit.MaskProperty, effectiveMask);
             }
-            factory.SetBinding(TextBox.TextProperty, editBinding);
+            factory.SetBinding(WWBaseEdit.ValueProperty, editBinding);
             SuppressValidationErrorAdorner(factory);
 
-            // Select all when the editor receives focus — standard cell-editing UX for keyboard
-            // entry (Tab / Enter / F2 / programmatic). When edit mode was triggered by a mouse
-            // click, the SearchDataGrid stashes the click point and we instead place the caret
-            // at the clicked text index — matching the behavior the user would get clicking into
-            // a regular TextBox. Skipped when MaskInputBehavior is active because its own
-            // GotFocus handler selects the first editable region; both branches would clobber it.
-            factory.AddHandler(UIElement.GotKeyboardFocusEvent,
-                new KeyboardFocusChangedEventHandler((s, e) =>
-                {
-                    if (s is not TextBox tb) return;
-                    if (!string.IsNullOrEmpty(MaskInputBehavior.GetMask(tb))) return;
-
-                    if (TryApplyMouseClickCaret(tb)) return;
-                    tb.SelectAll();
-                }));
-
-            // Single-click in: focus lands on the TextBox so the user can type immediately
-            // (and the GotKeyboardFocus handler above selects existing text). Without this,
-            // edit mode starts but focus stays on the cell, requiring a second click.
-            AutoFocusOnLoad(factory);
-
-            // Arrow keys with caret at a boundary (or in SelectAll state) exit the cell to
-            // navigate the grid; otherwise they move the caret normally. Ctrl/Shift+Arrow
-            // defer to TextBox default (jump / extend selection).
-            AddTextBoxCaretAwareArrowExit(factory);
+            // Grid-cell interaction — focus-on-edit, mouse-click caret, and arrow-key cell exit —
+            // is layered on by the grid-side host (EditorHostBehavior), not by the control.
+            factory.SetValue(EditorHostBehavior.HostInCellProperty, true);
 
             return new DataTemplate { VisualTree = factory };
         }
 
         /// <summary>
-        /// Mouse-driven edit entry: pull the click point the SearchDataGrid stashed for this
-        /// cell, project it into <paramref name="tb"/>'s coordinate space, and set
-        /// <see cref="TextBox.CaretIndex"/> to the character at that point. Returns false (and
-        /// makes no changes) when there's no pending point — the caller falls back to select-all.
+        /// Filter-row editor: the same <see cref="WWTextEdit"/> the cell uses, bound to the host's
+        /// <see cref="IColumnFilterHost.SearchText"/> and updating on every keystroke so the filter
+        /// pipeline's debounce fires. Flat — the inherited border flag resolves false in the filter
+        /// row — and without cell-host wiring, since the filter row drives its own navigation.
         /// </summary>
-        private static bool TryApplyMouseClickCaret(TextBox tb)
+        public override System.Windows.UIElement CreateFilterEditor(IColumnFilterHost host)
         {
-            var cell = VisualTreeHelperMethods.FindVisualAncestor<DataGridCell>(tb);
-            if (cell == null) return false;
-            var grid = VisualTreeHelperMethods.FindVisualAncestor<SearchDataGrid>(cell);
-            if (grid == null) return false;
-            if (!grid.TryConsumeMouseEditPoint(cell, out var cellPoint)) return false;
-
-            try
+            var editor = new WWTextEdit();
+            BindingOperations.SetBinding(editor, WWBaseEdit.ShowBorderProperty, new Binding
             {
-                var pointInTb = cell.TranslatePoint(cellPoint, tb);
-                int idx = tb.GetCharacterIndexFromPoint(pointInTb, snapToText: true);
-                if (idx < 0) return false;
-
-                // Snap-to-end: GetCharacterIndexFromPoint(snapToText:true) returns the index of
-                // the closest character — for a click past the trailing edge of the last
-                // character it returns Text.Length - 1, leaving the caret one slot short of the
-                // end. Compare the click X to the post-text caret rect; if the click is at or
-                // past it, set the caret after the last character instead.
-                int textLen = tb.Text?.Length ?? 0;
-                if (textLen > 0)
-                {
-                    var endRect = tb.GetRectFromCharacterIndex(textLen, false);
-                    if (!endRect.IsEmpty && pointInTb.X >= endRect.X)
-                        idx = textLen;
-                }
-
-                tb.CaretIndex = idx;
-                tb.SelectionLength = 0;
-                return true;
-            }
-            catch
+                RelativeSource = new RelativeSource(RelativeSourceMode.Self),
+                Path = new PropertyPath(ShowEditorBorderProperty),
+                Mode = BindingMode.OneWay,
+            });
+            BindingOperations.SetBinding(editor, WWBaseEdit.ValueProperty, new Binding(nameof(IColumnFilterHost.SearchText))
             {
-                // TranslatePoint can throw if the elements aren't in a common visual tree
-                // (e.g., the cell was unloaded between BeginEdit and focus). Fall through to
-                // select-all rather than leaving the caret in an undefined state.
-                return false;
-            }
+                Source = host,
+                Mode = BindingMode.TwoWay,
+                UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged,
+            });
+            return editor;
         }
 
         /// <summary>

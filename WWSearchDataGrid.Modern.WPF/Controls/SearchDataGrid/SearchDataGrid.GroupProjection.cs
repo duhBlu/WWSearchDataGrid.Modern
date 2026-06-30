@@ -769,6 +769,14 @@ namespace WWSearchDataGrid.Modern.WPF
             // the container takes on its new item.
             ClearSlideOnContainer(element);
             base.PrepareContainerForItemOverride(element, item);
+
+            // Re-apply edit-form open state: a recycled row scrolling back onto the editing item must
+            // re-show its form (and re-hide its cells for InlineHideRow); every other row is forced
+            // closed so a recycled container never inherits the prior item's open form. Only runs
+            // once the edit-form host has been wired (EditFormShowMode != None), so the stock path is
+            // untouched.
+            if (_editFormHostingApplied && element is SearchDataGridRow editFormRow)
+                ApplyEditFormRowState(editFormRow, IsEditFormItem(item));
         }
 
         /// <summary>
@@ -782,6 +790,10 @@ namespace WWSearchDataGrid.Modern.WPF
             {
                 row.SetGroupHeader(null);
                 row.SetGroupFooter(null);
+                // Drop any InlineHideRow cells-hidden flag so a recycled container never reuses it;
+                // PrepareContainerForItemOverride re-stamps the right state for the next item.
+                if (_editFormHostingApplied)
+                    row.SetCellsHidden(false);
             }
             ClearSlideOnContainer(element);
             base.ClearContainerForItemOverride(element, item);

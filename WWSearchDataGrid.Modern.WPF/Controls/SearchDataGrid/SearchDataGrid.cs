@@ -2355,10 +2355,17 @@ namespace WWSearchDataGrid.Modern.WPF
             this.BeginningEdit -= OnBeginningEdit;
             this.RowEditEnding -= OnRowEditEnding;
             this.CellEditEnding -= OnCellEditEnding;
+            this.PreparingCellForEdit -= OnPreparingCellForEditForRowEdit;
+            this.CellEditEnding -= OnCellEditEndingForRowEdit;
 
             this.BeginningEdit += OnBeginningEdit;
             this.RowEditEnding += OnRowEditEnding;
             this.CellEditEnding += OnCellEditEnding;
+            this.PreparingCellForEdit += OnPreparingCellForEditForRowEdit;
+            this.CellEditEnding += OnCellEditEndingForRowEdit;
+
+            // Full-row ("edit entire row") edit-mode overlay parts.
+            InitializeRowEditParts();
 
             // Surface data-annotation validation messages as editor tooltips.
             Validation.RemoveErrorHandler(this, OnValidationError);

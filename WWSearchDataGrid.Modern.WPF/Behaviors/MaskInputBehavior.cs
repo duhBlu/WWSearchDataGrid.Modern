@@ -274,8 +274,8 @@ namespace WWSearchDataGrid.Modern.WPF.Behaviors
                     // motion into selection within the region rather than a jump to the next
                     // one, matching how Ctrl+Shift+Arrow works for word-wise selection in a
                     // plain textbox. Tab is left alone so the grid can use it for cell-to-cell
-                    // navigation. AddTextBoxCaretAwareArrowExit explicitly defers when Ctrl is
-                    // held, so it won't try to exit the cell here.
+                    // navigation. The grid-side editor host (EditorHostBehavior) explicitly defers
+                    // when Ctrl is held, so it won't try to exit the cell here.
                     if (!state.RegionEditMode) break;
 
                     bool shiftHeld = (Keyboard.Modifiers & ModifierKeys.Shift) != 0;

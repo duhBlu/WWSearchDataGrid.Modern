@@ -112,6 +112,9 @@
     <EmbeddedResource Include="Views\Samples\Editing\NewItemRowSampleView.xaml" />
     <EmbeddedResource Include="Views\Samples\Editing\NewItemRowSampleView.xaml.cs" />
     <EmbeddedResource Include="Views\Samples\Editing\NewItemRowSampleViewModel.cs" />
+    <EmbeddedResource Include="Views\Samples\Editing\EditEntireRowSampleView.xaml" />
+    <EmbeddedResource Include="Views\Samples\Editing\EditEntireRowSampleView.xaml.cs" />
+    <EmbeddedResource Include="Views\Samples\Editing\EditEntireRowSampleViewModel.cs" />
 
     <!-- Animation & Performance -->
     <EmbeddedResource Include="Views\Samples\AnimationPerformance\ScrollingAnimationSampleView.xaml" />
@@ -125,6 +128,7 @@
     <EmbeddedResource Include="Models\Customer.cs" />
     <EmbeddedResource Include="Models\OrderItem.cs" />
     <EmbeddedResource Include="Models\TaskItem.cs" />
+    <EmbeddedResource Include="Models\EditRowItem.cs" />
     <EmbeddedResource Include="Models\Contact.cs" />
     <EmbeddedResource Include="Models\ValidationData.cs" />
     <EmbeddedResource Include="Models\PersonInfo.cs" />

@@ -28,6 +28,31 @@ namespace WWSearchDataGrid.Modern.WPF
     public abstract class BaseEditSettings : FrameworkContentElement
     {
         /// <summary>
+        /// Inheritable attached flag marking that an editor is hosted somewhere it should render its
+        /// own border — set on the <see cref="EditFormPresenter"/> so every editor it hosts shows a
+        /// border, while the same editor templates stay flat (borderless) in a grid cell or the
+        /// filter row, where this defaults to <c>false</c>. The migrated <c>WWxxxEdit</c> controls
+        /// bind <see cref="WWBaseEdit.ShowBorder"/> to this flag (chrome is owned once by
+        /// <see cref="WWBaseEdit"/>); the <c>EditTextBox</c> style keyed on it still drives the inner
+        /// TextBox of <see cref="SegmentedDateTimeEditor"/>. Checkbox and read-only display editors
+        /// carry no such trigger and stay flat regardless.
+        /// </summary>
+        public static readonly DependencyProperty ShowEditorBorderProperty =
+            DependencyProperty.RegisterAttached(
+                "ShowEditorBorder",
+                typeof(bool),
+                typeof(BaseEditSettings),
+                new FrameworkPropertyMetadata(false, FrameworkPropertyMetadataOptions.Inherits));
+
+        /// <summary>Sets <see cref="ShowEditorBorderProperty"/> on <paramref name="element"/>.</summary>
+        public static void SetShowEditorBorder(DependencyObject element, bool value)
+            => element.SetValue(ShowEditorBorderProperty, value);
+
+        /// <summary>Reads <see cref="ShowEditorBorderProperty"/> from <paramref name="element"/>.</summary>
+        public static bool GetShowEditorBorder(DependencyObject element)
+            => (bool)element.GetValue(ShowEditorBorderProperty);
+
+        /// <summary>
         /// Optional user-supplied template for the read-only display cell. When set, the library
         /// uses this template verbatim and skips <see cref="CreateDisplayTemplate"/>. Bindings
         /// inside the template should reach the owning ViewModel via
@@ -55,16 +80,6 @@ namespace WWSearchDataGrid.Modern.WPF
         /// </summary>
         public static readonly DependencyProperty DisplayStyleProperty =
             DependencyProperty.Register(nameof(DisplayStyle), typeof(Style), typeof(BaseEditSettings),
-                new PropertyMetadata(null));
-
-        /// <summary>
-        /// Optional <see cref="System.Windows.Style"/> applied to the edit-mode element
-        /// (TextBox / ComboBox / DatePicker / CheckBox depending on editor) when the library builds
-        /// its default edit template. Beats the library's default style. Ignored when
-        /// <see cref="EditTemplate"/> is set.
-        /// </summary>
-        public static readonly DependencyProperty EditorStyleProperty =
-            DependencyProperty.Register(nameof(EditorStyle), typeof(Style), typeof(BaseEditSettings),
                 new PropertyMetadata(null));
 
         /// <summary>
@@ -116,12 +131,6 @@ namespace WWSearchDataGrid.Modern.WPF
             set => SetValue(DisplayStyleProperty, value);
         }
 
-        public Style EditorStyle
-        {
-            get => (Style)GetValue(EditorStyleProperty);
-            set => SetValue(EditorStyleProperty, value);
-        }
-
         /// <summary>
         /// Helper for subclasses: applies the user-supplied <see cref="DisplayStyle"/> as a
         /// local value if set; otherwise looks up the library's default style by
@@ -133,17 +142,6 @@ namespace WWSearchDataGrid.Modern.WPF
         protected void ApplyDisplayStyle(FrameworkElementFactory factory, ComponentResourceKey defaultStyleKey)
         {
             var style = DisplayStyle ?? ResolveLibraryStyle(defaultStyleKey);
-            if (style != null)
-                factory.SetValue(FrameworkElement.StyleProperty, style);
-        }
-
-        /// <summary>
-        /// Helper for subclasses: applies <see cref="EditorStyle"/> as a local value if set,
-        /// else falls back to the library's keyed default Style looked up at build time.
-        /// </summary>
-        protected void ApplyEditorStyle(FrameworkElementFactory factory, ComponentResourceKey defaultStyleKey)
-        {
-            var style = EditorStyle ?? ResolveLibraryStyle(defaultStyleKey);
             if (style != null)
                 factory.SetValue(FrameworkElement.StyleProperty, style);
         }
@@ -178,8 +176,8 @@ namespace WWSearchDataGrid.Modern.WPF
         /// <summary>
         /// Helper for subclasses that build composite editors with sub-elements (e.g. a dropdown
         /// button next to a TextBox): looks up the library-keyed default style and applies it.
-        /// Unlike <see cref="ApplyEditorStyle"/> / <see cref="ApplyDisplayStyle"/>, there's no
-        /// per-instance override DP — sub-elements aren't user-customizable today.
+        /// Unlike <see cref="ApplyDisplayStyle"/>, there's no per-instance override DP —
+        /// sub-elements aren't user-customizable today.
         /// </summary>
         protected static void ApplyKeyedStyle(FrameworkElementFactory factory, ComponentResourceKey key)
         {
@@ -395,52 +393,27 @@ namespace WWSearchDataGrid.Modern.WPF
         }
 
         /// <summary>
-        /// Helper for TextBox-based edit templates: arrow keys exit the cell to navigate
-        /// adjacent cells when the caret is at a text boundary or all text is selected.
-        /// Otherwise the TextBox processes the arrow normally (moves caret).
-        /// <list type="bullet">
-        ///   <item>Left + caret at start (or all selected) → commit + navigate left</item>
-        ///   <item>Right + caret at end (or all selected) → commit + navigate right</item>
-        ///   <item>Up / Down → always commit + navigate (single-line TextBox)</item>
-        ///   <item>Ctrl+Arrow → defer to TextBox (jump word / start-end of text)</item>
-        ///   <item>Shift+Arrow → defer to TextBox (extend selection)</item>
-        /// </list>
+        /// Decides whether an unmodified arrow keypress should exit the cell rather than move the
+        /// caret: Left at the start (or all selected), Right at the end (or all selected), Up / Down
+        /// always (single-line). Used by the grid-side editor host
+        /// (<see cref="EditorHostBehavior"/>) so the hosted TextBox-based editors apply identical
+        /// boundary rules.
         /// </summary>
-        protected static void AddTextBoxCaretAwareArrowExit(FrameworkElementFactory factory)
+        internal static bool ShouldExitCellOnArrow(TextBox tb, Key key)
         {
-            factory.AddHandler(UIElement.PreviewKeyDownEvent,
-                new KeyEventHandler((s, e) =>
-                {
-                    // The TextBox might be the sender (plain TextBox factory: Text / Numeric /
-                    // Masked) or a focused descendant (DatePicker's inner PART_TextBox).
-                    // OriginalSource resolves to the actual focused element either way.
-                    var tb = (e.OriginalSource as TextBox) ?? (s as TextBox);
-                    if (tb == null) return;
-                    if (e.Key != Key.Left && e.Key != Key.Right && e.Key != Key.Up && e.Key != Key.Down) return;
+            int caret = tb.CaretIndex;
+            int len = tb.Text?.Length ?? 0;
+            int selLen = tb.SelectionLength;
+            bool selectAll = selLen > 0 && selLen == len;
 
-                    // Modified arrows: defer to TextBox default (caret jump / extend selection).
-                    var modifiers = Keyboard.Modifiers;
-                    if ((modifiers & (ModifierKeys.Control | ModifierKeys.Shift)) != 0) return;
-
-                    int caret = tb.CaretIndex;
-                    int len = tb.Text?.Length ?? 0;
-                    int selLen = tb.SelectionLength;
-                    bool selectAll = selLen > 0 && selLen == len;
-
-                    bool shouldExit = e.Key switch
-                    {
-                        Key.Left  => selectAll || (caret == 0 && selLen == 0),
-                        Key.Right => selectAll || (caret == len && selLen == 0),
-                        Key.Up    => true,
-                        Key.Down  => true,
-                        _         => false,
-                    };
-
-                    if (!shouldExit) return;
-
-                    e.Handled = true;
-                    ExitCellViaArrow(tb, e);
-                }));
+            return key switch
+            {
+                Key.Left  => selectAll || (caret == 0 && selLen == 0),
+                Key.Right => selectAll || (caret == len && selLen == 0),
+                Key.Up    => true,
+                Key.Down  => true,
+                _         => false,
+            };
         }
 
         /// <summary>

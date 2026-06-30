@@ -56,7 +56,7 @@
         <Setter Property="Foreground" Value="#FF444444" />
         <Setter Property="Background" Value="#F9F9F9" />
         <Setter Property="BorderBrush" Value="#FFd0d0d0" />
-        <Setter Property="BorderThickness" Value="1,1,1,0" />
+        <Setter Property="BorderThickness" Value="1,1,1,1" />
         <Setter Property="ContextMenu" Value="{StaticResource {x:Static sdg:ThemeKeys.GridSearchDataGridRowHeaderContextMenu}}" />
         <Setter Property="Template">
             <Setter.Value>
@@ -127,7 +127,7 @@
                             <!--  FixedColumnsCellsPanel overlays right-pinned columns at the
                                   viewport's right edge; with no right pins it is byte-for-byte
                                   the native DataGridCellsPanel arrangement.  -->
-                            <DataGridCellsPresenter Grid.Column="1">
+                            <DataGridCellsPresenter x:Name="PART_CellsPresenter" Grid.Column="1">
                                 <DataGridCellsPresenter.ItemsPanel>
                                     <ItemsPanelTemplate>
                                         <sdg:FixedColumnsCellsPanel />
@@ -145,6 +145,14 @@
                                                SelectiveScrollingGrid.SelectiveScrollingOrientation="Vertical" />
                         </SelectiveScrollingGrid>
                     </Border>
+                    <ControlTemplate.Triggers>
+                        <!--  InlineHideRow edit form: hide the row's own cells so only the form
+                              (in the details area below) shows for this row. Bound to the
+                              SearchDataGridRow.IsCellsHidden flag the grid pushes while editing.  -->
+                        <DataTrigger Binding="{Binding IsCellsHidden, RelativeSource={RelativeSource TemplatedParent}}" Value="True">
+                            <Setter TargetName="PART_CellsPresenter" Property="Visibility" Value="Collapsed" />
+                        </DataTrigger>
+                    </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>

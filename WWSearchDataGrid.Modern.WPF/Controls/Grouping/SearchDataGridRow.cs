@@ -115,6 +115,54 @@ namespace WWSearchDataGrid.Modern.WPF
             SetValue(IsGroupFooterPropertyKey, footer != null);
         }
 
+        private static readonly DependencyPropertyKey IsRowEditingPropertyKey =
+            DependencyProperty.RegisterReadOnly(
+                nameof(IsRowEditing),
+                typeof(bool),
+                typeof(SearchDataGridRow),
+                new PropertyMetadata(false));
+
+        /// <summary>
+        /// Identifies the read-only <see cref="IsRowEditing"/> dependency property. The themed row
+        /// style can key a highlight trigger on this so the row under the full-row-edit overlay reads
+        /// as the active one.
+        /// </summary>
+        public static readonly DependencyProperty IsRowEditingProperty = IsRowEditingPropertyKey.DependencyProperty;
+
+        /// <summary>
+        /// True while this row is the one open in full-row ("edit entire row") edit mode — the row
+        /// the <see cref="RowEditPresenter"/> overlay is editing. Pushed by
+        /// <see cref="SearchDataGrid.BeginRowEdit"/> / cleared when the row edit ends.
+        /// </summary>
+        public bool IsRowEditing => (bool)GetValue(IsRowEditingProperty);
+
+        /// <summary>Sets (or clears) the full-row-edit highlight state. Called by the owning grid.</summary>
+        internal void SetRowEditing(bool editing) => SetValue(IsRowEditingPropertyKey, editing);
+
+        private static readonly DependencyPropertyKey IsCellsHiddenPropertyKey =
+            DependencyProperty.RegisterReadOnly(
+                nameof(IsCellsHidden),
+                typeof(bool),
+                typeof(SearchDataGridRow),
+                new PropertyMetadata(false));
+
+        /// <summary>
+        /// Identifies the read-only <see cref="IsCellsHidden"/> dependency property. The themed row
+        /// template keys a trigger on this to collapse the cells presenter while the edit form
+        /// stands in for the row (<see cref="EditFormShowMode.InlineHideRow"/>).
+        /// </summary>
+        public static readonly DependencyProperty IsCellsHiddenProperty = IsCellsHiddenPropertyKey.DependencyProperty;
+
+        /// <summary>
+        /// True while this row's cells are hidden so the inline edit form shows in place of the row
+        /// (<see cref="EditFormShowMode.InlineHideRow"/>). The row's details area (hosting the form)
+        /// stays visible. Pushed by <see cref="SearchDataGrid.ApplyEditFormRowState(SearchDataGridRow, bool)"/>.
+        /// </summary>
+        public bool IsCellsHidden => (bool)GetValue(IsCellsHiddenProperty);
+
+        /// <summary>Sets (or clears) the cells-hidden state for InlineHideRow. Called by the owning grid.</summary>
+        internal void SetCellsHidden(bool hidden) => SetValue(IsCellsHiddenPropertyKey, hidden);
+
         protected override void OnMouseLeftButtonDown(MouseButtonEventArgs e)
         {
             if (IsGroupHeader)

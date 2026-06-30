@@ -1,6 +1,4 @@
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Controls.Primitives;
 using System.Windows.Data;
 using System.Windows.Input;
 
@@ -31,60 +29,53 @@ namespace WWSearchDataGrid.Modern.WPF
 
         public override UIElement CreateFilterEditor(IColumnFilterHost host)
         {
-            // Tri-state checkbox bound to FilterCheckboxState. The control's checkbox-cycle
-            // logic handles the IsChecked transitions (null ↔ true ↔ false); the editor
-            // itself just publishes the current state.
-            var cb = new CheckBox
+            // Tri-state WWCheckEdit bound to FilterCheckboxState. The checkbox-cycle logic handles
+            // the IsChecked transitions (null ↔ true ↔ false); the editor just publishes the state.
+            var editor = new WWCheckEdit
             {
                 IsThreeState = true,
                 HorizontalAlignment = HorizontalAlignment.Center,
                 VerticalAlignment = VerticalAlignment.Center,
             };
-            var style = Application.Current?.TryFindResource(EditSettingsThemeKeys.DisplayCheckBox) as Style;
-            if (style != null) cb.Style = style;
-
-            BindingOperations.SetBinding(cb, ToggleButton.IsCheckedProperty, new Binding(nameof(IColumnFilterHost.FilterCheckboxState))
+            BindingOperations.SetBinding(editor, WWCheckEdit.IsCheckedProperty, new Binding(nameof(IColumnFilterHost.FilterCheckboxState))
             {
                 Source = host,
                 Mode = BindingMode.TwoWay,
             });
-            return cb;
+            return editor;
         }
 
         private DataTemplate BuildCheckBoxTemplate(ColumnDataBase column, bool isDisplay)
         {
-            var factory = new FrameworkElementFactory(typeof(CheckBox));
-            // Style FIRST — FrameworkElementFactory requires StyleProperty before other setters.
-            // Both display and edit templates use DisplayCheckBox: the display checkbox is already
-            // interactive (toggles via TwoWay binding without going through edit mode), so the
-            // edit template doesn't need a separate visually-distinct style.
-            ApplyDisplayStyle(factory, EditSettingsThemeKeys.DisplayCheckBox);
-            ApplyTextAlignment(factory, column);
+            var factory = new FrameworkElementFactory(typeof(WWCheckEdit));
 
-            factory.SetBinding(ToggleButton.IsCheckedProperty, CreateValueBinding(column));
+            // Both display and edit host the same interactive WWCheckEdit — the checkbox toggles via
+            // its two-way binding without going through edit mode, so there's no visually distinct
+            // edit surface. The themed checkbox look + the cell read-only gate live in WWCheckEdit's
+            // hosted CheckBox style (EditSettingsThemeKeys.DisplayCheckBox).
+            factory.SetBinding(WWCheckEdit.IsCheckedProperty, CreateValueBinding(column));
             SuppressValidationErrorAdorner(factory);
 
             if (!isDisplay)
             {
-                // Edit-template only: ensure the CheckBox receives focus when the user tabs
-                // into the cell, so Space toggles immediately. Display-mode clicks toggle via
-                // the now-interactive display CheckBox (IsHitTestVisible=True) without needing
-                // edit mode at all — first click on the cell hits the CheckBox and toggles it.
+                // Edit-template only: focus the editor when the user tabs into the cell so Space
+                // toggles immediately (WWCheckEdit forwards focus to its checkbox). Display-mode
+                // clicks toggle the interactive checkbox directly without entering edit mode.
                 AutoFocusOnLoad(factory);
 
-                // CheckBox doesn't consume arrow keys, and DataGrid skips arrow navigation
-                // while a cell is editing — so without this, arrow keys would do nothing
-                // in CheckBox edit mode. Commit + re-raise on the parent grid so the
-                // standard cell-arrow-navigation runs.
+                // CheckBox doesn't consume arrow keys and DataGrid skips arrow navigation while a
+                // cell is editing — so commit + re-raise on the parent grid for any arrow, letting
+                // the standard cell-arrow-navigation run. (Editor-specific coupling wired by the
+                // adapter, the bridge; the control stays grid-agnostic.)
                 factory.AddHandler(UIElement.PreviewKeyDownEvent,
                     new KeyEventHandler((s, e) =>
                     {
-                        if (s is not CheckBox cb) return;
+                        if (s is not WWCheckEdit editor) return;
                         if (e.Key == Key.Left || e.Key == Key.Right
                             || e.Key == Key.Up || e.Key == Key.Down)
                         {
                             e.Handled = true;
-                            ExitCellViaArrow(cb, e);
+                            ExitCellViaArrow(editor, e);
                         }
                     }));
             }

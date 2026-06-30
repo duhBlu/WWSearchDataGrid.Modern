@@ -85,6 +85,9 @@
                                      AcceptsReturn="True"
                                      AcceptsTab="True"
                                      FontFamily="Consolas"
+                                     Padding="4"
+                                     VerticalContentAlignment="Top"
+                                     VerticalAlignment="Stretch"
                                      VerticalScrollBarVisibility="Auto"
                                      HorizontalScrollBarVisibility="Auto"
                                      TextWrapping="NoWrap" />

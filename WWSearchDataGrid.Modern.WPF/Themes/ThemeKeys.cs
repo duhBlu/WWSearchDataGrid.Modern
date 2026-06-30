@@ -147,6 +147,19 @@ namespace WWSearchDataGrid.Modern.WPF
 
         #endregion
 
+        #region Editors
+
+        /// <summary>
+        /// Default style for <see cref="WWBaseEdit"/> — the shared editor chrome (border, background,
+        /// padding, focus accent, disabled visual, content host, decoration-button slot). The
+        /// concrete editors (<see cref="WWTextEdit"/>, …) point their default style key at
+        /// <see cref="WWBaseEdit"/>, so retheming this one key rechromes every editor at once.
+        /// </summary>
+        public static ComponentResourceKey EditorsBaseEdit { get; } =
+            new ComponentResourceKey(typeof(ThemeKeys), nameof(EditorsBaseEdit));
+
+        #endregion
+
         #region Grid
 
         /// <summary>Default style for the top-level <see cref="SearchDataGrid"/> control.</summary>
@@ -164,6 +177,31 @@ namespace WWSearchDataGrid.Modern.WPF
         /// <summary>Default style applied to <see cref="DataGridRowHeader"/>.</summary>
         public static ComponentResourceKey GridSearchDataGridRowHeader { get; } =
             new ComponentResourceKey(typeof(ThemeKeys), nameof(GridSearchDataGridRowHeader));
+
+        /// <summary>
+        /// Default style for the <see cref="RowEditPresenter"/> — the bright, column-aligned editor
+        /// strip (plus Update / Cancel action bar) shown over the row open in full-row edit mode
+        /// (<see cref="SearchDataGrid.RowEditTrigger"/>).
+        /// </summary>
+        public static ComponentResourceKey GridSearchDataGridRowEditPresenter { get; } =
+            new ComponentResourceKey(typeof(ThemeKeys), nameof(GridSearchDataGridRowEditPresenter));
+
+        /// <summary>
+        /// Default style for the <see cref="EditFormPresenter"/> — the caption/editor form (plus
+        /// Update / Cancel action bar) shown for the row open in full-row edit mode when
+        /// <see cref="SearchDataGrid.EditFormShowMode"/> is not <see cref="EditFormShowMode.None"/>.
+        /// </summary>
+        public static ComponentResourceKey GridSearchDataGridEditFormPresenter { get; } =
+            new ComponentResourceKey(typeof(ThemeKeys), nameof(GridSearchDataGridEditFormPresenter));
+
+        /// <summary>
+        /// <see cref="DataTemplate"/> the grid assigns to <see cref="DataGrid.RowDetailsTemplate"/>
+        /// to host an <see cref="EditFormPresenter"/> in the editing row's details area. The
+        /// template's <c>DataContext</c> is the row item; it wires <c>OwnerGrid</c>, the editing
+        /// item, and the grid's <c>EditFormTemplate</c> / caption onto the presenter.
+        /// </summary>
+        public static ComponentResourceKey GridSearchDataGridEditFormRowDetailsTemplate { get; } =
+            new ComponentResourceKey(typeof(ThemeKeys), nameof(GridSearchDataGridEditFormRowDetailsTemplate));
 
         /// <summary>
         /// <see cref="ControlTemplate"/> for an in-body group-header row — the full-width header

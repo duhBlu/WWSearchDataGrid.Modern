@@ -15,12 +15,14 @@
         ═══════════════════════════════════════════════════════════════════════
         EditSettings — Default Display & Edit Element Styles
         ═══════════════════════════════════════════════════════════════════════
-        Each editor type (Text / ComboBox / Spin / Date / CheckBox) builds
-        its cell template via FrameworkElementFactory and applies one of these styles
-        by ComponentResourceKey lookup against EditSettingsThemeKeys. Consumers override
-        at three levels:
-        
-        1. Per-column EditorStyle / DisplayStyle DPs on the EditSettings instance
+        Each editor type (Text / ComboBox / Spin / Date / CheckBox) builds its
+        display template (and sub-elements like the spin / combo / date drop-down
+        buttons) via FrameworkElementFactory and applies one of these styles by
+        ComponentResourceKey lookup against EditSettingsThemeKeys; the edit templates
+        host the WWxxxEdit controls, whose chrome is owned by WWBaseEdit. Consumers
+        override at three levels:
+
+        1. Per-column DisplayStyle DP on the EditSettings instance
         — applied as a local Style value, beats the keyed default lookup.
         2. App-level keyed override — redefine the Style under the same
         {x:Static sdg:EditSettingsThemeKeys.X} key in App.xaml / Window.Resources.
@@ -203,20 +205,22 @@
         <Setter Property="VerticalAlignment" Value="Stretch" />
         <Setter Property="HorizontalAlignment" Value="Stretch" />
         <Style.Triggers>
-            <Trigger Property="IsKeyboardFocusWithin" Value="True">
-                <Setter Property="BorderThickness" Value="0" />
+            <!--  Borderless in a cell / filter row; the TextBox's own border shows when hosted
+                  somewhere that sets BaseEditSettings.ShowEditorBorder (the edit form), with an
+                  accent edge on focus.  -->
+            <Trigger Property="sdg:BaseEditSettings.ShowEditorBorder" Value="True">
+                <Setter Property="BorderThickness" Value="1" />
+                <Setter Property="BorderBrush" Value="#CCCCCC" />
             </Trigger>
+            <MultiTrigger>
+                <MultiTrigger.Conditions>
+                    <Condition Property="sdg:BaseEditSettings.ShowEditorBorder" Value="True" />
+                    <Condition Property="IsKeyboardFocusWithin" Value="True" />
+                </MultiTrigger.Conditions>
+                <Setter Property="BorderBrush" Value="#0078D4" />
+            </MultiTrigger>
         </Style.Triggers>
     </Style>
-
-    <!--  Right-aligned numeric edit variant — used by SpinEditSettings.  -->
-    <Style x:Key="{x:Static sdg:EditSettingsThemeKeys.EditNumericTextBox}"
-           BasedOn="{StaticResource {x:Static sdg:EditSettingsThemeKeys.EditTextBox}}"
-           TargetType="{x:Type TextBox}">
-        <Setter Property="TextAlignment" Value="Right" />
-    </Style>
-
-
 
     <!--
         Chevron drop-down button used inside the EditComboBox ControlTemplate. Must be
@@ -366,9 +370,20 @@
             </Setter.Value>
         </Setter>
         <Style.Triggers>
-            <Trigger Property="IsKeyboardFocusWithin" Value="True">
-                <!--<Setter Property="BorderThickness" Value="1" />-->
+            <!--  Borderless in a cell; the combo's own MainBorder (TemplateBound thickness/brush)
+                  shows when hosted with BaseEditSettings.ShowEditorBorder set (the edit form), with
+                  an accent edge on focus.  -->
+            <Trigger Property="sdg:BaseEditSettings.ShowEditorBorder" Value="True">
+                <Setter Property="BorderThickness" Value="1" />
+                <Setter Property="BorderBrush" Value="#CCCCCC" />
             </Trigger>
+            <MultiTrigger>
+                <MultiTrigger.Conditions>
+                    <Condition Property="sdg:BaseEditSettings.ShowEditorBorder" Value="True" />
+                    <Condition Property="IsKeyboardFocusWithin" Value="True" />
+                </MultiTrigger.Conditions>
+                <Setter Property="BorderBrush" Value="#0078D4" />
+            </MultiTrigger>
         </Style.Triggers>
     </Style>
 
@@ -462,13 +477,19 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type sdg:SegmentedDateTimeEditor}">
-                    <Grid>
+                    <!-- Always flat: chrome (border, focus accent) is owned by WWBaseEdit when this
+                         editor is hosted in WWDateEdit (cell / edit form); in the filter row the cell
+                         is flat. The old ShowEditorBorder-driven EditorOuterBorder is retired. -->
+                    <Border SnapsToDevicePixels="True">
+                        <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
 
-                        <TextBox x:Name="PART_TextBox" Style="{StaticResource {x:Static sdg:EditSettingsThemeKeys.EditTextBox}}" />
+                        <TextBox x:Name="PART_TextBox"
+                                 sdg:BaseEditSettings.ShowEditorBorder="False"
+                                 Style="{StaticResource {x:Static sdg:EditSettingsThemeKeys.EditTextBox}}" />
 
                         <!--
                             Calendar glyph is provided by EditDateDropDownButton's ControlTemplate
@@ -498,7 +519,8 @@
                                           DisplayDateEnd="{Binding MaxDate, RelativeSource={RelativeSource TemplatedParent}}" />
                             </Border>
                         </Popup>
-                    </Grid>
+                        </Grid>
+                    </Border>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>

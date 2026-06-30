@@ -2,6 +2,59 @@
 
 ## [Unreleased]
 
+### Added — Editor control foundation (WWBaseEdit + first-class editors)
+- **`WWBaseEdit`** (lookless base) owns the editor chrome in one place: outer border, background,
+  padding, focus accent, disabled visual, a `PART_ContentHost` for the concrete input, and a
+  trailing decoration-button slot. Border policy is driven by `ShowBorder` — flat by default (the
+  in-cell / filter-row look) and a 1px edge with a focus accent when set (the edit-form / standalone
+  look). This is where the long-standing spin / date border inconsistency is resolved: every editor
+  inherits the one chrome.
+- **Five concrete editors over that base** — `WWTextEdit` (mask support via `MaskInputBehavior`),
+  `WWSpinEdit` (numeric entry + up/down buttons + Ctrl+Up/Down increment), `WWComboEdit` (wraps a flat
+  ComboBox), `WWDateEdit` (wraps `SegmentedDateTimeEditor`), `WWCheckEdit` (two/three-state). They
+  carry **zero grid references** and are usable standalone on any form.
+- **`EditSettings` adapters now host these controls.** `TextEditSettings` / `SpinEditSettings` /
+  `ComboBoxEditSettings` / `DateEditSettings` / `CheckBoxEditSettings` build their edit templates
+  around the `WWxxxEdit` controls instead of assembling raw `TextBox` / `ComboBox` composites via
+  `FrameworkElementFactory`. The column API, filter row, and edit form are unchanged.
+- **`EditorHostBehavior`** (grid-side attached behavior) carries the three editor↔grid couplings
+  (arrow-key cell exit, mouse-click caret, focus-on-edit) so the controls stay grid-agnostic.
+- **Sample**: **Editing → Standalone Editors** now demonstrates all five controls used directly on a
+  form (flat vs bordered chrome, masked, read-only), proving the controls are grid-independent.
+
+### Removed — editor styling that the controls now subsume
+- **`BaseEditSettings.EditorStyle`** (the per-column edit-mode `Style` DP) is removed. Edit-mode chrome
+  is now owned by the editor controls (`WWBaseEdit`), so a `TargetType="TextBox"` style no longer maps
+  onto the editor. To restyle: use `DisplayStyle` for the read-only display cell (unchanged), or
+  `EditTemplate` to fully replace the in-place editor.
+- **`EditSettingsThemeKeys.EditNumericTextBox`** (and its theme style) removed — it backed the old
+  spinner's TextBox, which `WWSpinEdit` now replaces.
+
+### Added — Edit Entire Row (full-row edit mode)
+- **Full-row editing.** A row can now be edited as a unit: clicking into it opens every cell as an
+  editor at once behind a dimming overlay, with a row-scoped **Update / Cancel** action bar docked
+  beneath the row. The grid swallows clicks and wheel input outside the bright strip, so interacting
+  with the rest of the grid neither moves the current cell nor exits editing — the row stays open
+  until the user commits or cancels.
+- **`SearchDataGrid.RowEditTrigger`** (`RowEditTrigger` enum DP, default `Never`): gates when a row
+  promotes into full-row edit mode. `Never` keeps stock single-cell editing; `OnCellEditorOpen`
+  promotes the instant any cell editor opens; `OnCellValueChange` stays in single-cell editing until
+  the open editor's value first changes, then promotes (the triggering change is folded into the
+  row's transaction so Cancel reverts it too).
+- **Commit / cancel as a unit** via the grid's row transaction. Update pushes the focused editor and
+  calls `CommitEdit(Row)`; Cancel calls `CancelEdit(Row)`. Models implementing `IEditableObject` get
+  a clean revert of every field. New API: `BeginRowEdit(item)` / `CommitRowEdit()` / `CancelRowEdit()`,
+  read-only `IsRowEditing` / `RowEditItem`, and `RowEditStarted` / `RowEditEnded` events.
+- **`RowEditPresenter`** (new control, `: ColumnAlignedRowPresenter`): the bright, column-aligned
+  editor strip. Reuses the same `FilterRowPanel` alignment engine as the filter and total-summary
+  rows; each cell hosts its column's own edit template bound to the editing item (read-only columns
+  show their display template). Themed via `ThemeKeys.GridSearchDataGridRowEditPresenter`; the grid
+  template gains a `PART_RowEditOverlay` / `PART_RowEditDim` / `PART_RowEditHost` /
+  `PART_RowEditPresenter` layer. `SearchDataGridRow.IsRowEditing` marks the active row.
+- **Sample**: the previously-planned **Editing → Edit Entire Row** sample is now implemented
+  (`EditRowItem` row model with `IEditableObject`, a live `RowEditTrigger` switcher, and a
+  last-action panel).
+
 ### Changed — Best fit (column auto-width engine)
 - **Best Fit is measurement-based now.** The context-menu Best Fit / Best Fit All Columns no
   longer flip the column through `SizeToHeader` / `SizeToCells` with full `UpdateLayout()`
