@@ -32,7 +32,6 @@ using System.Windows.Markup;
 [assembly: XmlnsPrefix("http://schemas.wwcontrols.com/wpf", "ww")]
 [assembly: XmlnsDefinition("http://schemas.wwcontrols.com/wpf", "WWControls.Wpf")]
 [assembly: XmlnsDefinition("http://schemas.wwcontrols.com/wpf", "WWControls.Wpf.Editors")]
-[assembly: XmlnsDefinition("http://schemas.wwcontrols.com/wpf", "WWControls.Wpf.Primitives")]
 [assembly: XmlnsDefinition("http://schemas.wwcontrols.com/wpf", "WWControls.Wpf.Grids")]
 [assembly: XmlnsDefinition("http://schemas.wwcontrols.com/wpf", "WWControls.Wpf.Behaviors")]
 [assembly: XmlnsDefinition("http://schemas.wwcontrols.com/wpf", "WWControls.Wpf.Commands")]

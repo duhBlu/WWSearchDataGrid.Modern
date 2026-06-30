@@ -14,6 +14,9 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 [assembly: InternalsVisibleTo("WWControls.Wpf")]
+[assembly: InternalsVisibleTo("WWControls.Wpf.Primitives")]
+[assembly: InternalsVisibleTo("WWControls.Wpf.Editors")]
+[assembly: InternalsVisibleTo("WWControls.Wpf.Grid")]
 [assembly: InternalsVisibleTo("WWControls.Core.Tests")]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM.

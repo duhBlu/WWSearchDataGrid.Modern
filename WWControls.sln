@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 18
-VisualStudioVersion = 18.2.11415.280 d18.0
+VisualStudioVersion = 18.2.11415.280
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WWControls.Core", "WWControls.Core\WWControls.Core.csproj", "{6A9A38C2-5C45-455C-811D-89FBB693AAE1}"
 EndProject
@@ -32,6 +32,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WWControls.Wpf.Themes.Default", "WWControls.Wpf.Themes.Default\WWControls.Wpf.Themes.Default.csproj", "{80A4B546-C62D-4F1A-9CB5-094BFC2ADEB0}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WWControls.Core.Tests", "WWControls.Core.Tests\WWControls.Core.Tests.csproj", "{DBFAC76C-696F-FF69-1D03-F938015C4B16}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WWControls.Wpf.Primitives", "WWControls.Wpf.Primitives\WWControls.Wpf.Primitives.csproj", "{4A2810A5-38CA-4B87-837F-76C5458DC0B3}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -103,6 +105,18 @@ Global
 		{DBFAC76C-696F-FF69-1D03-F938015C4B16}.Release|x64.Build.0 = Release|Any CPU
 		{DBFAC76C-696F-FF69-1D03-F938015C4B16}.Release|x86.ActiveCfg = Release|Any CPU
 		{DBFAC76C-696F-FF69-1D03-F938015C4B16}.Release|x86.Build.0 = Release|Any CPU
+		{4A2810A5-38CA-4B87-837F-76C5458DC0B3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4A2810A5-38CA-4B87-837F-76C5458DC0B3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4A2810A5-38CA-4B87-837F-76C5458DC0B3}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{4A2810A5-38CA-4B87-837F-76C5458DC0B3}.Debug|x64.Build.0 = Debug|Any CPU
+		{4A2810A5-38CA-4B87-837F-76C5458DC0B3}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{4A2810A5-38CA-4B87-837F-76C5458DC0B3}.Debug|x86.Build.0 = Debug|Any CPU
+		{4A2810A5-38CA-4B87-837F-76C5458DC0B3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4A2810A5-38CA-4B87-837F-76C5458DC0B3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4A2810A5-38CA-4B87-837F-76C5458DC0B3}.Release|x64.ActiveCfg = Release|Any CPU
+		{4A2810A5-38CA-4B87-837F-76C5458DC0B3}.Release|x64.Build.0 = Release|Any CPU
+		{4A2810A5-38CA-4B87-837F-76C5458DC0B3}.Release|x86.ActiveCfg = Release|Any CPU
+		{4A2810A5-38CA-4B87-837F-76C5458DC0B3}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

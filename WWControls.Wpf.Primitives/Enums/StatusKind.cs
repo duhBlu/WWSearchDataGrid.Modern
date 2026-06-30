@@ -1,4 +1,4 @@
-namespace WWControls.Wpf
+namespace WWControls.Wpf.Primitives
 {
     /// <summary>
     /// Severity of a <see cref="StatusIcon"/>. Drives the badge's color and glyph via the default
