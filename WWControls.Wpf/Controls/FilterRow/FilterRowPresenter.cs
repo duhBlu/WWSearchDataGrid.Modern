@@ -1,7 +1,7 @@
 using System.Windows;
 using System.Windows.Controls;
 
-namespace WWControls.Wpf
+namespace WWControls.Wpf.Grids
 {
     /// <summary>
     /// Hosts a <see cref="FilterRowPanel"/> beneath the column headers of a

@@ -4,7 +4,7 @@ using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Media;
 
-namespace WWControls.Wpf
+namespace WWControls.Wpf.Grids
 {
     /// <summary>
     /// The aligned-summary layer of one group header row

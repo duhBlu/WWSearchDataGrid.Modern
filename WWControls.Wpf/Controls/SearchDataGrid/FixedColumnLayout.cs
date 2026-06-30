@@ -2,7 +2,7 @@ using System;
 using System.Windows;
 using System.Windows.Media;
 
-namespace WWControls.Wpf
+namespace WWControls.Wpf.Grids
 {
     /// <summary>
     /// Geometry for the right-fixed column band, shared by every surface that anchors

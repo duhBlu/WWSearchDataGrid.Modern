@@ -7,7 +7,7 @@ using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
 
-namespace WWControls.Wpf
+namespace WWControls.Wpf.Editors
 {
     /// <summary>
     /// Spinner numeric editor over <see cref="WWBaseEdit"/>: a right-aligned numeric TextBox in the

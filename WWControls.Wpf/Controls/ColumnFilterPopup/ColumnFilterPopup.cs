@@ -10,7 +10,7 @@ using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using WWControls.Core;
 
-namespace WWControls.Wpf
+namespace WWControls.Wpf.Grids
 {
     /// <summary>
     /// Filter editor with deferred-apply: changes are NOT applied to the grid while

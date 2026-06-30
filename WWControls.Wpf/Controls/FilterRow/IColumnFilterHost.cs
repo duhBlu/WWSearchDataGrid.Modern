@@ -2,7 +2,7 @@ using System.Windows;
 using System.Windows.Controls;
 using WWControls.Core;
 
-namespace WWControls.Wpf
+namespace WWControls.Wpf.Grids
 {
     /// <summary>
     /// Contract that <see cref="SearchDataGridFiltering"/> (and the context-menu / chip

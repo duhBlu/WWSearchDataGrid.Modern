@@ -14,7 +14,7 @@ using System.Windows;
 using System.Windows.Media.Imaging;
 using Microsoft.Xaml.Behaviors;
 
-namespace WWControls.Wpf
+namespace WWControls.Wpf.Primitives
 {
     #region Attached Property Helper Class
     

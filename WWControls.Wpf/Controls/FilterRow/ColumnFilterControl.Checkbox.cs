@@ -4,7 +4,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using WWControls.Core;
 
-namespace WWControls.Wpf
+namespace WWControls.Wpf.Grids
 {
     /// <summary>
     /// Checkbox cycling for boolean / boolean-styled columns: three-state cycle

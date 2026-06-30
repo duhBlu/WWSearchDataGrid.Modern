@@ -3,7 +3,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using WWControls.Core;
 
-namespace WWControls.Wpf
+namespace WWControls.Wpf.Grids
 {
     /// <summary>
     /// The "View Totals" dialog body — the group-summary editor. Items tab: per-column

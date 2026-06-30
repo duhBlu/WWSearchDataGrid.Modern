@@ -2,7 +2,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 
-namespace WWControls.Wpf
+namespace WWControls.Wpf.Editors
 {
     /// <summary>
     /// Lookless base for the library's first-class editor controls. Owns the shared editor

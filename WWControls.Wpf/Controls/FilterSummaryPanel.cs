@@ -9,7 +9,7 @@ using System.Windows.Input;
 using System.Windows.Threading;
 using WWControls.Core;
 
-namespace WWControls.Wpf
+namespace WWControls.Wpf.Grids
 {
     /// <summary>
     /// FilterSummaryPanel control for displaying and managing active filters

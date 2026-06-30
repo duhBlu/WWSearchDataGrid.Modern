@@ -6,7 +6,7 @@ using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using WWControls.Core;
 
-namespace WWControls.Wpf
+namespace WWControls.Wpf.Grids
 {
     /// <summary>
     /// Working copy behind the summary editor, in one of three modes (see

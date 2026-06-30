@@ -2,7 +2,7 @@ using System;
 using System.Globalization;
 using System.Windows.Data;
 
-namespace WWControls.Wpf
+namespace WWControls.Wpf.Grids
 {
     /// <summary>
     /// Reads the expansion state of the group a pinned <see cref="FixedGroupHeaderEntry"/> mirrors,

@@ -7,7 +7,7 @@ using System.Windows.Controls.Primitives;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 
-namespace WWControls.Wpf
+namespace WWControls.Wpf.Grids
 {
     public partial class SearchDataGrid
     {

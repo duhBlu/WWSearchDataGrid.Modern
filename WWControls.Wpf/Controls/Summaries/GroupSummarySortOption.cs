@@ -1,7 +1,7 @@
 using System.ComponentModel;
 using WWControls.Core;
 
-namespace WWControls.Wpf
+namespace WWControls.Wpf.Grids
 {
     /// <summary>
     /// One entry in the "Sort By Summary" context-menu listing — an Ascending or Descending

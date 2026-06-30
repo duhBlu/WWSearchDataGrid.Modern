@@ -1,4 +1,4 @@
-namespace WWControls.Wpf
+namespace WWControls.Wpf.Grids
 {
     /// <summary>
     /// What the summary editor edits.

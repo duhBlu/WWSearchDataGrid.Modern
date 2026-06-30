@@ -14,7 +14,7 @@ using System.Windows.Threading;
 using WWControls.Core;
 using WWControls.Core.Caching;
 
-namespace WWControls.Wpf
+namespace WWControls.Wpf.Grids
 {
     public partial class SearchDataGrid
     {

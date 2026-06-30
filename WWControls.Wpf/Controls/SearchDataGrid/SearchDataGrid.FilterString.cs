@@ -9,7 +9,7 @@ using System.Windows;
 using WWControls.Core;
 using WWControls.Wpf.Display;
 
-namespace WWControls.Wpf
+namespace WWControls.Wpf.Grids
 {
     public partial class SearchDataGrid
     {

@@ -1,4 +1,4 @@
-namespace WWControls.Wpf
+namespace WWControls.Wpf.Grids
 {
     /// <summary>
     /// Controls where the per-column filter editors are placed on a <see cref="SearchDataGrid"/>.

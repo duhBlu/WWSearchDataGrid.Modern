@@ -3,7 +3,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using WWControls.Core;
 
-namespace WWControls.Wpf
+namespace WWControls.Wpf.Grids
 {
     /// <summary>
     /// The Prefix / Value / Suffix text-styling sub-editor opened from the summary editor's Order

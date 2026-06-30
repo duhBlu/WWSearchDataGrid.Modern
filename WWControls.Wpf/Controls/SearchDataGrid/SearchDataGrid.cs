@@ -23,7 +23,7 @@ using System.Windows.Automation.Peers;
 using System.Windows.Controls.Primitives;
 using System.Reflection;
 
-namespace WWControls.Wpf
+namespace WWControls.Wpf.Grids
 {
 
     /// <summary>

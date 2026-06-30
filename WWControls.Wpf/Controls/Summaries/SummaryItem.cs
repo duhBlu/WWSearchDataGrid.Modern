@@ -1,7 +1,7 @@
 using System.Windows;
 using WWControls.Core;
 
-namespace WWControls.Wpf
+namespace WWControls.Wpf.Grids
 {
     /// <summary>
     /// One summary definition on a column — an aggregate function plus an optional display

@@ -1,7 +1,7 @@
 using System.Linq;
 using System.Windows;
 
-namespace WWControls.Wpf
+namespace WWControls.Wpf.Grids
 {
     /// <summary>
     /// Observable row-count surface. <see cref="OriginalItemsCount"/> already reports the unfiltered

@@ -2,7 +2,7 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:converters="clr-namespace:WWControls.Wpf.Converters;assembly=WWControls.Wpf"
                     xmlns:behaviors="clr-namespace:WWControls.Wpf.Behaviors;assembly=WWControls.Wpf"
-                    xmlns:sdg="clr-namespace:WWControls.Wpf;assembly=WWControls.Wpf">
+                    xmlns:sdg="http://schemas.wwcontrols.com/wpf">
 
     <!--
         ═══════════════════════════════════════════════════════════════════════

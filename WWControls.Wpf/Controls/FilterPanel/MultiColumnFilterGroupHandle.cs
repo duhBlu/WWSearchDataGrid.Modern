@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace WWControls.Wpf
+namespace WWControls.Wpf.Grids
 {
     /// <summary>
     /// Sentinel placed on <see cref="WWControls.Core.ColumnFilterInfo.FilterData"/>

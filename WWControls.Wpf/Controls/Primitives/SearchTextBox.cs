@@ -14,7 +14,7 @@ using System.Windows.Threading;
 using WWControls.Core;
 using WWControls.Wpf.Behaviors;
 
-namespace WWControls.Wpf
+namespace WWControls.Wpf.Primitives
 {
     /// <summary>
     /// Sort mode for dropdown values

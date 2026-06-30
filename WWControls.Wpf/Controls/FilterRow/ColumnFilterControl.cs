@@ -13,7 +13,7 @@ using System.Windows.Threading;
 using WWControls.Core;
 using WWControls.Wpf.Display;
 
-namespace WWControls.Wpf
+namespace WWControls.Wpf.Grids
 {
     /// <summary>
     /// Per-column filter editor hosting the search-type selector, a data-type-matched editor,

@@ -1,5 +1,6 @@
 using System.Runtime.InteropServices;
 using System.Windows;
+using System.Windows.Markup;
 
 // In SDK-style projects such as this one, several assembly attributes that were historically
 // defined in this file are now automatically added during build and populated with
@@ -25,3 +26,15 @@ using System.Windows;
                                               //(used if a resource is not found in the page,
                                               // app, or any theme specific resource dictionaries)
 )]
+
+// Single XML namespace for all of WWControls.Wpf's public sub-namespaces, so consumer XAML
+// (and our own theme dictionaries) use ONE xmlns despite the code being split across folders.
+[assembly: XmlnsPrefix("http://schemas.wwcontrols.com/wpf", "ww")]
+[assembly: XmlnsDefinition("http://schemas.wwcontrols.com/wpf", "WWControls.Wpf")]
+[assembly: XmlnsDefinition("http://schemas.wwcontrols.com/wpf", "WWControls.Wpf.Editors")]
+[assembly: XmlnsDefinition("http://schemas.wwcontrols.com/wpf", "WWControls.Wpf.Primitives")]
+[assembly: XmlnsDefinition("http://schemas.wwcontrols.com/wpf", "WWControls.Wpf.Grids")]
+[assembly: XmlnsDefinition("http://schemas.wwcontrols.com/wpf", "WWControls.Wpf.Behaviors")]
+[assembly: XmlnsDefinition("http://schemas.wwcontrols.com/wpf", "WWControls.Wpf.Commands")]
+[assembly: XmlnsDefinition("http://schemas.wwcontrols.com/wpf", "WWControls.Wpf.Converters")]
+[assembly: XmlnsDefinition("http://schemas.wwcontrols.com/wpf", "WWControls.Wpf.Display")]

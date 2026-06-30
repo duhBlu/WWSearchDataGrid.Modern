@@ -8,7 +8,7 @@ using System.Windows.Input;
 using System.Windows;
 using WWControls.Core;
 
-namespace WWControls.Wpf
+namespace WWControls.Wpf.Primitives
 {
     /// <summary>
     /// Simple NumericUpDown control for numeric input

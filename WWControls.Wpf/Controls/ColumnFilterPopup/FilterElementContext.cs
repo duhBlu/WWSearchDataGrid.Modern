@@ -1,7 +1,7 @@
 using System;
 using WWControls.Core;
 
-namespace WWControls.Wpf
+namespace WWControls.Wpf.Grids
 {
     /// <summary>
     /// Bundles everything a <see cref="FilterElementBase"/> needs to drive filtering for one

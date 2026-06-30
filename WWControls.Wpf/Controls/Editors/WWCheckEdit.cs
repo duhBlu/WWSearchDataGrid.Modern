@@ -3,7 +3,7 @@ using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Data;
 
-namespace WWControls.Wpf
+namespace WWControls.Wpf.Editors
 {
     /// <summary>
     /// Boolean / three-state checkbox editor over <see cref="WWBaseEdit"/>. The checkbox is

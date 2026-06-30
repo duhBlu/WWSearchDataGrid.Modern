@@ -8,7 +8,7 @@ using System.Windows;
 using System.Windows.Controls;
 using WWControls.Core;
 
-namespace WWControls.Wpf
+namespace WWControls.Wpf.Grids
 {
     /// <summary>
     /// The grouping engine. When the grid is grouped, the group tree is projected into a single

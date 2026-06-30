@@ -8,7 +8,7 @@ using System.Windows;
 using System.Windows.Threading;
 using WWControls.Core;
 
-namespace WWControls.Wpf
+namespace WWControls.Wpf.Grids
 {
     /// <summary>
     /// The summary engine. Three independently-configured surfaces, all computed over the

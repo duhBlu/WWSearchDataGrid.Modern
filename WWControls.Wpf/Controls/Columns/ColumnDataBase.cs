@@ -8,7 +8,7 @@ using System.Windows.Data;
 using System.Windows.Input;
 using WWControls.Core.Display;
 
-namespace WWControls.Wpf
+namespace WWControls.Wpf.Grids
 {
     /// <summary>
     /// Abstract data/filter/sort/editor tier of the column descriptor hierarchy. Layers data

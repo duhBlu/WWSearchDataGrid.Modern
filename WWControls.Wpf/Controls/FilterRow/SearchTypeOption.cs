@@ -1,6 +1,6 @@
 using WWControls.Core;
 
-namespace WWControls.Wpf
+namespace WWControls.Wpf.Grids
 {
     /// <summary>
     /// Display-friendly wrapper around a <see cref="SearchType"/> for the

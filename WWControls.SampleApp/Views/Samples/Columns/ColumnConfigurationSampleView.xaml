@@ -6,7 +6,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:sampleControls="clr-namespace:WWControls.SampleApp.Controls"
              xmlns:sampleConverters="clr-namespace:WWControls.SampleApp.Converters"
-             xmlns:sdg="clr-namespace:WWControls.Wpf;assembly=WWControls.Wpf"
+             xmlns:sdg="http://schemas.wwcontrols.com/wpf"
              mc:Ignorable="d">
     <UserControl.DataContext>
         <local:ColumnConfigurationSampleViewModel />

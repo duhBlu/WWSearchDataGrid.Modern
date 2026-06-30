@@ -1,7 +1,7 @@
 using System.ComponentModel;
 using WWControls.Core;
 
-namespace WWControls.Wpf
+namespace WWControls.Wpf.Grids
 {
     /// <summary>
     /// The active sort-groups-by-summary configuration — what

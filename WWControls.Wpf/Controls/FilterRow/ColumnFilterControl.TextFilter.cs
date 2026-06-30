@@ -8,7 +8,7 @@ using System.Windows.Input;
 using System.Windows.Threading;
 using WWControls.Core;
 
-namespace WWControls.Wpf
+namespace WWControls.Wpf.Grids
 {
     /// <summary>
     /// Text + typed-value filtering for <see cref="ColumnFilterControl"/>. The active

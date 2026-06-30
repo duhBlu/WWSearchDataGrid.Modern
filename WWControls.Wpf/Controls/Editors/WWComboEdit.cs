@@ -5,7 +5,7 @@ using System.Windows.Controls.Primitives;
 using System.Windows.Data;
 using System.Windows.Media;
 
-namespace WWControls.Wpf
+namespace WWControls.Wpf.Editors
 {
     /// <summary>
     /// Dropdown editor over <see cref="WWBaseEdit"/>. It wraps a real, flat <see cref="ComboBox"/> in

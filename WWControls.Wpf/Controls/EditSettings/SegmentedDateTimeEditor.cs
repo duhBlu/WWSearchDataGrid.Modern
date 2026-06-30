@@ -9,7 +9,7 @@ using System.Windows.Input;
 using System.Windows.Threading;
 using WWControls.Core.Display;
 
-namespace WWControls.Wpf
+namespace WWControls.Wpf.Editors
 {
     /// <summary>
     /// Segmented datetime editor used by <see cref="DateEditSettings"/>. Each format token in
@@ -147,7 +147,7 @@ namespace WWControls.Wpf
         /// <summary>
         /// Set after any user keystroke is applied; consumed by the deferred SelectAll
         /// on <see cref="OnTextBoxGotKeyboardFocus"/> so the seed-char path
-        /// (<see cref="WWControls.Wpf.SearchDataGrid"/> raises a synthetic
+        /// (<see cref="WWControls.Wpf.Grids"/> raises a synthetic
         /// PreviewTextInput when the user types into a non-editing cell) doesn't get
         /// clobbered by SelectAll re-running after the seed digit was already inserted.
         /// Reset on <see cref="OnTextBoxLostFocus"/>.

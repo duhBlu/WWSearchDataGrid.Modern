@@ -5,7 +5,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using WWControls.Core;
 
-namespace WWControls.Wpf
+namespace WWControls.Wpf.Grids
 {
     /// <summary>
     /// Modal Filter Editor — authoring surface for multi-rule, cross-column filter expressions.

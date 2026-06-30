@@ -2,7 +2,7 @@ using System.Windows;
 using System.Windows.Input;
 using WWControls.Core;
 
-namespace WWControls.Wpf
+namespace WWControls.Wpf.Grids
 {
     /// <summary>
     /// Excel-style filter element: search box + Select All toggle + checkbox list of distinct

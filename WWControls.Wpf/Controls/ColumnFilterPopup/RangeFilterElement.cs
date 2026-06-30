@@ -2,7 +2,7 @@ using System.Linq;
 using System.Windows;
 using WWControls.Core;
 
-namespace WWControls.Wpf
+namespace WWControls.Wpf.Grids
 {
     /// <summary>
     /// Numeric / date / string range filter element. Hosts a single

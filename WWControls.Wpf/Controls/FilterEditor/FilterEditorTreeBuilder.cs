@@ -4,7 +4,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using WWControls.Core;
 
-namespace WWControls.Wpf
+namespace WWControls.Wpf.Grids
 {
     /// <summary>
     /// Translates between the editor-time tree (<see cref="FilterGroupNode"/> /

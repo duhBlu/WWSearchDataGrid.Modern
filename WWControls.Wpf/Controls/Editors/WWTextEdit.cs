@@ -4,7 +4,7 @@ using System.Windows.Data;
 using WWControls.Core.Display;
 using WWControls.Wpf.Behaviors;
 
-namespace WWControls.Wpf
+namespace WWControls.Wpf.Editors
 {
     /// <summary>
     /// Exposes an editor's underlying <see cref="TextBox"/> so a host can drive the caret or read

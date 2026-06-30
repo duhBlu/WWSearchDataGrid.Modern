@@ -2,7 +2,7 @@ using System.Linq;
 using System.Windows;
 using WWControls.Core;
 
-namespace WWControls.Wpf
+namespace WWControls.Wpf.Grids
 {
     /// <summary>
     /// Single-rule filter element: hosts the column's first <see cref="SearchTemplate"/> with a

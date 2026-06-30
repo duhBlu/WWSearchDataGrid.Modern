@@ -5,7 +5,7 @@ using System.Text;
 using System.Windows;
 using WWControls.Core;
 
-namespace WWControls.Wpf
+namespace WWControls.Wpf.Grids
 {
     /// <summary>
     /// Light-green chip that hosts the per-input-template value editor for a condition row.

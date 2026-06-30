@@ -5,7 +5,7 @@ using System.ComponentModel;
 using System.Windows.Controls;
 using System.Windows.Input;
 
-namespace WWControls.Wpf
+namespace WWControls.Wpf.Grids
 {
     public partial class SearchDataGrid
     {

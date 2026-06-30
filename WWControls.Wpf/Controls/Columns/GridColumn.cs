@@ -4,7 +4,7 @@ using System.Windows;
 using System.Windows.Controls;
 using WWControls.Core;
 
-namespace WWControls.Wpf
+namespace WWControls.Wpf.Grids
 {
     /// <summary>
     /// A column descriptor that defines how a column should be created and configured in a

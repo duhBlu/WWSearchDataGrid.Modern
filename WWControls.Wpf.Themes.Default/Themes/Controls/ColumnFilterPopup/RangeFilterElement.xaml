@@ -1,7 +1,7 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:sdgCore="clr-namespace:WWControls.Core;assembly=WWControls.Core"
-                    xmlns:sdg="clr-namespace:WWControls.Wpf;assembly=WWControls.Wpf"
+                    xmlns:sdg="http://schemas.wwcontrols.com/wpf"
                     xmlns:converters="clr-namespace:WWControls.Wpf.Converters;assembly=WWControls.Wpf">
 
     <ResourceDictionary.MergedDictionaries>

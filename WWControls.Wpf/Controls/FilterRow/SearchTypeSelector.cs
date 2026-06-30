@@ -7,7 +7,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using WWControls.Core;
 
-namespace WWControls.Wpf
+namespace WWControls.Wpf.Grids
 {
     /// <summary>
     /// Compact picker for the active <see cref="SearchType"/> on a column. Shows the icon of

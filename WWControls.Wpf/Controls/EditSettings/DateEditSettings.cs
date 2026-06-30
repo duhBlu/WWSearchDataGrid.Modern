@@ -6,7 +6,7 @@ using System.Windows.Data;
 using WWControls.Core.Display;
 using WWControls.Wpf.Converters;
 
-namespace WWControls.Wpf
+namespace WWControls.Wpf.Editors
 {
     /// <summary>
     /// Date editor with full mask support.

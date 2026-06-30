@@ -1,6 +1,6 @@
 using WWControls.Core;
 
-namespace WWControls.Wpf
+namespace WWControls.Wpf.Grids
 {
     /// <summary>
     /// One computed summary value — the per-item entry behind

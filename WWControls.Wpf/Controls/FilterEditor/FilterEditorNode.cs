@@ -1,7 +1,7 @@
 using System;
 using WWControls.Core;
 
-namespace WWControls.Wpf
+namespace WWControls.Wpf.Grids
 {
     /// <summary>
     /// Base type for nodes in the Filter Editor's editor-time tree. The tree is built when the

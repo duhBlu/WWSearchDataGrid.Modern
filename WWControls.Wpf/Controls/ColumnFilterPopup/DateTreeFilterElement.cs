@@ -2,7 +2,7 @@ using System.Windows;
 using System.Windows.Input;
 using WWControls.Core;
 
-namespace WWControls.Wpf
+namespace WWControls.Wpf.Grids
 {
     /// <summary>
     /// DateTime-aware filter element: Year / Month / Day (/ Time when the display format shows it)

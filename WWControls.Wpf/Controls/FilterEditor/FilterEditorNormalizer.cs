@@ -1,7 +1,7 @@
 using System.Linq;
 using WWControls.Core;
 
-namespace WWControls.Wpf
+namespace WWControls.Wpf.Grids
 {
     /// <summary>
     /// Editor-time tree cleanup invoked after user-driven removals. Mirrors the build-time

@@ -3,7 +3,7 @@ using System.ComponentModel;
 using System.Globalization;
 using WWControls.Core;
 
-namespace WWControls.Wpf
+namespace WWControls.Wpf.Grids
 {
     /// <summary>
     /// A <see cref="GroupDescription"/> that buckets rows by a derived key rather than the whole

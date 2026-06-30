@@ -3,7 +3,7 @@ using System.Windows;
 using System.Windows.Controls;
 using WWControls.Core;
 
-namespace WWControls.Wpf
+namespace WWControls.Wpf.Grids
 {
     /// <summary>
     /// Dropdown chip rendering a group's <see cref="LogicalOperator"/> (And / Or / NotAnd / NotOr).

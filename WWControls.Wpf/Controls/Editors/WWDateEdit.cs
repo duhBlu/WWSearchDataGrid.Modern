@@ -3,7 +3,7 @@ using System.Windows;
 using System.Windows.Data;
 using WWControls.Core.Display;
 
-namespace WWControls.Wpf
+namespace WWControls.Wpf.Editors
 {
     /// <summary>
     /// Date editor over <see cref="WWBaseEdit"/>. It wraps the existing

@@ -1,7 +1,7 @@
 using System.Windows;
 using System.Windows.Media;
 
-namespace WWControls.Wpf
+namespace WWControls.Wpf.Grids
 {
     /// <summary>
     /// The look of one summary text segment — the prefix, the value, or the suffix of a

@@ -5,7 +5,7 @@ using System.Linq;
 using WWControls.Core.Display;
 using CoreAnnotations = WWControls.Core.DataAnnotations;
 
-namespace WWControls.Wpf
+namespace WWControls.Wpf.Grids
 {
     /// <summary>
     /// Applies a column's bound-property data annotations to its descriptor when the column is

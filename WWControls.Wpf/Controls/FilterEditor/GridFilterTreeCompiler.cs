@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using WWControls.Core;
 
-namespace WWControls.Wpf
+namespace WWControls.Wpf.Grids
 {
     /// <summary>
     /// Compiles a Filter Editor view-model tree (<see cref="FilterGroupNode"/>) into a single

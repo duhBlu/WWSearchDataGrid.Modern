@@ -2,7 +2,7 @@ using System.Linq;
 using System.Windows;
 using WWControls.Core;
 
-namespace WWControls.Wpf
+namespace WWControls.Wpf.Grids
 {
     /// <summary>
     /// Predefined date-range filter: lists the <see cref="DateInterval"/> enum values

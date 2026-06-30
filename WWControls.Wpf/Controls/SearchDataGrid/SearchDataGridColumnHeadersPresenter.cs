@@ -1,7 +1,7 @@
 using System.Windows;
 using System.Windows.Controls.Primitives;
 
-namespace WWControls.Wpf
+namespace WWControls.Wpf.Grids
 {
     /// <summary>
     /// Headers presenter that materializes <see cref="SearchDataGridColumnHeader"/> instead of

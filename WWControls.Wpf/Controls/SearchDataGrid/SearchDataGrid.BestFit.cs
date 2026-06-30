@@ -11,7 +11,7 @@ using WWControls.Core;
 using WWControls.Core.Display;
 using WWControls.Wpf.Display;
 
-namespace WWControls.Wpf
+namespace WWControls.Wpf.Grids
 {
     /// <summary>
     /// Best-fit (auto-width) engine. Computes a column's ideal pixel width without the

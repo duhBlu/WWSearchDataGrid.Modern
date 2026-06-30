@@ -15,7 +15,7 @@ using System.Windows.Threading;
 using WWControls.Core;
 using WWControls.Wpf.Commands;
 
-namespace WWControls.Wpf
+namespace WWControls.Wpf.Grids
 {
     public enum ColumnChooserPositionMode
     {

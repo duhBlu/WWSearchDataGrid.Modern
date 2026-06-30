@@ -4,7 +4,7 @@ using System.Linq;
 using System.Windows.Input;
 using WWControls.Core;
 
-namespace WWControls.Wpf
+namespace WWControls.Wpf.Grids
 {
     /// <summary>
     /// Editor-time view model for a logical group inside the Filter Editor. Contains a
