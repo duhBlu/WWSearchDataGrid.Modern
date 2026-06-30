@@ -3,6 +3,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Data;
+using System.Windows.Input;
 using WWControls.Core.Display;
 using WWControls.Wpf.Converters;
 
@@ -234,6 +235,10 @@ namespace WWControls.Wpf.Editors
                 Source = host,
                 Mode = BindingMode.TwoWay,
             });
+
+            // Cell-exit is the host's job: the control raises CellExitRequested, the adapter drives
+            // the navigation (in the filter row, ExitCellViaArrow routes through FilterRowNavigator).
+            editor.CellExitRequested += OnDateEditorCellExit;
             return editor;
         }
 
@@ -261,7 +266,34 @@ namespace WWControls.Wpf.Editors
             if (MinDate.HasValue) factory.SetValue(WWDateEdit.MinDateProperty, MinDate.Value);
             if (MaxDate.HasValue) factory.SetValue(WWDateEdit.MaxDateProperty, MaxDate.Value);
 
+            // The control decides when an arrow should exit the cell and raises CellExitRequested;
+            // the grid-side adapter drives the actual navigation, keeping WWDateEdit /
+            // SegmentedDateTimeEditor grid-agnostic. Wire it once the editor materializes (re-arm on
+            // recycle — the -= guards against stacking duplicate handlers).
+            factory.AddHandler(FrameworkElement.LoadedEvent, new RoutedEventHandler((s, _) =>
+            {
+                if (s is WWDateEdit dateEdit && dateEdit.Editor != null)
+                {
+                    dateEdit.Editor.CellExitRequested -= OnDateEditorCellExit;
+                    dateEdit.Editor.CellExitRequested += OnDateEditorCellExit;
+                }
+            }));
+
             return new DataTemplate { VisualTree = factory };
+        }
+
+        /// <summary>
+        /// Grid-side handler for <see cref="SegmentedDateTimeEditor.CellExitRequested"/>: commits the
+        /// edit and steps to the adjacent cell. The control raises this instead of calling the grid's
+        /// navigation directly, so it stays grid-agnostic. The sender is the editor's inner TextBox
+        /// (under the <see cref="System.Windows.Controls.DataGridCell"/> / filter
+        /// <see cref="ColumnFilterControl"/>), which <see cref="BaseEditSettings.ExitCellViaArrow"/>
+        /// resolves to the owning cell.
+        /// </summary>
+        private static void OnDateEditorCellExit(object sender, KeyEventArgs e)
+        {
+            if (sender is DependencyObject source)
+                ExitCellViaArrow(source, e);
         }
     }
 }

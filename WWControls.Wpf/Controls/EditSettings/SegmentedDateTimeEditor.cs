@@ -839,6 +839,19 @@ namespace WWControls.Wpf.Editors
             return false;
         }
 
+        /// <summary>
+        /// Raised when an arrow keypress should leave the cell rather than navigate the editor's
+        /// date segments — bare Up/Down, or Left/Right at the editor's edge region / when the whole
+        /// value is selected. The control decides <em>when</em> to exit (it owns the segment logic);
+        /// a host decides <em>how</em>. The grid-side adapter subscribes and commits + navigates the
+        /// cell; a standalone host with no subscriber simply keeps focus in the editor. Keeps the
+        /// control grid-agnostic (no direct call into the grid's cell-navigation code).
+        /// </summary>
+        public event KeyEventHandler CellExitRequested;
+
+        /// <summary>Raises <see cref="CellExitRequested"/> with the inner TextBox as the source.</summary>
+        private void RequestCellExit(KeyEventArgs e) => CellExitRequested?.Invoke(_textBox, e);
+
         private void OnTextBoxPreviewKeyDown(object sender, KeyEventArgs e)
         {
             if (_textBox == null || _segments.Count == 0) return;
@@ -860,7 +873,7 @@ namespace WWControls.Wpf.Editors
                 }
                 else
                 {
-                    BaseEditSettings.ExitCellViaArrow(_textBox, e);
+                    RequestCellExit(e);
                 }
                 e.Handled = true;
                 return;
@@ -897,7 +910,7 @@ namespace WWControls.Wpf.Editors
                 }
                 else if (isAllSelected)
                 {
-                    BaseEditSettings.ExitCellViaArrow(_textBox, e);
+                    RequestCellExit(e);
                 }
                 else
                 {
@@ -913,7 +926,7 @@ namespace WWControls.Wpf.Editors
                     {
                         // Edge region reached — exit the cell so the user can keep arrowing
                         // through the row.
-                        BaseEditSettings.ExitCellViaArrow(_textBox, e);
+                        RequestCellExit(e);
                     }
                 }
                 e.Handled = true;
