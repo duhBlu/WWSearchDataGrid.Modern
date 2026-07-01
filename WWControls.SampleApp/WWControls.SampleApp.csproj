@@ -15,7 +15,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\WWControls.Core\WWControls.Core.csproj" />
-    <ProjectReference Include="..\WWControls.Wpf\WWControls.Wpf.csproj" />
+    <ProjectReference Include="..\WWControls.Wpf.Grid\WWControls.Wpf.Grid.csproj" />
     <ProjectReference Include="..\WWControls.Wpf.Themes.Default\WWControls.Wpf.Themes.Default.csproj" />
   </ItemGroup>
 

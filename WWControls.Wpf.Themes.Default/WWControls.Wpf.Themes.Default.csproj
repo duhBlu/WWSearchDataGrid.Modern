@@ -6,7 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\WWControls.Wpf\WWControls.Wpf.csproj" />
+    <ProjectReference Include="..\WWControls.Wpf.Grid\WWControls.Wpf.Grid.csproj" />
     <ProjectReference Include="..\WWControls.Wpf.Primitives\WWControls.Wpf.Primitives.csproj" />
     <ProjectReference Include="..\WWControls.Wpf.Editors\WWControls.Wpf.Editors.csproj" />
   </ItemGroup>

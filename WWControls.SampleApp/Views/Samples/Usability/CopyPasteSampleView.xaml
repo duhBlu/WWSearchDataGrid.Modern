@@ -4,7 +4,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:sdg="http://schemas.wwcontrols.com/wpf"
-             xmlns:commands="clr-namespace:WWControls.Wpf.Commands;assembly=WWControls.Wpf"
+             xmlns:commands="clr-namespace:WWControls.Wpf.Commands;assembly=WWControls.Wpf.Grid"
              xmlns:sampleControls="clr-namespace:WWControls.SampleApp.Controls"
              xmlns:local="clr-namespace:WWControls.SampleApp.Views.Samples.Usability"
              mc:Ignorable="d">

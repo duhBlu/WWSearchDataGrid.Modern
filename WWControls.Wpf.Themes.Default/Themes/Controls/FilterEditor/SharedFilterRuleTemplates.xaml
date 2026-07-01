@@ -3,7 +3,7 @@
                     xmlns:sdgCore="clr-namespace:WWControls.Core;assembly=WWControls.Core"
                     xmlns:sys="clr-namespace:System;assembly=mscorlib"
                     xmlns:sdg="http://schemas.wwcontrols.com/wpf"
-                    xmlns:converters="clr-namespace:WWControls.Wpf.Converters;assembly=WWControls.Wpf">
+                    xmlns:converters="clr-namespace:WWControls.Wpf.Converters;assembly=WWControls.Wpf.Grid">
 
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Controls/Primitives/DefaultControls.xaml" />

@@ -1,8 +1,8 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:sdg="http://schemas.wwcontrols.com/wpf"
-                    xmlns:converters="clr-namespace:WWControls.Wpf.Converters;assembly=WWControls.Wpf"
-                    xmlns:commands="clr-namespace:WWControls.Wpf.Commands;assembly=WWControls.Wpf">
+                    xmlns:converters="clr-namespace:WWControls.Wpf.Converters;assembly=WWControls.Wpf.Grid"
+                    xmlns:commands="clr-namespace:WWControls.Wpf.Commands;assembly=WWControls.Wpf.Grid">
 
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Resources/Icons/Icons.xaml" />

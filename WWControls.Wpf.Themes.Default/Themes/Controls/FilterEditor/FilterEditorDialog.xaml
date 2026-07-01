@@ -2,8 +2,8 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:sdg="http://schemas.wwcontrols.com/wpf"
                     xmlns:sdgCore="clr-namespace:WWControls.Core;assembly=WWControls.Core"
-                    xmlns:behaviors="clr-namespace:WWControls.Wpf.Behaviors;assembly=WWControls.Wpf"
-                    xmlns:converters="clr-namespace:WWControls.Wpf.Converters;assembly=WWControls.Wpf">
+                    xmlns:behaviors="clr-namespace:WWControls.Wpf.Behaviors;assembly=WWControls.Wpf.Grid"
+                    xmlns:converters="clr-namespace:WWControls.Wpf.Converters;assembly=WWControls.Wpf.Grid">
 
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Controls/Primitives/DefaultControls.xaml" />

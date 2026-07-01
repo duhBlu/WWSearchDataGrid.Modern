@@ -1,6 +1,6 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-                    xmlns:converters="clr-namespace:WWControls.Wpf.Converters;assembly=WWControls.Wpf"
+                    xmlns:converters="clr-namespace:WWControls.Wpf.Converters;assembly=WWControls.Wpf.Grid"
                     xmlns:sdg="http://schemas.wwcontrols.com/wpf">
 
     <!--
