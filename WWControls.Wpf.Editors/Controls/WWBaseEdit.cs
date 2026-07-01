@@ -5,28 +5,20 @@ using System.Windows.Input;
 namespace WWControls.Wpf.Editors
 {
     /// <summary>
-    /// Lookless base for the library's first-class editor controls. Owns the shared editor
-    /// chrome in one place: the outer border (drawn by default — a 1px edge with an accent on
-    /// focus — and suppressed when the editor is hosted in a grid cell), background, padding,
-    /// the disabled visual, a <c>PART_ContentHost</c> site that presents the concrete input
-    /// (<see cref="EditContent"/>), and a decoration-button slot
-    /// (<see cref="ButtonContent"/> / <see cref="ShowButtons"/>).
+    /// Lookless base for the library's first-class editor controls. It carries only what every
+    /// editor shares: the edited <see cref="Value"/>, <see cref="IsReadOnly"/>, the
+    /// <see cref="ShowBorder"/> flag, focus-forwarding to the concrete input, and the in-cell
+    /// self-flatten. Each concrete editor (<see cref="WWTextEdit"/> and the spin / combo / date /
+    /// check editors) owns its own default style, control template, border, and named parts — the
+    /// base supplies no shared chrome template.
     /// </summary>
     /// <remarks>
-    /// <para>
-    /// Concrete editors (<see cref="WWTextEdit"/>, and the spin / combo / date / check editors
-    /// that follow) derive from this type, point their default style key at
-    /// <see cref="WWBaseEdit"/> so they reuse this one chrome template, and fill
-    /// <see cref="EditContent"/> with their input element. Because the border lives here and
-    /// nowhere else, every editor reads consistently — bordered when hosted standalone or in
-    /// the edit form, flat in a grid cell — without each editor repeating the border triggers.
-    /// </para>
-    /// <para>
-    /// These controls carry <em>no</em> reference to the grid. Cell-interaction concerns
-    /// (arrow-key cell exit, mouse-click caret, decoration-button visibility) live in the
-    /// grid-side editor host; an editor only raises normal input events and exposes its input
-    /// element.
-    /// </para>
+    /// These controls carry <em>no</em> reference to the grid. Cell-interaction concerns (arrow-key
+    /// cell exit, mouse-click caret, decoration-button visibility) live in the grid-side editor
+    /// host; an editor only raises normal input events and exposes its input element. Bordered by
+    /// default (standalone use, the edit form), an editor renders flat inside a grid cell —
+    /// <see cref="OnBaseEditLoaded"/> clears <see cref="ShowBorder"/> when it detects a stock
+    /// <see cref="System.Windows.Controls.DataGridCell"/> ancestor.
     /// </remarks>
     public class WWBaseEdit : Control
     {
@@ -72,29 +64,6 @@ namespace WWControls.Wpf.Editors
             DependencyProperty.Register(nameof(ShowBorder), typeof(bool), typeof(WWBaseEdit),
                 new PropertyMetadata(true));
 
-        /// <summary>Whether the decoration-button slot (<see cref="ButtonContent"/>) is shown.</summary>
-        public static readonly DependencyProperty ShowButtonsProperty =
-            DependencyProperty.Register(nameof(ShowButtons), typeof(bool), typeof(WWBaseEdit),
-                new PropertyMetadata(false));
-
-        /// <summary>
-        /// Content of the decoration-button slot rendered at the trailing edge of the chrome
-        /// (combo toggle, spinner, calendar dropdown). Visible only while <see cref="ShowButtons"/>
-        /// is true. Plain text editors leave this null.
-        /// </summary>
-        public static readonly DependencyProperty ButtonContentProperty =
-            DependencyProperty.Register(nameof(ButtonContent), typeof(object), typeof(WWBaseEdit),
-                new PropertyMetadata(null));
-
-        /// <summary>
-        /// The concrete input element, presented inside the chrome at <c>PART_ContentHost</c>.
-        /// Set by the derived editor (e.g. <see cref="WWTextEdit"/> assigns its TextBox); not
-        /// intended as a consumer-facing knob.
-        /// </summary>
-        public static readonly DependencyProperty EditContentProperty =
-            DependencyProperty.Register(nameof(EditContent), typeof(object), typeof(WWBaseEdit),
-                new PropertyMetadata(null));
-
         public object Value
         {
             get => GetValue(ValueProperty);
@@ -111,25 +80,6 @@ namespace WWControls.Wpf.Editors
         {
             get => (bool)GetValue(ShowBorderProperty);
             set => SetValue(ShowBorderProperty, value);
-        }
-
-        public bool ShowButtons
-        {
-            get => (bool)GetValue(ShowButtonsProperty);
-            set => SetValue(ShowButtonsProperty, value);
-        }
-
-        public object ButtonContent
-        {
-            get => GetValue(ButtonContentProperty);
-            set => SetValue(ButtonContentProperty, value);
-        }
-
-        /// <summary>The concrete input element hosted inside the chrome. Assigned by derived editors.</summary>
-        protected object EditContent
-        {
-            get => GetValue(EditContentProperty);
-            set => SetValue(EditContentProperty, value);
         }
 
         /// <summary>

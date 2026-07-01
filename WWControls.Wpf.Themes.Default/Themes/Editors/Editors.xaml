@@ -4,89 +4,23 @@
 
     <!--
         ═══════════════════════════════════════════════════════════════════════
-        Editors — shared chrome for the WWBaseEdit-derived editor controls
+        Editors — each editor owns its own chrome
         ═══════════════════════════════════════════════════════════════════════
-        WWBaseEdit owns the editor chrome in ONE place: the outer border, background,
-        padding, focus accent, disabled visual, the PART_ContentHost that presents the
-        concrete input, and the trailing decoration-button slot. Concrete editors
-        (WWTextEdit, and the spin / combo / date / check editors that follow) point their
-        default style key at WWBaseEdit, so they reuse this template and the border problem
-        is solved once rather than per editor.
+        Every editor control carries its own default style + control template: a border
+        (drawn per ShowBorder, an accent edge on focus), background, padding, disabled
+        visual, and the named parts that host its input (PART_TextBox, PART_ComboBox,
+        PART_Editor, PART_CheckBox, plus the spinner's PART_UpButton / PART_DownButton).
+
+        Each style is keyed (EditorThemeKeys.TextEdit / SpinEdit / ComboEdit / DateEdit /
+        CheckEdit) so a consumer can retheme one editor by that key; a paired implicit style
+        (grouped at the bottom of this file) is what each control's DefaultStyleKey resolves.
 
         Border policy:
-        — Flat (no border) by default — the in-cell / filter-row look.
-        — A 1px #CCCCCC edge when ShowBorder is true (edit form, standalone), gaining an
-          accent #0078D4 edge while focused.
+        — Bordered by default (standalone use, the edit form).
+        — Flat in a grid cell: the control clears ShowBorder when it detects a DataGridCell
+          ancestor; the filter row sets ShowBorder=false explicitly.
+        — A 1px #CCCCCC edge when ShowBorder is true, gaining an accent #0078D4 edge on focus.
     -->
-
-    <Style x:Key="{x:Static sdg:EditorThemeKeys.BaseEdit}" TargetType="{x:Type sdg:WWBaseEdit}">
-        <Setter Property="Background" Value="#FFFFFF" />
-        <Setter Property="Foreground" Value="#1C1C1C" />
-        <Setter Property="BorderBrush" Value="#CCCCCC" />
-        <Setter Property="BorderThickness" Value="0" />
-        <Setter Property="Padding" Value="4,2" />
-        <!-- Focusable so a host can Keyboard.Focus the editor and have it forward to the input
-             (WWBaseEdit.OnGotKeyboardFocus); IsTabStop=False keeps the chrome out of the tab order
-             so Tab lands on the inner input directly. -->
-        <Setter Property="Focusable" Value="True" />
-        <Setter Property="IsTabStop" Value="False" />
-        <Setter Property="VerticalContentAlignment" Value="Center" />
-        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-        <Setter Property="Template">
-            <Setter.Value>
-                <ControlTemplate TargetType="{x:Type sdg:WWBaseEdit}">
-                    <Border x:Name="ChromeBorder"
-                            Background="{TemplateBinding Background}"
-                            BorderBrush="{TemplateBinding BorderBrush}"
-                            BorderThickness="{TemplateBinding BorderThickness}"
-                            CornerRadius="3"
-                            SnapsToDevicePixels="True">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="Auto" />
-                            </Grid.ColumnDefinitions>
-
-                            <ContentPresenter x:Name="PART_ContentHost"
-                                              Grid.Column="0"
-                                              Margin="{TemplateBinding Padding}"
-                                              Content="{TemplateBinding EditContent}"
-                                              VerticalAlignment="Stretch"
-                                              HorizontalAlignment="Stretch" />
-
-                            <ContentPresenter x:Name="PART_ButtonHost"
-                                              Grid.Column="1"
-                                              Content="{TemplateBinding ButtonContent}"
-                                              VerticalAlignment="Center"
-                                              Visibility="Collapsed" />
-                        </Grid>
-                    </Border>
-                    <ControlTemplate.Triggers>
-                        <Trigger Property="ShowBorder" Value="True">
-                            <Setter TargetName="ChromeBorder" Property="BorderThickness" Value="1" />
-                        </Trigger>
-                        <MultiTrigger>
-                            <MultiTrigger.Conditions>
-                                <Condition Property="ShowBorder" Value="True" />
-                                <Condition Property="IsKeyboardFocusWithin" Value="True" />
-                            </MultiTrigger.Conditions>
-                            <Setter TargetName="ChromeBorder" Property="BorderBrush" Value="#0078D4" />
-                        </MultiTrigger>
-                        <Trigger Property="ShowButtons" Value="True">
-                            <Setter TargetName="PART_ButtonHost" Property="Visibility" Value="Visible" />
-                        </Trigger>
-                        <Trigger Property="IsEnabled" Value="False">
-                            <Setter TargetName="ChromeBorder" Property="Opacity" Value="0.6" />
-                        </Trigger>
-                    </ControlTemplate.Triggers>
-                </ControlTemplate>
-            </Setter.Value>
-        </Setter>
-    </Style>
-
-    <!-- Implicit default so WWBaseEdit and every editor whose default style key still points at it
-         (the combo / date editors) pick up the shared chrome without an explicit Style reference. -->
-    <Style BasedOn="{StaticResource {x:Static sdg:EditorThemeKeys.BaseEdit}}" TargetType="{x:Type sdg:WWBaseEdit}" />
 
     <!--
         WWTextEdit — the text editor's own chrome: border (drawn per ShowBorder, an accent edge on
@@ -327,12 +261,42 @@
         </Setter>
     </Style>
 
-    <!-- WWCheckEdit is a glyph, not a bordered input: transparent background so the cell's own
-         fill / selection shows through, no padding, border stays off. Reuses the base chrome
-         template via BasedOn. -->
-    <Style BasedOn="{StaticResource {x:Static sdg:EditorThemeKeys.BaseEdit}}" TargetType="{x:Type sdg:WWCheckEdit}">
+    <!--
+        WWCheckEdit — a glyph, not a bordered input: transparent background so the cell's own
+        fill / selection shows through, no border. Hosts PART_CheckBox, whose themed look
+        (box + check/indeterminate glyphs + the DataGridCell read-only gate) comes from
+        DisplayCheckBox, applied in code (WWCheckEdit.OnApplyTemplate).
+    -->
+    <Style x:Key="{x:Static sdg:EditorThemeKeys.CheckEdit}" TargetType="{x:Type sdg:WWCheckEdit}">
         <Setter Property="Background" Value="Transparent" />
-        <Setter Property="Padding" Value="0" />
+        <Setter Property="Focusable" Value="True" />
+        <Setter Property="IsTabStop" Value="False" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type sdg:WWCheckEdit}">
+                    <Border Background="{TemplateBinding Background}" SnapsToDevicePixels="True">
+                        <CheckBox x:Name="PART_CheckBox"
+                                  HorizontalAlignment="Center"
+                                  VerticalAlignment="Center"
+                                  IsThreeState="{TemplateBinding IsThreeState}"
+                                  IsChecked="{Binding IsChecked, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}" />
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
     </Style>
+
+    <!--
+        Implicit default styles — each editor's DefaultStyleKey (typeof the control) resolves the
+        matching implicit style below, which BasedOn's the keyed definition above. Overriding the
+        keyed style reskins the editor; the implicit style is only the DefaultStyleKey seam.
+    -->
+    <Style TargetType="{x:Type sdg:WWTextEdit}" BasedOn="{StaticResource {x:Static sdg:EditorThemeKeys.TextEdit}}" />
+    <Style TargetType="{x:Type sdg:WWSpinEdit}" BasedOn="{StaticResource {x:Static sdg:EditorThemeKeys.SpinEdit}}" />
+    <Style TargetType="{x:Type sdg:WWComboEdit}" BasedOn="{StaticResource {x:Static sdg:EditorThemeKeys.ComboEdit}}" />
+    <Style TargetType="{x:Type sdg:WWDateEdit}" BasedOn="{StaticResource {x:Static sdg:EditorThemeKeys.DateEdit}}" />
+    <Style TargetType="{x:Type sdg:WWCheckEdit}" BasedOn="{StaticResource {x:Static sdg:EditorThemeKeys.CheckEdit}}" />
 
 </ResourceDictionary>

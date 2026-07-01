@@ -3,7 +3,7 @@ using System.Windows;
 namespace WWControls.Wpf.Editors
 {
     /// <summary>
-    /// Typed resource keys for the editor controls' styles — the <see cref="WWBaseEdit"/> chrome and
+    /// Typed resource keys for the editor controls' styles — each editor control's own chrome and
     /// the display / edit element styles the editor templates and <c>EditSettings</c> adapters apply.
     /// Consumers retheme an editor element by redefining a resource under the same key:
     /// <code>
@@ -17,15 +17,6 @@ namespace WWControls.Wpf.Editors
     /// </summary>
     public static class EditorThemeKeys
     {
-        /// <summary>
-        /// Default style for <see cref="WWBaseEdit"/> — the shared editor chrome (border, background,
-        /// padding, focus accent, disabled visual, content host, decoration-button slot). The concrete
-        /// editors point their default style key at <see cref="WWBaseEdit"/>, so retheming this one key
-        /// rechromes every editor at once.
-        /// </summary>
-        public static ComponentResourceKey BaseEdit { get; } =
-            new ComponentResourceKey(typeof(EditorThemeKeys), nameof(BaseEdit));
-
         /// <summary>
         /// Default style for <see cref="WWTextEdit"/> — the editor's own chrome (border, background,
         /// padding, focus accent, disabled visual) hosting its inner <c>PART_TextBox</c>. The border
@@ -55,6 +46,13 @@ namespace WWControls.Wpf.Editors
         /// </summary>
         public static ComponentResourceKey DateEdit { get; } =
             new ComponentResourceKey(typeof(EditorThemeKeys), nameof(DateEdit));
+
+        /// <summary>
+        /// Default style for <see cref="WWCheckEdit"/> — a borderless chrome hosting the interactive
+        /// <c>PART_CheckBox</c> (a checkbox is a glyph, so it carries no border).
+        /// </summary>
+        public static ComponentResourceKey CheckEdit { get; } =
+            new ComponentResourceKey(typeof(EditorThemeKeys), nameof(CheckEdit));
 
         /// <summary>Default style for the read-only TextBlock used by Text / ComboBox / Spin / Date display templates.</summary>
         public static ComponentResourceKey DisplayTextBlock { get; } =
