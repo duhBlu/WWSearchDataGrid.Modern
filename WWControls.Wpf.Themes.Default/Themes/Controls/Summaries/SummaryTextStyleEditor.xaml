@@ -33,7 +33,7 @@
                        Text="Style"
                        Margin="0,0,0,3" />
             <sdg:SimpleStackPanel Orientation="Horizontal" Spacing="6">
-                <ToggleButton Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesToggleButton}}"
+                <ToggleButton Style="{StaticResource {x:Static sdg:PrimitiveThemeKeys.ToggleButton}}"
                               IsChecked="{Binding IsBold, Mode=TwoWay}"
                               MinWidth="34"
                               ToolTip="Bold">
@@ -42,7 +42,7 @@
                               IconSource="{StaticResource {x:Static sdg:IconKeys.IconTextBold}}"
                               IconBrush="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type ToggleButton}}}" />
                 </ToggleButton>
-                <ToggleButton Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesToggleButton}}"
+                <ToggleButton Style="{StaticResource {x:Static sdg:PrimitiveThemeKeys.ToggleButton}}"
                               IsChecked="{Binding IsItalic, Mode=TwoWay}"
                               MinWidth="34"
                               ToolTip="Italic">
@@ -51,7 +51,7 @@
                               IconSource="{StaticResource {x:Static sdg:IconKeys.IconTextItalic}}"
                               IconBrush="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type ToggleButton}}}" />
                 </ToggleButton>
-                <ToggleButton Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesToggleButton}}"
+                <ToggleButton Style="{StaticResource {x:Static sdg:PrimitiveThemeKeys.ToggleButton}}"
                               IsChecked="{Binding IsUnderline, Mode=TwoWay}"
                               MinWidth="34"
                               ToolTip="Underline">
@@ -99,7 +99,7 @@
                                         Orientation="Horizontal"
                                         Margin="0,12,0,0"
                                         HorizontalAlignment="Right">
-                                <Button Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesButton}}"
+                                <Button Style="{StaticResource {x:Static sdg:PrimitiveThemeKeys.Button}}"
                                         IsCancel="True"
                                         IsDefault="True"
                                         Command="{Binding CloseCommand, RelativeSource={RelativeSource TemplatedParent}}"
@@ -107,14 +107,14 @@
                                         Content="Done" />
                             </StackPanel>
 
-                            <TabControl Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesTabControl}}" ContentTemplate="{StaticResource SummarySegmentStyleTemplate}">
-                                <TabItem Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesTabItem}}"
+                            <TabControl Style="{StaticResource {x:Static sdg:PrimitiveThemeKeys.TabControl}}" ContentTemplate="{StaticResource SummarySegmentStyleTemplate}">
+                                <TabItem Style="{StaticResource {x:Static sdg:PrimitiveThemeKeys.TabItem}}"
                                          Header="Prefix"
                                          Content="{Binding Prefix}" />
-                                <TabItem Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesTabItem}}"
+                                <TabItem Style="{StaticResource {x:Static sdg:PrimitiveThemeKeys.TabItem}}"
                                          Header="Value"
                                          Content="{Binding Value}" />
-                                <TabItem Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesTabItem}}"
+                                <TabItem Style="{StaticResource {x:Static sdg:PrimitiveThemeKeys.TabItem}}"
                                          Header="Suffix"
                                          Content="{Binding Suffix}" />
                             </TabControl>

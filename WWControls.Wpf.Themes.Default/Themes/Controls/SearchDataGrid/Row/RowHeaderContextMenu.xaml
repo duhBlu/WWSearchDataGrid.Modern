@@ -14,7 +14,7 @@
         (x:Shared defaults to True for ContextMenu).
     -->
     <ContextMenu x:Key="{x:Static sdg:ThemeKeys.GridSearchDataGridRowHeaderContextMenu}"
-                 Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesContextMenu}}"
+                 Style="{StaticResource {x:Static sdg:PrimitiveThemeKeys.ContextMenu}}"
                  AutomationProperties.AutomationId="cmuRowHeader">
         <MenuItem x:Name="miCopy"
                   Command="{x:Static commands:ContextMenuCommands.CopySelectedCellValuesCommand}"

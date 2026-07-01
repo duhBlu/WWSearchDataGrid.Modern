@@ -113,7 +113,7 @@
                                         Margin="0"
                                         Padding="4"
                                         CornerRadius="0,0,4,4">
-                                    <Button Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesButton}}"
+                                    <Button Style="{StaticResource {x:Static sdg:PrimitiveThemeKeys.Button}}"
                                             Command="{Binding ClearFilterCommand, RelativeSource={RelativeSource TemplatedParent}}"
                                             HorizontalAlignment="Left"
                                             Content="Clear Filter" />
@@ -123,7 +123,7 @@
 
                         <!--  Bottom-left resize grip  -->
                         <Thumb x:Name="PART_ResizeBottomLeft"
-                               Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesResizeThumb}}"
+                               Style="{StaticResource {x:Static sdg:PrimitiveThemeKeys.ResizeThumb}}"
                                Cursor="SizeNESW"
                                HorizontalAlignment="Left"
                                VerticalAlignment="Bottom"
@@ -133,7 +133,7 @@
 
                         <!--  Bottom-right resize grip  -->
                         <Thumb x:Name="PART_ResizeBottomRight"
-                               Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesResizeThumb}}"
+                               Style="{StaticResource {x:Static sdg:PrimitiveThemeKeys.ResizeThumb}}"
                                Cursor="SizeNWSE"
                                HorizontalAlignment="Right"
                                VerticalAlignment="Bottom"

@@ -2,7 +2,7 @@ using System.Windows;
 using System.Windows.Media;
 using WWControls.Core;
 
-namespace WWControls.Wpf
+namespace WWControls.Wpf.Primitives
 {
     /// <summary>
     /// Typed resource keys for the per-<see cref="SearchType"/> and per-<see cref="DateInterval"/>

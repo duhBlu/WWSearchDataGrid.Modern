@@ -12,7 +12,7 @@ namespace WWControls.Wpf.Primitives
     /// A compact HSV color picker: a swatch toggle button that drops a popup with preset swatches,
     /// hue / saturation / brightness sliders, and a hex input. Ported into the library so the
     /// summary text-styling editor can pick segment colors. Self-contained — the templated default
-    /// style lives under <see cref="ThemeKeys.PrimitivesColorPicker"/>.
+    /// style lives under <see cref="PrimitiveThemeKeys.ColorPicker"/>.
     /// </summary>
     [TemplatePart(Name = PART_ToggleButton, Type = typeof(ToggleButton))]
     [TemplatePart(Name = PART_Popup, Type = typeof(Popup))]

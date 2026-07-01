@@ -14,7 +14,7 @@
     <converters:ValueToCountConverter x:Key="ValueToCountConverter" />
 
     <!--  Default SearchTextBox Style  -->
-    <Style x:Key="{x:Static sdg:ThemeKeys.PrimitivesSearchTextBox}" TargetType="{x:Type sdg:SearchTextBox}">
+    <Style x:Key="{x:Static sdg:PrimitiveThemeKeys.SearchTextBox}" TargetType="{x:Type sdg:SearchTextBox}">
         <Setter Property="Background" Value="#FFFFFFFF" />
         <Setter Property="BorderBrush" Value="#FFCCCCCC" />
         <Setter Property="Foreground" Value="#FF000000" />
@@ -339,7 +339,7 @@
                                                 </DataTemplate>
                                             </ListBox.ItemTemplate>
                                             <ListBox.ItemContainerStyle>
-                                                <Style BasedOn="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesListBoxItem}}" TargetType="ListBoxItem" />
+                                                <Style BasedOn="{StaticResource {x:Static sdg:PrimitiveThemeKeys.ListBoxItem}}" TargetType="ListBoxItem" />
                                             </ListBox.ItemContainerStyle>
                                         </ListBox>
                                     </Grid>

@@ -1,7 +1,7 @@
 using System.Windows;
 using System.Windows.Media;
 
-namespace WWControls.Wpf
+namespace WWControls.Wpf.Primitives
 {
     /// <summary>
     /// Typed resource keys for the general-purpose button-content icons shipped with the WPF

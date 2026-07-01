@@ -154,7 +154,7 @@
     -->
     <ContextMenu x:Key="{x:Static sdg:ThemeKeys.GridSearchDataGridGroupHeaderContextMenu}"
                  AutomationProperties.AutomationId="cmuGroupHeader"
-                 Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesContextMenu}}"
+                 Style="{StaticResource {x:Static sdg:PrimitiveThemeKeys.ContextMenu}}"
                  x:Shared="False">
         <MenuItem Command="{x:Static commands:ContextMenuCommands.ExpandGroupCommand}"
                   CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}"
@@ -243,7 +243,7 @@
                 </Grid>
             </MenuItem.Icon>
             <MenuItem.Style>
-                <Style TargetType="MenuItem" BasedOn="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesMenuItem}}">
+                <Style TargetType="MenuItem" BasedOn="{StaticResource {x:Static sdg:PrimitiveThemeKeys.MenuItem}}">
                     <Style.Triggers>
                         <!--  Read-only gate: the group-header DataContext exposes its owning column's grid.  -->
                         <DataTrigger Binding="{Binding PlacementTarget.DataContext.OwningColumn.View.SummaryContextMenusEnabled, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}" Value="False">
@@ -509,7 +509,7 @@
 
     <ContextMenu x:Key="{x:Static sdg:ThemeKeys.GridSearchDataGridFixedGroupHeaderContextMenu}"
                  AutomationProperties.AutomationId="cmuFixedGroupHeader"
-                 Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesContextMenu}}"
+                 Style="{StaticResource {x:Static sdg:PrimitiveThemeKeys.ContextMenu}}"
                  x:Shared="False">
         <MenuItem Command="{x:Static commands:ContextMenuCommands.ExpandFixedGroupCommand}"
                   CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}"
@@ -598,7 +598,7 @@
                 </Grid>
             </MenuItem.Icon>
             <MenuItem.Style>
-                <Style TargetType="MenuItem" BasedOn="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesMenuItem}}">
+                <Style TargetType="MenuItem" BasedOn="{StaticResource {x:Static sdg:PrimitiveThemeKeys.MenuItem}}">
                     <Style.Triggers>
                         <!--  Read-only gate: the pinned entry exposes its column's grid via Column.View.  -->
                         <DataTrigger Binding="{Binding PlacementTarget.DataContext.Column.View.SummaryContextMenusEnabled, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}" Value="False">

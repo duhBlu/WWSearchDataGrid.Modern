@@ -10,7 +10,7 @@ namespace WWControls.Wpf
     /// Attached properties for configuring DWM (Desktop Window Manager) features on WPF windows —
     /// drop shadow, native border color (active/inactive), corner rounding, and taskbar-respecting
     /// maximize bounds for borderless (<c>WindowStyle=None</c>) windows. Consumed by the
-    /// <see cref="ThemeKeys.PrimitivesWindow"/> chrome; usable on any consumer window.
+    /// <see cref="PrimitiveThemeKeys.Window"/> chrome; usable on any consumer window.
     /// </summary>
     public static class DwmWindowHelper
     {

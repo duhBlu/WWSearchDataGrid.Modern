@@ -40,26 +40,26 @@
                                         Orientation="Horizontal"
                                         Margin="0,12,0,0"
                                         HorizontalAlignment="Right">
-                                <Button Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesButton}}"
+                                <Button Style="{StaticResource {x:Static sdg:PrimitiveThemeKeys.Button}}"
                                         IsDefault="True"
                                         Command="{Binding OkCommand, RelativeSource={RelativeSource TemplatedParent}}"
                                         Margin="0,0,8,0"
                                         MinWidth="80"
                                         Content="OK" />
-                                <Button Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesButton}}"
+                                <Button Style="{StaticResource {x:Static sdg:PrimitiveThemeKeys.Button}}"
                                         IsCancel="True"
                                         Command="{Binding CancelCommand, RelativeSource={RelativeSource TemplatedParent}}"
                                         MinWidth="80"
                                         Content="Cancel" />
                             </StackPanel>
 
-                            <TabControl Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesTabControl}}">
+                            <TabControl Style="{StaticResource {x:Static sdg:PrimitiveThemeKeys.TabControl}}">
 
                                 <!--  ITEMS  -->
-                                <TabItem Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesTabItem}}" Header="Columns">
+                                <TabItem Style="{StaticResource {x:Static sdg:PrimitiveThemeKeys.TabItem}}" Header="Columns">
                                     <DockPanel Margin="8">
                                         <!--  Row count only applies to group headers — hidden in totals mode.  -->
-                                        <CheckBox Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesCheckBox}}"
+                                        <CheckBox Style="{StaticResource {x:Static sdg:PrimitiveThemeKeys.CheckBox}}"
                                                   DockPanel.Dock="Bottom"
                                                   Visibility="{Binding IsRowCountVisible, Converter={StaticResource SummaryEditorBooleanToVisibilityConverter}}"
                                                   IsChecked="{Binding ShowRowCount, Mode=TwoWay}"
@@ -88,7 +88,7 @@
                                                          ItemsSource="{Binding Columns}"
                                                          SelectedItem="{Binding SelectedColumn, Mode=TwoWay}">
                                                     <ListBox.ItemContainerStyle>
-                                                        <Style BasedOn="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesListBoxItem}}" TargetType="{x:Type ListBoxItem}" />
+                                                        <Style BasedOn="{StaticResource {x:Static sdg:PrimitiveThemeKeys.ListBoxItem}}" TargetType="{x:Type ListBoxItem}" />
                                                     </ListBox.ItemContainerStyle>
                                                     <ListBox.ItemTemplate>
                                                         <!--  Columns with configured summaries in this editor's scope render bold.  -->
@@ -116,22 +116,22 @@
                                             <StackPanel Grid.Column="1"
                                                         Margin="16,2,4,0"
                                                         MinWidth="90">
-                                                <CheckBox Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesCheckBox}}"
+                                                <CheckBox Style="{StaticResource {x:Static sdg:PrimitiveThemeKeys.CheckBox}}"
                                                           IsEnabled="{Binding SelectedColumn.CanMax}"
                                                           IsChecked="{Binding SelectedColumn.IsMaxChecked, Mode=TwoWay}"
                                                           Margin="0,4"
                                                           Content="Max" />
-                                                <CheckBox Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesCheckBox}}"
+                                                <CheckBox Style="{StaticResource {x:Static sdg:PrimitiveThemeKeys.CheckBox}}"
                                                           IsEnabled="{Binding SelectedColumn.CanMin}"
                                                           IsChecked="{Binding SelectedColumn.IsMinChecked, Mode=TwoWay}"
                                                           Margin="0,4"
                                                           Content="Min" />
-                                                <CheckBox Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesCheckBox}}"
+                                                <CheckBox Style="{StaticResource {x:Static sdg:PrimitiveThemeKeys.CheckBox}}"
                                                           IsEnabled="{Binding SelectedColumn.CanAverage}"
                                                           IsChecked="{Binding SelectedColumn.IsAverageChecked, Mode=TwoWay}"
                                                           Margin="0,4"
                                                           Content="Average" />
-                                                <CheckBox Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesCheckBox}}"
+                                                <CheckBox Style="{StaticResource {x:Static sdg:PrimitiveThemeKeys.CheckBox}}"
                                                           IsEnabled="{Binding SelectedColumn.CanSum}"
                                                           IsChecked="{Binding SelectedColumn.IsSumChecked, Mode=TwoWay}"
                                                           Margin="0,4"
@@ -142,7 +142,7 @@
                                 </TabItem>
 
                                 <!--  ORDER AND ALIGNMENT ("Order" in column-totals mode)  -->
-                                <TabItem Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesTabItem}}" Header="{Binding OrderTabHeader}">
+                                <TabItem Style="{StaticResource {x:Static sdg:PrimitiveThemeKeys.TabItem}}" Header="{Binding OrderTabHeader}">
                                     <DockPanel Margin="8">
 
                                         <!--  Prefix / Display format / Suffix + example, for the selected entry.  -->
@@ -174,19 +174,19 @@
                                                            Foreground="#FF444444"
                                                            Text="Suffix:"
                                                            Margin="0,0,0,2" />
-                                                <TextBox Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesTextBox}}"
+                                                <TextBox Style="{StaticResource {x:Static sdg:PrimitiveThemeKeys.TextBox}}"
                                                          Grid.Row="1"
                                                          Grid.Column="0"
                                                          Text="{Binding SelectedEntry.Prefix, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                                          Padding="2"
                                                          VerticalContentAlignment="Center" />
-                                                <sdg:SearchTextBox Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesSearchTextBox}}"
+                                                <sdg:SearchTextBox Style="{StaticResource {x:Static sdg:PrimitiveThemeKeys.SearchTextBox}}"
                                                                    Grid.Row="1"
                                                                    Grid.Column="2"
                                                                    ShowClearButton="False"
                                                                    Text="{Binding SelectedEntry.DisplayFormat, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                                                    ItemsSource="{Binding DisplayFormatOptions}" />
-                                                <TextBox Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesTextBox}}"
+                                                <TextBox Style="{StaticResource {x:Static sdg:PrimitiveThemeKeys.TextBox}}"
                                                          Grid.Row="1"
                                                          Grid.Column="4"
                                                          Text="{Binding SelectedEntry.Suffix, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
@@ -221,7 +221,7 @@
                                                          Foreground="{Binding SelectedEntry.SuffixStyle.Foreground, Converter={StaticResource SummaryEditorBrushToUnsetConverter}}" />
                                                 </TextBlock>
                                                 <Button Grid.Column="1"
-                                                        Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesButton}}"
+                                                        Style="{StaticResource {x:Static sdg:PrimitiveThemeKeys.Button}}"
                                                         Margin="8,0,0,0"
                                                         IsEnabled="{Binding HasSelectedEntry}"
                                                         Command="{Binding EditTextStylingCommand}"
@@ -279,7 +279,7 @@
                                                          SelectedItem="{Binding SelectedLeftEntry, Mode=TwoWay}"
                                                          DisplayMemberPath="DisplayName">
                                                     <ListBox.ItemContainerStyle>
-                                                        <Style BasedOn="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesListBoxItem}}" TargetType="{x:Type ListBoxItem}" />
+                                                        <Style BasedOn="{StaticResource {x:Static sdg:PrimitiveThemeKeys.ListBoxItem}}" TargetType="{x:Type ListBoxItem}" />
                                                     </ListBox.ItemContainerStyle>
                                                 </ListBox>
                                             </Border>
@@ -289,7 +289,7 @@
                                                                   Margin="10,0"
                                                                   VerticalAlignment="Center"
                                                                   Spacing="2">
-                                                <Button Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesButton}}"
+                                                <Button Style="{StaticResource {x:Static sdg:PrimitiveThemeKeys.Button}}"
                                                         Command="{Binding MoveUpCommand}"
                                                         Width="24"
                                                         Height="24"
@@ -299,7 +299,7 @@
                                                               IconBrush="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}"
                                                               IconSource="{StaticResource {x:Static sdg:IconKeys.IconCaretUp}}" />
                                                 </Button>
-                                                <Button Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesButton}}"
+                                                <Button Style="{StaticResource {x:Static sdg:PrimitiveThemeKeys.Button}}"
                                                         Command="{Binding MoveDownCommand}"
                                                         Width="24"
                                                         Height="24"
@@ -309,7 +309,7 @@
                                                               IconBrush="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}"
                                                               IconSource="{StaticResource {x:Static sdg:IconKeys.IconCaretDown}}" />
                                                 </Button>
-                                                <Button Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesButton}}"
+                                                <Button Style="{StaticResource {x:Static sdg:PrimitiveThemeKeys.Button}}"
                                                         Visibility="{Binding IsAlignmentVisible, Converter={StaticResource SummaryEditorBooleanToVisibilityConverter}}"
                                                         Command="{Binding MoveToLeftCommand}"
                                                         Width="24"
@@ -320,7 +320,7 @@
                                                               IconBrush="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}"
                                                               IconSource="{StaticResource {x:Static sdg:IconKeys.IconCaretLeft}}" />
                                                 </Button>
-                                                <Button Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesButton}}"
+                                                <Button Style="{StaticResource {x:Static sdg:PrimitiveThemeKeys.Button}}"
                                                         Visibility="{Binding IsAlignmentVisible, Converter={StaticResource SummaryEditorBooleanToVisibilityConverter}}"
                                                         Command="{Binding MoveToRightCommand}"
                                                         Width="24"
@@ -347,7 +347,7 @@
                                                          SelectedItem="{Binding SelectedRightEntry, Mode=TwoWay}"
                                                          DisplayMemberPath="DisplayName">
                                                     <ListBox.ItemContainerStyle>
-                                                        <Style BasedOn="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesListBoxItem}}" TargetType="{x:Type ListBoxItem}" />
+                                                        <Style BasedOn="{StaticResource {x:Static sdg:PrimitiveThemeKeys.ListBoxItem}}" TargetType="{x:Type ListBoxItem}" />
                                                     </ListBox.ItemContainerStyle>
                                                 </ListBox>
                                             </Border>

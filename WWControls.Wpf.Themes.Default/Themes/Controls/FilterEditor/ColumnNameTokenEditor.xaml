@@ -64,7 +64,7 @@
                                          ItemsSource="{Binding AvailableColumns, RelativeSource={RelativeSource TemplatedParent}}"
                                          SelectedItem="{Binding SelectedColumn, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}">
                                     <ListBox.ItemContainerStyle>
-                                        <Style BasedOn="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesListBoxItem}}" TargetType="ListBoxItem" />
+                                        <Style BasedOn="{StaticResource {x:Static sdg:PrimitiveThemeKeys.ListBoxItem}}" TargetType="ListBoxItem" />
                                     </ListBox.ItemContainerStyle>
                                     <ListBox.ItemTemplate>
                                         <DataTemplate>

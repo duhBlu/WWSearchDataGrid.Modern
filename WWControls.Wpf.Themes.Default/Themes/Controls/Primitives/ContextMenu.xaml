@@ -41,7 +41,7 @@
         Note: the icon column keeps its 20px reservation even when MenuItem.Icon is null,
         so every item in a menu — iconned or not — lines up on the same vertical guideline.
     -->
-    <Style x:Key="{x:Static sdg:ThemeKeys.PrimitivesMenuItem}" TargetType="{x:Type MenuItem}">
+    <Style x:Key="{x:Static sdg:PrimitiveThemeKeys.MenuItem}" TargetType="{x:Type MenuItem}">
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="Foreground" Value="#1C1C1C" />
         <Setter Property="FontSize" Value="12" />
@@ -157,7 +157,7 @@
         a BasedOn style (see FooterSummaryFunctionIconStyle below). PrimitivesContextMenu applies
         this implicitly to every icon in its menus; it's also exposed as a key for standalone use.
     -->
-    <Style x:Key="{x:Static sdg:ThemeKeys.PrimitivesMenuItemIcon}" TargetType="{x:Type sdg:Icon}">
+    <Style x:Key="{x:Static sdg:PrimitiveThemeKeys.MenuItemIcon}" TargetType="{x:Type sdg:Icon}">
         <Style.Triggers>
             <DataTrigger Binding="{Binding IsEnabled, RelativeSource={RelativeSource AncestorType={x:Type MenuItem}}}" Value="False">
                 <Setter Property="Opacity" Value="0.35" />
@@ -169,7 +169,7 @@
         Modern flat ContextMenu shell. AllowsTransparency=True (inherited via HasDropShadow=False
         below) lets the rounded Border + drop shadow render without the popup clipping them.
     -->
-    <Style x:Key="{x:Static sdg:ThemeKeys.PrimitivesContextMenu}" TargetType="{x:Type ContextMenu}">
+    <Style x:Key="{x:Static sdg:PrimitiveThemeKeys.ContextMenu}" TargetType="{x:Type ContextMenu}">
         <!--
             Implicit MenuItem and Icon styles scoped to this ContextMenu only. We can't use
             ItemContainerStyle here because the ContextMenu's items collection holds both
@@ -180,8 +180,8 @@
             The implicit Icon style dims any menu glyph in step with its owning item's enabled state.
         -->
         <Style.Resources>
-            <Style BasedOn="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesMenuItem}}" TargetType="{x:Type MenuItem}" />
-            <Style BasedOn="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesMenuItemIcon}}" TargetType="{x:Type sdg:Icon}" />
+            <Style BasedOn="{StaticResource {x:Static sdg:PrimitiveThemeKeys.MenuItem}}" TargetType="{x:Type MenuItem}" />
+            <Style BasedOn="{StaticResource {x:Static sdg:PrimitiveThemeKeys.MenuItemIcon}}" TargetType="{x:Type sdg:Icon}" />
         </Style.Resources>
         <Setter Property="Background" Value="#FFFFFFFF" />
         <Setter Property="BorderBrush" Value="#FFE0E0E0" />
@@ -223,7 +223,7 @@
     -->
     <Style x:Key="FooterSummaryFunctionIconStyle"
            TargetType="{x:Type sdg:Icon}"
-           BasedOn="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesMenuItemIcon}}">
+           BasedOn="{StaticResource {x:Static sdg:PrimitiveThemeKeys.MenuItemIcon}}">
         <Setter Property="Width" Value="12" />
         <Setter Property="Height" Value="12" />
         <Setter Property="StrokeThickness" Value="2.5" />

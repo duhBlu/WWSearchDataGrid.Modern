@@ -33,7 +33,7 @@
                                     <ColumnDefinition Width="*" />
                                 </Grid.ColumnDefinitions>
 
-                                <CheckBox Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesCheckBox}}"
+                                <CheckBox Style="{StaticResource {x:Static sdg:PrimitiveThemeKeys.CheckBox}}"
                                           Grid.Column="0"
                                           IsChecked="{Binding FilterValueManager.SelectAllState, RelativeSource={RelativeSource TemplatedParent}, Mode=OneWay}"
                                           Command="{Binding SelectAllToggleCommand, RelativeSource={RelativeSource TemplatedParent}}"
@@ -42,7 +42,7 @@
                                           Content="Select All"
                                           FontSize="11" />
 
-                                <TextBox Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesTextBox}}"
+                                <TextBox Style="{StaticResource {x:Static sdg:PrimitiveThemeKeys.TextBox}}"
                                          Grid.Column="1"
                                          Text="{Binding FilterValueManager.SearchText, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, Delay=200}"
                                          Padding="4,2"
@@ -93,7 +93,7 @@
                                 </ListBox.ItemContainerStyle>
                                 <ListBox.ItemTemplate>
                                     <DataTemplate>
-                                        <CheckBox Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesCheckBox}}"
+                                        <CheckBox Style="{StaticResource {x:Static sdg:PrimitiveThemeKeys.CheckBox}}"
                                                   IsChecked="{Binding IsChecked}"
                                                   Margin="2,1"
                                                   VerticalContentAlignment="Center">

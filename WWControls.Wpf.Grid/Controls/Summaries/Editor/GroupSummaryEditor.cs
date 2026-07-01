@@ -12,7 +12,7 @@ namespace WWControls.Wpf.Grids
     /// and per-entry Prefix / Display format / Suffix. Edits a
     /// <see cref="GroupSummaryEditorViewModel"/> working copy; OK applies, Cancel discards.
     /// Templated in the theme (<see cref="ThemeKeys.GroupSummaryEditor"/>); hosted in a window
-    /// styled by the shared <see cref="ThemeKeys.PrimitivesWindow"/> chrome, same as the
+    /// styled by the shared <see cref="PrimitiveThemeKeys.Window"/> chrome, same as the
     /// Filter Editor and Column Chooser.
     /// </summary>
     public class GroupSummaryEditor : Control

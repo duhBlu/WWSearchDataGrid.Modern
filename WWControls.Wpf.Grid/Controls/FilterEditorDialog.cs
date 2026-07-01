@@ -86,7 +86,7 @@ namespace WWControls.Wpf.Grids
 
         /// <summary>
         /// Opens the Filter Editor as a modal dialog over the given grid. The host window picks
-        /// up the library's shared chrome via <see cref="ThemeKeys.PrimitivesWindow"/> —
+        /// up the library's shared chrome via <see cref="PrimitiveThemeKeys.Window"/> —
         /// resolved through <see cref="ComponentResourceKey"/> against the assembly's
         /// <c>Themes/Generic.xaml</c>, matching how <see cref="ColumnChooser"/> styles its host.
         /// </summary>

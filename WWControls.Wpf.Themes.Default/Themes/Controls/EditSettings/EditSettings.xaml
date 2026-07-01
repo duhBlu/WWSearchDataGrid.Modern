@@ -271,7 +271,7 @@
             the library's popups. Matches the pattern PrimitivesComboBox uses.
         -->
         <Style.Resources>
-            <Style TargetType="{x:Type ComboBoxItem}" BasedOn="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesComboBoxItem}}" />
+            <Style TargetType="{x:Type ComboBoxItem}" BasedOn="{StaticResource {x:Static sdg:PrimitiveThemeKeys.ComboBoxItem}}" />
         </Style.Resources>
         <Setter Property="Background" Value="#FFFFFF" />
         <Setter Property="Foreground" Value="#1C1C1C" />

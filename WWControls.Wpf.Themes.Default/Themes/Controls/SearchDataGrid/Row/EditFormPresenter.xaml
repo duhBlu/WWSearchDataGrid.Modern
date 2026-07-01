@@ -90,7 +90,7 @@
                                             Content="Update"
                                             IsDefault="True" />
                                     <Button x:Name="PART_CancelButton"
-                                            Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesButton}}"
+                                            Style="{StaticResource {x:Static sdg:PrimitiveThemeKeys.Button}}"
                                             MinWidth="78"
                                             Padding="12,3"
                                             Margin="8,0,0,0"

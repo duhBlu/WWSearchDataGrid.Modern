@@ -288,7 +288,7 @@ namespace WWControls.Wpf.Grids
             if (column == null) return;
 
             var tabControl = new System.Windows.Controls.TabControl();
-            tabControl.SetResourceReference(Control.StyleProperty, ThemeKeys.PrimitivesTabControl);
+            tabControl.SetResourceReference(Control.StyleProperty, PrimitiveThemeKeys.TabControl);
 
             var customTabs = column.CustomColumnFilterTabs;
             bool hasCustomTabs = customTabs != null && customTabs.Count > 0;
@@ -335,7 +335,7 @@ namespace WWControls.Wpf.Grids
         private TabItem BuildTabItem(object header, object content)
         {
             var tabItem = new TabItem { Header = header, Content = content };
-            tabItem.SetResourceReference(Control.StyleProperty, ThemeKeys.PrimitivesTabItem);
+            tabItem.SetResourceReference(Control.StyleProperty, PrimitiveThemeKeys.TabItem);
             return tabItem;
         }
 

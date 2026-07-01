@@ -17,7 +17,7 @@
         control's Visibility flipping to Visible — which happens whenever Status leaves None — so a
         badge re-animates each time it (re)appears, not on every revalidation.
     -->
-    <Style x:Key="{x:Static sdg:ThemeKeys.PrimitivesStatusIcon}" TargetType="{x:Type sdg:StatusIcon}">
+    <Style x:Key="{x:Static sdg:PrimitiveThemeKeys.StatusIcon}" TargetType="{x:Type sdg:StatusIcon}">
         <Setter Property="Width" Value="16" />
         <Setter Property="Height" Value="16" />
         <Setter Property="HorizontalAlignment" Value="Right" />
@@ -138,6 +138,6 @@
         </Style.Triggers>
     </Style>
 
-    <Style BasedOn="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesStatusIcon}}" TargetType="{x:Type sdg:StatusIcon}" />
+    <Style BasedOn="{StaticResource {x:Static sdg:PrimitiveThemeKeys.StatusIcon}}" TargetType="{x:Type sdg:StatusIcon}" />
 
 </ResourceDictionary>

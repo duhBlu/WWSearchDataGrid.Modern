@@ -37,7 +37,7 @@
                                       IsChecked="{Binding FiltersEnabled, RelativeSource={RelativeSource TemplatedParent}}"
                                       ToolTip="Enable or disable all filters without clearing filter definitions">
                                 <CheckBox.Style>
-                                    <Style BasedOn="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesCheckBox}}" TargetType="{x:Type CheckBox}">
+                                    <Style BasedOn="{StaticResource {x:Static sdg:PrimitiveThemeKeys.CheckBox}}" TargetType="{x:Type CheckBox}">
                                         <Setter Property="VerticalAlignment" Value="Top" />
                                         <Setter Property="Margin" Value="6,4,0,0" />
                                         <Style.Triggers>

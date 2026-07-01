@@ -46,7 +46,7 @@
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
 
-                            <CheckBox Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesCheckBox}}"
+                            <CheckBox Style="{StaticResource {x:Static sdg:PrimitiveThemeKeys.CheckBox}}"
                                       Grid.Column="0"
                                       IsChecked="{Binding IsVisible}"
                                       Focusable="False"
@@ -210,7 +210,7 @@
                                     </Grid.ColumnDefinitions>
 
                                     <CheckBox x:Name="PART_SelectAllCheckBox"
-                                              Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesCheckBox}}"
+                                              Style="{StaticResource {x:Static sdg:PrimitiveThemeKeys.CheckBox}}"
                                               Grid.Column="0"
                                               Foreground="#495057"
                                               VerticalAlignment="Center"

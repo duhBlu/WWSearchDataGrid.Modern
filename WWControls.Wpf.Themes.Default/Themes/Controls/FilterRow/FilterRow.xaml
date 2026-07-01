@@ -102,7 +102,7 @@
                             </ControlTemplate>
                         </Button.Template>
                         <Button.ContextMenu>
-                            <ContextMenu Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesContextMenu}}"
+                            <ContextMenu Style="{StaticResource {x:Static sdg:PrimitiveThemeKeys.ContextMenu}}"
                                          DataContext="{Binding RelativeSource={RelativeSource TemplatedParent}}"
                                          IsOpen="{Binding IsDropDownOpen, Mode=TwoWay}"
                                          ItemsSource="{Binding AvailableSearchTypes}"
@@ -124,7 +124,7 @@
                                     </DataTemplate>
                                 </ContextMenu.Resources>
                                 <ContextMenu.ItemContainerStyle>
-                                    <Style TargetType="MenuItem" BasedOn="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesMenuItem}}">
+                                    <Style TargetType="MenuItem" BasedOn="{StaticResource {x:Static sdg:PrimitiveThemeKeys.MenuItem}}">
                                         <Setter Property="Header" Value="{Binding DisplayName}" />
                                         <Setter Property="Command" Value="{Binding DataContext.SelectSearchTypeCommand, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}" />
                                         <Setter Property="CommandParameter" Value="{Binding}" />
@@ -326,7 +326,7 @@
                                       IsThreeState="True"
                                       ToolTip="Filter by checkbox state">
                                 <CheckBox.Style>
-                                    <Style BasedOn="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesCheckBox}}" TargetType="CheckBox">
+                                    <Style BasedOn="{StaticResource {x:Static sdg:PrimitiveThemeKeys.CheckBox}}" TargetType="CheckBox">
                                         <Setter Property="Visibility" Value="Collapsed" />
                                         <Setter Property="Padding" Value="0" />
                                         <Setter Property="FocusVisualStyle">

@@ -55,7 +55,7 @@
         owning SearchDataGrid (filled in on Loaded by walking the visual tree).
     -->
     <ContextMenu x:Key="{x:Static sdg:ThemeKeys.GridSearchDataGridGroupPanelContextMenu}"
-                 Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesContextMenu}}"
+                 Style="{StaticResource {x:Static sdg:PrimitiveThemeKeys.ContextMenu}}"
                  AutomationProperties.AutomationId="cmuGroupPanel">
         <MenuItem Header="Expand All Groups"
                   Command="{x:Static commands:ContextMenuCommands.ExpandAllGroupsCommand}"
@@ -96,7 +96,7 @@
     -->
     <ContextMenu x:Key="{x:Static sdg:ThemeKeys.GridSearchDataGridGroupPillContextMenu}"
                  x:Shared="False"
-                 Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesContextMenu}}"
+                 Style="{StaticResource {x:Static sdg:PrimitiveThemeKeys.ContextMenu}}"
                  StaysOpen="True"
                  AutomationProperties.AutomationId="cmuGroupPanelPill"
                  DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
@@ -166,13 +166,13 @@
                 </MultiBinding>
             </MenuItem.ItemsSource>
             <MenuItem.ItemContainerStyle>
-                <Style TargetType="{x:Type MenuItem}" BasedOn="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesMenuItem}}">
+                <Style TargetType="{x:Type MenuItem}" BasedOn="{StaticResource {x:Static sdg:PrimitiveThemeKeys.MenuItem}}">
                     <Setter Property="Command" Value="{x:Static commands:ContextMenuCommands.SortGroupsBySummaryCommand}" />
                     <Setter Property="CommandParameter" Value="{Binding}" />
                 </Style>
             </MenuItem.ItemContainerStyle>
             <MenuItem.Style>
-                <Style TargetType="{x:Type MenuItem}" BasedOn="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesMenuItem}}">
+                <Style TargetType="{x:Type MenuItem}" BasedOn="{StaticResource {x:Static sdg:PrimitiveThemeKeys.MenuItem}}">
                     <Setter Property="Visibility" Value="Visible" />
                     <Style.Triggers>
                         <Trigger Property="HasItems" Value="False">
@@ -209,7 +209,7 @@
                           IconSource="{StaticResource {x:Static sdg:IconKeys.IconBestFit}}" />
             </MenuItem.Icon>
             <MenuItem.Style>
-                <Style TargetType="MenuItem" BasedOn="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesMenuItem}}">
+                <Style TargetType="MenuItem" BasedOn="{StaticResource {x:Static sdg:PrimitiveThemeKeys.MenuItem}}">
                     <Setter Property="Visibility" Value="Visible" />
                     <Style.Triggers>
                         <DataTrigger Binding="{Binding ActualAllowBestFit}" Value="False">
@@ -223,7 +223,7 @@
                   Command="{x:Static commands:ContextMenuCommands.BestFitAllColumnsCommand}"
                   CommandParameter="{Binding ., Converter={StaticResource GridColumnToContextMenuContextConverter}}">
             <MenuItem.Style>
-                <Style TargetType="MenuItem" BasedOn="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesMenuItem}}">
+                <Style TargetType="MenuItem" BasedOn="{StaticResource {x:Static sdg:PrimitiveThemeKeys.MenuItem}}">
                     <Setter Property="Visibility" Value="Visible" />
                     <Style.Triggers>
                         <DataTrigger Binding="{Binding View.AllowBestFit}" Value="False">
@@ -244,7 +244,7 @@
         </MenuItem>
         <MenuItem Header="Fixed">
             <MenuItem.Style>
-                <Style TargetType="MenuItem" BasedOn="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesMenuItem}}">
+                <Style TargetType="MenuItem" BasedOn="{StaticResource {x:Static sdg:PrimitiveThemeKeys.MenuItem}}">
                     <Setter Property="Visibility" Value="Collapsed" />
                     <Style.Triggers>
                         <DataTrigger Binding="{Binding View.AllowFixedColumnMenu}" Value="True">

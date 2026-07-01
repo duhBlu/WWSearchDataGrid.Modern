@@ -8,7 +8,7 @@
 
     <!--#region Button Style-->
 
-    <Style x:Key="{x:Static sdg:ThemeKeys.PrimitivesButton}" TargetType="{x:Type Button}">
+    <Style x:Key="{x:Static sdg:PrimitiveThemeKeys.Button}" TargetType="{x:Type Button}">
         <Setter Property="Background" Value="#FFFFFF" />
         <Setter Property="Foreground" Value="#1C1C1C" />
         <Setter Property="BorderBrush" Value="#e3e3e3" />
@@ -64,7 +64,7 @@
 
     <!--#region CheckBox Style-->
 
-    <Style x:Key="{x:Static sdg:ThemeKeys.PrimitivesCheckBox}" TargetType="{x:Type CheckBox}">
+    <Style x:Key="{x:Static sdg:PrimitiveThemeKeys.CheckBox}" TargetType="{x:Type CheckBox}">
         <Setter Property="Foreground" Value="#1C1C1C" />
         <Setter Property="Background" Value="#FFFFFF" />
         <Setter Property="BorderBrush" Value="#AAAAAA" />
@@ -161,7 +161,7 @@
 
     <!--#region Resize Thumb Style-->
 
-    <Style x:Key="{x:Static sdg:ThemeKeys.PrimitivesResizeThumb}" TargetType="{x:Type Thumb}">
+    <Style x:Key="{x:Static sdg:PrimitiveThemeKeys.ResizeThumb}" TargetType="{x:Type Thumb}">
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="Focusable" Value="False" />
         <Setter Property="IsTabStop" Value="False" />
@@ -183,7 +183,7 @@
         the accent (white glyph) so an on/off state reads at a glance. Used by the summary
         text-styling editor's Bold / Italic / Underline toggles.
     -->
-    <Style x:Key="{x:Static sdg:ThemeKeys.PrimitivesToggleButton}" TargetType="{x:Type ToggleButton}">
+    <Style x:Key="{x:Static sdg:PrimitiveThemeKeys.ToggleButton}" TargetType="{x:Type ToggleButton}">
         <Setter Property="Background" Value="#FFFFFF" />
         <Setter Property="Foreground" Value="#1C1C1C" />
         <Setter Property="BorderBrush" Value="#e3e3e3" />
@@ -251,7 +251,7 @@
             Sel+Over #D6E8F8     (one step darker on hover-over-selected)
             Disabled #9CA3AF foreground
     -->
-    <Style x:Key="{x:Static sdg:ThemeKeys.PrimitivesComboBoxItem}" TargetType="{x:Type ComboBoxItem}">
+    <Style x:Key="{x:Static sdg:PrimitiveThemeKeys.ComboBoxItem}" TargetType="{x:Type ComboBoxItem}">
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="Foreground" Value="#1C1C1C" />
         <Setter Property="FontSize" Value="12" />
@@ -294,7 +294,7 @@
         </Setter>
     </Style>
 
-    <Style x:Key="{x:Static sdg:ThemeKeys.PrimitivesListBoxItem}" TargetType="{x:Type ListBoxItem}">
+    <Style x:Key="{x:Static sdg:PrimitiveThemeKeys.ListBoxItem}" TargetType="{x:Type ListBoxItem}">
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="Foreground" Value="#1C1C1C" />
         <Setter Property="FontSize" Value="12" />
@@ -341,11 +341,11 @@
 
     <!--#region ComboBox Style-->
 
-    <Style x:Key="{x:Static sdg:ThemeKeys.PrimitivesComboBox}" TargetType="{x:Type ComboBox}">
+    <Style x:Key="{x:Static sdg:PrimitiveThemeKeys.ComboBox}" TargetType="{x:Type ComboBox}">
         <Setter Property="Background" Value="#FFFFFF" />
         <Setter Property="Foreground" Value="#1C1C1C" />
         <Setter Property="BorderBrush" Value="#e3e3e3" />
-        <Setter Property="ItemContainerStyle" Value="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesComboBoxItem}}" />
+        <Setter Property="ItemContainerStyle" Value="{StaticResource {x:Static sdg:PrimitiveThemeKeys.ComboBoxItem}}" />
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="Padding" Value="6,2" />
         <Setter Property="MinHeight" Value="24" />
@@ -535,7 +535,7 @@
         bottom-lip depth cue, and metrics. Focus swaps the lip for an accent underline
         (the same #0078D4 the tab strip and selection tints derive from).
     -->
-    <Style x:Key="{x:Static sdg:ThemeKeys.PrimitivesTextBox}" TargetType="{x:Type TextBox}">
+    <Style x:Key="{x:Static sdg:PrimitiveThemeKeys.TextBox}" TargetType="{x:Type TextBox}">
         <Setter Property="Background" Value="#FFFFFF" />
         <Setter Property="Foreground" Value="#1C1C1C" />
         <Setter Property="BorderBrush" Value="#e3e3e3" />
@@ -602,7 +602,7 @@
 
     <!--#region TabControl & TabItem Style-->
 
-    <Style x:Key="{x:Static sdg:ThemeKeys.PrimitivesTabControl}" TargetType="{x:Type TabControl}">
+    <Style x:Key="{x:Static sdg:PrimitiveThemeKeys.TabControl}" TargetType="{x:Type TabControl}">
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderThickness" Value="0" />
         <Setter Property="Padding" Value="0" />
@@ -638,7 +638,7 @@
         </Setter>
     </Style>
 
-    <Style x:Key="{x:Static sdg:ThemeKeys.PrimitivesTabItem}" TargetType="{x:Type TabItem}">
+    <Style x:Key="{x:Static sdg:PrimitiveThemeKeys.TabItem}" TargetType="{x:Type TabItem}">
         <Setter Property="Foreground" Value="#666666" />
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="Padding" Value="4,2" />
@@ -684,7 +684,7 @@
 
     <!--  Vertical ScrollBar Context Menu  -->
 
-    <Style x:Key="{x:Static sdg:ThemeKeys.PrimitivesScrollBar}" TargetType="{x:Type ScrollBar}">
+    <Style x:Key="{x:Static sdg:PrimitiveThemeKeys.ScrollBar}" TargetType="{x:Type ScrollBar}">
         <Setter Property="OverridesDefaultStyle" Value="True" />
         <Setter Property="Template">
             <Setter.Value>
@@ -1010,7 +1010,7 @@
     </Style>
 
     <!--  Implicit: every ScrollBar inside a control that merges DefaultControls picks this up  -->
-    <Style BasedOn="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesScrollBar}}" TargetType="{x:Type ScrollBar}" />
+    <Style BasedOn="{StaticResource {x:Static sdg:PrimitiveThemeKeys.ScrollBar}}" TargetType="{x:Type ScrollBar}" />
 
     <!--#endregion-->
 

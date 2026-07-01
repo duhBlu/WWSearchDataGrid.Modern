@@ -11,7 +11,7 @@ namespace WWControls.Wpf.Grids
     /// and a live preview. Edits the selected <see cref="SummaryEditorEntry"/>'s working-copy
     /// segment styles in place; closing returns to the parent editor, whose OK / Cancel decides
     /// persistence. Templated in the theme (<see cref="ThemeKeys.SummaryTextStyleEditor"/>); hosted
-    /// in a window styled by the shared <see cref="ThemeKeys.PrimitivesWindow"/> chrome, same as the
+    /// in a window styled by the shared <see cref="PrimitiveThemeKeys.Window"/> chrome, same as the
     /// group summary editor.
     /// </summary>
     public class SummaryTextStyleEditor : Control

@@ -34,7 +34,7 @@
                                 <ItemsControl ItemsSource="{Binding SearchTemplate.DateIntervals, RelativeSource={RelativeSource TemplatedParent}}">
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
-                                            <CheckBox Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesCheckBox}}"
+                                            <CheckBox Style="{StaticResource {x:Static sdg:PrimitiveThemeKeys.CheckBox}}"
                                                       IsChecked="{Binding IsSelected}"
                                                       Margin="0,3"
                                                       VerticalContentAlignment="Center">

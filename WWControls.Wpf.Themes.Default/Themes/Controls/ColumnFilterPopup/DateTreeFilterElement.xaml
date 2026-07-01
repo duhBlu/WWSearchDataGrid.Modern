@@ -27,7 +27,7 @@
                         <DockPanel LastChildFill="True">
 
                             <!--  Top: Select All toggle  -->
-                            <CheckBox Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesCheckBox}}"
+                            <CheckBox Style="{StaticResource {x:Static sdg:PrimitiveThemeKeys.CheckBox}}"
                                       DockPanel.Dock="Top"
                                       IsChecked="{Binding FilterValueManager.SelectAllState, RelativeSource={RelativeSource TemplatedParent}, Mode=OneWay}"
                                       Command="{Binding SelectAllToggleCommand, RelativeSource={RelativeSource TemplatedParent}}"
@@ -69,7 +69,7 @@
                                     </TreeView.ItemContainerStyle>
                                     <TreeView.ItemTemplate>
                                         <HierarchicalDataTemplate ItemsSource="{Binding Children}">
-                                            <CheckBox Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesCheckBox}}"
+                                            <CheckBox Style="{StaticResource {x:Static sdg:PrimitiveThemeKeys.CheckBox}}"
                                                       IsChecked="{Binding IsChecked}"
                                                       Margin="2,1"
                                                       IsThreeState="False">

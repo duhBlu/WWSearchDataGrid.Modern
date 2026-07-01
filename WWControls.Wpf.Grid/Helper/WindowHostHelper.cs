@@ -5,7 +5,7 @@ namespace WWControls.Wpf
 {
     /// <summary>
     /// Shared setup for the windows the library creates in code (Filter Editor, group summary
-    /// editor, Column Chooser): applies the <see cref="ThemeKeys.PrimitivesWindow"/> chrome and
+    /// editor, Column Chooser): applies the <see cref="PrimitiveThemeKeys.Window"/> chrome and
     /// wires the <see cref="SystemCommands"/> its caption buttons invoke — per window instance,
     /// so consumers don't need app-level class command bindings for the chrome to work.
     /// </summary>
@@ -20,7 +20,7 @@ namespace WWControls.Wpf
         /// </summary>
         internal static void ApplyDefaultChrome(Window host, FrameworkElement resourceScope)
         {
-            if (resourceScope.TryFindResource(ThemeKeys.PrimitivesWindow) is Style style)
+            if (resourceScope.TryFindResource(PrimitiveThemeKeys.Window) is Style style)
                 host.Style = style;
             WireSystemCommands(host);
         }

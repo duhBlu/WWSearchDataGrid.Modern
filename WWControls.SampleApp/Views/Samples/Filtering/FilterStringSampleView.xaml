@@ -91,7 +91,7 @@
                                              MinHeight="80"
                                              AcceptsReturn="True"
                                              TextWrapping="Wrap"
-                                             Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesTextBox}}"
+                                             Style="{StaticResource {x:Static sdg:PrimitiveThemeKeys.TextBox}}"
                                              VerticalScrollBarVisibility="Auto"
                                              FontFamily="Consolas"
                                              FontSize="12" />

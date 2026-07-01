@@ -37,7 +37,7 @@
     -->
     <ContextMenu x:Key="{x:Static sdg:ThemeKeys.GridSearchDataGridGroupFooterCellContextMenu}"
                  AutomationProperties.AutomationId="cmuGroupFooterCell"
-                 Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesContextMenu}}"
+                 Style="{StaticResource {x:Static sdg:PrimitiveThemeKeys.ContextMenu}}"
                  x:Shared="False">
         <MenuItem Command="{x:Static commands:ContextMenuCommands.ToggleCountFooterSummaryCommand}"
                   CommandParameter="{Binding PlacementTarget, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}"

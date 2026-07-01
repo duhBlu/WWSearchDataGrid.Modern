@@ -4,7 +4,7 @@
                     xmlns:sdg="http://schemas.wwcontrols.com/wpf">
 
     <ResourceDictionary.MergedDictionaries>
-        <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Controls/SearchDataGrid/Cell/CellContextMenu.xaml" />
+        <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Controls/Primitives/CellContextMenu.xaml" />
     </ResourceDictionary.MergedDictionaries>
 
     <converters:BooleanToVisibilityCollapsedConverter x:Key="BooleanToVisibilityCollapsedConverter" />

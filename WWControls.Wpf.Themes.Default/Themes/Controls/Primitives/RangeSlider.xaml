@@ -11,7 +11,7 @@
         on LowValue / HighValue and the track's actual width — so XAML doesn't need to compute
         positions or centering converters.
     -->
-    <Style x:Key="{x:Static sdg:ThemeKeys.PrimitivesRangeSlider}" TargetType="{x:Type sdg:RangeSlider}">
+    <Style x:Key="{x:Static sdg:PrimitiveThemeKeys.RangeSlider}" TargetType="{x:Type sdg:RangeSlider}">
         <Setter Property="Background" Value="#E5E5E5" />
         <Setter Property="Foreground" Value="#0078D4" />
         <Setter Property="MinHeight" Value="24" />
@@ -59,6 +59,6 @@
         </Setter>
     </Style>
 
-    <Style BasedOn="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesRangeSlider}}" TargetType="{x:Type sdg:RangeSlider}" />
+    <Style BasedOn="{StaticResource {x:Static sdg:PrimitiveThemeKeys.RangeSlider}}" TargetType="{x:Type sdg:RangeSlider}" />
 
 </ResourceDictionary>

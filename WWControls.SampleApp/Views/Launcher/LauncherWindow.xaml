@@ -6,7 +6,7 @@
         xmlns:launcher="clr-namespace:WWControls.SampleApp.Views.Launcher"
         xmlns:sdg="http://schemas.wwcontrols.com/wpf"
         Title="WWControls — Sample Browser"
-        Style="{DynamicResource {x:Static sdg:ThemeKeys.PrimitivesWindow}}"
+        Style="{DynamicResource {x:Static sdg:PrimitiveThemeKeys.Window}}"
         Width="1500"
         Height="880"
         ResizeMode="CanResize"
@@ -57,10 +57,10 @@
             </Setter>
         </Style>
 
-        <Style BasedOn="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesComboBox}}" TargetType="{x:Type ComboBox}" />
-        <Style BasedOn="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesButton}}" TargetType="{x:Type Button}" />
-        <Style BasedOn="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesCheckBox}}" TargetType="{x:Type CheckBox}" />
-        <Style BasedOn="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesTextBox}}" TargetType="{x:Type TextBox}" />
+        <Style BasedOn="{StaticResource {x:Static sdg:PrimitiveThemeKeys.ComboBox}}" TargetType="{x:Type ComboBox}" />
+        <Style BasedOn="{StaticResource {x:Static sdg:PrimitiveThemeKeys.Button}}" TargetType="{x:Type Button}" />
+        <Style BasedOn="{StaticResource {x:Static sdg:PrimitiveThemeKeys.CheckBox}}" TargetType="{x:Type CheckBox}" />
+        <Style BasedOn="{StaticResource {x:Static sdg:PrimitiveThemeKeys.TextBox}}" TargetType="{x:Type TextBox}" />
         <Style BasedOn="{StaticResource SampleRadioButtonStyle}" TargetType="{x:Type RadioButton}" />
         <Style BasedOn="{StaticResource SampleSliderStyle}" TargetType="{x:Type Slider}" />
         <Style BasedOn="{StaticResource SampleExpanderStyle}" TargetType="{x:Type Expander}" />

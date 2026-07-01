@@ -5,7 +5,7 @@
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Controls/Primitives/DefaultControls.xaml" />
         <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Controls/SearchDataGrid/Column/ColumnHeaderContextMenu.xaml" />
-        <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Controls/SearchDataGrid/Cell/CellContextMenu.xaml" />
+        <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Controls/Primitives/CellContextMenu.xaml" />
         <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Controls/SearchDataGrid/Row/RowHeaderContextMenu.xaml" />
         <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Controls/SearchDataGrid/Grid/GridContextMenu.xaml" />
         <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Controls/FilterSummaryPanel/FilterSummaryPanel.xaml" />

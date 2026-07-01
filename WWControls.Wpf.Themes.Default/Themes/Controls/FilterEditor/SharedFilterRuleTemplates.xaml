@@ -27,7 +27,7 @@
         template directly) get counts unconditionally, matching the prior shared behavior.
     -->
     <DataTemplate x:Key="SingleSearchTextBoxTemplate">
-        <sdg:SearchTextBox Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesSearchTextBox}}"
+        <sdg:SearchTextBox Style="{StaticResource {x:Static sdg:PrimitiveThemeKeys.SearchTextBox}}"
                            Text="{Binding SelectedValue, UpdateSourceTrigger=LostFocus}"
                            ItemsSource="{Binding SearchTemplateController.DisplayColumnValues}"
                            ShowClearButton="False"
@@ -68,7 +68,7 @@
                        FontSize="11" />
 
             <sdg:SearchTextBox Grid.Column="0" Grid.Row="1"
-                               Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesSearchTextBox}}"
+                               Style="{StaticResource {x:Static sdg:PrimitiveThemeKeys.SearchTextBox}}"
                                Text="{Binding SelectedValue, UpdateSourceTrigger=LostFocus, ValidatesOnDataErrors=True}"
                                HorizontalAlignment="Stretch"
                                ItemsSource="{Binding SearchTemplateController.DisplayColumnValues}"
@@ -84,7 +84,7 @@
                 </sdg:SearchTextBox.ColumnValueCounts>
             </sdg:SearchTextBox>
             <sdg:SearchTextBox Grid.Column="2" Grid.Row="1"
-                               Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesSearchTextBox}}"
+                               Style="{StaticResource {x:Static sdg:PrimitiveThemeKeys.SearchTextBox}}"
                                Text="{Binding SelectedSecondaryValue, UpdateSourceTrigger=LostFocus, ValidatesOnDataErrors=True}"
                                HorizontalAlignment="Stretch"
                                ItemsSource="{Binding SearchTemplateController.DisplayColumnValues}"
@@ -194,7 +194,7 @@
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
-                                <sdg:SearchTextBox Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesSearchTextBox}}"
+                                <sdg:SearchTextBox Style="{StaticResource {x:Static sdg:PrimitiveThemeKeys.SearchTextBox}}"
                                                    Grid.Column="0"
                                                    Background="Transparent"
                                                    BorderThickness="0"
@@ -306,7 +306,7 @@
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
-            <Button Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesButton}}"
+            <Button Style="{StaticResource {x:Static sdg:PrimitiveThemeKeys.Button}}"
                     Grid.Row="0"
                     Command="{Binding AddDateCommand}"
                     Margin="0,0,0,5"

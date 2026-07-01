@@ -12,7 +12,7 @@
     </UserControl.DataContext>
 
     <UserControl.Resources>
-        <Style BasedOn="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesButton}}" TargetType="{x:Type Button}">
+        <Style BasedOn="{StaticResource {x:Static sdg:PrimitiveThemeKeys.Button}}" TargetType="{x:Type Button}">
             <!--  Panel buttons share a uniform width.  -->
             <Setter Property="HorizontalAlignment" Value="Stretch" />
         </Style>

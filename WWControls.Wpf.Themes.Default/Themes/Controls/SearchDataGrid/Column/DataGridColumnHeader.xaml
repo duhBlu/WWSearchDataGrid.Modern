@@ -96,7 +96,7 @@
                                             VerticalAlignment="Center">
 
                                     <CheckBox x:Name="PART_SelectAllCheckBox"
-                                              Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesCheckBox}}"
+                                              Style="{StaticResource {x:Static sdg:PrimitiveThemeKeys.CheckBox}}"
                                               Visibility="{Binding Column.(sdg:SearchDataGridColumnHeader.Descriptor).ActualShowCheckBoxInHeader, RelativeSource={RelativeSource AncestorType={x:Type sdg:SearchDataGridColumnHeader}}, Converter={StaticResource SelectAllBoolToVisibilityConverter}, FallbackValue=Collapsed}"
                                               IsChecked="{Binding Column.(sdg:SearchDataGridColumnHeader.Descriptor).IsChecked, RelativeSource={RelativeSource AncestorType={x:Type sdg:SearchDataGridColumnHeader}}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                               VerticalAlignment="Center"

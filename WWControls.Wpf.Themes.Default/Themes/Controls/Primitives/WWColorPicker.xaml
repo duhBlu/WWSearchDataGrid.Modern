@@ -168,7 +168,7 @@
     </DataTemplate>
 
     <!--  Main WWColorPicker style  -->
-    <Style x:Key="{x:Static sdg:ThemeKeys.PrimitivesColorPicker}" TargetType="{x:Type sdg:WWColorPicker}">
+    <Style x:Key="{x:Static sdg:PrimitiveThemeKeys.ColorPicker}" TargetType="{x:Type sdg:WWColorPicker}">
         <Setter Property="Focusable" Value="False" />
         
         <Setter Property="MinHeight" Value="24" />
@@ -414,7 +414,7 @@
                                             </Rectangle>
                                         </Border>
                                         <TextBox x:Name="PART_HexTextBox"
-                                                 Style="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesTextBox}}"
+                                                 Style="{StaticResource {x:Static sdg:PrimitiveThemeKeys.TextBox}}"
                                                  Grid.Column="2"
                                                  Text="{Binding HexText, RelativeSource={RelativeSource TemplatedParent}, UpdateSourceTrigger=LostFocus}"
                                                  VerticalAlignment="Center"
@@ -442,6 +442,6 @@
         </Setter>
     </Style>
 
-    <Style BasedOn="{StaticResource {x:Static sdg:ThemeKeys.PrimitivesColorPicker}}" TargetType="{x:Type sdg:WWColorPicker}" />
+    <Style BasedOn="{StaticResource {x:Static sdg:PrimitiveThemeKeys.ColorPicker}}" TargetType="{x:Type sdg:WWColorPicker}" />
 
 </ResourceDictionary>
