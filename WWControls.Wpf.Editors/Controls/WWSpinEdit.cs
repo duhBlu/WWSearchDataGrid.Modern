@@ -10,10 +10,11 @@ using System.Windows.Media;
 namespace WWControls.Wpf.Editors
 {
     /// <summary>
-    /// Spinner numeric editor over <see cref="WWBaseEdit"/>: a right-aligned numeric TextBox in the
-    /// content host plus up/down repeat buttons in the chrome's decoration-button slot. The base owns
-    /// the border, so the spinner reads as one bordered input in the edit form and flat in a cell —
-    /// retiring the old composite "outer border" workaround.
+    /// Spinner numeric editor. A lookless control whose template hosts a right-aligned
+    /// <c>PART_TextBox</c> plus a <c>PART_UpButton</c> / <c>PART_DownButton</c> spinner column inside
+    /// its own chrome (border, focus accent). <see cref="WWBaseEdit.Value"/> carries the text (the
+    /// inner TextBox two-way-binds to it in the template), and the spinner reads as one bordered
+    /// input on a form, flat in a cell.
     /// </summary>
     /// <remarks>
     /// Grid-agnostic. It owns numeric concerns — digit filtering, Ctrl+Up/Down (and Ctrl+Shift for
@@ -21,67 +22,26 @@ namespace WWControls.Wpf.Editors
     /// <see cref="IEditTextBoxProvider"/>. Bare arrow keys are left unhandled so the grid-side host
     /// can drive cell navigation; <see cref="WWBaseEdit.Value"/> carries the text.
     /// </remarks>
+    [TemplatePart(Name = PartTextBox, Type = typeof(TextBox))]
+    [TemplatePart(Name = PartUpButton, Type = typeof(RepeatButton))]
+    [TemplatePart(Name = PartDownButton, Type = typeof(RepeatButton))]
     public class WWSpinEdit : WWBaseEdit, IEditTextBoxProvider
     {
         private const string ChevronUp = "";   // Segoe Fluent Icons ChevronUp
         private const string ChevronDown = ""; // Segoe Fluent Icons ChevronDown
 
-        private readonly TextBox _textBox;
-        private readonly RepeatButton _upButton;
-        private readonly RepeatButton _downButton;
+        private const string PartTextBox = "PART_TextBox";
+        private const string PartUpButton = "PART_UpButton";
+        private const string PartDownButton = "PART_DownButton";
+
+        private TextBox _textBox;
+        private RepeatButton _upButton;
+        private RepeatButton _downButton;
 
         static WWSpinEdit()
         {
             DefaultStyleKeyProperty.OverrideMetadata(typeof(WWSpinEdit),
-                new FrameworkPropertyMetadata(typeof(WWBaseEdit)));
-        }
-
-        public WWSpinEdit()
-        {
-            _textBox = new TextBox
-            {
-                BorderThickness = new Thickness(0),
-                Background = Brushes.Transparent,
-                Padding = new Thickness(0),
-                TextAlignment = TextAlignment.Right,
-                VerticalContentAlignment = VerticalAlignment.Center,
-                VerticalAlignment = VerticalAlignment.Stretch,
-            };
-            BindingOperations.SetBinding(_textBox, TextBox.TextProperty, new Binding(nameof(Value))
-            {
-                Source = this,
-                Mode = BindingMode.TwoWay,
-                UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged,
-            });
-            BindingOperations.SetBinding(_textBox, TextBox.IsReadOnlyProperty, new Binding(nameof(IsReadOnly))
-            {
-                Source = this,
-                Mode = BindingMode.OneWay,
-            });
-            BindingOperations.SetBinding(_textBox, Control.ForegroundProperty, new Binding(nameof(Foreground))
-            {
-                Source = this,
-                Mode = BindingMode.OneWay,
-            });
-            _textBox.PreviewTextInput += OnPreviewTextInput;
-            _textBox.PreviewKeyDown += OnTextBoxPreviewKeyDown;
-            EditContent = _textBox;
-
-            _upButton = new RepeatButton { Content = ChevronUp, Focusable = false };
-            _downButton = new RepeatButton { Content = ChevronDown, Focusable = false };
-            _upButton.Click += (_, _) => Step(+1, large: false);
-            _downButton.Click += (_, _) => Step(-1, large: false);
-
-            var buttons = new Grid();
-            buttons.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
-            buttons.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
-            Grid.SetRow(_upButton, 0);
-            Grid.SetRow(_downButton, 1);
-            buttons.Children.Add(_upButton);
-            buttons.Children.Add(_downButton);
-
-            ButtonContent = buttons;
-            ShowButtons = true;
+                new FrameworkPropertyMetadata(typeof(WWSpinEdit)));
         }
 
         public static readonly DependencyProperty MinimumProperty =
@@ -130,12 +90,45 @@ namespace WWControls.Wpf.Editors
         public override void OnApplyTemplate()
         {
             base.OnApplyTemplate();
-            if (TryFindResource(EditorThemeKeys.SpinButton) is Style spinStyle)
+
+            if (_textBox != null)
             {
-                _upButton.Style ??= spinStyle;
-                _downButton.Style ??= spinStyle;
+                _textBox.PreviewTextInput -= OnPreviewTextInput;
+                _textBox.PreviewKeyDown -= OnTextBoxPreviewKeyDown;
+            }
+            if (_upButton != null) _upButton.Click -= OnUpButtonClick;
+            if (_downButton != null) _downButton.Click -= OnDownButtonClick;
+
+            _textBox = GetTemplateChild(PartTextBox) as TextBox;
+            _upButton = GetTemplateChild(PartUpButton) as RepeatButton;
+            _downButton = GetTemplateChild(PartDownButton) as RepeatButton;
+
+            if (_textBox != null)
+            {
+                _textBox.PreviewTextInput += OnPreviewTextInput;
+                _textBox.PreviewKeyDown += OnTextBoxPreviewKeyDown;
+            }
+
+            // The glyph content is assigned in code (rather than the template) so the Segoe Fluent
+            // chevron characters live in exactly one place — the ChevronUp / ChevronDown constants.
+            var spinStyle = TryFindResource(EditorThemeKeys.SpinButton) as Style;
+            if (_upButton != null)
+            {
+                _upButton.Content = ChevronUp;
+                if (_upButton.Style == null && spinStyle != null) _upButton.Style = spinStyle;
+                _upButton.Click += OnUpButtonClick;
+            }
+            if (_downButton != null)
+            {
+                _downButton.Content = ChevronDown;
+                if (_downButton.Style == null && spinStyle != null) _downButton.Style = spinStyle;
+                _downButton.Click += OnDownButtonClick;
             }
         }
+
+        private void OnUpButtonClick(object sender, RoutedEventArgs e) => Step(+1, large: false);
+
+        private void OnDownButtonClick(object sender, RoutedEventArgs e) => Step(-1, large: false);
 
         // Numeric-only entry: digits, decimal point / group separator, sign. Binding-time conversion
         // does the actual parse against the column's runtime type (int rejects "1.5", etc.).

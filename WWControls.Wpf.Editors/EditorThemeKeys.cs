@@ -26,6 +26,22 @@ namespace WWControls.Wpf.Editors
         public static ComponentResourceKey BaseEdit { get; } =
             new ComponentResourceKey(typeof(EditorThemeKeys), nameof(BaseEdit));
 
+        /// <summary>
+        /// Default style for <see cref="WWTextEdit"/> — the editor's own chrome (border, background,
+        /// padding, focus accent, disabled visual) hosting its inner <c>PART_TextBox</c>. The border
+        /// draws per <see cref="WWBaseEdit.ShowBorder"/>; retheme this key to restyle the text editor.
+        /// </summary>
+        public static ComponentResourceKey TextEdit { get; } =
+            new ComponentResourceKey(typeof(EditorThemeKeys), nameof(TextEdit));
+
+        /// <summary>
+        /// Default style for <see cref="WWSpinEdit"/> — the editor's own chrome hosting its inner
+        /// right-aligned <c>PART_TextBox</c> plus the <c>PART_UpButton</c> / <c>PART_DownButton</c>
+        /// spinner column.
+        /// </summary>
+        public static ComponentResourceKey SpinEdit { get; } =
+            new ComponentResourceKey(typeof(EditorThemeKeys), nameof(SpinEdit));
+
         /// <summary>Default style for the read-only TextBlock used by Text / ComboBox / Spin / Date display templates.</summary>
         public static ComponentResourceKey DisplayTextBlock { get; } =
             new ComponentResourceKey(typeof(EditorThemeKeys), nameof(DisplayTextBlock));

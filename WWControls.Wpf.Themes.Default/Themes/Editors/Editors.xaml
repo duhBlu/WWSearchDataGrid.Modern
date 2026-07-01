@@ -84,9 +84,138 @@
         </Setter>
     </Style>
 
-    <!-- Implicit default so WWBaseEdit and every editor whose default style key points at it
-         (WWTextEdit, …) pick up the chrome without an explicit Style reference. -->
+    <!-- Implicit default so WWBaseEdit and every editor whose default style key still points at it
+         (the combo / date editors) pick up the shared chrome without an explicit Style reference. -->
     <Style BasedOn="{StaticResource {x:Static sdg:EditorThemeKeys.BaseEdit}}" TargetType="{x:Type sdg:WWBaseEdit}" />
+
+    <!--
+        WWTextEdit — the text editor's own chrome: border (drawn per ShowBorder, an accent edge on
+        focus), background, padding, disabled visual, hosting the inner PART_TextBox. Flat inside a
+        grid cell (the control clears ShowBorder there), bordered on a form / standalone.
+    -->
+    <Style x:Key="{x:Static sdg:EditorThemeKeys.TextEdit}" TargetType="{x:Type sdg:WWTextEdit}">
+        <Setter Property="Background" Value="#FFFFFF" />
+        <Setter Property="Foreground" Value="#1C1C1C" />
+        <Setter Property="BorderBrush" Value="#CCCCCC" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Padding" Value="4,2" />
+        <Setter Property="Focusable" Value="True" />
+        <Setter Property="IsTabStop" Value="False" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type sdg:WWTextEdit}">
+                    <Border x:Name="ChromeBorder"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="3"
+                            SnapsToDevicePixels="True">
+                        <TextBox x:Name="PART_TextBox"
+                                 Margin="{TemplateBinding Padding}"
+                                 BorderThickness="0"
+                                 Background="Transparent"
+                                 Padding="0"
+                                 Foreground="{TemplateBinding Foreground}"
+                                 VerticalContentAlignment="Center"
+                                 VerticalAlignment="Stretch"
+                                 IsReadOnly="{TemplateBinding IsReadOnly}"
+                                 TextAlignment="{TemplateBinding TextAlignment}"
+                                 Text="{Binding Value, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="ShowBorder" Value="True">
+                            <Setter TargetName="ChromeBorder" Property="BorderThickness" Value="1" />
+                        </Trigger>
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="ShowBorder" Value="True" />
+                                <Condition Property="IsKeyboardFocusWithin" Value="True" />
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="ChromeBorder" Property="BorderBrush" Value="#0078D4" />
+                        </MultiTrigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="ChromeBorder" Property="Opacity" Value="0.6" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!--
+        WWSpinEdit — its own chrome hosting a right-aligned PART_TextBox and a two-row spinner column
+        (PART_UpButton / PART_DownButton). The button glyph + SpinButton style are applied in code
+        (WWSpinEdit.OnApplyTemplate); Click / increment / clamp logic lives on the control.
+    -->
+    <Style x:Key="{x:Static sdg:EditorThemeKeys.SpinEdit}" TargetType="{x:Type sdg:WWSpinEdit}">
+        <Setter Property="Background" Value="#FFFFFF" />
+        <Setter Property="Foreground" Value="#1C1C1C" />
+        <Setter Property="BorderBrush" Value="#CCCCCC" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Padding" Value="4,2" />
+        <Setter Property="Focusable" Value="True" />
+        <Setter Property="IsTabStop" Value="False" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type sdg:WWSpinEdit}">
+                    <Border x:Name="ChromeBorder"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="3"
+                            SnapsToDevicePixels="True">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <TextBox x:Name="PART_TextBox"
+                                     Grid.Column="0"
+                                     Margin="{TemplateBinding Padding}"
+                                     BorderThickness="0"
+                                     Background="Transparent"
+                                     Padding="0"
+                                     Foreground="{TemplateBinding Foreground}"
+                                     TextAlignment="Right"
+                                     VerticalContentAlignment="Center"
+                                     VerticalAlignment="Stretch"
+                                     IsReadOnly="{TemplateBinding IsReadOnly}"
+                                     Text="{Binding Value, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+
+                            <Grid Grid.Column="1" VerticalAlignment="Center">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="*" />
+                                    <RowDefinition Height="*" />
+                                </Grid.RowDefinitions>
+                                <RepeatButton x:Name="PART_UpButton" Grid.Row="0" Focusable="False" />
+                                <RepeatButton x:Name="PART_DownButton" Grid.Row="1" Focusable="False" />
+                            </Grid>
+                        </Grid>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="ShowBorder" Value="True">
+                            <Setter TargetName="ChromeBorder" Property="BorderThickness" Value="1" />
+                        </Trigger>
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="ShowBorder" Value="True" />
+                                <Condition Property="IsKeyboardFocusWithin" Value="True" />
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="ChromeBorder" Property="BorderBrush" Value="#0078D4" />
+                        </MultiTrigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="ChromeBorder" Property="Opacity" Value="0.6" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
 
     <!-- WWCheckEdit is a glyph, not a bordered input: transparent background so the cell's own
          fill / selection shows through, no padding, border stays off. Reuses the base chrome
