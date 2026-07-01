@@ -15,7 +15,7 @@
         surfaces). x:Shared defaults to True for ContextMenu, but consumers
         rebind DataContext per opening so a single instance is fine here.
     -->
-    <ContextMenu x:Key="{x:Static sdg:ThemeKeys.GridSearchDataGridColumnHeaderContextMenu}"
+    <ContextMenu x:Key="{x:Static sdg:GridThemeKeys.GridSearchDataGridColumnHeaderContextMenu}"
                  AutomationProperties.AutomationId="cmuColumnHeader"
                  Style="{StaticResource {x:Static sdg:PrimitiveThemeKeys.ContextMenu}}"
                  StaysOpen="True">

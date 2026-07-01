@@ -86,7 +86,7 @@
         </StackPanel>
     </DataTemplate>
 
-    <Style x:Key="{x:Static sdg:ThemeKeys.SummaryTextStyleEditor}" TargetType="{x:Type sdg:SummaryTextStyleEditor}">
+    <Style x:Key="{x:Static sdg:GridThemeKeys.SummaryTextStyleEditor}" TargetType="{x:Type sdg:SummaryTextStyleEditor}">
         <Setter Property="Background" Value="#f4f4f4" />
         <Setter Property="Template">
             <Setter.Value>
@@ -125,6 +125,6 @@
         </Setter>
     </Style>
 
-    <Style BasedOn="{StaticResource {x:Static sdg:ThemeKeys.SummaryTextStyleEditor}}" TargetType="{x:Type sdg:SummaryTextStyleEditor}" />
+    <Style BasedOn="{StaticResource {x:Static sdg:GridThemeKeys.SummaryTextStyleEditor}}" TargetType="{x:Type sdg:SummaryTextStyleEditor}" />
 
 </ResourceDictionary>

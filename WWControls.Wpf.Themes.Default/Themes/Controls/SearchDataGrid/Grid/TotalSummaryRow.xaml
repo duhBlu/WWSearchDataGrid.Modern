@@ -64,7 +64,7 @@
         AllowedTotalSummaries or unsupported by the column's FieldType. Each item declares its
         OWN icon element — a shared Setter visual would parent once and render on a single row only.
     -->
-    <ContextMenu x:Key="{x:Static sdg:ThemeKeys.GridSearchDataGridTotalSummaryCellContextMenu}"
+    <ContextMenu x:Key="{x:Static sdg:GridThemeKeys.GridSearchDataGridTotalSummaryCellContextMenu}"
                  AutomationProperties.AutomationId="cmuTotalSummaryCell"
                  Style="{StaticResource {x:Static sdg:PrimitiveThemeKeys.ContextMenu}}"
                  x:Shared="False">
@@ -182,7 +182,7 @@
         opens the editor to pick column-specific summaries for the panel. PlacementTarget is the
         panel border inside the grid template, so TemplatedParent reaches the SearchDataGrid.
     -->
-    <ContextMenu x:Key="{x:Static sdg:ThemeKeys.GridSearchDataGridFixedTotalSummaryContextMenu}"
+    <ContextMenu x:Key="{x:Static sdg:GridThemeKeys.GridSearchDataGridFixedTotalSummaryContextMenu}"
                  AutomationProperties.AutomationId="cmuFixedTotalSummary"
                  Style="{StaticResource {x:Static sdg:PrimitiveThemeKeys.ContextMenu}}"
                  x:Shared="False">
@@ -228,12 +228,12 @@
         <Setter Property="HorizontalAlignment" Value="Right" />
     </Style>
 
-    <Style x:Key="{x:Static sdg:ThemeKeys.GridSearchDataGridTotalSummaryCell}" TargetType="{x:Type sdg:TotalSummaryCell}">
+    <Style x:Key="{x:Static sdg:GridThemeKeys.GridSearchDataGridTotalSummaryCell}" TargetType="{x:Type sdg:TotalSummaryCell}">
         <Setter Property="Background" Value="#FFF9F9F9" />
         <Setter Property="BorderBrush" Value="#FFC8C8C8" />
         <Setter Property="BorderThickness" Value="0,0,0,0" />
         <Setter Property="MinHeight" Value="24" />
-        <Setter Property="ContextMenu" Value="{StaticResource {x:Static sdg:ThemeKeys.GridSearchDataGridTotalSummaryCellContextMenu}}" />
+        <Setter Property="ContextMenu" Value="{StaticResource {x:Static sdg:GridThemeKeys.GridSearchDataGridTotalSummaryCellContextMenu}}" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type sdg:TotalSummaryCell}">
@@ -292,13 +292,13 @@
         </Style.Triggers>
     </Style>
 
-    <Style BasedOn="{StaticResource {x:Static sdg:ThemeKeys.GridSearchDataGridTotalSummaryCell}}" TargetType="{x:Type sdg:TotalSummaryCell}" />
+    <Style BasedOn="{StaticResource {x:Static sdg:GridThemeKeys.GridSearchDataGridTotalSummaryCell}}" TargetType="{x:Type sdg:TotalSummaryCell}" />
 
     <!--
         Pinned total summary row hosting the column-aligned panel — same shape as the
         FilterRowPresenter template, with the top seam against the data area.
     -->
-    <Style x:Key="{x:Static sdg:ThemeKeys.GridSearchDataGridTotalSummaryRow}" TargetType="{x:Type sdg:TotalSummaryRowPresenter}">
+    <Style x:Key="{x:Static sdg:GridThemeKeys.GridSearchDataGridTotalSummaryRow}" TargetType="{x:Type sdg:TotalSummaryRowPresenter}">
         <Setter Property="Background" Value="#FFF9F9F9" />
         <Setter Property="BorderBrush" Value="#d0d0d0" />
         <Setter Property="BorderThickness" Value="0,1,0,0" />
@@ -317,6 +317,6 @@
         </Setter>
     </Style>
 
-    <Style BasedOn="{StaticResource {x:Static sdg:ThemeKeys.GridSearchDataGridTotalSummaryRow}}" TargetType="{x:Type sdg:TotalSummaryRowPresenter}" />
+    <Style BasedOn="{StaticResource {x:Static sdg:GridThemeKeys.GridSearchDataGridTotalSummaryRow}}" TargetType="{x:Type sdg:TotalSummaryRowPresenter}" />
 
 </ResourceDictionary>

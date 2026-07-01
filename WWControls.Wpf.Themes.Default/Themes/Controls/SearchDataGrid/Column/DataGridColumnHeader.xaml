@@ -45,9 +45,9 @@
         </Setter>
     </Style>
 
-    <Style x:Key="{x:Static sdg:ThemeKeys.GridSearchDataGridColumnHeader}" TargetType="{x:Type sdg:SearchDataGridColumnHeader}">
+    <Style x:Key="{x:Static sdg:GridThemeKeys.GridSearchDataGridColumnHeader}" TargetType="{x:Type sdg:SearchDataGridColumnHeader}">
         <Setter Property="AllowDrop" Value="True" />
-        <Setter Property="ContextMenu" Value="{StaticResource {x:Static sdg:ThemeKeys.GridSearchDataGridColumnHeaderContextMenu}}" />
+        <Setter Property="ContextMenu" Value="{StaticResource {x:Static sdg:GridThemeKeys.GridSearchDataGridColumnHeaderContextMenu}}" />
         <Setter Property="Foreground" Value="#FF333333" />
         <Setter Property="Background" Value="#FFF9F9F9" />
         <Setter Property="BorderBrush" Value="#FFd0d0d0" />

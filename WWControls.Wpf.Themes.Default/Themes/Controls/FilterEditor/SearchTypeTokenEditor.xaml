@@ -10,7 +10,7 @@
     <converters:SearchTypeToIconConverter x:Key="FilterEditorSearchTypeToIconConverter" />
     <converters:EnumToStringConverter x:Key="FilterEditorEnumToStringConverter" />
 
-    <Style x:Key="{x:Static sdg:ThemeKeys.FilterEditorSearchTypeToken}" TargetType="{x:Type sdg:SearchTypeTokenEditor}">
+    <Style x:Key="{x:Static sdg:GridThemeKeys.FilterEditorSearchTypeToken}" TargetType="{x:Type sdg:SearchTypeTokenEditor}">
         <Setter Property="Focusable" Value="True" />
         <Setter Property="VerticalAlignment" Value="Center" />
         <Setter Property="Template">
@@ -90,6 +90,6 @@
         </Setter>
     </Style>
 
-    <Style BasedOn="{StaticResource {x:Static sdg:ThemeKeys.FilterEditorSearchTypeToken}}" TargetType="{x:Type sdg:SearchTypeTokenEditor}" />
+    <Style BasedOn="{StaticResource {x:Static sdg:GridThemeKeys.FilterEditorSearchTypeToken}}" TargetType="{x:Type sdg:SearchTypeTokenEditor}" />
 
 </ResourceDictionary>

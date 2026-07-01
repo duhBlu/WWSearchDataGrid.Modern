@@ -11,7 +11,7 @@ namespace WWControls.Wpf.Grids
     /// the configured entries in their Left / Right side lists with reorder / re-side arrows
     /// and per-entry Prefix / Display format / Suffix. Edits a
     /// <see cref="GroupSummaryEditorViewModel"/> working copy; OK applies, Cancel discards.
-    /// Templated in the theme (<see cref="ThemeKeys.GroupSummaryEditor"/>); hosted in a window
+    /// Templated in the theme (<see cref="GridThemeKeys.GroupSummaryEditor"/>); hosted in a window
     /// styled by the shared <see cref="PrimitiveThemeKeys.Window"/> chrome, same as the
     /// Filter Editor and Column Chooser.
     /// </summary>

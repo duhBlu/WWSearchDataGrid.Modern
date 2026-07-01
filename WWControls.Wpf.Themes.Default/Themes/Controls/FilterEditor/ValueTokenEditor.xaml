@@ -8,7 +8,7 @@
         <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Controls/Primitives/NumericUpDown.xaml" />
     </ResourceDictionary.MergedDictionaries>
 
-    <Style x:Key="{x:Static sdg:ThemeKeys.FilterEditorValueToken}" TargetType="{x:Type sdg:ValueTokenEditor}">
+    <Style x:Key="{x:Static sdg:GridThemeKeys.FilterEditorValueToken}" TargetType="{x:Type sdg:ValueTokenEditor}">
         <Setter Property="Focusable" Value="True" />
         <Setter Property="VerticalAlignment" Value="Center" />
         <Setter Property="Template">
@@ -105,6 +105,6 @@
         </Style.Triggers>
     </Style>
 
-    <Style BasedOn="{StaticResource {x:Static sdg:ThemeKeys.FilterEditorValueToken}}" TargetType="{x:Type sdg:ValueTokenEditor}" />
+    <Style BasedOn="{StaticResource {x:Static sdg:GridThemeKeys.FilterEditorValueToken}}" TargetType="{x:Type sdg:ValueTokenEditor}" />
 
 </ResourceDictionary>

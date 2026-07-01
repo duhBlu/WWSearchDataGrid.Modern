@@ -13,7 +13,7 @@
         and layout actions. The menu's DataContext is rebound to a Commands.ContextMenuContext
         per opening, so a single instance is fine here (x:Shared defaults to True for ContextMenu).
     -->
-    <ContextMenu x:Key="{x:Static sdg:ThemeKeys.GridSearchDataGridContextMenu}"
+    <ContextMenu x:Key="{x:Static sdg:GridThemeKeys.GridSearchDataGridContextMenu}"
                  Style="{StaticResource {x:Static sdg:PrimitiveThemeKeys.ContextMenu}}"
                  AutomationProperties.AutomationId="cmuGridBody">
         <!--  Filter operations  -->

@@ -15,7 +15,7 @@
     <!--#region Filter Tokens-->
 
     <!--  Open Bracket Token Template  -->
-    <DataTemplate x:Key="{x:Static sdg:ThemeKeys.FilterTokensOpenBracket}">
+    <DataTemplate x:Key="{x:Static sdg:GridThemeKeys.FilterTokensOpenBracket}">
         <Border Background="Transparent"
                 BorderThickness="1"
                 Margin="0,0,-8,0"
@@ -35,7 +35,7 @@
     </DataTemplate>
 
     <!--  Column Name Token Template  -->
-    <DataTemplate x:Key="{x:Static sdg:ThemeKeys.FilterTokensColumnName}">
+    <DataTemplate x:Key="{x:Static sdg:GridThemeKeys.FilterTokensColumnName}">
         <Border Background="#ffc69b"
                 Margin="1,0"
                 Padding="4,0"
@@ -51,7 +51,7 @@
     </DataTemplate>
 
     <!--  Search Type Token Template  -->
-    <DataTemplate x:Key="{x:Static sdg:ThemeKeys.FilterTokensSearchType}">
+    <DataTemplate x:Key="{x:Static sdg:GridThemeKeys.FilterTokensSearchType}">
         <Border Background="Transparent"
                 Margin="2,1"
                 Padding="4,3"
@@ -65,7 +65,7 @@
     </DataTemplate>
 
     <!--  Unary Search Type Token Template  -->
-    <DataTemplate x:Key="{x:Static sdg:ThemeKeys.FilterTokensUnarySearchType}">
+    <DataTemplate x:Key="{x:Static sdg:GridThemeKeys.FilterTokensUnarySearchType}">
         <Grid x:Name="TokenRoot"
               Cursor="Hand"
               Height="22"
@@ -146,7 +146,7 @@
     </DataTemplate>
 
     <!--  Value Token Template  -->
-    <DataTemplate x:Key="{x:Static sdg:ThemeKeys.FilterTokensValue}">
+    <DataTemplate x:Key="{x:Static sdg:GridThemeKeys.FilterTokensValue}">
         <Grid x:Name="TokenRoot"
               Background="Transparent"
               Cursor="Hand"
@@ -229,7 +229,7 @@
     </DataTemplate>
 
     <!--  Value Operator Token Template (between values "and")  -->
-    <DataTemplate x:Key="{x:Static sdg:ThemeKeys.FilterTokensValueOperator}">
+    <DataTemplate x:Key="{x:Static sdg:GridThemeKeys.FilterTokensValueOperator}">
         <Border Background="Transparent"
                 Margin="1,1"
                 Padding="3,3"
@@ -244,7 +244,7 @@
     </DataTemplate>
 
     <!--  Closing Bracket Token Template  -->
-    <DataTemplate x:Key="{x:Static sdg:ThemeKeys.FilterTokensCloseBracket}">
+    <DataTemplate x:Key="{x:Static sdg:GridThemeKeys.FilterTokensCloseBracket}">
         <Border Background="Transparent"
                 BorderThickness="1"
                 Margin="-8,0,0,0"
@@ -264,7 +264,7 @@
     </DataTemplate>
 
     <!--  Search Template Group logical Connector Token Template  -->
-    <DataTemplate x:Key="{x:Static sdg:ThemeKeys.FilterTokensGroupLogicalConnector}">
+    <DataTemplate x:Key="{x:Static sdg:GridThemeKeys.FilterTokensGroupLogicalConnector}">
         <Border x:Name="OperatorBorder"
                 Background="#cee8fb"
                 Cursor="Hand"
@@ -294,7 +294,7 @@
     </DataTemplate>
 
     <!--  Search Template Logical Connector Token Template  -->
-    <DataTemplate x:Key="{x:Static sdg:ThemeKeys.FilterTokensTemplateLogicalConnector}">
+    <DataTemplate x:Key="{x:Static sdg:GridThemeKeys.FilterTokensTemplateLogicalConnector}">
         <Border x:Name="TemplateOperatorBorder"
                 Background="#cee8fb"
                 Cursor="Hand"
@@ -324,7 +324,7 @@
     </DataTemplate>
 
     <!--  Remove Action Token Template  -->
-    <DataTemplate x:Key="{x:Static sdg:ThemeKeys.FilterTokensRemoveAction}">
+    <DataTemplate x:Key="{x:Static sdg:GridThemeKeys.FilterTokensRemoveAction}">
         <Button Cursor="Hand"
                 Command="{Binding RemoveTokenFilterCommand, RelativeSource={RelativeSource AncestorType=sdg:FilterSummaryPanel}}"
                 CommandParameter="{Binding}"
@@ -392,15 +392,15 @@
 
     <!--  Token Template Selector  -->
     <sdg:FilterTokenTemplateSelector x:Key="GenericFilterTokenTemplateSelector"
-                                     OpenBracketTemplate="{StaticResource {x:Static sdg:ThemeKeys.FilterTokensOpenBracket}}"
-                                     ColumnNameTemplate="{StaticResource {x:Static sdg:ThemeKeys.FilterTokensColumnName}}"
-                                     SearchTypeTemplate="{StaticResource {x:Static sdg:ThemeKeys.FilterTokensSearchType}}"
-                                     UnarySearchTypeTemplate="{StaticResource {x:Static sdg:ThemeKeys.FilterTokensUnarySearchType}}"
-                                     ValueTemplate="{StaticResource {x:Static sdg:ThemeKeys.FilterTokensValue}}"
-                                     ValueOperatorTemplate="{StaticResource {x:Static sdg:ThemeKeys.FilterTokensValueOperator}}"
-                                     CloseBracketTemplate="{StaticResource {x:Static sdg:ThemeKeys.FilterTokensCloseBracket}}"
-                                     GroupLogicalConnectorTemplate="{StaticResource {x:Static sdg:ThemeKeys.FilterTokensGroupLogicalConnector}}"
-                                     TemplateLogicalConnectorTemplate="{StaticResource {x:Static sdg:ThemeKeys.FilterTokensTemplateLogicalConnector}}"
-                                     RemoveActionTemplate="{StaticResource {x:Static sdg:ThemeKeys.FilterTokensRemoveAction}}" />
+                                     OpenBracketTemplate="{StaticResource {x:Static sdg:GridThemeKeys.FilterTokensOpenBracket}}"
+                                     ColumnNameTemplate="{StaticResource {x:Static sdg:GridThemeKeys.FilterTokensColumnName}}"
+                                     SearchTypeTemplate="{StaticResource {x:Static sdg:GridThemeKeys.FilterTokensSearchType}}"
+                                     UnarySearchTypeTemplate="{StaticResource {x:Static sdg:GridThemeKeys.FilterTokensUnarySearchType}}"
+                                     ValueTemplate="{StaticResource {x:Static sdg:GridThemeKeys.FilterTokensValue}}"
+                                     ValueOperatorTemplate="{StaticResource {x:Static sdg:GridThemeKeys.FilterTokensValueOperator}}"
+                                     CloseBracketTemplate="{StaticResource {x:Static sdg:GridThemeKeys.FilterTokensCloseBracket}}"
+                                     GroupLogicalConnectorTemplate="{StaticResource {x:Static sdg:GridThemeKeys.FilterTokensGroupLogicalConnector}}"
+                                     TemplateLogicalConnectorTemplate="{StaticResource {x:Static sdg:GridThemeKeys.FilterTokensTemplateLogicalConnector}}"
+                                     RemoveActionTemplate="{StaticResource {x:Static sdg:GridThemeKeys.FilterTokensRemoveAction}}" />
 
 </ResourceDictionary>

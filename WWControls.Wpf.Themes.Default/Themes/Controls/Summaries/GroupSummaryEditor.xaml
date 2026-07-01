@@ -23,7 +23,7 @@
     <converters:BooleanToGridLengthConverter x:Key="SummaryEditorBooleanToGridLengthConverter" />
     <converters:BrushToUnsetConverter x:Key="SummaryEditorBrushToUnsetConverter" />
 
-    <Style x:Key="{x:Static sdg:ThemeKeys.GroupSummaryEditor}" TargetType="{x:Type sdg:GroupSummaryEditor}">
+    <Style x:Key="{x:Static sdg:GridThemeKeys.GroupSummaryEditor}" TargetType="{x:Type sdg:GroupSummaryEditor}">
         <!--
             Same surface language as the ColumnFilterPopup: light-gray panel with white
             rounded cards for list content.
@@ -362,6 +362,6 @@
         </Setter>
     </Style>
 
-    <Style BasedOn="{StaticResource {x:Static sdg:ThemeKeys.GroupSummaryEditor}}" TargetType="{x:Type sdg:GroupSummaryEditor}" />
+    <Style BasedOn="{StaticResource {x:Static sdg:GridThemeKeys.GroupSummaryEditor}}" TargetType="{x:Type sdg:GroupSummaryEditor}" />
 
 </ResourceDictionary>

@@ -9,7 +9,7 @@
 
     <converters:BooleanToVisibilityCollapsedConverter x:Key="BooleanToVisibilityCollapsedConverter" />
 
-    <Style x:Key="{x:Static sdg:ThemeKeys.GridSearchDataGridCell}" TargetType="{x:Type DataGridCell}">
+    <Style x:Key="{x:Static sdg:GridThemeKeys.GridSearchDataGridCell}" TargetType="{x:Type DataGridCell}">
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderBrush" Value="Transparent" />
         <Setter Property="BorderThickness" Value="0" />
@@ -20,7 +20,7 @@
               the whole row. Null the cell error template to match the row's ValidationErrorTemplate.  -->
         <Setter Property="Validation.ErrorTemplate" Value="{x:Null}" />
         <Setter Property="FocusVisualStyle" Value="{x:Null}" />
-        <Setter Property="ContextMenu" Value="{StaticResource {x:Static sdg:ThemeKeys.GridSearchDataGridCellContextMenu}}" />
+        <Setter Property="ContextMenu" Value="{StaticResource {x:Static sdg:GridThemeKeys.GridSearchDataGridCellContextMenu}}" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type DataGridCell}">

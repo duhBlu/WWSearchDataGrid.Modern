@@ -199,7 +199,7 @@ namespace WWControls.Wpf.Grids
         /// <summary>
         /// Grid-wide default Style for <see cref="ColumnFilterControl"/>. Column override
         /// via <see cref="GridColumn.FilterRowCellStyle"/> wins; both null falls back to
-        /// the keyed theme style under <see cref="ThemeKeys.FilterRow.ColumnFilterControl"/>.
+        /// the keyed theme style under <see cref="GridThemeKeys.FilterRow.ColumnFilterControl"/>.
         /// </summary>
         public static readonly DependencyProperty FilterRowCellStyleProperty =
             DependencyProperty.Register(nameof(FilterRowCellStyle), typeof(Style), typeof(SearchDataGrid),

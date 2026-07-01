@@ -6,7 +6,7 @@
         <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Controls/Primitives/DefaultControls.xaml" />
     </ResourceDictionary.MergedDictionaries>
 
-    <Style x:Key="{x:Static sdg:ThemeKeys.FilterEditorColumnNameToken}" TargetType="{x:Type sdg:ColumnNameTokenEditor}">
+    <Style x:Key="{x:Static sdg:GridThemeKeys.FilterEditorColumnNameToken}" TargetType="{x:Type sdg:ColumnNameTokenEditor}">
         <Setter Property="Focusable" Value="True" />
         <Setter Property="VerticalAlignment" Value="Center" />
         <Setter Property="Template">
@@ -80,6 +80,6 @@
         </Setter>
     </Style>
 
-    <Style BasedOn="{StaticResource {x:Static sdg:ThemeKeys.FilterEditorColumnNameToken}}" TargetType="{x:Type sdg:ColumnNameTokenEditor}" />
+    <Style BasedOn="{StaticResource {x:Static sdg:GridThemeKeys.FilterEditorColumnNameToken}}" TargetType="{x:Type sdg:ColumnNameTokenEditor}" />
 
 </ResourceDictionary>

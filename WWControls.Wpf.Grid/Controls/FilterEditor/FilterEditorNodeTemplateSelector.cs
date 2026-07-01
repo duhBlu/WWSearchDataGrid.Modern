@@ -18,8 +18,8 @@ namespace WWControls.Wpf.Grids
 
             switch (item)
             {
-                case FilterGroupNode _: return element.TryFindResource(ThemeKeys.FilterEditorGroup) as DataTemplate;
-                case FilterConditionNode _: return element.TryFindResource(ThemeKeys.FilterEditorConditionRow) as DataTemplate;
+                case FilterGroupNode _: return element.TryFindResource(GridThemeKeys.FilterEditorGroup) as DataTemplate;
+                case FilterConditionNode _: return element.TryFindResource(GridThemeKeys.FilterEditorConditionRow) as DataTemplate;
                 default: return base.SelectTemplate(item, container);
             }
         }

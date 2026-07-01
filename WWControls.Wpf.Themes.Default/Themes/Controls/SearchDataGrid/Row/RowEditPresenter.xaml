@@ -46,7 +46,7 @@
         ═══════════════════════════════════════════════════════════════════════
     -->
 
-    <Style x:Key="{x:Static sdg:ThemeKeys.GridSearchDataGridRowEditPresenter}" TargetType="{x:Type sdg:RowEditPresenter}">
+    <Style x:Key="{x:Static sdg:GridThemeKeys.GridSearchDataGridRowEditPresenter}" TargetType="{x:Type sdg:RowEditPresenter}">
         <Setter Property="Background" Value="#FFFFFF" />
         <Setter Property="BorderBrush" Value="#0179d4" />
         <Setter Property="BorderThickness" Value="1" />
@@ -98,6 +98,6 @@
         </Setter>
     </Style>
 
-    <Style BasedOn="{StaticResource {x:Static sdg:ThemeKeys.GridSearchDataGridRowEditPresenter}}" TargetType="{x:Type sdg:RowEditPresenter}" />
+    <Style BasedOn="{StaticResource {x:Static sdg:GridThemeKeys.GridSearchDataGridRowEditPresenter}}" TargetType="{x:Type sdg:RowEditPresenter}" />
 
 </ResourceDictionary>

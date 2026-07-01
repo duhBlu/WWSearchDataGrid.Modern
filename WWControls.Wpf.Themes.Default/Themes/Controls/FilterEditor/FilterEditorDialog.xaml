@@ -19,7 +19,7 @@
     <sdg:FilterEditorNodeTemplateSelector x:Key="FilterEditorNodeTemplateSelector" />
 
     <!--  Condition row: column chip + search type chip + value chip + hover remove button.  -->
-    <DataTemplate x:Key="{x:Static sdg:ThemeKeys.FilterEditorConditionRow}" DataType="{x:Type sdg:FilterConditionNode}">
+    <DataTemplate x:Key="{x:Static sdg:GridThemeKeys.FilterEditorConditionRow}" DataType="{x:Type sdg:FilterConditionNode}">
         <Grid x:Name="ConditionRoot"
               Background="Transparent"
               Cursor="Hand"
@@ -82,7 +82,7 @@
     </DataTemplate>
 
     <!--  Group: operator chip + add-popup button + warning banner + recursive child list.  -->
-    <DataTemplate x:Key="{x:Static sdg:ThemeKeys.FilterEditorGroup}" DataType="{x:Type sdg:FilterGroupNode}">
+    <DataTemplate x:Key="{x:Static sdg:GridThemeKeys.FilterEditorGroup}" DataType="{x:Type sdg:FilterGroupNode}">
         <Border BorderBrush="#E1E5E9"
                 BorderThickness="0,0,0,0"
                 Margin="0,2,0,2"
@@ -270,7 +270,7 @@
         FilterEditorDialog default style. The recursive tree templates and chip control styles
         are picked up from Themes/Controls/FilterEditor/*.xaml merged in Generic.xaml.
     -->
-    <Style x:Key="{x:Static sdg:ThemeKeys.FilterEditorDialog}" TargetType="{x:Type sdg:FilterEditorDialog}">
+    <Style x:Key="{x:Static sdg:GridThemeKeys.FilterEditorDialog}" TargetType="{x:Type sdg:FilterEditorDialog}">
         <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.WindowBrushKey}}" />
         <Setter Property="Template">
             <Setter.Value>
@@ -326,6 +326,6 @@
         </Setter>
     </Style>
 
-    <Style BasedOn="{StaticResource {x:Static sdg:ThemeKeys.FilterEditorDialog}}" TargetType="{x:Type sdg:FilterEditorDialog}" />
+    <Style BasedOn="{StaticResource {x:Static sdg:GridThemeKeys.FilterEditorDialog}}" TargetType="{x:Type sdg:FilterEditorDialog}" />
 
 </ResourceDictionary>

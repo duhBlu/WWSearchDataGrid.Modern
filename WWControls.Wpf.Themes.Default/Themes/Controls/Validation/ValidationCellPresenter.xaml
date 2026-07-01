@@ -11,13 +11,10 @@
         content sits flush left. Retemplate this key to change that arrangement — e.g. move the
         badge to the right, or reserve a fixed-width gutter.
     -->
-    <Style x:Key="{x:Static sdg:ThemeKeys.ValidationCellPresenter}" TargetType="{x:Type sdg:ValidationCellPresenter}">
+    <Style x:Key="{x:Static sdg:GridThemeKeys.ValidationCellPresenter}" TargetType="{x:Type sdg:ValidationCellPresenter}">
         <Setter Property="Focusable" Value="False" />
         <Setter Property="HorizontalContentAlignment" Value="Stretch" />
         <Setter Property="VerticalContentAlignment" Value="Stretch" />
-        <!--  Content is a path-less binding to the row item. With an INotifyDataErrorInfo row the
-              default ValidatesOnNotifyDataErrors surfaces the row's entity-level errors as WPF's red
-              adorner around the whole presenter. The badge is the error surface, so null it.  -->
         <Setter Property="Validation.ErrorTemplate" Value="{x:Null}" />
         <Setter Property="Template">
             <Setter.Value>
@@ -40,6 +37,6 @@
         </Setter>
     </Style>
 
-    <Style BasedOn="{StaticResource {x:Static sdg:ThemeKeys.ValidationCellPresenter}}" TargetType="{x:Type sdg:ValidationCellPresenter}" />
+    <Style BasedOn="{StaticResource {x:Static sdg:GridThemeKeys.ValidationCellPresenter}}" TargetType="{x:Type sdg:ValidationCellPresenter}" />
 
 </ResourceDictionary>

@@ -15,7 +15,7 @@
         Commands.ContextMenuContext per opening, so a single instance is fine here
         (x:Shared defaults to True for ContextMenu).
     -->
-    <ContextMenu x:Key="{x:Static sdg:ThemeKeys.GridSearchDataGridCellContextMenu}"
+    <ContextMenu x:Key="{x:Static sdg:GridThemeKeys.GridSearchDataGridCellContextMenu}"
                  Style="{StaticResource {x:Static sdg:PrimitiveThemeKeys.ContextMenu}}"
                  AutomationProperties.AutomationId="cmuCell">
         <MenuItem x:Name="miCopy"

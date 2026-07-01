@@ -9,174 +9,39 @@ namespace WWControls.Wpf
     /// Typed resource keys for the library's default styles and templates. Consumers retheme
     /// by redefining a resource under the same key:
     /// <code>
-    /// &lt;Style x:Key="{x:Static sdg:ThemeKeys.GridSearchDataGrid}"
+    /// &lt;Style x:Key="{x:Static sdg:GridThemeKeys.GridSearchDataGrid}"
     ///        TargetType="{x:Type sdg:SearchDataGrid}"
-    ///        BasedOn="{StaticResource {x:Static sdg:ThemeKeys.GridSearchDataGrid}}" /&gt;
+    ///        BasedOn="{StaticResource {x:Static sdg:GridThemeKeys.GridSearchDataGrid}}" /&gt;
     /// </code>
     /// Editor element styles live separately in <see cref="WWControls.Wpf.Editors.EditorThemeKeys"/>.
     /// </summary>
-    public static class ThemeKeys
+    public static class GridThemeKeys
     {
-        #region Primitives
-
-        /// <summary>Sdg-themed <see cref="Button"/> style used inside library templates and available to consumers.</summary>
-        public static ComponentResourceKey PrimitivesButton { get; } =
-            new ComponentResourceKey(typeof(ThemeKeys), nameof(PrimitivesButton));
-
-        /// <summary>Sdg-themed <see cref="CheckBox"/> style.</summary>
-        public static ComponentResourceKey PrimitivesCheckBox { get; } =
-            new ComponentResourceKey(typeof(ThemeKeys), nameof(PrimitivesCheckBox));
-
-        /// <summary>Sdg-themed <see cref="ComboBox"/> style.</summary>
-        public static ComponentResourceKey PrimitivesComboBox { get; } =
-            new ComponentResourceKey(typeof(ThemeKeys), nameof(PrimitivesComboBox));
+        #region Grid
 
         /// <summary>
-        /// Sdg-themed <see cref="ComboBoxItem"/> style. Applied implicitly inside
-        /// <see cref="PrimitivesComboBox"/>'s popup; exposed as a key so consumer-defined
-        /// ComboBoxes that want the same dropdown-item look can opt in.
-        /// </summary>
-        public static ComponentResourceKey PrimitivesComboBoxItem { get; } =
-            new ComponentResourceKey(typeof(ThemeKeys), nameof(PrimitivesComboBoxItem));
-
-        /// <summary>
-        /// Sdg-themed <see cref="ListBoxItem"/> style — the shared "dropdown item" look used
-        /// inside library popups (SearchTextBox suggestions, FilterEditor token popups). Visuals
-        /// mirror <see cref="PrimitivesComboBoxItem"/> and <see cref="PrimitivesMenuItem"/> so
-        /// every dropdown row in the library reads as the same control.
-        /// </summary>
-        public static ComponentResourceKey PrimitivesListBoxItem { get; } =
-            new ComponentResourceKey(typeof(ThemeKeys), nameof(PrimitivesListBoxItem));
-
-        /// <summary>Sdg-themed <see cref="Primitives.ScrollBar"/> style.</summary>
-        public static ComponentResourceKey PrimitivesScrollBar { get; } =
-            new ComponentResourceKey(typeof(ThemeKeys), nameof(PrimitivesScrollBar));
-
-        /// <summary>Sdg-themed <see cref="TabControl"/> style.</summary>
-        public static ComponentResourceKey PrimitivesTabControl { get; } =
-            new ComponentResourceKey(typeof(ThemeKeys), nameof(PrimitivesTabControl));
-
-        /// <summary>Sdg-themed <see cref="TabItem"/> style.</summary>
-        public static ComponentResourceKey PrimitivesTabItem { get; } =
-            new ComponentResourceKey(typeof(ThemeKeys), nameof(PrimitivesTabItem));
-
-        /// <summary>Sdg-themed resize <see cref="Thumb"/> used by column splitters and resizers.</summary>
-        public static ComponentResourceKey PrimitivesResizeThumb { get; } =
-            new ComponentResourceKey(typeof(ThemeKeys), nameof(PrimitivesResizeThumb));
-
-        /// <summary>
-        /// Sdg-themed <see cref="System.Windows.Controls.Primitives.ToggleButton"/> style — a pill
-        /// that fills with the accent tint while checked. Used by the summary text-styling editor's
-        /// Bold / Italic / Underline toggles.
-        /// </summary>
-        public static ComponentResourceKey PrimitivesToggleButton { get; } =
-            new ComponentResourceKey(typeof(ThemeKeys), nameof(PrimitivesToggleButton));
-
-        /// <summary>Default style for the <see cref="WWControls.Wpf.WWColorPicker"/> swatch + HSV popup primitive.</summary>
-        public static ComponentResourceKey PrimitivesColorPicker { get; } =
-            new ComponentResourceKey(typeof(ThemeKeys), nameof(PrimitivesColorPicker));
-
-        /// <summary>Default style for the custom <see cref="SearchTextBox"/> primitive.</summary>
-        public static ComponentResourceKey PrimitivesSearchTextBox { get; } =
-            new ComponentResourceKey(typeof(ThemeKeys), nameof(PrimitivesSearchTextBox));
-
-        /// <summary>
-        /// Sdg-themed plain <see cref="TextBox"/> style — same chrome as
-        /// <see cref="PrimitivesComboBox"/> (border, radius, bottom-lip depth cue) with an
-        /// accent underline while focused.
-        /// </summary>
-        public static ComponentResourceKey PrimitivesTextBox { get; } =
-            new ComponentResourceKey(typeof(ThemeKeys), nameof(PrimitivesTextBox));
-
-        /// <summary>Default style for the custom <see cref="NumericUpDown"/> primitive.</summary>
-        public static ComponentResourceKey PrimitivesNumericUpDown { get; } =
-            new ComponentResourceKey(typeof(ThemeKeys), nameof(PrimitivesNumericUpDown));
-
-        /// <summary>Default style for the custom <see cref="RangeSlider"/> two-thumb range slider primitive.</summary>
-        public static ComponentResourceKey PrimitivesRangeSlider { get; } =
-            new ComponentResourceKey(typeof(ThemeKeys), nameof(PrimitivesRangeSlider));
-
-        /// <summary>Default style for the <see cref="StatusIcon"/> status badge primitive.</summary>
-        public static ComponentResourceKey PrimitivesStatusIcon { get; } =
-            new ComponentResourceKey(typeof(ThemeKeys), nameof(PrimitivesStatusIcon));
-
-        /// <summary>
-        /// Default style for <see cref="ValidationCellPresenter"/> — the validated-cell layout
+        /// Default style for <see cref="ValidationCellPresenter"/>: the validated-cell layout
         /// (a left badge gutter beside the cell content). Retemplate this key to change how the
         /// data-annotation error badge is arranged within a cell.
         /// </summary>
         public static ComponentResourceKey ValidationCellPresenter { get; } =
-            new ComponentResourceKey(typeof(ThemeKeys), nameof(ValidationCellPresenter));
-
-        /// <summary>
-        /// Default style for the <see cref="ContextMenu"/> shell — rounded white surface with
-        /// soft border and shadow. Applied by the four shared SearchDataGrid context menus
-        /// (column header, cell, row header, grid body) and available for consumer-defined
-        /// context menus that should match the library's look.
-        /// </summary>
-        public static ComponentResourceKey PrimitivesContextMenu { get; } =
-            new ComponentResourceKey(typeof(ThemeKeys), nameof(PrimitivesContextMenu));
-
-        /// <summary>
-        /// Default style for <see cref="MenuItem"/>s hosted inside an SDG context menu —
-        /// icon column, header, gesture text, and a chevron when the item carries a submenu.
-        /// Wired up as the <c>ItemContainerStyle</c> of <see cref="PrimitivesContextMenu"/>.
-        /// </summary>
-        public static ComponentResourceKey PrimitivesMenuItem { get; } =
-            new ComponentResourceKey(typeof(ThemeKeys), nameof(PrimitivesMenuItem));
-
-        /// <summary>
-        /// Style for an <see cref="Icon"/> hosted in a <see cref="MenuItem"/>'s icon slot — dims the
-        /// glyph to 35% opacity while the owning menu item is disabled, so every menu icon tracks the
-        /// item's enabled state. Trigger-only (no sizing); the icon element sets its own Width/Height,
-        /// or a sized glyph layers a <c>BasedOn</c> style on top (see the summary-function icon styles).
-        /// </summary>
-        public static ComponentResourceKey PrimitivesMenuItemIcon { get; } =
-            new ComponentResourceKey(typeof(ThemeKeys), nameof(PrimitivesMenuItemIcon));
-
-        /// <summary>
-        /// Default chrome for every <see cref="Window"/> the library opens (Filter Editor,
-        /// group summary editor, Column Chooser) — borderless DWM window with rounded corners,
-        /// drop shadow, accent border, and a 30px caption with taskbar-aware Min / Max / Close
-        /// buttons. Also available to consumer windows that should match the library's look;
-        /// the caption buttons invoke <see cref="System.Windows.SystemCommands"/>, so a consumer
-        /// window needs those command bindings registered (the library wires its own hosts).
-        /// </summary>
-        public static ComponentResourceKey PrimitivesWindow { get; } =
-            new ComponentResourceKey(typeof(ThemeKeys), nameof(PrimitivesWindow));
-
-        #endregion
-
-        #region Editors
-
-        /// <summary>
-        /// Default style for <see cref="WWBaseEdit"/> — the shared editor chrome (border, background,
-        /// padding, focus accent, disabled visual, content host, decoration-button slot). The
-        /// concrete editors (<see cref="WWTextEdit"/>, …) point their default style key at
-        /// <see cref="WWBaseEdit"/>, so retheming this one key rechromes every editor at once.
-        /// </summary>
-        public static ComponentResourceKey EditorsBaseEdit { get; } =
-            new ComponentResourceKey(typeof(ThemeKeys), nameof(EditorsBaseEdit));
-
-        #endregion
-
-        #region Grid
+            new ComponentResourceKey(typeof(GridThemeKeys), nameof(ValidationCellPresenter));
 
         /// <summary>Default style for the top-level <see cref="SearchDataGrid"/> control.</summary>
         public static ComponentResourceKey GridSearchDataGrid { get; } =
-            new ComponentResourceKey(typeof(ThemeKeys), nameof(GridSearchDataGrid));
+            new ComponentResourceKey(typeof(GridThemeKeys), nameof(GridSearchDataGrid));
 
         /// <summary>Default style applied to <see cref="DataGridCell"/> within a SearchDataGrid.</summary>
         public static ComponentResourceKey GridSearchDataGridCell { get; } =
-            new ComponentResourceKey(typeof(ThemeKeys), nameof(GridSearchDataGridCell));
+            new ComponentResourceKey(typeof(GridThemeKeys), nameof(GridSearchDataGridCell));
 
         /// <summary>Default style applied to <see cref="DataGridRow"/> within a SearchDataGrid.</summary>
         public static ComponentResourceKey GridSearchDataGridRow { get; } =
-            new ComponentResourceKey(typeof(ThemeKeys), nameof(GridSearchDataGridRow));
+            new ComponentResourceKey(typeof(GridThemeKeys), nameof(GridSearchDataGridRow));
 
         /// <summary>Default style applied to <see cref="DataGridRowHeader"/>.</summary>
         public static ComponentResourceKey GridSearchDataGridRowHeader { get; } =
-            new ComponentResourceKey(typeof(ThemeKeys), nameof(GridSearchDataGridRowHeader));
+            new ComponentResourceKey(typeof(GridThemeKeys), nameof(GridSearchDataGridRowHeader));
 
         /// <summary>
         /// Default style for the <see cref="RowEditPresenter"/> — the bright, column-aligned editor
@@ -184,7 +49,7 @@ namespace WWControls.Wpf
         /// (<see cref="SearchDataGrid.RowEditTrigger"/>).
         /// </summary>
         public static ComponentResourceKey GridSearchDataGridRowEditPresenter { get; } =
-            new ComponentResourceKey(typeof(ThemeKeys), nameof(GridSearchDataGridRowEditPresenter));
+            new ComponentResourceKey(typeof(GridThemeKeys), nameof(GridSearchDataGridRowEditPresenter));
 
         /// <summary>
         /// Default style for the <see cref="EditFormPresenter"/> — the caption/editor form (plus
@@ -192,7 +57,7 @@ namespace WWControls.Wpf
         /// <see cref="SearchDataGrid.EditFormShowMode"/> is not <see cref="EditFormShowMode.None"/>.
         /// </summary>
         public static ComponentResourceKey GridSearchDataGridEditFormPresenter { get; } =
-            new ComponentResourceKey(typeof(ThemeKeys), nameof(GridSearchDataGridEditFormPresenter));
+            new ComponentResourceKey(typeof(GridThemeKeys), nameof(GridSearchDataGridEditFormPresenter));
 
         /// <summary>
         /// <see cref="DataTemplate"/> the grid assigns to <see cref="DataGrid.RowDetailsTemplate"/>
@@ -201,7 +66,7 @@ namespace WWControls.Wpf
         /// item, and the grid's <c>EditFormTemplate</c> / caption onto the presenter.
         /// </summary>
         public static ComponentResourceKey GridSearchDataGridEditFormRowDetailsTemplate { get; } =
-            new ComponentResourceKey(typeof(ThemeKeys), nameof(GridSearchDataGridEditFormRowDetailsTemplate));
+            new ComponentResourceKey(typeof(GridThemeKeys), nameof(GridSearchDataGridEditFormRowDetailsTemplate));
 
         /// <summary>
         /// <see cref="ControlTemplate"/> for an in-body group-header row — the full-width header
@@ -212,7 +77,7 @@ namespace WWControls.Wpf
         /// via an <c>IsGroupHeader</c> trigger.
         /// </summary>
         public static ComponentResourceKey GridSearchDataGridGroupHeaderRow { get; } =
-            new ComponentResourceKey(typeof(ThemeKeys), nameof(GridSearchDataGridGroupHeaderRow));
+            new ComponentResourceKey(typeof(GridThemeKeys), nameof(GridSearchDataGridGroupHeaderRow));
 
         /// <summary>
         /// Default style applied to <see cref="GroupSummaryCell"/> — one per visible column in a
@@ -220,11 +85,11 @@ namespace WWControls.Wpf
         /// (<see cref="SearchDataGrid.GroupSummaryDisplayMode"/> = AlignByColumns).
         /// </summary>
         public static ComponentResourceKey GridSearchDataGridGroupSummaryCell { get; } =
-            new ComponentResourceKey(typeof(ThemeKeys), nameof(GridSearchDataGridGroupSummaryCell));
+            new ComponentResourceKey(typeof(GridThemeKeys), nameof(GridSearchDataGridGroupSummaryCell));
 
         /// <summary>Default style applied to <see cref="GroupSummaryCellsPresenter"/> — the aligned-summary layer inside a group header row.</summary>
         public static ComponentResourceKey GridSearchDataGridGroupSummaryCellsPresenter { get; } =
-            new ComponentResourceKey(typeof(ThemeKeys), nameof(GridSearchDataGridGroupSummaryCellsPresenter));
+            new ComponentResourceKey(typeof(GridThemeKeys), nameof(GridSearchDataGridGroupSummaryCellsPresenter));
 
         /// <summary>
         /// Default style applied to <see cref="FixedGroupSummaryCellsPresenter"/> — the
@@ -232,7 +97,7 @@ namespace WWControls.Wpf
         /// <see cref="SearchDataGrid.GroupSummaryDisplayMode"/> is AlignByColumns.
         /// </summary>
         public static ComponentResourceKey GridSearchDataGridFixedGroupSummaryCellsPresenter { get; } =
-            new ComponentResourceKey(typeof(ThemeKeys), nameof(GridSearchDataGridFixedGroupSummaryCellsPresenter));
+            new ComponentResourceKey(typeof(GridThemeKeys), nameof(GridSearchDataGridFixedGroupSummaryCellsPresenter));
 
         /// <summary>
         /// Style for the expand/collapse chevron <see cref="Button"/> on a group header — the padded,
@@ -244,25 +109,25 @@ namespace WWControls.Wpf
         /// button's DataContext (a <see cref="GroupHeaderRow"/> or a <see cref="FixedGroupHeaderEntry"/>).
         /// </summary>
         public static ComponentResourceKey GridSearchDataGridGroupHeaderChevronButton { get; } =
-            new ComponentResourceKey(typeof(ThemeKeys), nameof(GridSearchDataGridGroupHeaderChevronButton));
+            new ComponentResourceKey(typeof(GridThemeKeys), nameof(GridSearchDataGridGroupHeaderChevronButton));
 
         /// <summary>Default style applied to <see cref="DataGridColumnHeader"/>.</summary>
         public static ComponentResourceKey GridSearchDataGridColumnHeader { get; } =
-            new ComponentResourceKey(typeof(ThemeKeys), nameof(GridSearchDataGridColumnHeader));
+            new ComponentResourceKey(typeof(GridThemeKeys), nameof(GridSearchDataGridColumnHeader));
 
         /// <summary>
         /// Default <see cref="Style"/> for the <see cref="GroupPanel"/> — the strip above the
         /// column headers that shows one pill per grouped column.
         /// </summary>
         public static ComponentResourceKey GridSearchDataGridGroupPanel { get; } =
-            new ComponentResourceKey(typeof(ThemeKeys), nameof(GridSearchDataGridGroupPanel));
+            new ComponentResourceKey(typeof(GridThemeKeys), nameof(GridSearchDataGridGroupPanel));
 
         /// <summary>
         /// Right-click <see cref="ContextMenu"/> for the empty area of the
         /// <see cref="GroupPanel"/> — Expand All / Collapse All / Clear Grouping.
         /// </summary>
         public static ComponentResourceKey GridSearchDataGridGroupPanelContextMenu { get; } =
-            new ComponentResourceKey(typeof(ThemeKeys), nameof(GridSearchDataGridGroupPanelContextMenu));
+            new ComponentResourceKey(typeof(GridThemeKeys), nameof(GridSearchDataGridGroupPanelContextMenu));
 
         /// <summary>
         /// Right-click <see cref="ContextMenu"/> for an individual group-panel pill — Full Expand
@@ -270,7 +135,7 @@ namespace WWControls.Wpf
         /// / Hide / Pin / Filter operations). <c>x:Shared="False"</c> so every pill gets its own.
         /// </summary>
         public static ComponentResourceKey GridSearchDataGridGroupPillContextMenu { get; } =
-            new ComponentResourceKey(typeof(ThemeKeys), nameof(GridSearchDataGridGroupPillContextMenu));
+            new ComponentResourceKey(typeof(GridThemeKeys), nameof(GridSearchDataGridGroupPillContextMenu));
 
         /// <summary>
         /// Default <see cref="Style"/> for the <see cref="FixedGroupHeadersPresenter"/> — the
@@ -278,7 +143,7 @@ namespace WWControls.Wpf
         /// of the topmost visible row when <see cref="SearchDataGrid.AllowFixedGroups"/> is true.
         /// </summary>
         public static ComponentResourceKey GridSearchDataGridFixedGroupHeadersPresenter { get; } =
-            new ComponentResourceKey(typeof(ThemeKeys), nameof(GridSearchDataGridFixedGroupHeadersPresenter));
+            new ComponentResourceKey(typeof(GridThemeKeys), nameof(GridSearchDataGridFixedGroupHeadersPresenter));
 
         /// <summary>
         /// Right-click <see cref="ContextMenu"/> attached to every pinned header in the sticky
@@ -288,7 +153,7 @@ namespace WWControls.Wpf
         /// because the strip lives outside the rows-presenter visual subtree.
         /// </summary>
         public static ComponentResourceKey GridSearchDataGridFixedGroupHeaderContextMenu { get; } =
-            new ComponentResourceKey(typeof(ThemeKeys), nameof(GridSearchDataGridFixedGroupHeaderContextMenu));
+            new ComponentResourceKey(typeof(GridThemeKeys), nameof(GridSearchDataGridFixedGroupHeaderContextMenu));
 
         /// <summary>
         /// Right-click <see cref="ContextMenu"/> attached to the in-body group-header rows —
@@ -298,7 +163,7 @@ namespace WWControls.Wpf
         /// <see cref="FixedGroupHeaderEntry"/> for the pinned strip.
         /// </summary>
         public static ComponentResourceKey GridSearchDataGridGroupHeaderContextMenu { get; } =
-            new ComponentResourceKey(typeof(ThemeKeys), nameof(GridSearchDataGridGroupHeaderContextMenu));
+            new ComponentResourceKey(typeof(GridThemeKeys), nameof(GridSearchDataGridGroupHeaderContextMenu));
 
         /// <summary>
         /// Shared <see cref="ContextMenu"/> resource (declared with
@@ -309,7 +174,7 @@ namespace WWControls.Wpf
         /// to a <see cref="Commands.ContextMenuContext"/> by the consumer.
         /// </summary>
         public static ComponentResourceKey GridSearchDataGridColumnHeaderContextMenu { get; } =
-            new ComponentResourceKey(typeof(ThemeKeys), nameof(GridSearchDataGridColumnHeaderContextMenu));
+            new ComponentResourceKey(typeof(GridThemeKeys), nameof(GridSearchDataGridColumnHeaderContextMenu));
 
         /// <summary>
         /// Shared <see cref="ContextMenu"/> resource for the cell right-click menu —
@@ -317,7 +182,7 @@ namespace WWControls.Wpf
         /// <see cref="Commands.ContextMenuContext"/> by the consumer when the menu opens.
         /// </summary>
         public static ComponentResourceKey GridSearchDataGridCellContextMenu { get; } =
-            new ComponentResourceKey(typeof(ThemeKeys), nameof(GridSearchDataGridCellContextMenu));
+            new ComponentResourceKey(typeof(GridThemeKeys), nameof(GridSearchDataGridCellContextMenu));
 
         /// <summary>
         /// Shared <see cref="ContextMenu"/> resource for the row-header right-click menu —
@@ -325,7 +190,7 @@ namespace WWControls.Wpf
         /// <see cref="Commands.ContextMenuContext"/> by the consumer when the menu opens.
         /// </summary>
         public static ComponentResourceKey GridSearchDataGridRowHeaderContextMenu { get; } =
-            new ComponentResourceKey(typeof(ThemeKeys), nameof(GridSearchDataGridRowHeaderContextMenu));
+            new ComponentResourceKey(typeof(GridThemeKeys), nameof(GridSearchDataGridRowHeaderContextMenu));
 
         /// <summary>
         /// Shared <see cref="ContextMenu"/> resource for the grid-body right-click menu —
@@ -334,11 +199,11 @@ namespace WWControls.Wpf
         /// consumer when the menu opens.
         /// </summary>
         public static ComponentResourceKey GridSearchDataGridContextMenu { get; } =
-            new ComponentResourceKey(typeof(ThemeKeys), nameof(GridSearchDataGridContextMenu));
+            new ComponentResourceKey(typeof(GridThemeKeys), nameof(GridSearchDataGridContextMenu));
 
         /// <summary>Default style for the select-all corner button in the SearchDataGrid header.</summary>
         public static ComponentResourceKey GridSelectAllButton { get; } =
-            new ComponentResourceKey(typeof(ThemeKeys), nameof(GridSelectAllButton));
+            new ComponentResourceKey(typeof(GridThemeKeys), nameof(GridSelectAllButton));
 
         #endregion
 
@@ -352,7 +217,7 @@ namespace WWControls.Wpf
         /// is consistent with right-clicks on the header band.
         /// </summary>
         public static ComponentResourceKey ColumnChooserSectionItem { get; } =
-            new ComponentResourceKey(typeof(ThemeKeys), nameof(ColumnChooserSectionItem));
+            new ComponentResourceKey(typeof(GridThemeKeys), nameof(ColumnChooserSectionItem));
 
         #endregion
 
@@ -360,7 +225,7 @@ namespace WWControls.Wpf
 
         /// <summary>Default style for the <see cref="ColumnFilterPopup"/> popup.</summary>
         public static ComponentResourceKey ColumnFilterPopup { get; } =
-            new ComponentResourceKey(typeof(ThemeKeys), nameof(ColumnFilterPopup));
+            new ComponentResourceKey(typeof(GridThemeKeys), nameof(ColumnFilterPopup));
 
         #endregion
 
@@ -368,7 +233,7 @@ namespace WWControls.Wpf
 
         /// <summary>Default style for the <see cref="FilterSummaryPanel"/> chip strip below the grid.</summary>
         public static ComponentResourceKey FilterSummaryPanel { get; } =
-            new ComponentResourceKey(typeof(ThemeKeys), nameof(FilterSummaryPanel));
+            new ComponentResourceKey(typeof(GridThemeKeys), nameof(FilterSummaryPanel));
 
         #endregion
 
@@ -376,43 +241,43 @@ namespace WWControls.Wpf
 
         /// <summary>Visual leading bracket for a grouped token run.</summary>
         public static ComponentResourceKey FilterTokensOpenBracket { get; } =
-            new ComponentResourceKey(typeof(ThemeKeys), nameof(FilterTokensOpenBracket));
+            new ComponentResourceKey(typeof(GridThemeKeys), nameof(FilterTokensOpenBracket));
 
         /// <summary>Column-name chip — orange pill carrying the column header text.</summary>
         public static ComponentResourceKey FilterTokensColumnName { get; } =
-            new ComponentResourceKey(typeof(ThemeKeys), nameof(FilterTokensColumnName));
+            new ComponentResourceKey(typeof(GridThemeKeys), nameof(FilterTokensColumnName));
 
         /// <summary>Search-type label that sits between the column chip and the value chip(s).</summary>
         public static ComponentResourceKey FilterTokensSearchType { get; } =
-            new ComponentResourceKey(typeof(ThemeKeys), nameof(FilterTokensSearchType));
+            new ComponentResourceKey(typeof(GridThemeKeys), nameof(FilterTokensSearchType));
 
         /// <summary>Unary search-type chip (IsNull / IsToday / AboveAverage / …) with a click-to-confirm remove overlay.</summary>
         public static ComponentResourceKey FilterTokensUnarySearchType { get; } =
-            new ComponentResourceKey(typeof(ThemeKeys), nameof(FilterTokensUnarySearchType));
+            new ComponentResourceKey(typeof(GridThemeKeys), nameof(FilterTokensUnarySearchType));
 
         /// <summary>Single value chip (the green pill) with a click-to-confirm remove overlay.</summary>
         public static ComponentResourceKey FilterTokensValue { get; } =
-            new ComponentResourceKey(typeof(ThemeKeys), nameof(FilterTokensValue));
+            new ComponentResourceKey(typeof(GridThemeKeys), nameof(FilterTokensValue));
 
         /// <summary>Inline operator label between two value chips (e.g. the "and" in "between X and Y").</summary>
         public static ComponentResourceKey FilterTokensValueOperator { get; } =
-            new ComponentResourceKey(typeof(ThemeKeys), nameof(FilterTokensValueOperator));
+            new ComponentResourceKey(typeof(GridThemeKeys), nameof(FilterTokensValueOperator));
 
         /// <summary>Visual trailing bracket for a grouped token run.</summary>
         public static ComponentResourceKey FilterTokensCloseBracket { get; } =
-            new ComponentResourceKey(typeof(ThemeKeys), nameof(FilterTokensCloseBracket));
+            new ComponentResourceKey(typeof(GridThemeKeys), nameof(FilterTokensCloseBracket));
 
         /// <summary>Logical connector chip between search-template groups — clickable to toggle AND/OR.</summary>
         public static ComponentResourceKey FilterTokensGroupLogicalConnector { get; } =
-            new ComponentResourceKey(typeof(ThemeKeys), nameof(FilterTokensGroupLogicalConnector));
+            new ComponentResourceKey(typeof(GridThemeKeys), nameof(FilterTokensGroupLogicalConnector));
 
         /// <summary>Logical connector chip between search templates within a group — clickable to toggle AND/OR.</summary>
         public static ComponentResourceKey FilterTokensTemplateLogicalConnector { get; } =
-            new ComponentResourceKey(typeof(ThemeKeys), nameof(FilterTokensTemplateLogicalConnector));
+            new ComponentResourceKey(typeof(GridThemeKeys), nameof(FilterTokensTemplateLogicalConnector));
 
         /// <summary>Hover-revealed remove button that detaches an entire filter run.</summary>
         public static ComponentResourceKey FilterTokensRemoveAction { get; } =
-            new ComponentResourceKey(typeof(ThemeKeys), nameof(FilterTokensRemoveAction));
+            new ComponentResourceKey(typeof(GridThemeKeys), nameof(FilterTokensRemoveAction));
 
         #endregion
 
@@ -420,23 +285,23 @@ namespace WWControls.Wpf
 
         /// <summary>Default style for the modal <see cref="FilterEditorDialog"/> window's content control.</summary>
         public static ComponentResourceKey FilterEditorDialog { get; } =
-            new ComponentResourceKey(typeof(ThemeKeys), nameof(FilterEditorDialog));
+            new ComponentResourceKey(typeof(GridThemeKeys), nameof(FilterEditorDialog));
 
         /// <summary>Default style for the <see cref="ColumnNameTokenEditor"/> chip inside the Filter Editor.</summary>
         public static ComponentResourceKey FilterEditorColumnNameToken { get; } =
-            new ComponentResourceKey(typeof(ThemeKeys), nameof(FilterEditorColumnNameToken));
+            new ComponentResourceKey(typeof(GridThemeKeys), nameof(FilterEditorColumnNameToken));
 
         /// <summary>Default style for the <see cref="SearchTypeTokenEditor"/> chip inside the Filter Editor.</summary>
         public static ComponentResourceKey FilterEditorSearchTypeToken { get; } =
-            new ComponentResourceKey(typeof(ThemeKeys), nameof(FilterEditorSearchTypeToken));
+            new ComponentResourceKey(typeof(GridThemeKeys), nameof(FilterEditorSearchTypeToken));
 
         /// <summary>Default style for the <see cref="ValueTokenEditor"/> chip inside the Filter Editor.</summary>
         public static ComponentResourceKey FilterEditorValueToken { get; } =
-            new ComponentResourceKey(typeof(ThemeKeys), nameof(FilterEditorValueToken));
+            new ComponentResourceKey(typeof(GridThemeKeys), nameof(FilterEditorValueToken));
 
         /// <summary>Default style for the <see cref="GroupOperatorChip"/> inside the Filter Editor.</summary>
         public static ComponentResourceKey FilterEditorGroupOperatorChip { get; } =
-            new ComponentResourceKey(typeof(ThemeKeys), nameof(FilterEditorGroupOperatorChip));
+            new ComponentResourceKey(typeof(GridThemeKeys), nameof(FilterEditorGroupOperatorChip));
 
         /// <summary>
         /// DataTemplate for a single condition row in the recursive Filter Editor tree —
@@ -444,7 +309,7 @@ namespace WWControls.Wpf
         /// Looked up by <see cref="FilterEditorNodeTemplateSelector"/> at runtime.
         /// </summary>
         public static ComponentResourceKey FilterEditorConditionRow { get; } =
-            new ComponentResourceKey(typeof(ThemeKeys), nameof(FilterEditorConditionRow));
+            new ComponentResourceKey(typeof(GridThemeKeys), nameof(FilterEditorConditionRow));
 
         /// <summary>
         /// DataTemplate for a group node in the recursive Filter Editor tree — operator
@@ -452,7 +317,7 @@ namespace WWControls.Wpf
         /// <see cref="FilterEditorNodeTemplateSelector"/> at runtime.
         /// </summary>
         public static ComponentResourceKey FilterEditorGroup { get; } =
-            new ComponentResourceKey(typeof(ThemeKeys), nameof(FilterEditorGroup));
+            new ComponentResourceKey(typeof(GridThemeKeys), nameof(FilterEditorGroup));
 
         #endregion
 
@@ -460,15 +325,15 @@ namespace WWControls.Wpf
 
         /// <summary>Default style for the <see cref="SearchTypeSelector"/> per-column mode picker.</summary>
         public static ComponentResourceKey FilterRowSearchTypeSelector { get; } =
-            new ComponentResourceKey(typeof(ThemeKeys), nameof(FilterRowSearchTypeSelector));
+            new ComponentResourceKey(typeof(GridThemeKeys), nameof(FilterRowSearchTypeSelector));
 
         /// <summary>Default style for the <see cref="FilterRowPresenter"/> pinned filter row.</summary>
         public static ComponentResourceKey FilterRowPresenter { get; } =
-            new ComponentResourceKey(typeof(ThemeKeys), nameof(FilterRowPresenter));
+            new ComponentResourceKey(typeof(GridThemeKeys), nameof(FilterRowPresenter));
 
         /// <summary>Default style for the per-column <see cref="ColumnFilterControl"/>.</summary>
         public static ComponentResourceKey FilterRowColumnFilterControl { get; } =
-            new ComponentResourceKey(typeof(ThemeKeys), nameof(FilterRowColumnFilterControl));
+            new ComponentResourceKey(typeof(GridThemeKeys), nameof(FilterRowColumnFilterControl));
 
         #endregion
 
@@ -476,11 +341,11 @@ namespace WWControls.Wpf
 
         /// <summary>Default style for the <see cref="TotalSummaryRowPresenter"/> pinned total summary row.</summary>
         public static ComponentResourceKey GridSearchDataGridTotalSummaryRow { get; } =
-            new ComponentResourceKey(typeof(ThemeKeys), nameof(GridSearchDataGridTotalSummaryRow));
+            new ComponentResourceKey(typeof(GridThemeKeys), nameof(GridSearchDataGridTotalSummaryRow));
 
         /// <summary>Default style for the per-column <see cref="TotalSummaryCell"/>.</summary>
         public static ComponentResourceKey GridSearchDataGridTotalSummaryCell { get; } =
-            new ComponentResourceKey(typeof(ThemeKeys), nameof(GridSearchDataGridTotalSummaryCell));
+            new ComponentResourceKey(typeof(GridThemeKeys), nameof(GridSearchDataGridTotalSummaryCell));
 
         /// <summary>
         /// Right-click <see cref="System.Windows.Controls.ContextMenu"/> for a
@@ -488,11 +353,11 @@ namespace WWControls.Wpf
         /// Max / Average toggles + Clear).
         /// </summary>
         public static ComponentResourceKey GridSearchDataGridTotalSummaryCellContextMenu { get; } =
-            new ComponentResourceKey(typeof(ThemeKeys), nameof(GridSearchDataGridTotalSummaryCellContextMenu));
+            new ComponentResourceKey(typeof(GridThemeKeys), nameof(GridSearchDataGridTotalSummaryCellContextMenu));
 
         /// <summary>Default style for the <see cref="WWControls.Wpf.GroupSummaryEditor"/> ("View Totals") dialog body.</summary>
         public static ComponentResourceKey GroupSummaryEditor { get; } =
-            new ComponentResourceKey(typeof(ThemeKeys), nameof(GroupSummaryEditor));
+            new ComponentResourceKey(typeof(GridThemeKeys), nameof(GroupSummaryEditor));
 
         /// <summary>
         /// Default style for the <see cref="WWControls.Wpf.SummaryTextStyleEditor"/>
@@ -500,26 +365,26 @@ namespace WWControls.Wpf
         /// summary editor's Order tab.
         /// </summary>
         public static ComponentResourceKey SummaryTextStyleEditor { get; } =
-            new ComponentResourceKey(typeof(ThemeKeys), nameof(SummaryTextStyleEditor));
+            new ComponentResourceKey(typeof(GridThemeKeys), nameof(SummaryTextStyleEditor));
 
         /// <summary>
         /// Right-click <see cref="System.Windows.Controls.ContextMenu"/> for the fixed total
         /// summary panel — Count (grid row count toggle) + Customize….
         /// </summary>
         public static ComponentResourceKey GridSearchDataGridFixedTotalSummaryContextMenu { get; } =
-            new ComponentResourceKey(typeof(ThemeKeys), nameof(GridSearchDataGridFixedTotalSummaryContextMenu));
+            new ComponentResourceKey(typeof(GridThemeKeys), nameof(GridSearchDataGridFixedTotalSummaryContextMenu));
 
         /// <summary>Full-width group footer row template (one <see cref="GroupFooterCell"/> per column).</summary>
         public static ComponentResourceKey GridSearchDataGridGroupFooterRow { get; } =
-            new ComponentResourceKey(typeof(ThemeKeys), nameof(GridSearchDataGridGroupFooterRow));
+            new ComponentResourceKey(typeof(GridThemeKeys), nameof(GridSearchDataGridGroupFooterRow));
 
         /// <summary>Default style for the footer cells host (<see cref="GroupFooterCellsPresenter"/>).</summary>
         public static ComponentResourceKey GridSearchDataGridGroupFooterCellsPresenter { get; } =
-            new ComponentResourceKey(typeof(ThemeKeys), nameof(GridSearchDataGridGroupFooterCellsPresenter));
+            new ComponentResourceKey(typeof(GridThemeKeys), nameof(GridSearchDataGridGroupFooterCellsPresenter));
 
         /// <summary>Default style for the per-column <see cref="GroupFooterCell"/>.</summary>
         public static ComponentResourceKey GridSearchDataGridGroupFooterCell { get; } =
-            new ComponentResourceKey(typeof(ThemeKeys), nameof(GridSearchDataGridGroupFooterCell));
+            new ComponentResourceKey(typeof(GridThemeKeys), nameof(GridSearchDataGridGroupFooterCell));
 
         /// <summary>
         /// Right-click <see cref="System.Windows.Controls.ContextMenu"/> for a
@@ -527,7 +392,7 @@ namespace WWControls.Wpf
         /// Max / Average toggles + Clear + Customize).
         /// </summary>
         public static ComponentResourceKey GridSearchDataGridGroupFooterCellContextMenu { get; } =
-            new ComponentResourceKey(typeof(ThemeKeys), nameof(GridSearchDataGridGroupFooterCellContextMenu));
+            new ComponentResourceKey(typeof(GridThemeKeys), nameof(GridSearchDataGridGroupFooterCellContextMenu));
 
         #endregion
     }

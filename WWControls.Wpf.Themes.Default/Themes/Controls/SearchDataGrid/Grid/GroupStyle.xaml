@@ -152,7 +152,7 @@
         group" items are visibility-gated on the row's IsExpanded snapshot (fresh: the sentinel is
         rebuilt on every reflatten and the menu opens against the current instance).
     -->
-    <ContextMenu x:Key="{x:Static sdg:ThemeKeys.GridSearchDataGridGroupHeaderContextMenu}"
+    <ContextMenu x:Key="{x:Static sdg:GridThemeKeys.GridSearchDataGridGroupHeaderContextMenu}"
                  AutomationProperties.AutomationId="cmuGroupHeader"
                  Style="{StaticResource {x:Static sdg:PrimitiveThemeKeys.ContextMenu}}"
                  x:Shared="False">
@@ -278,7 +278,7 @@
         recycled-container rebinds snap. The toggle command is supplied by each call site
         (ToggleGroupCommand in body, ToggleFixedGroupCommand in the strip).
     -->
-    <Style x:Key="{x:Static sdg:ThemeKeys.GridSearchDataGridGroupHeaderChevronButton}" TargetType="{x:Type Button}">
+    <Style x:Key="{x:Static sdg:GridThemeKeys.GridSearchDataGridGroupHeaderChevronButton}" TargetType="{x:Type Button}">
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderThickness" Value="0" />
         <Setter Property="Foreground" Value="DarkGray" />
@@ -334,7 +334,7 @@
     <!--  Per-column slot: the column's results stack vertically, right-aligned under the
           column (entries already carry their formatted text). Empty for columns without
           entries — and in Header mode the presenter builds no cells at all.  -->
-    <Style x:Key="{x:Static sdg:ThemeKeys.GridSearchDataGridGroupSummaryCell}" TargetType="{x:Type sdg:GroupSummaryCell}">
+    <Style x:Key="{x:Static sdg:GridThemeKeys.GridSearchDataGridGroupSummaryCell}" TargetType="{x:Type sdg:GroupSummaryCell}">
         <Setter Property="IsTabStop" Value="False" />
         <Setter Property="Focusable" Value="False" />
         <Setter Property="Template">
@@ -379,13 +379,13 @@
             </Setter.Value>
         </Setter>
     </Style>
-    <Style BasedOn="{StaticResource {x:Static sdg:ThemeKeys.GridSearchDataGridGroupSummaryCell}}" TargetType="{x:Type sdg:GroupSummaryCell}" />
+    <Style BasedOn="{StaticResource {x:Static sdg:GridThemeKeys.GridSearchDataGridGroupSummaryCell}}" TargetType="{x:Type sdg:GroupSummaryCell}" />
 
     <!--  Cells host: per-column run in display order in the same extent space as the data
           cells; FixedColumnAlignedPanel additionally anchors pinned columns' cells to the
           viewport edges (and clips scrollable cells sliding under the bands), matching the
           data cells' fixed-column behavior.  -->
-    <Style x:Key="{x:Static sdg:ThemeKeys.GridSearchDataGridGroupSummaryCellsPresenter}" TargetType="{x:Type sdg:GroupSummaryCellsPresenter}">
+    <Style x:Key="{x:Static sdg:GridThemeKeys.GridSearchDataGridGroupSummaryCellsPresenter}" TargetType="{x:Type sdg:GroupSummaryCellsPresenter}">
         <Setter Property="IsTabStop" Value="False" />
         <Setter Property="Focusable" Value="False" />
         <Setter Property="Template">
@@ -396,9 +396,9 @@
             </Setter.Value>
         </Setter>
     </Style>
-    <Style BasedOn="{StaticResource {x:Static sdg:ThemeKeys.GridSearchDataGridGroupSummaryCellsPresenter}}" TargetType="{x:Type sdg:GroupSummaryCellsPresenter}" />
+    <Style BasedOn="{StaticResource {x:Static sdg:GridThemeKeys.GridSearchDataGridGroupSummaryCellsPresenter}}" TargetType="{x:Type sdg:GroupSummaryCellsPresenter}" />
 
-    <ControlTemplate x:Key="{x:Static sdg:ThemeKeys.GridSearchDataGridGroupHeaderRow}" TargetType="{x:Type DataGridRow}">
+    <ControlTemplate x:Key="{x:Static sdg:GridThemeKeys.GridSearchDataGridGroupHeaderRow}" TargetType="{x:Type DataGridRow}">
         <!--  #FFF3F3F3 matches the legacy GroupExpanderStyle background; the row's own
               (white / alternating) Background is intentionally ignored here.  -->
         <Border x:Name="HeaderBorder"
@@ -406,7 +406,7 @@
                 BorderBrush="#FFd0d0d0"
                 BorderThickness="0,0,0,1"
                 Cursor="Hand"
-                ContextMenu="{StaticResource {x:Static sdg:ThemeKeys.GridSearchDataGridGroupHeaderContextMenu}}"
+                ContextMenu="{StaticResource {x:Static sdg:GridThemeKeys.GridSearchDataGridGroupHeaderContextMenu}}"
                 UseLayoutRounding="True"
                 SnapsToDevicePixels="True">
           <Grid>
@@ -470,7 +470,7 @@
                                 <Binding RelativeSource="{RelativeSource AncestorType={x:Type sdg:SearchDataGrid}}" Path="GroupIndentWidth" />
                             </MultiBinding>
                         </sdg:SimpleStackPanel.Margin>
-                        <Button Style="{StaticResource {x:Static sdg:ThemeKeys.GridSearchDataGridGroupHeaderChevronButton}}"
+                        <Button Style="{StaticResource {x:Static sdg:GridThemeKeys.GridSearchDataGridGroupHeaderChevronButton}}"
                                 Command="{x:Static commands:ContextMenuCommands.ToggleGroupCommand}"
                                 CommandParameter="{Binding}" />
                         <ContentControl VerticalAlignment="Center"
@@ -507,7 +507,7 @@
         </ControlTemplate.Triggers>
     </ControlTemplate>
 
-    <ContextMenu x:Key="{x:Static sdg:ThemeKeys.GridSearchDataGridFixedGroupHeaderContextMenu}"
+    <ContextMenu x:Key="{x:Static sdg:GridThemeKeys.GridSearchDataGridFixedGroupHeaderContextMenu}"
                  AutomationProperties.AutomationId="cmuFixedGroupHeader"
                  Style="{StaticResource {x:Static sdg:PrimitiveThemeKeys.ContextMenu}}"
                  x:Shared="False">
@@ -610,7 +610,7 @@
         </MenuItem>
     </ContextMenu>
 
-    <Style x:Key="{x:Static sdg:ThemeKeys.GridSearchDataGridFixedGroupHeadersPresenter}" TargetType="{x:Type sdg:FixedGroupHeadersPresenter}">
+    <Style x:Key="{x:Static sdg:GridThemeKeys.GridSearchDataGridFixedGroupHeadersPresenter}" TargetType="{x:Type sdg:FixedGroupHeadersPresenter}">
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="UseLayoutRounding" Value="True" />
         <Setter Property="SnapsToDevicePixels" Value="True" />
@@ -628,7 +628,7 @@
                             BorderBrush="#FFd0d0d0"
                             BorderThickness="0,0,0,1"
                             Cursor="Hand"
-                            ContextMenu="{StaticResource {x:Static sdg:ThemeKeys.GridSearchDataGridFixedGroupHeaderContextMenu}}"
+                            ContextMenu="{StaticResource {x:Static sdg:GridThemeKeys.GridSearchDataGridFixedGroupHeaderContextMenu}}"
                             UseLayoutRounding="True"
                             SnapsToDevicePixels="True">
                         <!--  Click anywhere on the pinned entry toggles the group; the chevron button
@@ -674,7 +674,7 @@
                                             <Binding RelativeSource="{RelativeSource AncestorType={x:Type sdg:SearchDataGrid}}" Path="GroupIndentWidth" />
                                         </MultiBinding>
                                     </sdg:SimpleStackPanel.Margin>
-                                    <Button Style="{StaticResource {x:Static sdg:ThemeKeys.GridSearchDataGridGroupHeaderChevronButton}}"
+                                    <Button Style="{StaticResource {x:Static sdg:GridThemeKeys.GridSearchDataGridGroupHeaderChevronButton}}"
                                             Command="{x:Static commands:ContextMenuCommands.ToggleFixedGroupCommand}"
                                             CommandParameter="{Binding}" />
                                     <ContentControl VerticalAlignment="Center"
@@ -713,6 +713,6 @@
         </Setter>
     </Style>
 
-    <Style BasedOn="{StaticResource {x:Static sdg:ThemeKeys.GridSearchDataGridFixedGroupHeadersPresenter}}" TargetType="{x:Type sdg:FixedGroupHeadersPresenter}" />
+    <Style BasedOn="{StaticResource {x:Static sdg:GridThemeKeys.GridSearchDataGridFixedGroupHeadersPresenter}}" TargetType="{x:Type sdg:FixedGroupHeadersPresenter}" />
 
 </ResourceDictionary>

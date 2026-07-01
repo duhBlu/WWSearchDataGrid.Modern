@@ -1101,7 +1101,7 @@ namespace WWControls.Wpf.Grids
         /// <see cref="SearchDataGrid.FilterRowCellStyle"/>. <c>null</c> (default)
         /// inherits the grid setting; any non-null <see cref="Style"/> wins over the grid
         /// value for this column. When both are null, the keyed theme style
-        /// (<see cref="ThemeKeys.FilterRow.ColumnFilterControl"/>) is used.
+        /// (<see cref="GridThemeKeys.FilterRow.ColumnFilterControl"/>) is used.
         /// </summary>
         public static readonly DependencyProperty FilterRowCellStyleProperty =
             DependencyProperty.Register(
@@ -2512,7 +2512,7 @@ namespace WWControls.Wpf.Grids
         /// <see cref="ValidationCellPresenter"/> so a <see cref="ValidationErrorIcon"/> badge sits
         /// beside the cell content (badge appears whenever the value fails its data-annotation
         /// attributes). The presenter's layout is themable via
-        /// <see cref="ThemeKeys.ValidationCellPresenter"/>; this method only feeds it the per-column
+        /// <see cref="GridThemeKeys.ValidationCellPresenter"/>; this method only feeds it the per-column
         /// content, field name, and resolved <see cref="ActualShowValidationAttributeErrors"/>.
         /// </summary>
         private static DataTemplate BuildValidatingCellTemplate(DataTemplate inner, ColumnDataBase column)

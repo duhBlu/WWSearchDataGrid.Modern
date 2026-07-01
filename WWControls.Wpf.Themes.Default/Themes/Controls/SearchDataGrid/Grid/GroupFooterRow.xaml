@@ -35,7 +35,7 @@
         CanExecute when the aggregate is blocked by AllowedGroupFooterSummaries or unsupported by
         the column's FieldType.
     -->
-    <ContextMenu x:Key="{x:Static sdg:ThemeKeys.GridSearchDataGridGroupFooterCellContextMenu}"
+    <ContextMenu x:Key="{x:Static sdg:GridThemeKeys.GridSearchDataGridGroupFooterCellContextMenu}"
                  AutomationProperties.AutomationId="cmuGroupFooterCell"
                  Style="{StaticResource {x:Static sdg:PrimitiveThemeKeys.ContextMenu}}"
                  x:Shared="False">
@@ -160,9 +160,9 @@
         stack vertically. The picker is suppressed (ContextMenu cleared) when the owning grid's
         SummaryContextMenusEnabled is false.
     -->
-    <Style x:Key="{x:Static sdg:ThemeKeys.GridSearchDataGridGroupFooterCell}" TargetType="{x:Type sdg:GroupFooterCell}">
+    <Style x:Key="{x:Static sdg:GridThemeKeys.GridSearchDataGridGroupFooterCell}" TargetType="{x:Type sdg:GroupFooterCell}">
         <Setter Property="MinHeight" Value="22" />
-        <Setter Property="ContextMenu" Value="{StaticResource {x:Static sdg:ThemeKeys.GridSearchDataGridGroupFooterCellContextMenu}}" />
+        <Setter Property="ContextMenu" Value="{StaticResource {x:Static sdg:GridThemeKeys.GridSearchDataGridGroupFooterCellContextMenu}}" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type sdg:GroupFooterCell}">
@@ -211,13 +211,13 @@
             </DataTrigger>
         </Style.Triggers>
     </Style>
-    <Style BasedOn="{StaticResource {x:Static sdg:ThemeKeys.GridSearchDataGridGroupFooterCell}}" TargetType="{x:Type sdg:GroupFooterCell}" />
+    <Style BasedOn="{StaticResource {x:Static sdg:GridThemeKeys.GridSearchDataGridGroupFooterCell}}" TargetType="{x:Type sdg:GroupFooterCell}" />
 
     <!--  Cells host: per-column run in display order in the same extent space as the data
           cells; FixedColumnAlignedPanel additionally anchors pinned columns' cells to the
           viewport edges (and clips scrollable cells sliding under the bands), matching the
           data cells' fixed-column behavior.  -->
-    <Style x:Key="{x:Static sdg:ThemeKeys.GridSearchDataGridGroupFooterCellsPresenter}" TargetType="{x:Type sdg:GroupFooterCellsPresenter}">
+    <Style x:Key="{x:Static sdg:GridThemeKeys.GridSearchDataGridGroupFooterCellsPresenter}" TargetType="{x:Type sdg:GroupFooterCellsPresenter}">
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type sdg:GroupFooterCellsPresenter}">
@@ -226,7 +226,7 @@
             </Setter.Value>
         </Setter>
     </Style>
-    <Style BasedOn="{StaticResource {x:Static sdg:ThemeKeys.GridSearchDataGridGroupFooterCellsPresenter}}" TargetType="{x:Type sdg:GroupFooterCellsPresenter}" />
+    <Style BasedOn="{StaticResource {x:Static sdg:GridThemeKeys.GridSearchDataGridGroupFooterCellsPresenter}}" TargetType="{x:Type sdg:GroupFooterCellsPresenter}" />
 
     <!--
         Full-width group footer row, swapped in by the DataGridRow style's IsGroupFooter trigger.
@@ -234,7 +234,7 @@
         spacer then one cell per visible column) so each value sits under its column and scrolls
         with it. The footer background spans the extent so the row reads as a closing band.
     -->
-    <ControlTemplate x:Key="{x:Static sdg:ThemeKeys.GridSearchDataGridGroupFooterRow}" TargetType="{x:Type DataGridRow}">
+    <ControlTemplate x:Key="{x:Static sdg:GridThemeKeys.GridSearchDataGridGroupFooterRow}" TargetType="{x:Type DataGridRow}">
         <Border Background="#FFF9F9F9"
                 BorderBrush="#FFd9d9d9"
                 BorderThickness="0,1,0,1"

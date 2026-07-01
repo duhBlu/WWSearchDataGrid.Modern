@@ -61,10 +61,10 @@
         </TextBlock>
     </DataTemplate>
 
-    <Style x:Key="{x:Static sdg:ThemeKeys.GridSearchDataGrid}" TargetType="{x:Type sdg:SearchDataGrid}">
-        <Setter Property="CellStyle" Value="{StaticResource {x:Static sdg:ThemeKeys.GridSearchDataGridCell}}" />
-        <Setter Property="RowStyle" Value="{StaticResource {x:Static sdg:ThemeKeys.GridSearchDataGridRow}}" />
-        <Setter Property="ContextMenu" Value="{StaticResource {x:Static sdg:ThemeKeys.GridSearchDataGridContextMenu}}" />
+    <Style x:Key="{x:Static sdg:GridThemeKeys.GridSearchDataGrid}" TargetType="{x:Type sdg:SearchDataGrid}">
+        <Setter Property="CellStyle" Value="{StaticResource {x:Static sdg:GridThemeKeys.GridSearchDataGridCell}}" />
+        <Setter Property="RowStyle" Value="{StaticResource {x:Static sdg:GridThemeKeys.GridSearchDataGridRow}}" />
+        <Setter Property="ContextMenu" Value="{StaticResource {x:Static sdg:GridThemeKeys.GridSearchDataGridContextMenu}}" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type sdg:SearchDataGrid}">
@@ -117,7 +117,7 @@
 
 
                                             <!--  Per-Column Select All  -->
-                                            <Button Style="{StaticResource {x:Static sdg:ThemeKeys.GridSelectAllButton}}"
+                                            <Button Style="{StaticResource {x:Static sdg:GridThemeKeys.GridSelectAllButton}}"
                                                     Focusable="false"
                                                     Command="{x:Static DataGrid.SelectAllCommand}"
                                                     Panel.ZIndex="2" />
@@ -166,7 +166,7 @@
                                                 frozen-column boundary.
                                             -->
                                             <sdg:FilterRowPresenter x:Name="PART_FilterRow"
-                                                                    Style="{StaticResource {x:Static sdg:ThemeKeys.FilterRowPresenter}}"
+                                                                    Style="{StaticResource {x:Static sdg:GridThemeKeys.FilterRowPresenter}}"
                                                                     Grid.Row="1"
                                                                     Grid.Column="1">
                                                 <sdg:FilterRowPresenter.Visibility>
@@ -350,7 +350,7 @@
                                                     SnapsToDevicePixels="True"
                                                     Visibility="{Binding ActualShowTotalSummaryRow, RelativeSource={RelativeSource AncestorType={x:Type sdg:SearchDataGrid}}, Converter={StaticResource BooleanToVisibilityCollapsedConverter}}" />
                                             <sdg:TotalSummaryRowPresenter x:Name="PART_TotalSummaryRow"
-                                                                          Style="{StaticResource {x:Static sdg:ThemeKeys.GridSearchDataGridTotalSummaryRow}}"
+                                                                          Style="{StaticResource {x:Static sdg:GridThemeKeys.GridSearchDataGridTotalSummaryRow}}"
                                                                           Grid.Row="4"
                                                                           Grid.Column="1"
                                                                           Visibility="{Binding ActualShowTotalSummaryRow, RelativeSource={RelativeSource AncestorType={x:Type sdg:SearchDataGrid}}, Converter={StaticResource BooleanToVisibilityCollapsedConverter}}" />
@@ -526,7 +526,7 @@
                                 <!--  Right-click picker, dropped when the grid disables summary context menus.  -->
                                 <Border.Style>
                                     <Style TargetType="{x:Type Border}">
-                                        <Setter Property="ContextMenu" Value="{StaticResource {x:Static sdg:ThemeKeys.GridSearchDataGridFixedTotalSummaryContextMenu}}" />
+                                        <Setter Property="ContextMenu" Value="{StaticResource {x:Static sdg:GridThemeKeys.GridSearchDataGridFixedTotalSummaryContextMenu}}" />
                                         <Style.Triggers>
                                             <DataTrigger Binding="{Binding SummaryContextMenusEnabled, RelativeSource={RelativeSource AncestorType={x:Type sdg:SearchDataGrid}}}" Value="False">
                                                 <Setter Property="ContextMenu" Value="{x:Null}" />
@@ -569,7 +569,7 @@
 
                             <!--  FilterSummaryPanel  -->
                             <sdg:FilterSummaryPanel x:Name="PART_FilterSummaryPanel"
-                                                    Style="{StaticResource {x:Static sdg:ThemeKeys.FilterSummaryPanel}}"
+                                                    Style="{StaticResource {x:Static sdg:GridThemeKeys.FilterSummaryPanel}}"
                                                     Grid.Row="3" />
 
                             <!--
@@ -590,7 +590,7 @@
                                 <Rectangle x:Name="PART_RowEditDim" Fill="#59000000" />
                                 <Canvas x:Name="PART_RowEditHost" Background="Transparent">
                                     <sdg:RowEditPresenter x:Name="PART_RowEditPresenter"
-                                                          Style="{StaticResource {x:Static sdg:ThemeKeys.GridSearchDataGridRowEditPresenter}}" />
+                                                          Style="{StaticResource {x:Static sdg:GridThemeKeys.GridSearchDataGridRowEditPresenter}}" />
                                 </Canvas>
                             </Grid>
                         </Grid>
@@ -599,8 +599,8 @@
             </Setter.Value>
         </Setter>
         <Setter Property="Background" Value="White" />
-        <Setter Property="RowHeaderStyle" Value="{StaticResource {x:Static sdg:ThemeKeys.GridSearchDataGridRowHeader}}" />
-        <Setter Property="ColumnHeaderStyle" Value="{StaticResource {x:Static sdg:ThemeKeys.GridSearchDataGridColumnHeader}}" />
+        <Setter Property="RowHeaderStyle" Value="{StaticResource {x:Static sdg:GridThemeKeys.GridSearchDataGridRowHeader}}" />
+        <Setter Property="ColumnHeaderStyle" Value="{StaticResource {x:Static sdg:GridThemeKeys.GridSearchDataGridColumnHeader}}" />
         <Setter Property="RowHeaderWidth" Value="24" />
         <Setter Property="BorderBrush" Value="#FFd0d0d0" />
         <Setter Property="BorderThickness" Value="1" />
@@ -631,5 +631,5 @@
         <Setter Property="ScrollViewer.CanContentScroll" Value="True" />
     </Style>
 
-    <Style BasedOn="{StaticResource {x:Static sdg:ThemeKeys.GridSearchDataGrid}}" TargetType="{x:Type sdg:SearchDataGrid}" />
+    <Style BasedOn="{StaticResource {x:Static sdg:GridThemeKeys.GridSearchDataGrid}}" TargetType="{x:Type sdg:SearchDataGrid}" />
 </ResourceDictionary>

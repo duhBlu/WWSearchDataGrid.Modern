@@ -14,7 +14,7 @@ namespace WWControls.Wpf.Grids
     /// </summary>
     /// <remarks>
     /// The entire cell layout — badge gutter on the left, content filling the rest — lives in the
-    /// default template (keyed <see cref="ThemeKeys.ValidationCellPresenter"/> in
+    /// default template (keyed <see cref="GridThemeKeys.ValidationCellPresenter"/> in
     /// <c>Themes/Controls/Validation/ValidationCellPresenter.xaml</c>), so it can be retemplated in
     /// XAML without touching code.
     /// </remarks>

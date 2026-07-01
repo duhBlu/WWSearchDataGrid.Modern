@@ -10,7 +10,7 @@
         <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Controls/SearchDataGrid/Grid/GroupFooterRow.xaml" />
     </ResourceDictionary.MergedDictionaries>
 
-    <Style x:Key="{x:Static sdg:ThemeKeys.GridSelectAllButton}" TargetType="{x:Type Button}">
+    <Style x:Key="{x:Static sdg:GridThemeKeys.GridSelectAllButton}" TargetType="{x:Type Button}">
         <Setter Property="Cursor" Value="Hand" />
         <Setter Property="Width" Value="{Binding RowHeaderWidth, RelativeSource={RelativeSource AncestorType={x:Type sdg:SearchDataGrid}}}" />
         <Setter Property="Template">
@@ -49,7 +49,7 @@
         </Setter>
     </Style>
 
-    <Style x:Key="{x:Static sdg:ThemeKeys.GridSearchDataGridRowHeader}" TargetType="{x:Type DataGridRowHeader}">
+    <Style x:Key="{x:Static sdg:GridThemeKeys.GridSearchDataGridRowHeader}" TargetType="{x:Type DataGridRowHeader}">
         <Setter Property="HorizontalContentAlignment" Value="Center" />
         <Setter Property="VerticalContentAlignment" Value="Center" />
         <Setter Property="FontWeight" Value="Normal" />
@@ -57,7 +57,7 @@
         <Setter Property="Background" Value="#F9F9F9" />
         <Setter Property="BorderBrush" Value="#FFd0d0d0" />
         <Setter Property="BorderThickness" Value="1,1,1,1" />
-        <Setter Property="ContextMenu" Value="{StaticResource {x:Static sdg:ThemeKeys.GridSearchDataGridRowHeaderContextMenu}}" />
+        <Setter Property="ContextMenu" Value="{StaticResource {x:Static sdg:GridThemeKeys.GridSearchDataGridRowHeaderContextMenu}}" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type DataGridRowHeader}">
@@ -99,7 +99,7 @@
         </Setter>
     </Style>
 
-    <Style x:Key="{x:Static sdg:ThemeKeys.GridSearchDataGridRow}" TargetType="{x:Type DataGridRow}">
+    <Style x:Key="{x:Static sdg:GridThemeKeys.GridSearchDataGridRow}" TargetType="{x:Type DataGridRow}">
         <Setter Property="Background" Value="{Binding RowBackground, RelativeSource={RelativeSource AncestorType={x:Type DataGrid}}}" />
         <!--  ValidationErrorTemplate is the row-header error indicator. Validation.ErrorTemplate is
               the framework adorner that boxes the whole row in red when its item (an
@@ -164,7 +164,7 @@
                 above. Bound off Self so the trigger reads the runtime container instance.
             -->
             <DataTrigger Binding="{Binding IsGroupHeader, RelativeSource={RelativeSource Self}}" Value="True">
-                <Setter Property="Template" Value="{StaticResource {x:Static sdg:ThemeKeys.GridSearchDataGridGroupHeaderRow}}" />
+                <Setter Property="Template" Value="{StaticResource {x:Static sdg:GridThemeKeys.GridSearchDataGridGroupHeaderRow}}" />
             </DataTrigger>
             <!--
                 Group-footer sentinel: swap to the full-width footer chrome (one GroupFooterCell
@@ -172,7 +172,7 @@
                 stays false for data and header rows.
             -->
             <DataTrigger Binding="{Binding IsGroupFooter, RelativeSource={RelativeSource Self}}" Value="True">
-                <Setter Property="Template" Value="{StaticResource {x:Static sdg:ThemeKeys.GridSearchDataGridGroupFooterRow}}" />
+                <Setter Property="Template" Value="{StaticResource {x:Static sdg:GridThemeKeys.GridSearchDataGridGroupFooterRow}}" />
             </DataTrigger>
         </Style.Triggers>
     </Style>

@@ -273,7 +273,7 @@ namespace WWControls.Wpf.Grids
             // Resolve the host template lazily, retrying on each call: the first call can run at
             // XAML-parse time before the theme resource is reachable, and we must not latch a null.
             if (RowDetailsTemplate == null)
-                RowDetailsTemplate = TryFindResource(ThemeKeys.GridSearchDataGridEditFormRowDetailsTemplate) as DataTemplate;
+                RowDetailsTemplate = TryFindResource(GridThemeKeys.GridSearchDataGridEditFormRowDetailsTemplate) as DataTemplate;
 
             // No row shows details until ApplyEditFormRowState flips the editing row on.
             RowDetailsVisibilityMode = DataGridRowDetailsVisibilityMode.Collapsed;

@@ -54,7 +54,7 @@
         ContextMenu's PlacementTarget is the GroupPanel, and GroupPanel.OwnerGrid resolves the
         owning SearchDataGrid (filled in on Loaded by walking the visual tree).
     -->
-    <ContextMenu x:Key="{x:Static sdg:ThemeKeys.GridSearchDataGridGroupPanelContextMenu}"
+    <ContextMenu x:Key="{x:Static sdg:GridThemeKeys.GridSearchDataGridGroupPanelContextMenu}"
                  Style="{StaticResource {x:Static sdg:PrimitiveThemeKeys.ContextMenu}}"
                  AutomationProperties.AutomationId="cmuGroupPanel">
         <MenuItem Header="Expand All Groups"
@@ -94,7 +94,7 @@
         menu above we bind PlacementTarget (the panel); for the pill it's not surfaced because
         Clear Grouping is a global action and lives on the panel menu, not per-pill.
     -->
-    <ContextMenu x:Key="{x:Static sdg:ThemeKeys.GridSearchDataGridGroupPillContextMenu}"
+    <ContextMenu x:Key="{x:Static sdg:GridThemeKeys.GridSearchDataGridGroupPillContextMenu}"
                  x:Shared="False"
                  Style="{StaticResource {x:Static sdg:PrimitiveThemeKeys.ContextMenu}}"
                  StaysOpen="True"
@@ -288,7 +288,7 @@
         the empty area opens the panel context menu (Expand All / Collapse All / Clear
         Grouping).
     -->
-    <Style x:Key="{x:Static sdg:ThemeKeys.GridSearchDataGridGroupPanel}" TargetType="{x:Type sdg:GroupPanel}">
+    <Style x:Key="{x:Static sdg:GridThemeKeys.GridSearchDataGridGroupPanel}" TargetType="{x:Type sdg:GroupPanel}">
         <Setter Property="Background" Value="#FFF6F8FB" />
         <Setter Property="BorderBrush" Value="#FFD0D6DF" />
         <Setter Property="BorderThickness" Value="0,0,0,1" />
@@ -296,7 +296,7 @@
         <Setter Property="MinHeight" Value="36" />
         <Setter Property="AllowDrop" Value="True" />
         <Setter Property="ContextMenu"
-                Value="{StaticResource {x:Static sdg:ThemeKeys.GridSearchDataGridGroupPanelContextMenu}}" />
+                Value="{StaticResource {x:Static sdg:GridThemeKeys.GridSearchDataGridGroupPanelContextMenu}}" />
         <Setter Property="ItemsPanel">
             <Setter.Value>
                 <ItemsPanelTemplate>
@@ -319,7 +319,7 @@
                             Focusable="False"
                             VerticalAlignment="Top"
                             HorizontalAlignment="Left"
-                            ContextMenu="{StaticResource {x:Static sdg:ThemeKeys.GridSearchDataGridGroupPillContextMenu}}"
+                            ContextMenu="{StaticResource {x:Static sdg:GridThemeKeys.GridSearchDataGridGroupPillContextMenu}}"
                             ToolTip="Click to flip sort direction. Right-click for actions.">
                         <Button.Margin>
                             <MultiBinding Converter="{StaticResource GroupPillIndentConverter}">
@@ -499,6 +499,6 @@
     </Style>
 
     <Style TargetType="{x:Type sdg:GroupPanel}"
-           BasedOn="{StaticResource {x:Static sdg:ThemeKeys.GridSearchDataGridGroupPanel}}" />
+           BasedOn="{StaticResource {x:Static sdg:GridThemeKeys.GridSearchDataGridGroupPanel}}" />
 
 </ResourceDictionary>

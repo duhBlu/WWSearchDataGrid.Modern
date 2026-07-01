@@ -29,10 +29,10 @@
         in ColumnChooser.OnSectionContextMenuOpening, matching how the header
         path wires its menu at opening time.
     -->
-    <Style x:Key="{x:Static sdg:ThemeKeys.ColumnChooserSectionItem}" TargetType="ListBoxItem">
+    <Style x:Key="{x:Static sdg:GridThemeKeys.ColumnChooserSectionItem}" TargetType="ListBoxItem">
         <Setter Property="HorizontalContentAlignment" Value="Stretch" />
         <Setter Property="Background" Value="Transparent" />
-        <Setter Property="ContextMenu" Value="{StaticResource {x:Static sdg:ThemeKeys.GridSearchDataGridColumnHeaderContextMenu}}" />
+        <Setter Property="ContextMenu" Value="{StaticResource {x:Static sdg:GridThemeKeys.GridSearchDataGridColumnHeaderContextMenu}}" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="ListBoxItem">
@@ -325,7 +325,7 @@
 
                                     <!--  Left section  -->
                                     <sdg:ReorderableListBox x:Name="PART_LeftSectionList"
-                                                            ItemContainerStyle="{StaticResource {x:Static sdg:ThemeKeys.ColumnChooserSectionItem}}"
+                                                            ItemContainerStyle="{StaticResource {x:Static sdg:GridThemeKeys.ColumnChooserSectionItem}}"
                                                             Grid.Row="0"
                                                             BorderThickness="0"
                                                             Visibility="{Binding HasLeftFixedColumns, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource BooleanToVisibilityConverter}}"
@@ -342,7 +342,7 @@
 
                                     <!--  Unpinned section — fills remaining vertical space.  -->
                                     <sdg:ReorderableListBox x:Name="PART_UnpinnedSectionList"
-                                                            ItemContainerStyle="{StaticResource {x:Static sdg:ThemeKeys.ColumnChooserSectionItem}}"
+                                                            ItemContainerStyle="{StaticResource {x:Static sdg:GridThemeKeys.ColumnChooserSectionItem}}"
                                                             Grid.Row="2"
                                                             BorderThickness="0"
                                                             Visibility="{Binding HasUnpinnedColumns, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource BooleanToVisibilityConverter}}"
@@ -359,7 +359,7 @@
 
                                     <!--  Right section  -->
                                     <sdg:ReorderableListBox x:Name="PART_RightSectionList"
-                                                            ItemContainerStyle="{StaticResource {x:Static sdg:ThemeKeys.ColumnChooserSectionItem}}"
+                                                            ItemContainerStyle="{StaticResource {x:Static sdg:GridThemeKeys.ColumnChooserSectionItem}}"
                                                             Grid.Row="4"
                                                             BorderThickness="0"
                                                             Visibility="{Binding HasRightFixedColumns, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource BooleanToVisibilityConverter}}"

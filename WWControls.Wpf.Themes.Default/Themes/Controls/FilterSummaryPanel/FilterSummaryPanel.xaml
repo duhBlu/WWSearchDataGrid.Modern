@@ -16,7 +16,7 @@
     <converters:GreaterThanConverter x:Key="GreaterThanConverter" />
 
     <!--  Default FilterSummaryPanel Style  -->
-    <Style x:Key="{x:Static sdg:ThemeKeys.FilterSummaryPanel}" TargetType="{x:Type sdg:FilterSummaryPanel}">
+    <Style x:Key="{x:Static sdg:GridThemeKeys.FilterSummaryPanel}" TargetType="{x:Type sdg:FilterSummaryPanel}">
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type sdg:FilterSummaryPanel}">

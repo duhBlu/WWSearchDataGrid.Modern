@@ -60,7 +60,7 @@
 
 
     <!--  ColumnFilterPopup Style  -->
-    <Style x:Key="{x:Static sdg:ThemeKeys.ColumnFilterPopup}" TargetType="{x:Type sdg:ColumnFilterPopup}">
+    <Style x:Key="{x:Static sdg:GridThemeKeys.ColumnFilterPopup}" TargetType="{x:Type sdg:ColumnFilterPopup}">
         <Setter Property="Background" Value="#f4f4f4" />
         <Setter Property="BorderBrush" Value="DarkGray" />
         <Setter Property="VerticalOffset" Value="-24" />
@@ -146,6 +146,6 @@
         </Setter>
     </Style>
 
-    <Style BasedOn="{StaticResource {x:Static sdg:ThemeKeys.ColumnFilterPopup}}" TargetType="{x:Type sdg:ColumnFilterPopup}" />
+    <Style BasedOn="{StaticResource {x:Static sdg:GridThemeKeys.ColumnFilterPopup}}" TargetType="{x:Type sdg:ColumnFilterPopup}" />
 
 </ResourceDictionary>

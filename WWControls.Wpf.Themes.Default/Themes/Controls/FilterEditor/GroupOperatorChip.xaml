@@ -5,7 +5,7 @@
 
     <converters:EnumToStringConverter x:Key="GroupOperatorEnumToStringConverter" />
 
-    <Style x:Key="{x:Static sdg:ThemeKeys.FilterEditorGroupOperatorChip}" TargetType="{x:Type sdg:GroupOperatorChip}">
+    <Style x:Key="{x:Static sdg:GridThemeKeys.FilterEditorGroupOperatorChip}" TargetType="{x:Type sdg:GroupOperatorChip}">
         <Setter Property="Focusable" Value="True" />
         <Setter Property="VerticalAlignment" Value="Center" />
         <Setter Property="Template">
@@ -76,6 +76,6 @@
         </Setter>
     </Style>
 
-    <Style BasedOn="{StaticResource {x:Static sdg:ThemeKeys.FilterEditorGroupOperatorChip}}" TargetType="{x:Type sdg:GroupOperatorChip}" />
+    <Style BasedOn="{StaticResource {x:Static sdg:GridThemeKeys.FilterEditorGroupOperatorChip}}" TargetType="{x:Type sdg:GroupOperatorChip}" />
 
 </ResourceDictionary>
