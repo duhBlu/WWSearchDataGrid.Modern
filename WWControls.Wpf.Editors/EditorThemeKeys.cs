@@ -42,6 +42,20 @@ namespace WWControls.Wpf.Editors
         public static ComponentResourceKey SpinEdit { get; } =
             new ComponentResourceKey(typeof(EditorThemeKeys), nameof(SpinEdit));
 
+        /// <summary>
+        /// Default style for <see cref="WWComboEdit"/> — the editor's own chrome hosting the flat
+        /// inner <c>PART_ComboBox</c> (whose own look comes from <see cref="EditComboBox"/>).
+        /// </summary>
+        public static ComponentResourceKey ComboEdit { get; } =
+            new ComponentResourceKey(typeof(EditorThemeKeys), nameof(ComboEdit));
+
+        /// <summary>
+        /// Default style for <see cref="WWDateEdit"/> — the editor's own chrome hosting the segmented
+        /// date editor as <c>PART_Editor</c>.
+        /// </summary>
+        public static ComponentResourceKey DateEdit { get; } =
+            new ComponentResourceKey(typeof(EditorThemeKeys), nameof(DateEdit));
+
         /// <summary>Default style for the read-only TextBlock used by Text / ComboBox / Spin / Date display templates.</summary>
         public static ComponentResourceKey DisplayTextBlock { get; } =
             new ComponentResourceKey(typeof(EditorThemeKeys), nameof(DisplayTextBlock));

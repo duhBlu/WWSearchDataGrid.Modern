@@ -217,6 +217,116 @@
         </Setter>
     </Style>
 
+    <!--
+        WWComboEdit — its own chrome hosting the flat inner PART_ComboBox. The combo forwards its
+        essentials (items, selection, drop-down state) via TemplateBindings; its flat look
+        (chevron / popup / item container) is applied from EditComboBox in code
+        (WWComboEdit.OnApplyTemplate), so it stays borderless and this chrome draws the border.
+    -->
+    <Style x:Key="{x:Static sdg:EditorThemeKeys.ComboEdit}" TargetType="{x:Type sdg:WWComboEdit}">
+        <Setter Property="Background" Value="#FFFFFF" />
+        <Setter Property="Foreground" Value="#1C1C1C" />
+        <Setter Property="BorderBrush" Value="#CCCCCC" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Padding" Value="4,2" />
+        <Setter Property="Focusable" Value="True" />
+        <Setter Property="IsTabStop" Value="False" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type sdg:WWComboEdit}">
+                    <Border x:Name="ChromeBorder"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="3"
+                            SnapsToDevicePixels="True">
+                        <ComboBox x:Name="PART_ComboBox"
+                                  Margin="{TemplateBinding Padding}"
+                                  Background="Transparent"
+                                  VerticalContentAlignment="Center"
+                                  HorizontalContentAlignment="Left"
+                                  ItemsSource="{TemplateBinding ItemsSource}"
+                                  SelectedValuePath="{TemplateBinding SelectedValuePath}"
+                                  IsEditable="{TemplateBinding IsEditable}"
+                                  SelectedValue="{Binding SelectedValue, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}"
+                                  SelectedItem="{Binding SelectedItem, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}"
+                                  IsDropDownOpen="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="ShowBorder" Value="True">
+                            <Setter TargetName="ChromeBorder" Property="BorderThickness" Value="1" />
+                        </Trigger>
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="ShowBorder" Value="True" />
+                                <Condition Property="IsKeyboardFocusWithin" Value="True" />
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="ChromeBorder" Property="BorderBrush" Value="#0078D4" />
+                        </MultiTrigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="ChromeBorder" Property="Opacity" Value="0.6" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!--
+        WWDateEdit — its own chrome hosting the segmented date editor (PART_Editor). Forwards the
+        date essentials via TemplateBindings; the segmented editor renders flat, so this chrome
+        draws the border.
+    -->
+    <Style x:Key="{x:Static sdg:EditorThemeKeys.DateEdit}" TargetType="{x:Type sdg:WWDateEdit}">
+        <Setter Property="Background" Value="#FFFFFF" />
+        <Setter Property="Foreground" Value="#1C1C1C" />
+        <Setter Property="BorderBrush" Value="#CCCCCC" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Padding" Value="4,2" />
+        <Setter Property="Focusable" Value="True" />
+        <Setter Property="IsTabStop" Value="False" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type sdg:WWDateEdit}">
+                    <Border x:Name="ChromeBorder"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="3"
+                            SnapsToDevicePixels="True">
+                        <sdg:SegmentedDateTimeEditor x:Name="PART_Editor"
+                                                     Margin="{TemplateBinding Padding}"
+                                                     Value="{Binding Value, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}"
+                                                     Mask="{TemplateBinding Mask}"
+                                                     MaskType="{TemplateBinding MaskType}"
+                                                     MinDate="{TemplateBinding MinDate}"
+                                                     MaxDate="{TemplateBinding MaxDate}"
+                                                     TextAlignment="{TemplateBinding TextAlignment}" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="ShowBorder" Value="True">
+                            <Setter TargetName="ChromeBorder" Property="BorderThickness" Value="1" />
+                        </Trigger>
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="ShowBorder" Value="True" />
+                                <Condition Property="IsKeyboardFocusWithin" Value="True" />
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="ChromeBorder" Property="BorderBrush" Value="#0078D4" />
+                        </MultiTrigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="ChromeBorder" Property="Opacity" Value="0.6" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
     <!-- WWCheckEdit is a glyph, not a bordered input: transparent background so the cell's own
          fill / selection shows through, no padding, border stays off. Reuses the base chrome
          template via BasedOn. -->

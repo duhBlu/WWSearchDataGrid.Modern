@@ -1,54 +1,29 @@
 using System.Collections;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Controls.Primitives;
 using System.Windows.Data;
-using System.Windows.Media;
 
 namespace WWControls.Wpf.Editors
 {
     /// <summary>
-    /// Dropdown editor over <see cref="WWBaseEdit"/>. It wraps a real, flat <see cref="ComboBox"/> in
-    /// the content host — so WPF keeps doing selection, popup, and keyboard work — while the base owns
-    /// the border (the inner combo never draws its own). The combo essentials are surfaced as
-    /// forwarding DPs, and <see cref="IsDropDownOpen"/> plus <see cref="ComboBox"/> are exposed so the
-    /// grid-side adapter can drive cell interaction without the control referencing the grid.
+    /// Dropdown editor. A lookless control whose template hosts a flat, real <see cref="ComboBox"/>
+    /// (<c>PART_ComboBox</c>) inside its own chrome — so WPF keeps doing selection, popup, and
+    /// keyboard work while the chrome owns the border (the inner combo never draws its own). The
+    /// combo essentials are surfaced as forwarding DPs (bound to the inner combo in the template),
+    /// and <see cref="IsDropDownOpen"/> plus <see cref="ComboBox"/> are exposed so the grid-side
+    /// adapter can drive cell interaction without the control referencing the grid.
     /// </summary>
+    [TemplatePart(Name = PartComboBox, Type = typeof(ComboBox))]
     public class WWComboEdit : WWBaseEdit
     {
-        private readonly ComboBox _comboBox;
+        private const string PartComboBox = "PART_ComboBox";
+
+        private ComboBox _comboBox;
 
         static WWComboEdit()
         {
             DefaultStyleKeyProperty.OverrideMetadata(typeof(WWComboEdit),
-                new FrameworkPropertyMetadata(typeof(WWBaseEdit)));
-        }
-
-        public WWComboEdit()
-        {
-            _comboBox = new ComboBox
-            {
-                // Transparent + flat: the inner combo's EditComboBox style draws no border of its
-                // own, so the only border is the one WWBaseEdit's chrome draws.
-                Background = Brushes.Transparent,
-                VerticalContentAlignment = VerticalAlignment.Center,
-                HorizontalContentAlignment = HorizontalAlignment.Left,
-            };
-
-            BindingOperations.SetBinding(_comboBox, ItemsControl.ItemsSourceProperty,
-                new Binding(nameof(ItemsSource)) { Source = this, Mode = BindingMode.OneWay });
-            BindingOperations.SetBinding(_comboBox, Selector.SelectedValuePathProperty,
-                new Binding(nameof(SelectedValuePath)) { Source = this, Mode = BindingMode.OneWay });
-            BindingOperations.SetBinding(_comboBox, Selector.SelectedValueProperty,
-                new Binding(nameof(SelectedValue)) { Source = this, Mode = BindingMode.TwoWay });
-            BindingOperations.SetBinding(_comboBox, Selector.SelectedItemProperty,
-                new Binding(nameof(SelectedItem)) { Source = this, Mode = BindingMode.TwoWay });
-            BindingOperations.SetBinding(_comboBox, ComboBox.IsDropDownOpenProperty,
-                new Binding(nameof(IsDropDownOpen)) { Source = this, Mode = BindingMode.TwoWay });
-            BindingOperations.SetBinding(_comboBox, ComboBox.IsEditableProperty,
-                new Binding(nameof(IsEditable)) { Source = this, Mode = BindingMode.OneWay });
-
-            EditContent = _comboBox;
+                new FrameworkPropertyMetadata(typeof(WWComboEdit)));
         }
 
         public static readonly DependencyProperty ItemsSourceProperty =
@@ -133,18 +108,29 @@ namespace WWControls.Wpf.Editors
         public override void OnApplyTemplate()
         {
             base.OnApplyTemplate();
-            // Reuse the library's flat combo look (border / chevron / popup / item container style).
+            _comboBox = GetTemplateChild(PartComboBox) as ComboBox;
+            if (_comboBox == null) return;
+
+            // Reuse the library's flat combo look (chevron / popup / item container style). Resolved
+            // here — once the control is in the tree — so the ComponentResourceKey walks through to
+            // the theme dictionary. The combo stays borderless; WWComboEdit's chrome draws the border.
             if (_comboBox.Style == null && TryFindResource(EditorThemeKeys.EditComboBox) is Style style)
                 _comboBox.Style = style;
+
+            UpdateItemTemplate();
         }
 
         private static void OnDisplayMemberPathChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+            => ((WWComboEdit)d).UpdateItemTemplate();
+
+        private void UpdateItemTemplate()
         {
-            var self = (WWComboEdit)d;
-            var path = e.NewValue as string;
+            if (_comboBox == null) return;
+
+            var path = DisplayMemberPath;
             if (string.IsNullOrEmpty(path))
             {
-                self._comboBox.ItemTemplate = null;
+                _comboBox.ItemTemplate = null;
                 return;
             }
 
@@ -152,7 +138,7 @@ namespace WWControls.Wpf.Editors
             var text = new FrameworkElementFactory(typeof(TextBlock));
             text.SetBinding(TextBlock.TextProperty, new Binding(path));
             template.VisualTree = text;
-            self._comboBox.ItemTemplate = template;
+            _comboBox.ItemTemplate = template;
         }
     }
 }

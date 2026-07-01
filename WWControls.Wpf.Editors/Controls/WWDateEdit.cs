@@ -1,55 +1,33 @@
 using System;
 using System.Windows;
-using System.Windows.Data;
 using WWControls.Core.Display;
 
 namespace WWControls.Wpf.Editors
 {
     /// <summary>
-    /// Date editor over <see cref="WWBaseEdit"/>. It wraps the existing
-    /// <see cref="SegmentedDateTimeEditor"/> (masked segment entry + a calendar dropdown) in the
-    /// content host, forwarding the date essentials, while the base owns the border — so the date
-    /// editor reads as one bordered input in the edit form and flat in a grid cell, the same as every
-    /// other editor.
+    /// Date editor. A lookless control whose template wraps the existing
+    /// <see cref="SegmentedDateTimeEditor"/> (masked segment entry + a calendar dropdown) as
+    /// <c>PART_Editor</c> inside its own chrome, forwarding the date essentials via TemplateBindings
+    /// while the chrome owns the border — so the date editor reads as one bordered input on a form
+    /// and flat in a grid cell, the same as every other editor.
     /// </summary>
     /// <remarks>
-    /// Wrapping (rather than re-parenting the 71KB segmented control onto <see cref="WWBaseEdit"/>)
-    /// keeps that control's <c>Value</c> / segment logic intact and sidesteps a DP collision. The
-    /// inner editor renders flat so only the base's chrome draws; the segmented control still
+    /// Wrapping (rather than re-parenting the segmented control onto <see cref="WWBaseEdit"/>) keeps
+    /// that control's <c>Value</c> / segment logic intact and sidesteps a DP collision. The inner
+    /// editor renders flat so only the chrome's border draws; the segmented control still
     /// self-focuses its TextBox on edit-mode entry.
     /// </remarks>
+    [TemplatePart(Name = PartEditor, Type = typeof(SegmentedDateTimeEditor))]
     public class WWDateEdit : WWBaseEdit
     {
-        private readonly SegmentedDateTimeEditor _editor;
+        private const string PartEditor = "PART_Editor";
+
+        private SegmentedDateTimeEditor _editor;
 
         static WWDateEdit()
         {
             DefaultStyleKeyProperty.OverrideMetadata(typeof(WWDateEdit),
-                new FrameworkPropertyMetadata(typeof(WWBaseEdit)));
-        }
-
-        public WWDateEdit()
-        {
-            _editor = new SegmentedDateTimeEditor();
-            // The segmented control renders flat (its template draws no border), so the only border
-            // is the one WWBaseEdit's chrome draws — no double border.
-
-            // object ↔ DateTime? coerces through WPF's standard binding type-converter (same as the
-            // filter row's SearchValue binding), so the adapter can bind the column field to Value.
-            BindingOperations.SetBinding(_editor, SegmentedDateTimeEditor.ValueProperty,
-                new Binding(nameof(Value)) { Source = this, Mode = BindingMode.TwoWay });
-            BindingOperations.SetBinding(_editor, SegmentedDateTimeEditor.MaskProperty,
-                new Binding(nameof(Mask)) { Source = this, Mode = BindingMode.OneWay });
-            BindingOperations.SetBinding(_editor, SegmentedDateTimeEditor.MaskTypeProperty,
-                new Binding(nameof(MaskType)) { Source = this, Mode = BindingMode.OneWay });
-            BindingOperations.SetBinding(_editor, SegmentedDateTimeEditor.MinDateProperty,
-                new Binding(nameof(MinDate)) { Source = this, Mode = BindingMode.OneWay });
-            BindingOperations.SetBinding(_editor, SegmentedDateTimeEditor.MaxDateProperty,
-                new Binding(nameof(MaxDate)) { Source = this, Mode = BindingMode.OneWay });
-            BindingOperations.SetBinding(_editor, SegmentedDateTimeEditor.TextAlignmentProperty,
-                new Binding(nameof(TextAlignment)) { Source = this, Mode = BindingMode.OneWay });
-
-            EditContent = _editor;
+                new FrameworkPropertyMetadata(typeof(WWDateEdit)));
         }
 
         public static readonly DependencyProperty MaskProperty =
@@ -97,10 +75,16 @@ namespace WWControls.Wpf.Editors
             set => SetValue(TextAlignmentProperty, value);
         }
 
-        /// <summary>The wrapped segmented date editor.</summary>
+        /// <summary>The wrapped segmented date editor (null before the template is applied).</summary>
         public SegmentedDateTimeEditor Editor => _editor;
 
         /// <inheritdoc />
         protected override System.Windows.IInputElement FocusTarget => _editor;
+
+        public override void OnApplyTemplate()
+        {
+            base.OnApplyTemplate();
+            _editor = GetTemplateChild(PartEditor) as SegmentedDateTimeEditor;
+        }
     }
 }
