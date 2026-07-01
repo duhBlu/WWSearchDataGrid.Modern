@@ -1,0 +1,16 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- Shim: the default theme lives in WWControls.Wpf.Themes.Default. This file exists so
+         [ThemeInfo(GenericDictionaryLocation = SourceAssembly)] resolves to a valid Generic.xaml
+         inside the Editors assembly, giving the editor controls (WWBaseEdit + the WWxxxEdit family,
+         SegmentedDateTimeEditor) their default styles without the consumer having to merge anything.
+         Merged bottom-up: DefaultControls brings the shared brushes + icons + the PrimitivesComboBoxItem
+         style the combo editor reuses; then the editor chrome; then the editor element styles. -->
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="pack://application:,,,/WWControls.Wpf.Themes.Default;component/Themes/Controls/Primitives/DefaultControls.xaml" />
+        <ResourceDictionary Source="pack://application:,,,/WWControls.Wpf.Themes.Default;component/Themes/Controls/Editors/Editors.xaml" />
+        <ResourceDictionary Source="pack://application:,,,/WWControls.Wpf.Themes.Default;component/Themes/Controls/EditSettings/EditSettings.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+
+</ResourceDictionary>
