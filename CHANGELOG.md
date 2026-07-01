@@ -3,16 +3,20 @@
 ## [Unreleased]
 
 ### Added — Editor control foundation (WWBaseEdit + first-class editors)
-- **`WWBaseEdit`** (lookless base) owns the editor chrome in one place: outer border, background,
-  padding, focus accent, disabled visual, a `PART_ContentHost` for the concrete input, and a
-  trailing decoration-button slot. Border policy is driven by `ShowBorder` — flat by default (the
-  in-cell / filter-row look) and a 1px edge with a focus accent when set (the edit-form / standalone
-  look). This is where the long-standing spin / date border inconsistency is resolved: every editor
-  inherits the one chrome.
-- **Five concrete editors over that base** — `WWTextEdit` (mask support via `MaskInputBehavior`),
-  `WWSpinEdit` (numeric entry + up/down buttons + Ctrl+Up/Down increment), `WWComboEdit` (wraps a flat
-  ComboBox), `WWDateEdit` (wraps `SegmentedDateTimeEditor`), `WWCheckEdit` (two/three-state). They
-  carry **zero grid references** and are usable standalone on any form.
+- **`WWBaseEdit`** (lookless base) is the thin shared base for the editor family — the edited
+  `Value`, `IsReadOnly`, the `ShowBorder` flag, focus-forwarding to the concrete input, and an
+  in-cell self-flatten. It supplies **no** shared chrome template: each concrete editor owns its
+  own default style, control template, and border (keyed `EditorThemeKeys.TextEdit` / `SpinEdit` /
+  `ComboEdit` / `DateEdit` / `CheckEdit`) hosting named parts (`PART_TextBox`, `PART_ComboBox`,
+  `PART_Editor`, `PART_CheckBox`, plus the spinner's `PART_UpButton` / `PART_DownButton`).
+- **Border policy: bordered by default** (standalone use, the edit form). A grid cell flattens the
+  editor — the control clears `ShowBorder` when it detects a stock `DataGridCell` ancestor — and the
+  filter row sets `ShowBorder=false` explicitly. This resolves the long-standing spin / date border
+  inconsistency without the inherited host-context flag.
+- **Five concrete editors, each fully lookless with named parts** — `WWTextEdit` (mask support via
+  `MaskInputBehavior`), `WWSpinEdit` (numeric entry + up/down buttons + Ctrl+Up/Down increment),
+  `WWComboEdit` (hosts a flat ComboBox), `WWDateEdit` (wraps `SegmentedDateTimeEditor`), `WWCheckEdit`
+  (two/three-state). They carry **zero grid references** and are usable standalone on any form.
 - **`EditSettings` adapters now host these controls.** `TextEditSettings` / `SpinEditSettings` /
   `ComboBoxEditSettings` / `DateEditSettings` / `CheckBoxEditSettings` build their edit templates
   around the `WWxxxEdit` controls instead of assembling raw `TextBox` / `ComboBox` composites via
@@ -29,6 +33,10 @@
   `EditTemplate` to fully replace the in-place editor.
 - **`EditSettingsThemeKeys.EditNumericTextBox`** (and its theme style) removed — it backed the old
   spinner's TextBox, which `WWSpinEdit` now replaces.
+- **`EditorChrome.ShowEditorBorder`** (the inherited attached border flag) and the single shared
+  `WWBaseEdit` chrome template + its `EditorThemeKeys.BaseEdit` key are removed. Each editor draws
+  its own border per its own `ShowBorder` and flattens itself in a grid cell, so there is no
+  host-context flag to inherit and no double-border suppression on nested controls.
 
 ### Added — Edit Entire Row (full-row edit mode)
 - **Full-row editing.** A row can now be edited as a unit: clicking into it opens every cell as an

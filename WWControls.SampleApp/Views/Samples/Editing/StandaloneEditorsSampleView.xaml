@@ -15,7 +15,7 @@
             <TextBlock FontSize="13" Foreground="#444" TextWrapping="Wrap" Margin="0,0,0,16">
                 <Run FontWeight="SemiBold" Text="Standalone editors" />
                 <LineBreak />
-                <Run Text="The same editor controls the grid hosts in a cell, used directly on a form — no grid involved. The chrome (border, focus accent, padding) is owned by WWBaseEdit: flat by default, bordered when ShowBorder is set. Each editor's value two-way-binds to the echo on its right." />
+                <Run Text="The same editor controls the grid hosts in a cell, used directly on a form — no grid involved. Each editor owns its own chrome (border, focus accent, padding) and is bordered by default; a grid cell flattens it. The first row opts out with ShowBorder=false to show the in-cell look. Each editor's value two-way-binds to the echo on its right." />
             </TextBlock>
 
             <!-- WWTextEdit: the chrome story (flat vs bordered vs masked vs read-only). -->
@@ -38,33 +38,33 @@
                 <TextBlock Grid.Row="0" Grid.Column="1" Text="Editor" FontWeight="SemiBold" Foreground="#666" Margin="0,0,0,6" />
                 <TextBlock Grid.Row="0" Grid.Column="2" Text="Bound value" FontWeight="SemiBold" Foreground="#666" Margin="12,0,0,6" />
 
-                <!-- Flat (in-cell look) -->
-                <TextBlock Grid.Row="1" Grid.Column="0" Text="Flat (default)" VerticalAlignment="Center" Margin="0,4" Foreground="#333" />
-                <sdg:WWTextEdit Grid.Row="1" Grid.Column="1" Height="26" Margin="0,4"
+                <!-- Flat: a grid cell flattens the editor; here we opt out of the default border. -->
+                <TextBlock Grid.Row="1" Grid.Column="0" Text="Flat (in-cell look)" VerticalAlignment="Center" Margin="0,4" Foreground="#333" />
+                <sdg:WWTextEdit Grid.Row="1" Grid.Column="1" Height="26" Margin="0,4" ShowBorder="False"
                                 Value="{Binding PlainText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                 <TextBlock Grid.Row="1" Grid.Column="2" Text="{Binding PlainText}" VerticalAlignment="Center" Margin="12,4" Foreground="#0066AA" />
 
-                <!-- Bordered (form look) -->
-                <TextBlock Grid.Row="2" Grid.Column="0" Text="Bordered" VerticalAlignment="Center" Margin="0,4" Foreground="#333" />
-                <sdg:WWTextEdit Grid.Row="2" Grid.Column="1" Height="26" Margin="0,4" ShowBorder="True"
+                <!-- Bordered (the default form look). -->
+                <TextBlock Grid.Row="2" Grid.Column="0" Text="Bordered (default)" VerticalAlignment="Center" Margin="0,4" Foreground="#333" />
+                <sdg:WWTextEdit Grid.Row="2" Grid.Column="1" Height="26" Margin="0,4"
                                 Value="{Binding BorderedText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                 <TextBlock Grid.Row="2" Grid.Column="2" Text="{Binding BorderedText}" VerticalAlignment="Center" Margin="12,4" Foreground="#0066AA" />
 
-                <!-- Bordered + mask -->
+                <!-- Masked -->
                 <TextBlock Grid.Row="3" Grid.Column="0" Text="Masked (phone)" VerticalAlignment="Center" Margin="0,4" Foreground="#333" />
-                <sdg:WWTextEdit Grid.Row="3" Grid.Column="1" Height="26" Margin="0,4" ShowBorder="True"
+                <sdg:WWTextEdit Grid.Row="3" Grid.Column="1" Height="26" Margin="0,4"
                                 Mask="(000) 000-0000"
                                 Value="{Binding Phone, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                 <TextBlock Grid.Row="3" Grid.Column="2" Text="{Binding Phone}" VerticalAlignment="Center" Margin="12,4" Foreground="#0066AA" />
 
-                <!-- Bordered + read-only -->
+                <!-- Read-only -->
                 <TextBlock Grid.Row="4" Grid.Column="0" Text="Read-only" VerticalAlignment="Center" Margin="0,4" Foreground="#333" />
-                <sdg:WWTextEdit Grid.Row="4" Grid.Column="1" Height="26" Margin="0,4" ShowBorder="True" IsReadOnly="True"
+                <sdg:WWTextEdit Grid.Row="4" Grid.Column="1" Height="26" Margin="0,4" IsReadOnly="True"
                                 Value="{Binding ReadOnlyText, Mode=TwoWay}" />
                 <TextBlock Grid.Row="4" Grid.Column="2" Text="{Binding ReadOnlyText}" VerticalAlignment="Center" Margin="12,4" Foreground="#0066AA" />
             </Grid>
 
-            <!-- One of every editor type, bordered (the standalone-form look). -->
+            <!-- One of every editor type, bordered (the standalone-form look, which is the default). -->
             <TextBlock Text="Every editor type (bordered)" FontWeight="SemiBold" Foreground="#222" Margin="0,24,0,8" />
             <Grid>
                 <Grid.ColumnDefinitions>
@@ -86,21 +86,21 @@
 
                 <!-- WWSpinEdit -->
                 <TextBlock Grid.Row="1" Grid.Column="0" Text="WWSpinEdit" VerticalAlignment="Center" Margin="0,4" Foreground="#333" />
-                <sdg:WWSpinEdit Grid.Row="1" Grid.Column="1" Height="26" Margin="0,4" ShowBorder="True"
+                <sdg:WWSpinEdit Grid.Row="1" Grid.Column="1" Height="26" Margin="0,4"
                                 Minimum="0" Maximum="100" Increment="1" LargeIncrement="10"
                                 Value="{Binding Quantity, Mode=TwoWay}" />
                 <TextBlock Grid.Row="1" Grid.Column="2" Text="{Binding Quantity}" VerticalAlignment="Center" Margin="12,4" Foreground="#0066AA" />
 
                 <!-- WWComboEdit -->
                 <TextBlock Grid.Row="2" Grid.Column="0" Text="WWComboEdit" VerticalAlignment="Center" Margin="0,4" Foreground="#333" />
-                <sdg:WWComboEdit Grid.Row="2" Grid.Column="1" Height="26" Margin="0,4" ShowBorder="True"
+                <sdg:WWComboEdit Grid.Row="2" Grid.Column="1" Height="26" Margin="0,4"
                                  ItemsSource="{Binding Fruits}"
                                  SelectedItem="{Binding SelectedFruit, Mode=TwoWay}" />
                 <TextBlock Grid.Row="2" Grid.Column="2" Text="{Binding SelectedFruit}" VerticalAlignment="Center" Margin="12,4" Foreground="#0066AA" />
 
                 <!-- WWDateEdit -->
                 <TextBlock Grid.Row="3" Grid.Column="0" Text="WWDateEdit" VerticalAlignment="Center" Margin="0,4" Foreground="#333" />
-                <sdg:WWDateEdit Grid.Row="3" Grid.Column="1" Height="26" Margin="0,4" ShowBorder="True"
+                <sdg:WWDateEdit Grid.Row="3" Grid.Column="1" Height="26" Margin="0,4"
                                 Value="{Binding DueDate, Mode=TwoWay}" />
                 <TextBlock Grid.Row="3" Grid.Column="2" Text="{Binding DueDate, StringFormat='d'}" VerticalAlignment="Center" Margin="12,4" Foreground="#0066AA" />
 
