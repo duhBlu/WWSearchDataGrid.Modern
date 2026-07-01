@@ -6,7 +6,7 @@ using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
 
-namespace WWControls.Wpf.Editors
+namespace WWControls.Wpf.Editors.Settings
 {
     /// <summary>
     /// Spinner-style numeric editor. Edit mode is a TextBox with Up/Down arrow-key increments,
@@ -218,7 +218,7 @@ namespace WWControls.Wpf.Editors
         /// <summary>
         /// Builds a single up or down spin button for the read-only display template. Its
         /// <see cref="UIElement.Visibility"/> is bound through
-        /// <see cref="Converters.EditorButtonVisibilityConverter"/> (so it shows per
+        /// <see cref="EditorButtonVisibilityConverter"/> (so it shows per
         /// <c>EditorButtonShowMode</c> + cell/row state); clicking enters edit mode, where the
         /// hosted <see cref="WWSpinEdit"/>'s own up/down buttons drive the actual increment.
         /// </summary>

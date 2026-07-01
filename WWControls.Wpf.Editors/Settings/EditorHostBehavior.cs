@@ -4,7 +4,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Threading;
 
-namespace WWControls.Wpf.Grids
+namespace WWControls.Wpf.Editors.Settings
 {
     /// <summary>
     /// Grid-side glue that teaches a <see cref="WWBaseEdit"/>-derived editor how to behave inside a

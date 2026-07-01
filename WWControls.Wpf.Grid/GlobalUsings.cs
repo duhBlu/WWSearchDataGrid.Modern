@@ -5,6 +5,7 @@
 // split, so no two of them share a type name and these can never introduce an ambiguity.
 global using WWControls.Wpf;
 global using WWControls.Wpf.Editors;
+global using WWControls.Wpf.Editors.Settings;
 global using WWControls.Wpf.Primitives;
 global using WWControls.Wpf.Grids;
 global using WWControls.Wpf.Behaviors;

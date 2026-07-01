@@ -10,7 +10,7 @@ using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Threading;
 
-namespace WWControls.Wpf.Editors
+namespace WWControls.Wpf.Editors.Settings
 {
     /// <summary>
     /// Dropdown editor. Edit mode is a ComboBox with the configured ItemsSource, DisplayMemberPath,

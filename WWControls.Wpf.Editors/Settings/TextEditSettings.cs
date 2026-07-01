@@ -5,7 +5,7 @@ using System.Windows.Data;
 using WWControls.Core.Display;
 using WWControls.Wpf.Converters;
 
-namespace WWControls.Wpf.Editors
+namespace WWControls.Wpf.Editors.Settings
 {
     /// <summary>
     /// Plain text editor. TextBlock in display, TextBox in edit. Honors the column's

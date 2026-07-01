@@ -9,7 +9,7 @@ using System.Windows.Media;
 using System.Windows.Threading;
 using WWControls.Core;
 
-namespace WWControls.Wpf.Editors
+namespace WWControls.Wpf.Editors.Settings
 {
     /// <summary>
     /// Base class for column editor configurations. Each concrete implementation produces a
@@ -471,7 +471,7 @@ namespace WWControls.Wpf.Editors
         /// editor decoration button (combo toggle, spinner up/down, date dropdown). The binding
         /// pulls together the editor's <see cref="EditorButtonShowMode"/>, the grid's default,
         /// and the surrounding cell/row state, then routes them through
-        /// <see cref="Converters.EditorButtonVisibilityConverter"/>. Returns null when the column
+        /// <see cref="EditorButtonVisibilityConverter"/>. Returns null when the column
         /// has no <see cref="ColumnLayoutBase.View"/> (e.g. unit tests) — caller can leave the button
         /// unconditionally visible.
         /// </summary>
@@ -482,7 +482,7 @@ namespace WWControls.Wpf.Editors
 
             var binding = new MultiBinding
             {
-                Converter = new Converters.EditorButtonVisibilityConverter(),
+                Converter = new EditorButtonVisibilityConverter(),
                 Mode = BindingMode.OneWay,
             };
             binding.Bindings.Add(new Binding { Source = settings, Path = new PropertyPath(EditorButtonShowModeProperty), Mode = BindingMode.OneWay });
