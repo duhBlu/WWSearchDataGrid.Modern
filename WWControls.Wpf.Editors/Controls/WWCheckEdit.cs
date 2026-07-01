@@ -60,10 +60,10 @@ namespace WWControls.Wpf.Editors
             _checkBox = GetTemplateChild(PartCheckBox) as CheckBox;
 
             // Reuse the library's themed checkbox look (box + check/indeterminate glyphs + the
-            // DataGridCell read-only gate). Resolved here — once the control is in the tree — so the
-            // ComponentResourceKey walks through to the theme dictionary.
-            if (_checkBox != null && _checkBox.Style == null
-                && TryFindResource(EditorThemeKeys.DisplayCheckBox) is Style style)
+            // DataGridCell read-only gate). Applied explicitly and unconditionally so the inner box
+            // can't inherit an ambient implicit CheckBox style from the host app — an applied
+            // implicit style leaves Style non-null, so a "Style == null" guard would skip ours.
+            if (_checkBox != null && TryFindResource(EditorThemeKeys.DisplayCheckBox) is Style style)
                 _checkBox.Style = style;
         }
     }

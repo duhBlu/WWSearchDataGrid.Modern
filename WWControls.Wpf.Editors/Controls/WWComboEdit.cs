@@ -111,10 +111,13 @@ namespace WWControls.Wpf.Editors
             _comboBox = GetTemplateChild(PartComboBox) as ComboBox;
             if (_comboBox == null) return;
 
-            // Reuse the library's flat combo look (chevron / popup / item container style). Resolved
-            // here — once the control is in the tree — so the ComponentResourceKey walks through to
-            // the theme dictionary. The combo stays borderless; WWComboEdit's chrome draws the border.
-            if (_comboBox.Style == null && TryFindResource(EditorThemeKeys.EditComboBox) is Style style)
+            // Reuse the library's flat combo look (chevron / popup / item container style). Applied
+            // explicitly and unconditionally so the inner combo can't inherit an ambient implicit
+            // ComboBox style from the host app (which would draw a second border inside the chrome) —
+            // an applied implicit style leaves Style non-null, so a "Style == null" guard would skip
+            // ours. Resolved here (once the control is in the tree) so the ComponentResourceKey walks
+            // through to the theme dictionary. The combo stays borderless; the chrome draws the border.
+            if (TryFindResource(EditorThemeKeys.EditComboBox) is Style style)
                 _comboBox.Style = style;
 
             UpdateItemTemplate();
