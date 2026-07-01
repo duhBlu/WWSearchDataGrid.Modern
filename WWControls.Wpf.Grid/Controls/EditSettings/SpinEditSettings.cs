@@ -58,7 +58,7 @@ namespace WWControls.Wpf.Editors
             set => SetValue(LargeIncrementProperty, value);
         }
 
-        public override DataTemplate CreateDisplayTemplate(ColumnDataBase column)
+        public override DataTemplate CreateDisplayTemplate(IEditorColumn column)
         {
             var grid = BuildSpinHostGrid();
 
@@ -102,7 +102,7 @@ namespace WWControls.Wpf.Editors
                 Core.SearchType.GreaterThanOrEqualTo, Core.SearchType.LessThanOrEqualTo,
             }, isNullable);
 
-        public override UIElement CreateFilterDisplay(IColumnFilterHost host)
+        public override UIElement CreateFilterDisplay(IFilterEditorHost host)
         {
             // Read-only display: TextBlock with the column's DisplayStringFormat (e.g. "C2", "N0"),
             // mirroring the cell display template. No spinner buttons in display mode — they
@@ -122,7 +122,7 @@ namespace WWControls.Wpf.Editors
                 Source = host,
                 Mode = BindingMode.OneWay,
             };
-            var column = host?.GridColumn;
+            var column = host?.EditorColumn;
             if (column?.DisplayValueConverter != null)
             {
                 binding.Converter = column.DisplayValueConverter;
@@ -135,7 +135,7 @@ namespace WWControls.Wpf.Editors
             return tb;
         }
 
-        public override UIElement CreateFilterEditor(IColumnFilterHost host)
+        public override UIElement CreateFilterEditor(IFilterEditorHost host)
         {
             // NumericUpDown matches the cell editor's spinner UX. Value is object-typed on
             // NumericUpDown; the filter pipeline's engine coerces to the column's runtime
@@ -156,7 +156,7 @@ namespace WWControls.Wpf.Editors
             return spin;
         }
 
-        public override DataTemplate CreateEditTemplate(ColumnDataBase column)
+        public override DataTemplate CreateEditTemplate(IEditorColumn column)
         {
             var factory = new FrameworkElementFactory(typeof(WWSpinEdit));
 
@@ -222,7 +222,7 @@ namespace WWControls.Wpf.Editors
         /// <c>EditorButtonShowMode</c> + cell/row state); clicking enters edit mode, where the
         /// hosted <see cref="WWSpinEdit"/>'s own up/down buttons drive the actual increment.
         /// </summary>
-        private static FrameworkElementFactory BuildSpinDisplayButton(SpinEditSettings settings, ColumnDataBase column, bool isUp)
+        private static FrameworkElementFactory BuildSpinDisplayButton(SpinEditSettings settings, IEditorColumn column, bool isUp)
         {
             var btn = new FrameworkElementFactory(typeof(RepeatButton));
             // Style FIRST. FrameworkElementFactory has a known quirk where StyleProperty must be

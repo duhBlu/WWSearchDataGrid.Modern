@@ -100,7 +100,7 @@ namespace WWControls.Wpf.Editors
             set => SetValue(UseMaskAsDisplayFormatProperty, value);
         }
 
-        public override DataTemplate CreateDisplayTemplate(ColumnDataBase column)
+        public override DataTemplate CreateDisplayTemplate(IEditorColumn column)
         {
             // Two-column host: TextBlock fills column 0, calendar dropdown indicator sits in
             // column 1 with visibility controlled by EditorButtonShowMode.
@@ -168,7 +168,7 @@ namespace WWControls.Wpf.Editors
                 Core.SearchType.GreaterThanOrEqualTo, Core.SearchType.LessThanOrEqualTo,
             }, isNullable);
 
-        public override UIElement CreateFilterDisplay(IColumnFilterHost host)
+        public override UIElement CreateFilterDisplay(IFilterEditorHost host)
         {
             // Read-only display: TextBlock with the same mask / format resolution rules the cell
             // display template uses. UseMaskAsDisplayFormat routes through MaskFormatConverter for
@@ -190,8 +190,8 @@ namespace WWControls.Wpf.Editors
                 Mode = BindingMode.OneWay,
             };
 
-            string effectiveMask = !string.IsNullOrEmpty(Mask) ? Mask : host?.GridColumn?.DisplayMask;
-            string displayFormat = host?.GridColumn?.DisplayStringFormat;
+            string effectiveMask = !string.IsNullOrEmpty(Mask) ? Mask : host?.EditorColumn?.DisplayMask;
+            string displayFormat = host?.EditorColumn?.DisplayStringFormat;
             if (UseMaskAsDisplayFormat && !string.IsNullOrEmpty(effectiveMask))
             {
                 MaskFormatterFactory.EnsureSupported(MaskType);
@@ -207,7 +207,7 @@ namespace WWControls.Wpf.Editors
             return tb;
         }
 
-        public override UIElement CreateFilterEditor(IColumnFilterHost host)
+        public override UIElement CreateFilterEditor(IFilterEditorHost host)
         {
             // Reuse the same SegmentedDateTimeEditor the cell-edit template uses — same
             // masked TextBox + calendar popup, same theme styles. The only difference is
@@ -215,7 +215,7 @@ namespace WWControls.Wpf.Editors
             // of a row-item field path. WPF coerces object↔DateTime? through the standard
             // binding type-converter, so picking a date in the popup pushes a DateTime
             // into SearchValue and clearing the editor pushes null.
-            string effectiveMask = !string.IsNullOrEmpty(Mask) ? Mask : host?.GridColumn?.DisplayMask;
+            string effectiveMask = !string.IsNullOrEmpty(Mask) ? Mask : host?.EditorColumn?.DisplayMask;
             if (!string.IsNullOrEmpty(effectiveMask))
                 MaskFormatterFactory.EnsureSupported(MaskType);
 
@@ -242,7 +242,7 @@ namespace WWControls.Wpf.Editors
             return editor;
         }
 
-        public override DataTemplate CreateEditTemplate(ColumnDataBase column)
+        public override DataTemplate CreateEditTemplate(IEditorColumn column)
         {
             string effectiveMask = !string.IsNullOrEmpty(Mask) ? Mask : column.DisplayMask;
             if (!string.IsNullOrEmpty(effectiveMask))

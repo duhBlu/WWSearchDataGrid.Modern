@@ -141,7 +141,7 @@ namespace WWControls.Wpf.Grids
         {
             var cell = VisualTreeHelperMethods.FindVisualAncestor<DataGridCell>(tb);
             if (cell == null) return false;
-            var grid = VisualTreeHelperMethods.FindVisualAncestor<SearchDataGrid>(cell);
+            var grid = VisualTreeHelperMethods.FindVisualAncestor<IEditingGridHost>(cell);
             if (grid == null) return false;
             if (!grid.TryConsumeMouseEditPoint(cell, out var cellPoint)) return false;
 

@@ -10,7 +10,7 @@ namespace WWControls.Wpf
         /// Walks the visual tree upward from <paramref name="start"/> (inclusive) and returns
         /// the first element of type <typeparamref name="T"/>, or null if none is found.
         /// </summary>
-        public static T FindVisualAncestor<T>(DependencyObject start) where T : DependencyObject
+        public static T FindVisualAncestor<T>(DependencyObject start) where T : class
         {
             var current = start;
             while (current != null)

@@ -78,7 +78,7 @@ namespace WWControls.Wpf.Editors
         /// the bound value to its display text using the configured ItemsSource / DisplayMemberPath
         /// / SelectedValuePath, so a column storing an Id still shows the friendly name.
         /// </summary>
-        public override DataTemplate CreateDisplayTemplate(ColumnDataBase column)
+        public override DataTemplate CreateDisplayTemplate(IEditorColumn column)
         {
             // Two-column host: TextBlock fills column 0, optional chevron drop-down indicator
             // sits in column 1 with visibility controlled by EditorButtonShowMode.
@@ -135,7 +135,7 @@ namespace WWControls.Wpf.Editors
         // the ComboBox whitelist and would disable the FilterRow cell.
         public override DefaultSearchType? GetPreferredDefaultSearchType() => DefaultSearchType.Equals;
 
-        public override UIElement CreateFilterDisplay(IColumnFilterHost host)
+        public override UIElement CreateFilterDisplay(IFilterEditorHost host)
         {
             // Read-only display: TextBlock that resolves SearchValue through the same
             // ItemsSource / DisplayMemberPath / SelectedValuePath lookup the cell display
@@ -161,7 +161,7 @@ namespace WWControls.Wpf.Editors
             return tb;
         }
 
-        public override UIElement CreateFilterEditor(IColumnFilterHost host)
+        public override UIElement CreateFilterEditor(IFilterEditorHost host)
         {
             // ComboBox with the same ItemsSource / DisplayMemberPath / SelectedValuePath as
             // the cell editor — the dropdown options for filtering match what the cell editor
@@ -213,7 +213,7 @@ namespace WWControls.Wpf.Editors
             return cb;
         }
 
-        public override DataTemplate CreateEditTemplate(ColumnDataBase column)
+        public override DataTemplate CreateEditTemplate(IEditorColumn column)
         {
             var factory = new FrameworkElementFactory(typeof(WWComboEdit));
 
@@ -263,7 +263,7 @@ namespace WWControls.Wpf.Editors
                     if (!shouldOpen)
                     {
                         var cell = VisualTreeHelperMethods.FindVisualAncestor<DataGridCell>(editor);
-                        var grid = VisualTreeHelperMethods.FindVisualAncestor<SearchDataGrid>(cell);
+                        var grid = VisualTreeHelperMethods.FindVisualAncestor<IEditingGridHost>(cell);
                         if (grid != null && cell != null
                             && grid.TryConsumeMouseEditPoint(cell, out Point _))
                         {

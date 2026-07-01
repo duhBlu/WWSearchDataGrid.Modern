@@ -29,10 +29,10 @@ namespace WWControls.Wpf.Grids
     /// </remarks>
     internal sealed class DataAnnotationsValidationRule : ValidationRule
     {
-        private readonly ColumnDataBase _column;
+        private readonly IEditorColumn _column;
         private readonly string _propertyName;
 
-        public DataAnnotationsValidationRule(ColumnDataBase column, string propertyName)
+        public DataAnnotationsValidationRule(IEditorColumn column, string propertyName)
             : base(ValidationStep.ConvertedProposedValue, validatesOnTargetUpdated: false)
         {
             _column = column;
@@ -65,7 +65,7 @@ namespace WWControls.Wpf.Grids
             // edit even though the consumer asked to allow the commit. Report success and let the
             // value flow to the source; the cell's ValidationErrorIcon re-validates the committed
             // value by reflection and surfaces the error as an advisory badge.
-            if (_column.View?.AllowCommitOnValidationAttributeError == true)
+            if (_column.Host?.AllowCommitOnValidationAttributeError == true)
                 return ValidationResult.ValidResult;
 
             object item = (owner as BindingExpression)?.DataItem;

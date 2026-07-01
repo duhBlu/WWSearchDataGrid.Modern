@@ -110,7 +110,7 @@ namespace WWControls.Wpf.Editors
             }, isNullable);
         }
 
-        public override DataTemplate CreateDisplayTemplate(ColumnDataBase column)
+        public override DataTemplate CreateDisplayTemplate(IEditorColumn column)
         {
             var factory = new FrameworkElementFactory(typeof(TextBlock));
             // Style FIRST — FrameworkElementFactory requires StyleProperty before other setters.
@@ -154,7 +154,7 @@ namespace WWControls.Wpf.Editors
             return new DataTemplate { VisualTree = factory };
         }
 
-        public override DataTemplate CreateEditTemplate(ColumnDataBase column)
+        public override DataTemplate CreateEditTemplate(IEditorColumn column)
         {
             var factory = new FrameworkElementFactory(typeof(WWTextEdit));
 
@@ -209,7 +209,7 @@ namespace WWControls.Wpf.Editors
         /// pipeline's debounce fires. Flat — the inherited border flag resolves false in the filter
         /// row — and without cell-host wiring, since the filter row drives its own navigation.
         /// </summary>
-        public override System.Windows.UIElement CreateFilterEditor(IColumnFilterHost host)
+        public override System.Windows.UIElement CreateFilterEditor(IFilterEditorHost host)
         {
             var editor = new WWTextEdit();
             BindingOperations.SetBinding(editor, WWBaseEdit.ShowBorderProperty, new Binding
@@ -218,7 +218,7 @@ namespace WWControls.Wpf.Editors
                 Path = new PropertyPath(EditorChrome.ShowEditorBorderProperty),
                 Mode = BindingMode.OneWay,
             });
-            BindingOperations.SetBinding(editor, WWBaseEdit.ValueProperty, new Binding(nameof(IColumnFilterHost.SearchText))
+            BindingOperations.SetBinding(editor, WWBaseEdit.ValueProperty, new Binding(nameof(IFilterEditorHost.SearchText))
             {
                 Source = host,
                 Mode = BindingMode.TwoWay,
@@ -240,7 +240,7 @@ namespace WWControls.Wpf.Editors
         /// Returns <c>(null, MaskType)</c> when nothing applies — the caller leaves
         /// <see cref="MaskInputBehavior"/> unwired and the TextBox behaves like a plain editor.
         /// </summary>
-        private (string mask, MaskType maskType) ResolveEffectiveMask(ColumnDataBase column)
+        private (string mask, MaskType maskType) ResolveEffectiveMask(IEditorColumn column)
         {
             if (!string.IsNullOrEmpty(Mask))
                 return (Mask, MaskType);

@@ -167,27 +167,27 @@ namespace WWControls.Wpf.Editors
         /// <see cref="GridColumn"/> calls — subclasses still implement <see cref="CreateDisplayTemplate"/>
         /// for the default; users override at this layer.
         /// </summary>
-        public DataTemplate ResolveDisplayTemplate(ColumnDataBase column)
+        public DataTemplate ResolveDisplayTemplate(IEditorColumn column)
             => DisplayTemplate ?? CreateDisplayTemplate(column);
 
         /// <summary>
         /// Returns the user-supplied <see cref="EditTemplate"/> if set; otherwise builds the
         /// editor's default via <see cref="CreateEditTemplate"/>.
         /// </summary>
-        public DataTemplate ResolveEditTemplate(ColumnDataBase column)
+        public DataTemplate ResolveEditTemplate(IEditorColumn column)
             => EditTemplate ?? CreateEditTemplate(column);
 
         /// <summary>
         /// Builds the read-only display template. Receives the owning <see cref="GridColumn"/> so
         /// the implementation can reach the binding path, display formatting, and converters.
         /// </summary>
-        public abstract DataTemplate CreateDisplayTemplate(ColumnDataBase column);
+        public abstract DataTemplate CreateDisplayTemplate(IEditorColumn column);
 
         /// <summary>
         /// Builds the in-place edit template. Receives the owning <see cref="GridColumn"/> so the
         /// implementation can wire a two-way binding to the field.
         /// </summary>
-        public abstract DataTemplate CreateEditTemplate(ColumnDataBase column);
+        public abstract DataTemplate CreateEditTemplate(IEditorColumn column);
 
         /// <summary>
         /// Builds the editor element placed in the per-column cell of the
@@ -209,7 +209,7 @@ namespace WWControls.Wpf.Editors
         /// filter-row editor.
         /// </para>
         /// </remarks>
-        public virtual UIElement CreateFilterEditor(IColumnFilterHost host)
+        public virtual UIElement CreateFilterEditor(IFilterEditorHost host)
         {
             return BuildDefaultTextEditor(host);
         }
@@ -230,7 +230,7 @@ namespace WWControls.Wpf.Editors
         /// <see cref="IColumnFilterHost.SearchText"/>; subclasses override to bind to
         /// <see cref="IColumnFilterHost.SearchValue"/> with type-appropriate formatting.
         /// </remarks>
-        public virtual UIElement CreateFilterDisplay(IColumnFilterHost host)
+        public virtual UIElement CreateFilterDisplay(IFilterEditorHost host)
         {
             return BuildDefaultTextDisplay(host);
         }
@@ -242,7 +242,7 @@ namespace WWControls.Wpf.Editors
         /// <see cref="EditorThemeKeys.DisplayTextBlock"/> style so colors / margins match
         /// the cell editor's display mode.
         /// </summary>
-        protected static TextBlock BuildDefaultTextDisplay(IColumnFilterHost host)
+        protected static TextBlock BuildDefaultTextDisplay(IFilterEditorHost host)
         {
             var tb = new TextBlock
             {
@@ -254,7 +254,7 @@ namespace WWControls.Wpf.Editors
             var style = Application.Current?.TryFindResource(EditorThemeKeys.DisplayTextBlock) as Style;
             if (style != null) tb.Style = style;
 
-            BindingOperations.SetBinding(tb, TextBlock.TextProperty, new Binding(nameof(IColumnFilterHost.SearchText))
+            BindingOperations.SetBinding(tb, TextBlock.TextProperty, new Binding(nameof(IFilterEditorHost.SearchText))
             {
                 Source = host,
                 Mode = BindingMode.OneWay,
@@ -319,7 +319,7 @@ namespace WWControls.Wpf.Editors
         /// <see cref="TextBox.Text"/> DP two-way bound to <see cref="IColumnFilterHost.SearchText"/>
         /// updating on every keystroke so the filter pipeline's debounce hooks fire correctly.
         /// </summary>
-        protected static TextBox BuildDefaultTextEditor(IColumnFilterHost host)
+        protected static TextBox BuildDefaultTextEditor(IFilterEditorHost host)
         {
             var tb = new TextBox
             {
@@ -328,7 +328,7 @@ namespace WWControls.Wpf.Editors
             var style = Application.Current?.TryFindResource(EditorThemeKeys.EditTextBox) as Style;
             if (style != null) tb.Style = style;
 
-            BindingOperations.SetBinding(tb, TextBox.TextProperty, new Binding(nameof(IColumnFilterHost.SearchText))
+            BindingOperations.SetBinding(tb, TextBox.TextProperty, new Binding(nameof(IFilterEditorHost.SearchText))
             {
                 Source = host,
                 Mode = BindingMode.TwoWay,
@@ -423,9 +423,9 @@ namespace WWControls.Wpf.Editors
                 // CheckBoxEditSettings) mark the event Handled after the call regardless of
                 // whether navigation actually moved, which matches data-cell semantics: at
                 // the filter row's outer edge the key is consumed and focus stays put.
-                var filter = VisualTreeHelperMethods.FindVisualAncestor<ColumnFilterControl>(source);
+                var filter = VisualTreeHelperMethods.FindVisualAncestor<IFilterEditorHost>(source);
                 if (filter != null)
-                    FilterRowNavigator.TryNavigate(filter, e);
+                    filter.TryNavigateOnArrow(e);
                 return;
             }
 
@@ -436,13 +436,13 @@ namespace WWControls.Wpf.Editors
             // commit-on-error is off, an arrow at a boundary must not carry focus to another cell.
             // The caller already marked the key handled, so returning simply consumes the arrow
             // and keeps the user in the editor.
-            if (grid is SearchDataGrid lockedGrid && lockedGrid.IsEditLockActive())
+            if (grid is IEditingGridHost lockedGrid && lockedGrid.IsEditLockActive())
                 return;
 
             grid.CommitEdit();
             cell.Focus();
 
-            var searchGrid = grid as SearchDataGrid;
+            var searchGrid = grid as IEditingGridHost;
             if (searchGrid != null)
                 searchGrid.SetCarryEditStateOnNextFocus();
 
@@ -476,9 +476,9 @@ namespace WWControls.Wpf.Editors
         /// unconditionally visible.
         /// </summary>
         ///
-        protected static MultiBinding BuildEditorButtonVisibilityBinding(BaseEditSettings settings, ColumnDataBase column)
+        protected static MultiBinding BuildEditorButtonVisibilityBinding(BaseEditSettings settings, IEditorColumn column)
         {
-            if (settings == null || column?.View == null) return null;
+            if (settings == null || column?.Host == null) return null;
 
             var binding = new MultiBinding
             {
@@ -486,7 +486,7 @@ namespace WWControls.Wpf.Editors
                 Mode = BindingMode.OneWay,
             };
             binding.Bindings.Add(new Binding { Source = settings, Path = new PropertyPath(EditorButtonShowModeProperty), Mode = BindingMode.OneWay });
-            binding.Bindings.Add(new Binding { Source = column.View, Path = new PropertyPath(SearchDataGrid.EditorButtonShowModeProperty), Mode = BindingMode.OneWay });
+            binding.Bindings.Add(new Binding { RelativeSource = new RelativeSource(RelativeSourceMode.FindAncestor) { AncestorType = typeof(IEditingGridHost) }, Path = new PropertyPath(nameof(IEditingGridHost.EditorButtonShowMode)), Mode = BindingMode.OneWay });
             binding.Bindings.Add(new Binding
             {
                 RelativeSource = new RelativeSource(RelativeSourceMode.FindAncestor) { AncestorType = typeof(DataGridCell) },
@@ -543,7 +543,7 @@ namespace WWControls.Wpf.Editors
         /// <c>HorizontalAlignment</c> since the glyph itself is what shifts. The editor's outer
         /// stretching is unaffected — only the content within it moves.
         /// </summary>
-        protected static void ApplyTextAlignment(FrameworkElementFactory factory, ColumnDataBase column)
+        protected static void ApplyTextAlignment(FrameworkElementFactory factory, IEditorColumn column)
         {
             if (factory == null || column == null) return;
             var alignment = column.TextAlignment;
@@ -596,7 +596,7 @@ namespace WWControls.Wpf.Editors
         /// <see cref="GridColumn.FieldName"/>. Validation stays keyed on <c>FieldName</c> (the
         /// identity), independent of any binding-path override.
         /// </summary>
-        protected static Binding CreateValueBinding(ColumnDataBase column, BindingMode mode = BindingMode.TwoWay)
+        protected static Binding CreateValueBinding(IEditorColumn column, BindingMode mode = BindingMode.TwoWay)
         {
             var binding = column.CreateFieldBinding();
             binding.Mode = mode;

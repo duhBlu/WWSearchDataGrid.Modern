@@ -13,10 +13,10 @@ namespace WWControls.Wpf.Editors
     /// </summary>
     public class CheckBoxEditSettings : BaseEditSettings
     {
-        public override DataTemplate CreateDisplayTemplate(ColumnDataBase column)
+        public override DataTemplate CreateDisplayTemplate(IEditorColumn column)
             => BuildCheckBoxTemplate(column, isDisplay: true);
 
-        public override DataTemplate CreateEditTemplate(ColumnDataBase column)
+        public override DataTemplate CreateEditTemplate(IEditorColumn column)
             => BuildCheckBoxTemplate(column, isDisplay: false);
 
         public override System.Collections.Generic.IEnumerable<Core.SearchType> GetSupportedFilterSearchTypes(Core.ColumnDataType columnDataType, bool isNullable)
@@ -27,7 +27,7 @@ namespace WWControls.Wpf.Editors
             // explicitly. IsNull / IsNotNull flow in automatically when isNullable.
             => WithNullability(new[] { Core.SearchType.Equals }, isNullable);
 
-        public override UIElement CreateFilterEditor(IColumnFilterHost host)
+        public override UIElement CreateFilterEditor(IFilterEditorHost host)
         {
             // Tri-state WWCheckEdit bound to FilterCheckboxState. The checkbox-cycle logic handles
             // the IsChecked transitions (null ↔ true ↔ false); the editor just publishes the state.
@@ -37,7 +37,7 @@ namespace WWControls.Wpf.Editors
                 HorizontalAlignment = HorizontalAlignment.Center,
                 VerticalAlignment = VerticalAlignment.Center,
             };
-            BindingOperations.SetBinding(editor, WWCheckEdit.IsCheckedProperty, new Binding(nameof(IColumnFilterHost.FilterCheckboxState))
+            BindingOperations.SetBinding(editor, WWCheckEdit.IsCheckedProperty, new Binding(nameof(IFilterEditorHost.FilterCheckboxState))
             {
                 Source = host,
                 Mode = BindingMode.TwoWay,
@@ -45,7 +45,7 @@ namespace WWControls.Wpf.Editors
             return editor;
         }
 
-        private DataTemplate BuildCheckBoxTemplate(ColumnDataBase column, bool isDisplay)
+        private DataTemplate BuildCheckBoxTemplate(IEditorColumn column, bool isDisplay)
         {
             var factory = new FrameworkElementFactory(typeof(WWCheckEdit));
 
