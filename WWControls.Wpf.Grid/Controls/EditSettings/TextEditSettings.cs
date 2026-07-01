@@ -114,7 +114,7 @@ namespace WWControls.Wpf.Editors
         {
             var factory = new FrameworkElementFactory(typeof(TextBlock));
             // Style FIRST — FrameworkElementFactory requires StyleProperty before other setters.
-            ApplyDisplayStyle(factory, EditSettingsThemeKeys.DisplayTextBlock);
+            ApplyDisplayStyle(factory, EditorThemeKeys.DisplayTextBlock);
             ApplyTextAlignment(factory, column);
 
             var binding = column.CreateFieldBinding();

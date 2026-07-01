@@ -135,7 +135,7 @@ namespace WWControls.Wpf.Editors
         {
             base.OnApplyTemplate();
             // Reuse the library's flat combo look (border / chevron / popup / item container style).
-            if (_comboBox.Style == null && TryFindResource(EditSettingsThemeKeys.EditComboBox) is Style style)
+            if (_comboBox.Style == null && TryFindResource(EditorThemeKeys.EditComboBox) is Style style)
                 _comboBox.Style = style;
         }
 

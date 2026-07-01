@@ -20,7 +20,7 @@
 
         <!-- Title display: strikethrough + dim + italic when the task is complete. -->
         <Style x:Key="TitleDisplayStyle" TargetType="TextBlock"
-               BasedOn="{StaticResource {x:Static sdg:EditSettingsThemeKeys.DisplayTextBlock}}">
+               BasedOn="{StaticResource {x:Static sdg:EditorThemeKeys.DisplayTextBlock}}">
             <Style.Triggers>
                 <DataTrigger Binding="{Binding IsComplete}" Value="True">
                     <Setter Property="TextDecorations" Value="Strikethrough" />
@@ -32,7 +32,7 @@
 
         <!-- Due-date display: red + bold when overdue, dim when complete. -->
         <Style x:Key="DueDateDisplayStyle" TargetType="TextBlock"
-               BasedOn="{StaticResource {x:Static sdg:EditSettingsThemeKeys.DisplayTextBlock}}">
+               BasedOn="{StaticResource {x:Static sdg:EditorThemeKeys.DisplayTextBlock}}">
             <Style.Triggers>
                 <DataTrigger Binding="{Binding IsOverdue}" Value="True">
                     <Setter Property="Foreground" Value="#D32F2F" />
@@ -46,7 +46,7 @@
 
         <!-- Hours display: right-aligned, monospace, accent color. -->
         <Style x:Key="HoursDisplayStyle" TargetType="TextBlock"
-               BasedOn="{StaticResource {x:Static sdg:EditSettingsThemeKeys.DisplayNumericTextBlock}}">
+               BasedOn="{StaticResource {x:Static sdg:EditorThemeKeys.DisplayNumericTextBlock}}">
             <Setter Property="FontFamily" Value="Consolas" />
             <Setter Property="Foreground" Value="#5D4037" />
             <Setter Property="FontWeight" Value="SemiBold" />
@@ -296,7 +296,7 @@
                       SelectedItem="{Binding Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                       ItemsSource="{Binding View.DataContext.Statuses}"
                       ItemTemplate="{StaticResource StatusItemPillTemplate}"
-                      Style="{StaticResource {x:Static sdg:EditSettingsThemeKeys.EditComboBox}}" />
+                      Style="{StaticResource {x:Static sdg:EditorThemeKeys.EditComboBox}}" />
         </DataTemplate>
 
         <DataTemplate x:Key="PriorityFilterRowTemplate">
@@ -305,7 +305,7 @@
                       SelectedValuePath="Id"
                       ItemsSource="{Binding View.DataContext.Priorities}"
                       ItemTemplate="{StaticResource PriorityItemTemplate}"
-                      Style="{StaticResource {x:Static sdg:EditSettingsThemeKeys.EditComboBox}}" />
+                      Style="{StaticResource {x:Static sdg:EditorThemeKeys.EditComboBox}}" />
         </DataTemplate>
 
         <DataTemplate x:Key="AssigneeFilterRowTemplate">
@@ -313,7 +313,7 @@
                       SelectedItem="{Binding Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                       ItemsSource="{Binding View.DataContext.Assignees}"
                       ItemTemplate="{StaticResource AssigneeItemTemplate}"
-                      Style="{StaticResource {x:Static sdg:EditSettingsThemeKeys.EditComboBox}}" />
+                      Style="{StaticResource {x:Static sdg:EditorThemeKeys.EditComboBox}}" />
         </DataTemplate>
 
     </UserControl.Resources>
@@ -375,7 +375,7 @@
                                         <ComboBox SelectedItem="{Binding Status, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                                   ItemsSource="{Binding DataContext.Statuses, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                   ItemTemplate="{StaticResource StatusItemPillTemplate}"
-                                                  Style="{StaticResource {x:Static sdg:EditSettingsThemeKeys.EditComboBox}}" />
+                                                  Style="{StaticResource {x:Static sdg:EditorThemeKeys.EditComboBox}}" />
                                     </DataTemplate>
                                 </sdg:ComboBoxEditSettings.EditTemplate>
                             </sdg:ComboBoxEditSettings>
@@ -396,7 +396,7 @@
                                                   SelectedValuePath="Id"
                                                   ItemsSource="{Binding DataContext.Priorities, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                   ItemTemplate="{StaticResource PriorityItemTemplate}"
-                                                  Style="{StaticResource {x:Static sdg:EditSettingsThemeKeys.EditComboBox}}" />
+                                                  Style="{StaticResource {x:Static sdg:EditorThemeKeys.EditComboBox}}" />
                                     </DataTemplate>
                                 </sdg:ComboBoxEditSettings.EditTemplate>
                             </sdg:ComboBoxEditSettings>
@@ -414,7 +414,7 @@
                                         <ComboBox SelectedItem="{Binding AssignedTo, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                                   ItemsSource="{Binding DataContext.Assignees, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                   ItemTemplate="{StaticResource AssigneeItemTemplate}"
-                                                  Style="{StaticResource {x:Static sdg:EditSettingsThemeKeys.EditComboBox}}" />
+                                                  Style="{StaticResource {x:Static sdg:EditorThemeKeys.EditComboBox}}" />
                                     </DataTemplate>
                                 </sdg:ComboBoxEditSettings.EditTemplate>
                             </sdg:ComboBoxEditSettings>

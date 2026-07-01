@@ -63,7 +63,7 @@ namespace WWControls.Wpf.Editors
             var grid = BuildSpinHostGrid();
 
             var textBlock = new FrameworkElementFactory(typeof(TextBlock));
-            ApplyDisplayStyle(textBlock, EditSettingsThemeKeys.DisplayNumericTextBlock);
+            ApplyDisplayStyle(textBlock, EditorThemeKeys.DisplayNumericTextBlock);
             ApplyTextAlignment(textBlock, column);
 
             var binding = column.CreateFieldBinding();
@@ -114,7 +114,7 @@ namespace WWControls.Wpf.Editors
                 TextTrimming = TextTrimming.CharacterEllipsis,
                 Margin = new Thickness(4, 0, 4, 0),
             };
-            var style = Application.Current?.TryFindResource(EditSettingsThemeKeys.DisplayNumericTextBlock) as Style;
+            var style = Application.Current?.TryFindResource(EditorThemeKeys.DisplayNumericTextBlock) as Style;
             if (style != null) tb.Style = style;
 
             var binding = new Binding("SearchValue")
@@ -227,7 +227,7 @@ namespace WWControls.Wpf.Editors
             var btn = new FrameworkElementFactory(typeof(RepeatButton));
             // Style FIRST. FrameworkElementFactory has a known quirk where StyleProperty must be
             // set before other SetValue / SetBinding calls; otherwise the Style fails to apply.
-            ApplyKeyedStyle(btn, EditSettingsThemeKeys.SpinButton);
+            ApplyKeyedStyle(btn, EditorThemeKeys.SpinButton);
             btn.SetValue(Grid.ColumnProperty, 1);
             btn.SetValue(Grid.RowProperty, isUp ? 0 : 1);
 

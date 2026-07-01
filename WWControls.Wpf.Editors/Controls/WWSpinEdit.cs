@@ -130,7 +130,7 @@ namespace WWControls.Wpf.Editors
         public override void OnApplyTemplate()
         {
             base.OnApplyTemplate();
-            if (TryFindResource(EditSettingsThemeKeys.SpinButton) is Style spinStyle)
+            if (TryFindResource(EditorThemeKeys.SpinButton) is Style spinStyle)
             {
                 _upButton.Style ??= spinStyle;
                 _downButton.Style ??= spinStyle;

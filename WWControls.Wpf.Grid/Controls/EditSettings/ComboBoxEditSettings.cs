@@ -91,7 +91,7 @@ namespace WWControls.Wpf.Editors
             grid.AppendChild(col1);
 
             var factory = new FrameworkElementFactory(typeof(TextBlock));
-            ApplyDisplayStyle(factory, EditSettingsThemeKeys.DisplayTextBlock);
+            ApplyDisplayStyle(factory, EditorThemeKeys.DisplayTextBlock);
             ApplyTextAlignment(factory, column);
             factory.SetValue(Grid.ColumnProperty, 0);
 
@@ -111,7 +111,7 @@ namespace WWControls.Wpf.Editors
             // IsHitTestVisible=false lets the click reach the underlying cell, which the DataGrid
             // promotes to edit mode.
             var chevron = new FrameworkElementFactory(typeof(ToggleButton));
-            ApplyKeyedStyle(chevron, EditSettingsThemeKeys.EditComboBoxDropDownButton);
+            ApplyKeyedStyle(chevron, EditorThemeKeys.EditComboBoxDropDownButton);
             chevron.SetValue(UIElement.IsHitTestVisibleProperty, false);
             chevron.SetValue(Grid.ColumnProperty, 1);
 
@@ -149,7 +149,7 @@ namespace WWControls.Wpf.Editors
                 TextTrimming = TextTrimming.CharacterEllipsis,
                 Margin = new Thickness(4, 0, 4, 0),
             };
-            var style = Application.Current?.TryFindResource(EditSettingsThemeKeys.DisplayTextBlock) as Style;
+            var style = Application.Current?.TryFindResource(EditorThemeKeys.DisplayTextBlock) as Style;
             if (style != null) tb.Style = style;
 
             BindingOperations.SetBinding(tb, TextBlock.TextProperty, new Binding("SearchValue")
@@ -173,7 +173,7 @@ namespace WWControls.Wpf.Editors
             // sub-element references EditComboBoxDropDownButton via StaticResource — moving
             // the style application ahead of ItemsSource / ItemTemplate keeps the chevron
             // template materialization deterministic across hosts.
-            var style = Application.Current?.TryFindResource(EditSettingsThemeKeys.EditComboBox) as Style;
+            var style = Application.Current?.TryFindResource(EditorThemeKeys.EditComboBox) as Style;
             if (style != null) cb.Style = style;
 
             cb.VerticalContentAlignment = VerticalAlignment.Center;

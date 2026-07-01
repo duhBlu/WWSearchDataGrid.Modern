@@ -114,7 +114,7 @@ namespace WWControls.Wpf.Editors
 
             var factory = new FrameworkElementFactory(typeof(TextBlock));
             // Style FIRST — FrameworkElementFactory requires StyleProperty before other setters.
-            ApplyDisplayStyle(factory, EditSettingsThemeKeys.DisplayTextBlock);
+            ApplyDisplayStyle(factory, EditorThemeKeys.DisplayTextBlock);
             ApplyTextAlignment(factory, column);
             factory.SetValue(Grid.ColumnProperty, 0);
 
@@ -147,7 +147,7 @@ namespace WWControls.Wpf.Editors
             // and the editor's button together. IsHitTestVisible=false lets the click reach
             // the underlying cell, which the DataGrid promotes to edit mode.
             var glyph = new FrameworkElementFactory(typeof(ToggleButton));
-            ApplyKeyedStyle(glyph, EditSettingsThemeKeys.EditDateDropDownButton);
+            ApplyKeyedStyle(glyph, EditorThemeKeys.EditDateDropDownButton);
             glyph.SetValue(UIElement.IsHitTestVisibleProperty, false);
             glyph.SetValue(FrameworkElement.WidthProperty, 22.0);
             glyph.SetValue(Grid.ColumnProperty, 1);
@@ -181,7 +181,7 @@ namespace WWControls.Wpf.Editors
                 TextTrimming = TextTrimming.CharacterEllipsis,
                 Margin = new Thickness(4, 0, 4, 0),
             };
-            var style = Application.Current?.TryFindResource(EditSettingsThemeKeys.DisplayTextBlock) as Style;
+            var style = Application.Current?.TryFindResource(EditorThemeKeys.DisplayTextBlock) as Style;
             if (style != null) tb.Style = style;
 
             var binding = new Binding("SearchValue")

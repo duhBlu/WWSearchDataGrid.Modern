@@ -52,7 +52,7 @@ namespace WWControls.Wpf.Editors
             // Both display and edit host the same interactive WWCheckEdit — the checkbox toggles via
             // its two-way binding without going through edit mode, so there's no visually distinct
             // edit surface. The themed checkbox look + the cell read-only gate live in WWCheckEdit's
-            // hosted CheckBox style (EditSettingsThemeKeys.DisplayCheckBox).
+            // hosted CheckBox style (EditorThemeKeys.DisplayCheckBox).
             factory.SetBinding(WWCheckEdit.IsCheckedProperty, CreateValueBinding(column));
             SuppressValidationErrorAdorner(factory);
 

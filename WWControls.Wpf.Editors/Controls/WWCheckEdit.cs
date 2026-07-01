@@ -79,7 +79,7 @@ namespace WWControls.Wpf.Editors
             // Reuse the library's themed checkbox look (box + check/indeterminate glyphs + the
             // DataGridCell read-only gate). Resolved here — once the control is in the tree — so the
             // ComponentResourceKey walks through to the theme dictionary.
-            if (_checkBox.Style == null && TryFindResource(EditSettingsThemeKeys.DisplayCheckBox) is Style style)
+            if (_checkBox.Style == null && TryFindResource(EditorThemeKeys.DisplayCheckBox) is Style style)
                 _checkBox.Style = style;
         }
     }

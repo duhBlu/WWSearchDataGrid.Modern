@@ -239,7 +239,7 @@ namespace WWControls.Wpf.Editors
         /// Helper shared with the default <see cref="CreateFilterDisplay"/> and any subclass that
         /// wants to fall back to a plain <see cref="TextBlock"/> rendering of
         /// <see cref="IColumnFilterHost.SearchText"/>. Wears the library's
-        /// <see cref="EditSettingsThemeKeys.DisplayTextBlock"/> style so colors / margins match
+        /// <see cref="EditorThemeKeys.DisplayTextBlock"/> style so colors / margins match
         /// the cell editor's display mode.
         /// </summary>
         protected static TextBlock BuildDefaultTextDisplay(IColumnFilterHost host)
@@ -251,7 +251,7 @@ namespace WWControls.Wpf.Editors
                 TextTrimming = TextTrimming.CharacterEllipsis,
                 Margin = new Thickness(4, 0, 4, 0),
             };
-            var style = Application.Current?.TryFindResource(EditSettingsThemeKeys.DisplayTextBlock) as Style;
+            var style = Application.Current?.TryFindResource(EditorThemeKeys.DisplayTextBlock) as Style;
             if (style != null) tb.Style = style;
 
             BindingOperations.SetBinding(tb, TextBlock.TextProperty, new Binding(nameof(IColumnFilterHost.SearchText))
@@ -315,7 +315,7 @@ namespace WWControls.Wpf.Editors
         /// <summary>
         /// Helper shared with the default <see cref="CreateFilterEditor"/> and any subclass that
         /// wants to fall back to the text-editor shape. Produces a <see cref="TextBox"/> wearing
-        /// the library's <see cref="EditSettingsThemeKeys.EditTextBox"/> style, with its
+        /// the library's <see cref="EditorThemeKeys.EditTextBox"/> style, with its
         /// <see cref="TextBox.Text"/> DP two-way bound to <see cref="IColumnFilterHost.SearchText"/>
         /// updating on every keystroke so the filter pipeline's debounce hooks fire correctly.
         /// </summary>
@@ -325,7 +325,7 @@ namespace WWControls.Wpf.Editors
             {
                 VerticalContentAlignment = VerticalAlignment.Center,
             };
-            var style = Application.Current?.TryFindResource(EditSettingsThemeKeys.EditTextBox) as Style;
+            var style = Application.Current?.TryFindResource(EditorThemeKeys.EditTextBox) as Style;
             if (style != null) tb.Style = style;
 
             BindingOperations.SetBinding(tb, TextBox.TextProperty, new Binding(nameof(IColumnFilterHost.SearchText))

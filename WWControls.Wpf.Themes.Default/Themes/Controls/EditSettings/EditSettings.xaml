@@ -18,18 +18,18 @@
         Each editor type (Text / ComboBox / Spin / Date / CheckBox) builds its
         display template (and sub-elements like the spin / combo / date drop-down
         buttons) via FrameworkElementFactory and applies one of these styles by
-        ComponentResourceKey lookup against EditSettingsThemeKeys; the edit templates
+        ComponentResourceKey lookup against EditorThemeKeys; the edit templates
         host the WWxxxEdit controls, whose chrome is owned by WWBaseEdit. Consumers
         override at three levels:
 
         1. Per-column DisplayStyle DP on the EditSettings instance
         — applied as a local Style value, beats the keyed default lookup.
         2. App-level keyed override — redefine the Style under the same
-        {x:Static sdg:EditSettingsThemeKeys.X} key in App.xaml / Window.Resources.
+        {x:Static sdg:EditorThemeKeys.X} key in App.xaml / Window.Resources.
         3. Full template replacement via EditTemplate / DisplayTemplate DPs —
         skips the default style and any per-control override.
         
-        Keys are typed (ComponentResourceKey) — see EditSettingsThemeKeys.cs. The
+        Keys are typed (ComponentResourceKey) — see EditorThemeKeys.cs. The
         assembly's [ThemeInfo] attribute lets FindResource walk into this Generic.xaml
         automatically, so consumers don't need to merge any dictionary just to get
         defaults.
@@ -44,7 +44,7 @@
         Read-only TextBlock used inside display templates of Text / ComboBox / Spin /
         Date editors. Single inset, vertical centering, ellipsis on overflow.
     -->
-    <Style x:Key="{x:Static sdg:EditSettingsThemeKeys.DisplayTextBlock}" TargetType="{x:Type TextBlock}">
+    <Style x:Key="{x:Static sdg:EditorThemeKeys.DisplayTextBlock}" TargetType="{x:Type TextBlock}">
         <Setter Property="Padding" Value="6,4" />
         <Setter Property="VerticalAlignment" Value="Center" />
         <Setter Property="HorizontalAlignment" Value="Center" />
@@ -57,8 +57,8 @@
         Right-aligned variant for numeric display. Spreadsheet convention: numbers
         line up at the decimal on the right edge so columns of money / counts read cleanly.
     -->
-    <Style x:Key="{x:Static sdg:EditSettingsThemeKeys.DisplayNumericTextBlock}"
-           BasedOn="{StaticResource {x:Static sdg:EditSettingsThemeKeys.DisplayTextBlock}}"
+    <Style x:Key="{x:Static sdg:EditorThemeKeys.DisplayNumericTextBlock}"
+           BasedOn="{StaticResource {x:Static sdg:EditorThemeKeys.DisplayTextBlock}}"
            TargetType="{x:Type TextBlock}">
         <Setter Property="HorizontalAlignment" Value="Right" />
         <Setter Property="TextAlignment" Value="Right" />
@@ -78,7 +78,7 @@
         boundary, so the gate is wired in code on Loaded with a DependencyPropertyDescriptor
         listening on DataGridCell.IsReadOnly.
     -->
-    <Style x:Key="{x:Static sdg:EditSettingsThemeKeys.DisplayCheckBox}" TargetType="{x:Type CheckBox}">
+    <Style x:Key="{x:Static sdg:EditorThemeKeys.DisplayCheckBox}" TargetType="{x:Type CheckBox}">
         <Setter Property="HorizontalAlignment" Value="Center" />
         <Setter Property="VerticalAlignment" Value="Center" />
         <Setter Property="Focusable" Value="False" />
@@ -195,7 +195,7 @@
         BorderThickness on focus rather than swapping brushes — keeps the default
         WPF TextBox template intact, just changes its visible chrome.
     -->
-    <Style x:Key="{x:Static sdg:EditSettingsThemeKeys.EditTextBox}" TargetType="{x:Type TextBox}">
+    <Style x:Key="{x:Static sdg:EditorThemeKeys.EditTextBox}" TargetType="{x:Type TextBox}">
         <Setter Property="Background" Value="#FFFFFF" />
         <Setter Property="Foreground" Value="#1C1C1C" />
         <Setter Property="BorderBrush" Value="#0078D4" />
@@ -232,7 +232,7 @@
         filter-row's per-column ColumnFilterControl is one such host). Backward order is
         the dependable form.
     -->
-    <Style x:Key="{x:Static sdg:EditSettingsThemeKeys.EditComboBoxDropDownButton}" TargetType="{x:Type ToggleButton}">
+    <Style x:Key="{x:Static sdg:EditorThemeKeys.EditComboBoxDropDownButton}" TargetType="{x:Type ToggleButton}">
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderThickness" Value="0" />
         <Setter Property="Padding" Value="4,0,9,0" />
@@ -264,7 +264,7 @@
         above so Background / BorderBrush / BorderThickness actually take effect. Borderless
         until focus, accent border on focus.
     -->
-    <Style x:Key="{x:Static sdg:EditSettingsThemeKeys.EditComboBox}" TargetType="{x:Type ComboBox}">
+    <Style x:Key="{x:Static sdg:EditorThemeKeys.EditComboBox}" TargetType="{x:Type ComboBox}">
         <!--
             Scoped implicit ComboBoxItem style so the in-cell edit-mode dropdown picks up
             the unified dropdown-row look — same hover / selection visuals as the rest of
@@ -335,7 +335,7 @@
                                 keeps the chevron in sync with ComboBox.Foreground.
                             -->
                             <ToggleButton x:Name="Chevron"
-                                          Style="{StaticResource {x:Static sdg:EditSettingsThemeKeys.EditComboBoxDropDownButton}}"
+                                          Style="{StaticResource {x:Static sdg:EditorThemeKeys.EditComboBoxDropDownButton}}"
                                           Grid.Column="1"
                                           Foreground="{TemplateBinding Foreground}"
                                           IsChecked="{Binding IsDropDownOpen, Mode=OneWay, RelativeSource={RelativeSource TemplatedParent}}"
@@ -394,7 +394,7 @@
         The calendar glyph lives inside this template so overriding the key once retheme both
         surfaces — consumers don't need to touch C# or a parallel display-only key.
     -->
-    <Style x:Key="{x:Static sdg:EditSettingsThemeKeys.EditDateDropDownButton}" TargetType="{x:Type ToggleButton}">
+    <Style x:Key="{x:Static sdg:EditorThemeKeys.EditDateDropDownButton}" TargetType="{x:Type ToggleButton}">
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderThickness" Value="0" />
         <Setter Property="HorizontalAlignment" Value="Right" />
@@ -429,7 +429,7 @@
     </Style>
 
 
-    <Style x:Key="{x:Static sdg:EditSettingsThemeKeys.SpinButton}" TargetType="{x:Type RepeatButton}">
+    <Style x:Key="{x:Static sdg:EditorThemeKeys.SpinButton}" TargetType="{x:Type RepeatButton}">
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderBrush" Value="Transparent" />
         <Setter Property="BorderThickness" Value="0" />
@@ -489,7 +489,7 @@
 
                         <TextBox x:Name="PART_TextBox"
                                  sdg:EditorChrome.ShowEditorBorder="False"
-                                 Style="{StaticResource {x:Static sdg:EditSettingsThemeKeys.EditTextBox}}" />
+                                 Style="{StaticResource {x:Static sdg:EditorThemeKeys.EditTextBox}}" />
 
                         <!--
                             Calendar glyph is provided by EditDateDropDownButton's ControlTemplate
@@ -498,7 +498,7 @@
                             to retheme the button + icon in both surfaces.
                         -->
                         <ToggleButton x:Name="PART_DropDownButton"
-                                      Style="{StaticResource {x:Static sdg:EditSettingsThemeKeys.EditDateDropDownButton}}"
+                                      Style="{StaticResource {x:Static sdg:EditorThemeKeys.EditDateDropDownButton}}"
                                       Grid.Column="1"
                                       Width="22" />
 
