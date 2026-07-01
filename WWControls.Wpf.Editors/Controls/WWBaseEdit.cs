@@ -6,9 +6,9 @@ namespace WWControls.Wpf.Editors
 {
     /// <summary>
     /// Lookless base for the library's first-class editor controls. Owns the shared editor
-    /// chrome in one place: the outer border (flat by default, a 1px edge with an accent on
-    /// focus when <see cref="ShowBorder"/> is set), background, padding, the disabled visual,
-    /// a <c>PART_ContentHost</c> site that presents the concrete input
+    /// chrome in one place: the outer border (drawn by default — a 1px edge with an accent on
+    /// focus — and suppressed when the editor is hosted in a grid cell), background, padding,
+    /// the disabled visual, a <c>PART_ContentHost</c> site that presents the concrete input
     /// (<see cref="EditContent"/>), and a decoration-button slot
     /// (<see cref="ButtonContent"/> / <see cref="ShowButtons"/>).
     /// </summary>
@@ -36,6 +36,22 @@ namespace WWControls.Wpf.Editors
                 new FrameworkPropertyMetadata(typeof(WWBaseEdit)));
         }
 
+        public WWBaseEdit()
+        {
+            Loaded += OnBaseEditLoaded;
+        }
+
+        // Bordered by default (standalone use, the edit form); a grid cell provides its own
+        // boundary, so the editor renders flat when hosted inside one. DataGridCell is a stock WPF
+        // type, so this detection carries no dependency on the SearchDataGrid — the editor stays
+        // grid-agnostic. Loaded is the first point the cell ancestor is reliably in the tree; it can
+        // re-fire on container recycling, and re-setting the same value is a no-op.
+        private void OnBaseEditLoaded(object sender, RoutedEventArgs e)
+        {
+            if (VisualTreeHelperMethods.FindVisualAncestor<DataGridCell>(this) != null)
+                ShowBorder = false;
+        }
+
         /// <summary>The edited value. Concrete editors give this their natural shape (text for <see cref="WWTextEdit"/>).</summary>
         public static readonly DependencyProperty ValueProperty =
             DependencyProperty.Register(nameof(Value), typeof(object), typeof(WWBaseEdit),
@@ -47,13 +63,14 @@ namespace WWControls.Wpf.Editors
                 new PropertyMetadata(false));
 
         /// <summary>
-        /// Whether the chrome border draws. Flat (<c>false</c>) is the in-cell / filter-row look;
-        /// a host that wants the editor to read as a discrete bordered input (the edit form, a
-        /// standalone form) sets this true, and the border gains an accent edge while focused.
+        /// Whether the chrome border draws. Defaults to <c>true</c> — a standalone editor and the
+        /// edit form read as discrete bordered inputs, with an accent edge while focused. A grid
+        /// cell flattens it (see <see cref="OnBaseEditLoaded"/>) and the filter row sets it false,
+        /// so both surfaces render edge-to-edge.
         /// </summary>
         public static readonly DependencyProperty ShowBorderProperty =
             DependencyProperty.Register(nameof(ShowBorder), typeof(bool), typeof(WWBaseEdit),
-                new PropertyMetadata(false));
+                new PropertyMetadata(true));
 
         /// <summary>Whether the decoration-button slot (<see cref="ButtonContent"/>) is shown.</summary>
         public static readonly DependencyProperty ShowButtonsProperty =

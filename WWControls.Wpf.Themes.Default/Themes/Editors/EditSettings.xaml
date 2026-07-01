@@ -190,36 +190,18 @@
     <!--#region Edit element styles-->
 
     <!--
-        Flat TextBox used inside edit templates of Text editors. Borderless
-        until focus, accent border on focus, fills the cell. The trigger toggles
-        BorderThickness on focus rather than swapping brushes — keeps the default
-        WPF TextBox template intact, just changes its visible chrome.
+        Flat inner text input hosted inside an editor's chrome (the segmented date editor's
+        PART_TextBox). Always borderless — the editor control's own chrome draws the border,
+        so this inner element never draws one of its own.
     -->
     <Style x:Key="{x:Static sdg:EditorThemeKeys.EditTextBox}" TargetType="{x:Type TextBox}">
         <Setter Property="Background" Value="#FFFFFF" />
         <Setter Property="Foreground" Value="#1C1C1C" />
-        <Setter Property="BorderBrush" Value="#0078D4" />
         <Setter Property="BorderThickness" Value="0" />
         <Setter Property="Padding" Value="4,2,4,2" />
         <Setter Property="VerticalContentAlignment" Value="Center" />
         <Setter Property="VerticalAlignment" Value="Stretch" />
         <Setter Property="HorizontalAlignment" Value="Stretch" />
-        <Style.Triggers>
-            <!--  Borderless in a cell / filter row; the TextBox's own border shows when hosted
-                  somewhere that sets EditorChrome.ShowEditorBorder (the edit form), with an
-                  accent edge on focus.  -->
-            <Trigger Property="sdg:EditorChrome.ShowEditorBorder" Value="True">
-                <Setter Property="BorderThickness" Value="1" />
-                <Setter Property="BorderBrush" Value="#CCCCCC" />
-            </Trigger>
-            <MultiTrigger>
-                <MultiTrigger.Conditions>
-                    <Condition Property="sdg:EditorChrome.ShowEditorBorder" Value="True" />
-                    <Condition Property="IsKeyboardFocusWithin" Value="True" />
-                </MultiTrigger.Conditions>
-                <Setter Property="BorderBrush" Value="#0078D4" />
-            </MultiTrigger>
-        </Style.Triggers>
     </Style>
 
     <!--
@@ -261,8 +243,8 @@
 
     <!--
         Flat ComboBox for ComboBoxEditSettings edit mode. Uses the custom ControlTemplate
-        above so Background / BorderBrush / BorderThickness actually take effect. Borderless
-        until focus, accent border on focus.
+        above so Background / BorderBrush / BorderThickness actually take effect. Always
+        borderless — WWComboEdit's own chrome draws the border.
     -->
     <Style x:Key="{x:Static sdg:EditorThemeKeys.EditComboBox}" TargetType="{x:Type ComboBox}">
         <!--
@@ -369,22 +351,6 @@
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
-        <Style.Triggers>
-            <!--  Borderless in a cell; the combo's own MainBorder (TemplateBound thickness/brush)
-                  shows when hosted with EditorChrome.ShowEditorBorder set (the edit form), with
-                  an accent edge on focus.  -->
-            <Trigger Property="sdg:EditorChrome.ShowEditorBorder" Value="True">
-                <Setter Property="BorderThickness" Value="1" />
-                <Setter Property="BorderBrush" Value="#CCCCCC" />
-            </Trigger>
-            <MultiTrigger>
-                <MultiTrigger.Conditions>
-                    <Condition Property="sdg:EditorChrome.ShowEditorBorder" Value="True" />
-                    <Condition Property="IsKeyboardFocusWithin" Value="True" />
-                </MultiTrigger.Conditions>
-                <Setter Property="BorderBrush" Value="#0078D4" />
-            </MultiTrigger>
-        </Style.Triggers>
     </Style>
 
     <!--
@@ -477,9 +443,9 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type sdg:SegmentedDateTimeEditor}">
-                    <!-- Always flat: chrome (border, focus accent) is owned by WWBaseEdit when this
-                         editor is hosted in WWDateEdit (cell / edit form); in the filter row the cell
-                         is flat. The old ShowEditorBorder-driven EditorOuterBorder is retired. -->
+                    <!-- Always flat: the segmented editor draws no border of its own. Hosted in
+                         WWDateEdit the chrome draws the border (cell / edit form); in the filter row
+                         it renders edge-to-edge. -->
                     <Border SnapsToDevicePixels="True">
                         <Grid>
                         <Grid.ColumnDefinitions>
@@ -488,7 +454,6 @@
                         </Grid.ColumnDefinitions>
 
                         <TextBox x:Name="PART_TextBox"
-                                 sdg:EditorChrome.ShowEditorBorder="False"
                                  Style="{StaticResource {x:Static sdg:EditorThemeKeys.EditTextBox}}" />
 
                         <!--

@@ -248,16 +248,9 @@ namespace WWControls.Wpf.Editors.Settings
             if (!string.IsNullOrEmpty(effectiveMask))
                 MaskFormatterFactory.EnsureSupported(MaskType);
 
-            // WWDateEdit wraps the SegmentedDateTimeEditor (masked segments + calendar popup) so the
-            // chrome (border, focus accent) is owned once by WWBaseEdit. ShowBorder follows the
-            // inherited host-context flag — bordered in the edit form, flat in a grid cell.
+            // WWDateEdit wraps the SegmentedDateTimeEditor (masked segments + calendar popup) and owns
+            // its own border, drawn by default and flattened when it detects a grid cell.
             var factory = new FrameworkElementFactory(typeof(WWDateEdit));
-            factory.SetBinding(WWBaseEdit.ShowBorderProperty, new Binding
-            {
-                RelativeSource = new RelativeSource(RelativeSourceMode.Self),
-                Path = new PropertyPath(EditorChrome.ShowEditorBorderProperty),
-                Mode = BindingMode.OneWay,
-            });
             factory.SetValue(WWDateEdit.TextAlignmentProperty, column.TextAlignment);
             factory.SetBinding(WWBaseEdit.ValueProperty, CreateValueBinding(column));
             SuppressValidationErrorAdorner(factory);

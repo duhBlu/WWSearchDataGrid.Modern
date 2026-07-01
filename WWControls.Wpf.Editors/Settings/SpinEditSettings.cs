@@ -160,16 +160,8 @@ namespace WWControls.Wpf.Editors.Settings
         {
             var factory = new FrameworkElementFactory(typeof(WWSpinEdit));
 
-            // Chrome (border, focus accent, padding) is owned by WWBaseEdit. ShowBorder follows the
-            // inherited host-context flag — bordered in the edit form, flat in a grid cell — which
-            // retires the old composite outer-border wrapper for the spinner.
-            factory.SetBinding(WWBaseEdit.ShowBorderProperty, new Binding
-            {
-                RelativeSource = new RelativeSource(RelativeSourceMode.Self),
-                Path = new PropertyPath(EditorChrome.ShowEditorBorderProperty),
-                Mode = BindingMode.OneWay,
-            });
-
+            // The editor owns its own border and draws it by default, flattening itself when it
+            // detects a grid cell — so the cell edit template needs no border wiring.
             if (Minimum.HasValue) factory.SetValue(WWSpinEdit.MinimumProperty, Minimum);
             if (Maximum.HasValue) factory.SetValue(WWSpinEdit.MaximumProperty, Maximum);
             factory.SetValue(WWSpinEdit.IncrementProperty, Increment);

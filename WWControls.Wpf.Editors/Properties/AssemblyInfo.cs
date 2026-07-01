@@ -15,7 +15,7 @@ using System.Windows.Markup;
 // (and the theme dictionaries) reach the editor controls through the one `ww` xmlns.
 //
 // This assembly holds the editor *controls* (ns WWControls.Wpf.Editors — WWBaseEdit, the WWxxxEdit
-// family, SegmentedDateTimeEditor, EditorChrome, EditorThemeKeys) AND the grid-agnostic EditSettings
+// family, SegmentedDateTimeEditor, EditorThemeKeys) AND the grid-agnostic EditSettings
 // *adapters* (ns WWControls.Wpf.Editors.Settings — BaseEditSettings, TextEditSettings, ...). Both
 // namespaces map to the one `ww` xmlns so consumer XAML reaches `ww:WWTextEdit` and
 // `ww:TextEditSettings` alike. The grid connects to the adapters purely via the column EditSettings

@@ -28,13 +28,12 @@ namespace WWControls.Wpf.Editors
         {
             _comboBox = new ComboBox
             {
-                // Transparent + borderless so only WWBaseEdit's chrome shows; the inner combo's own
-                // border is suppressed via the host-context flag the other editors use.
+                // Transparent + flat: the inner combo's EditComboBox style draws no border of its
+                // own, so the only border is the one WWBaseEdit's chrome draws.
                 Background = Brushes.Transparent,
                 VerticalContentAlignment = VerticalAlignment.Center,
                 HorizontalContentAlignment = HorizontalAlignment.Left,
             };
-            EditorChrome.SetShowEditorBorder(_comboBox, false);
 
             BindingOperations.SetBinding(_comboBox, ItemsControl.ItemsSourceProperty,
                 new Binding(nameof(ItemsSource)) { Source = this, Mode = BindingMode.OneWay });

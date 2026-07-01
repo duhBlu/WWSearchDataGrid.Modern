@@ -78,10 +78,8 @@ namespace WWControls.Wpf.Grids
 
         public EditFormPresenter()
         {
-            // Mark this subtree as a bordered editor host: every editor the form hosts inherits this
-            // and renders its own border, while the same editor templates stay flat in a grid cell.
-            EditorChrome.SetShowEditorBorder(this, true);
-
+            // Editors render their own border by default and only flatten themselves when hosted in a
+            // grid cell; the form is not a cell, so the editors it hosts stay bordered with no wiring.
             Loaded += (_, _) => UpdateMaxWidth();
             Unloaded += (_, _) => HookOwnerGridSize(null);
 
@@ -308,9 +306,8 @@ namespace WWControls.Wpf.Grids
         /// <summary>
         /// A single field in the wrapped layout: the caption above its editor. The block's width
         /// scales with <see cref="ColumnDataBase.EditFormColumnSpan"/> so wider fields claim more of
-        /// the row. The editor renders its own border via the inherited
-        /// <see cref="EditorChrome.ShowEditorBorderProperty"/> the presenter sets — read-only and
-        /// checkbox editors carry no border trigger and stay flat.
+        /// the row. Each editor renders its own border by default (the form is not a grid cell, so it
+        /// doesn't flatten) — read-only display and checkbox editors have no border and stay flat.
         /// </summary>
         private FrameworkElement BuildFieldBlock(ColumnDataBase descriptor)
         {

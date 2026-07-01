@@ -53,9 +53,8 @@ namespace WWControls.Wpf.Grids
         /// <summary>
         /// Binds this editor's content to the editing item (the inherited DataContext) and sets the
         /// content template to the resolved column's effective edit-form template. No-op until the
-        /// owning grid and a matching column are reachable. The editor renders its own border via the
-        /// inherited <see cref="EditorChrome.ShowEditorBorderProperty"/> the form sets; to suppress
-        /// it on a specific field set <c>sdg:EditorChrome.ShowEditorBorder="False"</c> here.
+        /// owning grid and a matching column are reachable. The resolved editor renders its own border
+        /// by default (a form host is not a grid cell, so the editor doesn't flatten itself).
         /// </summary>
         private void Resolve()
         {

@@ -158,17 +158,8 @@ namespace WWControls.Wpf.Editors.Settings
         {
             var factory = new FrameworkElementFactory(typeof(WWTextEdit));
 
-            // Chrome (border, background, padding, focus accent) is owned once by WWBaseEdit's
-            // style. ShowBorder tracks the inherited host-context flag, so the editor is bordered
-            // in the edit form and flat in a grid cell / filter row — the control stays
-            // grid-agnostic and the adapter wires the signal.
-            factory.SetBinding(WWBaseEdit.ShowBorderProperty, new Binding
-            {
-                RelativeSource = new RelativeSource(RelativeSourceMode.Self),
-                Path = new PropertyPath(EditorChrome.ShowEditorBorderProperty),
-                Mode = BindingMode.OneWay,
-            });
-
+            // The editor owns its own border and draws it by default; it flattens itself when it
+            // detects a grid cell around it, so the cell edit template needs no border wiring.
             factory.SetValue(WWTextEdit.TextAlignmentProperty, column.TextAlignment);
 
             // Mask resolution order: explicit Mask > column.DisplayMask > column.DisplayStringFormat
@@ -206,18 +197,12 @@ namespace WWControls.Wpf.Editors.Settings
         /// <summary>
         /// Filter-row editor: the same <see cref="WWTextEdit"/> the cell uses, bound to the host's
         /// <see cref="IColumnFilterHost.SearchText"/> and updating on every keystroke so the filter
-        /// pipeline's debounce fires. Flat — the inherited border flag resolves false in the filter
-        /// row — and without cell-host wiring, since the filter row drives its own navigation.
+        /// pipeline's debounce fires. Flat (<c>ShowBorder=false</c> — the filter row renders
+        /// edge-to-edge) and without cell-host wiring, since the filter row drives its own navigation.
         /// </summary>
         public override System.Windows.UIElement CreateFilterEditor(IFilterEditorHost host)
         {
-            var editor = new WWTextEdit();
-            BindingOperations.SetBinding(editor, WWBaseEdit.ShowBorderProperty, new Binding
-            {
-                RelativeSource = new RelativeSource(RelativeSourceMode.Self),
-                Path = new PropertyPath(EditorChrome.ShowEditorBorderProperty),
-                Mode = BindingMode.OneWay,
-            });
+            var editor = new WWTextEdit { ShowBorder = false };
             BindingOperations.SetBinding(editor, WWBaseEdit.ValueProperty, new Binding(nameof(IFilterEditorHost.SearchText))
             {
                 Source = host,

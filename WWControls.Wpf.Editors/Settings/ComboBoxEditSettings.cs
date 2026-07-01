@@ -217,16 +217,9 @@ namespace WWControls.Wpf.Editors.Settings
         {
             var factory = new FrameworkElementFactory(typeof(WWComboEdit));
 
-            // Chrome (border, focus accent) is owned by WWBaseEdit; ShowBorder follows the inherited
-            // host-context flag — bordered in the edit form, flat in a grid cell. WWComboEdit wraps a
-            // flat real ComboBox, so WPF still does the selection / popup work.
-            factory.SetBinding(WWBaseEdit.ShowBorderProperty, new Binding
-            {
-                RelativeSource = new RelativeSource(RelativeSourceMode.Self),
-                Path = new PropertyPath(EditorChrome.ShowEditorBorderProperty),
-                Mode = BindingMode.OneWay,
-            });
-
+            // The editor owns its own border and draws it by default, flattening itself when it
+            // detects a grid cell. WWComboEdit wraps a flat real ComboBox, so WPF still does the
+            // selection / popup work.
             factory.SetValue(WWComboEdit.ItemsSourceProperty, ItemsSource);
             // DisplayMemberPath is materialized as an ItemTemplate inside WWComboEdit — the flat combo
             // template hand-places its selection ContentPresenter, so DisplayMemberPath's auto-walk

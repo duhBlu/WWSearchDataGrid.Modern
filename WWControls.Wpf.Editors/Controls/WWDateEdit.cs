@@ -15,7 +15,7 @@ namespace WWControls.Wpf.Editors
     /// <remarks>
     /// Wrapping (rather than re-parenting the 71KB segmented control onto <see cref="WWBaseEdit"/>)
     /// keeps that control's <c>Value</c> / segment logic intact and sidesteps a DP collision. The
-    /// inner editor is forced flat so only the base's chrome draws; the segmented control still
+    /// inner editor renders flat so only the base's chrome draws; the segmented control still
     /// self-focuses its TextBox on edit-mode entry.
     /// </remarks>
     public class WWDateEdit : WWBaseEdit
@@ -31,9 +31,8 @@ namespace WWControls.Wpf.Editors
         public WWDateEdit()
         {
             _editor = new SegmentedDateTimeEditor();
-            // Force the inner editor flat — WWBaseEdit owns the border, so the segmented control's
-            // own border (and its inner TextBox's) must not also draw, or the edit form double-borders.
-            EditorChrome.SetShowEditorBorder(_editor, false);
+            // The segmented control renders flat (its template draws no border), so the only border
+            // is the one WWBaseEdit's chrome draws — no double border.
 
             // object ↔ DateTime? coerces through WPF's standard binding type-converter (same as the
             // filter row's SearchValue binding), so the adapter can bind the column field to Value.
