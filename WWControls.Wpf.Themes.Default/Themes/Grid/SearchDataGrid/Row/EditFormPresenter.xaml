@@ -1,0 +1,134 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sdg="http://schemas.wwcontrols.com/wpf">
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Primitives/DefaultControls.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+
+    <!--  Accent (primary) button for the edit-form Update action — keeps white-on-blue contrast
+          through hover / pressed (the shared PrimitivesButton greys its background on hover).  -->
+    <Style x:Key="EditFormUpdateButtonStyle" TargetType="{x:Type Button}">
+        <Setter Property="Background" Value="#0078d4" />
+        <Setter Property="Foreground" Value="White" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="MinHeight" Value="24" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type Button}">
+                    <Border x:Name="border"
+                            Background="{TemplateBinding Background}"
+                            CornerRadius="4">
+                        <ContentPresenter Margin="{TemplateBinding Padding}"
+                                          HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                          VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="border" Property="Background" Value="#005a9e" />
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="border" Property="Background" Value="#00467b" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="border" Property="Background" Value="#b6c1cd" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!--
+        ═══════════════════════════════════════════════════════════════════════
+        EditFormPresenter — the caption/editor form shown for the row open in
+        full-row edit mode when EditFormShowMode is Inline / InlineHideRow. Hosts
+        an auto-generated layout (or the consumer's EditFormTemplate) in
+        PART_FormHost, with an optional caption bar and a docked Update / Cancel
+        action bar beneath it.
+        ═══════════════════════════════════════════════════════════════════════
+    -->
+
+    <Style x:Key="{x:Static sdg:GridThemeKeys.GridSearchDataGridEditFormPresenter}" TargetType="{x:Type sdg:EditFormPresenter}">
+        <Setter Property="Background" Value="#FFFFFF" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type sdg:EditFormPresenter}">
+                    <Border Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            Margin="0"
+                            SnapsToDevicePixels="True"
+                            UseLayoutRounding="True">
+                        <DockPanel LastChildFill="True">
+                            <!--  Caption bar — hidden when no caption is set.  -->
+                            <ContentControl x:Name="PART_Caption"
+                                            DockPanel.Dock="Top"
+                                            Content="{TemplateBinding Caption}"
+                                            ContentTemplate="{TemplateBinding CaptionTemplate}"
+                                            Background="#FFF4F7F9"
+                                            Foreground="#FF1A3C57"
+                                            FontWeight="SemiBold"
+                                            FontSize="13"
+                                            Margin="4,4,0,0"
+                                            Padding="12,6" />
+
+                            <!--  Action bar — docked beneath the form body.  -->
+                            <Border DockPanel.Dock="Bottom"
+                                    Background="#FFF4F7F9"
+                                    BorderBrush="#FFDDE3E8"
+                                    BorderThickness="0,1,0,0">
+                                <StackPanel Orientation="Horizontal"
+                                            HorizontalAlignment="Right"
+                                            Margin="8,6">
+                                    <Button x:Name="PART_UpdateButton"
+                                            Style="{StaticResource EditFormUpdateButtonStyle}"
+                                            MinWidth="78"
+                                            Padding="12,3"
+                                            Content="Update"
+                                            IsDefault="True" />
+                                    <Button x:Name="PART_CancelButton"
+                                            Style="{StaticResource {x:Static sdg:PrimitiveThemeKeys.Button}}"
+                                            MinWidth="78"
+                                            Padding="12,3"
+                                            Margin="8,0,0,0"
+                                            Content="Cancel"
+                                            IsCancel="True" />
+                                </StackPanel>
+                            </Border>
+
+                            <!--  Form body — auto-generated layout or the consumer's EditFormTemplate.  -->
+                            <ContentControl x:Name="PART_FormHost"
+                                            HorizontalContentAlignment="Stretch"
+                                            VerticalContentAlignment="Stretch" />
+                        </DockPanel>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="Caption" Value="{x:Null}">
+                            <Setter TargetName="PART_Caption" Property="Visibility" Value="Collapsed" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style BasedOn="{StaticResource {x:Static sdg:GridThemeKeys.GridSearchDataGridEditFormPresenter}}" TargetType="{x:Type sdg:EditFormPresenter}" />
+
+    <!--
+        RowDetailsTemplate the grid assigns at runtime (SearchDataGrid.EditForm.cs) to host the
+        form in the editing row's details area. DataContext is the row item; OwnerGrid / the
+        custom template / caption are pulled off the ancestor grid. Only the editing row has its
+        DetailsVisibility flipped to Visible, so this realizes for one row at a time.
+    -->
+    <DataTemplate x:Key="{x:Static sdg:GridThemeKeys.GridSearchDataGridEditFormRowDetailsTemplate}">
+        <sdg:EditFormPresenter EditingItem="{Binding}"
+                               OwnerGrid="{Binding RelativeSource={RelativeSource AncestorType={x:Type sdg:SearchDataGrid}}}"
+                               CustomTemplate="{Binding EditFormTemplate, RelativeSource={RelativeSource AncestorType={x:Type sdg:SearchDataGrid}}}"
+                               Caption="{Binding EditFormCaption, RelativeSource={RelativeSource AncestorType={x:Type sdg:SearchDataGrid}}}"
+                               Style="{StaticResource {x:Static sdg:GridThemeKeys.GridSearchDataGridEditFormPresenter}}" />
+    </DataTemplate>
+
+</ResourceDictionary>

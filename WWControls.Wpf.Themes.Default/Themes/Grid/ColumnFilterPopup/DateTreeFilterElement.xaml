@@ -1,0 +1,99 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sdg="http://schemas.wwcontrols.com/wpf"
+                    xmlns:converters="clr-namespace:WWControls.Wpf.Converters;assembly=WWControls.Wpf.Grid">
+
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Primitives/DefaultControls.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+
+    <converters:BooleanToVisibilityCollapsedConverter x:Key="BoolToVisCollapsed" />
+
+    <Style TargetType="{x:Type sdg:DateTreeFilterElement}">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Foreground" Value="{x:Static SystemColors.WindowTextBrush}" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="MinWidth" Value="240" />
+        <Setter Property="MinHeight" Value="200" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type sdg:DateTreeFilterElement}">
+                    <Border Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            Padding="{TemplateBinding Padding}"
+                            CornerRadius="4">
+                        <DockPanel LastChildFill="True">
+
+                            <!--  Top: Select All toggle  -->
+                            <CheckBox Style="{StaticResource {x:Static sdg:PrimitiveThemeKeys.CheckBox}}"
+                                      DockPanel.Dock="Top"
+                                      IsChecked="{Binding FilterValueManager.SelectAllState, RelativeSource={RelativeSource TemplatedParent}, Mode=OneWay}"
+                                      Command="{Binding SelectAllToggleCommand, RelativeSource={RelativeSource TemplatedParent}}"
+                                      Margin="0,0,0,4"
+                                      IsThreeState="True"
+                                      Content="Select All"
+                                      FontSize="11" />
+
+                            <!--  Bottom: Status  -->
+                            <TextBlock DockPanel.Dock="Bottom"
+                                       Foreground="Gray"
+                                       Margin="0,4,0,2"
+                                       HorizontalAlignment="Right"
+                                       FontSize="11">
+                                <TextBlock.Text>
+                                    <MultiBinding StringFormat="{}{0:N0} / {1:N0} selected">
+                                        <Binding RelativeSource="{RelativeSource TemplatedParent}" Path="FilterValueManager.CheckedCount" />
+                                        <Binding RelativeSource="{RelativeSource TemplatedParent}" Path="FilterValueManager.TotalCount" />
+                                    </MultiBinding>
+                                </TextBlock.Text>
+                            </TextBlock>
+
+                            <!--  Center: Year / Month / Day (/ Time) tree, wrapped in a rounded themed card  -->
+                            <Border Background="{x:Static SystemColors.WindowBrush}"
+                                    BorderBrush="#CCCCCC"
+                                    BorderThickness="1"
+                                    CornerRadius="4"
+                                    ClipToBounds="True">
+                                <TreeView BorderThickness="0"
+                                          Padding="2"
+                                          Margin="1"
+                                          Background="Transparent"
+                                          ClipToBounds="True"
+                                          ItemsSource="{Binding FilterValueManager.DateTreeRoots, RelativeSource={RelativeSource TemplatedParent}}">
+                                    <TreeView.ItemContainerStyle>
+                                        <Style TargetType="TreeViewItem">
+                                            <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
+                                        </Style>
+                                    </TreeView.ItemContainerStyle>
+                                    <TreeView.ItemTemplate>
+                                        <HierarchicalDataTemplate ItemsSource="{Binding Children}">
+                                            <CheckBox Style="{StaticResource {x:Static sdg:PrimitiveThemeKeys.CheckBox}}"
+                                                      IsChecked="{Binding IsChecked}"
+                                                      Margin="2,1"
+                                                      IsThreeState="False">
+                                                <CheckBox.Content>
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <TextBlock Text="{Binding DisplayName}" VerticalAlignment="Center" />
+                                                        <TextBlock Foreground="Gray"
+                                                                   Text="{Binding TotalCount, StringFormat=' ({0:N0})'}"
+                                                                   Visibility="{Binding ShowCounts, RelativeSource={RelativeSource AncestorType={x:Type sdg:DateTreeFilterElement}}, Converter={StaticResource BoolToVisCollapsed}}"
+                                                                   VerticalAlignment="Center"
+                                                                   FontSize="10" />
+                                                    </StackPanel>
+                                                </CheckBox.Content>
+                                            </CheckBox>
+                                        </HierarchicalDataTemplate>
+                                    </TreeView.ItemTemplate>
+                                </TreeView>
+                            </Border>
+
+                        </DockPanel>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+</ResourceDictionary>

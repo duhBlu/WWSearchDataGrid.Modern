@@ -1,0 +1,53 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:commands="clr-namespace:WWControls.Wpf.Commands;assembly=WWControls.Wpf.Grid"
+                    xmlns:sdg="http://schemas.wwcontrols.com/wpf">
+
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Resources/Icons/Icons.xaml" />
+        <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Primitives/ContextMenu.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+
+    <BooleanToVisibilityConverter x:Key="SdgCellMenuBoolToVis" />
+
+    <!--
+        Shared cell right-click menu. The menu's DataContext is rebound to a
+        Commands.ContextMenuContext per opening, so a single instance is fine here
+        (x:Shared defaults to True for ContextMenu).
+    -->
+    <ContextMenu x:Key="{x:Static sdg:GridThemeKeys.GridSearchDataGridCellContextMenu}"
+                 Style="{StaticResource {x:Static sdg:PrimitiveThemeKeys.ContextMenu}}"
+                 AutomationProperties.AutomationId="cmuCell">
+        <MenuItem x:Name="miCopy"
+                  Command="{x:Static commands:ContextMenuCommands.CopySelectedCellValuesCommand}"
+                  CommandParameter="{Binding Grid}"
+                  Header="Copy">
+            <MenuItem.Icon>
+                <sdg:Icon Width="14"
+                             Height="14"
+                             IconSource="{StaticResource {x:Static sdg:IconKeys.IconCopy}}" />
+            </MenuItem.Icon>
+        </MenuItem>
+        <MenuItem x:Name="miCopyWithHeaders"
+                  Command="{x:Static commands:ContextMenuCommands.CopySelectedCellValuesWithHeadersCommand}"
+                  CommandParameter="{Binding Grid}"
+                  Header="Copy With Headers" />
+        <MenuItem x:Name="miCopyCellValue"
+                  Command="{x:Static commands:ContextMenuCommands.CopyCellValueCommand}"
+                  CommandParameter="{Binding}"
+                  Header="Copy Cell Value"
+                  Visibility="{Binding HasMultipleSelectedCells, Converter={StaticResource SdgCellMenuBoolToVis}}" />
+        <Separator />
+        <MenuItem x:Name="miFilterByCellValue"
+                  Command="{x:Static commands:ContextMenuCommands.FilterByCellValueCommand}"
+                  CommandParameter="{Binding}"
+                  Header="Filter By This Value">
+            <MenuItem.Icon>
+                <sdg:Icon Width="14"
+                             Height="14"
+                             IconSource="{StaticResource {x:Static sdg:IconKeys.IconFilter}}" />
+            </MenuItem.Icon>
+        </MenuItem>
+    </ContextMenu>
+
+</ResourceDictionary>

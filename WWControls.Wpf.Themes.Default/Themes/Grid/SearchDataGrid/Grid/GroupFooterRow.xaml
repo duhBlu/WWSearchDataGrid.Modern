@@ -1,0 +1,251 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:converters="clr-namespace:WWControls.Wpf.Converters;assembly=WWControls.Wpf.Grid"
+                    xmlns:commands="clr-namespace:WWControls.Wpf.Commands;assembly=WWControls.Wpf.Grid"
+                    xmlns:core="clr-namespace:WWControls.Core;assembly=WWControls.Core"
+                    xmlns:sdg="http://schemas.wwcontrols.com/wpf">
+
+    <!--
+        ═══════════════════════════════════════════════════════════════════════
+        Group Footer Row — a per-group totals row in extent space.
+
+        Emitted by the projection after a group's content (expanded) or directly
+        beneath its header (collapsed). The row template hosts a
+        GroupFooterCellsPresenter — one GroupFooterCell per column, aligned under
+        the columns and scrolling with them. Each cell renders that group's footer
+        results for its column and carries the runtime footer summary picker.
+        ═══════════════════════════════════════════════════════════════════════
+    -->
+
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Resources/Icons/Icons.xaml" />
+        <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Primitives/ContextMenu.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+
+    <converters:SummaryTypeActiveConverter x:Key="FooterSummaryTypeActiveConverter" />
+
+    <!--  Per-segment styling: an unset weight / style / color falls back to the entry's base look.  -->
+    <converters:BrushToUnsetConverter x:Key="SummaryStyleForeground" />
+    <converters:FontWeightToUnsetConverter x:Key="SummaryStyleFontWeight" />
+    <converters:FontStyleToUnsetConverter x:Key="SummaryStyleFontStyle" />
+
+    <!--
+        Runtime footer summary picker. Mirrors the total-summary cell menu but its commands and
+        active-state bindings target the cell column's GroupFooterSummaries. Items disable via
+        CanExecute when the aggregate is blocked by AllowedGroupFooterSummaries or unsupported by
+        the column's FieldType.
+    -->
+    <ContextMenu x:Key="{x:Static sdg:GridThemeKeys.GridSearchDataGridGroupFooterCellContextMenu}"
+                 AutomationProperties.AutomationId="cmuGroupFooterCell"
+                 Style="{StaticResource {x:Static sdg:PrimitiveThemeKeys.ContextMenu}}"
+                 x:Shared="False">
+        <MenuItem Command="{x:Static commands:ContextMenuCommands.ToggleCountFooterSummaryCommand}"
+                  CommandParameter="{Binding PlacementTarget, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}"
+                  Header="Count">
+            <MenuItem.IsChecked>
+                <MultiBinding Mode="OneWay"
+                              Converter="{StaticResource FooterSummaryTypeActiveConverter}"
+                              ConverterParameter="{x:Static core:SummaryItemType.Count}">
+                    <Binding Path="PlacementTarget.Descriptor.GroupFooterSummaries" RelativeSource="{RelativeSource AncestorType={x:Type ContextMenu}}" />
+                    <Binding Path="PlacementTarget.Descriptor.GroupFooterSummaries.Count" RelativeSource="{RelativeSource AncestorType={x:Type ContextMenu}}" />
+                </MultiBinding>
+            </MenuItem.IsChecked>
+            <MenuItem.Icon>
+                <Grid>
+                    <Border Style="{StaticResource FooterSummaryFunctionActivePillStyle}" />
+                    <sdg:Icon Style="{StaticResource FooterSummaryFunctionIconStyle}" IconSource="{StaticResource {x:Static sdg:IconKeys.IconCount}}" />
+                </Grid>
+            </MenuItem.Icon>
+        </MenuItem>
+        <MenuItem Command="{x:Static commands:ContextMenuCommands.ToggleSumFooterSummaryCommand}"
+                  CommandParameter="{Binding PlacementTarget, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}"
+                  Header="Sum">
+            <MenuItem.IsChecked>
+                <MultiBinding Mode="OneWay"
+                              Converter="{StaticResource FooterSummaryTypeActiveConverter}"
+                              ConverterParameter="{x:Static core:SummaryItemType.Sum}">
+                    <Binding Path="PlacementTarget.Descriptor.GroupFooterSummaries" RelativeSource="{RelativeSource AncestorType={x:Type ContextMenu}}" />
+                    <Binding Path="PlacementTarget.Descriptor.GroupFooterSummaries.Count" RelativeSource="{RelativeSource AncestorType={x:Type ContextMenu}}" />
+                </MultiBinding>
+            </MenuItem.IsChecked>
+            <MenuItem.Icon>
+                <Grid>
+                    <Border Style="{StaticResource FooterSummaryFunctionActivePillStyle}" />
+                    <sdg:Icon Style="{StaticResource FooterSummaryFunctionIconStyle}" IconSource="{StaticResource {x:Static sdg:IconKeys.IconSum}}" />
+                </Grid>
+            </MenuItem.Icon>
+        </MenuItem>
+        <MenuItem Command="{x:Static commands:ContextMenuCommands.ToggleMinFooterSummaryCommand}"
+                  CommandParameter="{Binding PlacementTarget, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}"
+                  Header="Min">
+            <MenuItem.IsChecked>
+                <MultiBinding Mode="OneWay"
+                              Converter="{StaticResource FooterSummaryTypeActiveConverter}"
+                              ConverterParameter="{x:Static core:SummaryItemType.Min}">
+                    <Binding Path="PlacementTarget.Descriptor.GroupFooterSummaries" RelativeSource="{RelativeSource AncestorType={x:Type ContextMenu}}" />
+                    <Binding Path="PlacementTarget.Descriptor.GroupFooterSummaries.Count" RelativeSource="{RelativeSource AncestorType={x:Type ContextMenu}}" />
+                </MultiBinding>
+            </MenuItem.IsChecked>
+            <MenuItem.Icon>
+                <Grid>
+                    <Border Style="{StaticResource FooterSummaryFunctionActivePillStyle}" />
+                    <sdg:Icon Style="{StaticResource FooterSummaryFunctionIconStyle}" IconSource="{StaticResource {x:Static sdg:IconKeys.IconMin}}" />
+                </Grid>
+            </MenuItem.Icon>
+        </MenuItem>
+        <MenuItem Command="{x:Static commands:ContextMenuCommands.ToggleMaxFooterSummaryCommand}"
+                  CommandParameter="{Binding PlacementTarget, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}"
+                  Header="Max">
+            <MenuItem.IsChecked>
+                <MultiBinding Mode="OneWay"
+                              Converter="{StaticResource FooterSummaryTypeActiveConverter}"
+                              ConverterParameter="{x:Static core:SummaryItemType.Max}">
+                    <Binding Path="PlacementTarget.Descriptor.GroupFooterSummaries" RelativeSource="{RelativeSource AncestorType={x:Type ContextMenu}}" />
+                    <Binding Path="PlacementTarget.Descriptor.GroupFooterSummaries.Count" RelativeSource="{RelativeSource AncestorType={x:Type ContextMenu}}" />
+                </MultiBinding>
+            </MenuItem.IsChecked>
+            <MenuItem.Icon>
+                <Grid>
+                    <Border Style="{StaticResource FooterSummaryFunctionActivePillStyle}" />
+                    <sdg:Icon Style="{StaticResource FooterSummaryFunctionIconStyle}" IconSource="{StaticResource {x:Static sdg:IconKeys.IconMax}}" />
+                </Grid>
+            </MenuItem.Icon>
+        </MenuItem>
+        <MenuItem Command="{x:Static commands:ContextMenuCommands.ToggleAverageFooterSummaryCommand}"
+                  CommandParameter="{Binding PlacementTarget, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}"
+                  Header="Average">
+            <MenuItem.IsChecked>
+                <MultiBinding Mode="OneWay"
+                              Converter="{StaticResource FooterSummaryTypeActiveConverter}"
+                              ConverterParameter="{x:Static core:SummaryItemType.Average}">
+                    <Binding Path="PlacementTarget.Descriptor.GroupFooterSummaries" RelativeSource="{RelativeSource AncestorType={x:Type ContextMenu}}" />
+                    <Binding Path="PlacementTarget.Descriptor.GroupFooterSummaries.Count" RelativeSource="{RelativeSource AncestorType={x:Type ContextMenu}}" />
+                </MultiBinding>
+            </MenuItem.IsChecked>
+            <MenuItem.Icon>
+                <Grid>
+                    <Border Style="{StaticResource FooterSummaryFunctionActivePillStyle}" />
+                    <sdg:Icon Style="{StaticResource FooterSummaryFunctionIconStyle}" IconSource="{StaticResource {x:Static sdg:IconKeys.IconAverage}}" />
+                </Grid>
+            </MenuItem.Icon>
+        </MenuItem>
+        <Separator />
+        <MenuItem Command="{x:Static commands:ContextMenuCommands.ClearFooterSummariesCommand}"
+                  CommandParameter="{Binding PlacementTarget, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}"
+                  Header="Clear Summaries" />
+        <Separator />
+        <MenuItem Command="{x:Static commands:ContextMenuCommands.CustomizeFooterSummariesCommand}"
+                  CommandParameter="{Binding PlacementTarget, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}"
+                  Header="Customize" >
+            <MenuItem.Icon>
+                <Grid>
+                    <Border Style="{StaticResource FooterSummaryFunctionActivePillStyle}" />
+                    <sdg:Icon Style="{StaticResource FooterSummaryFunctionIconStyle}" IconSource="{StaticResource {x:Static sdg:IconKeys.IconCustomizeSummary}}" />
+                </Grid>
+            </MenuItem.Icon>
+        </MenuItem>
+    </ContextMenu>
+
+    <!--  One footer summary line; mirrors the totals-cell entry look (right-aligned).  -->
+    <Style x:Key="DefaultGroupFooterEntryTextStyle" TargetType="{x:Type TextBlock}">
+        <Setter Property="FontWeight" Value="Normal" />
+        <Setter Property="Foreground" Value="#FF333333" />
+        <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+        <Setter Property="HorizontalAlignment" Value="Right" />
+    </Style>
+
+    <!--
+        Per-column footer cell. Every data column gets a cell (continuous surface + right-click
+        picker); columns without footer entries render empty. Multiple entries on one column
+        stack vertically. The picker is suppressed (ContextMenu cleared) when the owning grid's
+        SummaryContextMenusEnabled is false.
+    -->
+    <Style x:Key="{x:Static sdg:GridThemeKeys.GridSearchDataGridGroupFooterCell}" TargetType="{x:Type sdg:GroupFooterCell}">
+        <Setter Property="MinHeight" Value="22" />
+        <Setter Property="ContextMenu" Value="{StaticResource {x:Static sdg:GridThemeKeys.GridSearchDataGridGroupFooterCellContextMenu}}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type sdg:GroupFooterCell}">
+                    <Border Background="Transparent">
+                        <ItemsControl ItemsSource="{Binding Results, RelativeSource={RelativeSource TemplatedParent}}"
+                                      Margin="4,1"
+                                      HorizontalAlignment="Right"
+                                      VerticalAlignment="Center"
+                                      IsTabStop="False"
+                                      Focusable="False">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <StackPanel Orientation="Vertical" />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="{x:Type sdg:SummaryResult}">
+                                    <TextBlock Style="{StaticResource DefaultGroupFooterEntryTextStyle}" IsHitTestVisible="False">
+                                        <Run Text="{Binding PrefixText, Mode=OneWay}"
+                                             FontWeight="{Binding PrefixStyle.FontWeight, Converter={StaticResource SummaryStyleFontWeight}}"
+                                             FontStyle="{Binding PrefixStyle.FontStyle, Converter={StaticResource SummaryStyleFontStyle}}"
+                                             TextDecorations="{Binding PrefixStyle.TextDecorations}"
+                                             Foreground="{Binding PrefixStyle.Foreground, Converter={StaticResource SummaryStyleForeground}}" />
+                                        <Run Text="{Binding ValueText, Mode=OneWay}"
+                                             FontWeight="{Binding ValueStyle.FontWeight, Converter={StaticResource SummaryStyleFontWeight}}"
+                                             FontStyle="{Binding ValueStyle.FontStyle, Converter={StaticResource SummaryStyleFontStyle}}"
+                                             TextDecorations="{Binding ValueStyle.TextDecorations}"
+                                             Foreground="{Binding ValueStyle.Foreground, Converter={StaticResource SummaryStyleForeground}}" />
+                                        <Run Text="{Binding SuffixText, Mode=OneWay}"
+                                             FontWeight="{Binding SuffixStyle.FontWeight, Converter={StaticResource SummaryStyleFontWeight}}"
+                                             FontStyle="{Binding SuffixStyle.FontStyle, Converter={StaticResource SummaryStyleFontStyle}}"
+                                             TextDecorations="{Binding SuffixStyle.TextDecorations}"
+                                             Foreground="{Binding SuffixStyle.Foreground, Converter={StaticResource SummaryStyleForeground}}" />
+                                    </TextBlock>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+        <Style.Triggers>
+            <!--  Read-only gate: drop the picker when the grid disables summary context menus.  -->
+            <DataTrigger Binding="{Binding OwnerGrid.SummaryContextMenusEnabled, RelativeSource={RelativeSource Self}}" Value="False">
+                <Setter Property="ContextMenu" Value="{x:Null}" />
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+    <Style BasedOn="{StaticResource {x:Static sdg:GridThemeKeys.GridSearchDataGridGroupFooterCell}}" TargetType="{x:Type sdg:GroupFooterCell}" />
+
+    <!--  Cells host: per-column run in display order in the same extent space as the data
+          cells; FixedColumnAlignedPanel additionally anchors pinned columns' cells to the
+          viewport edges (and clips scrollable cells sliding under the bands), matching the
+          data cells' fixed-column behavior.  -->
+    <Style x:Key="{x:Static sdg:GridThemeKeys.GridSearchDataGridGroupFooterCellsPresenter}" TargetType="{x:Type sdg:GroupFooterCellsPresenter}">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type sdg:GroupFooterCellsPresenter}">
+                    <sdg:FixedColumnAlignedPanel x:Name="PART_FooterCellsPanel" />
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    <Style BasedOn="{StaticResource {x:Static sdg:GridThemeKeys.GridSearchDataGridGroupFooterCellsPresenter}}" TargetType="{x:Type sdg:GroupFooterCellsPresenter}" />
+
+    <!--
+        Full-width group footer row, swapped in by the DataGridRow style's IsGroupFooter trigger.
+        Like the AlignByColumns header layer, the cells live in EXTENT space (a row-header-width
+        spacer then one cell per visible column) so each value sits under its column and scrolls
+        with it. The footer background spans the extent so the row reads as a closing band.
+    -->
+    <ControlTemplate x:Key="{x:Static sdg:GridThemeKeys.GridSearchDataGridGroupFooterRow}" TargetType="{x:Type DataGridRow}">
+        <Border Background="#FFF9F9F9"
+                BorderBrush="#FFd9d9d9"
+                BorderThickness="0,1,0,1"
+                UseLayoutRounding="True"
+                SnapsToDevicePixels="True">
+            <DockPanel HorizontalAlignment="Left">
+                <Border DockPanel.Dock="Left"
+                        Width="{Binding RowHeaderActualWidth, RelativeSource={RelativeSource AncestorType={x:Type sdg:SearchDataGrid}}}" />
+                <sdg:GroupFooterCellsPresenter VerticalAlignment="Center" />
+            </DockPanel>
+        </Border>
+    </ControlTemplate>
+
+</ResourceDictionary>

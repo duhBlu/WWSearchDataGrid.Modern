@@ -8,9 +8,9 @@
          Merged bottom-up: DefaultControls brings the shared brushes + icons + the PrimitivesComboBoxItem
          style the combo editor reuses; then the editor chrome; then the editor element styles. -->
     <ResourceDictionary.MergedDictionaries>
-        <ResourceDictionary Source="pack://application:,,,/WWControls.Wpf.Themes.Default;component/Themes/Controls/Primitives/DefaultControls.xaml" />
-        <ResourceDictionary Source="pack://application:,,,/WWControls.Wpf.Themes.Default;component/Themes/Controls/Editors/Editors.xaml" />
-        <ResourceDictionary Source="pack://application:,,,/WWControls.Wpf.Themes.Default;component/Themes/Controls/EditSettings/EditSettings.xaml" />
+        <ResourceDictionary Source="pack://application:,,,/WWControls.Wpf.Themes.Default;component/Themes/Primitives/DefaultControls.xaml" />
+        <ResourceDictionary Source="pack://application:,,,/WWControls.Wpf.Themes.Default;component/Themes/Editors/Editors.xaml" />
+        <ResourceDictionary Source="pack://application:,,,/WWControls.Wpf.Themes.Default;component/Themes/Editors/EditSettings.xaml" />
     </ResourceDictionary.MergedDictionaries>
 
 </ResourceDictionary>

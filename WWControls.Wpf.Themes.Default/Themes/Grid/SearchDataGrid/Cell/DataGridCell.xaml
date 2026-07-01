@@ -1,0 +1,87 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:converters="clr-namespace:WWControls.Wpf.Converters;assembly=WWControls.Wpf.Grid"
+                    xmlns:sdg="http://schemas.wwcontrols.com/wpf">
+
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Grid/CellContextMenu.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+
+    <converters:BooleanToVisibilityCollapsedConverter x:Key="BooleanToVisibilityCollapsedConverter" />
+
+    <Style x:Key="{x:Static sdg:GridThemeKeys.GridSearchDataGridCell}" TargetType="{x:Type DataGridCell}">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Padding" Value="0" />
+        <!--  The library surfaces validation through the cell's ValidationErrorIcon badge, so the
+              framework's default red error-border adorner is redundant chrome. A row whose item
+              implements INotifyDataErrorInfo marks every cell HasError, which would otherwise border
+              the whole row. Null the cell error template to match the row's ValidationErrorTemplate.  -->
+        <Setter Property="Validation.ErrorTemplate" Value="{x:Null}" />
+        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+        <Setter Property="ContextMenu" Value="{StaticResource {x:Static sdg:GridThemeKeys.GridSearchDataGridCellContextMenu}}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type DataGridCell}">
+                    <Grid>
+                        <Border Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
+                        </Border>
+                        <Border BorderBrush="{Binding VerticalGridLinesBrush, RelativeSource={RelativeSource AncestorType={x:Type DataGrid}}}"
+                                BorderThickness="0,0,1,0"
+                                Visibility="{Binding ShowVerticalGridLines, RelativeSource={RelativeSource AncestorType={x:Type sdg:SearchDataGrid}}, Converter={StaticResource BooleanToVisibilityCollapsedConverter}}"
+                                IsHitTestVisible="False" />
+                        <Border BorderBrush="{Binding HorizontalGridLinesBrush, RelativeSource={RelativeSource AncestorType={x:Type DataGrid}}}"
+                                BorderThickness="0,0,0,1"
+                                Visibility="{Binding ShowHorizontalGridLines, RelativeSource={RelativeSource AncestorType={x:Type sdg:SearchDataGrid}}, Converter={StaticResource BooleanToVisibilityCollapsedConverter}}"
+                                IsHitTestVisible="False" />
+                        <!--  Focus indicator — keyboard-focused cell.  -->
+                        <Border x:Name="FocusBorder"
+                                BorderBrush="#0078D4"
+                                BorderThickness="1"
+                                Visibility="Collapsed"
+                                IsHitTestVisible="False" />
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                            <Setter TargetName="FocusBorder" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+        <Style.Triggers>
+            <MultiTrigger>
+                <MultiTrigger.Conditions>
+                    <Condition Property="IsMouseOver" Value="True" />
+                    <Condition Property="IsSelected" Value="False" />
+                </MultiTrigger.Conditions>
+                <Setter Property="Background" Value="#E8E8E8" />
+            </MultiTrigger>
+            <Trigger Property="IsSelected" Value="True">
+                <Setter Property="Background" Value="#CCE4F7" />
+                <Setter Property="Foreground" Value="#1C1C1C" />
+            </Trigger>
+            <MultiTrigger>
+                <MultiTrigger.Conditions>
+                    <Condition Property="IsSelected" Value="True" />
+                    <Condition Property="IsMouseOver" Value="True" />
+                </MultiTrigger.Conditions>
+                <Setter Property="Background" Value="#B3D7F2" />
+            </MultiTrigger>
+            <MultiTrigger>
+                <MultiTrigger.Conditions>
+                    <Condition Property="IsSelected" Value="True" />
+                    <Condition Property="Selector.IsSelectionActive" Value="False" />
+                </MultiTrigger.Conditions>
+                <Setter Property="Background" Value="#EDEDED" />
+                <Setter Property="Foreground" Value="#1C1C1C" />
+            </MultiTrigger>
+            <Trigger Property="IsEnabled" Value="False">
+                <Setter Property="Foreground" Value="#999999" />
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+</ResourceDictionary>

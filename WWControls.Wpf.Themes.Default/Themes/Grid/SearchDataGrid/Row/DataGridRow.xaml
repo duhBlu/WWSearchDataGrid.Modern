@@ -1,0 +1,180 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sdg="http://schemas.wwcontrols.com/wpf">
+
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Grid/SearchDataGrid/Row/RowHeaderContextMenu.xaml" />
+        <!--  Supplies the flat-grouping header-row template referenced by the IsGroupHeader trigger below.  -->
+        <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Grid/SearchDataGrid/Grid/GroupStyle.xaml" />
+        <!--  Supplies the group-footer-row template referenced by the IsGroupFooter trigger below.  -->
+        <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Grid/SearchDataGrid/Grid/GroupFooterRow.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+
+    <Style x:Key="{x:Static sdg:GridThemeKeys.GridSelectAllButton}" TargetType="{x:Type Button}">
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Width" Value="{Binding RowHeaderWidth, RelativeSource={RelativeSource AncestorType={x:Type sdg:SearchDataGrid}}}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Grid>
+                        <Border x:Name="Border"
+                                Background="#F0F0F0"
+                                BorderBrush="#d0d0d0"
+                                BorderThickness="0,0,1,1"
+                                Margin="0,0,0,0" />
+                        <Polygon x:Name="Arrow"
+                                 Fill="#666"
+                                 Opacity="0.5"
+                                 Margin="8,8,3,3"
+                                 HorizontalAlignment="Right"
+                                 VerticalAlignment="Bottom"
+                                 Points="0,10 10,10 10,0"
+                                 Stretch="Uniform" />
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Arrow" Property="Opacity" Value="0.8" />
+                            <Setter TargetName="Border" Property="Background" Value="#E0F0FF" />
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="Arrow" Property="Opacity" Value="1" />
+                            <Setter TargetName="Border" Property="Background" Value="#CCE0FF" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="Arrow" Property="Visibility" Value="Collapsed" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="{x:Static sdg:GridThemeKeys.GridSearchDataGridRowHeader}" TargetType="{x:Type DataGridRowHeader}">
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="FontWeight" Value="Normal" />
+        <Setter Property="Foreground" Value="#FF444444" />
+        <Setter Property="Background" Value="#F9F9F9" />
+        <Setter Property="BorderBrush" Value="#FFd0d0d0" />
+        <Setter Property="BorderThickness" Value="1,1,1,1" />
+        <Setter Property="ContextMenu" Value="{StaticResource {x:Static sdg:GridThemeKeys.GridSearchDataGridRowHeaderContextMenu}}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type DataGridRowHeader}">
+                    <Grid>
+                        <Border x:Name="HeaderBorder"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                Margin="-1,-1,0,0"
+                                Padding="0,0,20,0">
+                            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
+                        </Border>
+
+                        <sdg:Icon x:Name="RowStateIndicator"
+                                     Width="10"
+                                     Height="10"
+                                     StrokeThickness="1.5"
+                                     Visibility="Collapsed"
+                                     IconBrush="{TemplateBinding Foreground}" />
+                    </Grid>
+
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="HeaderBorder" Property="Background" Value="#FFF0F0F0" />
+                        </Trigger>
+                        <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType={x:Type DataGridRow}}}" Value="True">
+                            <Setter TargetName="RowStateIndicator" Property="IconSource" Value="{StaticResource {x:Static sdg:IconKeys.IconChevronRight}}" />
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding IsKeyboardFocusWithin, RelativeSource={RelativeSource AncestorType={x:Type DataGridRow}}}" Value="True">
+                            <Setter TargetName="RowStateIndicator" Property="Visibility" Value="Visible" />
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding IsEditing, RelativeSource={RelativeSource AncestorType={x:Type DataGridRow}}}" Value="True">
+                            <Setter TargetName="RowStateIndicator" Property="IconSource" Value="{StaticResource {x:Static sdg:IconKeys.IconEdit}}" />
+                            <Setter TargetName="RowStateIndicator" Property="Visibility" Value="Visible" />
+                        </DataTrigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="{x:Static sdg:GridThemeKeys.GridSearchDataGridRow}" TargetType="{x:Type DataGridRow}">
+        <Setter Property="Background" Value="{Binding RowBackground, RelativeSource={RelativeSource AncestorType={x:Type DataGrid}}}" />
+        <!--  ValidationErrorTemplate is the row-header error indicator. Validation.ErrorTemplate is
+              the framework adorner that boxes the whole row in red when its item (an
+              INotifyDataErrorInfo source) reports errors. The library surfaces errors through the
+              per-cell ValidationErrorIcon badge, so null both.  -->
+        <Setter Property="ValidationErrorTemplate" Value="{x:Null}" />
+        <Setter Property="Validation.ErrorTemplate" Value="{x:Null}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type DataGridRow}">
+                    <Border x:Name="DGR_Border"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}">
+                        <SelectiveScrollingGrid>
+                            <SelectiveScrollingGrid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </SelectiveScrollingGrid.ColumnDefinitions>
+                            <SelectiveScrollingGrid.RowDefinitions>
+                                <RowDefinition Height="*" />
+                                <RowDefinition Height="Auto" />
+                            </SelectiveScrollingGrid.RowDefinitions>
+
+                            <!--  FixedColumnsCellsPanel overlays right-pinned columns at the
+                                  viewport's right edge; with no right pins it is byte-for-byte
+                                  the native DataGridCellsPanel arrangement.  -->
+                            <DataGridCellsPresenter x:Name="PART_CellsPresenter" Grid.Column="1">
+                                <DataGridCellsPresenter.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <sdg:FixedColumnsCellsPanel />
+                                    </ItemsPanelTemplate>
+                                </DataGridCellsPresenter.ItemsPanel>
+                            </DataGridCellsPresenter>
+
+                            <DataGridDetailsPresenter Grid.Row="1"
+                                                      Grid.Column="1"
+                                                      Visibility="{TemplateBinding DetailsVisibility}"
+                                                      SelectiveScrollingGrid.SelectiveScrollingOrientation="{Binding AreRowDetailsFrozen, ConverterParameter={x:Static SelectiveScrollingOrientation.Vertical}, Converter={x:Static DataGrid.RowDetailsScrollingConverter}, RelativeSource={RelativeSource AncestorType={x:Type DataGrid}}}" />
+
+                            <DataGridRowHeader Grid.RowSpan="2"
+                                               Visibility="{Binding HeadersVisibility, ConverterParameter={x:Static DataGridHeadersVisibility.Row}, Converter={x:Static DataGrid.HeadersVisibilityConverter}, RelativeSource={RelativeSource AncestorType={x:Type DataGrid}}}"
+                                               SelectiveScrollingGrid.SelectiveScrollingOrientation="Vertical" />
+                        </SelectiveScrollingGrid>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <!--  InlineHideRow edit form: hide the row's own cells so only the form
+                              (in the details area below) shows for this row. Bound to the
+                              SearchDataGridRow.IsCellsHidden flag the grid pushes while editing.  -->
+                        <DataTrigger Binding="{Binding IsCellsHidden, RelativeSource={RelativeSource TemplatedParent}}" Value="True">
+                            <Setter TargetName="PART_CellsPresenter" Property="Visibility" Value="Collapsed" />
+                        </DataTrigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+        <Style.Triggers>
+            <!--
+                Flat-grouping header sentinel: swap the cells template for the full-width
+                group-header chrome. IsGroupHeader lives on the SearchDataGridRow the grid
+                generates for every row; it stays false for data rows, so they keep the template
+                above. Bound off Self so the trigger reads the runtime container instance.
+            -->
+            <DataTrigger Binding="{Binding IsGroupHeader, RelativeSource={RelativeSource Self}}" Value="True">
+                <Setter Property="Template" Value="{StaticResource {x:Static sdg:GridThemeKeys.GridSearchDataGridGroupHeaderRow}}" />
+            </DataTrigger>
+            <!--
+                Group-footer sentinel: swap to the full-width footer chrome (one GroupFooterCell
+                per column). IsGroupFooter lives on the SearchDataGridRow the grid generates;
+                stays false for data and header rows.
+            -->
+            <DataTrigger Binding="{Binding IsGroupFooter, RelativeSource={RelativeSource Self}}" Value="True">
+                <Setter Property="Template" Value="{StaticResource {x:Static sdg:GridThemeKeys.GridSearchDataGridGroupFooterRow}}" />
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+
+</ResourceDictionary>
