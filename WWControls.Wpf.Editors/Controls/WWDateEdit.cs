@@ -33,7 +33,7 @@ namespace WWControls.Wpf.Editors
             _editor = new SegmentedDateTimeEditor();
             // Force the inner editor flat — WWBaseEdit owns the border, so the segmented control's
             // own border (and its inner TextBox's) must not also draw, or the edit form double-borders.
-            BaseEditSettings.SetShowEditorBorder(_editor, false);
+            EditorChrome.SetShowEditorBorder(_editor, false);
 
             // object ↔ DateTime? coerces through WPF's standard binding type-converter (same as the
             // filter row's SearchValue binding), so the adapter can bind the column field to Value.

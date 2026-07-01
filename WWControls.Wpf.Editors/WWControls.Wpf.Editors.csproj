@@ -6,9 +6,12 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\WWControls.Wpf\WWControls.Wpf.csproj" />
+    <PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.122" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\WWControls.Core\WWControls.Core.csproj" />
     <ProjectReference Include="..\WWControls.Wpf.Primitives\WWControls.Wpf.Primitives.csproj" />
-    <ProjectReference Include="..\WWControls.Wpf.Editors\WWControls.Wpf.Editors.csproj" />
   </ItemGroup>
 
 </Project>

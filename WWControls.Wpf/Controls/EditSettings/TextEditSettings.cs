@@ -165,7 +165,7 @@ namespace WWControls.Wpf.Editors
             factory.SetBinding(WWBaseEdit.ShowBorderProperty, new Binding
             {
                 RelativeSource = new RelativeSource(RelativeSourceMode.Self),
-                Path = new PropertyPath(ShowEditorBorderProperty),
+                Path = new PropertyPath(EditorChrome.ShowEditorBorderProperty),
                 Mode = BindingMode.OneWay,
             });
 
@@ -215,7 +215,7 @@ namespace WWControls.Wpf.Editors
             BindingOperations.SetBinding(editor, WWBaseEdit.ShowBorderProperty, new Binding
             {
                 RelativeSource = new RelativeSource(RelativeSourceMode.Self),
-                Path = new PropertyPath(ShowEditorBorderProperty),
+                Path = new PropertyPath(EditorChrome.ShowEditorBorderProperty),
                 Mode = BindingMode.OneWay,
             });
             BindingOperations.SetBinding(editor, WWBaseEdit.ValueProperty, new Binding(nameof(IColumnFilterHost.SearchText))

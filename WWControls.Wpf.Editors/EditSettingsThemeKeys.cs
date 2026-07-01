@@ -1,6 +1,6 @@
 using System.Windows;
 
-namespace WWControls.Wpf
+namespace WWControls.Wpf.Editors
 {
     /// <summary>
     /// Typed resource keys for the editor element styles defined in

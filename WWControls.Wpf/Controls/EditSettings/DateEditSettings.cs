@@ -255,7 +255,7 @@ namespace WWControls.Wpf.Editors
             factory.SetBinding(WWBaseEdit.ShowBorderProperty, new Binding
             {
                 RelativeSource = new RelativeSource(RelativeSourceMode.Self),
-                Path = new PropertyPath(ShowEditorBorderProperty),
+                Path = new PropertyPath(EditorChrome.ShowEditorBorderProperty),
                 Mode = BindingMode.OneWay,
             });
             factory.SetValue(WWDateEdit.TextAlignmentProperty, column.TextAlignment);

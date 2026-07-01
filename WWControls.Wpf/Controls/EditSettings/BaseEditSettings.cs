@@ -28,31 +28,6 @@ namespace WWControls.Wpf.Editors
     public abstract class BaseEditSettings : FrameworkContentElement
     {
         /// <summary>
-        /// Inheritable attached flag marking that an editor is hosted somewhere it should render its
-        /// own border — set on the <see cref="EditFormPresenter"/> so every editor it hosts shows a
-        /// border, while the same editor templates stay flat (borderless) in a grid cell or the
-        /// filter row, where this defaults to <c>false</c>. The migrated <c>WWxxxEdit</c> controls
-        /// bind <see cref="WWBaseEdit.ShowBorder"/> to this flag (chrome is owned once by
-        /// <see cref="WWBaseEdit"/>); the <c>EditTextBox</c> style keyed on it still drives the inner
-        /// TextBox of <see cref="SegmentedDateTimeEditor"/>. Checkbox and read-only display editors
-        /// carry no such trigger and stay flat regardless.
-        /// </summary>
-        public static readonly DependencyProperty ShowEditorBorderProperty =
-            DependencyProperty.RegisterAttached(
-                "ShowEditorBorder",
-                typeof(bool),
-                typeof(BaseEditSettings),
-                new FrameworkPropertyMetadata(false, FrameworkPropertyMetadataOptions.Inherits));
-
-        /// <summary>Sets <see cref="ShowEditorBorderProperty"/> on <paramref name="element"/>.</summary>
-        public static void SetShowEditorBorder(DependencyObject element, bool value)
-            => element.SetValue(ShowEditorBorderProperty, value);
-
-        /// <summary>Reads <see cref="ShowEditorBorderProperty"/> from <paramref name="element"/>.</summary>
-        public static bool GetShowEditorBorder(DependencyObject element)
-            => (bool)element.GetValue(ShowEditorBorderProperty);
-
-        /// <summary>
         /// Optional user-supplied template for the read-only display cell. When set, the library
         /// uses this template verbatim and skips <see cref="CreateDisplayTemplate"/>. Bindings
         /// inside the template should reach the owning ViewModel via
