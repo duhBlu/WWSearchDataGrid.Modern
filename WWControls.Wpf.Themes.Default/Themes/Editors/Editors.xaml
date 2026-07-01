@@ -46,9 +46,13 @@
                             BorderThickness="{TemplateBinding BorderThickness}"
                             CornerRadius="3"
                             SnapsToDevicePixels="True">
+                        <!-- Style=null so an ambient implicit TextBox style in the host app can't
+                             add a second border; this editor's chrome owns the border. -->
                         <TextBox x:Name="PART_TextBox"
+                                 Style="{x:Null}"
                                  Margin="{TemplateBinding Padding}"
                                  BorderThickness="0"
+
                                  Background="Transparent"
                                  Padding="0"
                                  Foreground="{TemplateBinding Foreground}"
@@ -108,7 +112,10 @@
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
 
+                            <!-- Style=null so an ambient implicit TextBox style in the host app can't
+                                 add a second border; this editor's chrome owns the border. -->
                             <TextBox x:Name="PART_TextBox"
+                                     Style="{x:Null}"
                                      Grid.Column="0"
                                      Margin="{TemplateBinding Padding}"
                                      BorderThickness="0"
