@@ -20,8 +20,11 @@ namespace WWControls.Wpf.Grids
     /// The <see cref="FieldName"/> property is the primary key: it drives <c>Binding</c>,
     /// <c>SortMemberPath</c>, and <c>FilterMemberPath</c> unless explicitly overridden.
     /// </remarks>
-    public abstract class ColumnDataBase : ColumnLayoutBase
+    public abstract class ColumnDataBase : ColumnLayoutBase, IEditorColumn
     {
+        /// <summary>The grid host when this column is hosted in a data grid; null otherwise. Satisfies <see cref="IEditorColumn.Host"/> (upcast of <see cref="ColumnLayoutBase.View"/>).</summary>
+        public IEditingGridHost Host => View;
+
         protected ColumnDataBase()
         {
             // Initialize the custom-popup tabs collection so the XAML implicit-collection syntax
@@ -3154,7 +3157,7 @@ namespace WWControls.Wpf.Grids
         /// formatting on top. Shared by the bound-column paths and every EditSettings editor /
         /// display template so they bind to the same effective value.
         /// </summary>
-        internal Binding CreateFieldBinding()
+        public Binding CreateFieldBinding()
         {
             if (Binding is Binding custom)
             {

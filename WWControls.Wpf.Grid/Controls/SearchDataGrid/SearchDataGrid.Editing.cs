@@ -210,7 +210,7 @@ namespace WWControls.Wpf.Grids
         /// releases the lock immediately. Consumed by the keyboard / mouse / arrow-exit handlers
         /// and by <see cref="BaseEditSettings.ExitCellViaArrow"/>.
         /// </summary>
-        internal bool IsEditLockActive() => TryGetLockedEditingCell(out _);
+        public bool IsEditLockActive() => TryGetLockedEditingCell(out _);
 
         /// <summary>
         /// Resolves the currently-editing cell and reports whether it is locked (see

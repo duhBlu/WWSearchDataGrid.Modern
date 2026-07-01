@@ -41,6 +41,12 @@ namespace WWControls.Wpf.Grids
                 new FrameworkPropertyMetadata((Style)null));
         }
 
+        /// <summary>The column context for the filter editor (upcast of <see cref="GridColumn"/>). Satisfies <see cref="IFilterEditorHost.EditorColumn"/>.</summary>
+        public IEditorColumn EditorColumn => GridColumn;
+
+        /// <summary>Routes a boundary arrow key to the filter row's DisplayIndex-order navigation. Satisfies <see cref="IFilterEditorHost.TryNavigateOnArrow"/>.</summary>
+        public bool TryNavigateOnArrow(KeyEventArgs e) => FilterRowNavigator.TryNavigate(this, e);
+
         #region Template parts and fields
 
         public const string PartSearchTextBoxName = "PART_SearchTextBox";

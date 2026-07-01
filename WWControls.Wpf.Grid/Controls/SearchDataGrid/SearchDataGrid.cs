@@ -29,7 +29,7 @@ namespace WWControls.Wpf.Grids
     /// <summary>
     /// Modern implementation of the SearchDataGrid
     /// </summary>
-    public partial class SearchDataGrid : DataGrid
+    public partial class SearchDataGrid : DataGrid, IEditingGridHost
     {
         #region Fields
 
@@ -789,7 +789,7 @@ namespace WWControls.Wpf.Grids
         /// Arms the one-shot carry flag. Called by <see cref="BaseEditSettings.ExitCellViaArrow"/>
         /// after committing so arrow nav from an editing cell stays in edit mode at the destination.
         /// </summary>
-        internal void SetCarryEditStateOnNextFocus() => _carryEditStateOnNextFocus = true;
+        public void SetCarryEditStateOnNextFocus() => _carryEditStateOnNextFocus = true;
 
         /// <summary>
         /// True when the cell or owning grid is read-only. The cell-level check alone is
@@ -822,7 +822,7 @@ namespace WWControls.Wpf.Grids
         /// Returns and clears the stashed click point for <paramref name="forCell"/>.
         /// Consume-on-read so a stale point can't bleed into a later keyboard-driven edit.
         /// </summary>
-        internal bool TryConsumeMouseEditPoint(DataGridCell forCell, out Point cellPoint)
+        public bool TryConsumeMouseEditPoint(DataGridCell forCell, out Point cellPoint)
         {
             if (forCell != null
                 && ReferenceEquals(_pendingMouseEditCell, forCell)
@@ -1152,7 +1152,7 @@ namespace WWControls.Wpf.Grids
         /// the relevant edge (caller falls back to native arrow handling). Tab, not arrows, crosses
         /// to the next/previous row.
         /// </summary>
-        internal bool TryWrapArrowWithinRow(DataGridCell cell, bool forward)
+        public bool TryWrapArrowWithinRow(DataGridCell cell, bool forward)
         {
             var targetCell = GetWrapTargetAtRowEdge(cell, forward);
             if (targetCell == null) return false;

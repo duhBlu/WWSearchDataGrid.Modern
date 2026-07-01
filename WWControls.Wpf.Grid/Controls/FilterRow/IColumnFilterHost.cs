@@ -16,7 +16,7 @@ namespace WWControls.Wpf.Grids
     /// implementer, so keep the surface minimal: anything purely UI (focus, popup wiring,
     /// editor templates) stays on the concrete control.
     /// </remarks>
-    public interface IColumnFilterHost
+    public interface IColumnFilterHost : IFilterEditorHost
     {
         /// <summary>The <see cref="DataGridColumn"/> this filter host represents.</summary>
         DataGridColumn CurrentColumn { get; }
@@ -34,8 +34,7 @@ namespace WWControls.Wpf.Grids
         /// </summary>
         string BindingPath { get; }
 
-        /// <summary>Currently-typed search text (string fast path).</summary>
-        string SearchText { get; }
+        // SearchText is inherited from IFilterEditorHost.
 
         /// <summary>Whether a transient (uncommitted) filter template exists.</summary>
         bool HasTemporaryTemplate { get; }
@@ -49,8 +48,7 @@ namespace WWControls.Wpf.Grids
         /// <summary>True when the column is rendered as a tri-state checkbox filter.</summary>
         bool IsCheckboxColumn { get; }
 
-        /// <summary>Current tri-state checkbox value (null/true/false). Only meaningful when <see cref="IsCheckboxColumn"/>.</summary>
-        bool? FilterCheckboxState { get; set; }
+        // FilterCheckboxState is inherited from IFilterEditorHost.
 
         /// <summary>
         /// Whether the filter editor is visible for this column. Mirrors
