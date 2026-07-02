@@ -57,7 +57,7 @@ namespace WWControls.Wpf.Grids
         /// <summary>
         /// Backing collection for the Left-pinned section listbox. Reorder operations
         /// happen within this collection; cross-section drags are impossible because
-        /// each section has its own <see cref="ReorderableListBox"/>.
+        /// each section has its own <see cref="WWReorderableListBox"/>.
         /// </summary>
         public static readonly DependencyProperty LeftFixedColumnsProperty =
             DependencyProperty.Register(nameof(LeftFixedColumns), typeof(ObservableCollection<ColumnVisibilityInfo>), typeof(ColumnChooser),
@@ -447,9 +447,9 @@ namespace WWControls.Wpf.Grids
             // Wire up the three section listboxes — each handles its own drag-drop and
             // raises ItemReordered with section-local indices. Cross-section drags are
             // impossible by construction.
-            _leftSectionListBox = GetTemplateChild("PART_LeftSectionList") as ReorderableListBox;
-            _unpinnedSectionListBox = GetTemplateChild("PART_UnpinnedSectionList") as ReorderableListBox;
-            _rightSectionListBox = GetTemplateChild("PART_RightSectionList") as ReorderableListBox;
+            _leftSectionListBox = GetTemplateChild("PART_LeftSectionList") as WWReorderableListBox;
+            _unpinnedSectionListBox = GetTemplateChild("PART_UnpinnedSectionList") as WWReorderableListBox;
+            _rightSectionListBox = GetTemplateChild("PART_RightSectionList") as WWReorderableListBox;
 
             foreach (var listBox in EnumerateSectionListBoxes())
             {
@@ -486,11 +486,11 @@ namespace WWControls.Wpf.Grids
             }
         }
 
-        private ReorderableListBox _leftSectionListBox;
-        private ReorderableListBox _unpinnedSectionListBox;
-        private ReorderableListBox _rightSectionListBox;
+        private WWReorderableListBox _leftSectionListBox;
+        private WWReorderableListBox _unpinnedSectionListBox;
+        private WWReorderableListBox _rightSectionListBox;
 
-        private IEnumerable<ReorderableListBox> EnumerateSectionListBoxes()
+        private IEnumerable<WWReorderableListBox> EnumerateSectionListBoxes()
         {
             if (_leftSectionListBox != null) yield return _leftSectionListBox;
             if (_unpinnedSectionListBox != null) yield return _unpinnedSectionListBox;
@@ -526,7 +526,7 @@ namespace WWControls.Wpf.Grids
         /// </summary>
         private void OnSectionContextMenuOpening(object sender, ContextMenuEventArgs e)
         {
-            if (sender is not ReorderableListBox listBox) return;
+            if (sender is not WWReorderableListBox listBox) return;
 
             // Walk up to the originating ListBoxItem so the chooser-row identity is preserved
             // even when the click lands on a child element (checkbox, text, glyph).
@@ -1409,7 +1409,7 @@ namespace WWControls.Wpf.Grids
         private void OnSectionListBoxSelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (_isSyncingSelection) return;
-            if (sender is not ReorderableListBox source) return;
+            if (sender is not WWReorderableListBox source) return;
 
             _isSyncingSelection = true;
             try
@@ -1444,7 +1444,7 @@ namespace WWControls.Wpf.Grids
         /// Handles drag-drop reordering inside one of the three section listboxes.
         /// The section structure enforces the group constraint by construction —
         /// drag-drop never crosses a section boundary because each section is its
-        /// own <see cref="ReorderableListBox"/> — so this handler only needs to
+        /// own <see cref="WWReorderableListBox"/> — so this handler only needs to
         /// apply the move within the host section.
         /// </summary>
         private void OnSectionListItemReordered(object sender, ItemReorderedEventArgs e)

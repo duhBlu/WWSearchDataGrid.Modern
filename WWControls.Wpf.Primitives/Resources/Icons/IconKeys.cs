@@ -47,7 +47,7 @@ namespace WWControls.Wpf.Primitives
         public static ComponentResourceKey IconChevronDown { get; } =
             new ComponentResourceKey(typeof(IconKeys), nameof(IconChevronDown));
 
-        /// <summary>Chevron pointing up — collapse, move-up button, <see cref="NumericUpDown"/> increment.</summary>
+        /// <summary>Chevron pointing up — collapse, move-up button, numeric up/down increment.</summary>
         public static ComponentResourceKey IconChevronUp { get; } =
             new ComponentResourceKey(typeof(IconKeys), nameof(IconChevronUp));
         

@@ -401,7 +401,7 @@ namespace WWControls.Wpf.Grids
             {
                 var child = VisualTreeHelper.GetChild(root, i);
                 // Known editor types first; then any tab-stoppable Control (covers custom editors
-                // like NumericUpDown / the segmented date editor) — but not the bare focusable
+                // like WWNumericUpDown / the segmented date editor) — but not the bare focusable
                 // containers WPF stamps between the cell and its real input element.
                 if (child is UIElement el && el.Focusable && el.IsEnabled
                     && (el is TextBox || el is ComboBox || el is CheckBox || el is DatePicker

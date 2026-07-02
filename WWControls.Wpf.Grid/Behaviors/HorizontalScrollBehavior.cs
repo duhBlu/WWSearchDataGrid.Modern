@@ -83,7 +83,7 @@ namespace WWControls.Wpf
 
             double delta = -e.Delta * SystemParameters.WheelScrollLines / 15.0;
             sv.ScrollToHorizontalOffset(
-                Math.Clamp(sv.HorizontalOffset + delta, 0, sv.ScrollableWidth));
+                MathCompat.Clamp(sv.HorizontalOffset + delta, 0, sv.ScrollableWidth));
             e.Handled = true;
         }
 
@@ -209,7 +209,7 @@ namespace WWControls.Wpf
                     // adjust horizontal offset
                     double offset = sv.HorizontalOffset + (delta * SystemParameters.WheelScrollLines / 15.0);
                     sv.ScrollToHorizontalOffset(
-                        Math.Clamp(offset, 0, sv.ScrollableWidth));
+                        MathCompat.Clamp(offset, 0, sv.ScrollableWidth));
                     handled = true;
                     Debug.WriteLine($"[HScroll] -> scrolled, HorizontalOffset now {sv.HorizontalOffset:0.#}");
                 }

@@ -181,7 +181,7 @@ namespace WWControls.Wpf
                     double fromTarget = hasPending ? pending : sv.VerticalOffset;
 
                     double oldOffset = sv.VerticalOffset;
-                    double newOffset = Math.Clamp(fromTarget + delta, 0, sv.ScrollableHeight);
+                    double newOffset = MathCompat.Clamp(fromTarget + delta, 0, sv.ScrollableHeight);
 
                     sv.SetValue(PendingCustomTargetProperty, newOffset);
                     sv.SetValue(HasPendingCustomTargetProperty, true);
@@ -351,7 +351,7 @@ namespace WWControls.Wpf
                     var animStart = (TimeSpan)sv.GetValue(AnimStartTimeProperty);
                     double elapsed = (currentTime - animStart).TotalSeconds;
                     double totalDuration = -1.0 / (Math.Log(friction) * 60.0) * Math.Log(0.01);
-                    double progress = Math.Clamp(elapsed / Math.Max(totalDuration, 0.1), 0.0, 1.0);
+                    double progress = MathCompat.Clamp(elapsed / Math.Max(totalDuration, 0.1), 0.0, 1.0);
                     // Smoothstep: stronger friction at start and end, less in middle
                     double smoothStep = progress * progress * (3.0 - 2.0 * progress);
                     double easedFriction = friction + (1.0 - friction) * 0.5 * (1.0 - Math.Sin(smoothStep * Math.PI));
@@ -382,7 +382,7 @@ namespace WWControls.Wpf
             // Advance target offset
             var targetOffset = (double)sv.GetValue(TargetOffsetProperty);
             targetOffset += velocity * dt;
-            targetOffset = Math.Clamp(targetOffset, 0, sv.ScrollableHeight);
+            targetOffset = MathCompat.Clamp(targetOffset, 0, sv.ScrollableHeight);
             sv.SetValue(TargetOffsetProperty, targetOffset);
 
             if ((targetOffset <= 0 && velocity < 0) ||

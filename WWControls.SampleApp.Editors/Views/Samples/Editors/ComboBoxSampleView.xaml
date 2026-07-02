@@ -1,0 +1,76 @@
+<UserControl x:Class="WWControls.SampleApp.Editors.Views.Samples.Editors.ComboBoxSampleView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:sdg="http://schemas.wwcontrols.com/wpf"
+             xmlns:sampleControls="clr-namespace:WWControls.SampleApp.Editors.Controls"
+             xmlns:local="clr-namespace:WWControls.SampleApp.Editors.Views.Samples.Editors"
+             mc:Ignorable="d">
+    <UserControl.DataContext>
+        <local:ComboBoxSampleViewModel />
+    </UserControl.DataContext>
+
+    <sampleControls:SampleHostControl Sources="{x:Static sampleControls:SampleSources.ComboBox}">
+        <ScrollViewer Background="#FFFFFF" VerticalScrollBarVisibility="Auto">
+            <StackPanel Margin="24" MaxWidth="620" HorizontalAlignment="Left">
+                <TextBlock FontSize="13" Foreground="#444" TextWrapping="Wrap" Margin="0,0,0,16">
+                    <Run FontWeight="SemiBold" Text="WWComboBox" />
+                    <LineBreak />
+                    <Run Text="Selection editor wrapping a native ComboBox inside WWEditorBase chrome. Bind plain strings with SelectedItem, or object lists with DisplayMemberPath for display and SelectedValuePath / SelectedValue for id-based selection — the shape grid cells use for lookup columns. IsEditable swaps picking for typing — text that matches an item commits it to SelectedItem." />
+                </TextBlock>
+
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="200" />
+                        <ColumnDefinition Width="240" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0" Grid.Column="1" Text="Editor" FontWeight="SemiBold" Foreground="#666" Margin="0,0,0,6" />
+                    <TextBlock Grid.Row="0" Grid.Column="2" Text="Bound value" FontWeight="SemiBold" Foreground="#666" Margin="12,0,0,6" />
+
+                    <!-- Plain strings via SelectedItem. -->
+                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Strings + SelectedItem" VerticalAlignment="Center" Margin="0,4" Foreground="#333" />
+                    <sdg:WWComboBox Grid.Row="1" Grid.Column="1" Height="26" Margin="0,4"
+                                     ItemsSource="{Binding Fruits}"
+                                     SelectedItem="{Binding SelectedFruit, Mode=TwoWay}" />
+                    <TextBlock Grid.Row="1" Grid.Column="2" Text="{Binding SelectedFruit}" VerticalAlignment="Center" Margin="12,4" Foreground="#0066AA" />
+
+                    <!-- Object items: DisplayMemberPath shows the name, SelectedItem carries the object. -->
+                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Objects + DisplayMemberPath" VerticalAlignment="Center" Margin="0,4" Foreground="#333" />
+                    <sdg:WWComboBox Grid.Row="2" Grid.Column="1" Height="26" Margin="0,4"
+                                     ItemsSource="{Binding Statuses}"
+                                     DisplayMemberPath="Name"
+                                     SelectedItem="{Binding SelectedStatus, Mode=TwoWay}" />
+                    <TextBlock Grid.Row="2" Grid.Column="2" Text="{Binding SelectedStatus.Name}" VerticalAlignment="Center" Margin="12,4" Foreground="#0066AA" />
+
+                    <!-- Id-based selection: the VM stores only the id; SelectedValuePath maps it to an item. -->
+                    <TextBlock Grid.Row="3" Grid.Column="0" Text="Id-based SelectedValue" VerticalAlignment="Center" Margin="0,4" Foreground="#333" />
+                    <sdg:WWComboBox Grid.Row="3" Grid.Column="1" Height="26" Margin="0,4"
+                                     ItemsSource="{Binding Statuses}"
+                                     DisplayMemberPath="Name"
+                                     SelectedValuePath="Id"
+                                     SelectedValue="{Binding SelectedStatusId, Mode=TwoWay}" />
+                    <TextBlock Grid.Row="3" Grid.Column="2" Text="{Binding SelectedStatusId, StringFormat='Id = {0}'}" VerticalAlignment="Center" Margin="12,4" Foreground="#0066AA" />
+
+                    <!-- IsEditable: type instead of picking — text that matches an item commits it to
+                         SelectedItem (non-matching free text stays local to the inner ComboBox). -->
+                    <TextBlock Grid.Row="4" Grid.Column="0" Text="IsEditable (type to select)" VerticalAlignment="Center" Margin="0,4" Foreground="#333" />
+                    <sdg:WWComboBox Grid.Row="4" Grid.Column="1" Height="26" Margin="0,4"
+                                     IsEditable="True"
+                                     ItemsSource="{Binding Fruits}"
+                                     SelectedItem="{Binding TypedFruit, Mode=TwoWay}" />
+                    <TextBlock Grid.Row="4" Grid.Column="2" Text="{Binding TypedFruit}" VerticalAlignment="Center" Margin="12,4" Foreground="#0066AA" />
+                </Grid>
+            </StackPanel>
+        </ScrollViewer>
+    </sampleControls:SampleHostControl>
+</UserControl>

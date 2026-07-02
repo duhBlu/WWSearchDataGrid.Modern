@@ -1122,7 +1122,7 @@ namespace WWControls.Wpf.Grids
         /// <summary>
         /// Gets or sets the <see cref="DataTemplate"/> used as the display surface for the
         /// filter row cell on this column. When set, it replaces the default editor
-        /// produced by <see cref="BaseEditSettings.CreateFilterEditor"/>. The template's
+        /// produced by <see cref="BaseEditorSettings.CreateFilterEditor"/>. The template's
         /// <see cref="FrameworkElement.DataContext"/> is an <see cref="EditGridCellData"/>
         /// instance with <c>Value</c> two-way-bound to the column's filter value; templates
         /// that don't bind <c>{Binding Value}</c> simply won't drive the filter — matching
@@ -1386,20 +1386,20 @@ namespace WWControls.Wpf.Grids
 
         /// <summary>
         /// Gets or sets the editor configuration for this column. When set, the grid generates a
-        /// <see cref="DataGridTemplateColumn"/> using <see cref="BaseEditSettings.CreateDisplayTemplate"/>
-        /// and <see cref="BaseEditSettings.CreateEditTemplate"/> instead of the default text/checkbox
+        /// <see cref="DataGridTemplateColumn"/> using <see cref="BaseEditorSettings.CreateDisplayTemplate"/>
+        /// and <see cref="BaseEditorSettings.CreateEditTemplate"/> instead of the default text/checkbox
         /// column. Leave null to use the default column type chosen from <see cref="FieldType"/>.
         /// </summary>
         public static readonly DependencyProperty EditSettingsProperty =
             DependencyProperty.Register(
                 nameof(EditSettings),
-                typeof(BaseEditSettings),
+                typeof(BaseEditorSettings),
                 typeof(ColumnDataBase),
                 new PropertyMetadata(null, OnEditSettingsChanged));
 
-        public BaseEditSettings EditSettings
+        public BaseEditorSettings EditSettings
         {
-            get => (BaseEditSettings)GetValue(EditSettingsProperty);
+            get => (BaseEditorSettings)GetValue(EditSettingsProperty);
             set => SetValue(EditSettingsProperty, value);
         }
 
@@ -1409,9 +1409,9 @@ namespace WWControls.Wpf.Grids
 
             // EditSettings is a FrameworkContentElement but isn't part of the visual / logical tree,
             // so it doesn't automatically inherit DataContext. Push the column's current DataContext
-            // down so XAML bindings on EditSettings (e.g. ComboBoxEditSettings.ItemsSource) resolve
+            // down so XAML bindings on EditSettings (e.g. ComboBoxSettings.ItemsSource) resolve
             // against the same source as bindings elsewhere on the grid.
-            if (e.NewValue is BaseEditSettings settings)
+            if (e.NewValue is BaseEditorSettings settings)
                 settings.DataContext = col.DataContext;
 
             // Surface the resolved value for bindings. Mirror-only today; reserved for future
@@ -1432,7 +1432,7 @@ namespace WWControls.Wpf.Grids
         private static readonly DependencyPropertyKey ActualEditSettingsPropertyKey =
             DependencyProperty.RegisterReadOnly(
                 nameof(ActualEditSettings),
-                typeof(BaseEditSettings),
+                typeof(BaseEditorSettings),
                 typeof(ColumnDataBase),
                 new PropertyMetadata(null));
 
@@ -1443,13 +1443,13 @@ namespace WWControls.Wpf.Grids
         /// for future grid-level default resolution (e.g. a <c>SearchDataGrid.DefaultEditSettings</c>
         /// per CLR type).
         /// </summary>
-        public BaseEditSettings ActualEditSettings => (BaseEditSettings)GetValue(ActualEditSettingsProperty);
+        public BaseEditorSettings ActualEditSettings => (BaseEditorSettings)GetValue(ActualEditSettingsProperty);
 
         /// <summary>
         /// Gets or sets whether cell edits commit on every change (typically every keystroke)
         /// rather than on focus loss / commit. Default <c>false</c>. Wiring this to the
         /// generated edit template's <see cref="System.Windows.Data.UpdateSourceTrigger"/> lives
-        /// inside the relevant <see cref="BaseEditSettings"/> subclasses — currently the DP is
+        /// inside the relevant <see cref="BaseEditorSettings"/> subclasses — currently the DP is
         /// exposed for consumer configuration but not yet honored by any editor.
         /// </summary>
         public static readonly DependencyProperty EnableImmediatePostingProperty =
@@ -2573,7 +2573,7 @@ namespace WWControls.Wpf.Grids
                     SetAutoUseCheckBoxInSearchBox(true);
                 if (!IsTextAlignmentExplicit)
                     SetAutoTextAlignment(TextAlignment.Center);
-                // CheckBoxEditSettings.GetSupportedFilterSearchTypes whitelists only Equals
+                // CheckBoxSettings.GetSupportedFilterSearchTypes whitelists only Equals
                 // (+ IsNull/IsNotNull when nullable). Without an Equals default,
                 // ColumnFilterControl.UpdateEffectiveIsCellEnabled sees the registered
                 // StartsWith default fall outside the whitelist and disables the entire
@@ -2612,8 +2612,8 @@ namespace WWControls.Wpf.Grids
                 if (!IsTextAlignmentExplicit)
                     SetAutoTextAlignment(TextAlignment.Right);
                 // Numeric columns can't meaningfully StartsWith / Contains, and the matching
-                // EditSettings (auto-created TextEditSettings with MaskType=Numeric, or an
-                // explicit SpinEditSettings) exposes only numeric operators. Without an Equals
+                // EditSettings (auto-created TextBoxSettings with MaskType=Numeric, or an
+                // explicit NumericUpDownSettings) exposes only numeric operators. Without an Equals
                 // default, ColumnFilterControl.UpdateEffectiveIsCellEnabled greys the
                 // FilterRow cell because the registered StartsWith default isn't in the
                 // numeric whitelist.
@@ -2623,13 +2623,13 @@ namespace WWControls.Wpf.Grids
             // decimal/double: no auto-format — DisplayStringFormat stays user-controlled.
 
             // Editor-shape override wins over CLR-type default. Runs after the type branches so
-            // a ComboBoxEditSettings on a string-typed column ends up at Equals (whitelist-
+            // a ComboBoxSettings on a string-typed column ends up at Equals (whitelist-
             // compatible) instead of the StartsWith the string branch would otherwise pick.
             ApplyEditSettingsPreferredDefaults();
         }
 
         /// <summary>
-        /// Applies <see cref="BaseEditSettings.GetPreferredDefaultSearchType"/> as the column's
+        /// Applies <see cref="BaseEditorSettings.GetPreferredDefaultSearchType"/> as the column's
         /// auto-default when the editor shape constrains the allowed operator set tighter than
         /// the CLR-type default. Skipped when the user has explicitly set
         /// <see cref="DefaultSearchType"/>. Called from both <see cref="ApplyTypeBasedDefaults"/>
@@ -2708,11 +2708,11 @@ namespace WWControls.Wpf.Grids
         /// </summary>
         private string ResolveEffectiveDisplayFormat()
         {
-            if (EditSettings is DateEditSettings dateSettings
+            if (EditSettings is DatePickerSettings dateSettings
                 && dateSettings.UseMaskAsDisplayFormat
                 && !string.IsNullOrEmpty(dateSettings.Mask))
                 return dateSettings.Mask;
-            if (EditSettings is TextEditSettings textSettings
+            if (EditSettings is TextBoxSettings textSettings
                 && textSettings.UseMaskAsDisplayFormat
                 && !string.IsNullOrEmpty(textSettings.Mask))
                 return textSettings.Mask;
@@ -2850,18 +2850,18 @@ namespace WWControls.Wpf.Grids
             // Auto-fill an EditSettings for fields that would otherwise fall through to plain
             // DataGridTextColumn / DataGridCheckBoxColumn so consumers get a styled, keyboard-aware
             // editor regardless of CLR type. Columns with a user-supplied display hint (converter /
-            // string format / mask) also auto-fill — TextEditSettings.CreateDisplayTemplate applies
+            // string format / mask) also auto-fill — TextBoxSettings.CreateDisplayTemplate applies
             // the converter / mask / format string through the same styled DisplayTextBlock the
             // numeric and date paths use, so all formatted columns get matching padding and
             // vertical centering.
-            BaseEditSettings effectiveEditSettings = EditSettings ?? AutoCreateEditSettings(wantsCustomDisplay);
+            BaseEditorSettings effectiveEditSettings = EditSettings ?? AutoCreateEditSettings(wantsCustomDisplay);
 
             // Surface auto-created settings on the descriptor so downstream readers — most
             // importantly ColumnFilterControl, which reads EditSettings to pick the
             // filter-row editor shape and the SearchTypeSelector operator whitelist — see the
             // same instance that's driving the cell templates. Without this, auto-created
             // settings remain invisible to the filter row and it defaults to a string-only
-            // TextEditSettings whitelist. The assignment fires OnEditSettingsChanged, but its
+            // TextBoxSettings whitelist. The assignment fires OnEditSettingsChanged, but its
             // template-rebuild branch is guarded by a non-null InternalColumn (still null at
             // this point), so the only side effect is DataContext propagation — desirable.
             if (EditSettings == null && effectiveEditSettings != null)
@@ -2941,52 +2941,52 @@ namespace WWControls.Wpf.Grids
         }
 
         /// <summary>
-        /// Picks a sensible default <see cref="BaseEditSettings"/> by CLR type so columns without
+        /// Picks a sensible default <see cref="BaseEditorSettings"/> by CLR type so columns without
         /// an explicit <see cref="EditSettings"/> still get a styled editor:
         /// <list type="bullet">
-        ///   <item>DateTime / DateTime? → <see cref="DateEditSettings"/> (masked date editor).
+        ///   <item>DateTime / DateTime? → <see cref="DatePickerSettings"/> (masked date editor).
         ///   Data with time-of-day uses <c>"MM/dd/yyyy HH:mm:ss"</c>; date-only uses the default
         ///   short-date mask. Always applied — display formatting is integrated into the editor.</item>
         ///   <item>Numeric (int, long, decimal, double, etc.) with a numeric
         ///   <see cref="DisplayStringFormat"/> (<c>C</c>/<c>N</c>/<c>F</c>/<c>P</c> with optional
-        ///   precision) → <see cref="TextEditSettings"/> with <see cref="TextEditSettings.Mask"/>
-        ///   set to the format string and <see cref="TextEditSettings.MaskType"/> =
+        ///   precision) → <see cref="TextBoxSettings"/> with <see cref="TextBoxSettings.Mask"/>
+        ///   set to the format string and <see cref="TextBoxSettings.MaskType"/> =
         ///   <see cref="MaskType.Numeric"/>. The read-only TextBlock keeps the user's format via
         ///   <c>Binding.StringFormat</c>; the edit TextBox routes through <c>NumericMaskFormatter</c>
         ///   for keystroke validation and chrome stripping; the filter row picks up the numeric
-        ///   operator whitelist via <see cref="TextEditSettings.GetSupportedFilterSearchTypes"/>.</item>
-        ///   <item>bool / bool? → <see cref="CheckBoxEditSettings"/>.</item>
-        ///   <item>string → <see cref="TextEditSettings"/> (no mask).</item>
+        ///   operator whitelist via <see cref="TextBoxSettings.GetSupportedFilterSearchTypes"/>.</item>
+        ///   <item>bool / bool? → <see cref="CheckBoxSettings"/>.</item>
+        ///   <item>string → <see cref="TextBoxSettings"/> (no mask).</item>
         ///   <item>Numeric (int, long, decimal, double, etc.) without a custom display →
-        ///   <see cref="TextEditSettings"/> with <see cref="TextEditSettings.MaskType"/> =
-        ///   <see cref="MaskType.Numeric"/> and no <see cref="TextEditSettings.Mask"/>. Behaves
+        ///   <see cref="TextBoxSettings"/> with <see cref="TextBoxSettings.MaskType"/> =
+        ///   <see cref="MaskType.Numeric"/> and no <see cref="TextBoxSettings.Mask"/>. Behaves
         ///   like a plain TextBox in edit mode while still routing the filter row through the
         ///   numeric operator whitelist (Equals, GreaterThan, Between, …). Consumers who want
-        ///   up/down spinner UX assign <see cref="SpinEditSettings"/> explicitly.</item>
+        ///   up/down spinner UX assign <see cref="NumericUpDownSettings"/> explicitly.</item>
         ///   <item>Any non-DateTime, non-numeric-format field with <paramref name="wantsCustomDisplay"/> →
-        ///   plain <see cref="TextEditSettings"/>. <see cref="TextEditSettings.UseMaskAsDisplayFormat"/>
+        ///   plain <see cref="TextBoxSettings"/>. <see cref="TextBoxSettings.UseMaskAsDisplayFormat"/>
         ///   is set when <see cref="DisplayMask"/> is present so the mask formats the
-        ///   display text; otherwise <see cref="TextEditSettings.CreateDisplayTemplate"/> applies
+        ///   display text; otherwise <see cref="TextBoxSettings.CreateDisplayTemplate"/> applies
         ///   the column's <see cref="DisplayValueConverter"/> or
         ///   <see cref="DisplayStringFormat"/> to the styled
         ///   <c>DisplayTextBlock</c>.</item>
         /// </list>
         /// </summary>
-        private BaseEditSettings AutoCreateEditSettings(bool wantsCustomDisplay)
+        private BaseEditorSettings AutoCreateEditSettings(bool wantsCustomDisplay)
         {
             if (FieldType == typeof(DateTime) || FieldType == typeof(DateTime?))
                 return BuildAutoDateTimeEditSettings();
 
             // Numeric column with a numeric DisplayStringFormat: skip the spinner editor (the
             // user opted into custom display, so spinner chrome is unwanted) and instead wire a
-            // mask-aware TextEditSettings. The Numeric mask engine accepts the same C/N/F/P
+            // mask-aware TextBoxSettings. The Numeric mask engine accepts the same C/N/F/P
             // grammar the format string uses, so DisplayStringFormat doubles as the edit-time
             // mask without extra configuration on the consumer's side.
             if (wantsCustomDisplay
                 && IsNumericType(FieldType)
                 && IsNumericFormatString(DisplayStringFormat))
             {
-                return new TextEditSettings
+                return new TextBoxSettings
                 {
                     Mask = DisplayStringFormat,
                     MaskType = MaskType.Numeric,
@@ -2994,24 +2994,24 @@ namespace WWControls.Wpf.Grids
             }
 
             // Custom-display column on a non-DateTime, non-numeric-format field: route through
-            // a plain TextEditSettings so the styled DisplayTextBlock template renders the value
+            // a plain TextBoxSettings so the styled DisplayTextBlock template renders the value
             // with the same padding and vertical centering the other formatted columns use.
-            // TextEditSettings.CreateDisplayTemplate already honors DisplayValueConverter and
+            // TextBoxSettings.CreateDisplayTemplate already honors DisplayValueConverter and
             // DisplayStringFormat; UseMaskAsDisplayFormat=true engages the MaskFormatConverter
             // path when the column carries a DisplayMask.
             if (wantsCustomDisplay)
             {
-                return new TextEditSettings
+                return new TextBoxSettings
                 {
                     UseMaskAsDisplayFormat = !string.IsNullOrEmpty(DisplayMask),
                 };
             }
 
             if (FieldType == typeof(bool) || FieldType == typeof(bool?))
-                return new CheckBoxEditSettings();
+                return new CheckBoxSettings();
 
             if (FieldType == typeof(string))
-                return new TextEditSettings();
+                return new TextBoxSettings();
 
             if (IsNumericType(FieldType))
                 return BuildAutoNumericEditSettings();
@@ -3021,13 +3021,13 @@ namespace WWControls.Wpf.Grids
 
         // Numeric default. MaskType=Numeric (without an explicit Mask) keeps the filter row's
         // operator whitelist on the numeric set (Equals, GreaterThan, Between, …) per
-        // TextEditSettings.GetSupportedFilterSearchTypes, while the empty Mask leaves
+        // TextBoxSettings.GetSupportedFilterSearchTypes, while the empty Mask leaves
         // MaskInputBehavior unwired — the edit TextBox behaves like a plain text editor.
-        // Spinner UX is opt-in via explicit SpinEditSettings.
-        private static BaseEditSettings BuildAutoNumericEditSettings()
-            => new TextEditSettings { MaskType = MaskType.Numeric };
+        // Spinner UX is opt-in via explicit NumericUpDownSettings.
+        private static BaseEditorSettings BuildAutoNumericEditSettings()
+            => new TextBoxSettings { MaskType = MaskType.Numeric };
 
-        private BaseEditSettings BuildAutoDateTimeEditSettings()
+        private BaseEditorSettings BuildAutoDateTimeEditSettings()
         {
             // Date-only DisplayStringFormat: adopt it as the editor Mask with
             // UseMaskAsDisplayFormat=true so the filter editor has no time segments, the cell
@@ -3038,7 +3038,7 @@ namespace WWControls.Wpf.Grids
             // 'hh'/'mm' and silently change the displayed hour from "8:30 AM" to "08:30 AM".
             if (!string.IsNullOrEmpty(DisplayStringFormat) && !DateTimeFormatHasTimeTokens(DisplayStringFormat))
             {
-                return new DateEditSettings
+                return new DatePickerSettings
                 {
                     Mask = DisplayStringFormat,
                     MaskType = MaskType.DateTime,
@@ -3053,13 +3053,13 @@ namespace WWControls.Wpf.Grids
             // RoundDateTime DP, otherwise the data-sampling fallback.
             if (!ResolveEffectiveRoundDateTime())
             {
-                return new DateEditSettings
+                return new DatePickerSettings
                 {
                     Mask = "MM/dd/yyyy HH:mm:ss",
                     MaskType = MaskType.DateTime,
                 };
             }
-            return new DateEditSettings();
+            return new DatePickerSettings();
         }
 
         /// <summary>

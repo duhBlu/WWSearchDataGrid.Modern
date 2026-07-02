@@ -38,7 +38,7 @@ namespace WWControls.Core.DataAnnotations
         /// <summary>
         /// When <c>true</c>, the read-only display cell formats its value through the same mask
         /// used in edit mode (the column's display converter / string format are suppressed).
-        /// Maps to <c>TextEditSettings.UseMaskAsDisplayFormat</c>. Default <c>false</c>.
+        /// Maps to <c>TextBoxSettings.UseMaskAsDisplayFormat</c>. Default <c>false</c>.
         /// </summary>
         public bool UseMaskAsDisplayFormat { get; set; }
     }

@@ -7,7 +7,7 @@ namespace WWControls.Wpf.Converters
 {
     /// <summary>
     /// Converter that looks up a value's occurrence count from a dictionary and formats it
-    /// Used to display count information in SearchTextBox dropdown items
+    /// Used to display count information in WWSearchTextBox dropdown items
     /// </summary>
     public class ValueToCountConverter : IMultiValueConverter
     {

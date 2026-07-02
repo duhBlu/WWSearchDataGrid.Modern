@@ -204,7 +204,7 @@ namespace WWControls.Wpf.Grids
 
         /// <summary>
         /// Operator whitelist for the embedded <see cref="SearchTypeSelector"/>. Computed from
-        /// the column's <see cref="BaseEditSettings.GetSupportedFilterSearchTypes"/> override —
+        /// the column's <see cref="BaseEditorSettings.GetSupportedFilterSearchTypes"/> override —
         /// lets each editor shape scope its operator list independently of the data type.
         /// </summary>
         public static readonly DependencyProperty SupportedSearchTypesProperty =
@@ -517,7 +517,7 @@ namespace WWControls.Wpf.Grids
             else
             {
                 DetachFilterCellData();
-                var settings = GridColumn?.EditSettings ?? new TextEditSettings();
+                var settings = GridColumn?.EditSettings ?? new TextBoxSettings();
 
                 DetachFilterEditor();
                 UIElement editor = IsFilterCellEditing
@@ -1176,7 +1176,7 @@ namespace WWControls.Wpf.Grids
         /// </summary>
         private void RefreshSupportedSearchTypes()
         {
-            var supportSource = GridColumn?.EditSettings ?? new TextEditSettings();
+            var supportSource = GridColumn?.EditSettings ?? new TextBoxSettings();
             SupportedSearchTypes = supportSource.GetSupportedFilterSearchTypes(ColumnDataType, IsColumnNullable);
         }
 

@@ -1,0 +1,70 @@
+<UserControl x:Class="WWControls.SampleApp.Editors.Views.Samples.Editors.DatePickerSampleView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:sdg="http://schemas.wwcontrols.com/wpf"
+             xmlns:sampleControls="clr-namespace:WWControls.SampleApp.Editors.Controls"
+             xmlns:local="clr-namespace:WWControls.SampleApp.Editors.Views.Samples.Editors"
+             mc:Ignorable="d">
+    <UserControl.DataContext>
+        <local:DatePickerSampleViewModel />
+    </UserControl.DataContext>
+
+    <sampleControls:SampleHostControl Sources="{x:Static sampleControls:SampleSources.DatePicker}">
+        <ScrollViewer Background="#FFFFFF" VerticalScrollBarVisibility="Auto">
+            <StackPanel Margin="24" MaxWidth="620" HorizontalAlignment="Left">
+                <TextBlock FontSize="13" Foreground="#444" TextWrapping="Wrap" Margin="0,0,0,16">
+                    <Run FontWeight="SemiBold" Text="WWDatePicker" />
+                    <LineBreak />
+                    <Run Text="Date editor masked by standard .NET date format strings — the default mask is the short date ('d'); set Mask to any date format. MinDate / MaxDate clamp what the editor accepts. Values bind as nullable DateTime." />
+                </TextBlock>
+
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="200" />
+                        <ColumnDefinition Width="240" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0" Grid.Column="1" Text="Editor" FontWeight="SemiBold" Foreground="#666" Margin="0,0,0,6" />
+                    <TextBlock Grid.Row="0" Grid.Column="2" Text="Bound value" FontWeight="SemiBold" Foreground="#666" Margin="12,0,0,6" />
+
+                    <!-- Default: short-date mask "d". -->
+                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Short date (default 'd')" VerticalAlignment="Center" Margin="0,4" Foreground="#333" />
+                    <sdg:WWDatePicker Grid.Row="1" Grid.Column="1" Height="26" Margin="0,4"
+                                    Value="{Binding DueDate, Mode=TwoWay}" />
+                    <TextBlock Grid.Row="1" Grid.Column="2" Text="{Binding DueDate}" VerticalAlignment="Center" Margin="12,4" Foreground="#0066AA" />
+
+                    <!-- Explicit custom pattern. -->
+                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Custom MM/dd/yyyy" VerticalAlignment="Center" Margin="0,4" Foreground="#333" />
+                    <sdg:WWDatePicker Grid.Row="2" Grid.Column="1" Height="26" Margin="0,4"
+                                    Mask="MM/dd/yyyy"
+                                    Value="{Binding ShipDate, Mode=TwoWay}" />
+                    <TextBlock Grid.Row="2" Grid.Column="2" Text="{Binding ShipDate}" VerticalAlignment="Center" Margin="12,4" Foreground="#0066AA" />
+
+                    <!-- Date + time via the general format. -->
+                    <TextBlock Grid.Row="3" Grid.Column="0" Text="Date + time ('g')" VerticalAlignment="Center" Margin="0,4" Foreground="#333" />
+                    <sdg:WWDatePicker Grid.Row="3" Grid.Column="1" Height="26" Margin="0,4"
+                                    Mask="g"
+                                    Value="{Binding Appointment, Mode=TwoWay}" />
+                    <TextBlock Grid.Row="3" Grid.Column="2" Text="{Binding Appointment}" VerticalAlignment="Center" Margin="12,4" Foreground="#0066AA" />
+
+                    <!-- MinDate / MaxDate clamp: this editor only accepts dates inside the current year. -->
+                    <TextBlock Grid.Row="4" Grid.Column="0" Text="Clamped to this year" VerticalAlignment="Center" Margin="0,4" Foreground="#333" />
+                    <sdg:WWDatePicker Grid.Row="4" Grid.Column="1" Height="26" Margin="0,4"
+                                    MinDate="{Binding YearStart}" MaxDate="{Binding YearEnd}"
+                                    Value="{Binding InYearDate, Mode=TwoWay}" />
+                    <TextBlock Grid.Row="4" Grid.Column="2" Text="{Binding InYearDate}" VerticalAlignment="Center" Margin="12,4" Foreground="#0066AA" />
+                </Grid>
+            </StackPanel>
+        </ScrollViewer>
+    </sampleControls:SampleHostControl>
+</UserControl>

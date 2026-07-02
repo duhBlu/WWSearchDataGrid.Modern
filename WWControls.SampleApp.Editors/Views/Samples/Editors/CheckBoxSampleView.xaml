@@ -1,0 +1,62 @@
+<UserControl x:Class="WWControls.SampleApp.Editors.Views.Samples.Editors.CheckBoxSampleView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:sdg="http://schemas.wwcontrols.com/wpf"
+             xmlns:sampleControls="clr-namespace:WWControls.SampleApp.Editors.Controls"
+             xmlns:local="clr-namespace:WWControls.SampleApp.Editors.Views.Samples.Editors"
+             mc:Ignorable="d">
+    <UserControl.DataContext>
+        <local:CheckBoxSampleViewModel />
+    </UserControl.DataContext>
+
+    <sampleControls:SampleHostControl Sources="{x:Static sampleControls:SampleSources.CheckBox}">
+        <ScrollViewer Background="#FFFFFF" VerticalScrollBarVisibility="Auto">
+            <StackPanel Margin="24" MaxWidth="620" HorizontalAlignment="Left">
+                <TextBlock FontSize="13" Foreground="#444" TextWrapping="Wrap" Margin="0,0,0,16">
+                    <Run FontWeight="SemiBold" Text="WWCheckBox" />
+                    <LineBreak />
+                    <Run Text="Boolean editor over a nullable IsChecked. Two-state by default; IsThreeState=true cycles checked → unchecked → indeterminate (null). A glyph control, so it stays flat regardless of ShowBorder." />
+                </TextBlock>
+
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="200" />
+                        <ColumnDefinition Width="240" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0" Grid.Column="1" Text="Editor" FontWeight="SemiBold" Foreground="#666" Margin="0,0,0,6" />
+                    <TextBlock Grid.Row="0" Grid.Column="2" Text="Bound value" FontWeight="SemiBold" Foreground="#666" Margin="12,0,0,6" />
+
+                    <!-- Two-state (default). -->
+                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Two-state" VerticalAlignment="Center" Margin="0,4" Foreground="#333" />
+                    <sdg:WWCheckBox Grid.Row="1" Grid.Column="1" Height="26" Margin="0,4" HorizontalAlignment="Left"
+                                     IsChecked="{Binding IsActive, Mode=TwoWay}" />
+                    <TextBlock Grid.Row="1" Grid.Column="2" Text="{Binding IsActive}" VerticalAlignment="Center" Margin="12,4" Foreground="#0066AA" />
+
+                    <!-- Three-state: click cycles checked → unchecked → indeterminate (null). -->
+                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Three-state (nullable)" VerticalAlignment="Center" Margin="0,4" Foreground="#333" />
+                    <sdg:WWCheckBox Grid.Row="2" Grid.Column="1" Height="26" Margin="0,4" HorizontalAlignment="Left"
+                                     IsThreeState="True"
+                                     IsChecked="{Binding Approval, Mode=TwoWay}" />
+                    <TextBlock Grid.Row="2" Grid.Column="2" Text="{Binding Approval, TargetNullValue=null}" VerticalAlignment="Center" Margin="12,4" Foreground="#0066AA" />
+
+                    <!-- Read-only. -->
+                    <TextBlock Grid.Row="3" Grid.Column="0" Text="Read-only" VerticalAlignment="Center" Margin="0,4" Foreground="#333" />
+                    <sdg:WWCheckBox Grid.Row="3" Grid.Column="1" Height="26" Margin="0,4" HorizontalAlignment="Left"
+                                     IsReadOnly="True"
+                                     IsChecked="{Binding Locked, Mode=TwoWay}" />
+                    <TextBlock Grid.Row="3" Grid.Column="2" Text="{Binding Locked}" VerticalAlignment="Center" Margin="12,4" Foreground="#0066AA" />
+                </Grid>
+            </StackPanel>
+        </ScrollViewer>
+    </sampleControls:SampleHostControl>
+</UserControl>

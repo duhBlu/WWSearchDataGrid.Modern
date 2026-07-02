@@ -1,4 +1,4 @@
-﻿# WWControls - Agent Navigation Guide
+# WWControls - Agent Navigation Guide
 
 > **Human developers**: See [README.md](README.md) for getting started, [docs/getting-started.md](docs/getting-started.md) for usage guides, and [docs/api-reference.md](docs/api-reference.md) for the public API. This document is for AI code assistants.
 
@@ -11,7 +11,8 @@ WWControls is a comprehensive WPF data grid library with advanced search and fil
 WWControls.sln
 ├── WWControls.Core/         (Core logic - .NET Standard 2.0)
 ├── WWControls.Wpf/          (WPF controls - .NET 9.0-windows)
-├── WWControls.SampleApp/    (Demo application - .NET 9.0-windows)
+├── WWControls.SampleApp.Grid/    (Grid demo application - .NET 9.0-windows)
+├── WWControls.SampleApp.Editors/ (Standalone-editor demo application - .NET 9.0-windows)
 └── Samples/                              (Solution folder)
 ```
 
@@ -79,7 +80,6 @@ TopN, BottomN, AboveAverage, BelowAverage, Unique, Duplicate
 - **`ColumnChooser.cs`** - Column visibility manager with drag-drop reordering
 - **`GridColumn.cs`** - Column descriptor class (`FrameworkContentElement`). Declared inside `SearchDataGrid.GridColumns`; the grid generates internal `DataGridColumn` instances from each descriptor.
 - **`GridColumnSettings.cs`** - Legacy static attached properties for column configuration (used internally as a bridge and for backwards compatibility)
-- **`NumericUpDown.cs`** - Custom numeric input control
 
 #### `/Themes/Controls/` - XAML Styling (Presentation Only)
 **⚠️ Only styling XAML - No code-behind**
@@ -111,7 +111,7 @@ SearchText    Manages State     Builds Expressions    Evaluates Items   Compiles
 
 **Column Descriptor Pattern:** `GridColumn` is a `FrameworkContentElement` that *describes* a column. `SearchDataGrid` reads descriptors from its `GridColumns` collection and generates the real WPF `DataGridColumn` instances internally. `ColumnSearchBox` resolves its configuration from the `GridColumnDescriptor` first, then falls back to `GridColumnSettings` attached properties for legacy columns.
 
-## Sample Application (WWControls.SampleApp)
+## Sample Applications (WWControls.SampleApp.Grid / WWControls.SampleApp.Editors)
 
 ### Key Files for Understanding Usage
 

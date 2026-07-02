@@ -6,9 +6,8 @@
 
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Primitives/DefaultControls.xaml" />
-        <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Primitives/SearchTextBox.xaml" />
-        <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Primitives/NumericUpDown.xaml" />
-        <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Primitives/RangeSlider.xaml" />
+        <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Editors/WWSearchTextBox.xaml" />
+        <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Editors/WWRangeSlider.xaml" />
     </ResourceDictionary.MergedDictionaries>
 
     <converters:NullableNumericFallbackConverter x:Key="NullableNumericFallbackConverter" />
@@ -22,12 +21,12 @@
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
-            <sdg:RangeSlider Grid.Row="0"
-                                Style="{StaticResource {x:Static sdg:PrimitiveThemeKeys.RangeSlider}}"
+            <sdg:WWRangeSlider Grid.Row="0"
+                                Style="{StaticResource {x:Static sdg:EditorThemeKeys.RangeSlider}}"
                                 Margin="2,4,2,10"
                                 Minimum="{Binding SliderMinimum, RelativeSource={RelativeSource AncestorType={x:Type sdg:RangeFilterElement}}}"
                                 Maximum="{Binding SliderMaximum, RelativeSource={RelativeSource AncestorType={x:Type sdg:RangeFilterElement}}}">
-                <sdg:RangeSlider.LowValue>
+                <sdg:WWRangeSlider.LowValue>
                     <MultiBinding Converter="{StaticResource NullableNumericFallbackConverter}"
                                   Mode="TwoWay"
                                   UpdateSourceTrigger="PropertyChanged">
@@ -35,8 +34,8 @@
                         <Binding Path="SliderMinimum" Mode="OneWay"
                                  RelativeSource="{RelativeSource AncestorType={x:Type sdg:RangeFilterElement}}" />
                     </MultiBinding>
-                </sdg:RangeSlider.LowValue>
-                <sdg:RangeSlider.HighValue>
+                </sdg:WWRangeSlider.LowValue>
+                <sdg:WWRangeSlider.HighValue>
                     <MultiBinding Converter="{StaticResource NullableNumericFallbackConverter}"
                                   Mode="TwoWay"
                                   UpdateSourceTrigger="PropertyChanged">
@@ -44,8 +43,8 @@
                         <Binding Path="SliderMaximum" Mode="OneWay"
                                  RelativeSource="{RelativeSource AncestorType={x:Type sdg:RangeFilterElement}}" />
                     </MultiBinding>
-                </sdg:RangeSlider.HighValue>
-            </sdg:RangeSlider>
+                </sdg:WWRangeSlider.HighValue>
+            </sdg:WWRangeSlider>
 
             <Grid Grid.Row="1" Grid.RowSpan="2">
                 <Grid.ColumnDefinitions>
@@ -69,14 +68,12 @@
                            Margin="0,0,0,2"
                            FontSize="11" />
 
-                <sdg:NumericUpDown Grid.Column="0" Grid.Row="1"
-                                   Style="{StaticResource {x:Static sdg:PrimitiveThemeKeys.NumericUpDown}}"
-                                   HorizontalAlignment="Stretch"
-                                   Value="{Binding SelectedValue, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                <sdg:NumericUpDown Grid.Column="2" Grid.Row="1"
-                                   Style="{StaticResource {x:Static sdg:PrimitiveThemeKeys.NumericUpDown}}"
-                                   HorizontalAlignment="Stretch"
-                                   Value="{Binding SelectedSecondaryValue, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                <sdg:WWNumericUpDown Grid.Column="0" Grid.Row="1"
+                                     HorizontalAlignment="Stretch"
+                                     Value="{Binding SelectedValue, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                <sdg:WWNumericUpDown Grid.Column="2" Grid.Row="1"
+                                     HorizontalAlignment="Stretch"
+                                     Value="{Binding SelectedSecondaryValue, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
             </Grid>
         </Grid>
     </DataTemplate>
@@ -144,8 +141,8 @@
                        Margin="0,0,0,2"
                        FontSize="11" />
 
-            <sdg:SearchTextBox Grid.Column="0" Grid.Row="1"
-                               Style="{StaticResource {x:Static sdg:PrimitiveThemeKeys.SearchTextBox}}"
+            <sdg:WWSearchTextBox Grid.Column="0" Grid.Row="1"
+                               Style="{StaticResource {x:Static sdg:EditorThemeKeys.SearchTextBox}}"
                                Text="{Binding SelectedValue, UpdateSourceTrigger=LostFocus}"
                                HorizontalAlignment="Stretch"
                                ItemsSource="{Binding SearchTemplateController.DisplayColumnValues}"
@@ -153,8 +150,8 @@
                                ShowToggleButton="True"
                                PreserveValueOnSourceChange="True"
                                Watermark="Enter or select..." />
-            <sdg:SearchTextBox Grid.Column="2" Grid.Row="1"
-                               Style="{StaticResource {x:Static sdg:PrimitiveThemeKeys.SearchTextBox}}"
+            <sdg:WWSearchTextBox Grid.Column="2" Grid.Row="1"
+                               Style="{StaticResource {x:Static sdg:EditorThemeKeys.SearchTextBox}}"
                                Text="{Binding SelectedSecondaryValue, UpdateSourceTrigger=LostFocus}"
                                HorizontalAlignment="Stretch"
                                ItemsSource="{Binding SearchTemplateController.DisplayColumnValues}"

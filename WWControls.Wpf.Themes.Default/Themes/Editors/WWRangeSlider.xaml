@@ -1,0 +1,64 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sdg="http://schemas.wwcontrols.com/wpf">
+
+    <!--
+        Two-thumb horizontal range slider primitive.
+
+        Layout: a Grid stacks a static track Border (the gray bar) with a Canvas hosting the
+        selected-range highlight (PART_Range) + two thumbs (PART_LowThumb, PART_HighThumb).
+        WWRangeSlider.UpdateThumbPositions sets Canvas.Left / Canvas.Top on those parts based
+        on LowValue / HighValue and the track's actual width — so XAML doesn't need to compute
+        positions or centering converters.
+    -->
+    <Style x:Key="{x:Static sdg:EditorThemeKeys.RangeSlider}" TargetType="{x:Type sdg:WWRangeSlider}">
+        <Setter Property="Background" Value="#E5E5E5" />
+        <Setter Property="Foreground" Value="#0078D4" />
+        <Setter Property="MinHeight" Value="24" />
+        <Setter Property="MinWidth" Value="120" />
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type sdg:WWRangeSlider}">
+                    <Grid Height="{TemplateBinding MinHeight}" VerticalAlignment="Center">
+
+                        <!--  Static track  -->
+                        <Border VerticalAlignment="Center"
+                                Height="4"
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="2" />
+
+                        <!--  Interactive surface — Canvas with code-positioned thumbs + highlight  -->
+                        <Canvas x:Name="PART_Track" ClipToBounds="False">
+
+                            <Border x:Name="PART_Range"
+                                    Background="{TemplateBinding Foreground}"
+                                    Height="4"
+                                    CornerRadius="2" />
+
+                            <Thumb x:Name="PART_LowThumb" Width="14" Height="14" Cursor="Hand">
+                                <Thumb.Template>
+                                    <ControlTemplate TargetType="Thumb">
+                                        <Ellipse Fill="White" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type sdg:WWRangeSlider}}}" StrokeThickness="2" />
+                                    </ControlTemplate>
+                                </Thumb.Template>
+                            </Thumb>
+
+                            <Thumb x:Name="PART_HighThumb" Width="14" Height="14" Cursor="Hand">
+                                <Thumb.Template>
+                                    <ControlTemplate TargetType="Thumb">
+                                        <Ellipse Fill="White" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type sdg:WWRangeSlider}}}" StrokeThickness="2" />
+                                    </ControlTemplate>
+                                </Thumb.Template>
+                            </Thumb>
+
+                        </Canvas>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style BasedOn="{StaticResource {x:Static sdg:EditorThemeKeys.RangeSlider}}" TargetType="{x:Type sdg:WWRangeSlider}" />
+
+</ResourceDictionary>

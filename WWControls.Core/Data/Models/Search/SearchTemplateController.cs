@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -83,7 +83,7 @@ namespace WWControls.Core
 
         /// <summary>
         /// Gets or sets the mask pattern string for this column.
-        /// When set, SearchTextBox controls will use masked input.
+        /// When set, WWSearchTextBox controls will use masked input.
         /// Null/empty means no mask is applied.
         /// </summary>
         public string DisplayMaskPattern

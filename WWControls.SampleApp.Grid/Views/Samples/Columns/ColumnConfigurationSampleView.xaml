@@ -1,0 +1,208 @@
+<UserControl x:Class="WWControls.SampleApp.Grid.Views.Samples.Columns.ColumnConfigurationSampleView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:local="clr-namespace:WWControls.SampleApp.Grid.Views.Samples.Columns"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:sampleControls="clr-namespace:WWControls.SampleApp.Grid.Controls"
+             xmlns:sampleConverters="clr-namespace:WWControls.SampleApp.Grid.Converters"
+             xmlns:sdg="http://schemas.wwcontrols.com/wpf"
+             mc:Ignorable="d">
+    <UserControl.DataContext>
+        <local:ColumnConfigurationSampleViewModel />
+    </UserControl.DataContext>
+
+    <UserControl.Resources>
+        <sampleConverters:NullToBooleanConverter x:Key="NullToBooleanConverter" />
+        <sampleConverters:EnumToBooleanConverter x:Key="EnumToBooleanConverter" />
+    </UserControl.Resources>
+
+    <sampleControls:SampleHostControl Sources="{x:Static sampleControls:SampleSources.ColumnConfiguration}">
+        <DockPanel>
+            <TextBlock DockPanel.Dock="Top"
+                       Foreground="#444"
+                       Margin="16,12,16,4"
+                       FontSize="13"
+                       TextWrapping="Wrap">
+                <Run Text="Column configuration" FontWeight="SemiBold" />
+                <LineBreak />
+                <Run Text="Click any column cell to focus it, then tweak its identity and layout settings — plus the grid's selection and appearance options — in the panel on the right." />
+            </TextBlock>
+
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="320" />
+                </Grid.ColumnDefinitions>
+
+                <sdg:SearchDataGrid x:Name="Grid"
+                                    Grid.Column="0"
+                                    IsReadOnly="False"
+                                    Margin="10"
+                                    AllowFixedColumnMenu="True"
+                                    AutoGenerateColumns="False"
+                                    CanUserAddRows="False"
+                                    CanUserDeleteRows="False"
+                                    IsColumnChooserConfinedToGrid="True"
+                                    IsColumnChooserEnabled="True"
+                                    ItemsSource="{Binding Items}"
+                                    SelectionMode="Extended"
+                                    SelectionUnit="CellOrRowHeader">
+                    <sdg:SearchDataGrid.GridColumns>
+                        <sdg:GridColumn IsReadOnly="True"
+                                        Width="80"
+                                        FieldName="OrderNumber"
+                                        Fixed="Left"
+                                        Header="Order #" />
+                        <sdg:GridColumn Width="120"
+                                        ColumnDisplayName="Order Status"
+                                        DefaultSearchType="Equals"
+                                        FieldName="OrderStatusName"
+                                        Header="Status" />
+                        <sdg:GridColumn Width="150"
+                                        DisplayStringFormat="MM/dd/yyyy h:mm tt"
+                                        FieldName="OrderDate"
+                                        RoundDateTime="True"
+                                        Header="Order Date" />
+                        <sdg:GridColumn Width="200"
+                                        FieldName="CustomerName"
+                                        Header="Customer" />
+                        <sdg:GridColumn Width="160"
+                                        FieldName="EmployeeName"
+                                        Header="Employee" />
+                        <sdg:GridColumn Width="110"
+                                        DisplayStringFormat="C2"
+                                        FieldName="OrderItemsTotalPrice"
+                                        Header="Total" />
+                        <sdg:GridColumn Width="90"
+                                        FieldName="OrderCancelled"
+                                        Header="Cancelled" />
+                    </sdg:SearchDataGrid.GridColumns>
+                </sdg:SearchDataGrid>
+
+                <GridSplitter Grid.Column="1"
+                              Background="#CCCCCC"
+                              HorizontalAlignment="Stretch"
+                              Width="5" />
+
+                <ScrollViewer Grid.Column="2"
+                              Background="#FFFFFF"
+                              Padding="8,4"
+                              VerticalScrollBarVisibility="Auto">
+                    <sdg:SimpleStackPanel Orientation="Vertical" Spacing="8">
+
+                        <Expander Header="Selection" ToolTip="How rows and cells are selected.">
+                            <sdg:SimpleStackPanel Orientation="Vertical"
+                                                  Margin="4"
+                                                  Spacing="6">
+                                <Expander Padding="4" Header="Selection Mode">
+                                    <sdg:SimpleStackPanel Orientation="Vertical" Spacing="2">
+                                        <RadioButton IsChecked="{Binding ElementName=Grid, Path=SelectionMode, Converter={StaticResource EnumToBooleanConverter}, ConverterParameter=Single}"
+                                                     Content="Single"
+                                                     GroupName="SelectionMode" />
+                                        <RadioButton IsChecked="{Binding ElementName=Grid, Path=SelectionMode, Converter={StaticResource EnumToBooleanConverter}, ConverterParameter=Extended}"
+                                                     Content="Extended"
+                                                     GroupName="SelectionMode" />
+                                    </sdg:SimpleStackPanel>
+                                </Expander>
+                                <Expander Padding="4" Header="Selection Unit">
+                                    <sdg:SimpleStackPanel Orientation="Vertical" Spacing="2">
+                                        <RadioButton IsChecked="{Binding ElementName=Grid, Path=SelectionUnit, Converter={StaticResource EnumToBooleanConverter}, ConverterParameter=Cell}"
+                                                     Content="Cell"
+                                                     GroupName="SelectionUnit" />
+                                        <RadioButton IsChecked="{Binding ElementName=Grid, Path=SelectionUnit, Converter={StaticResource EnumToBooleanConverter}, ConverterParameter=FullRow}"
+                                                     Content="Full Row"
+                                                     GroupName="SelectionUnit" />
+                                        <RadioButton IsChecked="{Binding ElementName=Grid, Path=SelectionUnit, Converter={StaticResource EnumToBooleanConverter}, ConverterParameter=CellOrRowHeader}"
+                                                     Content="Cell or Row Header"
+                                                     GroupName="SelectionUnit" />
+                                    </sdg:SimpleStackPanel>
+                                </Expander>
+                                <CheckBox IsChecked="{Binding ElementName=Grid, Path=CanUserReorderColumns}" Content="Allow Column Reorder" />
+                            </sdg:SimpleStackPanel>
+                        </Expander>
+
+                        <Expander Header="Appearance">
+                            <sdg:SimpleStackPanel Orientation="Vertical"
+                                                  Margin="4"
+                                                  Spacing="4">
+                                <CheckBox IsChecked="{Binding ElementName=Grid, Path=ShowHorizontalGridLines}" Content="Horizontal Grid Lines" />
+                                <CheckBox IsChecked="{Binding ElementName=Grid, Path=ShowVerticalGridLines}" Content="Vertical Grid Lines" />
+                            </sdg:SimpleStackPanel>
+                        </Expander>
+
+                        <Expander DataContext="{Binding ElementName=Grid, Path=LastFocusedGridColumn}" ToolTip="Click a column cell in the grid to focus it.">
+                            <Expander.Header>
+                                <TextBlock>
+                                    <Run Text="Focused column:" />
+                                    <Run Text="{Binding ElementName=Grid, Path=LastFocusedGridColumn.HeaderCaption, Mode=OneWay}" FontWeight="Bold" />
+                                </TextBlock>
+                            </Expander.Header>
+                            <sdg:SimpleStackPanel Orientation="Vertical"
+                                                  IsEnabled="{Binding Converter={StaticResource NullToBooleanConverter}}"
+                                                  Margin="4"
+                                                  Spacing="8">
+
+                                <Expander Header="Identity">
+                                    <sdg:SimpleStackPanel Orientation="Vertical"
+                                                          Margin="4"
+                                                          Spacing="4">
+                                        <sdg:SimpleStackPanel Orientation="Vertical" Spacing="2">
+                                            <TextBlock Text="Field Name:" FontWeight="Bold" />
+                                            <TextBlock Text="{Binding FieldName, FallbackValue='(none)'}" />
+                                        </sdg:SimpleStackPanel>
+                                        <sdg:SimpleStackPanel Orientation="Vertical" Spacing="2">
+                                            <TextBlock Text="Header:" FontWeight="Bold" />
+                                            <TextBox Text="{Binding Header, UpdateSourceTrigger=PropertyChanged}" />
+                                        </sdg:SimpleStackPanel>
+                                        <sdg:SimpleStackPanel Orientation="Vertical" Spacing="2">
+                                            <TextBlock Text="Display Name:" FontWeight="Bold" />
+                                            <TextBox Text="{Binding ColumnDisplayName, UpdateSourceTrigger=PropertyChanged}" />
+                                        </sdg:SimpleStackPanel>
+                                        <sdg:SimpleStackPanel Orientation="Vertical" Spacing="2">
+                                            <TextBlock Text="Filter Member Path:" FontWeight="Bold" />
+                                            <TextBox Text="{Binding FilterMemberPath, UpdateSourceTrigger=PropertyChanged}" />
+                                        </sdg:SimpleStackPanel>
+                                        <sdg:SimpleStackPanel Orientation="Vertical" Spacing="2">
+                                            <TextBlock Text="Sort Member Path:" FontWeight="Bold" />
+                                            <TextBox Text="{Binding SortMemberPath, UpdateSourceTrigger=PropertyChanged}" />
+                                        </sdg:SimpleStackPanel>
+                                    </sdg:SimpleStackPanel>
+                                </Expander>
+
+                                <Expander Header="Layout">
+                                    <sdg:SimpleStackPanel Orientation="Vertical"
+                                                          Margin="4"
+                                                          Spacing="4">
+                                        <CheckBox IsChecked="{Binding Visible}" Content="Visible" />
+                                        <Expander Padding="4" Header="Fixed (Pinned)">
+                                            <sdg:SimpleStackPanel Orientation="Vertical" Spacing="2">
+                                                <RadioButton IsChecked="{Binding Fixed, Converter={StaticResource EnumToBooleanConverter}, ConverterParameter=None}"
+                                                             Content="None"
+                                                             GroupName="FixedColumnPosition" />
+                                                <RadioButton IsChecked="{Binding Fixed, Converter={StaticResource EnumToBooleanConverter}, ConverterParameter=Left}"
+                                                             Content="Left"
+                                                             GroupName="FixedColumnPosition" />
+                                                <RadioButton IsChecked="{Binding Fixed, Converter={StaticResource EnumToBooleanConverter}, ConverterParameter=Right}"
+                                                             Content="Right"
+                                                             GroupName="FixedColumnPosition" />
+                                            </sdg:SimpleStackPanel>
+                                        </Expander>
+                                        <CheckBox IsChecked="{Binding IsReadOnly}" Content="Read Only" />
+                                        <CheckBox IsChecked="{Binding AllowMoving}" Content="Allow Moving" />
+                                        <CheckBox IsChecked="{Binding AllowResizing}" Content="Allow Resizing" />
+                                        <CheckBox IsChecked="{Binding AllowSorting}" Content="Allow Sorting" />
+                                        <CheckBox IsChecked="{Binding ShowInColumnChooser}" Content="Show in Chooser" />
+                                    </sdg:SimpleStackPanel>
+                                </Expander>
+
+                            </sdg:SimpleStackPanel>
+                        </Expander>
+
+                    </sdg:SimpleStackPanel>
+                </ScrollViewer>
+            </Grid>
+        </DockPanel>
+    </sampleControls:SampleHostControl>
+</UserControl>

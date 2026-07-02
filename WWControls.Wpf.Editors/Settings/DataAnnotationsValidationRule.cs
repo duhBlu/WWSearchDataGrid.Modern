@@ -16,7 +16,7 @@ namespace WWControls.Wpf.Editors.Settings
     /// (<c>Required</c>, <c>Range</c>, <c>StringLength</c>, <c>RegularExpression</c>,
     /// <c>CustomValidation</c>, …). Backs Phase 2.2's data-annotation-aware error display: the
     /// grid attaches one to each editable cell binding via
-    /// <see cref="BaseEditSettings.CreateValueBinding"/>.
+    /// <see cref="BaseEditorSettings.CreateValueBinding"/>.
     /// </summary>
     /// <remarks>
     /// Runs at <see cref="ValidationStep.ConvertedProposedValue"/> so the attributes see the value

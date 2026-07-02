@@ -123,6 +123,14 @@ namespace WWControls.Wpf.Grids
                 && other.Node?.PathKey == Node?.PathKey;
 
         public override int GetHashCode()
-            => System.HashCode.Combine(Level, Node?.PathKey);
+        {
+            unchecked
+            {
+                int hash = 17;
+                hash = hash * 31 + Level.GetHashCode();
+                hash = hash * 31 + (Node?.PathKey?.GetHashCode() ?? 0);
+                return hash;
+            }
+        }
     }
 }

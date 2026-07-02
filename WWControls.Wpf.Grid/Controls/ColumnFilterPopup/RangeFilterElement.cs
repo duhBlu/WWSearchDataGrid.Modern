@@ -10,9 +10,9 @@ namespace WWControls.Wpf.Grids
     /// columns) template against the column's controller and inflates the appropriate input
     /// editor based on the column's <see cref="ColumnDataType"/>:
     /// <list type="bullet">
-    /// <item><b>Number</b> — <see cref="RangeSlider"/> + low/high <see cref="NumericUpDown"/> inputs.</item>
+    /// <item><b>Number</b> — <see cref="WWRangeSlider"/> + low/high <see cref="WWNumericUpDown"/> inputs.</item>
     /// <item><b>DateTime</b> — low/high <see cref="SegmentedDateTimeEditor"/>.</item>
-    /// <item><b>String / other</b> — low/high <see cref="SearchTextBox"/>.</item>
+    /// <item><b>String / other</b> — low/high <see cref="WWSearchTextBox"/>.</item>
     /// </list>
     /// </summary>
     public class RangeFilterElement : FilterElementBase

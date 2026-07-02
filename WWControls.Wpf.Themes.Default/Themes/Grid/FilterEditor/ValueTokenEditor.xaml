@@ -4,8 +4,7 @@
 
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Grid/FilterEditor/SharedFilterRuleTemplates.xaml" />
-        <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Primitives/SearchTextBox.xaml" />
-        <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Primitives/NumericUpDown.xaml" />
+        <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Editors/WWSearchTextBox.xaml" />
     </ResourceDictionary.MergedDictionaries>
 
     <Style x:Key="{x:Static sdg:GridThemeKeys.FilterEditorValueToken}" TargetType="{x:Type sdg:ValueTokenEditor}">

@@ -241,7 +241,7 @@
 
     <!--
         Shared "dropdown row" look used everywhere a popup lists pickable items —
-        ComboBoxItem in PrimitivesComboBox, ListBoxItem in SearchTextBox suggestions
+        ComboBoxItem in PrimitivesComboBox, ListBoxItem in WWSearchTextBox suggestions
         and FilterEditor token popups. Visuals track PrimitivesMenuItem so every
         list-of-things in the library reads as the same control.
 

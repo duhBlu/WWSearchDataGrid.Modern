@@ -1,0 +1,126 @@
+<UserControl x:Class="WWControls.SampleApp.Grid.Views.Samples.Editing.EditorTypesSampleView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:sdg="http://schemas.wwcontrols.com/wpf"
+             xmlns:sampleControls="clr-namespace:WWControls.SampleApp.Grid.Controls"
+             xmlns:local="clr-namespace:WWControls.SampleApp.Grid.Views.Samples.Editing"
+             mc:Ignorable="d">
+    <UserControl.DataContext>
+        <local:EditorTypesSampleViewModel />
+    </UserControl.DataContext>
+    <sampleControls:SampleHostControl Sources="{x:Static sampleControls:SampleSources.EditorTypes}">
+        <DockPanel>
+            <TextBlock DockPanel.Dock="Top"
+                       Margin="16,12,16,4"
+                       FontSize="13"
+                       Foreground="#444"
+                       TextWrapping="Wrap">
+                <Run FontWeight="SemiBold" Text="Editor types — every EditSettings" />
+                <LineBreak />
+                <Run Text="One column per editor type. Use the panel to flip when editing triggers, when editor buttons appear, and which editor the boolean Done column uses." />
+            </TextBlock>
+
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="320" />
+                </Grid.ColumnDefinitions>
+
+                <sdg:SearchDataGrid x:Name="Grid"
+                                    Grid.Column="0"
+                                    Margin="10"
+                                    ItemsSource="{Binding Tasks}"
+                                    AutoGenerateColumns="False"
+                                    CanUserAddRows="False"
+                                    CanUserDeleteRows="False"
+                                    EditorShowMode="{Binding EditorShowMode}"
+                                    EditorButtonShowMode="{Binding EditorButtonShowMode}">
+                    <sdg:SearchDataGrid.GridColumns>
+                        <sdg:GridColumn Width="50" FieldName="Id" Header="#" IsReadOnly="True" />
+
+                        <sdg:GridColumn Width="2*" FieldName="Title" Header="Title" />
+
+                        <sdg:GridColumn Width="100" FieldName="AssignedTo" Header="Assigned">
+                            <sdg:GridColumn.EditSettings>
+                                <sdg:ComboBoxSettings ItemsSource="{Binding Assignees}" />
+                            </sdg:GridColumn.EditSettings>
+                        </sdg:GridColumn>
+
+                        <sdg:GridColumn Width="80" FieldName="HoursEstimate" Header="Hours" DisplayStringFormat="N2">
+                            <sdg:GridColumn.EditSettings>
+                                <sdg:NumericUpDownSettings Minimum="0" Maximum="80" LargeIncrement="1" Increment="0.25" />
+                            </sdg:GridColumn.EditSettings>
+                        </sdg:GridColumn>
+
+                        <sdg:GridColumn Width="100" FieldName="PriorityId" Header="Priority">
+                            <sdg:GridColumn.EditSettings>
+                                <sdg:ComboBoxSettings ItemsSource="{Binding Priorities}"
+                                                          DisplayMemberPath="Name"
+                                                          SelectedValuePath="Id" />
+                            </sdg:GridColumn.EditSettings>
+                        </sdg:GridColumn>
+
+                        <!-- IsComplete column's EditSettings is swapped at runtime by the code-behind based on BooleanEditor.
+                             ShowCheckBoxInHeader surfaces a header checkbox bound two-way to GridColumn.IsChecked;
+                             toggling it flips every IsComplete value within the chosen SelectAllScope. -->
+                        <sdg:GridColumn x:Name="DoneColumn" Width="80" FieldName="IsComplete" Header="Done"
+                                        ShowCheckBoxInHeader="True"
+                                        SelectAllScope="{Binding SelectAllScope}">
+                            <sdg:GridColumn.EditSettings>
+                                <sdg:CheckBoxSettings />
+                            </sdg:GridColumn.EditSettings>
+                        </sdg:GridColumn>
+
+                        <sdg:GridColumn Width="120" FieldName="DueDate" Header="Due">
+                            <sdg:GridColumn.EditSettings>
+                                <sdg:DatePickerSettings />
+                            </sdg:GridColumn.EditSettings>
+                        </sdg:GridColumn>
+                    </sdg:SearchDataGrid.GridColumns>
+                </sdg:SearchDataGrid>
+
+                <GridSplitter Grid.Column="1" HorizontalAlignment="Stretch" Width="5" Background="#CCCCCC" />
+
+                <ScrollViewer Grid.Column="2" Background="#FFFFFF" VerticalScrollBarVisibility="Auto" Padding="8,4">
+                    <sdg:SimpleStackPanel Orientation="Vertical" Spacing="8">
+
+                        <Expander Header="Editor behavior">
+                            <sdg:SimpleStackPanel Margin="4" Orientation="Vertical" Spacing="6">
+                                <sdg:SimpleStackPanel Orientation="Vertical" Spacing="2">
+                                    <TextBlock FontWeight="Bold" Text="Editor Show Mode:" />
+                                    <ComboBox ItemsSource="{Binding EditorShowModeChoices}"
+                                              SelectedItem="{Binding EditorShowMode, Mode=TwoWay}" />
+                                </sdg:SimpleStackPanel>
+                                <sdg:SimpleStackPanel Orientation="Vertical" Spacing="2">
+                                    <TextBlock FontWeight="Bold" Text="Editor Button Show Mode:" />
+                                    <ComboBox ItemsSource="{Binding EditorButtonShowModeChoices}"
+                                              SelectedItem="{Binding EditorButtonShowMode, Mode=TwoWay}" />
+                                </sdg:SimpleStackPanel>
+                            </sdg:SimpleStackPanel>
+                        </Expander>
+
+                        <Expander Header="Done column">
+                            <sdg:SimpleStackPanel Margin="4" Orientation="Vertical" Spacing="6">
+                                <sdg:SimpleStackPanel Orientation="Vertical" Spacing="2">
+                                    <TextBlock FontWeight="Bold" Text="Boolean Edit Type:" />
+                                    <ComboBox ItemsSource="{Binding BooleanEditorChoices}"
+                                              SelectedItem="{Binding BooleanEditor, Mode=TwoWay}" />
+                                </sdg:SimpleStackPanel>
+                                <sdg:SimpleStackPanel Orientation="Vertical" Spacing="2"
+                                                      ToolTip="The Done column header has a select-all checkbox. SelectAllScope decides which rows it toggles: FilteredRows (only currently visible rows after filters), SelectedRows (only the user's current selection), or AllItems (every row regardless of filter or selection).">
+                                    <TextBlock FontWeight="Bold" Text="Select-All Scope:" />
+                                    <ComboBox ItemsSource="{Binding SelectAllScopeChoices}"
+                                              SelectedItem="{Binding SelectAllScope, Mode=TwoWay}" />
+                                </sdg:SimpleStackPanel>
+                            </sdg:SimpleStackPanel>
+                        </Expander>
+
+                    </sdg:SimpleStackPanel>
+                </ScrollViewer>
+            </Grid>
+        </DockPanel>
+    </sampleControls:SampleHostControl>
+</UserControl>

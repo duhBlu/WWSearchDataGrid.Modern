@@ -5,7 +5,7 @@ using WWControls.Core.Display;
 namespace WWControls.Wpf.Display
 {
     /// <summary>
-    /// Display value provider for columns whose editor is a <see cref="ComboBoxEditSettings"/>.
+    /// Display value provider for columns whose editor is a <see cref="ComboBoxSettings"/>.
     /// Translates the raw cell value (typically a foreign-key id, or the item itself) into the
     /// user-facing text shown in the dropdown, so filter popups, chips, and copy commands match
     /// what the user sees in the cell rather than the underlying value.

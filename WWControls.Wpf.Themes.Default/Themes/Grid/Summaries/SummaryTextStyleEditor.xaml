@@ -15,7 +15,7 @@
 
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Primitives/DefaultControls.xaml" />
-        <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Primitives/WWColorPicker.xaml" />
+        <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Editors/WWColorPicker.xaml" />
     </ResourceDictionary.MergedDictionaries>
 
     <converters:BrushToUnsetConverter x:Key="SummaryStyleBrushToUnsetConverter" />

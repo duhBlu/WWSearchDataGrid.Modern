@@ -180,7 +180,7 @@
                                                          Text="{Binding SelectedEntry.Prefix, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                                          Padding="2"
                                                          VerticalContentAlignment="Center" />
-                                                <sdg:SearchTextBox Style="{StaticResource {x:Static sdg:PrimitiveThemeKeys.SearchTextBox}}"
+                                                <sdg:WWSearchTextBox Style="{StaticResource {x:Static sdg:EditorThemeKeys.SearchTextBox}}"
                                                                    Grid.Row="1"
                                                                    Grid.Column="2"
                                                                    ShowClearButton="False"

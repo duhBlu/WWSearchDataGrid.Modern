@@ -1,0 +1,51 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFrameworks>net462;net48;net9.0-windows</TargetFrameworks>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <LangVersion>latest</LangVersion>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+    <PackageReference Include="AvalonEdit" Version="6.3.1.120" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\WWControls.Wpf.Editors\WWControls.Wpf.Editors.csproj" />
+    <ProjectReference Include="..\WWControls.Wpf.Primitives\WWControls.Wpf.Primitives.csproj" />
+    <ProjectReference Include="..\WWControls.Wpf.Themes.Default\WWControls.Wpf.Themes.Default.csproj" />
+  </ItemGroup>
+
+  <!-- Embed each sample's source files so SampleHostControl can show XAML / C# tabs alongside the live editors. -->
+  <ItemGroup>
+    <EmbeddedResource Include="Views\Samples\Editors\EditorGallerySampleView.xaml" />
+    <EmbeddedResource Include="Views\Samples\Editors\EditorGallerySampleView.xaml.cs" />
+    <EmbeddedResource Include="Views\Samples\Editors\EditorGallerySampleViewModel.cs" />
+    <EmbeddedResource Include="Views\Samples\Editors\TextBoxSampleView.xaml" />
+    <EmbeddedResource Include="Views\Samples\Editors\TextBoxSampleView.xaml.cs" />
+    <EmbeddedResource Include="Views\Samples\Editors\TextBoxSampleViewModel.cs" />
+    <EmbeddedResource Include="Views\Samples\Editors\NumericUpDownSampleView.xaml" />
+    <EmbeddedResource Include="Views\Samples\Editors\NumericUpDownSampleView.xaml.cs" />
+    <EmbeddedResource Include="Views\Samples\Editors\NumericUpDownSampleViewModel.cs" />
+    <EmbeddedResource Include="Views\Samples\Editors\ComboBoxSampleView.xaml" />
+    <EmbeddedResource Include="Views\Samples\Editors\ComboBoxSampleView.xaml.cs" />
+    <EmbeddedResource Include="Views\Samples\Editors\ComboBoxSampleViewModel.cs" />
+    <EmbeddedResource Include="Views\Samples\Editors\DatePickerSampleView.xaml" />
+    <EmbeddedResource Include="Views\Samples\Editors\DatePickerSampleView.xaml.cs" />
+    <EmbeddedResource Include="Views\Samples\Editors\DatePickerSampleViewModel.cs" />
+    <EmbeddedResource Include="Views\Samples\Editors\CheckBoxSampleView.xaml" />
+    <EmbeddedResource Include="Views\Samples\Editors\CheckBoxSampleView.xaml.cs" />
+    <EmbeddedResource Include="Views\Samples\Editors\CheckBoxSampleViewModel.cs" />
+
+    <!-- Custom AvalonEdit syntax highlighting registered at startup; replaces the bundled XML / C# defaults. -->
+    <EmbeddedResource Include="Themes\SyntaxHighlighting\CSharp.xshd" />
+    <EmbeddedResource Include="Themes\SyntaxHighlighting\Xaml.xshd" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,459 @@
+<UserControl x:Class="WWControls.SampleApp.Grid.Views.Samples.Editing.EditorCustomizationSampleView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:sdg="http://schemas.wwcontrols.com/wpf"
+             xmlns:sampleControls="clr-namespace:WWControls.SampleApp.Grid.Controls"
+             xmlns:models="clr-namespace:WWControls.SampleApp.Grid.Models"
+             xmlns:local="clr-namespace:WWControls.SampleApp.Grid.Views.Samples.Editing"
+             mc:Ignorable="d">
+    <UserControl.DataContext>
+        <local:EditorCustomizationSampleViewModel />
+    </UserControl.DataContext>
+
+    <UserControl.Resources>
+
+        <!-- ============================================================== -->
+        <!-- LAYER 1: DisplayStyle — re-style the display cell, no replacement -->
+        <!-- ============================================================== -->
+
+        <!-- Title display: strikethrough + dim + italic when the task is complete. -->
+        <Style x:Key="TitleDisplayStyle" TargetType="TextBlock"
+               BasedOn="{StaticResource {x:Static sdg:EditorThemeKeys.DisplayTextBlock}}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsComplete}" Value="True">
+                    <Setter Property="TextDecorations" Value="Strikethrough" />
+                    <Setter Property="Foreground" Value="#9E9E9E" />
+                    <Setter Property="FontStyle" Value="Italic" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Due-date display: red + bold when overdue, dim when complete. -->
+        <Style x:Key="DueDateDisplayStyle" TargetType="TextBlock"
+               BasedOn="{StaticResource {x:Static sdg:EditorThemeKeys.DisplayTextBlock}}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsOverdue}" Value="True">
+                    <Setter Property="Foreground" Value="#D32F2F" />
+                    <Setter Property="FontWeight" Value="SemiBold" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding IsComplete}" Value="True">
+                    <Setter Property="Foreground" Value="#9E9E9E" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Hours display: right-aligned, monospace, accent color. -->
+        <Style x:Key="HoursDisplayStyle" TargetType="TextBlock"
+               BasedOn="{StaticResource {x:Static sdg:EditorThemeKeys.DisplayNumericTextBlock}}">
+            <Setter Property="FontFamily" Value="Consolas" />
+            <Setter Property="Foreground" Value="#5D4037" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+        </Style>
+
+        <!-- ============================================================== -->
+        <!-- LAYER 2: DisplayTemplate / EditTemplate — full visual takeover -->
+        <!-- ============================================================== -->
+
+        <!-- Status pill: rounded border whose Background is keyed off the row's Status string. -->
+        <Style x:Key="StatusPillBorderStyle" TargetType="Border">
+            <Setter Property="CornerRadius" Value="10" />
+            <Setter Property="Padding" Value="10,2" />
+            <Setter Property="HorizontalAlignment" Value="Left" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Background" Value="#757575" />
+            <Setter Property="Margin" Value="6,2" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Status}" Value="In Progress">
+                    <Setter Property="Background" Value="#1976D2" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Status}" Value="In Review">
+                    <Setter Property="Background" Value="#F57C00" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Status}" Value="Blocked">
+                    <Setter Property="Background" Value="#D32F2F" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Status}" Value="Done">
+                    <Setter Property="Background" Value="#388E3C" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <DataTemplate x:Key="StatusPillDisplayTemplate">
+            <Border Style="{StaticResource StatusPillBorderStyle}">
+                <TextBlock Text="{Binding Status}"
+                           Foreground="White"
+                           FontWeight="SemiBold"
+                           FontSize="11" />
+            </Border>
+        </DataTemplate>
+
+        <!--
+            Item-level pill: same shape as StatusPillBorderStyle but the DataTrigger Path is
+            `{Binding}` (the item itself) instead of `{Binding Status}` (a property on the row).
+            That lets this template render correctly inside a ComboBox.ItemTemplate where each
+            DataContext is a plain status string — used by the cell EditTemplate and by the
+            FilterRowEditTemplate.
+        -->
+        <Style x:Key="StatusItemPillBorderStyle" TargetType="Border">
+            <Setter Property="CornerRadius" Value="10" />
+            <Setter Property="Padding" Value="10,2" />
+            <Setter Property="HorizontalAlignment" Value="Left" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Background" Value="#757575" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding}" Value="In Progress">
+                    <Setter Property="Background" Value="#1976D2" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding}" Value="In Review">
+                    <Setter Property="Background" Value="#F57C00" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding}" Value="Blocked">
+                    <Setter Property="Background" Value="#D32F2F" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding}" Value="Done">
+                    <Setter Property="Background" Value="#388E3C" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <DataTemplate x:Key="StatusItemPillTemplate">
+            <Border Style="{StaticResource StatusItemPillBorderStyle}">
+                <TextBlock Text="{Binding}"
+                           Foreground="White"
+                           FontWeight="SemiBold"
+                           FontSize="11" />
+            </Border>
+        </DataTemplate>
+
+        <!-- ItemTemplate for the Priority ComboBox dropdown — colored dot + name. -->
+        <DataTemplate x:Key="PriorityItemTemplate" DataType="{x:Type models:PriorityOption}">
+            <StackPanel Orientation="Horizontal" Margin="2,1">
+                <Ellipse Width="10" Height="10" Margin="0,0,8,0" VerticalAlignment="Center">
+                    <Ellipse.Style>
+                        <Style TargetType="Ellipse">
+                            <Setter Property="Fill" Value="#9E9E9E" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Id}" Value="2">
+                                    <Setter Property="Fill" Value="#1976D2" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding Id}" Value="3">
+                                    <Setter Property="Fill" Value="#F57C00" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding Id}" Value="4">
+                                    <Setter Property="Fill" Value="#D32F2F" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Ellipse.Style>
+                    <Ellipse.Effect>
+                        <DropShadowEffect BlurRadius="3" ShadowDepth="0" Opacity="0.35" />
+                    </Ellipse.Effect>
+                </Ellipse>
+                <TextBlock Text="{Binding Name}" VerticalAlignment="Center" />
+            </StackPanel>
+        </DataTemplate>
+
+        <!-- Priority cell display: same chip shape, driven by PriorityId on the row item. -->
+        <DataTemplate x:Key="PriorityDisplayTemplate">
+            <Border Margin="6,0" HorizontalAlignment="Left" VerticalAlignment="Center"
+                    CornerRadius="3" Padding="2">
+                <StackPanel Orientation="Horizontal" x:Name="Chip">
+                    <Ellipse x:Name="Dot" Width="10" Height="10" Margin="0,0,8,0"
+                             VerticalAlignment="Center" Fill="#9E9E9E" />
+                    <TextBlock x:Name="Label" VerticalAlignment="Center" Text="Low" />
+                </StackPanel>
+            </Border>
+            <DataTemplate.Triggers>
+                <DataTrigger Binding="{Binding PriorityId}" Value="2">
+                    <Setter TargetName="Dot" Property="Fill" Value="#1976D2" />
+                    <Setter TargetName="Label" Property="Text" Value="Normal" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding PriorityId}" Value="3">
+                    <Setter TargetName="Dot" Property="Fill" Value="#F57C00" />
+                    <Setter TargetName="Label" Property="Text" Value="High" />
+                    <Setter TargetName="Label" Property="FontWeight" Value="SemiBold" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding PriorityId}" Value="4">
+                    <Setter TargetName="Dot" Property="Fill" Value="#D32F2F" />
+                    <Setter TargetName="Label" Property="Text" Value="Urgent" />
+                    <Setter TargetName="Label" Property="FontWeight" Value="Bold" />
+                    <Setter TargetName="Label" Property="Foreground" Value="#D32F2F" />
+                </DataTrigger>
+            </DataTemplate.Triggers>
+        </DataTemplate>
+
+        <!-- Assignee avatar: a colored circle stamped with the initial, plus the full name. -->
+        <Style x:Key="AvatarEllipseStyle" TargetType="Ellipse">
+            <Setter Property="Width" Value="22" />
+            <Setter Property="Height" Value="22" />
+            <Setter Property="Fill" Value="#607D8B" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Initials}" Value="A">
+                    <Setter Property="Fill" Value="#1976D2" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Initials}" Value="B">
+                    <Setter Property="Fill" Value="#388E3C" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Initials}" Value="C">
+                    <Setter Property="Fill" Value="#F57C00" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Initials}" Value="D">
+                    <Setter Property="Fill" Value="#7B1FA2" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Initials}" Value="E">
+                    <Setter Property="Fill" Value="#00838F" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Initials}" Value="F">
+                    <Setter Property="Fill" Value="#D32F2F" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Initials}" Value="G">
+                    <Setter Property="Fill" Value="#5D4037" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Initials}" Value="H">
+                    <Setter Property="Fill" Value="#455A64" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <DataTemplate x:Key="AssigneeAvatarDisplayTemplate">
+            <StackPanel Orientation="Horizontal" Margin="6,0" VerticalAlignment="Center">
+                <Grid Margin="0,0,8,0">
+                    <Ellipse Style="{StaticResource AvatarEllipseStyle}">
+                        <Ellipse.Effect>
+                            <DropShadowEffect BlurRadius="4" ShadowDepth="0" Opacity="0.35" />
+                        </Ellipse.Effect>
+                    </Ellipse>
+                    <TextBlock Text="{Binding Initials}"
+                               Foreground="White"
+                               FontWeight="Bold"
+                               FontSize="11"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center" />
+                </Grid>
+                <TextBlock Text="{Binding AssignedTo}" VerticalAlignment="Center" />
+            </StackPanel>
+        </DataTemplate>
+
+        <!--
+            Item-level Assignee swatch — used inside ComboBox.ItemTemplate (both cell edit and
+            filter row). DataContext per item is a plain assignee-name string; DataTriggers key
+            the dot color off the name directly so no converter is needed.
+        -->
+        <Style x:Key="AssigneeDotStyle" TargetType="Ellipse">
+            <Setter Property="Width" Value="10" />
+            <Setter Property="Height" Value="10" />
+            <Setter Property="Fill" Value="#607D8B" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding}" Value="Alice">
+                    <Setter Property="Fill" Value="#1976D2" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding}" Value="Bob">
+                    <Setter Property="Fill" Value="#388E3C" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding}" Value="Carol">
+                    <Setter Property="Fill" Value="#F57C00" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding}" Value="Dan">
+                    <Setter Property="Fill" Value="#7B1FA2" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding}" Value="Erin">
+                    <Setter Property="Fill" Value="#00838F" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding}" Value="Frank">
+                    <Setter Property="Fill" Value="#D32F2F" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding}" Value="Grace">
+                    <Setter Property="Fill" Value="#5D4037" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding}" Value="Henry">
+                    <Setter Property="Fill" Value="#455A64" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <DataTemplate x:Key="AssigneeItemTemplate">
+            <StackPanel Orientation="Horizontal" Margin="2,1">
+                <Ellipse Style="{StaticResource AssigneeDotStyle}"
+                         Margin="0,0,8,0"
+                         VerticalAlignment="Center" />
+                <TextBlock Text="{Binding}" VerticalAlignment="Center" />
+            </StackPanel>
+        </DataTemplate>
+
+        <!--
+            ============================================================
+            FILTER-ROW edit templates — DataContext is EditGridCellData.
+              • {Binding Value}             ↔ ColumnFilterControl.SearchValue
+              • {Binding View.DataContext.X} reaches the grid's ViewModel
+            All three reuse the cell-edit ItemTemplates above so the
+            filter-row visual matches the cell editor exactly.
+            ============================================================
+        -->
+        <DataTemplate x:Key="StatusFilterRowTemplate">
+            <ComboBox Margin="0,0"
+                      SelectedItem="{Binding Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                      ItemsSource="{Binding View.DataContext.Statuses}"
+                      ItemTemplate="{StaticResource StatusItemPillTemplate}"
+                      Style="{StaticResource {x:Static sdg:EditorThemeKeys.EditComboBox}}" />
+        </DataTemplate>
+
+        <DataTemplate x:Key="PriorityFilterRowTemplate">
+            <ComboBox Margin="0,0"
+                      SelectedValue="{Binding Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                      SelectedValuePath="Id"
+                      ItemsSource="{Binding View.DataContext.Priorities}"
+                      ItemTemplate="{StaticResource PriorityItemTemplate}"
+                      Style="{StaticResource {x:Static sdg:EditorThemeKeys.EditComboBox}}" />
+        </DataTemplate>
+
+        <DataTemplate x:Key="AssigneeFilterRowTemplate">
+            <ComboBox Margin="0,0"
+                      SelectedItem="{Binding Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                      ItemsSource="{Binding View.DataContext.Assignees}"
+                      ItemTemplate="{StaticResource AssigneeItemTemplate}"
+                      Style="{StaticResource {x:Static sdg:EditorThemeKeys.EditComboBox}}" />
+        </DataTemplate>
+
+    </UserControl.Resources>
+
+    <sampleControls:SampleHostControl Sources="{x:Static sampleControls:SampleSources.EditorCustomization}">
+        <DockPanel>
+            <TextBlock DockPanel.Dock="Top"
+                       Margin="16,12,16,4"
+                       FontSize="13"
+                       Foreground="#444"
+                       TextWrapping="Wrap">
+                <Run FontWeight="SemiBold" Text="Editor customization" />
+                <LineBreak />
+                <Run Text="Restyle or fully replace a column's cell display, in-place editor, and filter-row editor. Each column demonstrates one customization surface — the panel maps them." />
+            </TextBlock>
+
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="320" />
+                </Grid.ColumnDefinitions>
+
+                <sdg:SearchDataGrid x:Name="Grid"
+                                Grid.Column="0"
+                                Margin="10"
+                                ItemsSource="{Binding Tasks}"
+                                AutoGenerateColumns="False"
+                                CanUserAddRows="False"
+                                CanUserDeleteRows="False"
+                                EditorShowMode="MouseDown">
+                <sdg:SearchDataGrid.GridColumns>
+                    <sdg:GridColumn Width="50" FieldName="Id" Header="#" IsReadOnly="True" />
+
+                    <!-- DisplayStyle: TextBoxSettings + conditional restyle of the read-only TextBlock. -->
+                    <sdg:GridColumn Width="2*" FieldName="Title" Header="Title">
+                        <sdg:GridColumn.EditSettings>
+                            <sdg:TextBoxSettings DisplayStyle="{StaticResource TitleDisplayStyle}" />
+                        </sdg:GridColumn.EditSettings>
+                    </sdg:GridColumn>
+
+                    <!-- DisplayStyle: NumericUpDownSettings with a custom monospace display TextBlock. -->
+                    <sdg:GridColumn Width="90" FieldName="HoursEstimate" Header="Hours" DisplayStringFormat="N2">
+                        <sdg:GridColumn.EditSettings>
+                            <sdg:NumericUpDownSettings Minimum="0" Maximum="80"
+                                                  Increment="0.25" LargeIncrement="1"
+                                                  DisplayStyle="{StaticResource HoursDisplayStyle}" />
+                        </sdg:GridColumn.EditSettings>
+                    </sdg:GridColumn>
+
+                    <!-- DisplayTemplate + matching EditTemplate: colored pill in both modes, plus a pill-styled filter-row ComboBox. -->
+                    <sdg:GridColumn Width="150" FieldName="Status" Header="Status"
+                                    FilterRowEditTemplate="{StaticResource StatusFilterRowTemplate}">
+                        <sdg:GridColumn.EditSettings>
+                            <sdg:ComboBoxSettings ItemsSource="{Binding Statuses}"
+                                                      DisplayTemplate="{StaticResource StatusPillDisplayTemplate}">
+                                <sdg:ComboBoxSettings.EditTemplate>
+                                    <DataTemplate>
+                                        <ComboBox SelectedItem="{Binding Status, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                  ItemsSource="{Binding DataContext.Statuses, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                  ItemTemplate="{StaticResource StatusItemPillTemplate}"
+                                                  Style="{StaticResource {x:Static sdg:EditorThemeKeys.EditComboBox}}" />
+                                    </DataTemplate>
+                                </sdg:ComboBoxSettings.EditTemplate>
+                            </sdg:ComboBoxSettings>
+                        </sdg:GridColumn.EditSettings>
+                    </sdg:GridColumn>
+
+                    <!-- Full takeover: rich chip in display + rich ComboBox with ItemTemplate in edit + matching filter row. -->
+                    <sdg:GridColumn Width="170" FieldName="PriorityId" Header="Priority"
+                                    FilterRowEditTemplate="{StaticResource PriorityFilterRowTemplate}">
+                        <sdg:GridColumn.EditSettings>
+                            <sdg:ComboBoxSettings ItemsSource="{Binding Priorities}"
+                                                      DisplayMemberPath="Name"
+                                                      SelectedValuePath="Id"
+                                                      DisplayTemplate="{StaticResource PriorityDisplayTemplate}">
+                                <sdg:ComboBoxSettings.EditTemplate>
+                                    <DataTemplate>
+                                        <ComboBox SelectedValue="{Binding PriorityId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                  SelectedValuePath="Id"
+                                                  ItemsSource="{Binding DataContext.Priorities, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                  ItemTemplate="{StaticResource PriorityItemTemplate}"
+                                                  Style="{StaticResource {x:Static sdg:EditorThemeKeys.EditComboBox}}" />
+                                    </DataTemplate>
+                                </sdg:ComboBoxSettings.EditTemplate>
+                            </sdg:ComboBoxSettings>
+                        </sdg:GridColumn.EditSettings>
+                    </sdg:GridColumn>
+
+                    <!-- DisplayTemplate + matching EditTemplate: avatar circle in cell, dot+name in dropdown + filter row. -->
+                    <sdg:GridColumn Width="170" FieldName="AssignedTo" Header="Assigned"
+                                    FilterRowEditTemplate="{StaticResource AssigneeFilterRowTemplate}">
+                        <sdg:GridColumn.EditSettings>
+                            <sdg:ComboBoxSettings ItemsSource="{Binding Assignees}"
+                                                      DisplayTemplate="{StaticResource AssigneeAvatarDisplayTemplate}">
+                                <sdg:ComboBoxSettings.EditTemplate>
+                                    <DataTemplate>
+                                        <ComboBox SelectedItem="{Binding AssignedTo, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                  ItemsSource="{Binding DataContext.Assignees, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                  ItemTemplate="{StaticResource AssigneeItemTemplate}"
+                                                  Style="{StaticResource {x:Static sdg:EditorThemeKeys.EditComboBox}}" />
+                                    </DataTemplate>
+                                </sdg:ComboBoxSettings.EditTemplate>
+                            </sdg:ComboBoxSettings>
+                        </sdg:GridColumn.EditSettings>
+                    </sdg:GridColumn>
+
+                    <!-- DisplayStyle: conditional formatting on a Date editor. -->
+                    <sdg:GridColumn Width="130" FieldName="DueDate" Header="Due">
+                        <sdg:GridColumn.EditSettings>
+                            <sdg:DatePickerSettings DisplayStyle="{StaticResource DueDateDisplayStyle}" />
+                        </sdg:GridColumn.EditSettings>
+                    </sdg:GridColumn>
+                </sdg:SearchDataGrid.GridColumns>
+                </sdg:SearchDataGrid>
+
+                <GridSplitter Grid.Column="1" Width="5" HorizontalAlignment="Stretch" Background="#CCCCCC" />
+
+                <ScrollViewer Grid.Column="2" Padding="8,4" Background="#FFFFFF" VerticalScrollBarVisibility="Auto">
+                    <sdg:SimpleStackPanel Orientation="Vertical" Spacing="8">
+
+                        <Expander Style="{StaticResource SampleExpanderStyle}" Header="Surface per column">
+                            <TextBlock Margin="4" FontSize="11" Foreground="#666" TextWrapping="Wrap">
+                                <Run FontWeight="SemiBold" Text="DisplayStyle" />
+                                <Run Text="— restyle the default display TextBlock. Title strikes through when complete; Due turns red-bold when overdue; Hours uses a monospace accent." />
+                                <LineBreak />
+                                <Run FontWeight="SemiBold" Text="DisplayTemplate" />
+                                <Run Text="— full takeover of the read-only cell. Status renders as a colored pill; Assigned shows an initial-stamped avatar circle." />
+                                <LineBreak />
+                                <Run FontWeight="SemiBold" Text="EditTemplate" />
+                                <Run Text="— full takeover of the in-place editor. Status, Priority, and Assigned each wrap a ComboBox with a chip ItemTemplate so the dropdown matches the cell display." />
+                                <LineBreak />
+                                <Run FontWeight="SemiBold" Text="FilterRowEditTemplate" />
+                                <Run Text="— swaps the per-column filter editor. Reuses the same chip ItemTemplates so the filter row mirrors the cell editor — DataContext is EditGridCellData with {Binding Value} ↔ SearchValue." />
+                            </TextBlock>
+                        </Expander>
+
+                    </sdg:SimpleStackPanel>
+                </ScrollViewer>
+            </Grid>
+        </DockPanel>
+    </sampleControls:SampleHostControl>
+</UserControl>

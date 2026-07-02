@@ -65,8 +65,7 @@ WWControls.sln
 │   │   ├── ColumnChooser.cs             (Column visibility)
 │   │   ├── GridColumn.cs                (Static attached properties)
 │   │   └── Primitives/
-│   │       ├── SearchTextBox.cs         (Custom search input)
-│   │       └── NumericUpDown.cs         (Numeric spinner)
+│   │       └── WWSearchTextBox.cs         (Custom search input)
 │   ├── Behaviors/                        (Attached property behaviors)
 │   │   ├── HorizontalScrollBehavior.cs  (Shift+wheel scrolling)
 │   │   ├── TokenConfirmationBehavior.cs (Two-step delete confirm)
@@ -96,10 +95,9 @@ WWControls.sln
 │           ├── FilterSummaryPanel.xaml
 │           ├── ColumnFilterEditor.xaml
 │           └── Primitives/
-│               ├── SearchTextBox.xaml
-│               └── NumericUpDown.xaml
+│               └── WWSearchTextBox.xaml
 │
-└── WWControls.SampleApp/    (Demo app - .NET 9.0-windows)
+└── WWControls.SampleApp.Grid/    (Grid demo app - .NET 9.0-windows; WWControls.SampleApp.Editors/ holds the standalone-editor demos)
     ├── Models/
     │   ├── DataItem.cs                   (25+ property types)
     │   └── Enums.cs                      (Priority, OrderStatus)
@@ -554,8 +552,7 @@ Command logic runs (often delegates to control methods)
 ├── Controls/ColumnFilterEditor.xaml
 │   └── GenericColumnFilterEditorStyle (dynamic input templates)
 └── Primitives/
-    ├── SearchTextBox.xaml (dropdown with highlighting)
-    └── NumericUpDown.xaml (spinner control)
+    ├── WWSearchTextBox.xaml (dropdown with highlighting)
 ```
 
 **Visual Design System**:
@@ -572,7 +569,7 @@ Command logic runs (often delegates to control methods)
 
 ## Sample Application
 
-**File**: `/WWControls.SampleApp/`
+**File**: `/WWControls.SampleApp.Grid/` (grid samples) and `/WWControls.SampleApp.Editors/` (standalone editors)
 
 ### Architecture
 
@@ -981,7 +978,7 @@ WWControls.Core (Business Logic)
 
 10. **Virtualization** (WPF DataGrid):
     - Row virtualization with Recycling mode
-    - SearchTextBox dropdown virtualization
+    - WWSearchTextBox dropdown virtualization
     - Handles 5000+ items efficiently
 
 ### Performance Benchmarks (from CLAUDE.md)
@@ -1049,7 +1046,7 @@ WWControls.Core (Business Logic)
 dotnet build WWControls.sln --configuration Release
 
 # Run sample application
-dotnet run --project WWControls.SampleApp
+dotnet run --project WWControls.SampleApp.Grid
 
 # Build specific project
 dotnet build WWControls.Core/WWControls.Core.csproj

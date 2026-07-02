@@ -7,14 +7,14 @@ using System.Windows.Threading;
 namespace WWControls.Wpf.Editors.Settings
 {
     /// <summary>
-    /// Grid-side glue that teaches a <see cref="WWBaseEdit"/>-derived editor how to behave inside a
+    /// Grid-side glue that teaches a <see cref="WWEditorBase"/>-derived editor how to behave inside a
     /// <see cref="DataGridCell"/>, without the editor itself carrying any grid coupling. An
     /// <c>EditSettings</c> adapter sets <see cref="HostInCellProperty"/> on the editor it builds for
     /// a cell; this behavior then drives the three cell-interaction concerns that used to live in the
     /// editor templates:
     /// <list type="number">
     ///   <item><b>Arrow-key cell exit</b> — an unmodified arrow at a text boundary commits the edit
-    ///   and steps to the adjacent cell (via <see cref="BaseEditSettings.ExitCellViaArrow"/>), instead
+    ///   and steps to the adjacent cell (via <see cref="BaseEditorSettings.ExitCellViaArrow"/>), instead
     ///   of moving the caret.</item>
     ///   <item><b>Mouse-click caret</b> — when edit mode was opened by a mouse click, the caret lands
     ///   at the clicked character (via <see cref="SearchDataGrid.TryConsumeMouseEditPoint"/>); keyboard
@@ -30,7 +30,7 @@ namespace WWControls.Wpf.Editors.Settings
     public static class EditorHostBehavior
     {
         /// <summary>
-        /// Set true by an <c>EditSettings</c> adapter on a <see cref="WWBaseEdit"/>-derived editor it
+        /// Set true by an <c>EditSettings</c> adapter on a <see cref="WWEditorBase"/>-derived editor it
         /// builds for a grid cell's edit template. Wires arrow-exit, mouse-click caret, and
         /// focus-on-edit against the editor's <see cref="IEditTextBoxProvider.EditTextBox"/>.
         /// </summary>
@@ -125,10 +125,10 @@ namespace WWControls.Wpf.Editors.Settings
             // Modified arrows defer to the TextBox default (caret jump / extend selection).
             if ((Keyboard.Modifiers & (ModifierKeys.Control | ModifierKeys.Shift)) != 0) return;
 
-            if (!BaseEditSettings.ShouldExitCellOnArrow(tb, e.Key)) return;
+            if (!BaseEditorSettings.ShouldExitCellOnArrow(tb, e.Key)) return;
 
             e.Handled = true;
-            BaseEditSettings.ExitCellViaArrow(tb, e);
+            BaseEditorSettings.ExitCellViaArrow(tb, e);
         }
 
         /// <summary>

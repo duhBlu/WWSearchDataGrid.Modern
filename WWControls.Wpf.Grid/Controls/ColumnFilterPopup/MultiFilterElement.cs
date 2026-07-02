@@ -20,11 +20,11 @@ namespace WWControls.Wpf.Grids
         }
 
         /// <summary>
-        /// When <c>true</c> (default), suggestion-style inputs (the <see cref="SearchTextBox"/>
+        /// When <c>true</c> (default), suggestion-style inputs (the <see cref="WWSearchTextBox"/>
         /// primitives feeding from <c>SearchTemplateController.DisplayColumnValues</c>) show the
         /// per-value occurrence count alongside each entry. Set to <c>false</c> to suppress
         /// counts — the templated style nulls the <c>ColumnValueCounts</c> binding so the
-        /// SearchTextBox dropdown renders values only.
+        /// WWSearchTextBox dropdown renders values only.
         /// </summary>
         public static readonly DependencyProperty ShowCountsProperty =
             DependencyProperty.Register(

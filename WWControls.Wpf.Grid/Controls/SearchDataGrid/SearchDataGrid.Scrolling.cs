@@ -496,12 +496,12 @@ namespace WWControls.Wpf.Grids
 
             double denom = FastCascadeBatchThreshold - 1;
             double tBatch = denom > 0
-                ? Math.Clamp((batchSize - 1.0) / denom, 0.0, 1.0)
+                ? MathCompat.Clamp((batchSize - 1.0) / denom, 0.0, 1.0)
                 : 1.0;
 
             // Lookahead = time until the queue head drains; 0 when caught up to wall clock.
             double lookaheadMs = Math.Max(0, _nextCascadeSlotMs - nowMs);
-            double tQueue = Math.Clamp(lookaheadMs / MaxPreferredQueueLookaheadMs, 0.0, 1.0);
+            double tQueue = MathCompat.Clamp(lookaheadMs / MaxPreferredQueueLookaheadMs, 0.0, 1.0);
 
             double t = Math.Max(tBatch, tQueue);
 
@@ -807,7 +807,7 @@ namespace WWControls.Wpf.Grids
             if (shouldEnable)
             {
                 double durationSec = ScrollAnimationDuration / 1000.0;
-                durationSec = Math.Clamp(durationSec, 0.1, 5.0);
+                durationSec = MathCompat.Clamp(durationSec, 0.1, 5.0);
                 double friction = Math.Pow(0.01, 1.0 / (durationSec * 60.0));
 
                 SmoothScrollBehavior.SetFriction(_scrollViewer, friction);

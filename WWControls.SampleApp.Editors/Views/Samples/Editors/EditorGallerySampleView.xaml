@@ -1,0 +1,118 @@
+<UserControl x:Class="WWControls.SampleApp.Editors.Views.Samples.Editors.EditorGallerySampleView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:sdg="http://schemas.wwcontrols.com/wpf"
+             xmlns:sampleControls="clr-namespace:WWControls.SampleApp.Editors.Controls"
+             xmlns:local="clr-namespace:WWControls.SampleApp.Editors.Views.Samples.Editors"
+             mc:Ignorable="d">
+    <UserControl.DataContext>
+        <local:EditorGallerySampleViewModel />
+    </UserControl.DataContext>
+
+    <sampleControls:SampleHostControl Sources="{x:Static sampleControls:SampleSources.EditorGallery}">
+        <ScrollViewer Background="#FFFFFF" VerticalScrollBarVisibility="Auto">
+            <StackPanel Margin="24" MaxWidth="620" HorizontalAlignment="Left">
+                <TextBlock FontSize="13" Foreground="#444" TextWrapping="Wrap" Margin="0,0,0,16">
+                    <Run FontWeight="SemiBold" Text="Editor gallery" />
+                    <LineBreak />
+                    <Run Text="The same editor controls the grid hosts in a cell, used directly on a form — no grid involved. Each editor owns its own chrome (border, focus accent, padding) and is bordered by default; a grid cell flattens it. The first row opts out with ShowBorder=false to show the in-cell look. Each editor's value two-way-binds to the echo on its right." />
+                </TextBlock>
+
+                <!-- WWTextBox: the chrome story (flat vs bordered vs masked vs read-only). -->
+                <TextBlock Text="WWTextBox — chrome" FontWeight="SemiBold" Foreground="#222" Margin="0,4,0,8" />
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="150" />
+                        <ColumnDefinition Width="240" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <!-- Column headers -->
+                    <TextBlock Grid.Row="0" Grid.Column="1" Text="Editor" FontWeight="SemiBold" Foreground="#666" Margin="0,0,0,6" />
+                    <TextBlock Grid.Row="0" Grid.Column="2" Text="Bound value" FontWeight="SemiBold" Foreground="#666" Margin="12,0,0,6" />
+
+                    <!-- Flat: a grid cell flattens the editor; here we opt out of the default border. -->
+                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Flat (in-cell look)" VerticalAlignment="Center" Margin="0,4" Foreground="#333" />
+                    <sdg:WWTextBox Grid.Row="1" Grid.Column="1" Height="26" Margin="0,4" ShowBorder="False"
+                                    Value="{Binding PlainText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                    <TextBlock Grid.Row="1" Grid.Column="2" Text="{Binding PlainText}" VerticalAlignment="Center" Margin="12,4" Foreground="#0066AA" />
+
+                    <!-- Bordered (the default form look). -->
+                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Bordered (default)" VerticalAlignment="Center" Margin="0,4" Foreground="#333" />
+                    <sdg:WWTextBox Grid.Row="2" Grid.Column="1" Height="26" Margin="0,4"
+                                    Value="{Binding BorderedText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                    <TextBlock Grid.Row="2" Grid.Column="2" Text="{Binding BorderedText}" VerticalAlignment="Center" Margin="12,4" Foreground="#0066AA" />
+
+                    <!-- Masked -->
+                    <TextBlock Grid.Row="3" Grid.Column="0" Text="Masked (phone)" VerticalAlignment="Center" Margin="0,4" Foreground="#333" />
+                    <sdg:WWTextBox Grid.Row="3" Grid.Column="1" Height="26" Margin="0,4"
+                                    Mask="(000) 000-0000"
+                                    Value="{Binding Phone, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                    <TextBlock Grid.Row="3" Grid.Column="2" Text="{Binding Phone}" VerticalAlignment="Center" Margin="12,4" Foreground="#0066AA" />
+
+                    <!-- Read-only -->
+                    <TextBlock Grid.Row="4" Grid.Column="0" Text="Read-only" VerticalAlignment="Center" Margin="0,4" Foreground="#333" />
+                    <sdg:WWTextBox Grid.Row="4" Grid.Column="1" Height="26" Margin="0,4" IsReadOnly="True"
+                                    Value="{Binding ReadOnlyText, Mode=TwoWay}" />
+                    <TextBlock Grid.Row="4" Grid.Column="2" Text="{Binding ReadOnlyText}" VerticalAlignment="Center" Margin="12,4" Foreground="#0066AA" />
+                </Grid>
+
+                <!-- One of every editor type, bordered (the standalone-form look, which is the default). -->
+                <TextBlock Text="Every editor type (bordered)" FontWeight="SemiBold" Foreground="#222" Margin="0,24,0,8" />
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="150" />
+                        <ColumnDefinition Width="240" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <!-- Column headers -->
+                    <TextBlock Grid.Row="0" Grid.Column="1" Text="Editor" FontWeight="SemiBold" Foreground="#666" Margin="0,0,0,6" />
+                    <TextBlock Grid.Row="0" Grid.Column="2" Text="Bound value" FontWeight="SemiBold" Foreground="#666" Margin="12,0,0,6" />
+
+                    <!-- WWNumericUpDown -->
+                    <TextBlock Grid.Row="1" Grid.Column="0" Text="WWNumericUpDown" VerticalAlignment="Center" Margin="0,4" Foreground="#333" />
+                    <sdg:WWNumericUpDown Grid.Row="1" Grid.Column="1" Height="26" Margin="0,4"
+                                    Minimum="0" Maximum="100" Increment="1" LargeIncrement="10"
+                                    Value="{Binding Quantity, Mode=TwoWay}" />
+                    <TextBlock Grid.Row="1" Grid.Column="2" Text="{Binding Quantity}" VerticalAlignment="Center" Margin="12,4" Foreground="#0066AA" />
+
+                    <!-- WWComboBox -->
+                    <TextBlock Grid.Row="2" Grid.Column="0" Text="WWComboBox" VerticalAlignment="Center" Margin="0,4" Foreground="#333" />
+                    <sdg:WWComboBox Grid.Row="2" Grid.Column="1" Height="26" Margin="0,4"
+                                     ItemsSource="{Binding Fruits}"
+                                     SelectedItem="{Binding SelectedFruit, Mode=TwoWay}" />
+                    <TextBlock Grid.Row="2" Grid.Column="2" Text="{Binding SelectedFruit}" VerticalAlignment="Center" Margin="12,4" Foreground="#0066AA" />
+
+                    <!-- WWDatePicker -->
+                    <TextBlock Grid.Row="3" Grid.Column="0" Text="WWDatePicker" VerticalAlignment="Center" Margin="0,4" Foreground="#333" />
+                    <sdg:WWDatePicker Grid.Row="3" Grid.Column="1" Height="26" Margin="0,4"
+                                    Value="{Binding DueDate, Mode=TwoWay}" />
+                    <TextBlock Grid.Row="3" Grid.Column="2" Text="{Binding DueDate, StringFormat='d'}" VerticalAlignment="Center" Margin="12,4" Foreground="#0066AA" />
+
+                    <!-- WWCheckBox — a glyph, so it stays flat regardless of ShowBorder -->
+                    <TextBlock Grid.Row="4" Grid.Column="0" Text="WWCheckBox" VerticalAlignment="Center" Margin="0,4" Foreground="#333" />
+                    <sdg:WWCheckBox Grid.Row="4" Grid.Column="1" Height="26" Margin="0,4" HorizontalAlignment="Left"
+                                     IsChecked="{Binding IsActive, Mode=TwoWay}" />
+                    <TextBlock Grid.Row="4" Grid.Column="2" Text="{Binding IsActive}" VerticalAlignment="Center" Margin="12,4" Foreground="#0066AA" />
+                </Grid>
+            </StackPanel>
+        </ScrollViewer>
+    </sampleControls:SampleHostControl>
+</UserControl>

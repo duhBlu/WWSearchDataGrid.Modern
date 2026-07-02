@@ -3,7 +3,7 @@ namespace WWControls.Core.DataAnnotations
     /// <summary>
     /// Identifies which editor a column should use, named independently of the WPF editor types
     /// so model assemblies can annotate without referencing the WPF library. The grid maps each
-    /// value onto a concrete <c>BaseEditSettings</c> subclass when generating a smart column.
+    /// value onto a concrete <c>BaseEditorSettings</c> subclass when generating a smart column.
     /// </summary>
     public enum EditorKind
     {
@@ -13,19 +13,19 @@ namespace WWControls.Core.DataAnnotations
         /// </summary>
         Default = 0,
 
-        /// <summary>Plain text editor (<c>TextEditSettings</c>).</summary>
+        /// <summary>Plain text editor (<c>TextBoxSettings</c>).</summary>
         Text,
 
-        /// <summary>Checkbox editor (<c>CheckBoxEditSettings</c>).</summary>
+        /// <summary>Checkbox editor (<c>CheckBoxSettings</c>).</summary>
         CheckBox,
 
-        /// <summary>Drop-down list editor (<c>ComboBoxEditSettings</c>).</summary>
+        /// <summary>Drop-down list editor (<c>ComboBoxSettings</c>).</summary>
         ComboBox,
 
-        /// <summary>Date picker editor (<c>DateEditSettings</c>).</summary>
+        /// <summary>Date picker editor (<c>DatePickerSettings</c>).</summary>
         Date,
 
-        /// <summary>Numeric up/down editor (<c>SpinEditSettings</c>).</summary>
+        /// <summary>Numeric up/down editor (<c>NumericUpDownSettings</c>).</summary>
         Spin,
     }
 }

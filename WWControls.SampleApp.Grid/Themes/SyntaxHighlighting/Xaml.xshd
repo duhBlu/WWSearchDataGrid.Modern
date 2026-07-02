@@ -1,0 +1,77 @@
+<?xml version="1.0"?>
+<!--
+    Custom XML / XAML highlighting for the sample app's source viewer. Loaded at startup by
+    Controls/CustomSyntaxHighlighting.cs and registered under the name "XML" so it overrides
+    AvalonEdit's bundled default. Palette mirrors Visual Studio 2022 Light theme:
+      • Element / tag content — dark red (#A31515), VS's "XML Name" classification
+      • Attribute name — bright red (#FF0000)
+      • Attribute value — blue (#0000FF)
+      • Comments — green (#008000)
+      • CData — gray (#808080)
+      • DocType / XML declaration — blue (the "?xml" / DOCTYPE tokens read as keyword-ish)
+      • Entities — blue (matches attribute values; entities are value-like content)
+-->
+<SyntaxDefinition name="XML"
+                  extensions=".xml;.xsl;.xslt;.xsd;.manifest;.config;.addin;.xshd;.wxs;.wxi;.wxl;.proj;.csproj;.vbproj;.ilproj;.booproj;.build;.xfrm;.targets;.xaml;.xpt;.xft;.map;.wsdl;.disco;.ps1xml;.nuspec"
+                  xmlns="http://icsharpcode.net/sharpdevelop/syntaxdefinition/2008">
+    <Color foreground="#008000" name="Comment" exampleText="&lt;!-- comment --&gt;" />
+    <Color foreground="#808080" name="CData" exampleText="&lt;![CDATA[data]]&gt;" />
+    <Color foreground="#0000FF" name="DocType" exampleText="&lt;!DOCTYPE rootElement&gt;" />
+    <Color foreground="#0000FF" name="XmlDeclaration" exampleText='&lt;?xml version="1.0"?&gt;' />
+    <Color foreground="#A31515" name="XmlTag" exampleText='&lt;tag attribute="value" /&gt;' />
+    <Color foreground="#FF0000" name="AttributeName" exampleText='&lt;tag attribute="value" /&gt;' />
+    <Color foreground="#0000FF" name="AttributeValue" exampleText='&lt;tag attribute="value" /&gt;' />
+    <Color foreground="#0000FF" name="Entity" exampleText="index.aspx?a=1&amp;amp;b=2" />
+    <Color foreground="#FF0000" name="BrokenEntity" exampleText="index.aspx?a=1&amp;b=2" />
+
+    <RuleSet>
+        <Span color="Comment" multiline="true">
+            <Begin>&lt;!--</Begin>
+            <End>--&gt;</End>
+        </Span>
+        <Span color="CData" multiline="true">
+            <Begin>&lt;!\[CDATA\[</Begin>
+            <End>]]&gt;</End>
+        </Span>
+        <Span color="DocType" multiline="true">
+            <Begin>&lt;!DOCTYPE</Begin>
+            <End>&gt;</End>
+        </Span>
+        <Span color="XmlDeclaration" multiline="true">
+            <Begin>&lt;\?</Begin>
+            <End>\?&gt;</End>
+        </Span>
+        <Span color="XmlTag" multiline="true">
+            <Begin>&lt;</Begin>
+            <End>&gt;</End>
+            <RuleSet>
+                <!-- Treat the position before the next '<' as a string terminator so an unclosed
+                     attribute quote doesn't swallow the rest of the document. -->
+                <Span color="AttributeValue" multiline="true" ruleSet="EntitySet">
+                    <Begin>"</Begin>
+                    <End>"|(?=&lt;)</End>
+                </Span>
+                <Span color="AttributeValue" multiline="true" ruleSet="EntitySet">
+                    <Begin>'</Begin>
+                    <End>'|(?=&lt;)</End>
+                </Span>
+                <Rule color="AttributeName">[\d\w_\-\.]+(?=(\s*=))</Rule>
+                <Rule color="AttributeValue">=</Rule>
+            </RuleSet>
+        </Span>
+        <Import ruleSet="EntitySet" />
+    </RuleSet>
+
+    <RuleSet name="EntitySet">
+        <Rule color="Entity">
+            &amp;
+            [\w\d\#]+
+            ;
+        </Rule>
+
+        <Rule color="BrokenEntity">
+            &amp;
+            [\w\d\#]*
+        </Rule>
+    </RuleSet>
+</SyntaxDefinition>

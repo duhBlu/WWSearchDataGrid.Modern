@@ -8,7 +8,7 @@ namespace WWControls.Wpf
     public enum EditorButtonShowMode
     {
         /// <summary>
-        /// Sentinel meaning "fall through". On <see cref="BaseEditSettings.EditorButtonShowMode"/>
+        /// Sentinel meaning "fall through". On <see cref="BaseEditorSettings.EditorButtonShowMode"/>
         /// this inherits the value from <see cref="SearchDataGrid.EditorButtonShowMode"/>; on the
         /// grid itself it equals <see cref="ShowOnlyInEditor"/>.
         /// </summary>

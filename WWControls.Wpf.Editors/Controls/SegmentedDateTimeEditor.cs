@@ -12,7 +12,7 @@ using WWControls.Core.Display;
 namespace WWControls.Wpf.Editors
 {
     /// <summary>
-    /// Segmented datetime editor used by <see cref="DateEditSettings"/>. Each format token in
+    /// Segmented datetime editor used by <see cref="DatePickerSettings"/>. Each format token in
     /// the mask (<c>MM</c>, <c>dd</c>, <c>yyyy</c>, <c>hh</c>, <c>mm</c>, <c>ss</c>, <c>tt</c>,
     /// <c>MMM</c>, <c>MMMM</c>, <c>ddd</c>, <c>dddd</c>, etc.) is a discrete section: tab/arrow
     /// navigates between sections, digits / letters overwrite within a section, Ctrl+Up/Down
@@ -213,7 +213,7 @@ namespace WWControls.Wpf.Editors
 
         /// <summary>
         /// Marks this editor as the filter-row instance produced by
-        /// <see cref="DateEditSettings.CreateFilterEditor"/>. Two behaviors flip on:
+        /// <see cref="DatePickerSettings.CreateFilterEditor"/>. Two behaviors flip on:
         /// <list type="bullet">
         ///   <item><see cref="OnTextBoxLoaded"/> skips its <c>Keyboard.Focus</c> hop — the cell-edit
         ///   path needs it to bypass WPF's "focus stays on the cell" quirk, but the filter row

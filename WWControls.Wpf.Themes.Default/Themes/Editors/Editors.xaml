@@ -6,31 +6,34 @@
         ═══════════════════════════════════════════════════════════════════════
         Editors — each editor owns its own chrome
         ═══════════════════════════════════════════════════════════════════════
-        Every editor control carries its own default style + control template: a border
-        (drawn per ShowBorder, an accent edge on focus), background, padding, disabled
-        visual, and the named parts that host its input (PART_TextBox, PART_ComboBox,
-        PART_Editor, PART_CheckBox, plus the spinner's PART_UpButton / PART_DownButton).
+        Every editor control carries its own default style + control template: a two-part
+        border (a top/left/right frame plus a bottom lip, drawn per ShowBorder; the lip
+        accents on focus), background, padding, disabled visual, and the named parts that host
+        its input (PART_TextBox, PART_ComboBox, PART_Editor, PART_CheckBox, plus the spinner's
+        PART_UpButton / PART_DownButton).
 
-        Each style is keyed (EditorThemeKeys.TextEdit / SpinEdit / ComboEdit / DateEdit /
+        Each style is keyed (EditorThemeKeys.TextBox / SpinEdit / ComboEdit / DateEdit /
         CheckEdit) so a consumer can retheme one editor by that key; a paired implicit style
         (grouped at the bottom of this file) is what each control's DefaultStyleKey resolves.
 
-        Border policy:
+        Border policy (matching the primitive TextBox / ComboBox chrome):
         — Bordered by default (standalone use, the edit form).
         — Flat in a grid cell: the control clears ShowBorder when it detects a DataGridCell
           ancestor; the filter row sets ShowBorder=false explicitly.
-        — A 1px #CCCCCC edge when ShowBorder is true, gaining an accent #0078D4 edge on focus.
+        — When ShowBorder is true the chrome is two borders: a #e3e3e3 top/left/right frame
+          (Frame) plus a #bfbfbf bottom lip (Lip) for depth; the lip fills to the #0078D4
+          accent underline while focused.
     -->
 
     <!--
-        WWTextEdit — the text editor's own chrome: border (drawn per ShowBorder, an accent edge on
-        focus), background, padding, disabled visual, hosting the inner PART_TextBox. Flat inside a
-        grid cell (the control clears ShowBorder there), bordered on a form / standalone.
+        WWTextBox — the text editor's own chrome: a two-part border (Frame + focus-accent Lip,
+        drawn per ShowBorder), background, padding, disabled visual, hosting the inner PART_TextBox.
+        Flat inside a grid cell (the control clears ShowBorder there), bordered on a form / standalone.
     -->
-    <Style x:Key="{x:Static sdg:EditorThemeKeys.TextEdit}" TargetType="{x:Type sdg:WWTextEdit}">
+    <Style x:Key="{x:Static sdg:EditorThemeKeys.TextBox}" TargetType="{x:Type sdg:WWTextBox}">
         <Setter Property="Background" Value="#FFFFFF" />
         <Setter Property="Foreground" Value="#1C1C1C" />
-        <Setter Property="BorderBrush" Value="#CCCCCC" />
+        <Setter Property="BorderBrush" Value="#e3e3e3" />
         <Setter Property="BorderThickness" Value="0" />
         <Setter Property="Padding" Value="4,2" />
         <Setter Property="Focusable" Value="True" />
@@ -39,20 +42,18 @@
         <Setter Property="HorizontalContentAlignment" Value="Stretch" />
         <Setter Property="Template">
             <Setter.Value>
-                <ControlTemplate TargetType="{x:Type sdg:WWTextEdit}">
-                    <Border x:Name="ChromeBorder"
-                            Background="{TemplateBinding Background}"
-                            BorderBrush="{TemplateBinding BorderBrush}"
-                            BorderThickness="{TemplateBinding BorderThickness}"
-                            CornerRadius="3"
-                            SnapsToDevicePixels="True">
-                        <!-- Style=null so an ambient implicit TextBox style in the host app can't
-                             add a second border; this editor's chrome owns the border. -->
+                <ControlTemplate TargetType="{x:Type sdg:WWTextBox}">
+                    <Grid x:Name="Root" SnapsToDevicePixels="True">
+                        <!--  Frame — top/left/right only; the bottom edge is the lip below.  -->
+                        <Border x:Name="Frame"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="0"
+                                CornerRadius="3" />
+
                         <TextBox x:Name="PART_TextBox"
-                                 Style="{x:Null}"
                                  Margin="{TemplateBinding Padding}"
                                  BorderThickness="0"
-
                                  Background="Transparent"
                                  Padding="0"
                                  Foreground="{TemplateBinding Foreground}"
@@ -61,20 +62,33 @@
                                  IsReadOnly="{TemplateBinding IsReadOnly}"
                                  TextAlignment="{TemplateBinding TextAlignment}"
                                  Text="{Binding Value, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                    </Border>
+
+                        <!--  Bottom lip — depth cue that becomes the accent underline while focused.  -->
+                        <Border x:Name="Lip"
+                                Background="Transparent"
+                                BorderBrush="#bfbfbf"
+                                BorderThickness="0,0,0,1"
+                                CornerRadius="0,0,4,4"
+                                Height="2"
+                                VerticalAlignment="Bottom"
+                                IsHitTestVisible="False"
+                                Visibility="Collapsed" />
+                    </Grid>
                     <ControlTemplate.Triggers>
                         <Trigger Property="ShowBorder" Value="True">
-                            <Setter TargetName="ChromeBorder" Property="BorderThickness" Value="1" />
+                            <Setter TargetName="Frame" Property="BorderThickness" Value="1,1,1,0" />
+                            <Setter TargetName="Lip" Property="Visibility" Value="Visible" />
                         </Trigger>
                         <MultiTrigger>
                             <MultiTrigger.Conditions>
                                 <Condition Property="ShowBorder" Value="True" />
                                 <Condition Property="IsKeyboardFocusWithin" Value="True" />
                             </MultiTrigger.Conditions>
-                            <Setter TargetName="ChromeBorder" Property="BorderBrush" Value="#0078D4" />
+                            <Setter TargetName="Lip" Property="Background" Value="#0179D4" />
+                            <Setter TargetName="Lip" Property="BorderBrush" Value="#0078D4" />
                         </MultiTrigger>
                         <Trigger Property="IsEnabled" Value="False">
-                            <Setter TargetName="ChromeBorder" Property="Opacity" Value="0.6" />
+                            <Setter TargetName="Root" Property="Opacity" Value="0.6" />
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -83,14 +97,14 @@
     </Style>
 
     <!--
-        WWSpinEdit — its own chrome hosting a right-aligned PART_TextBox and a two-row spinner column
+        WWNumericUpDown — its own chrome hosting a right-aligned PART_TextBox and a two-row spinner column
         (PART_UpButton / PART_DownButton). The button glyph + SpinButton style are applied in code
-        (WWSpinEdit.OnApplyTemplate); Click / increment / clamp logic lives on the control.
+        (WWNumericUpDown.OnApplyTemplate); Click / increment / clamp logic lives on the control.
     -->
-    <Style x:Key="{x:Static sdg:EditorThemeKeys.SpinEdit}" TargetType="{x:Type sdg:WWSpinEdit}">
+    <Style x:Key="{x:Static sdg:EditorThemeKeys.NumericUpDown}" TargetType="{x:Type sdg:WWNumericUpDown}">
         <Setter Property="Background" Value="#FFFFFF" />
         <Setter Property="Foreground" Value="#1C1C1C" />
-        <Setter Property="BorderBrush" Value="#CCCCCC" />
+        <Setter Property="BorderBrush" Value="#e3e3e3" />
         <Setter Property="BorderThickness" Value="0" />
         <Setter Property="Padding" Value="4,2" />
         <Setter Property="Focusable" Value="True" />
@@ -99,23 +113,22 @@
         <Setter Property="HorizontalContentAlignment" Value="Stretch" />
         <Setter Property="Template">
             <Setter.Value>
-                <ControlTemplate TargetType="{x:Type sdg:WWSpinEdit}">
-                    <Border x:Name="ChromeBorder"
-                            Background="{TemplateBinding Background}"
-                            BorderBrush="{TemplateBinding BorderBrush}"
-                            BorderThickness="{TemplateBinding BorderThickness}"
-                            CornerRadius="3"
-                            SnapsToDevicePixels="True">
+                <ControlTemplate TargetType="{x:Type sdg:WWNumericUpDown}">
+                    <Grid x:Name="Root" SnapsToDevicePixels="True">
+                        <!--  Frame — top/left/right only; the bottom edge is the lip below.  -->
+                        <Border x:Name="Frame"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="0"
+                                CornerRadius="3" />
+
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
 
-                            <!-- Style=null so an ambient implicit TextBox style in the host app can't
-                                 add a second border; this editor's chrome owns the border. -->
                             <TextBox x:Name="PART_TextBox"
-                                     Style="{x:Null}"
                                      Grid.Column="0"
                                      Margin="{TemplateBinding Padding}"
                                      BorderThickness="0"
@@ -137,20 +150,33 @@
                                 <RepeatButton x:Name="PART_DownButton" Grid.Row="1" Focusable="False" />
                             </Grid>
                         </Grid>
-                    </Border>
+
+                        <!--  Bottom lip — depth cue that becomes the accent underline while focused.  -->
+                        <Border x:Name="Lip"
+                                Background="Transparent"
+                                BorderBrush="#bfbfbf"
+                                BorderThickness="0,0,0,1"
+                                CornerRadius="0,0,4,4"
+                                Height="2"
+                                VerticalAlignment="Bottom"
+                                IsHitTestVisible="False"
+                                Visibility="Collapsed" />
+                    </Grid>
                     <ControlTemplate.Triggers>
                         <Trigger Property="ShowBorder" Value="True">
-                            <Setter TargetName="ChromeBorder" Property="BorderThickness" Value="1" />
+                            <Setter TargetName="Frame" Property="BorderThickness" Value="1,1,1,0" />
+                            <Setter TargetName="Lip" Property="Visibility" Value="Visible" />
                         </Trigger>
                         <MultiTrigger>
                             <MultiTrigger.Conditions>
                                 <Condition Property="ShowBorder" Value="True" />
                                 <Condition Property="IsKeyboardFocusWithin" Value="True" />
                             </MultiTrigger.Conditions>
-                            <Setter TargetName="ChromeBorder" Property="BorderBrush" Value="#0078D4" />
+                            <Setter TargetName="Lip" Property="Background" Value="#0179D4" />
+                            <Setter TargetName="Lip" Property="BorderBrush" Value="#0078D4" />
                         </MultiTrigger>
                         <Trigger Property="IsEnabled" Value="False">
-                            <Setter TargetName="ChromeBorder" Property="Opacity" Value="0.6" />
+                            <Setter TargetName="Root" Property="Opacity" Value="0.6" />
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -159,30 +185,32 @@
     </Style>
 
     <!--
-        WWComboEdit — its own chrome hosting the flat inner PART_ComboBox. The combo forwards its
+        WWComboBox — its own chrome hosting the flat inner PART_ComboBox. The combo forwards its
         essentials (items, selection, drop-down state) via TemplateBindings; its flat look
         (chevron / popup / item container) is applied from EditComboBox in code
-        (WWComboEdit.OnApplyTemplate), so it stays borderless and this chrome draws the border.
+        (WWComboBox.OnApplyTemplate), so it stays borderless and this chrome draws the border.
     -->
-    <Style x:Key="{x:Static sdg:EditorThemeKeys.ComboEdit}" TargetType="{x:Type sdg:WWComboEdit}">
+    <Style x:Key="{x:Static sdg:EditorThemeKeys.ComboBox}" TargetType="{x:Type sdg:WWComboBox}">
         <Setter Property="Background" Value="#FFFFFF" />
         <Setter Property="Foreground" Value="#1C1C1C" />
-        <Setter Property="BorderBrush" Value="#CCCCCC" />
+        <Setter Property="BorderBrush" Value="#e3e3e3" />
         <Setter Property="BorderThickness" Value="0" />
-        <Setter Property="Padding" Value="4,2" />
+        <Setter Property="Padding" Value="0" />
         <Setter Property="Focusable" Value="True" />
         <Setter Property="IsTabStop" Value="False" />
         <Setter Property="VerticalContentAlignment" Value="Center" />
         <Setter Property="HorizontalContentAlignment" Value="Stretch" />
         <Setter Property="Template">
             <Setter.Value>
-                <ControlTemplate TargetType="{x:Type sdg:WWComboEdit}">
-                    <Border x:Name="ChromeBorder"
-                            Background="{TemplateBinding Background}"
-                            BorderBrush="{TemplateBinding BorderBrush}"
-                            BorderThickness="{TemplateBinding BorderThickness}"
-                            CornerRadius="3"
-                            SnapsToDevicePixels="True">
+                <ControlTemplate TargetType="{x:Type sdg:WWComboBox}">
+                    <Grid x:Name="Root" SnapsToDevicePixels="True">
+                        <!--  Frame — top/left/right only; the bottom edge is the lip below.  -->
+                        <Border x:Name="Frame"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="0"
+                                CornerRadius="3" />
+
                         <ComboBox x:Name="PART_ComboBox"
                                   Margin="{TemplateBinding Padding}"
                                   Background="Transparent"
@@ -194,20 +222,33 @@
                                   SelectedValue="{Binding SelectedValue, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}"
                                   SelectedItem="{Binding SelectedItem, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}"
                                   IsDropDownOpen="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}" />
-                    </Border>
+
+                        <!--  Bottom lip — depth cue that becomes the accent underline while focused.  -->
+                        <Border x:Name="Lip"
+                                Background="Transparent"
+                                BorderBrush="#bfbfbf"
+                                BorderThickness="0,0,0,1"
+                                CornerRadius="0,0,4,4"
+                                Height="2"
+                                VerticalAlignment="Bottom"
+                                IsHitTestVisible="False"
+                                Visibility="Collapsed" />
+                    </Grid>
                     <ControlTemplate.Triggers>
                         <Trigger Property="ShowBorder" Value="True">
-                            <Setter TargetName="ChromeBorder" Property="BorderThickness" Value="1" />
+                            <Setter TargetName="Frame" Property="BorderThickness" Value="1,1,1,0" />
+                            <Setter TargetName="Lip" Property="Visibility" Value="Visible" />
                         </Trigger>
                         <MultiTrigger>
                             <MultiTrigger.Conditions>
                                 <Condition Property="ShowBorder" Value="True" />
                                 <Condition Property="IsKeyboardFocusWithin" Value="True" />
                             </MultiTrigger.Conditions>
-                            <Setter TargetName="ChromeBorder" Property="BorderBrush" Value="#0078D4" />
+                            <Setter TargetName="Lip" Property="Background" Value="#0179D4" />
+                            <Setter TargetName="Lip" Property="BorderBrush" Value="#0078D4" />
                         </MultiTrigger>
                         <Trigger Property="IsEnabled" Value="False">
-                            <Setter TargetName="ChromeBorder" Property="Opacity" Value="0.6" />
+                            <Setter TargetName="Root" Property="Opacity" Value="0.6" />
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -216,14 +257,14 @@
     </Style>
 
     <!--
-        WWDateEdit — its own chrome hosting the segmented date editor (PART_Editor). Forwards the
+        WWDatePicker — its own chrome hosting the segmented date editor (PART_Editor). Forwards the
         date essentials via TemplateBindings; the segmented editor renders flat, so this chrome
         draws the border.
     -->
-    <Style x:Key="{x:Static sdg:EditorThemeKeys.DateEdit}" TargetType="{x:Type sdg:WWDateEdit}">
+    <Style x:Key="{x:Static sdg:EditorThemeKeys.DatePicker}" TargetType="{x:Type sdg:WWDatePicker}">
         <Setter Property="Background" Value="#FFFFFF" />
         <Setter Property="Foreground" Value="#1C1C1C" />
-        <Setter Property="BorderBrush" Value="#CCCCCC" />
+        <Setter Property="BorderBrush" Value="#e3e3e3" />
         <Setter Property="BorderThickness" Value="0" />
         <Setter Property="Padding" Value="4,2" />
         <Setter Property="Focusable" Value="True" />
@@ -232,13 +273,15 @@
         <Setter Property="HorizontalContentAlignment" Value="Stretch" />
         <Setter Property="Template">
             <Setter.Value>
-                <ControlTemplate TargetType="{x:Type sdg:WWDateEdit}">
-                    <Border x:Name="ChromeBorder"
-                            Background="{TemplateBinding Background}"
-                            BorderBrush="{TemplateBinding BorderBrush}"
-                            BorderThickness="{TemplateBinding BorderThickness}"
-                            CornerRadius="3"
-                            SnapsToDevicePixels="True">
+                <ControlTemplate TargetType="{x:Type sdg:WWDatePicker}">
+                    <Grid x:Name="Root" SnapsToDevicePixels="True">
+                        <!--  Frame — top/left/right only; the bottom edge is the lip below.  -->
+                        <Border x:Name="Frame"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="0"
+                                CornerRadius="3" />
+
                         <sdg:SegmentedDateTimeEditor x:Name="PART_Editor"
                                                      Margin="{TemplateBinding Padding}"
                                                      Value="{Binding Value, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}"
@@ -247,20 +290,33 @@
                                                      MinDate="{TemplateBinding MinDate}"
                                                      MaxDate="{TemplateBinding MaxDate}"
                                                      TextAlignment="{TemplateBinding TextAlignment}" />
-                    </Border>
+
+                        <!--  Bottom lip — depth cue that becomes the accent underline while focused.  -->
+                        <Border x:Name="Lip"
+                                Background="Transparent"
+                                BorderBrush="#bfbfbf"
+                                BorderThickness="0,0,0,1"
+                                CornerRadius="0,0,4,4"
+                                Height="2"
+                                VerticalAlignment="Bottom"
+                                IsHitTestVisible="False"
+                                Visibility="Collapsed" />
+                    </Grid>
                     <ControlTemplate.Triggers>
                         <Trigger Property="ShowBorder" Value="True">
-                            <Setter TargetName="ChromeBorder" Property="BorderThickness" Value="1" />
+                            <Setter TargetName="Frame" Property="BorderThickness" Value="1,1,1,0" />
+                            <Setter TargetName="Lip" Property="Visibility" Value="Visible" />
                         </Trigger>
                         <MultiTrigger>
                             <MultiTrigger.Conditions>
                                 <Condition Property="ShowBorder" Value="True" />
                                 <Condition Property="IsKeyboardFocusWithin" Value="True" />
                             </MultiTrigger.Conditions>
-                            <Setter TargetName="ChromeBorder" Property="BorderBrush" Value="#0078D4" />
+                            <Setter TargetName="Lip" Property="Background" Value="#0179D4" />
+                            <Setter TargetName="Lip" Property="BorderBrush" Value="#0078D4" />
                         </MultiTrigger>
                         <Trigger Property="IsEnabled" Value="False">
-                            <Setter TargetName="ChromeBorder" Property="Opacity" Value="0.6" />
+                            <Setter TargetName="Root" Property="Opacity" Value="0.6" />
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -269,12 +325,12 @@
     </Style>
 
     <!--
-        WWCheckEdit — a glyph, not a bordered input: transparent background so the cell's own
+        WWCheckBox — a glyph, not a bordered input: transparent background so the cell's own
         fill / selection shows through, no border. Hosts PART_CheckBox, whose themed look
         (box + check/indeterminate glyphs + the DataGridCell read-only gate) comes from
-        DisplayCheckBox, applied in code (WWCheckEdit.OnApplyTemplate).
+        DisplayCheckBox, applied in code (WWCheckBox.OnApplyTemplate).
     -->
-    <Style x:Key="{x:Static sdg:EditorThemeKeys.CheckEdit}" TargetType="{x:Type sdg:WWCheckEdit}">
+    <Style x:Key="{x:Static sdg:EditorThemeKeys.CheckBox}" TargetType="{x:Type sdg:WWCheckBox}">
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="Focusable" Value="True" />
         <Setter Property="IsTabStop" Value="False" />
@@ -282,7 +338,7 @@
         <Setter Property="VerticalContentAlignment" Value="Center" />
         <Setter Property="Template">
             <Setter.Value>
-                <ControlTemplate TargetType="{x:Type sdg:WWCheckEdit}">
+                <ControlTemplate TargetType="{x:Type sdg:WWCheckBox}">
                     <Border Background="{TemplateBinding Background}" SnapsToDevicePixels="True">
                         <CheckBox x:Name="PART_CheckBox"
                                   HorizontalAlignment="Center"
@@ -300,10 +356,10 @@
         matching implicit style below, which BasedOn's the keyed definition above. Overriding the
         keyed style reskins the editor; the implicit style is only the DefaultStyleKey seam.
     -->
-    <Style TargetType="{x:Type sdg:WWTextEdit}" BasedOn="{StaticResource {x:Static sdg:EditorThemeKeys.TextEdit}}" />
-    <Style TargetType="{x:Type sdg:WWSpinEdit}" BasedOn="{StaticResource {x:Static sdg:EditorThemeKeys.SpinEdit}}" />
-    <Style TargetType="{x:Type sdg:WWComboEdit}" BasedOn="{StaticResource {x:Static sdg:EditorThemeKeys.ComboEdit}}" />
-    <Style TargetType="{x:Type sdg:WWDateEdit}" BasedOn="{StaticResource {x:Static sdg:EditorThemeKeys.DateEdit}}" />
-    <Style TargetType="{x:Type sdg:WWCheckEdit}" BasedOn="{StaticResource {x:Static sdg:EditorThemeKeys.CheckEdit}}" />
+    <Style TargetType="{x:Type sdg:WWTextBox}" BasedOn="{StaticResource {x:Static sdg:EditorThemeKeys.TextBox}}" />
+    <Style TargetType="{x:Type sdg:WWNumericUpDown}" BasedOn="{StaticResource {x:Static sdg:EditorThemeKeys.NumericUpDown}}" />
+    <Style TargetType="{x:Type sdg:WWComboBox}" BasedOn="{StaticResource {x:Static sdg:EditorThemeKeys.ComboBox}}" />
+    <Style TargetType="{x:Type sdg:WWDatePicker}" BasedOn="{StaticResource {x:Static sdg:EditorThemeKeys.DatePicker}}" />
+    <Style TargetType="{x:Type sdg:WWCheckBox}" BasedOn="{StaticResource {x:Static sdg:EditorThemeKeys.CheckBox}}" />
 
 </ResourceDictionary>

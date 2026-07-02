@@ -144,14 +144,14 @@ namespace WWControls.Wpf.Grids
         /// <summary>
         /// Grid-wide default for when a cell click triggers edit. Default is
         /// <see cref="Wpf.EditorShowMode.MouseDownFocused"/> (focus on first click, edit on
-        /// second). Per-editor override via <see cref="BaseEditSettings.EditorShowMode"/>.
+        /// second). Per-editor override via <see cref="BaseEditorSettings.EditorShowMode"/>.
         /// </summary>
         public static readonly DependencyProperty EditorShowModeProperty =
             DependencyProperty.Register(nameof(EditorShowMode), typeof(EditorShowMode), typeof(SearchDataGrid),
                 new PropertyMetadata(EditorShowMode.MouseDownFocused));
 
         /// <summary>
-        /// Grid-wide default for <see cref="BaseEditSettings.EditorButtonShowMode"/> — controls
+        /// Grid-wide default for <see cref="BaseEditorSettings.EditorButtonShowMode"/> — controls
         /// when editor decoration buttons (combo toggle, spinner, calendar dropdown) appear.
         /// </summary>
         public static readonly DependencyProperty EditorButtonShowModeProperty =
@@ -786,7 +786,7 @@ namespace WWControls.Wpf.Grids
         private DataGridCell _pendingEditCell;
 
         /// <summary>
-        /// Arms the one-shot carry flag. Called by <see cref="BaseEditSettings.ExitCellViaArrow"/>
+        /// Arms the one-shot carry flag. Called by <see cref="BaseEditorSettings.ExitCellViaArrow"/>
         /// after committing so arrow nav from an editing cell stays in edit mode at the destination.
         /// </summary>
         public void SetCarryEditStateOnNextFocus() => _carryEditStateOnNextFocus = true;
@@ -870,7 +870,7 @@ namespace WWControls.Wpf.Grids
         /// the editor). The validation edit lock swallows these. Bare Home/End place the caret in
         /// a text editor, so only their Ctrl-modified forms (jump to first/last cell) count as
         /// grid navigation; bare arrows reach the editor and are neutralized at the boundary by
-        /// <see cref="BaseEditSettings.ExitCellViaArrow"/>.
+        /// <see cref="BaseEditorSettings.ExitCellViaArrow"/>.
         /// </summary>
         private static bool IsCellExitNavigationKey(Key key, ModifierKeys mods)
         {
@@ -1433,7 +1433,7 @@ namespace WWControls.Wpf.Grids
             // ComboBox cells: editor is non-editable; type-to-edit can't route into a text field.
             // Let the user press Enter/click to enter edit mode and use arrow/dropdown to pick.
             var descriptor = FindGridColumnDescriptor(cell.Column);
-            if (descriptor?.EditSettings is ComboBoxEditSettings) return;
+            if (descriptor?.EditSettings is ComboBoxSettings) return;
 
             _carryEditStateOnNextFocus = true;
             BeginEdit();

@@ -8,12 +8,7 @@
          styles) is merged first so the per-control dictionaries can reference them. -->
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="pack://application:,,,/WWControls.Wpf.Themes.Default;component/Themes/Primitives/DefaultControls.xaml" />
-        <ResourceDictionary Source="pack://application:,,,/WWControls.Wpf.Themes.Default;component/Themes/Primitives/NumericUpDown.xaml" />
-        <ResourceDictionary Source="pack://application:,,,/WWControls.Wpf.Themes.Default;component/Themes/Primitives/RangeSlider.xaml" />
-        <ResourceDictionary Source="pack://application:,,,/WWControls.Wpf.Themes.Default;component/Themes/Primitives/ReorderableListBox.xaml" />
-        <ResourceDictionary Source="pack://application:,,,/WWControls.Wpf.Themes.Default;component/Themes/Primitives/SearchTextBox.xaml" />
         <ResourceDictionary Source="pack://application:,,,/WWControls.Wpf.Themes.Default;component/Themes/Primitives/StatusIcon.xaml" />
-        <ResourceDictionary Source="pack://application:,,,/WWControls.Wpf.Themes.Default;component/Themes/Primitives/WWColorPicker.xaml" />
         <ResourceDictionary Source="pack://application:,,,/WWControls.Wpf.Themes.Default;component/Themes/Primitives/ContextMenu.xaml" />
         <ResourceDictionary Source="pack://application:,,,/WWControls.Wpf.Themes.Default;component/Themes/Primitives/Window.xaml" />
     </ResourceDictionary.MergedDictionaries>

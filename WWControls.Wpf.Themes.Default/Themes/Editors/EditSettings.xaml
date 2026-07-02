@@ -19,7 +19,7 @@
         display template (and sub-elements like the spin / combo / date drop-down
         buttons) via FrameworkElementFactory and applies one of these styles by
         ComponentResourceKey lookup against EditorThemeKeys; the edit templates
-        host the WWxxxEdit controls, whose chrome is owned by WWBaseEdit. Consumers
+        host the WWxxxEdit controls, whose chrome is owned by WWEditorBase. Consumers
         override at three levels:
 
         1. Per-column DisplayStyle DP on the EditSettings instance
@@ -65,14 +65,14 @@
     </Style>
 
     <!--
-        CheckBox shown in checkbox cells (CheckBoxEditSettings — used as both the cell
-        template and the editing template; see CheckBoxEditSettings.cs). Interactive:
+        CheckBox shown in checkbox cells (CheckBoxSettings — used as both the cell
+        template and the editing template; see CheckBoxSettings.cs). Interactive:
         toggles on click via TwoWay binding without entering edit mode. Focusable=False
         keeps Tab navigation on the cell itself; SearchDataGrid handles Space/Enter on
         the cell to toggle the inner CheckBox.
         
         Read-only handling (block clicks, dim visually, swap cursor) lives in
-        CheckBoxEditSettings.AttachReadOnlyGate. A Style.Triggers DataTrigger bound via
+        CheckBoxSettings.AttachReadOnlyGate. A Style.Triggers DataTrigger bound via
         RelativeSource AncestorType=DataGridCell never fires from a FrameworkElementFactory
         template — the binding silently fails to resolve through the cell's ContentPresenter
         boundary, so the gate is wired in code on Loaded with a DependencyPropertyDescriptor
@@ -242,9 +242,9 @@
     </Style>
 
     <!--
-        Flat ComboBox for ComboBoxEditSettings edit mode. Uses the custom ControlTemplate
+        Flat ComboBox for ComboBoxSettings edit mode. Uses the custom ControlTemplate
         above so Background / BorderBrush / BorderThickness actually take effect. Always
-        borderless — WWComboEdit's own chrome draws the border.
+        borderless — WWComboBox's own chrome draws the border.
     -->
     <Style x:Key="{x:Static sdg:EditorThemeKeys.EditComboBox}" TargetType="{x:Type ComboBox}">
         <!--
@@ -354,9 +354,9 @@
     </Style>
 
     <!--
-        Calendar dropdown ToggleButton for DateEditSettings. Used in BOTH surfaces:
+        Calendar dropdown ToggleButton for DatePickerSettings. Used in BOTH surfaces:
         — SegmentedDateTimeEditor's edit-mode template (functional, opens the popup);
-        — DateEditSettings.CreateDisplayTemplate (visual-only ShowAlways indicator).
+        — DatePickerSettings.CreateDisplayTemplate (visual-only ShowAlways indicator).
         The calendar glyph lives inside this template so overriding the key once retheme both
         surfaces — consumers don't need to touch C# or a parallel display-only key.
     -->
@@ -444,7 +444,7 @@
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type sdg:SegmentedDateTimeEditor}">
                     <!-- Always flat: the segmented editor draws no border of its own. Hosted in
-                         WWDateEdit the chrome draws the border (cell / edit form); in the filter row
+                         WWDatePicker the chrome draws the border (cell / edit form); in the filter row
                          it renders edge-to-edge. -->
                     <Border SnapsToDevicePixels="True">
                         <Grid>
@@ -458,7 +458,7 @@
 
                         <!--
                             Calendar glyph is provided by EditDateDropDownButton's ControlTemplate
-                            so the same icon appears in DateEditSettings's display-mode ShowAlways
+                            so the same icon appears in DatePickerSettings's display-mode ShowAlways
                             indicator without a parallel definition. Override that one style key
                             to retheme the button + icon in both surfaces.
                         -->

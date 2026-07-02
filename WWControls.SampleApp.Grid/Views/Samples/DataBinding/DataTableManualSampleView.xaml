@@ -1,0 +1,55 @@
+<UserControl x:Class="WWControls.SampleApp.Grid.Views.Samples.DataBinding.DataTableManualSampleView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:sdg="http://schemas.wwcontrols.com/wpf"
+             xmlns:sampleControls="clr-namespace:WWControls.SampleApp.Grid.Controls"
+             xmlns:local="clr-namespace:WWControls.SampleApp.Grid.Views.Samples.DataBinding"
+             mc:Ignorable="d">
+    <UserControl.DataContext>
+        <local:DataTableManualSampleViewModel />
+    </UserControl.DataContext>
+
+    <sampleControls:SampleHostControl Sources="{x:Static sampleControls:SampleSources.DataTableManual}">
+        <DockPanel>
+            <TextBlock DockPanel.Dock="Top"
+                       Margin="16,12,16,4"
+                       FontSize="13"
+                       Foreground="#444"
+                       TextWrapping="Wrap">
+                <Run FontWeight="SemiBold" Text="DataTable with manually declared columns" />
+                <LineBreak />
+                <Run Text="Bound via DataView wrapped in ListCollectionView (so SearchDataGrid can apply predicate filters). Includes DBNull values (UnitCost, LastReceived), a computed expression column (ExtendedCost = UnitCost * 0.1), and a column name with a space (Lead Time (Days))." />
+            </TextBlock>
+
+            <sdg:SearchDataGrid x:Name="Grid"
+                                Margin="8,4"
+                                ItemsSource="{Binding VendorTableView}"
+                                AutoGenerateColumns="False"
+                                AllowFilterPopup="False"
+                                CanUserAddRows="False"
+                                CanUserDeleteRows="False"
+                                ShowFilterRow="True"
+                                FilterEditorPlacement="Row"
+                                IsReadOnly="False">
+                <sdg:SearchDataGrid.GridColumns>
+                    <sdg:GridColumn FieldName="ProductId" Header="Product #" Width="90" />
+                    <sdg:GridColumn FieldName="VendorName" Header="Vendor" Width="180" />
+                    <sdg:GridColumn FieldName="PartNumber" Header="Part #" Width="120" />
+                    <sdg:GridColumn FieldName="UnitCost" Header="Unit Cost" Width="100">
+                        <sdg:GridColumn.EditSettings>
+                            <sdg:TextBoxSettings MaskType="Numeric" Mask="C2" UseMaskAsDisplayFormat="True" />
+                        </sdg:GridColumn.EditSettings>
+                    </sdg:GridColumn>
+                    <sdg:GridColumn FieldName="LastReceived" Header="Last Received" Width="130"
+                                    DisplayStringFormat="MM/dd/yyyy" />
+                    <sdg:GridColumn FieldName="InStock" Header="In Stock" Width="90" />
+                    <sdg:GridColumn FieldName="Lead Time (Days)" Header="Lead Time" Width="100" />
+                    <sdg:GridColumn FieldName="ExtendedCost" Header="Extended" Width="120"
+                                    DisplayStringFormat="C2" />
+                </sdg:SearchDataGrid.GridColumns>
+            </sdg:SearchDataGrid>
+        </DockPanel>
+    </sampleControls:SampleHostControl>
+</UserControl>

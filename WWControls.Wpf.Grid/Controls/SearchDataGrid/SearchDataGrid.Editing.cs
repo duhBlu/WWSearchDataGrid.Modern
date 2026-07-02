@@ -208,7 +208,7 @@ namespace WWControls.Wpf.Grids
         /// currently holds an unresolved data-annotation error. Re-evaluated live on every
         /// navigation attempt, so fixing the value — or a runtime change to the bound property —
         /// releases the lock immediately. Consumed by the keyboard / mouse / arrow-exit handlers
-        /// and by <see cref="BaseEditSettings.ExitCellViaArrow"/>.
+        /// and by <see cref="BaseEditorSettings.ExitCellViaArrow"/>.
         /// </summary>
         public bool IsEditLockActive() => TryGetLockedEditingCell(out _);
 

@@ -107,7 +107,7 @@ namespace WWControls.Wpf.Grids
             CoreAnnotations.EditorKind kind = ResolveEditorKind(attrs);
             CoreAnnotations.MaskAttribute mask = attrs.OfType<CoreAnnotations.MaskAttribute>().FirstOrDefault();
 
-            BaseEditSettings settings = CreateEditor(kind);
+            BaseEditorSettings settings = CreateEditor(kind);
 
             if (mask != null)
             {
@@ -117,15 +117,15 @@ namespace WWControls.Wpf.Grids
                 // editor (Spin / ComboBox / CheckBox), the mask is not applicable and is ignored.
                 bool wantsDate = mask.MaskType == MaskType.DateTime;
                 if (settings == null)
-                    settings = wantsDate ? new DateEditSettings() : new TextEditSettings();
+                    settings = wantsDate ? new DatePickerSettings() : new TextBoxSettings();
 
-                if (settings is TextEditSettings textSettings)
+                if (settings is TextBoxSettings textSettings)
                 {
                     textSettings.Mask = mask.Mask;
                     textSettings.MaskType = mask.MaskType;
                     textSettings.UseMaskAsDisplayFormat = mask.UseMaskAsDisplayFormat;
                 }
-                else if (settings is DateEditSettings dateSettings)
+                else if (settings is DatePickerSettings dateSettings)
                 {
                     dateSettings.Mask = mask.Mask;
                     dateSettings.MaskType = mask.MaskType;
@@ -136,7 +136,7 @@ namespace WWControls.Wpf.Grids
             // A ComboBox editor over an enum field self-populates its drop-down from the enum
             // values — the most common smart-combo case. Skipped when the consumer already wired
             // an ItemsSource.
-            if (settings is ComboBoxEditSettings combo && combo.ItemsSource == null)
+            if (settings is ComboBoxSettings combo && combo.ItemsSource == null)
             {
                 Type underlying = Nullable.GetUnderlyingType(column.FieldType) ?? column.FieldType;
                 if (underlying != null && underlying.IsEnum)
@@ -163,13 +163,13 @@ namespace WWControls.Wpf.Grids
             return def?.Editor ?? CoreAnnotations.EditorKind.Default;
         }
 
-        private static BaseEditSettings CreateEditor(CoreAnnotations.EditorKind kind) => kind switch
+        private static BaseEditorSettings CreateEditor(CoreAnnotations.EditorKind kind) => kind switch
         {
-            CoreAnnotations.EditorKind.Text => new TextEditSettings(),
-            CoreAnnotations.EditorKind.CheckBox => new CheckBoxEditSettings(),
-            CoreAnnotations.EditorKind.ComboBox => new ComboBoxEditSettings(),
-            CoreAnnotations.EditorKind.Date => new DateEditSettings(),
-            CoreAnnotations.EditorKind.Spin => new SpinEditSettings(),
+            CoreAnnotations.EditorKind.Text => new TextBoxSettings(),
+            CoreAnnotations.EditorKind.CheckBox => new CheckBoxSettings(),
+            CoreAnnotations.EditorKind.ComboBox => new ComboBoxSettings(),
+            CoreAnnotations.EditorKind.Date => new DatePickerSettings(),
+            CoreAnnotations.EditorKind.Spin => new NumericUpDownSettings(),
             _ => null, // Default → let ColumnDataBase.AutoCreateEditSettings pick by CLR type.
         };
     }

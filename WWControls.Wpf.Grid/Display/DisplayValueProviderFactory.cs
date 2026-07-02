@@ -5,7 +5,7 @@ namespace WWControls.Wpf.Display
     /// <summary>
     /// Creates the appropriate IDisplayValueProvider for a column based on its GridColumn descriptor.
     /// Priority: DisplayMask > DisplayValueConverter > EditSettings mask (UseMaskAsDisplayFormat=true) >
-    /// DisplayStringFormat > ComboBoxEditSettings lookup. Returns null if no display transformation is configured.
+    /// DisplayStringFormat > ComboBoxSettings lookup. Returns null if no display transformation is configured.
     /// </summary>
     internal static class DisplayValueProviderFactory
     {
@@ -28,7 +28,7 @@ namespace WWControls.Wpf.Display
 
             // Priority 3: EditSettings opting into UseMaskAsDisplayFormat. The cell already
             // routes through MaskFormatConverter for display in that case
-            // (Date/TextEditSettings.CreateDisplayTemplate), so the filter chip / filter row /
+            // (Date/TextBoxSettings.CreateDisplayTemplate), so the filter chip / filter row /
             // filter expression need to see the same formatted value to stay consistent.
             // Checked BEFORE DisplayStringFormat because UseMaskAsDisplayFormat=true wins
             // over DisplayStringFormat in the cell template — the filter side must match.
@@ -47,12 +47,12 @@ namespace WWControls.Wpf.Display
             if (!string.IsNullOrEmpty(descriptor.RoundDateDisplayFormat))
                 return new StringFormatDisplayProvider(descriptor.RoundDateDisplayFormat);
 
-            // Priority 5: ComboBoxEditSettings lookup. A column whose editor is a ComboBox with
+            // Priority 5: ComboBoxSettings lookup. A column whose editor is a ComboBox with
             // a DisplayMemberPath wants its filter popup / chips / copy commands to show the
             // display name rather than the raw id (or raw item ToString). Only kicks in when
             // there's actually a translation to do — a string-list ComboBox (no DisplayMember /
             // SelectedValuePath) leaves the value unchanged and gets no provider.
-            if (descriptor.EditSettings is ComboBoxEditSettings comboSettings
+            if (descriptor.EditSettings is ComboBoxSettings comboSettings
                 && !string.IsNullOrEmpty(comboSettings.DisplayMemberPath)
                 && comboSettings.ItemsSource != null)
             {
@@ -74,11 +74,11 @@ namespace WWControls.Wpf.Display
         {
             switch (descriptor.EditSettings)
             {
-                case DateEditSettings dateSettings
+                case DatePickerSettings dateSettings
                     when dateSettings.UseMaskAsDisplayFormat && !string.IsNullOrEmpty(dateSettings.Mask):
                     return (dateSettings.Mask, dateSettings.MaskType);
 
-                case TextEditSettings textSettings
+                case TextBoxSettings textSettings
                     when textSettings.UseMaskAsDisplayFormat && !string.IsNullOrEmpty(textSettings.Mask):
                     return (textSettings.Mask, textSettings.MaskType);
 

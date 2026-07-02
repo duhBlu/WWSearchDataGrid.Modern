@@ -1,0 +1,139 @@
+<UserControl x:Class="WWControls.SampleApp.Editors.Views.Samples.Editors.TextBoxSampleView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:sdg="http://schemas.wwcontrols.com/wpf"
+             xmlns:sampleControls="clr-namespace:WWControls.SampleApp.Editors.Controls"
+             xmlns:local="clr-namespace:WWControls.SampleApp.Editors.Views.Samples.Editors"
+             mc:Ignorable="d">
+    <UserControl.DataContext>
+        <local:TextBoxSampleViewModel />
+    </UserControl.DataContext>
+
+    <sampleControls:SampleHostControl Sources="{x:Static sampleControls:SampleSources.TextBox}">
+        <ScrollViewer Background="#FFFFFF" VerticalScrollBarVisibility="Auto">
+            <StackPanel Margin="24" MaxWidth="620" HorizontalAlignment="Left">
+                <TextBlock FontSize="13" Foreground="#444" TextWrapping="Wrap" Margin="0,0,0,16">
+                    <Run FontWeight="SemiBold" Text="WWTextBox" />
+                    <LineBreak />
+                    <Run Text="The workhorse text editor. WWEditorBase owns the chrome (bordered by default, ShowBorder=false for the flat in-cell look); WWTextBox adds TextAlignment plus the masking engine — MaskType=Simple takes the literal/placeholder grammar, MaskType=Numeric takes standard .NET numeric format strings. Every editor two-way-binds Value to the echo on its right." />
+                </TextBlock>
+
+                <!-- Chrome -->
+                <TextBlock Text="Chrome" FontWeight="SemiBold" Foreground="#222" Margin="0,4,0,8" />
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="170" />
+                        <ColumnDefinition Width="240" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0" Grid.Column="1" Text="Editor" FontWeight="SemiBold" Foreground="#666" Margin="0,0,0,6" />
+                    <TextBlock Grid.Row="0" Grid.Column="2" Text="Bound value" FontWeight="SemiBold" Foreground="#666" Margin="12,0,0,6" />
+
+                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Bordered (default)" VerticalAlignment="Center" Margin="0,4" Foreground="#333" />
+                    <sdg:WWTextBox Grid.Row="1" Grid.Column="1" Height="26" Margin="0,4"
+                                    Value="{Binding BorderedText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                    <TextBlock Grid.Row="1" Grid.Column="2" Text="{Binding BorderedText}" VerticalAlignment="Center" Margin="12,4" Foreground="#0066AA" />
+
+                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Flat (in-cell look)" VerticalAlignment="Center" Margin="0,4" Foreground="#333" />
+                    <sdg:WWTextBox Grid.Row="2" Grid.Column="1" Height="26" Margin="0,4" ShowBorder="False"
+                                    Value="{Binding PlainText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                    <TextBlock Grid.Row="2" Grid.Column="2" Text="{Binding PlainText}" VerticalAlignment="Center" Margin="12,4" Foreground="#0066AA" />
+
+                    <TextBlock Grid.Row="3" Grid.Column="0" Text="Read-only" VerticalAlignment="Center" Margin="0,4" Foreground="#333" />
+                    <sdg:WWTextBox Grid.Row="3" Grid.Column="1" Height="26" Margin="0,4" IsReadOnly="True"
+                                    Value="{Binding ReadOnlyText, Mode=TwoWay}" />
+                    <TextBlock Grid.Row="3" Grid.Column="2" Text="{Binding ReadOnlyText}" VerticalAlignment="Center" Margin="12,4" Foreground="#0066AA" />
+
+                    <TextBlock Grid.Row="4" Grid.Column="0" Text="Right-aligned" VerticalAlignment="Center" Margin="0,4" Foreground="#333" />
+                    <sdg:WWTextBox Grid.Row="4" Grid.Column="1" Height="26" Margin="0,4" TextAlignment="Right"
+                                    Value="{Binding RightAlignedText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                    <TextBlock Grid.Row="4" Grid.Column="2" Text="{Binding RightAlignedText}" VerticalAlignment="Center" Margin="12,4" Foreground="#0066AA" />
+                </Grid>
+
+                <!-- Simple masks: literal/placeholder grammar (0 required digit, L required letter, other chars literals). -->
+                <TextBlock Text="Simple masks (pattern grammar)" FontWeight="SemiBold" Foreground="#222" Margin="0,24,0,8" />
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="170" />
+                        <ColumnDefinition Width="240" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0" Grid.Column="1" Text="Editor" FontWeight="SemiBold" Foreground="#666" Margin="0,0,0,6" />
+                    <TextBlock Grid.Row="0" Grid.Column="2" Text="Bound value" FontWeight="SemiBold" Foreground="#666" Margin="12,0,0,6" />
+
+                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Phone (000) 000-0000" VerticalAlignment="Center" Margin="0,4" Foreground="#333" />
+                    <sdg:WWTextBox Grid.Row="1" Grid.Column="1" Height="26" Margin="0,4"
+                                    Mask="(000) 000-0000"
+                                    Value="{Binding Phone, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                    <TextBlock Grid.Row="1" Grid.Column="2" Text="{Binding Phone}" VerticalAlignment="Center" Margin="12,4" Foreground="#0066AA" />
+
+                    <TextBlock Grid.Row="2" Grid.Column="0" Text="SSN 000-00-0000" VerticalAlignment="Center" Margin="0,4" Foreground="#333" />
+                    <sdg:WWTextBox Grid.Row="2" Grid.Column="1" Height="26" Margin="0,4"
+                                    Mask="000-00-0000"
+                                    Value="{Binding Ssn, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                    <TextBlock Grid.Row="2" Grid.Column="2" Text="{Binding Ssn}" VerticalAlignment="Center" Margin="12,4" Foreground="#0066AA" />
+
+                    <TextBlock Grid.Row="3" Grid.Column="0" Text="Plate LLL-000" VerticalAlignment="Center" Margin="0,4" Foreground="#333" />
+                    <sdg:WWTextBox Grid.Row="3" Grid.Column="1" Height="26" Margin="0,4"
+                                    Mask="LLL-000"
+                                    Value="{Binding Plate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                    <TextBlock Grid.Row="3" Grid.Column="2" Text="{Binding Plate}" VerticalAlignment="Center" Margin="12,4" Foreground="#0066AA" />
+                </Grid>
+
+                <!-- Numeric masks: standard .NET numeric format strings, culture-aware separators. -->
+                <TextBlock Text="Numeric masks (.NET format strings)" FontWeight="SemiBold" Foreground="#222" Margin="0,24,0,8" />
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="170" />
+                        <ColumnDefinition Width="240" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0" Grid.Column="1" Text="Editor" FontWeight="SemiBold" Foreground="#666" Margin="0,0,0,6" />
+                    <TextBlock Grid.Row="0" Grid.Column="2" Text="Bound value" FontWeight="SemiBold" Foreground="#666" Margin="12,0,0,6" />
+
+                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Currency C2" VerticalAlignment="Center" Margin="0,4" Foreground="#333" />
+                    <sdg:WWTextBox Grid.Row="1" Grid.Column="1" Height="26" Margin="0,4"
+                                    MaskType="Numeric" Mask="C2" TextAlignment="Right"
+                                    Value="{Binding Price, Mode=TwoWay}" />
+                    <TextBlock Grid.Row="1" Grid.Column="2" Text="{Binding Price}" VerticalAlignment="Center" Margin="12,4" Foreground="#0066AA" />
+
+                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Percent P0" VerticalAlignment="Center" Margin="0,4" Foreground="#333" />
+                    <sdg:WWTextBox Grid.Row="2" Grid.Column="1" Height="26" Margin="0,4"
+                                    MaskType="Numeric" Mask="P0" TextAlignment="Right"
+                                    Value="{Binding Rate, Mode=TwoWay}" />
+                    <TextBlock Grid.Row="2" Grid.Column="2" Text="{Binding Rate}" VerticalAlignment="Center" Margin="12,4" Foreground="#0066AA" />
+
+                    <TextBlock Grid.Row="3" Grid.Column="0" Text="Fixed-point F2" VerticalAlignment="Center" Margin="0,4" Foreground="#333" />
+                    <sdg:WWTextBox Grid.Row="3" Grid.Column="1" Height="26" Margin="0,4"
+                                    MaskType="Numeric" Mask="F2" TextAlignment="Right"
+                                    Value="{Binding Weight, Mode=TwoWay}" />
+                    <TextBlock Grid.Row="3" Grid.Column="2" Text="{Binding Weight}" VerticalAlignment="Center" Margin="12,4" Foreground="#0066AA" />
+                </Grid>
+            </StackPanel>
+        </ScrollViewer>
+    </sampleControls:SampleHostControl>
+</UserControl>

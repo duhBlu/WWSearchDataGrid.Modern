@@ -7,7 +7,7 @@
 
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Primitives/DefaultControls.xaml" />
-        <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Primitives/SearchTextBox.xaml" />
+        <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Editors/WWSearchTextBox.xaml" />
     </ResourceDictionary.MergedDictionaries>
 
     <!--  Converters  -->
@@ -20,30 +20,30 @@
     <converters:BoolGateConverter x:Key="BoolGateConverter" />
 
     <!--
-        Single SearchTextBox Template. ColumnValueCounts is gated through a MultiFilterElement
+        Single WWSearchTextBox Template. ColumnValueCounts is gated through a MultiFilterElement
         ancestor if one is hosting the template — its ShowCounts DP toggles count display.
         FallbackValue=True means hosts outside a MultiFilterElement (e.g. the default popup
         before the Rules-tab/MultiFilterElement unification, or any consumer that drops this
         template directly) get counts unconditionally, matching the prior shared behavior.
     -->
     <DataTemplate x:Key="SingleSearchTextBoxTemplate">
-        <sdg:SearchTextBox Style="{StaticResource {x:Static sdg:PrimitiveThemeKeys.SearchTextBox}}"
+        <sdg:WWSearchTextBox Style="{StaticResource {x:Static sdg:EditorThemeKeys.SearchTextBox}}"
                            Text="{Binding SelectedValue, UpdateSourceTrigger=LostFocus}"
                            ItemsSource="{Binding SearchTemplateController.DisplayColumnValues}"
                            ShowClearButton="False"
                            ShowToggleButton="True"
                            PreserveValueOnSourceChange="True"
                            Watermark="Enter or select value...">
-            <sdg:SearchTextBox.ColumnValueCounts>
+            <sdg:WWSearchTextBox.ColumnValueCounts>
                 <MultiBinding Converter="{StaticResource BoolGateConverter}">
                     <Binding RelativeSource="{RelativeSource AncestorType={x:Type sdg:MultiFilterElement}}" Path="ShowCounts" FallbackValue="True" />
                     <Binding Path="SearchTemplateController.DisplayColumnValueCounts" UpdateSourceTrigger="PropertyChanged" />
                 </MultiBinding>
-            </sdg:SearchTextBox.ColumnValueCounts>
-        </sdg:SearchTextBox>
+            </sdg:WWSearchTextBox.ColumnValueCounts>
+        </sdg:WWSearchTextBox>
     </DataTemplate>
 
-    <!--  Dual SearchTextBox Template — counts gated by MultiFilterElement.ShowCounts when an ancestor is present (see SingleSearchTextBoxTemplate notes).  -->
+    <!--  Dual WWSearchTextBox Template — counts gated by MultiFilterElement.ShowCounts when an ancestor is present (see SingleSearchTextBoxTemplate notes).  -->
     <DataTemplate x:Key="DualSearchTextBoxTemplate">
         <Grid>
             <Grid.ColumnDefinitions>
@@ -67,8 +67,8 @@
                        Margin="0,0,0,2"
                        FontSize="11" />
 
-            <sdg:SearchTextBox Grid.Column="0" Grid.Row="1"
-                               Style="{StaticResource {x:Static sdg:PrimitiveThemeKeys.SearchTextBox}}"
+            <sdg:WWSearchTextBox Grid.Column="0" Grid.Row="1"
+                               Style="{StaticResource {x:Static sdg:EditorThemeKeys.SearchTextBox}}"
                                Text="{Binding SelectedValue, UpdateSourceTrigger=LostFocus, ValidatesOnDataErrors=True}"
                                HorizontalAlignment="Stretch"
                                ItemsSource="{Binding SearchTemplateController.DisplayColumnValues}"
@@ -76,15 +76,15 @@
                                ShowToggleButton="True"
                                PreserveValueOnSourceChange="True"
                                Watermark="Enter or select...">
-                <sdg:SearchTextBox.ColumnValueCounts>
+                <sdg:WWSearchTextBox.ColumnValueCounts>
                     <MultiBinding Converter="{StaticResource BoolGateConverter}">
                         <Binding RelativeSource="{RelativeSource AncestorType={x:Type sdg:MultiFilterElement}}" Path="ShowCounts" FallbackValue="True" />
                         <Binding Path="SearchTemplateController.DisplayColumnValueCounts" UpdateSourceTrigger="PropertyChanged" />
                     </MultiBinding>
-                </sdg:SearchTextBox.ColumnValueCounts>
-            </sdg:SearchTextBox>
-            <sdg:SearchTextBox Grid.Column="2" Grid.Row="1"
-                               Style="{StaticResource {x:Static sdg:PrimitiveThemeKeys.SearchTextBox}}"
+                </sdg:WWSearchTextBox.ColumnValueCounts>
+            </sdg:WWSearchTextBox>
+            <sdg:WWSearchTextBox Grid.Column="2" Grid.Row="1"
+                               Style="{StaticResource {x:Static sdg:EditorThemeKeys.SearchTextBox}}"
                                Text="{Binding SelectedSecondaryValue, UpdateSourceTrigger=LostFocus, ValidatesOnDataErrors=True}"
                                HorizontalAlignment="Stretch"
                                ItemsSource="{Binding SearchTemplateController.DisplayColumnValues}"
@@ -92,13 +92,13 @@
                                ShowToggleButton="True"
                                PreserveValueOnSourceChange="True"
                                Watermark="Enter or select...">
-                <sdg:SearchTextBox.ColumnValueCounts>
+                <sdg:WWSearchTextBox.ColumnValueCounts>
                     <MultiBinding Converter="{StaticResource BoolGateConverter}">
                         <Binding RelativeSource="{RelativeSource AncestorType={x:Type sdg:MultiFilterElement}}" Path="ShowCounts" FallbackValue="True" />
                         <Binding Path="SearchTemplateController.DisplayColumnValueCounts" UpdateSourceTrigger="PropertyChanged" />
                     </MultiBinding>
-                </sdg:SearchTextBox.ColumnValueCounts>
-            </sdg:SearchTextBox>
+                </sdg:WWSearchTextBox.ColumnValueCounts>
+            </sdg:WWSearchTextBox>
         </Grid>
     </DataTemplate>
 
@@ -144,7 +144,7 @@
     <!--  Numeric UpDown Template  -->
     <DataTemplate x:Key="NumericUpDownTemplate">
         <StackPanel Orientation="Horizontal">
-            <sdg:NumericUpDown Width="80"
+            <sdg:WWNumericUpDown Width="80"
                                Minimum="1"
                                Maximum="10000"
                                Increment="1"
@@ -165,7 +165,7 @@
     </DataTemplate>
 
     <!--
-        SearchTextBox List Template — each value renders as its own row-level pill, with a
+        WWSearchTextBox List Template — each value renders as its own row-level pill, with a
         trailing + button outside the pills. Used by IsAnyOf / IsNoneOf via the
         FilterInputTemplate.SearchTextBoxList enum. The host ValueTokenEditor flattens its
         own outer wrapper in list mode so these pills sit inline with the other row chips.
@@ -194,7 +194,7 @@
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
-                                <sdg:SearchTextBox Style="{StaticResource {x:Static sdg:PrimitiveThemeKeys.SearchTextBox}}"
+                                <sdg:WWSearchTextBox Style="{StaticResource {x:Static sdg:EditorThemeKeys.SearchTextBox}}"
                                                    Grid.Column="0"
                                                    Background="Transparent"
                                                    BorderThickness="0"

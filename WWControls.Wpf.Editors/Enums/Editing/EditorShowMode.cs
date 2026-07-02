@@ -6,7 +6,7 @@ namespace WWControls.Wpf
     public enum EditorShowMode
     {
         /// <summary>
-        /// Sentinel meaning "fall through". On <see cref="BaseEditSettings.EditorShowMode"/> this
+        /// Sentinel meaning "fall through". On <see cref="BaseEditorSettings.EditorShowMode"/> this
         /// inherits the value from <see cref="SearchDataGrid.EditorShowMode"/>; on the grid itself
         /// it equals <see cref="None"/>.
         /// </summary>
@@ -15,7 +15,7 @@ namespace WWControls.Wpf
         /// <summary>
         /// Click-to-edit is disabled. Cells focus on click but never auto-enter edit mode — the
         /// user can still invoke editing explicitly via Enter / F2. Use on a column's
-        /// <see cref="BaseEditSettings.EditorShowMode"/> to opt that one column out when the
+        /// <see cref="BaseEditorSettings.EditorShowMode"/> to opt that one column out when the
         /// grid-wide policy is otherwise.
         /// </summary>
         None,

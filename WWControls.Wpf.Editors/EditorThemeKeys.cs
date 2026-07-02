@@ -18,41 +18,41 @@ namespace WWControls.Wpf.Editors
     public static class EditorThemeKeys
     {
         /// <summary>
-        /// Default style for <see cref="WWTextEdit"/> — the editor's own chrome (border, background,
+        /// Default style for <see cref="WWTextBox"/> — the editor's own chrome (border, background,
         /// padding, focus accent, disabled visual) hosting its inner <c>PART_TextBox</c>. The border
-        /// draws per <see cref="WWBaseEdit.ShowBorder"/>; retheme this key to restyle the text editor.
+        /// draws per <see cref="WWEditorBase.ShowBorder"/>; retheme this key to restyle the text editor.
         /// </summary>
-        public static ComponentResourceKey TextEdit { get; } =
-            new ComponentResourceKey(typeof(EditorThemeKeys), nameof(TextEdit));
+        public static ComponentResourceKey TextBox { get; } =
+            new ComponentResourceKey(typeof(EditorThemeKeys), nameof(TextBox));
 
         /// <summary>
-        /// Default style for <see cref="WWSpinEdit"/> — the editor's own chrome hosting its inner
+        /// Default style for <see cref="WWNumericUpDown"/> — the editor's own chrome hosting its inner
         /// right-aligned <c>PART_TextBox</c> plus the <c>PART_UpButton</c> / <c>PART_DownButton</c>
         /// spinner column.
         /// </summary>
-        public static ComponentResourceKey SpinEdit { get; } =
-            new ComponentResourceKey(typeof(EditorThemeKeys), nameof(SpinEdit));
+        public static ComponentResourceKey NumericUpDown { get; } =
+            new ComponentResourceKey(typeof(EditorThemeKeys), nameof(NumericUpDown));
 
         /// <summary>
-        /// Default style for <see cref="WWComboEdit"/> — the editor's own chrome hosting the flat
+        /// Default style for <see cref="WWComboBox"/> — the editor's own chrome hosting the flat
         /// inner <c>PART_ComboBox</c> (whose own look comes from <see cref="EditComboBox"/>).
         /// </summary>
-        public static ComponentResourceKey ComboEdit { get; } =
-            new ComponentResourceKey(typeof(EditorThemeKeys), nameof(ComboEdit));
+        public static ComponentResourceKey ComboBox { get; } =
+            new ComponentResourceKey(typeof(EditorThemeKeys), nameof(ComboBox));
 
         /// <summary>
-        /// Default style for <see cref="WWDateEdit"/> — the editor's own chrome hosting the segmented
+        /// Default style for <see cref="WWDatePicker"/> — the editor's own chrome hosting the segmented
         /// date editor as <c>PART_Editor</c>.
         /// </summary>
-        public static ComponentResourceKey DateEdit { get; } =
-            new ComponentResourceKey(typeof(EditorThemeKeys), nameof(DateEdit));
+        public static ComponentResourceKey DatePicker { get; } =
+            new ComponentResourceKey(typeof(EditorThemeKeys), nameof(DatePicker));
 
         /// <summary>
-        /// Default style for <see cref="WWCheckEdit"/> — a borderless chrome hosting the interactive
+        /// Default style for <see cref="WWCheckBox"/> — a borderless chrome hosting the interactive
         /// <c>PART_CheckBox</c> (a checkbox is a glyph, so it carries no border).
         /// </summary>
-        public static ComponentResourceKey CheckEdit { get; } =
-            new ComponentResourceKey(typeof(EditorThemeKeys), nameof(CheckEdit));
+        public static ComponentResourceKey CheckBox { get; } =
+            new ComponentResourceKey(typeof(EditorThemeKeys), nameof(CheckBox));
 
         /// <summary>Default style for the read-only TextBlock used by Text / ComboBox / Spin / Date display templates.</summary>
         public static ComponentResourceKey DisplayTextBlock { get; } =
@@ -99,5 +99,17 @@ namespace WWControls.Wpf.Editors
         /// </summary>
         public static ComponentResourceKey SpinButton { get; } =
             new ComponentResourceKey(typeof(EditorThemeKeys), nameof(SpinButton));
+
+        /// <summary>Default style for the <see cref="WWColorPicker"/> swatch + HSV popup editor.</summary>
+        public static ComponentResourceKey ColorPicker { get; } =
+            new ComponentResourceKey(typeof(EditorThemeKeys), nameof(ColorPicker));
+
+        /// <summary>Default style for the <see cref="WWSearchTextBox"/> editor.</summary>
+        public static ComponentResourceKey SearchTextBox { get; } =
+            new ComponentResourceKey(typeof(EditorThemeKeys), nameof(SearchTextBox));
+
+        /// <summary>Default style for the <see cref="WWRangeSlider"/> two-thumb range slider editor.</summary>
+        public static ComponentResourceKey RangeSlider { get; } =
+            new ComponentResourceKey(typeof(EditorThemeKeys), nameof(RangeSlider));
     }
 }

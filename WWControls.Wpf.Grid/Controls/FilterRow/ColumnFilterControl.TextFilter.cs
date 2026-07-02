@@ -124,7 +124,7 @@ namespace WWControls.Wpf.Grids
 
         /// <summary>
         /// Enter/Escape/Tab/arrow handler for the editor produced by
-        /// <see cref="BaseEditSettings.CreateFilterEditor"/> — works across every editor shape.
+        /// <see cref="BaseEditorSettings.CreateFilterEditor"/> — works across every editor shape.
         /// </summary>
         private void OnFilterEditorPreviewKeyDown(object sender, KeyEventArgs e)
         {

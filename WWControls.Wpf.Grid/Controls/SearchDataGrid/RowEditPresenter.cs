@@ -10,7 +10,7 @@ namespace WWControls.Wpf.Grids
     /// <summary>
     /// The bright, column-aligned editor strip shown over a single row while the grid is in
     /// full-row ("edit entire row") edit mode. Hosts one editor per data column — the column's own
-    /// <see cref="BaseEditSettings"/> edit template, bound to <see cref="EditingItem"/> — laid out
+    /// <see cref="BaseEditorSettings"/> edit template, bound to <see cref="EditingItem"/> — laid out
     /// against the grid's live column geometry by the inherited <see cref="ColumnAlignedRowPresenter"/>
     /// (the same alignment engine behind the filter and total-summary rows). A docked action bar
     /// carries the row-scoped Update / Cancel buttons, which call back into the owning
@@ -162,7 +162,7 @@ namespace WWControls.Wpf.Grids
             {
                 var child = VisualTreeHelper.GetChild(root, i);
                 // Known editor types first; then any tab-stoppable Control (covers custom editors
-                // like NumericUpDown / the segmented date editor) — but not the bare focusable
+                // like WWNumericUpDown / the segmented date editor) — but not the bare focusable
                 // containers WPF stamps between the cell and its real input element.
                 if (child is UIElement el && el.Focusable && el.IsEnabled
                     && (el is TextBox || el is ComboBox || el is CheckBox || el is DatePicker

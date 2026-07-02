@@ -264,7 +264,7 @@ namespace WWControls.Wpf
                 double vps = AxisViewportsPerSecond(dx);
                 if (vps != 0)
                 {
-                    accumulatedHorizontal = Math.Clamp(
+                    accumulatedHorizontal = MathCompat.Clamp(
                         accumulatedHorizontal + vps * sv.ViewportWidth * dt, 0, sv.ScrollableWidth);
 
                     // Apply on whole-unit changes only. A fractional ScrollToHorizontalOffset every
@@ -283,7 +283,7 @@ namespace WWControls.Wpf
                 double vps = AxisViewportsPerSecond(dy);
                 if (vps != 0)
                 {
-                    accumulatedVertical = Math.Clamp(
+                    accumulatedVertical = MathCompat.Clamp(
                         accumulatedVertical + vps * sv.ViewportHeight * dt, 0, sv.ScrollableHeight);
 
                     double target = Math.Round(accumulatedVertical);

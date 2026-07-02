@@ -11,7 +11,7 @@
         
         Templates bind the editor's value DP to ColumnFilterControl via RelativeSource
         AncestorType. Text editor binds Text → ColumnFilterControl.SearchText (string).
-        Date / ComboBox / NumericUpDown bind their value DPs → ColumnFilterControl.SearchValue
+        Date / ComboBox / WWNumericUpDown bind their value DPs → ColumnFilterControl.SearchValue
         (object) — the control's filter pipeline treats SearchText as a string fast path
         and SearchValue as the typed-value fast path.
         
@@ -33,7 +33,7 @@
     <BooleanToVisibilityConverter x:Key="FilterRowBooleanToVisibilityConverter" />
 
     <!--
-        Per-column editors are produced by BaseEditSettings.CreateFilterEditor (one method
+        Per-column editors are produced by BaseEditorSettings.CreateFilterEditor (one method
         per EditSettings subtype) — same editor element + keyed theme style the cell editor
         uses, but with its value DP bound to ColumnFilterControl.SearchText / SearchValue /
         FilterCheckboxState instead of a row-item field path.

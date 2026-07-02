@@ -13,7 +13,7 @@ namespace WWControls.Wpf.Editors.Settings
     /// <para>
     /// Bound as a <see cref="MultiBinding"/> with values, in order:
     /// <list type="number">
-    ///   <item>Editor's <see cref="BaseEditSettings.EditorButtonShowMode"/>.</item>
+    ///   <item>Editor's <see cref="BaseEditorSettings.EditorButtonShowMode"/>.</item>
     ///   <item>Grid's <see cref="SearchDataGrid.EditorButtonShowMode"/> (fallback when editor is Default).</item>
     ///   <item><see cref="System.Windows.Controls.DataGridCell.IsKeyboardFocusWithin"/>.</item>
     ///   <item><see cref="System.Windows.Controls.DataGridCell.IsEditing"/>.</item>

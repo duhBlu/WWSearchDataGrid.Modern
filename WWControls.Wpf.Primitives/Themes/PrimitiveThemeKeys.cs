@@ -66,28 +66,12 @@ namespace WWControls.Wpf.Primitives
         public static ComponentResourceKey ToggleButton { get; } =
             new ComponentResourceKey(typeof(PrimitiveThemeKeys), nameof(ToggleButton));
 
-        /// <summary>Default style for the <see cref="WWColorPicker"/> swatch + HSV popup primitive.</summary>
-        public static ComponentResourceKey ColorPicker { get; } =
-            new ComponentResourceKey(typeof(PrimitiveThemeKeys), nameof(ColorPicker));
-
-        /// <summary>Default style for the custom <see cref="Primitives.SearchTextBox"/> primitive.</summary>
-        public static ComponentResourceKey SearchTextBox { get; } =
-            new ComponentResourceKey(typeof(PrimitiveThemeKeys), nameof(SearchTextBox));
-
         /// <summary>
         /// Sdg-themed plain <see cref="System.Windows.Controls.TextBox"/> style — same chrome as
         /// <see cref="ComboBox"/> with an accent underline while focused.
         /// </summary>
         public static ComponentResourceKey TextBox { get; } =
             new ComponentResourceKey(typeof(PrimitiveThemeKeys), nameof(TextBox));
-
-        /// <summary>Default style for the custom <see cref="Primitives.NumericUpDown"/> primitive.</summary>
-        public static ComponentResourceKey NumericUpDown { get; } =
-            new ComponentResourceKey(typeof(PrimitiveThemeKeys), nameof(NumericUpDown));
-
-        /// <summary>Default style for the custom <see cref="Primitives.RangeSlider"/> two-thumb range slider primitive.</summary>
-        public static ComponentResourceKey RangeSlider { get; } =
-            new ComponentResourceKey(typeof(PrimitiveThemeKeys), nameof(RangeSlider));
 
         /// <summary>Default style for the <see cref="StatusIcon"/> status badge primitive.</summary>
         public static ComponentResourceKey StatusIcon { get; } =
