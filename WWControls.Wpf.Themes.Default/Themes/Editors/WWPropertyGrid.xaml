@@ -1,0 +1,348 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sdg="http://schemas.wwcontrols.com/wpf">
+
+    <!--  Self-merged dependencies — DefaultControls brings the shared palette, the Icon primitive,
+          the themed ScrollBar, and the plain TextBox style the search box rides on. StaticResource
+          inside deferred template content only resolves reliably within this dictionary's own merge
+          chain (see WWTextBox.xaml).  -->
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Primitives/DefaultControls.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+
+    <BooleanToVisibilityConverter x:Key="WWPropertyGrid_BoolToVis" />
+
+    <!--  Chooses a custom editor from WWPropertyGrid.EditorDefinitions, else the placeholder below.  -->
+    <sdg:WWPropertyGridEditorSelector x:Key="WWPropertyGrid_EditorSelector" />
+
+    <!--
+        ═══════════════════════════════════════════════════════════════════════════════════════════
+        PLACEHOLDER EDITOR  (fallback for every property without a custom EditorDefinition)
+        ═══════════════════════════════════════════════════════════════════════════════════════════
+        WWPropertyGrid ships with NO built-in per-type editors yet. Consumers supply their own editor
+        templates per property via EditorDefinitions; anything without one lands here as a read-only
+        display of the value.
+
+        TODO: implement built-in typed editors (string / bool / enum / numeric / DateTime) over the
+        WWControls editor controls (WWTextBox, WWCheckBox, WWComboBox, WWNumericUpDown, WWDatePicker),
+        add a keyed DataTemplate per type here, and dispatch to them by property type in
+        WWPropertyGridEditorSelector.SelectTemplate.
+    -->
+    <DataTemplate x:Key="WWPropertyGrid_PlaceholderEditor">
+        <TextBlock Text="{Binding Value, Mode=OneWay}"
+                   Padding="6,2"
+                   VerticalAlignment="Center"
+                   Foreground="#1C1C1C"
+                   TextTrimming="CharacterEllipsis"
+                   ToolTip="No built-in editor yet — supply one via EditorDefinitions." />
+    </DataTemplate>
+
+    <!--
+        ═══════════════════════════════════════════════════════════════════════════════════════════
+        CATEGORY EXPANDER  (one per group)
+        ═══════════════════════════════════════════════════════════════════════════════════════════
+    -->
+    <Style x:Key="WWPropertyGrid_CategoryExpander_Style" TargetType="{x:Type Expander}">
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="IsExpanded" Value="True" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type Expander}">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+
+                        <!--  Category header  -->
+                        <Border x:Name="Header" Background="#F0F0F0" Padding="0,2">
+                            <ToggleButton OverridesDefaultStyle="True"
+                                          Padding="4"
+                                          IsChecked="{Binding Path=IsExpanded, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"
+                                          VerticalAlignment="Center">
+                                <ToggleButton.Template>
+                                    <ControlTemplate TargetType="{x:Type ToggleButton}">
+                                        <Grid Background="Transparent">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="20" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
+                                            <sdg:Icon x:Name="Arrow"
+                                                      Grid.Column="0"
+                                                      IconBrush="#1C1C1C"
+                                                      IconSource="{StaticResource {x:Static sdg:IconKeys.IconCaretRight}}"
+                                                      HorizontalAlignment="Center"
+                                                      VerticalAlignment="Center"
+                                                      Width="8"
+                                                      Height="8" />
+                                            <ContentPresenter Grid.Column="1"
+                                                              RecognizesAccessKey="True"
+                                                              TextElement.FontWeight="Bold"
+                                                              TextElement.Foreground="#1C1C1C" />
+                                        </Grid>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsChecked" Value="True">
+                                                <Setter TargetName="Arrow" Property="IconSource" Value="{StaticResource {x:Static sdg:IconKeys.IconCaretDown}}" />
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </ToggleButton.Template>
+                                <ContentPresenter ContentSource="Header" />
+                            </ToggleButton>
+                        </Border>
+
+                        <!--  Category content  -->
+                        <Border x:Name="Content"
+                                Grid.Row="1"
+                                Background="#FFFFFF"
+                                Visibility="Collapsed"
+                                Padding="0,2,0,4">
+                            <ContentPresenter Focusable="False" />
+                        </Border>
+                    </Grid>
+
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsExpanded" Value="True">
+                            <Setter TargetName="Content" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                        <Trigger SourceName="Header" Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Header" Property="Background" Value="#E8E8E8" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!--  Wraps each category group in the expander above.  -->
+    <Style x:Key="WWPropertyGrid_GroupItemStyle" TargetType="{x:Type GroupItem}">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type GroupItem}">
+                    <Expander Style="{StaticResource WWPropertyGrid_CategoryExpander_Style}"
+                              Header="{Binding Name}"
+                              IsExpanded="True">
+                        <ItemsPresenter />
+                    </Expander>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!--
+        ═══════════════════════════════════════════════════════════════════════════════════════════
+        PROPERTY ROW  (Name | Editor)
+        ═══════════════════════════════════════════════════════════════════════════════════════════
+    -->
+    <DataTemplate x:Key="WWPropertyGrid_ItemTemplate">
+        <Grid x:Name="Root" Background="Transparent" Cursor="Hand" Margin="2,0,2,2">
+            <Grid.InputBindings>
+                <MouseBinding Command="{x:Static sdg:WWPropertyGridCommands.SelectItemCommand}"
+                              CommandParameter="{Binding}"
+                              MouseAction="LeftClick" />
+            </Grid.InputBindings>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="{Binding NameColumnWidth, RelativeSource={RelativeSource AncestorType={x:Type sdg:WWPropertyGrid}}}" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <!--  Name  -->
+            <Border x:Name="NameBorder"
+                    Grid.Column="0"
+                    Background="#FAFAFA"
+                    BorderBrush="#E3E3E3"
+                    BorderThickness="1,1,0,1"
+                    MinHeight="22">
+                <TextBlock Text="{Binding DisplayName}"
+                           Padding="8,2"
+                           VerticalAlignment="Center"
+                           Foreground="#1C1C1C"
+                           TextTrimming="CharacterEllipsis"
+                           ToolTip="{Binding Description}" />
+            </Border>
+
+            <!--  Editor  -->
+            <Border x:Name="EditorBorder"
+                    Grid.Column="1"
+                    Background="#FFFFFF"
+                    BorderBrush="#E3E3E3"
+                    BorderThickness="1"
+                    MinHeight="22">
+                <ContentControl Focusable="False"
+                                VerticalAlignment="Stretch"
+                                Content="{Binding}"
+                                ContentTemplateSelector="{StaticResource WWPropertyGrid_EditorSelector}"
+                                IsTabStop="False" />
+            </Border>
+        </Grid>
+
+        <DataTemplate.Triggers>
+            <!--  Hover  -->
+            <DataTrigger Binding="{Binding IsMouseOver, ElementName=NameBorder}" Value="True">
+                <Setter TargetName="NameBorder" Property="Background" Value="#F0F0F0" />
+                <Setter TargetName="NameBorder" Property="BorderBrush" Value="#D6D6D6" />
+                <Setter TargetName="EditorBorder" Property="BorderBrush" Value="#D6D6D6" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding IsMouseOver, ElementName=EditorBorder}" Value="True">
+                <Setter TargetName="NameBorder" Property="Background" Value="#F0F0F0" />
+                <Setter TargetName="NameBorder" Property="BorderBrush" Value="#D6D6D6" />
+                <Setter TargetName="EditorBorder" Property="BorderBrush" Value="#D6D6D6" />
+            </DataTrigger>
+
+            <!--  Selected  -->
+            <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                <Setter TargetName="NameBorder" Property="Background" Value="#E5F1FB" />
+                <Setter TargetName="NameBorder" Property="BorderBrush" Value="#0078D4" />
+                <Setter TargetName="EditorBorder" Property="BorderBrush" Value="#0078D4" />
+            </DataTrigger>
+        </DataTemplate.Triggers>
+    </DataTemplate>
+
+    <!--
+        ═══════════════════════════════════════════════════════════════════════════════════════════
+        MAIN CONTROL STYLE
+        ═══════════════════════════════════════════════════════════════════════════════════════════
+    -->
+    <Style x:Key="{x:Static sdg:EditorThemeKeys.PropertyGrid}" TargetType="{x:Type sdg:WWPropertyGrid}">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderBrush" Value="#E3E3E3" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type sdg:WWPropertyGrid}">
+                    <Border Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}">
+                        <Grid Background="#FAFAFA" TextElement.Foreground="#1C1C1C">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" MinHeight="40" />
+                            </Grid.RowDefinitions>
+
+                            <!--  Title (hidden by default)  -->
+                            <Border Grid.Row="0"
+                                    Background="#F0F0F0"
+                                    Padding="6,4"
+                                    Visibility="{Binding ShowTitle, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource WWPropertyGrid_BoolToVis}}">
+                                <TextBlock Text="{Binding SelectedObject.GetType.Name, RelativeSource={RelativeSource TemplatedParent}, FallbackValue=''}"
+                                           FontWeight="Bold"
+                                           Foreground="#1C1C1C" />
+                            </Border>
+
+                            <!--  Search box  -->
+                            <Grid Grid.Row="1"
+                                  Margin="4,4,4,2"
+                                  Visibility="{Binding ShowSearchBox, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource WWPropertyGrid_BoolToVis}}">
+                                <TextBox x:Name="PART_FilterBox"
+                                         Style="{StaticResource {x:Static sdg:PrimitiveThemeKeys.TextBox}}"
+                                         Text="{Binding FilterText, RelativeSource={RelativeSource TemplatedParent}, UpdateSourceTrigger=PropertyChanged}" />
+                                <TextBlock IsHitTestVisible="False"
+                                           Margin="8,0,0,0"
+                                           VerticalAlignment="Center"
+                                           Foreground="#999999"
+                                           Text="Search properties...">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding Text, ElementName=PART_FilterBox}" Value="">
+                                                    <Setter Property="Visibility" Value="Visible" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </Grid>
+
+                            <!--  Property list  -->
+                            <ScrollViewer Grid.Row="2"
+                                          Padding="0"
+                                          VerticalScrollBarVisibility="Auto"
+                                          HorizontalScrollBarVisibility="Disabled">
+                                <ItemsControl Background="#FFFFFF"
+                                              Focusable="False"
+                                              ItemsSource="{Binding PropertyItems, RelativeSource={RelativeSource TemplatedParent}}"
+                                              ItemTemplate="{StaticResource WWPropertyGrid_ItemTemplate}"
+                                              IsTabStop="False"
+                                              VirtualizingStackPanel.IsVirtualizing="True"
+                                              VirtualizingStackPanel.VirtualizationMode="Recycling">
+                                    <ItemsControl.GroupStyle>
+                                        <GroupStyle ContainerStyle="{StaticResource WWPropertyGrid_GroupItemStyle}" />
+                                    </ItemsControl.GroupStyle>
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <VirtualizingStackPanel />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                </ItemsControl>
+                            </ScrollViewer>
+
+                            <!--  Shared name/editor column splitter  -->
+                            <Thumb x:Name="PART_ColumnSplitter"
+                                   Grid.Row="2"
+                                   Background="Transparent"
+                                   Focusable="False"
+                                   Cursor="SizeWE"
+                                   HorizontalAlignment="Left"
+                                   VerticalAlignment="Stretch"
+                                   Width="6">
+                                <Thumb.Template>
+                                    <ControlTemplate TargetType="Thumb">
+                                        <Border Background="Transparent" />
+                                    </ControlTemplate>
+                                </Thumb.Template>
+                            </Thumb>
+
+                            <!--  Description splitter  -->
+                            <GridSplitter Grid.Row="3"
+                                          Background="#E3E3E3"
+                                          Cursor="SizeNS"
+                                          HorizontalAlignment="Stretch"
+                                          VerticalAlignment="Center"
+                                          Height="4"
+                                          ResizeDirection="Rows"
+                                          ResizeBehavior="PreviousAndNext" />
+
+                            <!--  Description panel — collapses when nothing is selected  -->
+                            <Border Grid.Row="4"
+                                    Background="#FFFFFF"
+                                    BorderBrush="#E3E3E3"
+                                    BorderThickness="0,1,0,0"
+                                    Padding="6,4"
+                                    MinHeight="40">
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding SelectedPropertyItem, RelativeSource={RelativeSource TemplatedParent}}" Value="{x:Null}">
+                                                <Setter Property="Visibility" Value="Collapsed" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                                <StackPanel>
+                                    <TextBlock Text="{Binding SelectedPropertyItem.DisplayName, RelativeSource={RelativeSource TemplatedParent}}"
+                                               FontWeight="Bold"
+                                               Foreground="#1C1C1C"
+                                               TextTrimming="CharacterEllipsis" />
+                                    <TextBlock Text="{Binding SelectedPropertyItem.Description, RelativeSource={RelativeSource TemplatedParent}}"
+                                               Foreground="#666666"
+                                               Margin="0,2,0,0"
+                                               TextWrapping="Wrap" />
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style TargetType="{x:Type sdg:WWPropertyGrid}" BasedOn="{StaticResource {x:Static sdg:EditorThemeKeys.PropertyGrid}}" />
+
+</ResourceDictionary>

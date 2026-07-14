@@ -45,6 +45,12 @@ namespace WWControls.SampleApp.Editors.Views.Samples.Editors
         private bool _showWeekNumbers;
 
         [ObservableProperty]
+        private bool _disableWeekends;
+
+        [ObservableProperty]
+        private bool _highlightHolidays;
+
+        [ObservableProperty]
         private string _displayFormat;
 
         /// <summary>When on, MinDate/MaxDate clamp the editor to the current calendar year.</summary>

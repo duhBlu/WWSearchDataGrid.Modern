@@ -375,6 +375,8 @@
                                                 <Calendar x:Name="PART_Calendar"
                                                           Grid.Column="1"
                                                           Style="{StaticResource {x:Static sdg:EditorThemeKeys.Calendar}}"
+                                                          sdg:CalendarDecorations.DisableWeekends="{Binding DisableWeekends, RelativeSource={RelativeSource TemplatedParent}}"
+                                                          sdg:CalendarDecorations.HighlightHolidays="{Binding HighlightHolidays, RelativeSource={RelativeSource TemplatedParent}}"
                                                           DisplayDateStart="{Binding MinDate, RelativeSource={RelativeSource TemplatedParent}}"
                                                           DisplayDateEnd="{Binding MaxDate, RelativeSource={RelativeSource TemplatedParent}}" />
                                             </Grid>
@@ -400,6 +402,7 @@
                                                                   Value="{Binding Value, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}"
                                                                   MinDate="{Binding MinDate, RelativeSource={RelativeSource TemplatedParent}}"
                                                                   MaxDate="{Binding MaxDate, RelativeSource={RelativeSource TemplatedParent}}"
+                                                                  DisableWeekends="{Binding DisableWeekends, RelativeSource={RelativeSource TemplatedParent}}"
                                                                   DefaultDate="{Binding DefaultDate, RelativeSource={RelativeSource TemplatedParent}}" />
                                     </Grid>
                                 </DockPanel>

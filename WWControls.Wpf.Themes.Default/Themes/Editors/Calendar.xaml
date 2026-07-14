@@ -8,6 +8,10 @@
         <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Primitives/DefaultControls.xaml" />
     </ResourceDictionary.MergedDictionaries>
 
+    <!--  Resolves a day cell's date (its DataContext) to US federal holiday state — bool for the
+          highlight trigger, holiday name for the tooltip (ConverterParameter=Name).  -->
+    <sdg:UsHolidayConverter x:Key="UsHolidayConverter" />
+
     <!--
         Modernized calendar for the date editor's popup. All four styles are KEYED, never
         implicit — the library must not restyle a consumer app's own Calendars — and are applied
@@ -113,6 +117,16 @@
                         <ContentPresenter x:Name="Content"
                                           HorizontalAlignment="Center"
                                           VerticalAlignment="Center" />
+                        <!--  Federal-holiday accent — a marker dot under the day number, shown by
+                              the HighlightHolidays trigger below.  -->
+                        <Ellipse x:Name="HolidayDot"
+                                 Width="5" Height="5"
+                                 Fill="#E3A008"
+                                 HorizontalAlignment="Center"
+                                 VerticalAlignment="Bottom"
+                                 Margin="0,0,0,2"
+                                 IsHitTestVisible="False"
+                                 Visibility="Collapsed" />
                     </Grid>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
@@ -148,6 +162,18 @@
                             </MultiDataTrigger.Conditions>
                             <Setter Property="Foreground" Value="#E5A0A2" />
                         </MultiDataTrigger>
+                        <!--  Federal-holiday accent. HighlightHolidays inherits down from the
+                              Calendar (set by the editor), and the converter reads the cell's
+                              date; when both hold, show the marker dot and name it in a tooltip.
+                              Highlight only — the day stays selectable.  -->
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding Path=(sdg:CalendarDecorations.HighlightHolidays), RelativeSource={RelativeSource Self}}" Value="True" />
+                                <Condition Binding="{Binding Converter={StaticResource UsHolidayConverter}}" Value="True" />
+                            </MultiDataTrigger.Conditions>
+                            <Setter TargetName="HolidayDot" Property="Visibility" Value="Visible" />
+                            <Setter Property="ToolTip" Value="{Binding Converter={StaticResource UsHolidayConverter}, ConverterParameter=Name}" />
+                        </MultiDataTrigger>
                         <Trigger Property="IsToday" Value="True">
                             <Setter TargetName="TodayRing" Property="Visibility" Value="Visible" />
                             <Setter Property="Foreground" Value="#0078D4" />
@@ -166,6 +192,29 @@
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter TargetName="Content" Property="Opacity" Value="0.4" />
                         </Trigger>
+                        <!--  Weekend disabling. DisableWeekends inherits down from the Calendar
+                              (set by the editor); when on, Saturday / Sunday cells render disabled
+                              and non-interactive. Last in the list so the disabled look wins over
+                              the weekend-red and today styling; the editor also rejects weekend
+                              selections in code to cover keyboard navigation.  -->
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding Path=(sdg:CalendarDecorations.DisableWeekends), RelativeSource={RelativeSource Self}}" Value="True" />
+                                <Condition Binding="{Binding DayOfWeek}" Value="Saturday" />
+                            </MultiDataTrigger.Conditions>
+                            <Setter Property="IsEnabled" Value="False" />
+                            <Setter Property="Foreground" Value="#C4C4C4" />
+                            <Setter TargetName="Content" Property="Opacity" Value="0.4" />
+                        </MultiDataTrigger>
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding Path=(sdg:CalendarDecorations.DisableWeekends), RelativeSource={RelativeSource Self}}" Value="True" />
+                                <Condition Binding="{Binding DayOfWeek}" Value="Sunday" />
+                            </MultiDataTrigger.Conditions>
+                            <Setter Property="IsEnabled" Value="False" />
+                            <Setter Property="Foreground" Value="#C4C4C4" />
+                            <Setter TargetName="Content" Property="Opacity" Value="0.4" />
+                        </MultiDataTrigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>

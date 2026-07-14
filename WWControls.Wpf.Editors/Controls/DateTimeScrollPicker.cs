@@ -82,6 +82,16 @@ namespace WWControls.Wpf.Editors
             DependencyProperty.Register(nameof(Is24Hour), typeof(bool), typeof(DateTimeScrollPicker),
                 new PropertyMetadata(false, OnRangeChanged));
 
+        /// <summary>
+        /// When <c>true</c>, a composed date that lands on Saturday / Sunday snaps to the nearest
+        /// weekday (forward to Monday, falling back to the preceding Friday at the range's upper
+        /// edge) so scrolling can't commit a weekend. Mirrors
+        /// <see cref="SegmentedDateTimeEditor.DisableWeekends"/> for the scroll-list popup.
+        /// </summary>
+        public static readonly DependencyProperty DisableWeekendsProperty =
+            DependencyProperty.Register(nameof(DisableWeekends), typeof(bool), typeof(DateTimeScrollPicker),
+                new PropertyMetadata(false));
+
         public DateTime? Value
         {
             get => (DateTime?)GetValue(ValueProperty);
@@ -122,6 +132,13 @@ namespace WWControls.Wpf.Editors
         {
             get => (bool)GetValue(Is24HourProperty);
             set => SetValue(Is24HourProperty, value);
+        }
+
+        /// <inheritdoc cref="DisableWeekendsProperty"/>
+        public bool DisableWeekends
+        {
+            get => (bool)GetValue(DisableWeekendsProperty);
+            set => SetValue(DisableWeekendsProperty, value);
         }
 
         private static void OnValueChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
@@ -171,6 +188,21 @@ namespace WWControls.Wpf.Editors
 
         /// <summary>The date the columns show right now — <see cref="Value"/>, or the uncommitted starting position.</summary>
         private DateTime AnchorDate() => Value ?? DefaultDate ?? DateTime.Now;
+
+        /// <summary>
+        /// Moves a weekend date to the nearest weekday for <see cref="DisableWeekends"/>: forward
+        /// to Monday, falling back to the preceding Friday when Monday would overshoot
+        /// <see cref="MaxDate"/>. Time-of-day is preserved.
+        /// </summary>
+        private DateTime SnapToWeekday(DateTime dt)
+        {
+            if (dt.DayOfWeek == DayOfWeek.Saturday) dt = dt.AddDays(2);
+            else if (dt.DayOfWeek == DayOfWeek.Sunday) dt = dt.AddDays(1);
+            else return dt;
+
+            if (MaxDate.HasValue && dt > MaxDate.Value) dt = dt.AddDays(-3); // Monday → Friday
+            return dt;
+        }
 
         private void PopulateItemSources()
         {
@@ -273,15 +305,18 @@ namespace WWControls.Wpf.Editors
                     minute = anchor.Minute;
                 }
 
-                var composed = new DateTime(year, month, day, hour, minute, second);
+                var raw = new DateTime(year, month, day, hour, minute, second);
+                var composed = raw;
                 if (MinDate.HasValue && composed < MinDate.Value) composed = MinDate.Value;
                 if (MaxDate.HasValue && composed > MaxDate.Value) composed = MaxDate.Value;
+                if (DisableWeekends) composed = SnapToWeekday(composed);
 
                 Value = composed;
 
-                // If the range clamp moved the date away from the raw column positions, reflect it.
+                // If the range clamp or weekend snap moved the date away from the raw column
+                // positions, reflect it back into the columns.
                 _suppressSync = false;
-                if (composed != new DateTime(year, month, day, hour, minute, second))
+                if (composed != raw)
                     PositionSelectors();
             }
             finally { _suppressSync = false; }

@@ -81,6 +81,14 @@ namespace WWControls.Wpf.Editors
         public static readonly DependencyProperty ShowWeekNumbersProperty =
             DependencyProperty.Register(nameof(ShowWeekNumbers), typeof(bool), typeof(WWDatePicker), new PropertyMetadata(false));
 
+        /// <inheritdoc cref="SegmentedDateTimeEditor.DisableWeekendsProperty"/>
+        public static readonly DependencyProperty DisableWeekendsProperty =
+            DependencyProperty.Register(nameof(DisableWeekends), typeof(bool), typeof(WWDatePicker), new PropertyMetadata(false));
+
+        /// <inheritdoc cref="SegmentedDateTimeEditor.HighlightHolidaysProperty"/>
+        public static readonly DependencyProperty HighlightHolidaysProperty =
+            DependencyProperty.Register(nameof(HighlightHolidays), typeof(bool), typeof(WWDatePicker), new PropertyMetadata(false));
+
         /// <inheritdoc cref="SegmentedDateTimeEditor.DisplayFormatProperty"/>
         public static readonly DependencyProperty DisplayFormatProperty =
             DependencyProperty.Register(nameof(DisplayFormat), typeof(string), typeof(WWDatePicker), new PropertyMetadata(null));
@@ -180,6 +188,20 @@ namespace WWControls.Wpf.Editors
         {
             get => (bool)GetValue(ShowWeekNumbersProperty);
             set => SetValue(ShowWeekNumbersProperty, value);
+        }
+
+        /// <inheritdoc cref="SegmentedDateTimeEditor.DisableWeekends"/>
+        public bool DisableWeekends
+        {
+            get => (bool)GetValue(DisableWeekendsProperty);
+            set => SetValue(DisableWeekendsProperty, value);
+        }
+
+        /// <inheritdoc cref="SegmentedDateTimeEditor.HighlightHolidays"/>
+        public bool HighlightHolidays
+        {
+            get => (bool)GetValue(HighlightHolidaysProperty);
+            set => SetValue(HighlightHolidaysProperty, value);
         }
 
         /// <inheritdoc cref="SegmentedDateTimeEditor.DisplayFormat"/>

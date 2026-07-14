@@ -48,9 +48,15 @@
     <EmbeddedResource Include="Views\Samples\Editors\ColorPickerSampleView.xaml" />
     <EmbeddedResource Include="Views\Samples\Editors\ColorPickerSampleView.xaml.cs" />
     <EmbeddedResource Include="Views\Samples\Editors\ColorPickerSampleViewModel.cs" />
+    <EmbeddedResource Include="Views\Samples\Editors\PropertyGridSampleView.xaml" />
+    <EmbeddedResource Include="Views\Samples\Editors\PropertyGridSampleView.xaml.cs" />
+    <EmbeddedResource Include="Views\Samples\Editors\PropertyGridSampleViewModel.cs" />
     <EmbeddedResource Include="Views\Samples\Buttons\ButtonSampleView.xaml" />
     <EmbeddedResource Include="Views\Samples\Buttons\ButtonSampleView.xaml.cs" />
     <EmbeddedResource Include="Views\Samples\Buttons\ButtonSampleViewModel.cs" />
+    <EmbeddedResource Include="Views\Samples\Trees\TreeViewSampleView.xaml" />
+    <EmbeddedResource Include="Views\Samples\Trees\TreeViewSampleView.xaml.cs" />
+    <EmbeddedResource Include="Views\Samples\Trees\TreeViewSampleViewModel.cs" />
 
     <!-- Custom AvalonEdit syntax highlighting registered at startup; replaces the bundled XML / C# defaults. -->
     <EmbeddedResource Include="Themes\SyntaxHighlighting\CSharp.xshd" />

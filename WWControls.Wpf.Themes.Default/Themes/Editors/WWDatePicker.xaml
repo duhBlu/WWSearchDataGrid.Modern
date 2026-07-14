@@ -52,6 +52,8 @@
                                                      ShowTodayButton="{TemplateBinding ShowTodayButton}"
                                                      ShowNowButton="{TemplateBinding ShowNowButton}"
                                                      ShowWeekNumbers="{TemplateBinding ShowWeekNumbers}"
+                                                     DisableWeekends="{TemplateBinding DisableWeekends}"
+                                                     HighlightHolidays="{TemplateBinding HighlightHolidays}"
                                                      DisplayFormat="{TemplateBinding DisplayFormat}"
                                                      UseMaskAsDisplayFormat="{TemplateBinding UseMaskAsDisplayFormat}" />
 

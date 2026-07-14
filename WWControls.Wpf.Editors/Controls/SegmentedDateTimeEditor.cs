@@ -396,6 +396,27 @@ namespace WWControls.Wpf.Editors
                 new PropertyMetadata(false, OnPopupOptionChanged));
 
         /// <summary>
+        /// When <c>true</c>, Saturday and Sunday can't be selected — the calendar renders weekend
+        /// cells as disabled, and every other commit path (typed entry, segment spin, the scroll
+        /// picker, Today / Now) refuses a weekend result and leaves <see cref="Value"/> unchanged.
+        /// Does not rewrite a bound <see cref="Value"/> that already holds a weekend; it only
+        /// blocks the user from picking one.
+        /// </summary>
+        public static readonly DependencyProperty DisableWeekendsProperty =
+            DependencyProperty.Register(nameof(DisableWeekends), typeof(bool), typeof(SegmentedDateTimeEditor),
+                new PropertyMetadata(false, OnPopupOptionChanged));
+
+        /// <summary>
+        /// When <c>true</c>, the calendar popup accents US federal holidays (see
+        /// <see cref="UsFederalHolidays"/>) with a marker dot and a naming tooltip. Highlight
+        /// only — holiday dates stay selectable. Calendar-mode only (the scroll picker has no
+        /// per-day cell to accent).
+        /// </summary>
+        public static readonly DependencyProperty HighlightHolidaysProperty =
+            DependencyProperty.Register(nameof(HighlightHolidays), typeof(bool), typeof(SegmentedDateTimeEditor),
+                new PropertyMetadata(false));
+
+        /// <summary>
         /// Optional .NET date format string for the unfocused display text. While the editor is
         /// focused, the mask's segment composition always renders; when unfocused with a value,
         /// this format renders instead — unless <see cref="UseMaskAsDisplayFormat"/> forces the
@@ -497,6 +518,20 @@ namespace WWControls.Wpf.Editors
         {
             get => (bool)GetValue(ShowWeekNumbersProperty);
             set => SetValue(ShowWeekNumbersProperty, value);
+        }
+
+        /// <inheritdoc cref="DisableWeekendsProperty"/>
+        public bool DisableWeekends
+        {
+            get => (bool)GetValue(DisableWeekendsProperty);
+            set => SetValue(DisableWeekendsProperty, value);
+        }
+
+        /// <inheritdoc cref="HighlightHolidaysProperty"/>
+        public bool HighlightHolidays
+        {
+            get => (bool)GetValue(HighlightHolidaysProperty);
+            set => SetValue(HighlightHolidaysProperty, value);
         }
 
         /// <inheritdoc cref="DisplayFormatProperty"/>
@@ -652,6 +687,17 @@ namespace WWControls.Wpf.Editors
             // open for the time surface below; date-only picks close immediately.
             if (_suppressPopupSync) return;
             if (_calendar?.SelectedDate is not DateTime picked) return;
+
+            // Weekend guard: the day-button style already renders weekends disabled, but keyboard
+            // navigation can still land a selection on one — reject it and snap the calendar back
+            // to the committed value so Value never picks up a disallowed day.
+            if (!IsDateAllowed(picked))
+            {
+                _suppressPopupSync = true;
+                try { _calendar.SelectedDate = Value?.Date; }
+                finally { _suppressPopupSync = false; }
+                return;
+            }
 
             var time = Value?.TimeOfDay ?? DefaultDate?.TimeOfDay ?? TimeSpan.Zero;
             _suppressPopupSync = true;
@@ -1734,7 +1780,10 @@ namespace WWControls.Wpf.Editors
             var time = IsTimeEditingEnabled
                 ? (Value?.TimeOfDay ?? DefaultDate?.TimeOfDay ?? DateTime.Now.TimeOfDay)
                 : TimeSpan.Zero;
-            Value = ClampToRange(DateTime.Today + time);
+            var candidate = ClampToRange(DateTime.Today + time);
+            // With weekends disabled and today a weekend, "Today" has no valid target — leave the
+            // value untouched rather than commit a day the picker otherwise refuses.
+            if (IsDateAllowed(candidate)) Value = candidate;
             ClosePopup();
         }
 
@@ -1747,9 +1796,12 @@ namespace WWControls.Wpf.Editors
         {
             var now = DateTime.Now;
             now = now.AddTicks(-(now.Ticks % TimeSpan.TicksPerSecond));
-            Value = ClampToRange(HasDateParts
+            var candidate = ClampToRange(HasDateParts
                 ? now
                 : (Value?.Date ?? DefaultDate?.Date ?? DateTime.Today) + now.TimeOfDay);
+            // See OnTodayButtonClick: skip the commit when weekends are disabled and "now" lands
+            // on one (only possible on a date-bearing mask).
+            if (IsDateAllowed(candidate)) Value = candidate;
             ClosePopup();
         }
 
@@ -2100,6 +2152,16 @@ namespace WWControls.Wpf.Editors
 
             if (parsed.HasValue) parsed = ClampToRange(parsed.Value);
 
+            // Weekend guard: a typed / spun date that resolves to a disallowed weekend is treated
+            // like an invalid composite — the display reverts to the committed value rather than
+            // committing the weekend.
+            if (parsed.HasValue && !IsDateAllowed(parsed.Value))
+            {
+                PopulateSegmentsFromValue();
+                RefreshTextBox();
+                return;
+            }
+
             if (parsed.HasValue && parsed.Value != Value)
             {
                 _suppressValueSync = true;
@@ -2126,6 +2188,16 @@ namespace WWControls.Wpf.Editors
             if (MaxDate.HasValue && candidate > MaxDate.Value) return MaxDate.Value;
             return candidate;
         }
+
+        /// <summary>
+        /// Whether <paramref name="candidate"/> may be committed through the picker UI. Blocks
+        /// Saturday / Sunday when <see cref="DisableWeekends"/> is set — the single gate shared by
+        /// the calendar-pick, typed-commit, spin, and Today / Now paths so weekend rejection stays
+        /// consistent no matter how the user drives the editor.
+        /// </summary>
+        private bool IsDateAllowed(DateTime candidate)
+            => !(DisableWeekends
+                 && (candidate.DayOfWeek == DayOfWeek.Saturday || candidate.DayOfWeek == DayOfWeek.Sunday));
 
         /// <summary>
         /// Builds matching (text, format) inputs for <see cref="DateTime.TryParseExact(string, string, IFormatProvider, DateTimeStyles, out DateTime)"/>

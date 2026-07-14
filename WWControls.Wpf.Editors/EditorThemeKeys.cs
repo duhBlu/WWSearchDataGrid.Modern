@@ -184,5 +184,14 @@ namespace WWControls.Wpf.Editors
         /// </summary>
         public static ComponentResourceKey ListBoxItem { get; } =
             new ComponentResourceKey(typeof(EditorThemeKeys), nameof(ListBoxItem));
+
+        /// <summary>
+        /// Default style for <see cref="WWPropertyGrid"/> — the whole property-grid chrome: optional
+        /// title bar, search box, the category-grouped property list with its shared name/editor
+        /// column splitter, and the description panel. Each property row hosts an editor supplied via
+        /// <see cref="WWPropertyGrid.EditorDefinitions"/> (or the read-only placeholder).
+        /// </summary>
+        public static ComponentResourceKey PropertyGrid { get; } =
+            new ComponentResourceKey(typeof(EditorThemeKeys), nameof(PropertyGrid));
     }
 }

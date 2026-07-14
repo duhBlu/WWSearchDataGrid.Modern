@@ -53,10 +53,21 @@ namespace WWControls.SampleApp.Editors.Controls
             "Views/Samples/Editors/ColorPickerSampleView.xaml.cs",
             "Views/Samples/Editors/ColorPickerSampleViewModel.cs");
 
+        public static IReadOnlyList<SampleSourceFile> PropertyGrid { get; } = SampleSourceLoader.LoadFiles(
+            "Views/Samples/Editors/PropertyGridSampleView.xaml",
+            "Views/Samples/Editors/PropertyGridSampleView.xaml.cs",
+            "Views/Samples/Editors/PropertyGridSampleViewModel.cs");
+
         // ── Buttons ──────────────────────────────────────────────────────────
         public static IReadOnlyList<SampleSourceFile> Button { get; } = SampleSourceLoader.LoadFiles(
             "Views/Samples/Buttons/ButtonSampleView.xaml",
             "Views/Samples/Buttons/ButtonSampleView.xaml.cs",
             "Views/Samples/Buttons/ButtonSampleViewModel.cs");
+
+        // ── Trees ────────────────────────────────────────────────────────────
+        public static IReadOnlyList<SampleSourceFile> TreeView { get; } = SampleSourceLoader.LoadFiles(
+            "Views/Samples/Trees/TreeViewSampleView.xaml",
+            "Views/Samples/Trees/TreeViewSampleView.xaml.cs",
+            "Views/Samples/Trees/TreeViewSampleViewModel.cs");
     }
 }

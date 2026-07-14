@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using WWControls.SampleApp.Editors.Views.Samples.Buttons;
 using WWControls.SampleApp.Editors.Views.Samples.Editors;
+using WWControls.SampleApp.Editors.Views.Samples.Trees;
 
 namespace WWControls.SampleApp.Editors.Views.Launcher
 {
@@ -61,6 +62,17 @@ namespace WWControls.SampleApp.Editors.Views.Launcher
                 }),
 
             new SampleCategory(
+                "Property Grid",
+                "The WWPropertyGrid — reflection-driven, category-grouped property editing with per-property editor templates.",
+                new SampleDefinition[]
+                {
+                    new("WWPropertyGrid",
+                        "Reflects a bound object's properties (grouped by [Category], labeled from [DisplayName] / [Description]), with custom editor templates supplied per property via EditorDefinitions and a read-only placeholder for the rest. Includes the search filter, category expanders, resizable name column, and the selected-row description panel.",
+                        new[] { "PropertyGrid", "Reflection", "Editors" },
+                        () => new PropertyGridSampleView()),
+                }),
+
+            new SampleCategory(
                 "Buttons",
                 "The WWButton primitive — one control covering simple, repeat, and toggle behaviors.",
                 new SampleDefinition[]
@@ -69,6 +81,17 @@ namespace WWControls.SampleApp.Editors.Views.Launcher
                         "ButtonKind (Simple / Repeat / Toggle with IsThreeState), Glyph docked on any side, per-instance CornerRadius, and the AsyncDisplayMode wait / wait-cancel wheel driven by an AsyncCommand.",
                         new[] { "Button", "Repeat", "Toggle", "Async" },
                         () => new ButtonSampleView()),
+                }),
+
+            new SampleCategory(
+                "Trees",
+                "The WWTreeView primitive — a themed tree with selection binding, drag-and-drop, and expand/collapse-all.",
+                new SampleDefinition[]
+                {
+                    new("WWTreeView",
+                        "Two-way SelectedObject binding, ExpandOnLoad, per-item expand/collapse buttons (ExpandCollapseButtonMode), the tree-level ExpandAll / CollapseAll commands, and drag-drop reparenting via OnDropCommand (payload is a (target, dragged) tuple; CanExecute rejects illegal moves). Structural roots opt out of dragging through IWWTreeViewDragItem.",
+                        new[] { "Tree", "Selection", "DragDrop", "Expand" },
+                        () => new TreeViewSampleView()),
                 }),
         };
     }

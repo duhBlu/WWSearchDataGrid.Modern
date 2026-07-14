@@ -2,6 +2,29 @@
 
 ## [Unreleased]
 
+### Added — WWDatePicker weekend disabling + US federal holiday highlighting
+- **`DisableWeekends`** (`bool`, default `false`) on `SegmentedDateTimeEditor` / `WWDatePicker` /
+  `DatePickerSettings` blocks Saturday/Sunday selection across every input path: the calendar
+  renders weekend cells disabled, keyboard navigation onto a weekend is rejected in code
+  (`IsDateAllowed` gate), a typed/spun weekend result reverts like an invalid composite, the
+  scroll picker snaps a weekend to the nearest weekday (forward to Monday, back to Friday at the
+  range's upper edge), and Today/Now skip the commit when the current day is a weekend. It never
+  rewrites a bound `Value` that already holds a weekend — it only stops the user picking one.
+- **`HighlightHolidays`** (`bool`, default `false`) accents the eleven US federal holidays in the
+  calendar popup with a marker dot and a tooltip naming the holiday. Highlight only — holiday
+  dates stay selectable; calendar-mode only.
+- **New `UsFederalHolidays`** static helper (Editors assembly) — `IsHoliday(date)` /
+  `GetHolidayName(date)`, computed per year with the federal observance rule (a fixed-date
+  holiday on a weekend also resolves on its observed weekday; Juneteenth from 2021 on), cached
+  per year.
+- **New `CalendarDecorations`** attached properties (`DisableWeekends` / `HighlightHolidays`,
+  both `Inherits`) — the editor sets them on the popup `Calendar` and the keyed `CalendarDayButton`
+  style reads them via self-relative bindings, so an app can drive the same day-cell decoration
+  on its own calendar. New `UsHolidayConverter` maps a day cell's date to holiday bool/name.
+- **`DateTimeScrollPicker`** gained a `DisableWeekends` DP (weekend → weekday snap on commit).
+- **Editors sample app**: DatePicker playground gained `DisableWeekends` / `HighlightHolidays`
+  toggles.
+
 ### Changed — WWReorderableListBox replaced by WWListBox (selection glyphs + built-in reorder)
 - **New `WWListBox`** (Editors assembly) — a general-purpose `ListBox` that absorbs the
   reorderable listbox: the traveling-hole drag engine is unchanged but now an opt-in feature.

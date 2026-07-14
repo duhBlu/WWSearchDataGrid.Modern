@@ -8,6 +8,7 @@
         <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Primitives/StatusIcon.xaml" />
         <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Primitives/WWSpinningWheel.xaml" />
         <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Primitives/WWButton.xaml" />
+        <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Primitives/WWTreeView.xaml" />
         <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Primitives/Window.xaml" />
         <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Grid/Validation/ValidationCellPresenter.xaml" />
         <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Grid/ColumnFilterPopup/ColumnFilterPopup.xaml" />
@@ -32,6 +33,7 @@
         <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Editors/EditSettings.xaml" />
         <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Grid/FilterRow/FilterRow.xaml" />
         <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Editors/WWColorPicker.xaml" />
+        <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Editors/WWPropertyGrid.xaml" />
         <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Grid/Summaries/GroupSummaryEditor.xaml" />
         <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Grid/Summaries/SummaryTextStyleEditor.xaml" />
     </ResourceDictionary.MergedDictionaries>

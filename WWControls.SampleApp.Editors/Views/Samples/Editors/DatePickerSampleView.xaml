@@ -111,6 +111,12 @@
                                       IsChecked="{Binding ShowNowButton, Mode=TwoWay}" />
                             <CheckBox Style="{StaticResource ToggleRow}" Content="ShowWeekNumbers"
                                       IsChecked="{Binding ShowWeekNumbers, Mode=TwoWay}" />
+                            <CheckBox Style="{StaticResource ToggleRow}" Content="DisableWeekends"
+                                      ToolTip="Saturday/Sunday can't be picked — calendar cells disable, typing/spin/scroll/Today reject a weekend result"
+                                      IsChecked="{Binding DisableWeekends, Mode=TwoWay}" />
+                            <CheckBox Style="{StaticResource ToggleRow}" Content="HighlightHolidays"
+                                      ToolTip="Accents US federal holidays in the calendar with a marker dot and a naming tooltip (highlight only)"
+                                      IsChecked="{Binding HighlightHolidays, Mode=TwoWay}" />
                             <CheckBox Style="{StaticResource ToggleRow}" Content="Clamp to this year"
                                       ToolTip="Sets MinDate / MaxDate to Jan 1 – Dec 31 of the current year"
                                       IsChecked="{Binding ClampToThisYear, Mode=TwoWay}" />
@@ -137,6 +143,8 @@
                                           ShowTodayButton="{Binding ShowTodayButton}"
                                           ShowNowButton="{Binding ShowNowButton}"
                                           ShowWeekNumbers="{Binding ShowWeekNumbers}"
+                                          DisableWeekends="{Binding DisableWeekends}"
+                                          HighlightHolidays="{Binding HighlightHolidays}"
                                           MinDate="{Binding MinDate}"
                                           MaxDate="{Binding MaxDate}"
                                           DefaultDate="{Binding DefaultDate}" />

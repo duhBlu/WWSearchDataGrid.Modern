@@ -115,6 +115,16 @@ namespace WWControls.Wpf.Editors.Settings
             DependencyProperty.Register(nameof(ShowWeekNumbers), typeof(bool), typeof(DatePickerSettings),
                 new PropertyMetadata(false));
 
+        /// <inheritdoc cref="SegmentedDateTimeEditor.DisableWeekendsProperty"/>
+        public static readonly DependencyProperty DisableWeekendsProperty =
+            DependencyProperty.Register(nameof(DisableWeekends), typeof(bool), typeof(DatePickerSettings),
+                new PropertyMetadata(false));
+
+        /// <inheritdoc cref="SegmentedDateTimeEditor.HighlightHolidaysProperty"/>
+        public static readonly DependencyProperty HighlightHolidaysProperty =
+            DependencyProperty.Register(nameof(HighlightHolidays), typeof(bool), typeof(DatePickerSettings),
+                new PropertyMetadata(false));
+
         /// <summary>Optional lower bound applied to the calendar popup.</summary>
         public DateTime? MinDate
         {
@@ -211,6 +221,20 @@ namespace WWControls.Wpf.Editors.Settings
         {
             get => (bool)GetValue(ShowWeekNumbersProperty);
             set => SetValue(ShowWeekNumbersProperty, value);
+        }
+
+        /// <inheritdoc cref="SegmentedDateTimeEditor.DisableWeekends"/>
+        public bool DisableWeekends
+        {
+            get => (bool)GetValue(DisableWeekendsProperty);
+            set => SetValue(DisableWeekendsProperty, value);
+        }
+
+        /// <inheritdoc cref="SegmentedDateTimeEditor.HighlightHolidays"/>
+        public bool HighlightHolidays
+        {
+            get => (bool)GetValue(HighlightHolidaysProperty);
+            set => SetValue(HighlightHolidaysProperty, value);
         }
 
         public override DataTemplate CreateDisplayTemplate(IEditorColumn column)
@@ -348,6 +372,8 @@ namespace WWControls.Wpf.Editors.Settings
                 ShowTodayButton = ShowTodayButton,
                 ShowNowButton = ShowNowButton,
                 ShowWeekNumbers = ShowWeekNumbers,
+                DisableWeekends = DisableWeekends,
+                HighlightHolidays = HighlightHolidays,
             };
             if (MinDate.HasValue) editor.MinDate = MinDate.Value;
             if (MaxDate.HasValue) editor.MaxDate = MaxDate.Value;
@@ -389,6 +415,8 @@ namespace WWControls.Wpf.Editors.Settings
             factory.SetValue(WWDatePicker.ShowTodayButtonProperty, ShowTodayButton);
             factory.SetValue(WWDatePicker.ShowNowButtonProperty, ShowNowButton);
             factory.SetValue(WWDatePicker.ShowWeekNumbersProperty, ShowWeekNumbers);
+            factory.SetValue(WWDatePicker.DisableWeekendsProperty, DisableWeekends);
+            factory.SetValue(WWDatePicker.HighlightHolidaysProperty, HighlightHolidays);
 
             // The control decides when an arrow should exit the cell and raises CellExitRequested;
             // the grid-side adapter drives the actual navigation, keeping WWDatePicker /

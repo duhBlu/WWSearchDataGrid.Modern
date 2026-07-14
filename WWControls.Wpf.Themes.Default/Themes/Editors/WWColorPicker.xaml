@@ -170,7 +170,7 @@
     <!--  Main WWColorPicker style  -->
     <Style x:Key="{x:Static sdg:EditorThemeKeys.ColorPicker}" TargetType="{x:Type sdg:WWColorPicker}">
         <Setter Property="Focusable" Value="False" />
-        
+
         <Setter Property="MinHeight" Value="24" />
         <Setter Property="VerticalAlignment" Value="Stretch" />
         <Setter Property="HorizontalContentAlignment" Value="Stretch" />
@@ -186,12 +186,13 @@
                                       Padding="{TemplateBinding Padding}"
                                       HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
                                       IsTabStop="True">
-                            <Grid Margin="-1"  ClipToBounds="True">
+                            <Grid Margin="-1" ClipToBounds="True">
                                 <!--  Color-only display  -->
                                 <Border x:Name="ColorOnly"
                                         Background="{StaticResource WWColorPicker_CheckeredBrush}"
-                                        Margin="2">
-                                    <Rectangle>
+                                        CornerRadius="3"
+                                        Margin="3">
+                                    <Rectangle RadiusX="3" RadiusY="3">
                                         <Rectangle.Fill>
                                             <SolidColorBrush Color="{Binding SelectedColor, RelativeSource={RelativeSource TemplatedParent}}" />
                                         </Rectangle.Fill>
@@ -205,13 +206,13 @@
                                                           Margin="4,0,0,0"
                                                           Spacing="4">
                                         <Border Background="{StaticResource WWColorPicker_CheckeredBrush}"
-                                                BorderThickness="1"
                                                 BorderBrush="#cccccc"
-                                                CornerRadius="4"
+                                                BorderThickness="1"
                                                 Margin="2,4"
                                                 HorizontalAlignment="Left"
-                                                Width="24">
-                                            <Rectangle RadiusX="4" RadiusY="4" >
+                                                Width="24"
+                                                CornerRadius="4">
+                                            <Rectangle RadiusX="4" RadiusY="4">
                                                 <Rectangle.Fill>
                                                     <SolidColorBrush Color="{Binding SelectedColor, RelativeSource={RelativeSource TemplatedParent}}" />
                                                 </Rectangle.Fill>

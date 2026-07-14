@@ -97,6 +97,20 @@ namespace WWControls.Wpf.Primitives
             new ComponentResourceKey(typeof(PrimitiveThemeKeys), nameof(StatusIcon));
 
         /// <summary>
+        /// Default style for the <see cref="Primitives.WWTreeView"/> — a themed tree with two-way
+        /// single-selection binding, drag-and-drop, and expand-all / collapse-all commands.
+        /// </summary>
+        public static ComponentResourceKey WWTreeView { get; } =
+            new ComponentResourceKey(typeof(PrimitiveThemeKeys), nameof(WWTreeView));
+
+        /// <summary>
+        /// Default style for <see cref="Primitives.WWTreeViewItem"/> — the tree container that draws
+        /// the connector lines, hover highlight, and per-item expand/collapse affordances.
+        /// </summary>
+        public static ComponentResourceKey WWTreeViewItem { get; } =
+            new ComponentResourceKey(typeof(PrimitiveThemeKeys), nameof(WWTreeViewItem));
+
+        /// <summary>
         /// Default style for the <see cref="System.Windows.Controls.ContextMenu"/> shell — rounded
         /// white surface with soft border and shadow. Available for consumer-defined context menus.
         /// </summary>
