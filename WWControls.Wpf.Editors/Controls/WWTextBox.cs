@@ -96,14 +96,6 @@ namespace WWControls.Wpf.Editors
             base.OnApplyTemplate();
             _textBox = GetTemplateChild(PartTextBox) as TextBox;
 
-            // Give the inner text box the library's flat editor style, set explicitly so it can't
-            // pick up an ambient implicit TextBox style from the host app (which would draw a second
-            // border inside this editor's chrome). It must be unconditional: an applied implicit
-            // style leaves Style non-null, so a "Style == null" guard would skip ours and let the
-            // host's win. The editor's chrome owns the border; the inner box stays flat.
-            if (_textBox != null && TryFindResource(EditorThemeKeys.EditTextBox) is Style flatStyle)
-                _textBox.Style = flatStyle;
-
             ApplyMask();
         }
 

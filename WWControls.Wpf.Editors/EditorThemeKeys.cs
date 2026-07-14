@@ -34,11 +34,20 @@ namespace WWControls.Wpf.Editors
             new ComponentResourceKey(typeof(EditorThemeKeys), nameof(NumericUpDown));
 
         /// <summary>
-        /// Default style for <see cref="WWComboBox"/> — the editor's own chrome hosting the flat
-        /// inner <c>PART_ComboBox</c> (whose own look comes from <see cref="EditComboBox"/>).
+        /// Default style for <see cref="WWComboBox"/> — a single self-contained template owning
+        /// every part (chrome frame, selection box, editable text, chevron, popup).
         /// </summary>
         public static ComponentResourceKey ComboBox { get; } =
             new ComponentResourceKey(typeof(EditorThemeKeys), nameof(ComboBox));
+
+        /// <summary>
+        /// Default style for <see cref="WWComboBoxItem"/> — the container <see cref="WWComboBox"/>
+        /// generates for its popup rows: dropdown-row visuals plus the selection glyph column
+        /// (checkbox / radio per <see cref="WWComboBox.SelectionMode"/>) and the built-in
+        /// highlight rendering used during incremental filtering.
+        /// </summary>
+        public static ComponentResourceKey ComboBoxItem { get; } =
+            new ComponentResourceKey(typeof(EditorThemeKeys), nameof(ComboBoxItem));
 
         /// <summary>
         /// Default style for <see cref="WWDatePicker"/> — the editor's own chrome hosting the segmented
@@ -73,7 +82,12 @@ namespace WWControls.Wpf.Editors
         public static ComponentResourceKey EditTextBox { get; } =
             new ComponentResourceKey(typeof(EditorThemeKeys), nameof(EditTextBox));
 
-        /// <summary>Default style for the flat ComboBox used by the combo editor's edit template.</summary>
+        /// <summary>
+        /// Default style for a flat, borderless stock <see cref="System.Windows.Controls.ComboBox"/> —
+        /// used by the filter row's combo editor and available for consumer combos that should match
+        /// the editors' flat look. (<see cref="WWComboBox"/> no longer hosts one; its template is
+        /// self-contained under <see cref="ComboBox"/>.)
+        /// </summary>
         public static ComponentResourceKey EditComboBox { get; } =
             new ComponentResourceKey(typeof(EditorThemeKeys), nameof(EditComboBox));
 
@@ -94,6 +108,50 @@ namespace WWControls.Wpf.Editors
             new ComponentResourceKey(typeof(EditorThemeKeys), nameof(EditComboBoxDropDownButton));
 
         /// <summary>
+        /// Text-only style for the nested <see cref="SegmentedDateTimeEditor"/> that edits the
+        /// time-of-day inside the date editor's calendar popup. Its template is just the masked
+        /// <c>PART_TextBox</c> — no calendar, dropdown button, or popup — which is also what stops
+        /// the popup-hosting default template from recursing into itself.
+        /// </summary>
+        public static ComponentResourceKey SegmentedTimeEditor { get; } =
+            new ComponentResourceKey(typeof(EditorThemeKeys), nameof(SegmentedTimeEditor));
+
+        /// <summary>
+        /// Default style for the footer Buttons (Today / Clear) in the date editor's popup.
+        /// </summary>
+        public static ComponentResourceKey DatePickerPopupButton { get; } =
+            new ComponentResourceKey(typeof(EditorThemeKeys), nameof(DatePickerPopupButton));
+
+        /// <summary>
+        /// Modernized style for the <see cref="System.Windows.Controls.Calendar"/> inside the date
+        /// editor's popup. Keyed (not implicit) so consumer apps' calendars are untouched; it wires
+        /// the <see cref="CalendarItem"/> / <see cref="CalendarDayButton"/> /
+        /// <see cref="CalendarButton"/> keys below through the Calendar's style properties.
+        /// </summary>
+        public static ComponentResourceKey Calendar { get; } =
+            new ComponentResourceKey(typeof(EditorThemeKeys), nameof(Calendar));
+
+        /// <summary>
+        /// Style for the calendar's month/year chrome — header button, chevron navigation, the
+        /// day-title row, and the month / year view grids.
+        /// </summary>
+        public static ComponentResourceKey CalendarItem { get; } =
+            new ComponentResourceKey(typeof(EditorThemeKeys), nameof(CalendarItem));
+
+        /// <summary>
+        /// Style for a day cell in the calendar's month view — hover, accent-filled selection,
+        /// today ring, faded adjacent-month days, blacked-out days.
+        /// </summary>
+        public static ComponentResourceKey CalendarDayButton { get; } =
+            new ComponentResourceKey(typeof(EditorThemeKeys), nameof(CalendarDayButton));
+
+        /// <summary>
+        /// Style for a month / year cell in the calendar's zoomed-out views.
+        /// </summary>
+        public static ComponentResourceKey CalendarButton { get; } =
+            new ComponentResourceKey(typeof(EditorThemeKeys), nameof(CalendarButton));
+
+        /// <summary>
         /// Default style for the up/down RepeatButtons used by the spin editor's display and edit
         /// templates. The button's Content is rendered as a Fluent-icon glyph by the style's template.
         /// </summary>
@@ -111,5 +169,20 @@ namespace WWControls.Wpf.Editors
         /// <summary>Default style for the <see cref="WWRangeSlider"/> two-thumb range slider editor.</summary>
         public static ComponentResourceKey RangeSlider { get; } =
             new ComponentResourceKey(typeof(EditorThemeKeys), nameof(RangeSlider));
+
+        /// <summary>
+        /// Default style for <see cref="WWListBox"/> — list chrome plus the built-in reorder
+        /// defaults (animation duration, ghost opacity).
+        /// </summary>
+        public static ComponentResourceKey ListBox { get; } =
+            new ComponentResourceKey(typeof(EditorThemeKeys), nameof(ListBox));
+
+        /// <summary>
+        /// Default style for <see cref="WWListBoxItem"/> — the container <see cref="WWListBox"/>
+        /// generates for its rows: row visuals plus the selection glyph column (checkbox / radio
+        /// per <see cref="WWListBox.ItemKind"/>), lit by IsSelected.
+        /// </summary>
+        public static ComponentResourceKey ListBoxItem { get; } =
+            new ComponentResourceKey(typeof(EditorThemeKeys), nameof(ListBoxItem));
     }
 }

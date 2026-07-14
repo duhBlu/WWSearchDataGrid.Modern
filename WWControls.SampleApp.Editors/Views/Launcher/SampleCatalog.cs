@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using WWControls.SampleApp.Editors.Views.Samples.Buttons;
 using WWControls.SampleApp.Editors.Views.Samples.Editors;
 
 namespace WWControls.SampleApp.Editors.Views.Launcher
@@ -47,6 +48,22 @@ namespace WWControls.SampleApp.Editors.Views.Launcher
                         "Boolean editor — two-state, three-state (nullable), and read-only. A glyph control, so it stays flat regardless of ShowBorder.",
                         new[] { "Check", "ThreeState" },
                         () => new CheckBoxSampleView()),
+
+                    new("WWListBox",
+                        "List control — SelectionMode (Single / Multiple click-toggle / Extended Ctrl+Shift), ItemKind selection glyphs (Default / Checked / Radio), and built-in drag reordering via AllowReorder with the traveling-hole animation.",
+                        new[] { "List", "Selection", "Reorder" },
+                        () => new ListBoxSampleView()),
+                }),
+
+            new SampleCategory(
+                "Buttons",
+                "The WWButton primitive — one control covering simple, repeat, and toggle behaviors.",
+                new SampleDefinition[]
+                {
+                    new("WWButton",
+                        "ButtonKind (Simple / Repeat / Toggle with IsThreeState), Glyph docked on any side, per-instance CornerRadius, and the AsyncDisplayMode wait / wait-cancel wheel driven by an AsyncCommand.",
+                        new[] { "Button", "Repeat", "Toggle", "Async" },
+                        () => new ButtonSampleView()),
                 }),
         };
     }

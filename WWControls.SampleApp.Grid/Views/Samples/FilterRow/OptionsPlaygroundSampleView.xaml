@@ -175,11 +175,12 @@
                             <sdg:SimpleStackPanel Margin="4" Orientation="Vertical" Spacing="6">
                                 <TextBlock FontSize="11" Foreground="#666" TextWrapping="Wrap"
                                            Text="Drag rows to reorder Tab traversal. Reordering assigns explicit NavigationIndex values (0, 1, 2, …) — columns with explicit indices are visited first, ascending. Click Reset to clear every NavigationIndex back to -1 (natural display order)." />
-                                <sdg:WWReorderableListBox x:Name="NavigationOrderListBox"
-                                                        ItemsSource="{Binding NavigationOrder}"
-                                                        ItemReordered="OnNavigationOrderItemReordered"
-                                                        MaxHeight="200">
-                                    <sdg:WWReorderableListBox.ItemTemplate>
+                                <sdg:WWListBox x:Name="NavigationOrderListBox"
+                                             ItemsSource="{Binding NavigationOrder}"
+                                             AllowReorder="True"
+                                             ItemReordered="OnNavigationOrderItemReordered"
+                                             MaxHeight="200">
+                                    <sdg:WWListBox.ItemTemplate>
                                         <DataTemplate>
                                             <Grid>
                                                 <Grid.ColumnDefinitions>
@@ -202,8 +203,8 @@
                                                 </Border>
                                             </Grid>
                                         </DataTemplate>
-                                    </sdg:WWReorderableListBox.ItemTemplate>
-                                </sdg:WWReorderableListBox>
+                                    </sdg:WWListBox.ItemTemplate>
+                                </sdg:WWListBox>
                                 <Button Content="Reset to natural order"
                                         HorizontalAlignment="Left"
                                         Command="{Binding ResetNavigationOrderCommand}" />

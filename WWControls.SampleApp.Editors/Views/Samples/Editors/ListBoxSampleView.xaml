@@ -1,0 +1,134 @@
+<UserControl x:Class="WWControls.SampleApp.Editors.Views.Samples.Editors.ListBoxSampleView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:sdg="http://schemas.wwcontrols.com/wpf"
+             xmlns:sampleControls="clr-namespace:WWControls.SampleApp.Editors.Controls"
+             xmlns:local="clr-namespace:WWControls.SampleApp.Editors.Views.Samples.Editors"
+             mc:Ignorable="d">
+    <UserControl.DataContext>
+        <local:ListBoxSampleViewModel />
+    </UserControl.DataContext>
+
+    <UserControl.Resources>
+        <Style x:Key="Caption" TargetType="TextBlock">
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="#444" />
+            <Setter Property="Margin" Value="0,0,0,4" />
+        </Style>
+        <Style x:Key="OptionLabel" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="Foreground" Value="#666" />
+            <Setter Property="Margin" Value="0,0,0,3" />
+        </Style>
+        <Style x:Key="Hint" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="Foreground" Value="#888" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="Margin" Value="0,2,0,0" />
+        </Style>
+        <Style x:Key="BoundValue" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Foreground" Value="#0066AA" />
+            <Setter Property="Margin" Value="0,6,0,0" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+        </Style>
+        <Style x:Key="ToggleRow" BasedOn="{StaticResource {x:Static sdg:PrimitiveThemeKeys.CheckBox}}" TargetType="CheckBox">
+            <Setter Property="Margin" Value="0,0,0,8" />
+            <Setter Property="Foreground" Value="#333" />
+        </Style>
+        <Style x:Key="OptionCombo" TargetType="{x:Type sdg:WWComboBox}" BasedOn="{StaticResource {x:Static sdg:EditorThemeKeys.ComboBox}}">
+            <Setter Property="Height" Value="26" />
+            <Setter Property="Margin" Value="0,0,0,10" />
+        </Style>
+    </UserControl.Resources>
+
+    <sampleControls:SampleHostControl Sources="{x:Static sampleControls:SampleSources.ListBox}">
+        <ScrollViewer Background="#FFFFFF" VerticalScrollBarVisibility="Auto">
+            <StackPanel Margin="24" MaxWidth="760" HorizontalAlignment="Left">
+                <TextBlock FontSize="13" Foreground="#444" TextWrapping="Wrap" Margin="0,0,0,16">
+                    <Run FontWeight="SemiBold" Text="WWListBox" />
+                    <LineBreak />
+                    <Run Text="List control with the platform's selection behaviors, a selection-glyph item surface, and built-in drag reordering. SelectionMode picks how clicks select; ItemKind picks how selection reads (row highlight, checkbox, or radio dot); AllowReorder turns on the traveling-hole drag engine. Flip the options on the left — they all drive the demo list live." />
+                </TextBlock>
+
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="230" />
+                        <ColumnDefinition Width="24" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <!--  Options — every control here drives the demo list on the right.  -->
+                    <Border Grid.Column="0"
+                            Background="#FAFAFA"
+                            BorderBrush="#E3E3E3"
+                            BorderThickness="1"
+                            CornerRadius="6"
+                            Padding="14"
+                            VerticalAlignment="Top">
+                        <StackPanel>
+                            <TextBlock Style="{StaticResource Caption}" Text="Options" Margin="0,0,0,10" />
+
+                            <TextBlock Style="{StaticResource OptionLabel}" Text="SelectionMode" />
+                            <sdg:WWComboBox Style="{StaticResource OptionCombo}"
+                                            ItemsSource="{Binding SelectionModes}"
+                                            SelectedItem="{Binding SelectionMode, Mode=TwoWay}" />
+
+                            <TextBlock Style="{StaticResource OptionLabel}" Text="ItemKind" />
+                            <sdg:WWComboBox Style="{StaticResource OptionCombo}"
+                                            ItemsSource="{Binding ItemKinds}"
+                                            SelectedItem="{Binding ItemKind, Mode=TwoWay}" />
+
+                            <CheckBox Style="{StaticResource ToggleRow}" Content="AllowReorder"
+                                      ToolTip="Drag rows to reorder — a bitmap ghost follows the pointer while the other rows slide around the vacated slot"
+                                      IsChecked="{Binding AllowReorder, Mode=TwoWay}" />
+
+                            <TextBlock Style="{StaticResource OptionLabel}" Text="ReorderAnimationDuration (ms)" />
+                            <sdg:WWNumericUpDown Height="26"
+                                                 Minimum="0"
+                                                 Maximum="1000"
+                                                 Increment="50"
+                                                 Value="{Binding ReorderAnimationDuration, Mode=TwoWay}" />
+                        </StackPanel>
+                    </Border>
+
+                    <!--  The demo list.  -->
+                    <StackPanel Grid.Column="2">
+                        <TextBlock Style="{StaticResource Caption}" Text="List" />
+                        <sdg:WWListBox x:Name="DemoListBox"
+                                       MaxHeight="320"
+                                       HorizontalAlignment="Stretch"
+                                       ItemsSource="{Binding Items}"
+                                       SelectionMode="{Binding SelectionMode}"
+                                       ItemKind="{Binding ItemKind}"
+                                       AllowReorder="{Binding AllowReorder}"
+                                       ReorderAnimationDuration="{Binding ReorderAnimationDuration}"
+                                       SelectionChanged="OnDemoSelectionChanged"
+                                       ItemReordered="OnDemoItemReordered" />
+                        <TextBlock Style="{StaticResource BoundValue}" Text="{Binding SelectionSummary}" />
+                        <TextBlock Style="{StaticResource BoundValue}" Text="{Binding LastReorder}" />
+
+                        <TextBlock Style="{StaticResource Hint}" Margin="0,14,0,0">
+                            <Run FontWeight="SemiBold" Text="SelectionMode:" />
+                            <Run Text="Single keeps exactly one row selected. Multiple toggles rows with a plain click — click to select, click again to deselect, no modifier keys. Extended is the classic explorer feel — click replaces the selection, Ctrl+click toggles one row, Shift+click selects the range." />
+                        </TextBlock>
+                        <TextBlock Style="{StaticResource Hint}">
+                            <Run FontWeight="SemiBold" Text="ItemKind:" />
+                            <Run Text="purely visual — Default reads selection as the row highlight, Checked puts a checkbox on every row, Radio a radio dot, both lit by the row's IsSelected. Pair Checked with Multiple for a check-list and Radio with Single for an option list; the two properties stay independent either way." />
+                        </TextBlock>
+                        <TextBlock Style="{StaticResource Hint}">
+                            <Run FontWeight="SemiBold" Text="Reordering:" />
+                            <Run Text="drag a row and the list opens a traveling hole — the dragged row keeps its layout slot (hidden), a snapshot ghost follows the pointer, and the other rows slide between slots. Dragging near the top or bottom edge auto-scrolls. Escape cancels; the ItemReordered event reports the move and the consumer applies it to the data source." />
+                        </TextBlock>
+                        <TextBlock Style="{StaticResource Hint}">
+                            <Run FontWeight="SemiBold" Text="Virtualization:" />
+                            <Run Text="the drag engine needs every container realized, so WWListBox defaults VirtualizingPanel.IsVirtualizing to false and forces pixel scrolling. For a large list that never reorders, opt virtualization back in from XAML." />
+                        </TextBlock>
+                    </StackPanel>
+                </Grid>
+            </StackPanel>
+        </ScrollViewer>
+    </sampleControls:SampleHostControl>
+</UserControl>

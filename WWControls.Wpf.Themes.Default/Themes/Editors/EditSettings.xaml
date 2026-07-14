@@ -9,6 +9,8 @@
     -->
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Primitives/DefaultControls.xaml" />
+        <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Editors/EditorParts.xaml" />
+        <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Editors/Calendar.xaml" />
     </ResourceDictionary.MergedDictionaries>
 
     <!--
@@ -64,187 +66,18 @@
         <Setter Property="TextAlignment" Value="Right" />
     </Style>
 
-    <!--
-        CheckBox shown in checkbox cells (CheckBoxSettings — used as both the cell
-        template and the editing template; see CheckBoxSettings.cs). Interactive:
-        toggles on click via TwoWay binding without entering edit mode. Focusable=False
-        keeps Tab navigation on the cell itself; SearchDataGrid handles Space/Enter on
-        the cell to toggle the inner CheckBox.
-        
-        Read-only handling (block clicks, dim visually, swap cursor) lives in
-        CheckBoxSettings.AttachReadOnlyGate. A Style.Triggers DataTrigger bound via
-        RelativeSource AncestorType=DataGridCell never fires from a FrameworkElementFactory
-        template — the binding silently fails to resolve through the cell's ContentPresenter
-        boundary, so the gate is wired in code on Loaded with a DependencyPropertyDescriptor
-        listening on DataGridCell.IsReadOnly.
-    -->
-    <Style x:Key="{x:Static sdg:EditorThemeKeys.DisplayCheckBox}" TargetType="{x:Type CheckBox}">
-        <Setter Property="HorizontalAlignment" Value="Center" />
-        <Setter Property="VerticalAlignment" Value="Center" />
-        <Setter Property="Focusable" Value="False" />
-        <Setter Property="Foreground" Value="#1C1C1C" />
-        <Setter Property="Background" Value="#FFFFFF" />
-        <Setter Property="BorderBrush" Value="#AAAAAA" />
-        <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="FontSize" Value="12" />
-        <Setter Property="Cursor" Value="Hand" />
-        <Setter Property="Padding" Value="6,0,0,0" />
-        <Setter Property="Template">
-            <Setter.Value>
-                <ControlTemplate TargetType="{x:Type CheckBox}">
-                    <Grid Background="Transparent">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-
-                        <Border x:Name="Box"
-                                Grid.Column="0"
-                                Background="{TemplateBinding Background}"
-                                BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="{TemplateBinding BorderThickness}"
-                                VerticalAlignment="Center"
-                                Width="16"
-                                Height="16"
-                                CornerRadius="3">
-                            <Grid>
-                                <sdg:Icon x:Name="CheckGlyph"
-                                             Opacity="0"
-                                             HorizontalAlignment="Center"
-                                             VerticalAlignment="Center"
-                                             Width="10"
-                                             Height="10"
-                                             StrokeThickness="3"
-                                             IconSource="{StaticResource {x:Static sdg:IconKeys.IconCheck}}"
-                                             IconBrush="White" />
-                                <sdg:Icon x:Name="IndeterminateGlyph"
-                                             Opacity="0"
-                                             HorizontalAlignment="Center"
-                                             VerticalAlignment="Center"
-                                             Width="10"
-                                             Height="10"
-                                             IconBrush="#FFFFFF"
-                                             IconSource="{StaticResource {x:Static sdg:IconKeys.IconCheckIntermediate}}" />
-                            </Grid>
-                        </Border>
-
-                        <ContentPresenter Grid.Column="1"
-                                          Margin="{TemplateBinding Padding}"
-                                          HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                          VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
-                                          RecognizesAccessKey="True" />
-                    </Grid>
-                    <ControlTemplate.Triggers>
-                        <Trigger Property="IsChecked" Value="True">
-                            <Setter TargetName="Box" Property="Background" Value="#0078D4" />
-                            <Setter TargetName="Box" Property="BorderThickness" Value="0" />
-                            <Setter TargetName="Box" Property="Padding" Value="1" />
-                            <Setter TargetName="CheckGlyph" Property="Opacity" Value="1" />
-                        </Trigger>
-                        <Trigger Property="IsChecked" Value="{x:Null}">
-                            <Setter TargetName="Box" Property="Background" Value="#0078D4" />
-                            <Setter TargetName="Box" Property="BorderThickness" Value="0" />
-                            <Setter TargetName="Box" Property="Padding" Value="1" />
-                            <Setter TargetName="IndeterminateGlyph" Property="Opacity" Value="1" />
-                        </Trigger>
-                        <MultiTrigger>
-                            <MultiTrigger.Conditions>
-                                <Condition Property="IsMouseOver" Value="True" />
-                                <Condition Property="IsChecked" Value="False" />
-                            </MultiTrigger.Conditions>
-                            <Setter TargetName="Box" Property="BorderBrush" Value="#0078D4" />
-                        </MultiTrigger>
-                        <MultiTrigger>
-                            <MultiTrigger.Conditions>
-                                <Condition Property="IsMouseOver" Value="True" />
-                                <Condition Property="IsChecked" Value="True" />
-                            </MultiTrigger.Conditions>
-                            <Setter TargetName="Box" Property="Background" Value="#005A9E" />
-                        </MultiTrigger>
-                        <Trigger Property="IsEnabled" Value="False">
-                            <Setter Property="Foreground" Value="#999999" />
-                            <Setter TargetName="Box" Property="Background" Value="#F5F5F5" />
-                            <Setter TargetName="Box" Property="BorderBrush" Value="#CCCCCC" />
-                            <Setter Property="Cursor" Value="Arrow" />
-                        </Trigger>
-                    </ControlTemplate.Triggers>
-                </ControlTemplate>
-            </Setter.Value>
-        </Setter>
-        <Style.Triggers>
-            <DataTrigger Binding="{Binding IsReadOnly, RelativeSource={RelativeSource AncestorType={x:Type DataGridCell}}}" Value="True">
-                <Setter Property="IsHitTestVisible" Value="False" />
-                <Setter Property="Opacity" Value="0.8" />
-                <Setter Property="Cursor" Value="Arrow" />
-            </DataTrigger>
-            <DataTrigger Binding="{Binding IsReadOnly, RelativeSource={RelativeSource AncestorType={x:Type DataGrid}}}" Value="True">
-                <Setter Property="IsHitTestVisible" Value="False" />
-                <Setter Property="Opacity" Value="0.8" />
-                <Setter Property="Cursor" Value="Arrow" />
-            </DataTrigger>
-        </Style.Triggers>
-    </Style>
 
     <!--#endregion-->
 
     <!--#region Edit element styles-->
 
-    <!--
-        Flat inner text input hosted inside an editor's chrome (the segmented date editor's
-        PART_TextBox). Always borderless — the editor control's own chrome draws the border,
-        so this inner element never draws one of its own.
-    -->
-    <Style x:Key="{x:Static sdg:EditorThemeKeys.EditTextBox}" TargetType="{x:Type TextBox}">
-        <Setter Property="Background" Value="#FFFFFF" />
-        <Setter Property="Foreground" Value="#1C1C1C" />
-        <Setter Property="BorderThickness" Value="0" />
-        <Setter Property="Padding" Value="4,2,4,2" />
-        <Setter Property="VerticalContentAlignment" Value="Center" />
-        <Setter Property="VerticalAlignment" Value="Stretch" />
-        <Setter Property="HorizontalAlignment" Value="Stretch" />
-    </Style>
+
 
     <!--
-        Chevron drop-down button used inside the EditComboBox ControlTemplate. Must be
-        declared BEFORE EditComboBox (which references it via StaticResource) so the
-        forward-reference doesn't fail in any XAML-loader path. WPF generally tolerates
-        forward StaticResource references inside Style.Setters (resolution is deferred),
-        but the rule is unreliable across BAML / runtime / debugger combinations — most
-        visibly breaking the ComboBox chevron in dynamically-instantiated hosts (the
-        filter-row's per-column ColumnFilterControl is one such host). Backward order is
-        the dependable form.
-    -->
-    <Style x:Key="{x:Static sdg:EditorThemeKeys.EditComboBoxDropDownButton}" TargetType="{x:Type ToggleButton}">
-        <Setter Property="Background" Value="Transparent" />
-        <Setter Property="BorderThickness" Value="0" />
-        <Setter Property="Padding" Value="4,0,9,0" />
-        <Setter Property="Focusable" Value="False" />
-        <Setter Property="Foreground" Value="#1C1C1C" />
-        <Setter Property="VerticalAlignment" Value="Center" />
-        <Setter Property="Template">
-            <Setter.Value>
-                <ControlTemplate TargetType="{x:Type ToggleButton}">
-                    <Border x:Name="MainBorder"
-                            Background="{TemplateBinding Background}"
-                            SnapsToDevicePixels="True">
-                        <TextBlock Foreground="{TemplateBinding Foreground}"
-                                   Text="&#xE70D;"
-                                   IsHitTestVisible="False"
-                                   Margin="{TemplateBinding Padding}"
-                                   HorizontalAlignment="Center"
-                                   VerticalAlignment="Center"
-                                   FontFamily="Segoe Fluent Icons"
-                                   FontSize="10" />
-                    </Border>
-                </ControlTemplate>
-            </Setter.Value>
-        </Setter>
-    </Style>
-
-    <!--
-        Flat ComboBox for ComboBoxSettings edit mode. Uses the custom ControlTemplate
-        above so Background / BorderBrush / BorderThickness actually take effect. Always
-        borderless — WWComboBox's own chrome draws the border.
+        Flat, borderless stock ComboBox — used by the filter row's combo editor
+        (ComboBoxSettings.CreateFilterEditor) and available to consumer combos that should
+        match the editors' flat look. WWComboBox's own self-contained
+        template lives in WWComboBox.xaml.
     -->
     <Style x:Key="{x:Static sdg:EditorThemeKeys.EditComboBox}" TargetType="{x:Type ComboBox}">
         <!--
@@ -395,30 +228,30 @@
     </Style>
 
 
-    <Style x:Key="{x:Static sdg:EditorThemeKeys.SpinButton}" TargetType="{x:Type RepeatButton}">
+
+    <!--#endregion-->
+
+    <!--#region SegmentedDateTimeEditor-->
+
+    <!--
+        Footer Buttons (Today / Clear) in the date editor's popup. Visibility is driven from code
+        (ShowTodayButton / ShowClearButton + AllowNullInput); this key owns only the look.
+    -->
+    <Style x:Key="{x:Static sdg:EditorThemeKeys.DatePickerPopupButton}" TargetType="{x:Type Button}">
         <Setter Property="Background" Value="Transparent" />
-        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="Foreground" Value="#0066AA" />
         <Setter Property="BorderThickness" Value="0" />
-        <Setter Property="Foreground" Value="#1C1C1C" />
-        <Setter Property="Padding" Value="0" />
+        <Setter Property="Padding" Value="10,3" />
         <Setter Property="Focusable" Value="False" />
-        <Setter Property="Width" Value="16" />
-        <Setter Property="Height" Value="9" />
         <Setter Property="Template">
             <Setter.Value>
-                <ControlTemplate TargetType="{x:Type RepeatButton}">
+                <ControlTemplate TargetType="{x:Type Button}">
                     <Border x:Name="MainBorder"
                             Background="{TemplateBinding Background}"
-                            BorderBrush="{TemplateBinding BorderBrush}"
-                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="3"
+                            Padding="{TemplateBinding Padding}"
                             SnapsToDevicePixels="True">
-                        <TextBlock Foreground="{TemplateBinding Foreground}"
-                                   Text="{TemplateBinding Content}"
-                                   IsHitTestVisible="False"
-                                   HorizontalAlignment="Center"
-                                   VerticalAlignment="Center"
-                                   FontFamily="Segoe Fluent Icons"
-                                   FontSize="8" />
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
@@ -433,9 +266,32 @@
         </Setter>
     </Style>
 
-    <!--#endregion-->
-
-    <!--#region SegmentedDateTimeEditor-->
+    <!--
+        Text-only SegmentedDateTimeEditor — the nested time-of-day editor inside the calendar
+        popup. Just the masked TextBox: no dropdown button, no popup, no calendar. Besides being
+        the right chrome for an inline time field, the missing popup is what keeps the default
+        template below from recursing (a SegmentedDateTimeEditor whose template contains a
+        SegmentedDateTimeEditor with the same template would instantiate forever).
+    -->
+    <Style x:Key="{x:Static sdg:EditorThemeKeys.SegmentedTimeEditor}" TargetType="{x:Type sdg:SegmentedDateTimeEditor}">
+        <Setter Property="IsTabStop" Value="False" />
+        <Setter Property="Focusable" Value="True" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type sdg:SegmentedDateTimeEditor}">
+                    <Border Background="#FFFFFF"
+                            BorderBrush="#CCCCCC"
+                            BorderThickness="1"
+                            CornerRadius="3"
+                            Padding="4,2"
+                            SnapsToDevicePixels="True">
+                        <TextBox x:Name="PART_TextBox"
+                                 Style="{StaticResource {x:Static sdg:EditorThemeKeys.EditTextBox}}" />
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
 
     <Style TargetType="{x:Type sdg:SegmentedDateTimeEditor}">
         <Setter Property="IsTabStop" Value="False" />
@@ -478,14 +334,148 @@
                                     BorderBrush="#CCCCCC"
                                     BorderThickness="1"
                                     SnapsToDevicePixels="True">
-                                <Calendar x:Name="PART_Calendar"
-                                          SelectedDate="{Binding Value, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}"
-                                          DisplayDateStart="{Binding MinDate, RelativeSource={RelativeSource TemplatedParent}}"
-                                          DisplayDateEnd="{Binding MaxDate, RelativeSource={RelativeSource TemplatedParent}}" />
+                                <DockPanel Margin="4">
+                                    <!-- Shared footer: Today / Clear. Both start collapsed; code
+                                         shows them per ShowTodayButton / ShowClearButton (+
+                                         AllowNullInput for Clear). -->
+                                    <StackPanel x:Name="FooterPanel"
+                                                DockPanel.Dock="Bottom"
+                                                Orientation="Horizontal"
+                                                HorizontalAlignment="Right"
+                                                Margin="0,4,0,0">
+                                        <Button x:Name="PART_TodayButton"
+                                                Style="{StaticResource {x:Static sdg:EditorThemeKeys.DatePickerPopupButton}}"
+                                                Content="Today"
+                                                Visibility="Collapsed"
+                                                Margin="0,0,4,0" />
+                                        <Button x:Name="PART_NowButton"
+                                                Style="{StaticResource {x:Static sdg:EditorThemeKeys.DatePickerPopupButton}}"
+                                                Content="Now"
+                                                Visibility="Collapsed"
+                                                Margin="0,0,4,0" />
+                                        <Button x:Name="PART_ClearButton"
+                                                Style="{StaticResource {x:Static sdg:EditorThemeKeys.DatePickerPopupButton}}"
+                                                Content="Clear"
+                                                Visibility="Collapsed" />
+                                    </StackPanel>
+
+                                    <Grid>
+                                        <!-- Calendar surface: optional week-number strip + month
+                                             view + optional time row. -->
+                                        <StackPanel x:Name="CalendarHost">
+                                            <Grid x:Name="CalendarRow">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <Canvas x:Name="PART_WeekNumbers"
+                                                        Width="20"
+                                                        Visibility="Collapsed"
+                                                        ClipToBounds="False" />
+                                                <Calendar x:Name="PART_Calendar"
+                                                          Grid.Column="1"
+                                                          Style="{StaticResource {x:Static sdg:EditorThemeKeys.Calendar}}"
+                                                          DisplayDateStart="{Binding MinDate, RelativeSource={RelativeSource TemplatedParent}}"
+                                                          DisplayDateEnd="{Binding MaxDate, RelativeSource={RelativeSource TemplatedParent}}" />
+                                            </Grid>
+                                            <!-- Time-of-day row: a text-only segmented editor whose
+                                                 mask/value wiring lives in code. -->
+                                            <DockPanel x:Name="TimeRow"
+                                                       Margin="4,2,4,2"
+                                                       Visibility="Collapsed">
+                                                <TextBlock Text="Time:"
+                                                           DockPanel.Dock="Left"
+                                                           VerticalAlignment="Center"
+                                                           Foreground="#666666"
+                                                           Margin="0,0,6,0" />
+                                                <sdg:SegmentedDateTimeEditor x:Name="PART_TimeEditor"
+                                                                             Style="{StaticResource {x:Static sdg:EditorThemeKeys.SegmentedTimeEditor}}" />
+                                            </DockPanel>
+                                        </StackPanel>
+
+                                        <!-- Scroll-list surface: looping month / day / year (+ time)
+                                             columns. Column configuration comes from code. -->
+                                        <sdg:DateTimeScrollPicker x:Name="PART_ScrollPicker"
+                                                                  Visibility="Collapsed"
+                                                                  Value="{Binding Value, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}"
+                                                                  MinDate="{Binding MinDate, RelativeSource={RelativeSource TemplatedParent}}"
+                                                                  MaxDate="{Binding MaxDate, RelativeSource={RelativeSource TemplatedParent}}"
+                                                                  DefaultDate="{Binding DefaultDate, RelativeSource={RelativeSource TemplatedParent}}" />
+                                    </Grid>
+                                </DockPanel>
                             </Border>
                         </Popup>
                         </Grid>
                     </Border>
+                    <ControlTemplate.Triggers>
+                        <!-- Scroll-list mode swaps the popup surface. -->
+                        <Trigger Property="PopupMode" Value="ScrollList">
+                            <Setter TargetName="CalendarHost" Property="Visibility" Value="Collapsed" />
+                            <Setter TargetName="PART_ScrollPicker" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                        <!-- Calendar mode with time editing: show the time row under the month view. -->
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="PopupMode" Value="Calendar" />
+                                <Condition Property="IsTimeEditingEnabled" Value="True" />
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="TimeRow" Property="Visibility" Value="Visible" />
+                        </MultiTrigger>
+                        <!-- Time-only mask: the calendar row is meaningless; the popup is just the
+                             time surface. -->
+                        <Trigger Property="HasDateParts" Value="False">
+                            <Setter TargetName="CalendarRow" Property="Visibility" Value="Collapsed" />
+                        </Trigger>
+                        <Trigger Property="ShowWeekNumbers" Value="True">
+                            <Setter TargetName="PART_WeekNumbers" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!--#endregion-->
+
+    <!--#region DateTimeScrollPicker-->
+
+    <Style TargetType="{x:Type sdg:DateTimeScrollPicker}">
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type sdg:DateTimeScrollPicker}">
+                    <StackPanel Orientation="Horizontal" Margin="4">
+                        <sdg:WWLoopingSelector x:Name="PART_MonthSelector"
+                                               Height="120" ItemHeight="24" Margin="2,0" />
+                        <sdg:WWLoopingSelector x:Name="PART_DaySelector"
+                                               Height="120" ItemHeight="24" MinWidth="34" Margin="2,0" />
+                        <sdg:WWLoopingSelector x:Name="PART_YearSelector"
+                                               Height="120" ItemHeight="24" Margin="2,0" />
+                        <Border x:Name="TimeSeparator" Width="1" Background="#DDDDDD" Margin="4,8" />
+                        <sdg:WWLoopingSelector x:Name="PART_HourSelector"
+                                               Height="120" ItemHeight="24" MinWidth="30" Margin="2,0" />
+                        <sdg:WWLoopingSelector x:Name="PART_MinuteSelector"
+                                               Height="120" ItemHeight="24" MinWidth="30" Margin="2,0" />
+                        <sdg:WWLoopingSelector x:Name="PART_AmPmSelector"
+                                               Height="120" ItemHeight="24" Margin="2,0" />
+                    </StackPanel>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="ShowDate" Value="False">
+                            <Setter TargetName="PART_MonthSelector" Property="Visibility" Value="Collapsed" />
+                            <Setter TargetName="PART_DaySelector" Property="Visibility" Value="Collapsed" />
+                            <Setter TargetName="PART_YearSelector" Property="Visibility" Value="Collapsed" />
+                            <Setter TargetName="TimeSeparator" Property="Visibility" Value="Collapsed" />
+                        </Trigger>
+                        <Trigger Property="ShowTime" Value="False">
+                            <Setter TargetName="TimeSeparator" Property="Visibility" Value="Collapsed" />
+                            <Setter TargetName="PART_HourSelector" Property="Visibility" Value="Collapsed" />
+                            <Setter TargetName="PART_MinuteSelector" Property="Visibility" Value="Collapsed" />
+                            <Setter TargetName="PART_AmPmSelector" Property="Visibility" Value="Collapsed" />
+                        </Trigger>
+                        <Trigger Property="Is24Hour" Value="True">
+                            <Setter TargetName="PART_AmPmSelector" Property="Visibility" Value="Collapsed" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>

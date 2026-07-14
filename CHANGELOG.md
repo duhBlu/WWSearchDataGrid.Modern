@@ -2,6 +2,138 @@
 
 ## [Unreleased]
 
+### Changed — WWReorderableListBox replaced by WWListBox (selection glyphs + built-in reorder)
+- **New `WWListBox`** (Editors assembly) — a general-purpose `ListBox` that absorbs the
+  reorderable listbox: the traveling-hole drag engine is unchanged but now an opt-in feature.
+  - **`SelectionMode`** is the platform property — `Single`, `Multiple` (plain click toggles),
+    `Extended` (Ctrl/Shift multi-select) — no wrapper enum.
+  - **`ItemKind`** (`ListBoxItemKind`: `Default` / `Checked` / `Radio`) picks the selection
+    glyph rows render. Rows are generated as **`WWListBoxItem`** containers carrying a read-only
+    `Kind` mirrored from the parent (the `WWComboBoxItem` pattern); the checkbox / radio glyphs
+    are lit by the row's own `IsSelected`, and the row-highlight selection visual stays reserved
+    for `Default`. Purely visual — `ItemKind` and `SelectionMode` compose freely.
+  - **Reorder surface renames**: `EnableDragDrop` → **`AllowReorder`** (default now **`false`**
+    — reordering is opt-in on a general list control), `MarginAnimationDuration` →
+    **`ReorderAnimationDuration`**. `AutoScrollEdge` / `AutoScrollMinSpeed` / `AutoScrollMaxSpeed`
+    / `AdornerOpacity` / `IsDragging` and the `ItemDragStarting` / `ItemReordered` events (and
+    their args classes) carry over unchanged. `WWReorderableListBoxBehavior` →
+    **`WWListBoxBehavior`**. Turning `AllowReorder` off mid-drag cancels the drag cleanly.
+  - **Multi-select-safe dragging**: the engine only force-selects the pressed row and re-asserts
+    `SelectedItem` on drop in `Single` mode; in `Multiple` / `Extended` the native click
+    semantics own selection, so a drag never inverts a click-toggle or collapses a
+    multi-selection.
+  - New theme keys `EditorThemeKeys.ListBox` / `EditorThemeKeys.ListBoxItem`
+    (`Themes/Editors/WWListBox.xaml`, replacing `WWReorderableListBox.xaml`). Virtualization
+    and pixel-scroll defaults are unchanged from the reorderable control (containers must be
+    realized for drags; opt virtualization back in per instance for large non-reordering lists).
+- **`WWReorderableListBox` removed.** Migrated consumers: `ColumnChooser`'s three section lists
+  (template + code-behind, `AllowReorder` bound to the per-section drag-enabled flags) and the
+  Grid sample app's Options Playground navigation-order list.
+- **Editors sample app**: new **WWListBox** sample under Editors — SelectionMode / ItemKind /
+  AllowReorder / ReorderAnimationDuration driven live against one demo list.
+
+### Added — WWDatePicker full picker surface (null input, popup modes, time editing, footer actions)
+- **Segment cycling on plain Up/Down**: arrows now spin the focused segment by default (the
+  numeric-spin-editor feel) instead of requiring Ctrl. New `CycleModifier` (`ModifierKeys`,
+  default `None`) on `SegmentedDateTimeEditor` / `WWDatePicker` / `DatePickerSettings` sets the
+  modifier that must be held for Up/Down to cycle; when one is required, unmodified Up/Down
+  raises `CellExitRequested` (grid row navigation). `DatePickerSettings` defaults to
+  `Control` — grid cell and filter-row date editors keep plain Up/Down for row navigation,
+  matching the rest of the DataGrid — while the standalone control defaults to `None`.
+- **Null input**: new `AllowNullInput` (default `true`) on `SegmentedDateTimeEditor` /
+  `WWDatePicker` / `DatePickerSettings`. `Ctrl+0`, `Ctrl+Delete`, or `Ctrl+Backspace` clears
+  every segment and commits `null` in one stroke; committing an all-empty editor writes `null`.
+  With `AllowNullInput=False` the chords are inert and an emptied editor reverts to the bound
+  value on commit.
+- **Blank empty state + type-into-empty seeding**: a fully empty editor renders blank — no
+  mask-literal skeleton (`//`) — whenever unfocused, and also while focused when
+  `AllowNullInput`. The first keystroke into the empty editor seeds every other region from
+  `DefaultDate` (or now) and lands in the first region, so the user types only the parts they
+  want to change instead of navigating region by region. (Filter-row editors keep their
+  existing display-only pre-fill; untouched regions there stay empty so a half-typed filter
+  never commits made-up parts.) A focused non-nullable empty editor still shows the bare
+  literals as a type-here affordance.
+- **`DefaultDate`**: popup starting point while the value is null — the calendar opens on that
+  month and the scroll columns position there (falls back to today / now). Never committed by
+  itself; also seeds the year segment's first Ctrl+↑/↓ spin.
+- **`PopupMode`** (`Calendar` default / `ScrollList`): the dropdown now offers two surfaces.
+  `ScrollList` is a new **`DateTimeScrollPicker`** — looping month / day / year columns (day
+  count tracks the selected month; year clamps over `MinDate`–`MaxDate`, default 1900–2100),
+  plus hour / minute / AM-PM columns when time editing is on. Columns are built from the new
+  **`WWLoopingSelector`** primitive (wheel / drag / click / arrow keys, wraparound, center
+  selection band). Scroll selections commit live.
+- **Time editing** via `TimeInput` (`Auto` default / `Enabled` / `Disabled`): `Auto` enables the
+  popup's time surface exactly when the mask carries time specifiers. In `Calendar` mode the
+  popup gains an inline **text-only segmented time editor** (keyed
+  `EditorThemeKeys.SegmentedTimeEditor`) whose mask is the time tail of the main mask (or the
+  culture short-time pattern); a calendar pick merges the picked day with the current
+  time-of-day and keeps the popup open while time editing is on. Read-only `IsTimeEditingEnabled`
+  and `HasDateParts` expose the resolved state (a time-only mask collapses the calendar
+  entirely).
+- **Popup footer actions**: `ShowTodayButton` / `ShowNowButton` / `ShowClearButton` (all default
+  `false`) add Today / Now / Clear buttons (keyed `EditorThemeKeys.DatePickerPopupButton`). Each
+  renders only when its target is editable: Today needs date parts (hidden on a time-only mask),
+  Now needs the time surface (sets the full current date + time at whole-second precision, or
+  just the time-of-day on a time-only editor), Clear needs `AllowNullInput`. Today preserves the
+  time-of-day when time editing is on.
+- **`ShowWeekNumbers`** (default `false`): a week-of-year strip beside the calendar month view,
+  aligned to the calendar's real row slots and numbered per the culture's `CalendarWeekRule`.
+- **`MinDate` / `MaxDate` are now enforced on commit** (typed input clamps into range; the
+  scroll picker and Today/Clear clamp too) instead of only bounding the calendar's display
+  range.
+- **Unfocused display formatting**: new `DisplayFormat` + `UseMaskAsDisplayFormat` on
+  `SegmentedDateTimeEditor` / `WWDatePicker`. Unfocused with a value, `DisplayFormat` renders a
+  friendlier string (e.g. `D`); focusing swaps back to the editable mask.
+  `UseMaskAsDisplayFormat=True` pins display text to the mask composition (the previous — and
+  still default — behavior).
+- `DatePickerSettings` forwards the whole new surface (`AllowNullInput`, `DefaultDate`,
+  `PopupMode`, `TimeInput`, `ShowClearButton`, `ShowTodayButton`, `ShowWeekNumbers`) into both
+  the cell edit template and the filter-row editor.
+- **Modernized calendar** (`Themes/Editors/Calendar.xaml`): the popup's `Calendar` no longer
+  renders the stock Windows look. Full retemplate — flat white chrome, `IconKeys` chevron
+  navigation, semibold month-year header button, rounded hover day cells, accent-filled
+  selection, accent-ringed today, red weekend days (faded when adjacent-month), faded
+  adjacent-month days, dimmed blackout days, and matching month/year zoom-out cells. All four styles are **keyed**
+  (`EditorThemeKeys.Calendar` / `CalendarItem` / `CalendarDayButton` / `CalendarButton`), never
+  implicit, so consumer apps' own Calendars are untouched; the `CalendarItem` template keeps the
+  stock part contract (`PART_MonthView` 7×7, `PART_YearView` 4×3, `DayTitleTemplate`) so the
+  control's own population/zoom logic and the week-number strip keep working.
+
+### Changed — WWReorderableListBox drag engine (mouse capture + traveling hole)
+- **Reordering now runs on plain mouse capture, not OLE drag-drop** (`DragDrop.DoDragDrop`).
+  Move events keep flowing at full rate even when the pointer leaves the control, so the
+  edge dead-zones are gone and the `SetCursorPos` cursor-constraint P/Invoke hack is removed.
+- **Visuals use a "traveling hole"**: the dragged item keeps its layout slot but is hidden in
+  place (that slot IS the gap), a bitmap ghost follows the pointer, and the other items slide
+  between slots with animated `RenderTransform`s. Layout never runs during a drag — slot
+  geometry is frozen at drag start, so targeting is deterministic and can't oscillate with the
+  slide animations, and the list's total height never changes.
+- **New drag-lifecycle guarantees**: Escape cancels; losing mouse capture mid-drag (alt-tab, a
+  dialog) cancels; an `Items` change during a drag cancels (the frozen snapshot would be
+  invalid). All containers must be realized at drag start or the drag simply won't begin —
+  so the control defaults `VirtualizingPanel.IsVirtualizing` to `false` (a scrolled
+  virtualizing list would otherwise silently refuse every drag and fall back to native
+  swipe-select). Override in XAML only for lists too large to realize.
+- **Added** read-only `IsDragging` dependency property (true while a drag is in progress).
+  `AdornerOpacity` changes now apply live to an active drag.
+- **Removed** the `DragHelpers` static class (`DragHelpers.IsDragged` attached property). The
+  control hides the dragged row itself; the [ColumnChooser] item-style collapse trigger that
+  consumed it is deleted (collapsing the row would mutate layout mid-drag).
+- `MarginAnimationDuration` keeps its name for API compatibility but now times the
+  RenderTransform slide animation.
+- **Pixel scrolling is forced** (`ScrollViewer.CanContentScroll = false`, local value in the
+  constructor). Item scrolling re-arranges containers inside the items panel on every scroll,
+  invalidating the frozen slot snapshot mid-drag — the gap visibly detached from the pointer
+  after an auto-scroll. Auto-scroll speeds are now pixels per 20 ms tick and the defaults are
+  retuned (`AutoScrollMinSpeed` 0.5 → 2.0, `AutoScrollMaxSpeed` 2.0 → 10.0); the theme's
+  item-unit speed setters are removed.
+- **Selection is frozen during a drag.** The ListBox's native subtree capture (taken on
+  mouse down, powers swipe-select) is released before the drag takes element capture —
+  re-capturing the same element does not change the capture mode, so without the release
+  the items under the ghost kept receiving `MouseEnter` and selected themselves as the
+  pointer passed. Keyboard input is also swallowed mid-drag so arrow keys can't move the
+  selection under the drag.
+
 ### Added — Editor control foundation (WWBaseEdit + first-class editors)
 - **`WWBaseEdit`** (lookless base) is the thin shared base for the editor family — the edited
   `Value`, `IsReadOnly`, the `ShowBorder` flag, focus-forwarding to the concrete input, and an

@@ -1,0 +1,546 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sdg="http://schemas.wwcontrols.com/wpf">
+
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Editors/EditorParts.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+
+    <!--
+        WWComboBoxItem — the container WWComboBox generates for its popup rows. Same dropdown-row
+        language as PrimitiveThemeKeys.ComboBoxItem (padding 8,5 | radius 4 | hover #F0F0F0 |
+        selected #E5F1FB) plus the parent-driven extras: a glyph column that shows a checkbox
+        (GlyphMode=Checkbox, lit by IsChecked) or a radio dot (GlyphMode=Radio, lit by IsSelected),
+        and a HighlightTextBlock that replaces the ContentPresenter while the parent incrementally
+        filters (UseHighlightDisplay) so the matched substring reads bold + accent.
+    -->
+    <Style x:Key="{x:Static sdg:EditorThemeKeys.ComboBoxItem}" TargetType="{x:Type sdg:WWComboBoxItem}">
+        <!--  Rows take focus from arrow-key navigation only — Tab moves between controls, never through popup items.  -->
+        <Setter Property="IsTabStop" Value="False" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Foreground" Value="#1C1C1C" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="Padding" Value="8,5" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="SnapsToDevicePixels" Value="True" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type sdg:WWComboBoxItem}">
+                    <Border x:Name="Bd"
+                            Background="{TemplateBinding Background}"
+                            Padding="{TemplateBinding Padding}"
+                            CornerRadius="4"
+                            SnapsToDevicePixels="True">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <!--  Checkbox glyph (GlyphMode=Checkbox) — mirrors DisplayCheckBox's box visual.  -->
+                            <Border x:Name="CheckGlyphBox"
+                                    Grid.Column="0"
+                                    Width="16"
+                                    Height="16"
+                                    Margin="0,0,8,0"
+                                    VerticalAlignment="Center"
+                                    Background="#FFFFFF"
+                                    BorderBrush="#AAAAAA"
+                                    BorderThickness="1"
+                                    CornerRadius="3"
+                                    Visibility="Collapsed">
+                                <sdg:Icon x:Name="CheckGlyph"
+                                          Width="10"
+                                          Height="10"
+                                          Opacity="0"
+                                          HorizontalAlignment="Center"
+                                          VerticalAlignment="Center"
+                                          StrokeThickness="3"
+                                          IconSource="{StaticResource {x:Static sdg:IconKeys.IconCheck}}"
+                                          IconBrush="White" />
+                            </Border>
+
+                            <!--  Radio glyph (GlyphMode=Radio) — dot follows IsSelected.  -->
+                            <Grid x:Name="RadioGlyph"
+                                  Grid.Column="0"
+                                  Width="16"
+                                  Height="16"
+                                  Margin="0,0,8,0"
+                                  VerticalAlignment="Center"
+                                  Visibility="Collapsed">
+                                <Ellipse x:Name="RadioOuter" Fill="#FFFFFF" Stroke="#AAAAAA" StrokeThickness="1" />
+                                <Ellipse x:Name="RadioDot" Width="6" Height="6" Fill="#0078D4" Opacity="0" />
+                            </Grid>
+
+                            <ContentPresenter x:Name="ContentHost"
+                                              Grid.Column="1"
+                                              HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                              VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
+
+                            <!--  Swapped in while the parent filters — bolds the matched substring.  -->
+                            <sdg:HighlightTextBlock x:Name="HighlightHost"
+                                                    Grid.Column="1"
+                                                    VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                                    Visibility="Collapsed"
+                                                    HighlightTextBlockText="{TemplateBinding DisplayText}"
+                                                    HighlightText="{TemplateBinding SearchText}"
+                                                    MatchMode="{TemplateBinding HighlightMode}">
+                                <sdg:HighlightTextBlock.HighlightRunStyle>
+                                    <Style TargetType="Run">
+                                        <Setter Property="FontWeight" Value="SemiBold" />
+                                        <Setter Property="Foreground" Value="#0078D4" />
+                                    </Style>
+                                </sdg:HighlightTextBlock.HighlightRunStyle>
+                            </sdg:HighlightTextBlock>
+                        </Grid>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="GlyphMode" Value="Checkbox">
+                            <Setter TargetName="CheckGlyphBox" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                        <Trigger Property="GlyphMode" Value="Radio">
+                            <Setter TargetName="RadioGlyph" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="CheckGlyphBox" Property="Background" Value="#0078D4" />
+                            <Setter TargetName="CheckGlyphBox" Property="BorderThickness" Value="0" />
+                            <Setter TargetName="CheckGlyph" Property="Opacity" Value="1" />
+                        </Trigger>
+                        <Trigger Property="UseHighlightDisplay" Value="True">
+                            <Setter TargetName="ContentHost" Property="Visibility" Value="Collapsed" />
+                            <Setter TargetName="HighlightHost" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                        <Trigger Property="IsHighlighted" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="#F0F0F0" />
+                        </Trigger>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="#E5F1FB" />
+                            <Setter TargetName="RadioDot" Property="Opacity" Value="1" />
+                            <Setter TargetName="RadioOuter" Property="Stroke" Value="#0078D4" />
+                        </Trigger>
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="IsSelected" Value="True" />
+                                <Condition Property="IsHighlighted" Value="True" />
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="Bd" Property="Background" Value="#D6E8F8" />
+                        </MultiTrigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Foreground" Value="#9CA3AF" />
+                            <Setter Property="Cursor" Value="Arrow" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style TargetType="{x:Type sdg:WWComboBoxItem}" BasedOn="{StaticResource {x:Static sdg:EditorThemeKeys.ComboBoxItem}}" />
+
+    <!--
+        WWComboBox — a real ComboBox whose template owns every part: chrome frame, full-area
+        drop-down toggle, selection box, editable text (PART_EditableTextBox), chevron, and popup
+        (PART_Popup). No inner wrapped combo — selection / keyboard / typeahead behavior is the
+        platform control's; the whole look lives here. Popup rows are WWComboBoxItem containers
+        (style above). The chevron style lives in EditorParts.xaml (merged before this dictionary).
+
+        The popup stacks four rows: a read-only search strip (visible while non-editable
+        incremental filtering has typed text), the ShowNone clear row, the items, and the
+        ShowSizeGrip footer whose PART_ResizeGrip thumb resizes PART_PopupBorder from code.
+    -->
+    <Style x:Key="{x:Static sdg:EditorThemeKeys.ComboBox}" TargetType="{x:Type sdg:WWComboBox}">
+        <Style.Resources>
+            <!--  Raw ComboBoxItem children a consumer declares directly still read as dropdown rows.  -->
+            <Style TargetType="{x:Type ComboBoxItem}" BasedOn="{StaticResource {x:Static sdg:PrimitiveThemeKeys.ComboBoxItem}}" />
+        </Style.Resources>
+        <Setter Property="sdg:ControlHelper.CornerRadius" Value="{StaticResource {x:Static sdg:PrimitiveThemeKeys.ControlCornerRadius}}" />
+        <Setter Property="Background" Value="#FFFFFF" />
+        <Setter Property="Foreground" Value="#1C1C1C" />
+        <Setter Property="BorderBrush" Value="#e3e3e3" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Padding" Value="6,2" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="HorizontalContentAlignment" Value="Left" />
+        <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto" />
+        <Setter Property="ScrollViewer.CanContentScroll" Value="True" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type sdg:WWComboBox}">
+                    <Grid x:Name="Root" SnapsToDevicePixels="True">
+                        <!--  Frame — top/left/right only; the bottom edge is the lip below.  -->
+                        <Border x:Name="Frame"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="0"
+                                CornerRadius="{TemplateBinding sdg:ControlHelper.CornerRadius}" />
+
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <!--
+                                The whole control acts as the open/close toggle. Custom inner
+                                template so the ToggleButton contributes no chrome of its own.
+                                Collapsed in editable mode so clicks land in the text box.
+                            -->
+                            <ToggleButton x:Name="DropDownToggle"
+                                          Grid.ColumnSpan="2"
+                                          IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"
+                                          Focusable="False"
+                                          ClickMode="Press">
+                                <ToggleButton.Template>
+                                    <ControlTemplate TargetType="ToggleButton">
+                                        <Border Background="Transparent" BorderThickness="0" />
+                                    </ControlTemplate>
+                                </ToggleButton.Template>
+                            </ToggleButton>
+
+                            <!--
+                                Selected-item display, hit-test invisible so clicks pass through
+                                to the toggle. Two renderings: plain text (SelectionBoxDisplayText,
+                                the default — also the joined multi-select string) and the
+                                item-templated presenter, swapped by ApplyItemTemplateToSelectedItem.
+                            -->
+                            <TextBlock x:Name="SelectionText"
+                                       Grid.Column="0"
+                                       IsHitTestVisible="False"
+                                       Margin="{TemplateBinding Padding}"
+                                       HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                       VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                       Text="{TemplateBinding SelectionBoxDisplayText}"
+                                       TextTrimming="CharacterEllipsis"
+                                       Foreground="{TemplateBinding Foreground}"
+                                       FontWeight="{TemplateBinding FontWeight}" />
+                            <ContentPresenter x:Name="SelectionPresenter"
+                                              Grid.Column="0"
+                                              IsHitTestVisible="False"
+                                              Visibility="Collapsed"
+                                              Margin="{TemplateBinding Padding}"
+                                              HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                              VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                              Content="{TemplateBinding SelectionBoxItem}"
+                                              ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                                              ContentTemplateSelector="{TemplateBinding ItemTemplateSelector}"
+                                              ContentStringFormat="{TemplateBinding SelectionBoxItemStringFormat}"
+                                              TextElement.Foreground="{TemplateBinding Foreground}"
+                                              TextElement.FontWeight="{TemplateBinding FontWeight}" />
+
+                            <!--
+                                Editable-mode input. The stock ComboBox wires text sync, typeahead,
+                                and focus to this named part; the IsEditable trigger swaps it in
+                                for the selection display.
+                            -->
+                            <TextBox x:Name="PART_EditableTextBox"
+                                     Style="{StaticResource {x:Static sdg:EditorThemeKeys.EditTextBox}}"
+                                     Grid.Column="0"
+                                     Margin="{TemplateBinding Padding}"
+                                     Padding="0"
+                                     Background="Transparent"
+                                     BorderThickness="0"
+                                     Foreground="{TemplateBinding Foreground}"
+                                     HorizontalAlignment="Stretch"
+                                     VerticalContentAlignment="Center"
+                                     IsReadOnly="{TemplateBinding IsReadOnly}"
+                                     Visibility="Collapsed" />
+
+                            <!--
+                                Chevron — visual-only while the full-area toggle handles clicks;
+                                becomes the click target in editable mode (the trigger flips
+                                IsHitTestVisible), matching how ModernWpf's DropDownOverlay works.
+                            -->
+                            <ToggleButton x:Name="Chevron"
+                                          Style="{StaticResource {x:Static sdg:EditorThemeKeys.EditComboBoxDropDownButton}}"
+                                          Grid.Column="1"
+                                          Foreground="{TemplateBinding Foreground}"
+                                          IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"
+                                          ClickMode="Press"
+                                          IsHitTestVisible="False" />
+                        </Grid>
+
+                        <!--  Bottom lip — depth cue that becomes the accent underline while focused.  -->
+                        <Border x:Name="Lip"
+                                Background="Transparent"
+                                BorderBrush="#bfbfbf"
+                                BorderThickness="0,0,0,1"
+                                CornerRadius="0,0,4,4"
+                                Height="2"
+                                VerticalAlignment="Bottom"
+                                IsHitTestVisible="False"
+                                Visibility="Collapsed" />
+
+                        <Popup x:Name="PART_Popup"
+                               AllowsTransparency="True"
+                               IsOpen="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}}"
+                               Focusable="False"
+                               Placement="Bottom"
+                               PopupAnimation="None">
+                            <Border x:Name="PART_PopupBorder"
+                                    Background="#FFFFFF"
+                                    BorderBrush="#CCCCCC"
+                                    BorderThickness="1"
+                                    MinWidth="{Binding ActualWidth, ElementName=Root}"
+                                    MaxHeight="{TemplateBinding MaxDropDownHeight}"
+                                    SnapsToDevicePixels="True">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="*" />
+                                        <RowDefinition Height="Auto" />
+                                    </Grid.RowDefinitions>
+
+                                    <!--
+                                        Non-editable search strip — read-only echo of the typed
+                                        FilterText (keystrokes accumulate on the control itself,
+                                        so nothing here takes focus or mouse capture).
+                                    -->
+                                    <Border x:Name="FilterStrip"
+                                            Grid.Row="0"
+                                            Background="#F7F7F7"
+                                            BorderBrush="#EEEEEE"
+                                            BorderThickness="0,0,0,1"
+                                            Padding="8,5"
+                                            IsHitTestVisible="False"
+                                            Visibility="Collapsed">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="&#xE721;"
+                                                       FontFamily="Segoe Fluent Icons"
+                                                       FontSize="11"
+                                                       Foreground="#666666"
+                                                       VerticalAlignment="Center"
+                                                       Margin="0,0,6,0" />
+                                            <TextBlock Text="{Binding FilterText, RelativeSource={RelativeSource TemplatedParent}}"
+                                                       FontSize="12"
+                                                       Foreground="#1C1C1C"
+                                                       VerticalAlignment="Center" />
+                                        </StackPanel>
+                                    </Border>
+
+                                    <!--
+                                        Checkbox-mode select-all row (ShowSelectAll) — tri-state
+                                        glyph tracks AreAllItemsChecked; click checks / clears
+                                        every visible item and keeps the popup open.
+                                    -->
+                                    <Button x:Name="PART_SelectAllItem"
+                                            Grid.Row="1"
+                                            Visibility="Collapsed"
+                                            HorizontalAlignment="Stretch"
+                                            HorizontalContentAlignment="Left"
+                                            Cursor="Hand"
+                                            Focusable="False"
+                                            Content="{TemplateBinding SelectAllText}">
+                                        <Button.Template>
+                                            <ControlTemplate TargetType="Button">
+                                                <Border x:Name="SelectAllBd"
+                                                        Background="Transparent"
+                                                        BorderBrush="#EEEEEE"
+                                                        BorderThickness="0,0,0,1"
+                                                        Padding="8,5"
+                                                        SnapsToDevicePixels="True">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <Border x:Name="GlyphBox"
+                                                                Width="16"
+                                                                Height="16"
+                                                                Margin="0,0,8,0"
+                                                                VerticalAlignment="Center"
+                                                                Background="#FFFFFF"
+                                                                BorderBrush="#AAAAAA"
+                                                                BorderThickness="1"
+                                                                CornerRadius="3">
+                                                            <Grid>
+                                                                <sdg:Icon x:Name="AllGlyph"
+                                                                          Width="10"
+                                                                          Height="10"
+                                                                          Opacity="0"
+                                                                          HorizontalAlignment="Center"
+                                                                          VerticalAlignment="Center"
+                                                                          StrokeThickness="3"
+                                                                          IconSource="{StaticResource {x:Static sdg:IconKeys.IconCheck}}"
+                                                                          IconBrush="White" />
+                                                                <sdg:Icon x:Name="PartialGlyph"
+                                                                          Width="10"
+                                                                          Height="10"
+                                                                          Opacity="0"
+                                                                          HorizontalAlignment="Center"
+                                                                          VerticalAlignment="Center"
+                                                                          IconSource="{StaticResource {x:Static sdg:IconKeys.IconCheckIntermediate}}"
+                                                                          IconBrush="#FFFFFF" />
+                                                            </Grid>
+                                                        </Border>
+                                                        <TextBlock Text="{TemplateBinding Content}"
+                                                                   FontSize="12"
+                                                                   Foreground="#1C1C1C"
+                                                                   VerticalAlignment="Center" />
+                                                    </StackPanel>
+                                                </Border>
+                                                <ControlTemplate.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter TargetName="SelectAllBd" Property="Background" Value="#F0F0F0" />
+                                                    </Trigger>
+                                                    <DataTrigger Binding="{Binding AreAllItemsChecked, RelativeSource={RelativeSource AncestorType={x:Type sdg:WWComboBox}}}" Value="True">
+                                                        <Setter TargetName="GlyphBox" Property="Background" Value="#0078D4" />
+                                                        <Setter TargetName="GlyphBox" Property="BorderThickness" Value="0" />
+                                                        <Setter TargetName="AllGlyph" Property="Opacity" Value="1" />
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding AreAllItemsChecked, RelativeSource={RelativeSource AncestorType={x:Type sdg:WWComboBox}}}" Value="{x:Null}">
+                                                        <Setter TargetName="GlyphBox" Property="Background" Value="#0078D4" />
+                                                        <Setter TargetName="GlyphBox" Property="BorderThickness" Value="0" />
+                                                        <Setter TargetName="PartialGlyph" Property="Opacity" Value="1" />
+                                                    </DataTrigger>
+                                                </ControlTemplate.Triggers>
+                                            </ControlTemplate>
+                                        </Button.Template>
+                                    </Button>
+
+                                    <!--  Pinned clear-selection row (ShowNone).  -->
+                                    <Button x:Name="PART_NoneItem"
+                                            Grid.Row="2"
+                                            Visibility="Collapsed"
+                                            HorizontalAlignment="Stretch"
+                                            HorizontalContentAlignment="Left"
+                                            Cursor="Hand"
+                                            Focusable="False"
+                                            Content="{TemplateBinding NoneItemText}">
+                                        <Button.Template>
+                                            <ControlTemplate TargetType="Button">
+                                                <Border x:Name="NoneBd"
+                                                        Background="Transparent"
+                                                        BorderBrush="#EEEEEE"
+                                                        BorderThickness="0,0,0,1"
+                                                        Padding="8,5"
+                                                        SnapsToDevicePixels="True">
+                                                    <TextBlock Text="{TemplateBinding Content}"
+                                                               FontSize="12"
+                                                               FontStyle="Italic"
+                                                               Foreground="#666666"
+                                                               VerticalAlignment="Center" />
+                                                </Border>
+                                                <ControlTemplate.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter TargetName="NoneBd" Property="Background" Value="#F0F0F0" />
+                                                    </Trigger>
+                                                </ControlTemplate.Triggers>
+                                            </ControlTemplate>
+                                        </Button.Template>
+                                    </Button>
+
+                                    <ScrollViewer x:Name="PART_ScrollViewer" Grid.Row="3">
+                                        <ItemsPresenter KeyboardNavigation.DirectionalNavigation="Contained" />
+                                    </ScrollViewer>
+
+                                    <!--  Size-grip footer (ShowSizeGrip) — the thumb drives PART_PopupBorder's size from code.  -->
+                                    <Border x:Name="SizeGripFooter"
+                                            Grid.Row="4"
+                                            Background="#FAFAFA"
+                                            BorderBrush="#EEEEEE"
+                                            BorderThickness="0,1,0,0"
+                                            Height="16"
+                                            Visibility="Collapsed">
+                                        <Thumb x:Name="PART_ResizeGrip"
+                                               Width="16"
+                                               Height="16"
+                                               HorizontalAlignment="Right"
+                                               VerticalAlignment="Bottom"
+                                               Cursor="SizeNWSE"
+                                               Focusable="False"
+                                               IsTabStop="False">
+                                            <Thumb.Template>
+                                                <ControlTemplate TargetType="Thumb">
+                                                    <Grid Background="Transparent">
+                                                        <!--  Classic diagonal grip dots.  -->
+                                                        <Path Fill="#999999"
+                                                              Data="M 11,3 h2 v2 h-2 Z M 7,7 h2 v2 h-2 Z M 11,7 h2 v2 h-2 Z M 3,11 h2 v2 h-2 Z M 7,11 h2 v2 h-2 Z M 11,11 h2 v2 h-2 Z" />
+                                                    </Grid>
+                                                </ControlTemplate>
+                                            </Thumb.Template>
+                                        </Thumb>
+                                    </Border>
+                                </Grid>
+                            </Border>
+                        </Popup>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="ShowBorder" Value="True">
+                            <Setter TargetName="Frame" Property="BorderThickness" Value="1,1,1,0" />
+                            <Setter TargetName="Lip" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="ShowBorder" Value="True" />
+                                <Condition Property="IsKeyboardFocusWithin" Value="True" />
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="Lip" Property="Background" Value="#0179D4" />
+                            <Setter TargetName="Lip" Property="BorderBrush" Value="#0078D4" />
+                        </MultiTrigger>
+
+                        <!--  Selection-box rendering: templated presenter opt-in; checkbox mode always joined text.  -->
+                        <Trigger Property="ApplyItemTemplateToSelectedItem" Value="True">
+                            <Setter TargetName="SelectionText" Property="Visibility" Value="Collapsed" />
+                            <Setter TargetName="SelectionPresenter" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                        <Trigger Property="SelectionMode" Value="Checkbox">
+                            <Setter TargetName="SelectionText" Property="Visibility" Value="Visible" />
+                            <Setter TargetName="SelectionPresenter" Property="Visibility" Value="Collapsed" />
+                        </Trigger>
+
+                        <!--  Popup extras.  -->
+                        <Trigger Property="ShowNone" Value="True">
+                            <Setter TargetName="PART_NoneItem" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="ShowSelectAll" Value="True" />
+                                <Condition Property="SelectionMode" Value="Checkbox" />
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="PART_SelectAllItem" Property="Visibility" Value="Visible" />
+                        </MultiTrigger>
+                        <Trigger Property="ShowSizeGrip" Value="True">
+                            <Setter TargetName="SizeGripFooter" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="HasFilterText" Value="True" />
+                                <Condition Property="IsEditable" Value="False" />
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="FilterStrip" Property="Visibility" Value="Visible" />
+                        </MultiTrigger>
+
+                        <!--  Last so editable mode wins over the selection-box triggers above.  -->
+                        <Trigger Property="IsEditable" Value="True">
+                            <Setter TargetName="SelectionText" Property="Visibility" Value="Collapsed" />
+                            <Setter TargetName="SelectionPresenter" Property="Visibility" Value="Collapsed" />
+                            <Setter TargetName="DropDownToggle" Property="Visibility" Value="Collapsed" />
+                            <Setter TargetName="PART_EditableTextBox" Property="Visibility" Value="Visible" />
+                            <Setter TargetName="Chevron" Property="IsHitTestVisible" Value="True" />
+                        </Trigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Frame" Property="Background" Value="#E8E8E8" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="Root" Property="Opacity" Value="0.6" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+        <Style.Triggers>
+            <!--
+                Editable mode: the inner PART_EditableTextBox is the tab stop. Without this (the
+                stock ComboBox style has the same trigger) the host control stays in the tab
+                order ahead of its own text box, and Shift+Tab lands on the host — which forwards
+                focus straight back into the text box, trapping backward navigation.
+            -->
+            <Trigger Property="IsEditable" Value="True">
+                <Setter Property="IsTabStop" Value="False" />
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <Style TargetType="{x:Type sdg:WWComboBox}" BasedOn="{StaticResource {x:Static sdg:EditorThemeKeys.ComboBox}}" />
+
+</ResourceDictionary>

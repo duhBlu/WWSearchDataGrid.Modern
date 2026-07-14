@@ -44,6 +44,14 @@ namespace WWControls.Wpf.Grids
         private ButtonBase _updateButton;
         private ButtonBase _cancelButton;
 
+        public RowEditPresenter()
+        {
+            // The strip draws its own cell boundaries, so the hosted editors render flat —
+            // matching how the same edit templates look inside real grid cells. Inherited
+            // attached flag; every editor stamped into the strip's subtree picks it up.
+            WWEditorBase.SetFlattenEditors(this, true);
+        }
+
         /// <summary>
         /// The row item currently being edited. Every per-column editor binds its content to this,
         /// so the editors re-target whenever it changes (no rebuild needed).

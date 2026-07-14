@@ -1,7 +1,7 @@
 <UserControl x:Class="WWControls.SampleApp.Editors.Controls.SampleLoadingOverlay"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:controls="clr-namespace:WWControls.SampleApp.Editors.Controls"
+             xmlns:sdg="http://schemas.wwcontrols.com/wpf"
              x:Name="Root">
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
@@ -10,7 +10,7 @@
             Visibility="{Binding IsBusy, ElementName=Root, Converter={StaticResource BoolToVisibility}}"
             Panel.ZIndex="50">
         <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-            <controls:WWSpinningWheel Width="56" Height="56" />
+            <sdg:WWSpinningWheel Width="56" Height="56" StrokeThickness="3.5" />
             <TextBlock Foreground="#1C1C1C"
                        Text="{Binding Status, ElementName=Root}"
                        Margin="0,12,0,0"

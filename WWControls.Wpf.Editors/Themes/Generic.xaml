@@ -3,17 +3,25 @@
 
     <!-- Shim: the default theme lives in WWControls.Wpf.Themes.Default. This file exists so
          [ThemeInfo(GenericDictionaryLocation = SourceAssembly)] resolves to a valid Generic.xaml
-         inside the Editors assembly, giving the editor controls (WWEditorBase + the WWxxxEdit family,
+         inside the Editors assembly, giving the editor controls (WWEditorBase + the editor family,
          SegmentedDateTimeEditor) their default styles without the consumer having to merge anything.
-         Merged bottom-up: DefaultControls brings the shared brushes + icons + the PrimitivesComboBoxItem
-         style the combo editor reuses; then the editor chrome; then the editor element styles. -->
+         Merged bottom-up: DefaultControls brings the shared brushes + icons; EditorParts the shared
+         inner-part styles (flat TextBox, spin button, chevron, themed CheckBox) the per-editor
+         dictionaries reference via StaticResource; then one dictionary per editor; then the
+         EditSettings element styles. Order matters — parts before consumers. -->
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="pack://application:,,,/WWControls.Wpf.Themes.Default;component/Themes/Primitives/DefaultControls.xaml" />
-        <ResourceDictionary Source="pack://application:,,,/WWControls.Wpf.Themes.Default;component/Themes/Editors/Editors.xaml" />
+        <ResourceDictionary Source="pack://application:,,,/WWControls.Wpf.Themes.Default;component/Themes/Editors/EditorParts.xaml" />
+        <ResourceDictionary Source="pack://application:,,,/WWControls.Wpf.Themes.Default;component/Themes/Editors/WWTextBox.xaml" />
+        <ResourceDictionary Source="pack://application:,,,/WWControls.Wpf.Themes.Default;component/Themes/Editors/WWNumericUpDown.xaml" />
+        <ResourceDictionary Source="pack://application:,,,/WWControls.Wpf.Themes.Default;component/Themes/Editors/WWComboBox.xaml" />
+        <ResourceDictionary Source="pack://application:,,,/WWControls.Wpf.Themes.Default;component/Themes/Editors/WWDatePicker.xaml" />
+        <ResourceDictionary Source="pack://application:,,,/WWControls.Wpf.Themes.Default;component/Themes/Editors/WWCheckBox.xaml" />
+        <ResourceDictionary Source="pack://application:,,,/WWControls.Wpf.Themes.Default;component/Themes/Editors/Calendar.xaml" />
         <ResourceDictionary Source="pack://application:,,,/WWControls.Wpf.Themes.Default;component/Themes/Editors/EditSettings.xaml" />
         <ResourceDictionary Source="pack://application:,,,/WWControls.Wpf.Themes.Default;component/Themes/Editors/WWSearchTextBox.xaml" />
         <ResourceDictionary Source="pack://application:,,,/WWControls.Wpf.Themes.Default;component/Themes/Editors/WWRangeSlider.xaml" />
-        <ResourceDictionary Source="pack://application:,,,/WWControls.Wpf.Themes.Default;component/Themes/Editors/WWReorderableListBox.xaml" />
+        <ResourceDictionary Source="pack://application:,,,/WWControls.Wpf.Themes.Default;component/Themes/Editors/WWListBox.xaml" />
         <ResourceDictionary Source="pack://application:,,,/WWControls.Wpf.Themes.Default;component/Themes/Editors/WWColorPicker.xaml" />
     </ResourceDictionary.MergedDictionaries>
 

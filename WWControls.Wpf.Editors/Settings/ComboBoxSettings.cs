@@ -218,12 +218,9 @@ namespace WWControls.Wpf.Editors.Settings
             var factory = new FrameworkElementFactory(typeof(WWComboBox));
 
             // The editor owns its own border and draws it by default, flattening itself when it
-            // detects a grid cell. WWComboBox wraps a flat real ComboBox, so WPF still does the
-            // selection / popup work.
+            // detects a grid cell. WWComboBox IS a ComboBox (single self-contained template), so
+            // selection / popup / DisplayMemberPath are all native.
             factory.SetValue(WWComboBox.ItemsSourceProperty, ItemsSource);
-            // DisplayMemberPath is materialized as an ItemTemplate inside WWComboBox — the flat combo
-            // template hand-places its selection ContentPresenter, so DisplayMemberPath's auto-walk
-            // never fires and the closed-state text would fall back to ToString().
             if (!string.IsNullOrEmpty(DisplayMemberPath))
                 factory.SetValue(WWComboBox.DisplayMemberPathProperty, DisplayMemberPath);
 
@@ -286,7 +283,7 @@ namespace WWControls.Wpf.Editors.Settings
                     if (e.Key == Key.Tab && editor.IsDropDownOpen)
                     {
                         editor.IsDropDownOpen = false;
-                        editor.ComboBox.Focus();
+                        editor.Focus();
                         return;
                     }
 

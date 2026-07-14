@@ -7,7 +7,7 @@
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Primitives/DefaultControls.xaml" />
         <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Grid/SearchDataGrid/Column/ColumnHeaderContextMenu.xaml" />
-        <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Editors/WWReorderableListBox.xaml" />
+        <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Editors/WWListBox.xaml" />
     </ResourceDictionary.MergedDictionaries>
 
     <!--  Converters  -->
@@ -171,13 +171,6 @@
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
-        <Style.Triggers>
-            <!--  Collapse the item while it's being dragged.  -->
-            <DataTrigger Binding="{Binding Path=(sdg:DragHelpers.IsDragged), RelativeSource={RelativeSource Self}}" Value="True">
-                <Setter Property="Visibility" Value="Collapsed" />
-                <Setter Property="IsHitTestVisible" Value="False" />
-            </DataTrigger>
-        </Style.Triggers>
     </Style>
 
     <!--  Main ColumnChooser Style  -->
@@ -324,15 +317,15 @@
                                     </Grid.RowDefinitions>
 
                                     <!--  Left section  -->
-                                    <sdg:WWReorderableListBox x:Name="PART_LeftSectionList"
-                                                            ItemContainerStyle="{StaticResource {x:Static sdg:GridThemeKeys.ColumnChooserSectionItem}}"
-                                                            Grid.Row="0"
-                                                            BorderThickness="0"
-                                                            Visibility="{Binding HasLeftFixedColumns, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                                            Padding="0"
-                                                            EnableDragDrop="{Binding IsLeftDragEnabled, RelativeSource={RelativeSource TemplatedParent}}"
-                                                            ItemsSource="{Binding LeftFixedColumns, RelativeSource={RelativeSource TemplatedParent}}"
-                                                            SelectionMode="Single" />
+                                    <sdg:WWListBox x:Name="PART_LeftSectionList"
+                                                 ItemContainerStyle="{StaticResource {x:Static sdg:GridThemeKeys.ColumnChooserSectionItem}}"
+                                                 Grid.Row="0"
+                                                 BorderThickness="0"
+                                                 Visibility="{Binding HasLeftFixedColumns, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                                 Padding="0"
+                                                 AllowReorder="{Binding IsLeftDragEnabled, RelativeSource={RelativeSource TemplatedParent}}"
+                                                 ItemsSource="{Binding LeftFixedColumns, RelativeSource={RelativeSource TemplatedParent}}"
+                                                 SelectionMode="Single" />
 
                                     <!--  Divider between Left and the rest.  -->
                                     <Border Grid.Row="1"
@@ -341,15 +334,15 @@
                                             Height="1" />
 
                                     <!--  Unpinned section — fills remaining vertical space.  -->
-                                    <sdg:WWReorderableListBox x:Name="PART_UnpinnedSectionList"
-                                                            ItemContainerStyle="{StaticResource {x:Static sdg:GridThemeKeys.ColumnChooserSectionItem}}"
-                                                            Grid.Row="2"
-                                                            BorderThickness="0"
-                                                            Visibility="{Binding HasUnpinnedColumns, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                                            Padding="0"
-                                                            EnableDragDrop="{Binding IsUnpinnedDragEnabled, RelativeSource={RelativeSource TemplatedParent}}"
-                                                            ItemsSource="{Binding UnpinnedColumns, RelativeSource={RelativeSource TemplatedParent}}"
-                                                            SelectionMode="Single" />
+                                    <sdg:WWListBox x:Name="PART_UnpinnedSectionList"
+                                                 ItemContainerStyle="{StaticResource {x:Static sdg:GridThemeKeys.ColumnChooserSectionItem}}"
+                                                 Grid.Row="2"
+                                                 BorderThickness="0"
+                                                 Visibility="{Binding HasUnpinnedColumns, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                                 Padding="0"
+                                                 AllowReorder="{Binding IsUnpinnedDragEnabled, RelativeSource={RelativeSource TemplatedParent}}"
+                                                 ItemsSource="{Binding UnpinnedColumns, RelativeSource={RelativeSource TemplatedParent}}"
+                                                 SelectionMode="Single" />
 
                                     <!--  Divider between Unpinned and Right.  -->
                                     <Border Grid.Row="3"
@@ -358,15 +351,15 @@
                                             Height="1" />
 
                                     <!--  Right section  -->
-                                    <sdg:WWReorderableListBox x:Name="PART_RightSectionList"
-                                                            ItemContainerStyle="{StaticResource {x:Static sdg:GridThemeKeys.ColumnChooserSectionItem}}"
-                                                            Grid.Row="4"
-                                                            BorderThickness="0"
-                                                            Visibility="{Binding HasRightFixedColumns, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                                            Padding="0"
-                                                            EnableDragDrop="{Binding IsRightDragEnabled, RelativeSource={RelativeSource TemplatedParent}}"
-                                                            ItemsSource="{Binding RightFixedColumns, RelativeSource={RelativeSource TemplatedParent}}"
-                                                            SelectionMode="Single" />
+                                    <sdg:WWListBox x:Name="PART_RightSectionList"
+                                                 ItemContainerStyle="{StaticResource {x:Static sdg:GridThemeKeys.ColumnChooserSectionItem}}"
+                                                 Grid.Row="4"
+                                                 BorderThickness="0"
+                                                 Visibility="{Binding HasRightFixedColumns, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                                 Padding="0"
+                                                 AllowReorder="{Binding IsRightDragEnabled, RelativeSource={RelativeSource TemplatedParent}}"
+                                                 ItemsSource="{Binding RightFixedColumns, RelativeSource={RelativeSource TemplatedParent}}"
+                                                 SelectionMode="Single" />
                                 </Grid>
                             </AdornerDecorator>
                         </Grid>

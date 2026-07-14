@@ -9,7 +9,20 @@ using System.Windows;
 
 namespace WWControls.Wpf.Primitives
 {
+    /// <summary>
+    /// Where <see cref="HighlightTextBlock"/> anchors the highlighted match within the source text.
+    /// </summary>
+    public enum HighlightMatchMode
+    {
+        /// <summary>Highlight the first occurrence of the term anywhere in the text.</summary>
+        Contains,
 
+        /// <summary>Highlight the term only when the text starts with it.</summary>
+        StartsWith,
+
+        /// <summary>Highlight the term only when the text ends with it (anchored to the tail).</summary>
+        EndsWith
+    }
 
     /// <summary>
     /// A TextBlock that highlights the first occurrence of a search term within a source string.
@@ -50,6 +63,19 @@ namespace WWControls.Wpf.Primitives
                 typeof(HighlightTextBlock),
                 new PropertyMetadata(null, OnHighlightRunStyleChanged));
 
+        /// <summary>
+        /// Where the match anchors: <see cref="HighlightMatchMode.Contains"/> (default) highlights
+        /// the first occurrence anywhere; StartsWith / EndsWith only highlight when the text
+        /// begins / ends with the term — so a search combo filtering by suffix bolds the tail
+        /// occurrence instead of an earlier one.
+        /// </summary>
+        public static readonly DependencyProperty MatchModeProperty =
+            DependencyProperty.Register(
+                "MatchMode",
+                typeof(HighlightMatchMode),
+                typeof(HighlightTextBlock),
+                new PropertyMetadata(HighlightMatchMode.Contains, OnMatchModeChanged));
+
         #endregion
 
         #region Properties
@@ -84,6 +110,12 @@ namespace WWControls.Wpf.Primitives
             set => SetValue(HighlightRunStyleProperty, value);
         }
 
+        public HighlightMatchMode MatchMode
+        {
+            get => (HighlightMatchMode)GetValue(MatchModeProperty);
+            set => SetValue(MatchModeProperty, value);
+        }
+
         #endregion
 
         #region Property Changed Handlers
@@ -106,6 +138,12 @@ namespace WWControls.Wpf.Primitives
             if (textBlock != null) textBlock.Highlight();
         }
 
+        private static void OnMatchModeChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            var textBlock = d as HighlightTextBlock;
+            if (textBlock != null) textBlock.Highlight();
+        }
+
         #endregion
 
         #region Highlight Logic
@@ -123,8 +161,8 @@ namespace WWControls.Wpf.Primitives
                 return;
             }
 
-            // Case-insensitive, first occurrence
-            int index = text.IndexOf(term, StringComparison.CurrentCultureIgnoreCase);
+            // Case-insensitive; anchor per MatchMode
+            int index = FindMatchIndex(text, term);
             if (index < 0)
             {
                 Inlines.Add(new Run(text));
@@ -154,6 +192,21 @@ namespace WWControls.Wpf.Primitives
             int afterIndex = index + matchLen;
             if (afterIndex < text.Length)
                 Inlines.Add(new Run(text.Substring(afterIndex)));
+        }
+
+        private int FindMatchIndex(string text, string term)
+        {
+            switch (MatchMode)
+            {
+                case HighlightMatchMode.StartsWith:
+                    return text.StartsWith(term, StringComparison.CurrentCultureIgnoreCase) ? 0 : -1;
+                case HighlightMatchMode.EndsWith:
+                    return text.EndsWith(term, StringComparison.CurrentCultureIgnoreCase)
+                        ? text.Length - term.Length
+                        : -1;
+                default:
+                    return text.IndexOf(term, StringComparison.CurrentCultureIgnoreCase);
+            }
         }
 
         #endregion

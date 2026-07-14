@@ -65,6 +65,56 @@ namespace WWControls.Wpf.Editors.Settings
             DependencyProperty.Register(nameof(UseMaskAsDisplayFormat), typeof(bool), typeof(DatePickerSettings),
                 new PropertyMetadata(false));
 
+        /// <summary>
+        /// <inheritdoc cref="SegmentedDateTimeEditor.CycleModifierProperty"/>
+        /// Defaults to <see cref="ModifierKeys.Control"/> here — unlike the standalone control's
+        /// <see cref="ModifierKeys.None"/> — so unmodified Up/Down keeps navigating grid rows
+        /// from a date cell / filter cell, matching the rest of the DataGrid.
+        /// </summary>
+        public static readonly DependencyProperty CycleModifierProperty =
+            DependencyProperty.Register(nameof(CycleModifier), typeof(ModifierKeys), typeof(DatePickerSettings),
+                new PropertyMetadata(ModifierKeys.Control));
+
+        /// <inheritdoc cref="SegmentedDateTimeEditor.AllowNullInputProperty"/>
+        public static readonly DependencyProperty AllowNullInputProperty =
+            DependencyProperty.Register(nameof(AllowNullInput), typeof(bool), typeof(DatePickerSettings),
+                new PropertyMetadata(true));
+
+        /// <inheritdoc cref="SegmentedDateTimeEditor.DefaultDateProperty"/>
+        public static readonly DependencyProperty DefaultDateProperty =
+            DependencyProperty.Register(nameof(DefaultDate), typeof(DateTime?), typeof(DatePickerSettings),
+                new PropertyMetadata(null));
+
+        /// <inheritdoc cref="SegmentedDateTimeEditor.PopupModeProperty"/>
+        public static readonly DependencyProperty PopupModeProperty =
+            DependencyProperty.Register(nameof(PopupMode), typeof(DatePickerPopupMode), typeof(DatePickerSettings),
+                new PropertyMetadata(DatePickerPopupMode.Calendar));
+
+        /// <inheritdoc cref="SegmentedDateTimeEditor.TimeInputProperty"/>
+        public static readonly DependencyProperty TimeInputProperty =
+            DependencyProperty.Register(nameof(TimeInput), typeof(TimeInputMode), typeof(DatePickerSettings),
+                new PropertyMetadata(TimeInputMode.Auto));
+
+        /// <inheritdoc cref="SegmentedDateTimeEditor.ShowClearButtonProperty"/>
+        public static readonly DependencyProperty ShowClearButtonProperty =
+            DependencyProperty.Register(nameof(ShowClearButton), typeof(bool), typeof(DatePickerSettings),
+                new PropertyMetadata(false));
+
+        /// <inheritdoc cref="SegmentedDateTimeEditor.ShowTodayButtonProperty"/>
+        public static readonly DependencyProperty ShowTodayButtonProperty =
+            DependencyProperty.Register(nameof(ShowTodayButton), typeof(bool), typeof(DatePickerSettings),
+                new PropertyMetadata(false));
+
+        /// <inheritdoc cref="SegmentedDateTimeEditor.ShowNowButtonProperty"/>
+        public static readonly DependencyProperty ShowNowButtonProperty =
+            DependencyProperty.Register(nameof(ShowNowButton), typeof(bool), typeof(DatePickerSettings),
+                new PropertyMetadata(false));
+
+        /// <inheritdoc cref="SegmentedDateTimeEditor.ShowWeekNumbersProperty"/>
+        public static readonly DependencyProperty ShowWeekNumbersProperty =
+            DependencyProperty.Register(nameof(ShowWeekNumbers), typeof(bool), typeof(DatePickerSettings),
+                new PropertyMetadata(false));
+
         /// <summary>Optional lower bound applied to the calendar popup.</summary>
         public DateTime? MinDate
         {
@@ -98,6 +148,69 @@ namespace WWControls.Wpf.Editors.Settings
         {
             get => (bool)GetValue(UseMaskAsDisplayFormatProperty);
             set => SetValue(UseMaskAsDisplayFormatProperty, value);
+        }
+
+        /// <inheritdoc cref="SegmentedDateTimeEditor.CycleModifier"/>
+        public ModifierKeys CycleModifier
+        {
+            get => (ModifierKeys)GetValue(CycleModifierProperty);
+            set => SetValue(CycleModifierProperty, value);
+        }
+
+        /// <inheritdoc cref="SegmentedDateTimeEditor.AllowNullInput"/>
+        public bool AllowNullInput
+        {
+            get => (bool)GetValue(AllowNullInputProperty);
+            set => SetValue(AllowNullInputProperty, value);
+        }
+
+        /// <inheritdoc cref="SegmentedDateTimeEditor.DefaultDate"/>
+        public DateTime? DefaultDate
+        {
+            get => (DateTime?)GetValue(DefaultDateProperty);
+            set => SetValue(DefaultDateProperty, value);
+        }
+
+        /// <inheritdoc cref="SegmentedDateTimeEditor.PopupMode"/>
+        public DatePickerPopupMode PopupMode
+        {
+            get => (DatePickerPopupMode)GetValue(PopupModeProperty);
+            set => SetValue(PopupModeProperty, value);
+        }
+
+        /// <inheritdoc cref="SegmentedDateTimeEditor.TimeInput"/>
+        public TimeInputMode TimeInput
+        {
+            get => (TimeInputMode)GetValue(TimeInputProperty);
+            set => SetValue(TimeInputProperty, value);
+        }
+
+        /// <inheritdoc cref="SegmentedDateTimeEditor.ShowClearButton"/>
+        public bool ShowClearButton
+        {
+            get => (bool)GetValue(ShowClearButtonProperty);
+            set => SetValue(ShowClearButtonProperty, value);
+        }
+
+        /// <inheritdoc cref="SegmentedDateTimeEditor.ShowTodayButton"/>
+        public bool ShowTodayButton
+        {
+            get => (bool)GetValue(ShowTodayButtonProperty);
+            set => SetValue(ShowTodayButtonProperty, value);
+        }
+
+        /// <inheritdoc cref="SegmentedDateTimeEditor.ShowNowButton"/>
+        public bool ShowNowButton
+        {
+            get => (bool)GetValue(ShowNowButtonProperty);
+            set => SetValue(ShowNowButtonProperty, value);
+        }
+
+        /// <inheritdoc cref="SegmentedDateTimeEditor.ShowWeekNumbers"/>
+        public bool ShowWeekNumbers
+        {
+            get => (bool)GetValue(ShowWeekNumbersProperty);
+            set => SetValue(ShowWeekNumbersProperty, value);
         }
 
         public override DataTemplate CreateDisplayTemplate(IEditorColumn column)
@@ -226,6 +339,15 @@ namespace WWControls.Wpf.Editors.Settings
                 // Filter-row marker: enables today's-date pre-fill on focus and suppresses the
                 // cell-edit Loaded-time focus grab. See SegmentedDateTimeEditor.IsFilterRowEditor.
                 IsFilterRowEditor = true,
+                CycleModifier = CycleModifier,
+                AllowNullInput = AllowNullInput,
+                DefaultDate = DefaultDate,
+                PopupMode = PopupMode,
+                TimeInput = TimeInput,
+                ShowClearButton = ShowClearButton,
+                ShowTodayButton = ShowTodayButton,
+                ShowNowButton = ShowNowButton,
+                ShowWeekNumbers = ShowWeekNumbers,
             };
             if (MinDate.HasValue) editor.MinDate = MinDate.Value;
             if (MaxDate.HasValue) editor.MaxDate = MaxDate.Value;
@@ -258,6 +380,15 @@ namespace WWControls.Wpf.Editors.Settings
             factory.SetValue(WWDatePicker.MaskTypeProperty, MaskType);
             if (MinDate.HasValue) factory.SetValue(WWDatePicker.MinDateProperty, MinDate.Value);
             if (MaxDate.HasValue) factory.SetValue(WWDatePicker.MaxDateProperty, MaxDate.Value);
+            factory.SetValue(WWDatePicker.CycleModifierProperty, CycleModifier);
+            factory.SetValue(WWDatePicker.AllowNullInputProperty, AllowNullInput);
+            if (DefaultDate.HasValue) factory.SetValue(WWDatePicker.DefaultDateProperty, DefaultDate.Value);
+            factory.SetValue(WWDatePicker.PopupModeProperty, PopupMode);
+            factory.SetValue(WWDatePicker.TimeInputProperty, TimeInput);
+            factory.SetValue(WWDatePicker.ShowClearButtonProperty, ShowClearButton);
+            factory.SetValue(WWDatePicker.ShowTodayButtonProperty, ShowTodayButton);
+            factory.SetValue(WWDatePicker.ShowNowButtonProperty, ShowNowButton);
+            factory.SetValue(WWDatePicker.ShowWeekNumbersProperty, ShowWeekNumbers);
 
             // The control decides when an arrow should exit the cell and raises CellExitRequested;
             // the grid-side adapter drives the actual navigation, keeping WWDatePicker /

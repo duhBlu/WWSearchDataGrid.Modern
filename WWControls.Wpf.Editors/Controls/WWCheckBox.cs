@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 
 namespace WWControls.Wpf.Editors
 {
@@ -36,6 +37,42 @@ namespace WWControls.Wpf.Editors
             DependencyProperty.Register(nameof(IsThreeState), typeof(bool), typeof(WWCheckBox),
                 new PropertyMetadata(false));
 
+        /// <summary>When the inner checkbox registers a click: on mouse release (default), press, or hover.</summary>
+        public static readonly DependencyProperty ClickModeProperty =
+            DependencyProperty.Register(nameof(ClickMode), typeof(ClickMode), typeof(WWCheckBox),
+                new PropertyMetadata(ClickMode.Release, OnEffectiveClickModeInputChanged));
+
+        /// <summary>
+        /// Modifier key(s) that must be held for <see cref="ClickMode.Hover"/> to toggle.
+        /// <see cref="ModifierKeys.None"/> (default) hovers unguarded. When set, an unmodified
+        /// hover does nothing — the control toggles when the pointer is over it with the modifier
+        /// held (once per hover), and a normal click still toggles. Ignored outside Hover mode.
+        /// </summary>
+        public static readonly DependencyProperty HoverModifierProperty =
+            DependencyProperty.Register(nameof(HoverModifier), typeof(ModifierKeys), typeof(WWCheckBox),
+                new PropertyMetadata(ModifierKeys.None, OnEffectiveClickModeInputChanged));
+
+        private static readonly DependencyPropertyKey EffectiveClickModePropertyKey =
+            DependencyProperty.RegisterReadOnly(nameof(EffectiveClickMode), typeof(ClickMode), typeof(WWCheckBox),
+                new PropertyMetadata(ClickMode.Release));
+
+        /// <summary>
+        /// The click mode the inner checkbox actually runs — <see cref="ClickMode"/>, except
+        /// modifier-gated hover drops to <see cref="ClickMode.Release"/> so the native
+        /// hover-toggle stays off and the control applies the gated toggle itself.
+        /// </summary>
+        public static readonly DependencyProperty EffectiveClickModeProperty =
+            EffectiveClickModePropertyKey.DependencyProperty;
+
+        private static void OnEffectiveClickModeInputChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            var checkBox = (WWCheckBox)d;
+            var mode = checkBox.ClickMode;
+            if (mode == ClickMode.Hover && checkBox.HoverModifier != ModifierKeys.None)
+                mode = ClickMode.Release;
+            checkBox.SetValue(EffectiveClickModePropertyKey, mode);
+        }
+
         public bool? IsChecked
         {
             get => (bool?)GetValue(IsCheckedProperty);
@@ -48,6 +85,20 @@ namespace WWControls.Wpf.Editors
             set => SetValue(IsThreeStateProperty, value);
         }
 
+        public ClickMode ClickMode
+        {
+            get => (ClickMode)GetValue(ClickModeProperty);
+            set => SetValue(ClickModeProperty, value);
+        }
+
+        public ModifierKeys HoverModifier
+        {
+            get => (ModifierKeys)GetValue(HoverModifierProperty);
+            set => SetValue(HoverModifierProperty, value);
+        }
+
+        public ClickMode EffectiveClickMode => (ClickMode)GetValue(EffectiveClickModeProperty);
+
         /// <summary>The inner checkbox — the focus target and toggle element (null before template).</summary>
         public CheckBox CheckBox => _checkBox;
 
@@ -58,13 +109,49 @@ namespace WWControls.Wpf.Editors
         {
             base.OnApplyTemplate();
             _checkBox = GetTemplateChild(PartCheckBox) as CheckBox;
+        }
 
-            // Reuse the library's themed checkbox look (box + check/indeterminate glyphs + the
-            // DataGridCell read-only gate). Applied explicitly and unconditionally so the inner box
-            // can't inherit an ambient implicit CheckBox style from the host app — an applied
-            // implicit style leaves Style non-null, so a "Style == null" guard would skip ours.
-            if (_checkBox != null && TryFindResource(EditorThemeKeys.DisplayCheckBox) is Style style)
-                _checkBox.Style = style;
+        // ── Modifier-gated hover ────────────────────────────────────────────
+        // With HoverModifier set, the inner checkbox runs Release (EffectiveClickMode), so plain
+        // hovering is inert; the control itself toggles once per hover while the modifier is held.
+        // MouseMove (not just MouseEnter) participates so pressing the modifier after the pointer
+        // is already over the box still registers on the next pointer movement.
+
+        /// <summary>True once the current hover has toggled; re-arms when the pointer leaves.</summary>
+        private bool _hoverToggled;
+
+        protected override void OnMouseEnter(MouseEventArgs e)
+        {
+            base.OnMouseEnter(e);
+            TryHoverToggle();
+        }
+
+        protected override void OnPreviewMouseMove(MouseEventArgs e)
+        {
+            base.OnPreviewMouseMove(e);
+            TryHoverToggle();
+        }
+
+        protected override void OnMouseLeave(MouseEventArgs e)
+        {
+            base.OnMouseLeave(e);
+            _hoverToggled = false;
+        }
+
+        private void TryHoverToggle()
+        {
+            if (_hoverToggled || ClickMode != ClickMode.Hover || HoverModifier == ModifierKeys.None)
+                return;
+            if (IsReadOnly || !IsEnabled)
+                return;
+            if ((Keyboard.Modifiers & HoverModifier) != HoverModifier)
+                return;
+
+            _hoverToggled = true;
+            // Same cycle as ToggleButton.OnToggle: true → null (three-state) or false; null → false.
+            IsChecked = IsChecked == true ? (IsThreeState ? (bool?)null : false)
+                      : IsChecked == null ? false
+                      : true;
         }
     }
 }

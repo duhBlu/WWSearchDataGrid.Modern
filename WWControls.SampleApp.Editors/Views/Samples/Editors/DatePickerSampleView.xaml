@@ -11,58 +11,147 @@
         <local:DatePickerSampleViewModel />
     </UserControl.DataContext>
 
+    <UserControl.Resources>
+        <Style x:Key="Caption" TargetType="TextBlock">
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="#444" />
+            <Setter Property="Margin" Value="0,0,0,4" />
+        </Style>
+        <Style x:Key="OptionLabel" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="Foreground" Value="#666" />
+            <Setter Property="Margin" Value="0,0,0,3" />
+        </Style>
+        <Style x:Key="Hint" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="Foreground" Value="#888" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="Margin" Value="0,2,0,0" />
+        </Style>
+        <Style x:Key="BoundValue" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Foreground" Value="#0066AA" />
+            <Setter Property="Margin" Value="0,6,0,0" />
+        </Style>
+        <Style x:Key="ToggleRow" BasedOn="{StaticResource {x:Static sdg:PrimitiveThemeKeys.CheckBox}}" TargetType="CheckBox">
+            <Setter Property="Margin" Value="0,0,0,8" />
+            <Setter Property="Foreground" Value="#333" />
+        </Style>
+        <Style x:Key="OptionCombo" TargetType="{x:Type sdg:WWComboBox}" BasedOn="{StaticResource {x:Static sdg:EditorThemeKeys.ComboBox}}">
+            <Setter Property="Height" Value="26" />
+            <Setter Property="Margin" Value="0,0,0,10" />
+        </Style>
+    </UserControl.Resources>
+
     <sampleControls:SampleHostControl Sources="{x:Static sampleControls:SampleSources.DatePicker}">
         <ScrollViewer Background="#FFFFFF" VerticalScrollBarVisibility="Auto">
-            <StackPanel Margin="24" MaxWidth="620" HorizontalAlignment="Left">
+            <StackPanel Margin="24" MaxWidth="760" HorizontalAlignment="Left">
                 <TextBlock FontSize="13" Foreground="#444" TextWrapping="Wrap" Margin="0,0,0,16">
                     <Run FontWeight="SemiBold" Text="WWDatePicker" />
                     <LineBreak />
-                    <Run Text="Date editor masked by standard .NET date format strings — the default mask is the short date ('d'); set Mask to any date format. MinDate / MaxDate clamp what the editor accepts. Values bind as nullable DateTime." />
+                    <Run Text="Date/time editor masked by standard .NET format strings, binding a nullable DateTime. Flip the options on the left — they all drive the picker live. Typing edits one segment at a time (arrows move between segments, Up/Down cycles the focused one); the dropdown offers a calendar or looping scroll columns, with a time surface whenever the mask carries time parts." />
                 </TextBlock>
 
                 <Grid>
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="200" />
-                        <ColumnDefinition Width="240" />
+                        <ColumnDefinition Width="230" />
+                        <ColumnDefinition Width="24" />
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                    </Grid.RowDefinitions>
 
-                    <TextBlock Grid.Row="0" Grid.Column="1" Text="Editor" FontWeight="SemiBold" Foreground="#666" Margin="0,0,0,6" />
-                    <TextBlock Grid.Row="0" Grid.Column="2" Text="Bound value" FontWeight="SemiBold" Foreground="#666" Margin="12,0,0,6" />
+                    <!--  Options — every control here drives the demo picker on the right.  -->
+                    <Border Grid.Column="0"
+                            Background="#FAFAFA"
+                            BorderBrush="#E3E3E3"
+                            BorderThickness="1"
+                            CornerRadius="6"
+                            Padding="14"
+                            VerticalAlignment="Top">
+                        <StackPanel>
+                            <TextBlock Style="{StaticResource Caption}" Text="Options" Margin="0,0,0,10" />
 
-                    <!-- Default: short-date mask "d". -->
-                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Short date (default 'd')" VerticalAlignment="Center" Margin="0,4" Foreground="#333" />
-                    <sdg:WWDatePicker Grid.Row="1" Grid.Column="1" Height="26" Margin="0,4"
-                                    Value="{Binding DueDate, Mode=TwoWay}" />
-                    <TextBlock Grid.Row="1" Grid.Column="2" Text="{Binding DueDate}" VerticalAlignment="Center" Margin="12,4" Foreground="#0066AA" />
+                            <TextBlock Style="{StaticResource OptionLabel}" Text="Mask (editable — type your own)" />
+                            <sdg:WWComboBox Style="{StaticResource OptionCombo}"
+                                            IsEditable="True"
+                                            ItemsSource="{Binding MaskPresets}"
+                                            Text="{Binding Mask, Mode=TwoWay}" />
 
-                    <!-- Explicit custom pattern. -->
-                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Custom MM/dd/yyyy" VerticalAlignment="Center" Margin="0,4" Foreground="#333" />
-                    <sdg:WWDatePicker Grid.Row="2" Grid.Column="1" Height="26" Margin="0,4"
-                                    Mask="MM/dd/yyyy"
-                                    Value="{Binding ShipDate, Mode=TwoWay}" />
-                    <TextBlock Grid.Row="2" Grid.Column="2" Text="{Binding ShipDate}" VerticalAlignment="Center" Margin="12,4" Foreground="#0066AA" />
+                            <TextBlock Style="{StaticResource OptionLabel}" Text="PopupMode" />
+                            <sdg:WWComboBox Style="{StaticResource OptionCombo}"
+                                            ItemsSource="{Binding PopupModes}"
+                                            SelectedItem="{Binding PopupMode, Mode=TwoWay}" />
 
-                    <!-- Date + time via the general format. -->
-                    <TextBlock Grid.Row="3" Grid.Column="0" Text="Date + time ('g')" VerticalAlignment="Center" Margin="0,4" Foreground="#333" />
-                    <sdg:WWDatePicker Grid.Row="3" Grid.Column="1" Height="26" Margin="0,4"
-                                    Mask="g"
-                                    Value="{Binding Appointment, Mode=TwoWay}" />
-                    <TextBlock Grid.Row="3" Grid.Column="2" Text="{Binding Appointment}" VerticalAlignment="Center" Margin="12,4" Foreground="#0066AA" />
+                            <TextBlock Style="{StaticResource OptionLabel}" Text="TimeInput" />
+                            <sdg:WWComboBox Style="{StaticResource OptionCombo}"
+                                            ItemsSource="{Binding TimeInputModes}"
+                                            SelectedItem="{Binding TimeInput, Mode=TwoWay}" />
 
-                    <!-- MinDate / MaxDate clamp: this editor only accepts dates inside the current year. -->
-                    <TextBlock Grid.Row="4" Grid.Column="0" Text="Clamped to this year" VerticalAlignment="Center" Margin="0,4" Foreground="#333" />
-                    <sdg:WWDatePicker Grid.Row="4" Grid.Column="1" Height="26" Margin="0,4"
-                                    MinDate="{Binding YearStart}" MaxDate="{Binding YearEnd}"
-                                    Value="{Binding InYearDate, Mode=TwoWay}" />
-                    <TextBlock Grid.Row="4" Grid.Column="2" Text="{Binding InYearDate}" VerticalAlignment="Center" Margin="12,4" Foreground="#0066AA" />
+                            <TextBlock Style="{StaticResource OptionLabel}" Text="CycleModifier (for Up/Down spin)" />
+                            <sdg:WWComboBox Style="{StaticResource OptionCombo}"
+                                            ItemsSource="{Binding CycleModifiers}"
+                                            SelectedItem="{Binding CycleModifier, Mode=TwoWay}" />
+
+                            <TextBlock Style="{StaticResource OptionLabel}" Text="DisplayFormat (unfocused text)" />
+                            <sdg:WWComboBox Style="{StaticResource OptionCombo}"
+                                            IsEditable="True"
+                                            ItemsSource="{Binding DisplayFormatPresets}"
+                                            Text="{Binding DisplayFormat, Mode=TwoWay}" />
+
+                            <CheckBox Style="{StaticResource ToggleRow}" Content="AllowNullInput"
+                                      ToolTip="Ctrl+0 / Ctrl+Delete clears; emptied editor commits null"
+                                      IsChecked="{Binding AllowNullInput, Mode=TwoWay}" />
+                            <CheckBox Style="{StaticResource ToggleRow}" Content="ShowClearButton"
+                                      IsEnabled="{Binding AllowNullInput}"
+                                      IsChecked="{Binding ShowClearButton, Mode=TwoWay}" />
+                            <CheckBox Style="{StaticResource ToggleRow}" Content="ShowTodayButton"
+                                      ToolTip="Hidden automatically on a time-only mask"
+                                      IsChecked="{Binding ShowTodayButton, Mode=TwoWay}" />
+                            <CheckBox Style="{StaticResource ToggleRow}" Content="ShowNowButton"
+                                      ToolTip="Shows only while the popup has a time surface"
+                                      IsChecked="{Binding ShowNowButton, Mode=TwoWay}" />
+                            <CheckBox Style="{StaticResource ToggleRow}" Content="ShowWeekNumbers"
+                                      IsChecked="{Binding ShowWeekNumbers, Mode=TwoWay}" />
+                            <CheckBox Style="{StaticResource ToggleRow}" Content="Clamp to this year"
+                                      ToolTip="Sets MinDate / MaxDate to Jan 1 – Dec 31 of the current year"
+                                      IsChecked="{Binding ClampToThisYear, Mode=TwoWay}" />
+                            <CheckBox Style="{StaticResource ToggleRow}" Margin="0" Content="DefaultDate = next month"
+                                      ToolTip="Popup seeds at the first of next month while the value is null"
+                                      IsChecked="{Binding SeedNextMonth, Mode=TwoWay}" />
+                        </StackPanel>
+                    </Border>
+
+                    <!--  The demo picker.  -->
+                    <StackPanel Grid.Column="2">
+                        <TextBlock Style="{StaticResource Caption}" Text="Editor" />
+                        <sdg:WWDatePicker Height="28"
+                                          Width="260"
+                                          HorizontalAlignment="Left"
+                                          Value="{Binding Value, Mode=TwoWay}"
+                                          Mask="{Binding Mask}"
+                                          PopupMode="{Binding PopupMode}"
+                                          TimeInput="{Binding TimeInput}"
+                                          CycleModifier="{Binding CycleModifier}"
+                                          DisplayFormat="{Binding DisplayFormat}"
+                                          AllowNullInput="{Binding AllowNullInput}"
+                                          ShowClearButton="{Binding ShowClearButton}"
+                                          ShowTodayButton="{Binding ShowTodayButton}"
+                                          ShowNowButton="{Binding ShowNowButton}"
+                                          ShowWeekNumbers="{Binding ShowWeekNumbers}"
+                                          MinDate="{Binding MinDate}"
+                                          MaxDate="{Binding MaxDate}"
+                                          DefaultDate="{Binding DefaultDate}" />
+                        <TextBlock Style="{StaticResource BoundValue}"
+                                   Text="{Binding Value, StringFormat='Bound value: {0}', TargetNullValue='Bound value: (null)'}" />
+
+                        <TextBlock Style="{StaticResource Hint}" Margin="0,14,0,0">
+                            <Run FontWeight="SemiBold" Text="Keyboard:" />
+                            <Run Text="Left/Right (or click) picks a segment, digits overwrite it, Up/Down cycles it (gated by CycleModifier), Backspace/Delete clears it. With AllowNullInput on: Ctrl+0, Ctrl+Delete, or Ctrl+Backspace clears the whole value to blank, and the first keystroke into the empty editor auto-fills the other regions from DefaultDate (or now)." />
+                        </TextBlock>
+                        <TextBlock Style="{StaticResource Hint}">
+                            <Run FontWeight="SemiBold" Text="Popup:" />
+                            <Run Text="a mask with time parts (try 'g' or 'MM/dd/yyyy HH:mm') lights up the time surface — an inline time editor under the calendar, or hour/minute columns in the scroll list. A time-only mask ('t') collapses the calendar entirely. 'HH' masks switch the scroll list to a 24-hour column." />
+                        </TextBlock>
+                    </StackPanel>
                 </Grid>
             </StackPanel>
         </ScrollViewer>

@@ -27,8 +27,6 @@ namespace WWControls.Wpf.Editors
     [TemplatePart(Name = PartDownButton, Type = typeof(RepeatButton))]
     public class WWNumericUpDown : WWEditorBase, IEditTextBoxProvider
     {
-        private const string ChevronUp = "";   // Segoe Fluent Icons ChevronUp
-        private const string ChevronDown = ""; // Segoe Fluent Icons ChevronDown
 
         private const string PartTextBox = "PART_TextBox";
         private const string PartUpButton = "PART_UpButton";
@@ -105,32 +103,12 @@ namespace WWControls.Wpf.Editors
 
             if (_textBox != null)
             {
-                // Flat editor style, set explicitly so the inner box can't inherit an ambient
-                // implicit TextBox style from the host app and draw a second border inside the
-                // chrome. See WWTextBox.OnApplyTemplate for the full rationale.
-                if (TryFindResource(EditorThemeKeys.EditTextBox) is Style flatStyle)
-                    _textBox.Style = flatStyle;
                 _textBox.PreviewTextInput += OnPreviewTextInput;
                 _textBox.PreviewKeyDown += OnTextBoxPreviewKeyDown;
             }
 
-            // The glyph content is assigned in code (rather than the template) so the Segoe Fluent
-            // chevron characters live in exactly one place — the ChevronUp / ChevronDown constants.
-            // The SpinButton style is applied unconditionally so an ambient implicit Button style in
-            // the host app can't turn the flat spinner glyphs into full framed buttons.
-            var spinStyle = TryFindResource(EditorThemeKeys.SpinButton) as Style;
-            if (_upButton != null)
-            {
-                _upButton.Content = ChevronUp;
-                if (spinStyle != null) _upButton.Style = spinStyle;
-                _upButton.Click += OnUpButtonClick;
-            }
-            if (_downButton != null)
-            {
-                _downButton.Content = ChevronDown;
-                if (spinStyle != null) _downButton.Style = spinStyle;
-                _downButton.Click += OnDownButtonClick;
-            }
+            if (_upButton != null) _upButton.Click += OnUpButtonClick;
+            if (_downButton != null) _downButton.Click += OnDownButtonClick;
         }
 
         private void OnUpButtonClick(object sender, RoutedEventArgs e) => Step(+1, large: false);

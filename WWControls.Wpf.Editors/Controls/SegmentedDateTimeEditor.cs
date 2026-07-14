@@ -15,8 +15,9 @@ namespace WWControls.Wpf.Editors
     /// Segmented datetime editor used by <see cref="DatePickerSettings"/>. Each format token in
     /// the mask (<c>MM</c>, <c>dd</c>, <c>yyyy</c>, <c>hh</c>, <c>mm</c>, <c>ss</c>, <c>tt</c>,
     /// <c>MMM</c>, <c>MMMM</c>, <c>ddd</c>, <c>dddd</c>, etc.) is a discrete section: tab/arrow
-    /// navigates between sections, digits / letters overwrite within a section, Ctrl+Up/Down
-    /// cycles, literals between sections are non-focusable. Matches the industry-standard
+    /// navigates between sections, digits / letters overwrite within a section, Up/Down cycles
+    /// (gated by <see cref="CycleModifier"/>, default none — plain arrows spin), literals
+    /// between sections are non-focusable. Matches the industry-standard
     /// datetime-editor model (WinUI, Telerik, DevExpress, <c>&lt;input type="datetime-local"&gt;</c>).
     /// The TextBox + calendar-dropdown layout (DockPanel + TextBox + Button + Popup + Calendar)
     /// lives in the default <see cref="ControlTemplate"/> in <c>Themes/EditSettings.xaml</c>;
@@ -31,8 +32,12 @@ namespace WWControls.Wpf.Editors
     ///   segments are the fixed separators between them.</item>
     ///   <item>No prompt-character placeholders. An empty region renders as nothing — the
     ///   display string is just the concatenation of (current digits per editable segment)
-    ///   and (literal text). Empty MM/dd/yyyy → <c>"//"</c>; MM=5 → <c>"5//"</c>; full date
-    ///   → <c>"12/15/2025"</c>.</item>
+    ///   and (literal text). MM=5 → <c>"5//"</c>; full date → <c>"12/15/2025"</c>. A FULLY
+    ///   empty editor renders blank (no literal skeleton) whenever unfocused, and also while
+    ///   focused when <see cref="AllowNullInput"/> — the first keystroke then seeds every
+    ///   other region from <see cref="DefaultDate"/> / now so the user only types the parts
+    ///   they care about. Only a focused non-nullable editor shows the bare literals
+    ///   (<c>"//"</c>) as a type-here affordance.</item>
     ///   <item>No auto-advance. Each typed digit either appends to the current segment (if
     ///   the resulting <c>currentValue * 10 + digit</c> ≤ segment max) or overrides the
     ///   segment with just the new digit (if the candidate would be invalid). The caret
@@ -53,11 +58,25 @@ namespace WWControls.Wpf.Editors
     [TemplatePart(Name = PartTextBox, Type = typeof(TextBox))]
     [TemplatePart(Name = PartCalendar, Type = typeof(System.Windows.Controls.Calendar))]
     [TemplatePart(Name = PartDropDownButton, Type = typeof(ToggleButton))]
+    [TemplatePart(Name = PartPopup, Type = typeof(Popup))]
+    [TemplatePart(Name = PartTimeEditor, Type = typeof(SegmentedDateTimeEditor))]
+    [TemplatePart(Name = PartScrollPicker, Type = typeof(DateTimeScrollPicker))]
+    [TemplatePart(Name = PartTodayButton, Type = typeof(Button))]
+    [TemplatePart(Name = PartNowButton, Type = typeof(Button))]
+    [TemplatePart(Name = PartClearButton, Type = typeof(Button))]
+    [TemplatePart(Name = PartWeekNumbers, Type = typeof(Canvas))]
     public class SegmentedDateTimeEditor : Control
     {
         private const string PartTextBox = "PART_TextBox";
         private const string PartCalendar = "PART_Calendar";
         private const string PartDropDownButton = "PART_DropDownButton";
+        private const string PartPopup = "PART_Popup";
+        private const string PartTimeEditor = "PART_TimeEditor";
+        private const string PartScrollPicker = "PART_ScrollPicker";
+        private const string PartTodayButton = "PART_TodayButton";
+        private const string PartNowButton = "PART_NowButton";
+        private const string PartClearButton = "PART_ClearButton";
+        private const string PartWeekNumbers = "PART_WeekNumbers";
 
         /// <summary>
         /// One element of the parsed Mask. The hierarchy mirrors the four ways the editor
@@ -134,6 +153,20 @@ namespace WWControls.Wpf.Editors
         private TextBox _textBox;
         private System.Windows.Controls.Calendar _calendar;
         private ToggleButton _button;
+        private Popup _popup;
+        private SegmentedDateTimeEditor _timeEditor;
+        private DateTimeScrollPicker _scrollPicker;
+        private Button _todayButton;
+        private Button _nowButton;
+        private Button _clearButton;
+        private Canvas _weekNumbersHost;
+
+        /// <summary>
+        /// Set while this control pushes <see cref="Value"/> into (or reads it from) the popup's
+        /// calendar / nested time editor, so the pick-back handlers don't re-enter and clobber the
+        /// time-of-day merge.
+        /// </summary>
+        private bool _suppressPopupSync;
 
         private readonly List<Segment> _segments = new List<Segment>();
         private int _activeSegmentIndex = -1;
@@ -289,6 +322,212 @@ namespace WWControls.Wpf.Editors
             set => SetValue(IsFilterRowEditorProperty, value);
         }
 
+        /// <summary>
+        /// Modifier key(s) that must be held for Up / Down arrows to cycle the active segment's
+        /// value. Default <see cref="ModifierKeys.None"/> — plain Up/Down spins the focused
+        /// segment (the same in-place feel as a numeric spin editor). Require a modifier (e.g.
+        /// <see cref="ModifierKeys.Control"/>) to reserve unmodified Up/Down for
+        /// <see cref="CellExitRequested"/> — in a grid that's row navigation.
+        /// </summary>
+        public static readonly DependencyProperty CycleModifierProperty =
+            DependencyProperty.Register(nameof(CycleModifier), typeof(ModifierKeys), typeof(SegmentedDateTimeEditor),
+                new PropertyMetadata(ModifierKeys.None));
+
+        /// <summary>
+        /// Whether the user can null the value: Ctrl+0 / Ctrl+Delete clear to null, the popup's
+        /// Clear button shows (when <see cref="ShowClearButton"/> is also set), and committing an
+        /// all-empty editor writes null. When <c>false</c>, an all-empty commit reverts the display
+        /// to the bound value instead of nulling it.
+        /// </summary>
+        public static readonly DependencyProperty AllowNullInputProperty =
+            DependencyProperty.Register(nameof(AllowNullInput), typeof(bool), typeof(SegmentedDateTimeEditor),
+                new PropertyMetadata(true, OnPopupOptionChanged));
+
+        /// <summary>
+        /// Starting date for the popup surfaces while <see cref="Value"/> is null — the calendar
+        /// opens on this month and the scroll columns position here. Falls back to today / now.
+        /// Never committed by itself; the user's pick is what writes <see cref="Value"/>.
+        /// </summary>
+        public static readonly DependencyProperty DefaultDateProperty =
+            DependencyProperty.Register(nameof(DefaultDate), typeof(DateTime?), typeof(SegmentedDateTimeEditor),
+                new PropertyMetadata(null));
+
+        /// <summary>Which picker surface the dropdown shows — calendar or looping scroll columns.</summary>
+        public static readonly DependencyProperty PopupModeProperty =
+            DependencyProperty.Register(nameof(PopupMode), typeof(DatePickerPopupMode), typeof(SegmentedDateTimeEditor),
+                new PropertyMetadata(DatePickerPopupMode.Calendar, OnPopupOptionChanged));
+
+        /// <summary>
+        /// Whether the popup offers time editing. <see cref="TimeInputMode.Auto"/> (default)
+        /// derives it from the mask — see <see cref="IsTimeEditingEnabled"/>.
+        /// </summary>
+        public static readonly DependencyProperty TimeInputProperty =
+            DependencyProperty.Register(nameof(TimeInput), typeof(TimeInputMode), typeof(SegmentedDateTimeEditor),
+                new PropertyMetadata(TimeInputMode.Auto, OnMaskOrTypeChanged));
+
+        /// <summary>Shows a Clear button in the popup footer (requires <see cref="AllowNullInput"/>).</summary>
+        public static readonly DependencyProperty ShowClearButtonProperty =
+            DependencyProperty.Register(nameof(ShowClearButton), typeof(bool), typeof(SegmentedDateTimeEditor),
+                new PropertyMetadata(false, OnPopupOptionChanged));
+
+        /// <summary>
+        /// Shows a Today button in the popup footer. Only renders while the mask has date parts —
+        /// a time-only editor has no "today" to jump to (see <see cref="ShowNowButton"/> instead).
+        /// </summary>
+        public static readonly DependencyProperty ShowTodayButtonProperty =
+            DependencyProperty.Register(nameof(ShowTodayButton), typeof(bool), typeof(SegmentedDateTimeEditor),
+                new PropertyMetadata(false, OnPopupOptionChanged));
+
+        /// <summary>
+        /// Shows a Now button in the popup footer. Only renders while time editing is enabled —
+        /// it's the time surface's counterpart to Today. With date parts it sets the full current
+        /// date + time; on a time-only editor it sets the current time-of-day and keeps the date.
+        /// </summary>
+        public static readonly DependencyProperty ShowNowButtonProperty =
+            DependencyProperty.Register(nameof(ShowNowButton), typeof(bool), typeof(SegmentedDateTimeEditor),
+                new PropertyMetadata(false, OnPopupOptionChanged));
+
+        /// <summary>
+        /// Shows a week-number column beside the calendar popup — each displayed week's number
+        /// within its year, per the current culture's <see cref="CalendarWeekRule"/>.
+        /// </summary>
+        public static readonly DependencyProperty ShowWeekNumbersProperty =
+            DependencyProperty.Register(nameof(ShowWeekNumbers), typeof(bool), typeof(SegmentedDateTimeEditor),
+                new PropertyMetadata(false, OnPopupOptionChanged));
+
+        /// <summary>
+        /// Optional .NET date format string for the unfocused display text. While the editor is
+        /// focused, the mask's segment composition always renders; when unfocused with a value,
+        /// this format renders instead — unless <see cref="UseMaskAsDisplayFormat"/> forces the
+        /// mask composition in both states. Null/empty (default) keeps the mask composition.
+        /// </summary>
+        public static readonly DependencyProperty DisplayFormatProperty =
+            DependencyProperty.Register(nameof(DisplayFormat), typeof(string), typeof(SegmentedDateTimeEditor),
+                new PropertyMetadata(null, OnDisplayFormatChanged));
+
+        /// <summary>
+        /// Forces the unfocused display text through the mask's segment composition even when
+        /// <see cref="DisplayFormat"/> is set — display and edit text stay identical.
+        /// </summary>
+        public static readonly DependencyProperty UseMaskAsDisplayFormatProperty =
+            DependencyProperty.Register(nameof(UseMaskAsDisplayFormat), typeof(bool), typeof(SegmentedDateTimeEditor),
+                new PropertyMetadata(false, OnDisplayFormatChanged));
+
+        private static readonly DependencyPropertyKey IsTimeEditingEnabledPropertyKey =
+            DependencyProperty.RegisterReadOnly(nameof(IsTimeEditingEnabled), typeof(bool), typeof(SegmentedDateTimeEditor),
+                new PropertyMetadata(false));
+
+        /// <summary>
+        /// Read-only: whether the popup offers time editing — <see cref="TimeInput"/> resolved
+        /// against the mask (<see cref="TimeInputMode.Auto"/> = mask has time specifiers). Drives
+        /// the template's time-surface visibility.
+        /// </summary>
+        public static readonly DependencyProperty IsTimeEditingEnabledProperty =
+            IsTimeEditingEnabledPropertyKey.DependencyProperty;
+
+        private static readonly DependencyPropertyKey HasDatePartsPropertyKey =
+            DependencyProperty.RegisterReadOnly(nameof(HasDateParts), typeof(bool), typeof(SegmentedDateTimeEditor),
+                new PropertyMetadata(true));
+
+        /// <summary>
+        /// Read-only: whether the mask carries date specifiers. A time-only editor (false) hides
+        /// the calendar / date scroll columns and its popup is purely a time surface.
+        /// </summary>
+        public static readonly DependencyProperty HasDatePartsProperty =
+            HasDatePartsPropertyKey.DependencyProperty;
+
+        /// <inheritdoc cref="CycleModifierProperty"/>
+        public ModifierKeys CycleModifier
+        {
+            get => (ModifierKeys)GetValue(CycleModifierProperty);
+            set => SetValue(CycleModifierProperty, value);
+        }
+
+        /// <inheritdoc cref="AllowNullInputProperty"/>
+        public bool AllowNullInput
+        {
+            get => (bool)GetValue(AllowNullInputProperty);
+            set => SetValue(AllowNullInputProperty, value);
+        }
+
+        /// <inheritdoc cref="DefaultDateProperty"/>
+        public DateTime? DefaultDate
+        {
+            get => (DateTime?)GetValue(DefaultDateProperty);
+            set => SetValue(DefaultDateProperty, value);
+        }
+
+        /// <inheritdoc cref="PopupModeProperty"/>
+        public DatePickerPopupMode PopupMode
+        {
+            get => (DatePickerPopupMode)GetValue(PopupModeProperty);
+            set => SetValue(PopupModeProperty, value);
+        }
+
+        /// <inheritdoc cref="TimeInputProperty"/>
+        public TimeInputMode TimeInput
+        {
+            get => (TimeInputMode)GetValue(TimeInputProperty);
+            set => SetValue(TimeInputProperty, value);
+        }
+
+        /// <inheritdoc cref="ShowClearButtonProperty"/>
+        public bool ShowClearButton
+        {
+            get => (bool)GetValue(ShowClearButtonProperty);
+            set => SetValue(ShowClearButtonProperty, value);
+        }
+
+        /// <inheritdoc cref="ShowTodayButtonProperty"/>
+        public bool ShowTodayButton
+        {
+            get => (bool)GetValue(ShowTodayButtonProperty);
+            set => SetValue(ShowTodayButtonProperty, value);
+        }
+
+        /// <inheritdoc cref="ShowNowButtonProperty"/>
+        public bool ShowNowButton
+        {
+            get => (bool)GetValue(ShowNowButtonProperty);
+            set => SetValue(ShowNowButtonProperty, value);
+        }
+
+        /// <inheritdoc cref="ShowWeekNumbersProperty"/>
+        public bool ShowWeekNumbers
+        {
+            get => (bool)GetValue(ShowWeekNumbersProperty);
+            set => SetValue(ShowWeekNumbersProperty, value);
+        }
+
+        /// <inheritdoc cref="DisplayFormatProperty"/>
+        public string DisplayFormat
+        {
+            get => (string)GetValue(DisplayFormatProperty);
+            set => SetValue(DisplayFormatProperty, value);
+        }
+
+        /// <inheritdoc cref="UseMaskAsDisplayFormatProperty"/>
+        public bool UseMaskAsDisplayFormat
+        {
+            get => (bool)GetValue(UseMaskAsDisplayFormatProperty);
+            set => SetValue(UseMaskAsDisplayFormatProperty, value);
+        }
+
+        /// <inheritdoc cref="IsTimeEditingEnabledProperty"/>
+        public bool IsTimeEditingEnabled => (bool)GetValue(IsTimeEditingEnabledProperty);
+
+        /// <inheritdoc cref="HasDatePartsProperty"/>
+        public bool HasDateParts => (bool)GetValue(HasDatePartsProperty);
+
+        /// <summary>Raised whenever <see cref="Value"/> changes, from any source (typing, popup, binding).</summary>
+        public event EventHandler ValueChanged;
+
+        private static void OnPopupOptionChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+            => ((SegmentedDateTimeEditor)d).UpdatePopupSurfaces();
+
+        private static void OnDisplayFormatChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+            => ((SegmentedDateTimeEditor)d).RefreshTextBox();
+
         #endregion
 
         public override void OnApplyTemplate()
@@ -296,22 +535,50 @@ namespace WWControls.Wpf.Editors
             base.OnApplyTemplate();
 
             if (_textBox != null) DetachTextBoxHandlers(_textBox);
-            if (_calendar != null) _calendar.SelectedDatesChanged -= OnCalendarSelectionChanged;
+            if (_calendar != null)
+            {
+                _calendar.SelectedDatesChanged -= OnCalendarSelectionChanged;
+                _calendar.DisplayDateChanged -= OnCalendarDisplayDateChanged;
+                _calendar.DisplayModeChanged -= OnCalendarDisplayModeChanged;
+            }
+            if (_popup != null) _popup.Opened -= OnPopupOpened;
+            if (_timeEditor != null) _timeEditor.ValueChanged -= OnTimeEditorValueChanged;
+            if (_todayButton != null) _todayButton.Click -= OnTodayButtonClick;
+            if (_nowButton != null) _nowButton.Click -= OnNowButtonClick;
+            if (_clearButton != null) _clearButton.Click -= OnClearButtonClick;
 
             _textBox = GetTemplateChild(PartTextBox) as TextBox;
             _calendar = GetTemplateChild(PartCalendar) as System.Windows.Controls.Calendar;
             _button = GetTemplateChild(PartDropDownButton) as ToggleButton;
+            _popup = GetTemplateChild(PartPopup) as Popup;
+            _timeEditor = GetTemplateChild(PartTimeEditor) as SegmentedDateTimeEditor;
+            _scrollPicker = GetTemplateChild(PartScrollPicker) as DateTimeScrollPicker;
+            _todayButton = GetTemplateChild(PartTodayButton) as Button;
+            _nowButton = GetTemplateChild(PartNowButton) as Button;
+            _clearButton = GetTemplateChild(PartClearButton) as Button;
+            _weekNumbersHost = GetTemplateChild(PartWeekNumbers) as Canvas;
 
             if (_textBox != null)
             {
                 AttachTextBoxHandlers(_textBox);
                 _textBox.TextAlignment = TextAlignment;
             }
-            if (_calendar != null) _calendar.SelectedDatesChanged += OnCalendarSelectionChanged;
+            if (_calendar != null)
+            {
+                _calendar.SelectedDatesChanged += OnCalendarSelectionChanged;
+                _calendar.DisplayDateChanged += OnCalendarDisplayDateChanged;
+                _calendar.DisplayModeChanged += OnCalendarDisplayModeChanged;
+            }
+            if (_popup != null) _popup.Opened += OnPopupOpened;
+            if (_timeEditor != null) _timeEditor.ValueChanged += OnTimeEditorValueChanged;
+            if (_todayButton != null) _todayButton.Click += OnTodayButtonClick;
+            if (_nowButton != null) _nowButton.Click += OnNowButtonClick;
+            if (_clearButton != null) _clearButton.Click += OnClearButtonClick;
 
             BuildSegments();
             PopulateSegmentsFromValue();
             RefreshTextBox();
+            UpdatePopupSurfaces();
         }
 
         private void AttachTextBoxHandlers(TextBox tb)
@@ -353,7 +620,10 @@ namespace WWControls.Wpf.Editors
         /// </summary>
         private void OnTextBoxLoaded(object sender, RoutedEventArgs e)
         {
-            if (IsFilterRowEditor) return;
+            // AutoFocusTextBoxOnLoad is cleared on the popup's nested time editor — its Loaded
+            // fires when the popup opens, and grabbing focus there would steal the keyboard the
+            // moment the dropdown appears.
+            if (IsFilterRowEditor || !AutoFocusTextBoxOnLoad) return;
             Dispatcher.BeginInvoke(new Action(() =>
             {
                 if (_textBox == null) return;
@@ -376,11 +646,37 @@ namespace WWControls.Wpf.Editors
 
         private void OnCalendarSelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            // Close the popup as soon as the user picks. Calendar.SelectedDate flows back to
-            // Value via the TwoWay binding on the templated parent; OnValueChanged then
-            // refreshes the textbox via PopulateSegmentsFromValue.
-            if (_button != null && _calendar != null && _calendar.SelectedDate.HasValue)
-                _button.IsChecked = false;
+            // The calendar owns only the DATE part — the picked day is merged with the current
+            // time-of-day (or DefaultDate's, for a first pick on a null value) so choosing a day
+            // never resets a time the user already set. With time editing enabled the popup stays
+            // open for the time surface below; date-only picks close immediately.
+            if (_suppressPopupSync) return;
+            if (_calendar?.SelectedDate is not DateTime picked) return;
+
+            var time = Value?.TimeOfDay ?? DefaultDate?.TimeOfDay ?? TimeSpan.Zero;
+            _suppressPopupSync = true;
+            try { Value = ClampToRange(picked.Date + time); }
+            finally { _suppressPopupSync = false; }
+
+            PopulateSegmentsFromValue();
+            RefreshTextBox();
+            SyncPopupFromValue();
+
+            if (!IsTimeEditingEnabled) ClosePopup();
+        }
+
+        private void OnCalendarDisplayDateChanged(object sender, CalendarDateChangedEventArgs e)
+        {
+            // Month navigation re-generates the day buttons; reposition the week-number strip
+            // once the new month has laid out.
+            ScheduleWeekNumberRefresh();
+        }
+
+        private void OnCalendarDisplayModeChanged(object sender, CalendarModeChangedEventArgs e)
+        {
+            // The week-number strip only applies to the month view — clear it when zooming out
+            // to the year / decade grids, rebuild it when zooming back in.
+            ScheduleWeekNumberRefresh();
         }
 
         #region Segment building
@@ -401,6 +697,8 @@ namespace WWControls.Wpf.Editors
             {
                 if (_segments[i].IsEditable) { _activeSegmentIndex = i; break; }
             }
+
+            UpdateComputedFlags();
         }
 
         /// <summary>
@@ -682,20 +980,29 @@ namespace WWControls.Wpf.Editors
             _suppressValueSync = true;
             try
             {
-                // Placeholder suppression: when the user hasn't typed anything yet and
-                // the textbox doesn't have focus, render an empty string instead of the
-                // literals-only skeleton. Otherwise (focused, OR any segment has user
-                // input) render the full segment composition. See _textBoxIsFocused docs
-                // for the auto-filter-row motivation.
-                string text = (!_textBoxIsFocused && AllEditableSegmentsEmpty())
-                    ? string.Empty
-                    : ComputeDisplayText();
+                // Placeholder suppression: when the user hasn't typed anything yet, render an
+                // empty string instead of the literals-only skeleton ("//" for MM/dd/yyyy).
+                // Unfocused that's unconditional; focused it applies while AllowNullInput —
+                // a nullable editor's empty state should LOOK empty, and the first keystroke
+                // seeds the segments (see OnTextBoxPreviewTextInput). Only a non-nullable
+                // editor shows the skeleton as a type-here affordance. Unfocused with a value,
+                // an explicit DisplayFormat substitutes for the segment composition unless
+                // UseMaskAsDisplayFormat pins display text to the mask.
+                string text;
+                if (AllEditableSegmentsEmpty() && (!_textBoxIsFocused || AllowNullInput))
+                    text = string.Empty;
+                else if (!_textBoxIsFocused && Value.HasValue
+                    && !UseMaskAsDisplayFormat && !string.IsNullOrEmpty(DisplayFormat))
+                    text = Value.Value.ToString(DisplayFormat, CultureInfo.CurrentCulture);
+                else
+                    text = ComputeDisplayText();
                 _textBox.Text = text;
                 if (text.Length > 0
                     && _activeSegmentIndex >= 0
                     && _activeSegmentIndex < _segments.Count)
                 {
-                    _textBox.CaretIndex = SegmentEndPosition(_activeSegmentIndex);
+                    // Clamp: a DisplayFormat rendering can be shorter than the segment layout.
+                    _textBox.CaretIndex = Math.Min(SegmentEndPosition(_activeSegmentIndex), text.Length);
                     _textBox.SelectionLength = 0;
                 }
             }
@@ -741,6 +1048,30 @@ namespace WWControls.Wpf.Editors
             // appending to / cycling within the hint — clear the segments before the input
             // handler below applies its digit/letter to the active segment.
             DeactivatePrefill(clearSegments: true);
+
+            // Type-into-empty seeding: the first keystroke on a fully empty editor fills every
+            // OTHER region from DefaultDate (or now), so the user only types the parts they
+            // want to change instead of navigating region by region — the empty state renders
+            // blank, so there are no visible literals to type "into" anyway. The active (first)
+            // region stays clear to receive this keystroke. Skipped in the filter row, where an
+            // untouched region must stay empty so a half-typed filter never commits made-up
+            // parts.
+            if (!IsFilterRowEditor && AllEditableSegmentsEmpty())
+            {
+                PopulateSegmentsFromDate(DefaultDate ?? DateTime.Now);
+                for (int i = 0; i < _segments.Count; i++)
+                {
+                    if (_segments[i].IsEditable) { _activeSegmentIndex = i; break; }
+                }
+                if (_activeSegmentIndex >= 0 && _activeSegmentIndex < _segments.Count)
+                {
+                    switch (_segments[_activeSegmentIndex])
+                    {
+                        case DigitSegment d: d.Display = string.Empty; break;
+                        case EnumSegment en: en.Index = -1; en.Display = string.Empty; break;
+                    }
+                }
+            }
 
             // _activeSegmentIndex is the source of truth — set explicitly by arrow nav,
             // mouse click, SelectAll, or initial template apply. Don't re-derive from caret
@@ -841,7 +1172,8 @@ namespace WWControls.Wpf.Editors
 
         /// <summary>
         /// Raised when an arrow keypress should leave the cell rather than navigate the editor's
-        /// date segments — bare Up/Down, or Left/Right at the editor's edge region / when the whole
+        /// date segments — Up/Down missing a required <see cref="CycleModifier"/>, or Left/Right at
+        /// the editor's edge region / when the whole
         /// value is selected. The control decides <em>when</em> to exit (it owns the segment logic);
         /// a host decides <em>how</em>. The grid-side adapter subscribes and commits + navigates the
         /// cell; a standalone host with no subscriber simply keeps focus in the editor. Keeps the
@@ -859,11 +1191,27 @@ namespace WWControls.Wpf.Editors
 
             var modifiers = Keyboard.Modifiers;
 
-            // Up / Down: Ctrl spins the active region's value, anything else exits the cell
-            // (so plain Up/Down navigates rows like the rest of the DataGrid).
+            // Null-out chord: Ctrl+0 / Ctrl+Delete / Ctrl+Backspace clears every segment and
+            // commits null in one stroke — the display collapses to blank (no mask literals)
+            // until the next keystroke. Checked before the plain Backspace / Delete cases so
+            // the chords don't fall through to the single-segment clear.
+            if (AllowNullInput
+                && (modifiers & ModifierKeys.Control) != 0
+                && (e.Key == Key.D0 || e.Key == Key.NumPad0 || e.Key == Key.Delete || e.Key == Key.Back))
+            {
+                ClearToNull();
+                e.Handled = true;
+                return;
+            }
+
+            // Up / Down: spins the active region's value when CycleModifier is satisfied
+            // (default None — plain arrows spin, matching the numeric spin editor's in-place
+            // feel). With a required modifier configured, an unmodified arrow exits the cell
+            // instead (grid row navigation).
             if (e.Key == Key.Up || e.Key == Key.Down)
             {
-                if ((modifiers & ModifierKeys.Control) != 0)
+                var required = CycleModifier;
+                if ((modifiers & required) == required)
                 {
                     // Spinning is an explicit edit on the pre-filled value — keep the segments
                     // populated so the spin starts from today's date (rather than empty / min)
@@ -1171,7 +1519,7 @@ namespace WWControls.Wpf.Editors
 
             if (seg.Display.Length == 0)
             {
-                if (seg.Kind == 'y') newValue = DateTime.Today.Year;
+                if (seg.Kind == 'y') newValue = (DefaultDate ?? DateTime.Today).Year;
                 else newValue = delta > 0 ? min : max;
             }
             else
@@ -1222,11 +1570,292 @@ namespace WWControls.Wpf.Editors
 
         #endregion
 
+        #region Popup surfaces (calendar / time editor / scroll picker / footer / week numbers)
+
+        /// <summary>
+        /// Whether <see cref="OnTextBoxLoaded"/> hops keyboard focus into the inner TextBox.
+        /// The nested popup time editor turns this off — its Loaded fires when the popup opens,
+        /// and grabbing focus there would yank the keyboard away from the calendar.
+        /// </summary>
+        internal bool AutoFocusTextBoxOnLoad { get; set; } = true;
+
+        /// <summary>True when the resolved mask uses the 24-hour <c>H</c> specifier.</summary>
+        private bool _is24HourMask;
+
+        /// <summary>
+        /// Re-derives <see cref="HasDateParts"/> / <see cref="IsTimeEditingEnabled"/> from the
+        /// parsed segments + <see cref="TimeInput"/>. Runs on every segment rebuild (mask /
+        /// mask-type / time-mode change).
+        /// </summary>
+        private void UpdateComputedFlags()
+        {
+            bool hasDate = false, hasTime = false;
+            _is24HourMask = false;
+            foreach (var seg in _segments)
+            {
+                switch (seg)
+                {
+                    case DigitSegment d:
+                        if (d.Kind == 'M' || d.Kind == 'd' || d.Kind == 'y') hasDate = true;
+                        else if ("HhmsfF".IndexOf(d.Kind) >= 0) hasTime = true;
+                        if (d.Kind == 'H') _is24HourMask = true;
+                        break;
+                    case EnumSegment en:
+                        if (en.Kind == EnumKind.AmPm) hasTime = true;
+                        else hasDate = true;
+                        break;
+                }
+            }
+            // Simple-grammar masks ('?' kinds) carry no specifier info — treat as date-only.
+            if (!hasDate && !hasTime) hasDate = true;
+
+            SetValue(HasDatePartsPropertyKey, hasDate);
+            SetValue(IsTimeEditingEnabledPropertyKey,
+                TimeInput == TimeInputMode.Enabled || (TimeInput == TimeInputMode.Auto && hasTime));
+            UpdatePopupSurfaces();
+        }
+
+        /// <summary>
+        /// Pushes the current option set into the popup's template parts: footer button
+        /// visibility, the nested time editor's time-only mask, and the scroll picker's
+        /// column configuration. Null-guarded — callable before the template applies.
+        /// </summary>
+        private void UpdatePopupSurfaces()
+        {
+            // Today needs a date surface, Now needs a time surface — each quick-set button only
+            // renders when its target unit is actually editable in this popup.
+            if (_todayButton != null)
+                _todayButton.Visibility = ShowTodayButton && HasDateParts ? Visibility.Visible : Visibility.Collapsed;
+            if (_nowButton != null)
+                _nowButton.Visibility = ShowNowButton && IsTimeEditingEnabled ? Visibility.Visible : Visibility.Collapsed;
+            if (_clearButton != null)
+                _clearButton.Visibility = ShowClearButton && AllowNullInput ? Visibility.Visible : Visibility.Collapsed;
+
+            if (_timeEditor != null)
+            {
+                _timeEditor.AutoFocusTextBoxOnLoad = false;
+                _timeEditor.MaskType = MaskType.TimeOnly;
+                _timeEditor.Mask = ResolveTimeSubMask();
+                _timeEditor.AllowNullInput = false;
+                _timeEditor.TimeInput = TimeInputMode.Disabled;
+            }
+
+            if (_scrollPicker != null)
+            {
+                _scrollPicker.ShowDate = HasDateParts;
+                _scrollPicker.ShowTime = IsTimeEditingEnabled;
+                _scrollPicker.Is24Hour = _is24HourMask;
+            }
+
+            ScheduleWeekNumberRefresh();
+        }
+
+        /// <summary>
+        /// The time-only sub-pattern for the popup's nested time editor: the tail of the resolved
+        /// mask starting at its first time specifier (so <c>MM/dd/yyyy HH:mm</c> yields
+        /// <c>HH:mm</c>), or the culture's short-time pattern (<c>"t"</c>) when the mask carries
+        /// no time — the <see cref="TimeInputMode.Enabled"/>-with-date-only-mask case.
+        /// </summary>
+        private string ResolveTimeSubMask()
+        {
+            if ((MaskType == MaskType.DateTime || MaskType == MaskType.TimeOnly) && !string.IsNullOrEmpty(Mask))
+            {
+                string format = null;
+                try { format = DateTimeMaskFormatter.ResolvePattern(Mask); }
+                catch { /* unresolvable custom pattern — fall through to short time */ }
+                if (!string.IsNullOrEmpty(format))
+                {
+                    int idx = FindFirstTimeSpecifier(format);
+                    if (idx >= 0) return format.Substring(idx).Trim();
+                }
+            }
+            return "t";
+        }
+
+        private static int FindFirstTimeSpecifier(string format)
+        {
+            bool inQuote = false;
+            for (int i = 0; i < format.Length; i++)
+            {
+                char c = format[i];
+                if (c == '\'') { inQuote = !inQuote; continue; }
+                if (inQuote) continue;
+                if (c == '\\') { i++; continue; }
+                if (c == 'H' || c == 'h' || c == 'm' || c == 's' || c == 't' || c == 'f' || c == 'F')
+                    return i;
+            }
+            return -1;
+        }
+
+        /// <summary>
+        /// Pushes <see cref="Value"/> into the popup surfaces: calendar selection + displayed
+        /// month (seeded from <see cref="DefaultDate"/> while null) and the nested time editor.
+        /// The scroll picker tracks Value through its own TwoWay template binding.
+        /// </summary>
+        private void SyncPopupFromValue()
+        {
+            if (_suppressPopupSync) return;
+            _suppressPopupSync = true;
+            try
+            {
+                if (_calendar != null)
+                {
+                    _calendar.SelectedDate = Value?.Date;
+                    _calendar.DisplayDate = Value ?? DefaultDate ?? DateTime.Today;
+                }
+                if (_timeEditor != null)
+                    _timeEditor.Value = Value;
+            }
+            finally { _suppressPopupSync = false; }
+        }
+
+        private void OnPopupOpened(object sender, EventArgs e)
+        {
+            SyncPopupFromValue();
+            ScheduleWeekNumberRefresh();
+        }
+
+        /// <summary>
+        /// The popup time editor committed a time — merge its time-of-day onto the current date
+        /// (or <see cref="DefaultDate"/> / today when no date is set yet).
+        /// </summary>
+        private void OnTimeEditorValueChanged(object sender, EventArgs e)
+        {
+            if (_suppressPopupSync) return;
+            if (_timeEditor?.Value is not DateTime t) return;
+            _suppressPopupSync = true;
+            try { Value = ClampToRange((Value?.Date ?? DefaultDate?.Date ?? DateTime.Today) + t.TimeOfDay); }
+            finally { _suppressPopupSync = false; }
+            SyncPopupFromValue();
+        }
+
+        private void OnTodayButtonClick(object sender, RoutedEventArgs e)
+        {
+            var time = IsTimeEditingEnabled
+                ? (Value?.TimeOfDay ?? DefaultDate?.TimeOfDay ?? DateTime.Now.TimeOfDay)
+                : TimeSpan.Zero;
+            Value = ClampToRange(DateTime.Today + time);
+            ClosePopup();
+        }
+
+        /// <summary>
+        /// Sets the current time (whole-second precision — sub-second ticks would be invisible in
+        /// the segments and surprising in the bound value). With date parts the date jumps to
+        /// today too — "Now" means the full current moment; a time-only editor keeps its date.
+        /// </summary>
+        private void OnNowButtonClick(object sender, RoutedEventArgs e)
+        {
+            var now = DateTime.Now;
+            now = now.AddTicks(-(now.Ticks % TimeSpan.TicksPerSecond));
+            Value = ClampToRange(HasDateParts
+                ? now
+                : (Value?.Date ?? DefaultDate?.Date ?? DateTime.Today) + now.TimeOfDay);
+            ClosePopup();
+        }
+
+        private void OnClearButtonClick(object sender, RoutedEventArgs e)
+        {
+            ClearToNull();
+            ClosePopup();
+        }
+
+        /// <summary>
+        /// Clears every editable segment and commits null in one action — the Ctrl+0 /
+        /// Ctrl+Delete chord and the popup Clear button. Callers gate on
+        /// <see cref="AllowNullInput"/>.
+        /// </summary>
+        private void ClearToNull()
+        {
+            DeactivatePrefill(clearSegments: true);
+            foreach (var seg in _segments)
+            {
+                switch (seg)
+                {
+                    case DigitSegment d: d.Display = string.Empty; break;
+                    case EnumSegment en: en.Index = -1; en.Display = string.Empty; break;
+                }
+            }
+            if (Value != null)
+            {
+                _suppressValueSync = true;
+                Value = null;
+                _suppressValueSync = false;
+            }
+            RefreshTextBox();
+            SyncPopupFromValue();
+        }
+
+        private void ClosePopup()
+        {
+            if (_button != null) _button.IsChecked = false;
+            else if (_popup != null) _popup.IsOpen = false;
+        }
+
+        /// <summary>
+        /// Defers <see cref="UpdateWeekNumbers"/> to after the pending layout pass — the calendar's
+        /// day buttons only have final positions once the popup / new month has laid out.
+        /// </summary>
+        private void ScheduleWeekNumberRefresh()
+        {
+            if (_weekNumbersHost == null) return;
+            Dispatcher.BeginInvoke(new Action(UpdateWeekNumbers), DispatcherPriority.Loaded);
+        }
+
+        /// <summary>
+        /// Rebuilds the week-number strip beside the calendar: one label per displayed week row,
+        /// aligned to the row's actual layout slot (read from the leftmost
+        /// <see cref="System.Windows.Controls.Primitives.CalendarDayButton"/> of each row, so the
+        /// strip tracks the default calendar template without hard-coded metrics). The number is
+        /// the culture's week-of-year for the row's first day.
+        /// </summary>
+        private void UpdateWeekNumbers()
+        {
+            if (_weekNumbersHost == null) return;
+            _weekNumbersHost.Children.Clear();
+            if (!ShowWeekNumbers || _calendar == null || _popup == null || !_popup.IsOpen) return;
+            if (_calendar.DisplayMode != CalendarMode.Month) return;
+
+            var culture = CultureInfo.CurrentCulture;
+            var rule = culture.DateTimeFormat.CalendarWeekRule;
+            var firstDay = culture.DateTimeFormat.FirstDayOfWeek;
+
+            var rows = new SortedList<double, (DateTime Date, double Height)>();
+            foreach (var btn in VisualTreeHelperMethods.FindVisualDescendants<System.Windows.Controls.Primitives.CalendarDayButton>(_calendar))
+            {
+                if (btn.DataContext is not DateTime date) continue;
+                double y;
+                try { y = btn.TransformToVisual(_weekNumbersHost).Transform(default).Y; }
+                catch (InvalidOperationException) { continue; } // not connected yet
+                double key = Math.Round(y);
+                if (!rows.TryGetValue(key, out var existing) || date < existing.Date)
+                    rows[key] = (date, btn.ActualHeight);
+            }
+
+            foreach (var row in rows)
+            {
+                int week = culture.Calendar.GetWeekOfYear(row.Value.Date, rule, firstDay);
+                var label = new TextBlock
+                {
+                    Text = week.ToString(culture),
+                    FontSize = 10,
+                    Opacity = 0.55,
+                    TextAlignment = TextAlignment.Right,
+                    Width = Math.Max(0, _weekNumbersHost.Width - 4),
+                };
+                label.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+                Canvas.SetTop(label, row.Key + Math.Max(0, (row.Value.Height - label.DesiredSize.Height) / 2));
+                _weekNumbersHost.Children.Add(label);
+            }
+        }
+
+        #endregion
+
         #region Value sync
 
         private static void OnValueChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
             var self = (SegmentedDateTimeEditor)d;
+            self.ValueChanged?.Invoke(self, EventArgs.Empty);
             if (self._suppressValueSync) return;
             // External Value write (calendar popup pick, programmatic set) supersedes any
             // pending filter-row pre-fill — the segments will be overwritten by the new
@@ -1234,6 +1863,7 @@ namespace WWControls.Wpf.Editors
             self._prefillActive = false;
             self.PopulateSegmentsFromValue();
             self.RefreshTextBox();
+            self.SyncPopupFromValue();
         }
 
         private static void OnMaskOrTypeChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
@@ -1265,49 +1895,9 @@ namespace WWControls.Wpf.Editors
         {
             if (_segments.Count == 0) return;
 
-            var culture = CultureInfo.CurrentCulture;
-
             if (Value.HasValue)
             {
-                var dt = Value.Value;
-                var dtfi = culture.DateTimeFormat;
-                foreach (var seg in _segments)
-                {
-                    switch (seg)
-                    {
-                        case DigitSegment d:
-                        {
-                            int v = ValueForKind(d.Kind, dt);
-                            string text = v.ToString(CultureInfo.InvariantCulture).PadLeft(d.MaxDigits, '0');
-                            if (text.Length > d.MaxDigits) text = text.Substring(text.Length - d.MaxDigits);
-                            d.Display = text;
-                            break;
-                        }
-                        case EnumSegment e when e.Kind == EnumKind.AmPm:
-                        {
-                            e.Index = dt.Hour < 12 ? 0 : 1;
-                            e.Display = e.Index == 0 ? dtfi.AMDesignator : dtfi.PMDesignator;
-                            break;
-                        }
-                        case EnumSegment e when e.Kind == EnumKind.MonthAbbr:
-                        {
-                            e.Index = dt.Month - 1;
-                            e.Display = dtfi.AbbreviatedMonthNames[e.Index];
-                            break;
-                        }
-                        case EnumSegment e when e.Kind == EnumKind.MonthFull:
-                        {
-                            e.Index = dt.Month - 1;
-                            e.Display = dtfi.MonthNames[e.Index];
-                            break;
-                        }
-                        case ComputedSegment cs:
-                        {
-                            cs.Display = dt.ToString(cs.FormatToken, culture);
-                            break;
-                        }
-                    }
-                }
+                PopulateSegmentsFromDate(Value.Value);
             }
             else
             {
@@ -1345,7 +1935,17 @@ namespace WWControls.Wpf.Editors
             if (!AllEditableSegmentsEmpty()) return;
             if (_segments.Count == 0) return;
 
-            var today = DateTime.Today;
+            PopulateSegmentsFromDate(DateTime.Today);
+            _prefillActive = true;
+        }
+
+        /// <summary>
+        /// Loads a concrete date into every segment's display — the per-kind mapping shared by
+        /// <see cref="PopulateSegmentsFromValue"/>, the filter-row pre-fill, and the
+        /// type-into-empty seeding. Display only: <see cref="Value"/> is not touched.
+        /// </summary>
+        private void PopulateSegmentsFromDate(DateTime dt)
+        {
             var culture = CultureInfo.CurrentCulture;
             var dtfi = culture.DateTimeFormat;
 
@@ -1355,31 +1955,29 @@ namespace WWControls.Wpf.Editors
                 {
                     case DigitSegment d:
                     {
-                        int v = ValueForKind(d.Kind, today);
+                        int v = ValueForKind(d.Kind, dt);
                         string text = v.ToString(CultureInfo.InvariantCulture).PadLeft(d.MaxDigits, '0');
                         if (text.Length > d.MaxDigits) text = text.Substring(text.Length - d.MaxDigits);
                         d.Display = text;
                         break;
                     }
                     case EnumSegment e when e.Kind == EnumKind.AmPm:
-                        e.Index = today.Hour < 12 ? 0 : 1;
+                        e.Index = dt.Hour < 12 ? 0 : 1;
                         e.Display = e.Index == 0 ? dtfi.AMDesignator : dtfi.PMDesignator;
                         break;
                     case EnumSegment e when e.Kind == EnumKind.MonthAbbr:
-                        e.Index = today.Month - 1;
+                        e.Index = dt.Month - 1;
                         e.Display = dtfi.AbbreviatedMonthNames[e.Index];
                         break;
                     case EnumSegment e when e.Kind == EnumKind.MonthFull:
-                        e.Index = today.Month - 1;
+                        e.Index = dt.Month - 1;
                         e.Display = dtfi.MonthNames[e.Index];
                         break;
                     case ComputedSegment cs:
-                        cs.Display = today.ToString(cs.FormatToken, culture);
+                        cs.Display = dt.ToString(cs.FormatToken, culture);
                         break;
                 }
             }
-
-            _prefillActive = true;
         }
 
         /// <summary>
@@ -1461,6 +2059,14 @@ namespace WWControls.Wpf.Editors
             {
                 if (Value != null)
                 {
+                    if (!AllowNullInput)
+                    {
+                        // Nulling is disallowed — restore the bound value's display instead of
+                        // committing the cleared state.
+                        PopulateSegmentsFromValue();
+                        RefreshTextBox();
+                        return;
+                    }
                     _suppressValueSync = true;
                     Value = null;
                     _suppressValueSync = false;
@@ -1492,6 +2098,8 @@ namespace WWControls.Wpf.Editors
             if (!parsed.HasValue && DateTime.TryParse(candidate, CultureInfo.CurrentCulture, DateTimeStyles.None, out var dtAny))
                 parsed = dtAny;
 
+            if (parsed.HasValue) parsed = ClampToRange(parsed.Value);
+
             if (parsed.HasValue && parsed.Value != Value)
             {
                 _suppressValueSync = true;
@@ -1502,6 +2110,21 @@ namespace WWControls.Wpf.Editors
                 PopulateSegmentsFromValue();
                 RefreshTextBox();
             }
+            else if (parsed.HasValue)
+            {
+                // Same value but possibly non-canonical typed digits (or a clamp back to the
+                // current value) — re-render the canonical form.
+                PopulateSegmentsFromValue();
+                RefreshTextBox();
+            }
+        }
+
+        /// <summary>Clamps a candidate into [<see cref="MinDate"/>, <see cref="MaxDate"/>].</summary>
+        private DateTime ClampToRange(DateTime candidate)
+        {
+            if (MinDate.HasValue && candidate < MinDate.Value) return MinDate.Value;
+            if (MaxDate.HasValue && candidate > MaxDate.Value) return MaxDate.Value;
+            return candidate;
         }
 
         /// <summary>

@@ -5,56 +5,168 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:sdg="http://schemas.wwcontrols.com/wpf"
              xmlns:sampleControls="clr-namespace:WWControls.SampleApp.Editors.Controls"
+             xmlns:converters="clr-namespace:WWControls.SampleApp.Editors.Converters"
              xmlns:local="clr-namespace:WWControls.SampleApp.Editors.Views.Samples.Editors"
              mc:Ignorable="d">
     <UserControl.DataContext>
         <local:CheckBoxSampleViewModel />
     </UserControl.DataContext>
 
+    <UserControl.Resources>
+        <converters:EnumToBooleanConverter x:Key="EnumToBooleanConverter" />
+        <Style x:Key="Caption" TargetType="TextBlock">
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="#444" />
+            <Setter Property="Margin" Value="0,0,0,4" />
+        </Style>
+        <Style x:Key="OptionLabel" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="Foreground" Value="#666" />
+            <Setter Property="Margin" Value="0,0,0,3" />
+        </Style>
+        <Style x:Key="Hint" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="Foreground" Value="#888" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="Margin" Value="0,2,0,0" />
+        </Style>
+        <Style x:Key="BoundValue" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Foreground" Value="#0066AA" />
+            <Setter Property="Margin" Value="0,6,0,0" />
+        </Style>
+        <Style x:Key="ToggleRow" BasedOn="{StaticResource {x:Static sdg:PrimitiveThemeKeys.CheckBox}}" TargetType="CheckBox">
+            <Setter Property="Margin" Value="0,0,0,8" />
+            <Setter Property="Foreground" Value="#333" />
+        </Style>
+        <Style x:Key="OptionCombo" TargetType="{x:Type sdg:WWComboBox}" BasedOn="{StaticResource {x:Static sdg:EditorThemeKeys.ComboBox}}">
+            <Setter Property="Height" Value="26" />
+            <Setter Property="Margin" Value="0,0,0,10" />
+        </Style>
+    </UserControl.Resources>
+
     <sampleControls:SampleHostControl Sources="{x:Static sampleControls:SampleSources.CheckBox}">
         <ScrollViewer Background="#FFFFFF" VerticalScrollBarVisibility="Auto">
-            <StackPanel Margin="24" MaxWidth="620" HorizontalAlignment="Left">
+            <StackPanel Margin="24" MaxWidth="760" HorizontalAlignment="Left">
                 <TextBlock FontSize="13" Foreground="#444" TextWrapping="Wrap" Margin="0,0,0,16">
                     <Run FontWeight="SemiBold" Text="WWCheckBox" />
                     <LineBreak />
-                    <Run Text="Boolean editor over a nullable IsChecked. Two-state by default; IsThreeState=true cycles checked → unchecked → indeterminate (null). A glyph control, so it stays flat regardless of ShowBorder." />
+                    <Run Text="Boolean editor over a nullable IsChecked. Two-state by default; IsThreeState=true cycles checked → unchecked → indeterminate (null). A glyph control, so it stays flat regardless of ShowBorder. Flip the options on the left — they all drive the demo checkbox live." />
                 </TextBlock>
 
                 <Grid>
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="200" />
-                        <ColumnDefinition Width="240" />
+                        <ColumnDefinition Width="230" />
+                        <ColumnDefinition Width="24" />
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                    </Grid.RowDefinitions>
 
-                    <TextBlock Grid.Row="0" Grid.Column="1" Text="Editor" FontWeight="SemiBold" Foreground="#666" Margin="0,0,0,6" />
-                    <TextBlock Grid.Row="0" Grid.Column="2" Text="Bound value" FontWeight="SemiBold" Foreground="#666" Margin="12,0,0,6" />
+                    <!--  Options — every control here drives the demo checkbox on the right.  -->
+                    <Border Grid.Column="0"
+                            Background="#FAFAFA"
+                            BorderBrush="#E3E3E3"
+                            BorderThickness="1"
+                            CornerRadius="6"
+                            Padding="14"
+                            VerticalAlignment="Top">
+                        <StackPanel>
+                            <TextBlock Style="{StaticResource Caption}" Text="Options" Margin="0,0,0,10" />
 
-                    <!-- Two-state (default). -->
-                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Two-state" VerticalAlignment="Center" Margin="0,4" Foreground="#333" />
-                    <sdg:WWCheckBox Grid.Row="1" Grid.Column="1" Height="26" Margin="0,4" HorizontalAlignment="Left"
-                                     IsChecked="{Binding IsActive, Mode=TwoWay}" />
-                    <TextBlock Grid.Row="1" Grid.Column="2" Text="{Binding IsActive}" VerticalAlignment="Center" Margin="12,4" Foreground="#0066AA" />
+                            <TextBlock Style="{StaticResource OptionLabel}" Text="ClickMode" />
+                            <sdg:WWComboBox Style="{StaticResource OptionCombo}"
+                                            ItemsSource="{Binding ClickModes}"
+                                            SelectedItem="{Binding ClickMode, Mode=TwoWay}" />
 
-                    <!-- Three-state: click cycles checked → unchecked → indeterminate (null). -->
-                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Three-state (nullable)" VerticalAlignment="Center" Margin="0,4" Foreground="#333" />
-                    <sdg:WWCheckBox Grid.Row="2" Grid.Column="1" Height="26" Margin="0,4" HorizontalAlignment="Left"
-                                     IsThreeState="True"
-                                     IsChecked="{Binding Approval, Mode=TwoWay}" />
-                    <TextBlock Grid.Row="2" Grid.Column="2" Text="{Binding Approval, TargetNullValue=null}" VerticalAlignment="Center" Margin="12,4" Foreground="#0066AA" />
+                            <TextBlock Style="{StaticResource OptionLabel}" Text="HoverModifier (Hover mode only)" />
+                            <sdg:WWComboBox Style="{StaticResource OptionCombo}"
+                                            IsEnabled="{Binding ClickMode, Converter={StaticResource EnumToBooleanConverter}, ConverterParameter=Hover}"
+                                            ItemsSource="{Binding HoverModifiers}"
+                                            SelectedItem="{Binding HoverModifier, Mode=TwoWay}" />
 
-                    <!-- Read-only. -->
-                    <TextBlock Grid.Row="3" Grid.Column="0" Text="Read-only" VerticalAlignment="Center" Margin="0,4" Foreground="#333" />
-                    <sdg:WWCheckBox Grid.Row="3" Grid.Column="1" Height="26" Margin="0,4" HorizontalAlignment="Left"
-                                     IsReadOnly="True"
-                                     IsChecked="{Binding Locked, Mode=TwoWay}" />
-                    <TextBlock Grid.Row="3" Grid.Column="2" Text="{Binding Locked}" VerticalAlignment="Center" Margin="12,4" Foreground="#0066AA" />
+                            <CheckBox Style="{StaticResource ToggleRow}" Content="IsThreeState"
+                                      ToolTip="Clicking cycles checked → unchecked → indeterminate (null)"
+                                      IsChecked="{Binding IsThreeState, Mode=TwoWay}" />
+                            <CheckBox Style="{StaticResource ToggleRow}" Margin="0" Content="IsReadOnly"
+                                      ToolTip="Blocks user toggling; the bound value can still change programmatically"
+                                      IsChecked="{Binding IsReadOnly, Mode=TwoWay}" />
+                        </StackPanel>
+                    </Border>
+
+                    <!--  The demo checkbox.  -->
+                    <StackPanel Grid.Column="2">
+                        <TextBlock Style="{StaticResource Caption}" Text="Editor" />
+                        <sdg:WWCheckBox Height="26"
+                                        HorizontalAlignment="Left"
+                                        IsChecked="{Binding IsChecked, Mode=TwoWay}"
+                                        IsThreeState="{Binding IsThreeState}"
+                                        ClickMode="{Binding ClickMode}"
+                                        HoverModifier="{Binding HoverModifier}"
+                                        IsReadOnly="{Binding IsReadOnly}" />
+                        <TextBlock Style="{StaticResource BoundValue}"
+                                   Text="{Binding IsChecked, StringFormat='Bound value: {0}', TargetNullValue='Bound value: (null)'}" />
+
+                        <TextBlock Style="{StaticResource Hint}" Margin="0,14,0,0">
+                            <Run FontWeight="SemiBold" Text="ClickMode:" />
+                            <Run Text="Release toggles on mouse-up over the box (the standard feel — pressing and dragging away cancels), Press toggles the moment the button goes down, and Hover toggles as soon as the pointer enters the box — no click at all." />
+                        </TextBlock>
+                        <TextBlock Style="{StaticResource Hint}">
+                            <Run FontWeight="SemiBold" Text="HoverModifier:" />
+                            <Run Text="guards Hover mode — an unmodified hover does nothing; the box toggles (once per hover) while the pointer is over it with the modifier held, and a plain click still toggles. Pressing the modifier after the pointer is already inside registers on the next pointer movement." />
+                        </TextBlock>
+                        <TextBlock Style="{StaticResource Hint}">
+                            <Run FontWeight="SemiBold" Text="Three-state:" />
+                            <Run Text="with IsThreeState on, IsChecked is nullable and null renders the indeterminate dash. Turning it off doesn't clear an existing null — the next click resumes the two-state cycle." />
+                        </TextBlock>
+                        <TextBlock Style="{StaticResource Hint}">
+                            <Run FontWeight="SemiBold" Text="Read-only:" />
+                            <Run Text="the box dims and stops responding to the mouse, but the two-way binding stays live — programmatic changes to the bound value still render." />
+                        </TextBlock>
+
+                        <!--  Hover playground — only shown in Hover mode: sweep the pointer down the list.  -->
+                        <StackPanel Margin="0,18,0,0">
+                            <StackPanel.Style>
+                                <Style TargetType="StackPanel">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding ClickMode}" Value="Hover">
+                                            <Setter Property="Visibility" Value="Visible" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </StackPanel.Style>
+
+                            <TextBlock Style="{StaticResource Caption}" Text="Hover playground" />
+                            <TextBlock Style="{StaticResource Hint}" Margin="0,0,0,8"
+                                       Text="Sweep the pointer down the list — each box toggles as you cross it. With a HoverModifier set, sweeping does nothing until the modifier is held, so you can pick out single rows without disturbing the rest." />
+                            <Border BorderBrush="#E3E3E3"
+                                    BorderThickness="1"
+                                    CornerRadius="6"
+                                    Padding="12,8"
+                                    MinWidth="220"
+                                    HorizontalAlignment="Left">
+                                <ItemsControl ItemsSource="{Binding HoverItems}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal" Margin="0,3">
+                                                <sdg:WWCheckBox Height="20"
+                                                                IsChecked="{Binding IsChecked, Mode=TwoWay}"
+                                                                ClickMode="Hover"
+                                                                IsThreeState="{Binding DataContext.IsThreeState, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                                HoverModifier="{Binding DataContext.HoverModifier, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                                IsReadOnly="{Binding DataContext.IsReadOnly, RelativeSource={RelativeSource AncestorType=ItemsControl}}" />
+                                                <TextBlock Text="{Binding Name}"
+                                                           VerticalAlignment="Center"
+                                                           Margin="8,0,0,0"
+                                                           FontSize="12"
+                                                           Foreground="#333" />
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </Border>
+                            <TextBlock Style="{StaticResource BoundValue}" Text="{Binding CheckedSummary}" />
+                        </StackPanel>
+                    </StackPanel>
                 </Grid>
             </StackPanel>
         </ScrollViewer>

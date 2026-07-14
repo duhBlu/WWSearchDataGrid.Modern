@@ -11,64 +11,174 @@
         <local:ComboBoxSampleViewModel />
     </UserControl.DataContext>
 
+    <UserControl.Resources>
+        <Style x:Key="ComboCaption" TargetType="TextBlock">
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="#444" />
+            <Setter Property="Margin" Value="0,0,0,4" />
+        </Style>
+        <Style x:Key="ComboHint" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="Foreground" Value="#888" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="Margin" Value="0,2,0,0" />
+        </Style>
+        <Style x:Key="BoundValue" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="Foreground" Value="#0066AA" />
+            <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+            <Setter Property="Margin" Value="0,4,0,0" />
+        </Style>
+        <Style x:Key="ToggleRow" BasedOn="{StaticResource {x:Static sdg:PrimitiveThemeKeys.CheckBox}}" TargetType="CheckBox">
+            <Setter Property="Margin" Value="0,0,0,8" />
+            <Setter Property="Foreground" Value="#333" />
+        </Style>
+        <Style x:Key="EditorCombo" TargetType="{x:Type sdg:WWComboBox}" BasedOn="{StaticResource {x:Static sdg:EditorThemeKeys.ComboBox}}">
+            <Setter Property="Height" Value="26" />
+        </Style>
+    </UserControl.Resources>
+
     <sampleControls:SampleHostControl Sources="{x:Static sampleControls:SampleSources.ComboBox}">
         <ScrollViewer Background="#FFFFFF" VerticalScrollBarVisibility="Auto">
-            <StackPanel Margin="24" MaxWidth="620" HorizontalAlignment="Left">
+            <StackPanel Margin="24" MaxWidth="760" HorizontalAlignment="Left">
                 <TextBlock FontSize="13" Foreground="#444" TextWrapping="Wrap" Margin="0,0,0,16">
                     <Run FontWeight="SemiBold" Text="WWComboBox" />
                     <LineBreak />
-                    <Run Text="Selection editor wrapping a native ComboBox inside WWEditorBase chrome. Bind plain strings with SelectedItem, or object lists with DisplayMemberPath for display and SelectedValuePath / SelectedValue for id-based selection — the shape grid cells use for lookup columns. IsEditable swaps picking for typing — text that matches an item commits it to SelectedItem." />
+                    <Run Text="A retemplated native ComboBox with opt-in search-combo behaviors. Flip the toggles on the left — they drive all three combos at once. Typing filters and highlights matches (Escape clears the search, keeps the selection); auto-complete fills the closest item; ShowNone pins a clear row; the size grip makes the popup resizable." />
                 </TextBlock>
 
                 <Grid>
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="200" />
-                        <ColumnDefinition Width="240" />
+                        <ColumnDefinition Width="230" />
+                        <ColumnDefinition Width="24" />
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                    </Grid.RowDefinitions>
 
-                    <TextBlock Grid.Row="0" Grid.Column="1" Text="Editor" FontWeight="SemiBold" Foreground="#666" Margin="0,0,0,6" />
-                    <TextBlock Grid.Row="0" Grid.Column="2" Text="Bound value" FontWeight="SemiBold" Foreground="#666" Margin="12,0,0,6" />
+                    <!--  Feature toggles — shared by every demo combo.  -->
+                    <Border Grid.Column="0"
+                            Background="#FAFAFA"
+                            BorderBrush="#E3E3E3"
+                            BorderThickness="1"
+                            CornerRadius="6"
+                            Padding="14"
+                            VerticalAlignment="Top">
+                        <StackPanel>
+                            <TextBlock Style="{StaticResource ComboCaption}" Text="Options" Margin="0,0,0,10" />
 
-                    <!-- Plain strings via SelectedItem. -->
-                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Strings + SelectedItem" VerticalAlignment="Center" Margin="0,4" Foreground="#333" />
-                    <sdg:WWComboBox Grid.Row="1" Grid.Column="1" Height="26" Margin="0,4"
-                                     ItemsSource="{Binding Fruits}"
-                                     SelectedItem="{Binding SelectedFruit, Mode=TwoWay}" />
-                    <TextBlock Grid.Row="1" Grid.Column="2" Text="{Binding SelectedFruit}" VerticalAlignment="Center" Margin="12,4" Foreground="#0066AA" />
+                            <CheckBox Style="{StaticResource ToggleRow}" Content="IncrementalFiltering"
+                                      IsChecked="{Binding EnableFiltering, Mode=TwoWay}" />
+                            <CheckBox Style="{StaticResource ToggleRow}" Content="FilterDropdownItems"
+                                      ToolTip="Off = nothing hides while typing; matches sort to the top instead"
+                                      IsEnabled="{Binding EnableFiltering}"
+                                      IsChecked="{Binding FilterDropdownItems, Mode=TwoWay}" />
 
-                    <!-- Object items: DisplayMemberPath shows the name, SelectedItem carries the object. -->
-                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Objects + DisplayMemberPath" VerticalAlignment="Center" Margin="0,4" Foreground="#333" />
-                    <sdg:WWComboBox Grid.Row="2" Grid.Column="1" Height="26" Margin="0,4"
-                                     ItemsSource="{Binding Statuses}"
-                                     DisplayMemberPath="Name"
-                                     SelectedItem="{Binding SelectedStatus, Mode=TwoWay}" />
-                    <TextBlock Grid.Row="2" Grid.Column="2" Text="{Binding SelectedStatus.Name}" VerticalAlignment="Center" Margin="12,4" Foreground="#0066AA" />
+                            <TextBlock Text="IncrementalFilteringMode" FontSize="11" Foreground="#666" Margin="0,0,0,3" />
+                            <sdg:WWComboBox Style="{StaticResource EditorCombo}" Margin="0,0,0,10"
+                                            IsEnabled="{Binding EnableFiltering}"
+                                            ItemsSource="{Binding FilterModes}"
+                                            SelectedItem="{Binding FilterMode, Mode=TwoWay}" />
 
-                    <!-- Id-based selection: the VM stores only the id; SelectedValuePath maps it to an item. -->
-                    <TextBlock Grid.Row="3" Grid.Column="0" Text="Id-based SelectedValue" VerticalAlignment="Center" Margin="0,4" Foreground="#333" />
-                    <sdg:WWComboBox Grid.Row="3" Grid.Column="1" Height="26" Margin="0,4"
-                                     ItemsSource="{Binding Statuses}"
-                                     DisplayMemberPath="Name"
-                                     SelectedValuePath="Id"
-                                     SelectedValue="{Binding SelectedStatusId, Mode=TwoWay}" />
-                    <TextBlock Grid.Row="3" Grid.Column="2" Text="{Binding SelectedStatusId, StringFormat='Id = {0}'}" VerticalAlignment="Center" Margin="12,4" Foreground="#0066AA" />
+                            <CheckBox Style="{StaticResource ToggleRow}" Content="AutoComplete (editable)"
+                                      IsChecked="{Binding EnableAutoComplete, Mode=TwoWay}" />
+                            <CheckBox Style="{StaticResource ToggleRow}" Content="ShowNone"
+                                      IsChecked="{Binding EnableShowNone, Mode=TwoWay}" />
+                            <CheckBox Style="{StaticResource ToggleRow}" Content="ShowSelectAll (checkbox)"
+                                      IsChecked="{Binding EnableSelectAll, Mode=TwoWay}" />
+                            <CheckBox Style="{StaticResource ToggleRow}" Content="ShowSizeGrip"
+                                      IsChecked="{Binding EnableSizeGrip, Mode=TwoWay}" />
+                            <CheckBox Style="{StaticResource ToggleRow}" Content="ShowPopupWhenFocused"
+                                      IsChecked="{Binding OpenOnFocus, Mode=TwoWay}" />
+                            <CheckBox Style="{StaticResource ToggleRow}" Content="Radio glyphs (non-editable)"
+                                      IsChecked="{Binding UseRadio, Mode=TwoWay}" />
+                            <CheckBox Style="{StaticResource ToggleRow}" Margin="0" Content="ApplyItemTemplateToSelectedItem"
+                                      IsChecked="{Binding ApplyItemTemplate, Mode=TwoWay}" />
+                        </StackPanel>
+                    </Border>
 
-                    <!-- IsEditable: type instead of picking — text that matches an item commits it to
-                         SelectedItem (non-matching free text stays local to the inner ComboBox). -->
-                    <TextBlock Grid.Row="4" Grid.Column="0" Text="IsEditable (type to select)" VerticalAlignment="Center" Margin="0,4" Foreground="#333" />
-                    <sdg:WWComboBox Grid.Row="4" Grid.Column="1" Height="26" Margin="0,4"
-                                     IsEditable="True"
-                                     ItemsSource="{Binding Fruits}"
-                                     SelectedItem="{Binding TypedFruit, Mode=TwoWay}" />
-                    <TextBlock Grid.Row="4" Grid.Column="2" Text="{Binding TypedFruit}" VerticalAlignment="Center" Margin="12,4" Foreground="#0066AA" />
+                    <!--  The three demo combos.  -->
+                    <StackPanel Grid.Column="2">
+
+                        <!--
+                            Non-editable: object items with a custom ItemTemplate. ItemTemplate and
+                            DisplayMemberPath are mutually exclusive (WPF throws), so
+                            TextSearch.TextPath names the text property for filtering/search/
+                            selection-box text. The template embeds its own HighlightTextBlock
+                            bound to the ancestor's FilterText — the pattern consumers use when
+                            the built-in highlight row is replaced.
+                        -->
+                        <TextBlock Style="{StaticResource ComboCaption}" Text="Non-editable" />
+                        <sdg:WWComboBox x:Name="PlainCombo"
+                                        Style="{StaticResource EditorCombo}"
+                                        Width="260"
+                                        HorizontalAlignment="Left"
+                                        IncrementalFiltering="{Binding EnableFiltering}"
+                                        IncrementalFilteringMode="{Binding FilterMode}"
+                                        FilterDropdownItems="{Binding FilterDropdownItems}"
+                                        ShowNone="{Binding EnableShowNone}"
+                                        ShowSizeGrip="{Binding EnableSizeGrip}"
+                                        ShowPopupWhenFocused="{Binding OpenOnFocus}"
+                                        SelectionMode="{Binding NonEditableSelectionMode}"
+                                        ApplyItemTemplateToSelectedItem="{Binding ApplyItemTemplate}"
+                                        ItemsSource="{Binding Statuses}"
+                                        TextSearch.TextPath="Name"
+                                        SelectedItem="{Binding SelectedStatus, Mode=TwoWay}">
+                            <sdg:WWComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal">
+                                        <Ellipse Width="8" Height="8" Fill="#0078D4" VerticalAlignment="Center" Margin="0,0,6,0" />
+                                        <sdg:HighlightTextBlock VerticalAlignment="Center"
+                                                                HighlightTextBlockText="{Binding Name}"
+                                                                HighlightText="{Binding FilterText, RelativeSource={RelativeSource AncestorType={x:Type sdg:WWComboBox}}}"
+                                                                MatchMode="{Binding IncrementalFilteringMode, RelativeSource={RelativeSource AncestorType={x:Type sdg:WWComboBox}}, Converter={x:Static local:FilterModeToMatchModeConverter.Instance}}" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </sdg:WWComboBox.ItemTemplate>
+                        </sdg:WWComboBox>
+                        <TextBlock Style="{StaticResource ComboHint}"
+                                   Text="Open it and just start typing — the search strip appears at the top of the popup. Backspace edits, Escape clears the search without losing the selection." />
+                        <TextBlock Style="{StaticResource BoundValue}" Text="{Binding SelectedStatus.Name, StringFormat='SelectedItem: {0}', TargetNullValue='SelectedItem: (null)', FallbackValue='SelectedItem: (null)'}" />
+
+                        <!--  Editable: strings, built-in highlight rows, auto-complete tail selection.  -->
+                        <TextBlock Style="{StaticResource ComboCaption}" Text="Editable" Margin="0,20,0,4" />
+                        <sdg:WWComboBox Style="{StaticResource EditorCombo}"
+                                        Width="260"
+                                        HorizontalAlignment="Left"
+                                        IsEditable="True"
+                                        IncrementalFiltering="{Binding EnableFiltering}"
+                                        IncrementalFilteringMode="{Binding FilterMode}"
+                                        FilterDropdownItems="{Binding FilterDropdownItems}"
+                                        AutoComplete="{Binding EnableAutoComplete}"
+                                        ShowNone="{Binding EnableShowNone}"
+                                        ShowSizeGrip="{Binding EnableSizeGrip}"
+                                        ShowPopupWhenFocused="{Binding OpenOnFocus}"
+                                        ItemsSource="{Binding Woods}"
+                                        SelectedItem="{Binding SelectedWood, Mode=TwoWay}" />
+                        <TextBlock Style="{StaticResource ComboHint}"
+                                   Text="Try 'oak' with Smart mode — prefix matches rank first. Enter commits the best match; blur commits only an exact match." />
+                        <TextBlock Style="{StaticResource BoundValue}" Text="{Binding SelectedWood, StringFormat='SelectedItem: {0}', TargetNullValue='SelectedItem: (null)', FallbackValue='SelectedItem: (null)'}" />
+
+                        <!--  Checkbox multi-select: toggles stay open; selection box joins the checked items.  -->
+                        <TextBlock Style="{StaticResource ComboCaption}" Text="Checkbox multi-select" Margin="0,20,0,4" />
+                        <sdg:WWComboBox x:Name="CheckedCombo"
+                                        Style="{StaticResource EditorCombo}"
+                                        Width="260"
+                                        HorizontalAlignment="Left"
+                                        SelectionMode="Checkbox"
+                                        SelectedItems="{Binding CheckedWoods}"
+                                        MultiSelectSeparator="; "
+                                        NoneItemText="(Clear all)"
+                                        ShowSelectAll="{Binding EnableSelectAll}"
+                                        IncrementalFiltering="{Binding EnableFiltering}"
+                                        IncrementalFilteringMode="{Binding FilterMode}"
+                                        FilterDropdownItems="{Binding FilterDropdownItems}"
+                                        ShowNone="{Binding EnableShowNone}"
+                                        ShowSizeGrip="{Binding EnableSizeGrip}"
+                                        ShowPopupWhenFocused="{Binding OpenOnFocus}"
+                                        ItemsSource="{Binding Woods}" />
+                        <TextBlock Style="{StaticResource ComboHint}"
+                                   Text="Click or Space toggles a row without closing; Enter closes. ShowNone becomes a '(Clear all)' row here." />
+                        <TextBlock Style="{StaticResource BoundValue}" Text="{Binding SelectionBoxDisplayText, ElementName=CheckedCombo, StringFormat='SelectedItems: {0}'}" />
+                    </StackPanel>
                 </Grid>
             </StackPanel>
         </ScrollViewer>

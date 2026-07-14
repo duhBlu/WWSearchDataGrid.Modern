@@ -36,13 +36,34 @@ namespace WWControls.Wpf.Editors
         // Bordered by default (standalone use, the edit form); a grid cell provides its own
         // boundary, so the editor renders flat when hosted inside one. DataGridCell is a stock WPF
         // type, so this detection carries no dependency on the SearchDataGrid — the editor stays
-        // grid-agnostic. Loaded is the first point the cell ancestor is reliably in the tree; it can
-        // re-fire on container recycling, and re-setting the same value is a no-op.
+        // grid-agnostic. Hosts that aren't cells but provide their own boundary (e.g. the row-edit
+        // strip) opt in via the inherited FlattenEditors attached property instead. Loaded is the
+        // first point the cell ancestor / inherited value are reliably in the tree; it can re-fire
+        // on container recycling, and re-setting the same value is a no-op.
         private void OnBaseEditLoaded(object sender, RoutedEventArgs e)
         {
-            if (VisualTreeHelperMethods.FindVisualAncestor<DataGridCell>(this) != null)
+            if (GetFlattenEditors(this) || VisualTreeHelperMethods.FindVisualAncestor<DataGridCell>(this) != null)
+            {
                 ShowBorder = false;
+                // Flat also means square: the chrome's rounded background would otherwise clip out
+                // of the cell rectangle. Local value intentionally overrides the style's default.
+                ControlHelper.SetCornerRadius(this, default);
+            }
         }
+
+        /// <summary>
+        /// Attached, inherited flag a host sets on itself to render every editor in its subtree
+        /// flat (<see cref="ShowBorder"/> cleared) — for hosts that draw their own input boundary
+        /// but aren't a <see cref="DataGridCell"/>, like the grid's row-edit strip. Keeps the
+        /// editors host-agnostic: the host declares the surface, the editor reacts.
+        /// </summary>
+        public static readonly DependencyProperty FlattenEditorsProperty =
+            DependencyProperty.RegisterAttached("FlattenEditors", typeof(bool), typeof(WWEditorBase),
+                new FrameworkPropertyMetadata(false, FrameworkPropertyMetadataOptions.Inherits));
+
+        public static bool GetFlattenEditors(DependencyObject obj) => (bool)obj.GetValue(FlattenEditorsProperty);
+
+        public static void SetFlattenEditors(DependencyObject obj, bool value) => obj.SetValue(FlattenEditorsProperty, value);
 
         /// <summary>The edited value. Concrete editors give this their natural shape (text for <see cref="WWTextBox"/>).</summary>
         public static readonly DependencyProperty ValueProperty =

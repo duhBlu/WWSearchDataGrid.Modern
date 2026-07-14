@@ -6,6 +6,9 @@
         <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Resources/Icons/Icons.xaml" />
     </ResourceDictionary.MergedDictionaries>
 
+    <!--  Shared chrome corner rounding — feeds ControlHelper.CornerRadius via each style's setter.  -->
+    <CornerRadius x:Key="{x:Static sdg:PrimitiveThemeKeys.ControlCornerRadius}">3</CornerRadius>
+
     <!--#region Button Style-->
 
     <Style x:Key="{x:Static sdg:PrimitiveThemeKeys.Button}" TargetType="{x:Type Button}">

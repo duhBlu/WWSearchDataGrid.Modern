@@ -42,5 +42,16 @@ namespace WWControls.SampleApp.Editors.Controls
             "Views/Samples/Editors/CheckBoxSampleView.xaml",
             "Views/Samples/Editors/CheckBoxSampleView.xaml.cs",
             "Views/Samples/Editors/CheckBoxSampleViewModel.cs");
+
+        public static IReadOnlyList<SampleSourceFile> ListBox { get; } = SampleSourceLoader.LoadFiles(
+            "Views/Samples/Editors/ListBoxSampleView.xaml",
+            "Views/Samples/Editors/ListBoxSampleView.xaml.cs",
+            "Views/Samples/Editors/ListBoxSampleViewModel.cs");
+
+        // ── Buttons ──────────────────────────────────────────────────────────
+        public static IReadOnlyList<SampleSourceFile> Button { get; } = SampleSourceLoader.LoadFiles(
+            "Views/Samples/Buttons/ButtonSampleView.xaml",
+            "Views/Samples/Buttons/ButtonSampleView.xaml.cs",
+            "Views/Samples/Buttons/ButtonSampleViewModel.cs");
     }
 }

@@ -6,6 +6,8 @@
         <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Resources/Icons/Icons.xaml" />
         <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Editors/WWRangeSlider.xaml" />
         <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Primitives/StatusIcon.xaml" />
+        <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Primitives/WWSpinningWheel.xaml" />
+        <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Primitives/WWButton.xaml" />
         <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Primitives/Window.xaml" />
         <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Grid/Validation/ValidationCellPresenter.xaml" />
         <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Grid/ColumnFilterPopup/ColumnFilterPopup.xaml" />
@@ -21,7 +23,12 @@
         <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Grid/FilterEditor/FilterEditorDialog.xaml" />
         <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Grid/ColumnChooser/ColumnChooser.xaml" />
         <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Grid/SearchDataGrid/Grid/SearchDataGrid.xaml" />
-        <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Editors/Editors.xaml" />
+        <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Editors/EditorParts.xaml" />
+        <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Editors/WWTextBox.xaml" />
+        <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Editors/WWNumericUpDown.xaml" />
+        <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Editors/WWComboBox.xaml" />
+        <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Editors/WWDatePicker.xaml" />
+        <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Editors/WWCheckBox.xaml" />
         <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Editors/EditSettings.xaml" />
         <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Grid/FilterRow/FilterRow.xaml" />
         <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Editors/WWColorPicker.xaml" />

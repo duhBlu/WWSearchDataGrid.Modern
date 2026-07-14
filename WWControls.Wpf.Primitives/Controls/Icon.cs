@@ -34,11 +34,13 @@ namespace WWControls.Wpf.Primitives
     /// </remarks>
     public class Icon : Image
     {
-        /// <summary>Source <see cref="DrawingImage"/> resource — typically a <see cref="IconKeys"/> entry.</summary>
+        /// <summary>Source image — typically a monochrome <see cref="DrawingImage"/> from
+        /// <see cref="IconKeys"/>. A non-<see cref="DrawingImage"/> source (e.g. a bitmap) renders
+        /// as-is; tinting and stroke overrides apply only to drawings.</summary>
         public static readonly DependencyProperty IconSourceProperty =
             DependencyProperty.Register(
                 nameof(IconSource),
-                typeof(DrawingImage),
+                typeof(ImageSource),
                 typeof(Icon),
                 new PropertyMetadata(null, OnIconChanged));
 
@@ -63,9 +65,9 @@ namespace WWControls.Wpf.Primitives
                 new PropertyMetadata(double.NaN, OnIconChanged));
 
         /// <inheritdoc cref="IconSourceProperty"/>
-        public DrawingImage IconSource
+        public ImageSource IconSource
         {
-            get => (DrawingImage)GetValue(IconSourceProperty);
+            get => (ImageSource)GetValue(IconSourceProperty);
             set => SetValue(IconSourceProperty, value);
         }
 
@@ -91,9 +93,10 @@ namespace WWControls.Wpf.Primitives
         private void RebuildSource()
         {
             var source = IconSource;
-            if (source?.Drawing == null)
+            if (!(source is DrawingImage drawingImage) || drawingImage.Drawing == null)
             {
-                Source = null;
+                // Bitmaps and other non-drawing sources render untinted, as-is.
+                Source = source;
                 return;
             }
 
@@ -103,11 +106,11 @@ namespace WWControls.Wpf.Primitives
 
             if (brush == null && !hasThicknessOverride)
             {
-                Source = source;
+                Source = drawingImage;
                 return;
             }
 
-            Source = new DrawingImage(CloneAndTint(source.Drawing, brush, thickness));
+            Source = new DrawingImage(CloneAndTint(drawingImage.Drawing, brush, thickness));
         }
 
         private static Drawing CloneAndTint(Drawing source, Brush tint, double strokeThicknessOverride)

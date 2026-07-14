@@ -16,9 +16,28 @@ namespace WWControls.Wpf.Primitives
     /// </summary>
     public static class PrimitiveThemeKeys
     {
+        /// <summary>
+        /// Shared <see cref="CornerRadius"/> resource the library's chrome styles feed into
+        /// <see cref="ControlHelper.CornerRadiusProperty"/>. Redefine it to re-round (or square)
+        /// every consuming control at once.
+        /// </summary>
+        public static ComponentResourceKey ControlCornerRadius { get; } =
+            new ComponentResourceKey(typeof(PrimitiveThemeKeys), nameof(ControlCornerRadius));
+
         /// <summary>Sdg-themed <see cref="System.Windows.Controls.Button"/> style.</summary>
         public static ComponentResourceKey Button { get; } =
             new ComponentResourceKey(typeof(PrimitiveThemeKeys), nameof(Button));
+
+        /// <summary>
+        /// Default style for <see cref="Primitives.WWButton"/> — the library's simple / repeat /
+        /// toggle button with glyph and async-wait support.
+        /// </summary>
+        public static ComponentResourceKey WWButton { get; } =
+            new ComponentResourceKey(typeof(PrimitiveThemeKeys), nameof(WWButton));
+
+        /// <summary>Default style for the <see cref="Primitives.WWSpinningWheel"/> progress ring.</summary>
+        public static ComponentResourceKey SpinningWheel { get; } =
+            new ComponentResourceKey(typeof(PrimitiveThemeKeys), nameof(SpinningWheel));
 
         /// <summary>Sdg-themed <see cref="System.Windows.Controls.CheckBox"/> style.</summary>
         public static ComponentResourceKey CheckBox { get; } =

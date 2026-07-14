@@ -1,0 +1,197 @@
+<UserControl x:Class="WWControls.SampleApp.Editors.Views.Samples.Buttons.ButtonSampleView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:sdg="http://schemas.wwcontrols.com/wpf"
+             xmlns:sampleControls="clr-namespace:WWControls.SampleApp.Editors.Controls"
+             xmlns:local="clr-namespace:WWControls.SampleApp.Editors.Views.Samples.Buttons"
+             mc:Ignorable="d">
+    <UserControl.DataContext>
+        <local:ButtonSampleViewModel />
+    </UserControl.DataContext>
+
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis" />
+
+        <Style x:Key="OptionLabel" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="Foreground" Value="#666" />
+            <Setter Property="Margin" Value="0,0,0,3" />
+        </Style>
+        <Style x:Key="OptionGroup" TargetType="StackPanel">
+            <Setter Property="Margin" Value="0,0,0,12" />
+        </Style>
+        <Style x:Key="SectionHeader" TargetType="TextBlock">
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="#444" />
+            <Setter Property="Margin" Value="0,0,0,10" />
+        </Style>
+        <Style x:Key="Readout" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Foreground" Value="#0066AA" />
+            <Setter Property="Margin" Value="0,2,0,0" />
+        </Style>
+        <Style x:Key="OptionCombo" TargetType="{x:Type sdg:WWComboBox}" BasedOn="{StaticResource {x:Static sdg:EditorThemeKeys.ComboBox}}">
+            <Setter Property="Height" Value="26" />
+        </Style>
+        <Style x:Key="ToggleRow" BasedOn="{StaticResource {x:Static sdg:PrimitiveThemeKeys.CheckBox}}" TargetType="CheckBox">
+            <Setter Property="Margin" Value="0,0,0,10" />
+            <Setter Property="Foreground" Value="#333" />
+        </Style>
+    </UserControl.Resources>
+
+    <sampleControls:SampleHostControl Sources="{x:Static sampleControls:SampleSources.Button}">
+        <ScrollViewer Background="#FFFFFF" VerticalScrollBarVisibility="Auto">
+            <StackPanel Margin="24" MaxWidth="760" HorizontalAlignment="Left">
+                <TextBlock FontSize="13" Foreground="#444" TextWrapping="Wrap" Margin="0,0,0,16">
+                    <Run FontWeight="SemiBold" Text="WWButton" />
+                    <LineBreak />
+                    <Run Text="One button, every property. ButtonKind picks Simple / Repeat / Toggle, a glyph docks on any side, CornerRadius restyles the chrome, and choosing an AsyncDisplayMode swaps the command for an async one so the wait wheel (or hover-cancel) engages. Change the options on the left and the preview button reflects them live." />
+                </TextBlock>
+
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="250" />
+                        <ColumnDefinition Width="24" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <!--  Options panel — drives the single preview button.  -->
+                    <Border Grid.Column="0"
+                            Background="#FAFAFA"
+                            BorderBrush="#E3E3E3"
+                            BorderThickness="1"
+                            CornerRadius="6"
+                            Padding="14"
+                            VerticalAlignment="Top">
+                        <StackPanel>
+                            <TextBlock Style="{StaticResource SectionHeader}" Text="Behavior" />
+
+                            <StackPanel Style="{StaticResource OptionGroup}">
+                                <TextBlock Style="{StaticResource OptionLabel}" Text="ButtonKind" />
+                                <sdg:WWComboBox Style="{StaticResource OptionCombo}"
+                                                ItemsSource="{Binding Kinds}"
+                                                SelectedItem="{Binding Kind, Mode=TwoWay}" />
+                            </StackPanel>
+
+                            <StackPanel Style="{StaticResource OptionGroup}">
+                                <TextBlock Style="{StaticResource OptionLabel}" Text="Content" />
+                                <sdg:WWTextBox Value="{Binding ContentText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Height="26" />
+                            </StackPanel>
+
+                            <CheckBox Style="{StaticResource ToggleRow}" Content="IsEnabled"
+                                      IsChecked="{Binding IsButtonEnabled, Mode=TwoWay}" />
+
+                            <!--  Repeat-only pacing.  -->
+                            <StackPanel Visibility="{Binding ShowRepeatOptions, Converter={StaticResource BoolToVis}}">
+                                <StackPanel Style="{StaticResource OptionGroup}">
+                                    <TextBlock Style="{StaticResource OptionLabel}" Text="{Binding Delay, StringFormat='Delay: {0} ms'}" />
+                                    <Slider Minimum="0" Maximum="1000" TickFrequency="50" IsSnapToTickEnabled="True"
+                                            Value="{Binding Delay, Mode=TwoWay}" />
+                                </StackPanel>
+                                <StackPanel Style="{StaticResource OptionGroup}">
+                                    <TextBlock Style="{StaticResource OptionLabel}" Text="{Binding Interval, StringFormat='Interval: {0} ms'}" />
+                                    <Slider Minimum="10" Maximum="400" TickFrequency="10" IsSnapToTickEnabled="True"
+                                            Value="{Binding Interval, Mode=TwoWay}" />
+                                </StackPanel>
+                            </StackPanel>
+
+                            <!--  Toggle-only.  -->
+                            <CheckBox Style="{StaticResource ToggleRow}" Content="IsThreeState"
+                                      Visibility="{Binding ShowToggleOptions, Converter={StaticResource BoolToVis}}"
+                                      IsChecked="{Binding IsThreeState, Mode=TwoWay}" />
+
+                            <TextBlock Style="{StaticResource SectionHeader}" Text="Glyph" Margin="0,4,0,10" />
+
+                            <StackPanel Style="{StaticResource OptionGroup}">
+                                <TextBlock Style="{StaticResource OptionLabel}" Text="Glyph" />
+                                <sdg:WWComboBox Style="{StaticResource OptionCombo}"
+                                                ItemsSource="{Binding Glyphs}"
+                                                SelectedItem="{Binding Glyph, Mode=TwoWay}" />
+                            </StackPanel>
+                            <StackPanel Style="{StaticResource OptionGroup}">
+                                <TextBlock Style="{StaticResource OptionLabel}" Text="GlyphAlignment (Dock)" />
+                                <sdg:WWComboBox Style="{StaticResource OptionCombo}"
+                                                ItemsSource="{Binding GlyphAlignments}"
+                                                SelectedItem="{Binding GlyphAlignment, Mode=TwoWay}" />
+                            </StackPanel>
+                            <StackPanel Style="{StaticResource OptionGroup}">
+                                <TextBlock Style="{StaticResource OptionLabel}" Text="{Binding GlyphSize, StringFormat='Glyph size: {0:0}'}" />
+                                <Slider Minimum="8" Maximum="24" TickFrequency="1" IsSnapToTickEnabled="True"
+                                        Value="{Binding GlyphSize, Mode=TwoWay}" />
+                            </StackPanel>
+                            <StackPanel Style="{StaticResource OptionGroup}">
+                                <TextBlock Style="{StaticResource OptionLabel}" Text="{Binding GlyphToContentOffset, StringFormat='Glyph offset: {0:0}'}" />
+                                <Slider Minimum="0" Maximum="20" TickFrequency="1" IsSnapToTickEnabled="True"
+                                        Value="{Binding GlyphToContentOffset, Mode=TwoWay}" />
+                            </StackPanel>
+
+                            <TextBlock Style="{StaticResource SectionHeader}" Text="Chrome" Margin="0,4,0,10" />
+                            <StackPanel Style="{StaticResource OptionGroup}">
+                                <TextBlock Style="{StaticResource OptionLabel}" Text="{Binding CornerRadius, StringFormat='CornerRadius: {0:0}'}" />
+                                <Slider Minimum="0" Maximum="20" TickFrequency="1" IsSnapToTickEnabled="True"
+                                        Value="{Binding CornerRadius, Mode=TwoWay}" />
+                            </StackPanel>
+
+                            <TextBlock Style="{StaticResource SectionHeader}" Text="Async" Margin="0,4,0,10" />
+                            <StackPanel Style="{StaticResource OptionGroup}">
+                                <TextBlock Style="{StaticResource OptionLabel}" Text="AsyncDisplayMode" />
+                                <sdg:WWComboBox Style="{StaticResource OptionCombo}"
+                                                ItemsSource="{Binding AsyncDisplayModes}"
+                                                SelectedItem="{Binding AsyncDisplayMode, Mode=TwoWay}" />
+                            </StackPanel>
+                            <StackPanel Style="{StaticResource OptionGroup}"
+                                        Visibility="{Binding ShowWheelOption, Converter={StaticResource BoolToVis}}">
+                                <TextBlock Style="{StaticResource OptionLabel}" Text="AsyncWheelKind" />
+                                <sdg:WWComboBox Style="{StaticResource OptionCombo}"
+                                                ItemsSource="{Binding AsyncWheelKinds}"
+                                                SelectedItem="{Binding AsyncWheelKind, Mode=TwoWay}" />
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <!--  Preview area — the single configurable button + live readouts.  -->
+                    <StackPanel Grid.Column="2" VerticalAlignment="Top">
+                        <TextBlock Style="{StaticResource SectionHeader}" Text="Preview" />
+                        <Border Background="#F7F7F7"
+                                BorderBrush="#E3E3E3"
+                                BorderThickness="1"
+                                CornerRadius="6"
+                                MinHeight="120"
+                                Padding="24">
+                            <sdg:WWButton HorizontalAlignment="Center"
+                                          VerticalAlignment="Center"
+                                          MinWidth="96"
+                                          Padding="14,5"
+                                          ButtonKind="{Binding Kind}"
+                                          Content="{Binding ContentText}"
+                                          IsEnabled="{Binding IsButtonEnabled}"
+                                          Command="{Binding PreviewCommand}"
+                                          IsChecked="{Binding ToggleState, Mode=TwoWay}"
+                                          IsThreeState="{Binding IsThreeState}"
+                                          Glyph="{Binding Glyph, Converter={x:Static local:GlyphChoiceToImageConverter.Instance}}"
+                                          GlyphAlignment="{Binding GlyphAlignment}"
+                                          GlyphWidth="{Binding GlyphSize}"
+                                          GlyphHeight="{Binding GlyphSize}"
+                                          GlyphToContentOffset="{Binding GlyphToContentOffset}"
+                                          CornerRadius="{Binding CornerRadius, Converter={x:Static local:DoubleToCornerRadiusConverter.Instance}}"
+                                          Delay="{Binding Delay}"
+                                          Interval="{Binding Interval}"
+                                          AsyncDisplayMode="{Binding AsyncDisplayMode}"
+                                          AsyncWheelKind="{Binding AsyncWheelKind}" />
+                        </Border>
+
+                        <TextBlock Style="{StaticResource SectionHeader}" Text="State" Margin="0,20,0,6" />
+                        <TextBlock Style="{StaticResource Readout}" Text="{Binding ClickCount, StringFormat='Click count (Simple / Repeat): {0}'}" />
+                        <TextBlock Style="{StaticResource Readout}" Text="{Binding ToggleState, StringFormat='Toggle IsChecked: {0}', TargetNullValue='Toggle IsChecked: (indeterminate)'}" />
+                        <TextBlock Style="{StaticResource Readout}" Text="{Binding AsyncStatus, StringFormat='Async status: {0}'}" />
+
+                        <TextBlock FontSize="11" Foreground="#888" TextWrapping="Wrap" Margin="0,16,0,0"
+                                   Text="Repeat: hold the button and the counter climbs (Delay / Interval pace it). Toggle: each click cycles IsChecked (three-state adds an indeterminate step). Async: pick Wait or WaitCancel with Simple kind — the button runs a 4 s task; WaitCancel turns the wheel into a hover × that cancels." />
+                    </StackPanel>
+                </Grid>
+            </StackPanel>
+        </ScrollViewer>
+    </sampleControls:SampleHostControl>
+</UserControl>
