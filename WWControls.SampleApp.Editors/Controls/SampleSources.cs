@@ -48,6 +48,11 @@ namespace WWControls.SampleApp.Editors.Controls
             "Views/Samples/Editors/ListBoxSampleView.xaml.cs",
             "Views/Samples/Editors/ListBoxSampleViewModel.cs");
 
+        public static IReadOnlyList<SampleSourceFile> ColorPicker { get; } = SampleSourceLoader.LoadFiles(
+            "Views/Samples/Editors/ColorPickerSampleView.xaml",
+            "Views/Samples/Editors/ColorPickerSampleView.xaml.cs",
+            "Views/Samples/Editors/ColorPickerSampleViewModel.cs");
+
         // ── Buttons ──────────────────────────────────────────────────────────
         public static IReadOnlyList<SampleSourceFile> Button { get; } = SampleSourceLoader.LoadFiles(
             "Views/Samples/Buttons/ButtonSampleView.xaml",

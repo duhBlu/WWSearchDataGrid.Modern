@@ -53,6 +53,11 @@ namespace WWControls.SampleApp.Editors.Views.Launcher
                         "List control — SelectionMode (Single / Multiple click-toggle / Extended Ctrl+Shift), ItemKind selection glyphs (Default / Checked / Radio), and built-in drag reordering via AllowReorder with the traveling-hole animation.",
                         new[] { "List", "Selection", "Reorder" },
                         () => new ListBoxSampleView()),
+
+                    new("WWColorPicker",
+                        "HSV color picker — a swatch toggle dropping preset swatches, H / S / B sliders, and a hex box. Six pickers bound two-way to theme roles live-reskin a mock dashboard; shows SelectedColor, DisplayColorAndName, swappable PresetColors, and the color→brush projection.",
+                        new[] { "Color", "HSV", "Palette" },
+                        () => new ColorPickerSampleView()),
                 }),
 
             new SampleCategory(

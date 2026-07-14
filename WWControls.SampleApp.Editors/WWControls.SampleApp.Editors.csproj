@@ -45,6 +45,9 @@
     <EmbeddedResource Include="Views\Samples\Editors\ListBoxSampleView.xaml" />
     <EmbeddedResource Include="Views\Samples\Editors\ListBoxSampleView.xaml.cs" />
     <EmbeddedResource Include="Views\Samples\Editors\ListBoxSampleViewModel.cs" />
+    <EmbeddedResource Include="Views\Samples\Editors\ColorPickerSampleView.xaml" />
+    <EmbeddedResource Include="Views\Samples\Editors\ColorPickerSampleView.xaml.cs" />
+    <EmbeddedResource Include="Views\Samples\Editors\ColorPickerSampleViewModel.cs" />
     <EmbeddedResource Include="Views\Samples\Buttons\ButtonSampleView.xaml" />
     <EmbeddedResource Include="Views\Samples\Buttons\ButtonSampleView.xaml.cs" />
     <EmbeddedResource Include="Views\Samples\Buttons\ButtonSampleViewModel.cs" />
