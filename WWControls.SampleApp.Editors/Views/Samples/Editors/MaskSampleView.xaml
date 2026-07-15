@@ -1,0 +1,297 @@
+<UserControl x:Class="WWControls.SampleApp.Editors.Views.Samples.Editors.MaskSampleView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:sdg="http://schemas.wwcontrols.com/wpf"
+             xmlns:sampleControls="clr-namespace:WWControls.SampleApp.Editors.Controls"
+             xmlns:local="clr-namespace:WWControls.SampleApp.Editors.Views.Samples.Editors"
+             mc:Ignorable="d">
+    <UserControl.DataContext>
+        <local:MaskSampleViewModel />
+    </UserControl.DataContext>
+
+    <UserControl.Resources>
+        <Style x:Key="SectionHeader" TargetType="TextBlock">
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Foreground" Value="#222" />
+            <Setter Property="Margin" Value="0,22,0,8" />
+        </Style>
+        <Style x:Key="ColHeader" TargetType="TextBlock">
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="#666" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Margin" Value="0,0,0,6" />
+        </Style>
+        <Style x:Key="RowLabel" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#333" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Margin" Value="0,3" />
+        </Style>
+        <Style x:Key="Unmasked" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#0066AA" />
+            <Setter Property="FontFamily" Value="Consolas, Cascadia Mono" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+            <Setter Property="Margin" Value="14,3,0,3" />
+        </Style>
+        <Style x:Key="Note" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Foreground" Value="#666" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="Margin" Value="0,4,0,0" />
+        </Style>
+        <Style x:Key="Token" TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="Consolas, Cascadia Mono" />
+            <Setter Property="Foreground" Value="#A31515" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Margin" Value="0,2" />
+        </Style>
+        <Style x:Key="TokenMeaning" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#333" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Margin" Value="12,2,0,2" />
+        </Style>
+        <Style x:Key="MaskEditor" TargetType="{x:Type sdg:WWTextBox}" BasedOn="{StaticResource {x:Static sdg:EditorThemeKeys.TextBox}}">
+            <Setter Property="Height" Value="28" />
+            <Setter Property="Width" Value="200" />
+            <Setter Property="HorizontalAlignment" Value="Left" />
+            <Setter Property="Margin" Value="0,3" />
+        </Style>
+    </UserControl.Resources>
+
+    <sampleControls:SampleHostControl Sources="{x:Static sampleControls:SampleSources.Mask}">
+        <ScrollViewer Background="#FFFFFF" VerticalScrollBarVisibility="Auto">
+            <StackPanel Margin="24" MaxWidth="720" HorizontalAlignment="Left">
+                <TextBlock FontSize="13" Foreground="#444" TextWrapping="Wrap" Margin="0,0,0,4">
+                    <Run FontWeight="SemiBold" Text="Masked input" />
+                    <LineBreak />
+                    <Run Text="Set WWTextBox.Mask (and MaskType) and keystrokes validate against the pattern, the caret skips literals, and the value finalizes on blur. Four engines: Simple, Numeric, DateTime, TimeSpan. The blue column is UnmaskedValue — the raw value with literals stripped." />
+                </TextBlock>
+
+                <!--  ── Simple ─────────────────────────────────────────────────  -->
+                <TextBlock Style="{StaticResource SectionHeader}" Text="Simple masks (literal / placeholder grammar)" />
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="200" />
+                        <ColumnDefinition Width="210" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0" Grid.Column="1" Style="{StaticResource ColHeader}" Text="Editor" />
+                    <TextBlock Grid.Row="0" Grid.Column="2" Style="{StaticResource ColHeader}" Text="UnmaskedValue" Margin="14,0,0,6" />
+
+                    <TextBlock Grid.Row="1" Grid.Column="0" Style="{StaticResource RowLabel}" Text="Phone  (000) 000-0000" />
+                    <sdg:WWTextBox x:Name="PhoneBox" Grid.Row="1" Grid.Column="1" Style="{StaticResource MaskEditor}"
+                                   Mask="(000) 000-0000" Value="{Binding Phone, Mode=TwoWay}" />
+                    <TextBlock Grid.Row="1" Grid.Column="2" Style="{StaticResource Unmasked}" Text="{Binding UnmaskedValue, ElementName=PhoneBox}" />
+
+                    <TextBlock Grid.Row="2" Grid.Column="0" Style="{StaticResource RowLabel}" Text="SSN  000-00-0000" />
+                    <sdg:WWTextBox x:Name="SsnBox" Grid.Row="2" Grid.Column="1" Style="{StaticResource MaskEditor}"
+                                   Mask="000-00-0000" Value="{Binding Ssn, Mode=TwoWay}" />
+                    <TextBlock Grid.Row="2" Grid.Column="2" Style="{StaticResource Unmasked}" Text="{Binding UnmaskedValue, ElementName=SsnBox}" />
+
+                    <TextBlock Grid.Row="3" Grid.Column="0" Style="{StaticResource RowLabel}" Text="ZIP+4  00000-0000" />
+                    <sdg:WWTextBox x:Name="ZipBox" Grid.Row="3" Grid.Column="1" Style="{StaticResource MaskEditor}"
+                                   Mask="00000-0000" Value="{Binding Zip, Mode=TwoWay}" />
+                    <TextBlock Grid.Row="3" Grid.Column="2" Style="{StaticResource Unmasked}" Text="{Binding UnmaskedValue, ElementName=ZipBox}" />
+
+                    <TextBlock Grid.Row="4" Grid.Column="0" Style="{StaticResource RowLabel}" Text="Card  0000 0000 0000 0000" />
+                    <sdg:WWTextBox x:Name="CardBox" Grid.Row="4" Grid.Column="1" Style="{StaticResource MaskEditor}"
+                                   Mask="0000 0000 0000 0000" Value="{Binding Card, Mode=TwoWay}" />
+                    <TextBlock Grid.Row="4" Grid.Column="2" Style="{StaticResource Unmasked}" Text="{Binding UnmaskedValue, ElementName=CardBox}" />
+
+                    <TextBlock Grid.Row="5" Grid.Column="0" Style="{StaticResource RowLabel}" Text="Plate  LLL-000" />
+                    <sdg:WWTextBox x:Name="PlateBox" Grid.Row="5" Grid.Column="1" Style="{StaticResource MaskEditor}"
+                                   Mask="LLL-000" Value="{Binding Plate, Mode=TwoWay}" />
+                    <TextBlock Grid.Row="5" Grid.Column="2" Style="{StaticResource Unmasked}" Text="{Binding UnmaskedValue, ElementName=PlateBox}" />
+
+                    <TextBlock Grid.Row="6" Grid.Column="0" Style="{StaticResource RowLabel}" Text="Amount  0+\.00" />
+                    <sdg:WWTextBox x:Name="AmountBox" Grid.Row="6" Grid.Column="1" Style="{StaticResource MaskEditor}"
+                                   Mask="0+\.00" TextAlignment="Right" Value="{Binding Amount, Mode=TwoWay}" />
+                    <TextBlock Grid.Row="6" Grid.Column="2" Style="{StaticResource Unmasked}" Text="{Binding UnmaskedValue, ElementName=AmountBox}" />
+                </Grid>
+
+                <!--  ── Numeric ────────────────────────────────────────────────  -->
+                <TextBlock Style="{StaticResource SectionHeader}" Text="Numeric masks (.NET format strings, culture-aware)" />
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="200" />
+                        <ColumnDefinition Width="210" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0" Grid.Column="1" Style="{StaticResource ColHeader}" Text="Editor" />
+                    <TextBlock Grid.Row="0" Grid.Column="2" Style="{StaticResource ColHeader}" Text="UnmaskedValue" Margin="14,0,0,6" />
+
+                    <TextBlock Grid.Row="1" Grid.Column="0" Style="{StaticResource RowLabel}" Text="Currency  C2" />
+                    <sdg:WWTextBox x:Name="CurrencyBox" Grid.Row="1" Grid.Column="1" Style="{StaticResource MaskEditor}"
+                                   MaskType="Numeric" Mask="C2" TextAlignment="Right" Value="{Binding Currency, Mode=TwoWay}" />
+                    <TextBlock Grid.Row="1" Grid.Column="2" Style="{StaticResource Unmasked}" Text="{Binding UnmaskedValue, ElementName=CurrencyBox}" />
+
+                    <TextBlock Grid.Row="2" Grid.Column="0" Style="{StaticResource RowLabel}" Text="Number  N0" />
+                    <sdg:WWTextBox x:Name="NumberBox" Grid.Row="2" Grid.Column="1" Style="{StaticResource MaskEditor}"
+                                   MaskType="Numeric" Mask="N0" TextAlignment="Right" Value="{Binding Number, Mode=TwoWay}" />
+                    <TextBlock Grid.Row="2" Grid.Column="2" Style="{StaticResource Unmasked}" Text="{Binding UnmaskedValue, ElementName=NumberBox}" />
+
+                    <TextBlock Grid.Row="3" Grid.Column="0" Style="{StaticResource RowLabel}" Text="Fixed-point  F2" />
+                    <sdg:WWTextBox x:Name="FixedBox" Grid.Row="3" Grid.Column="1" Style="{StaticResource MaskEditor}"
+                                   MaskType="Numeric" Mask="F2" TextAlignment="Right" Value="{Binding Fixed, Mode=TwoWay}" />
+                    <TextBlock Grid.Row="3" Grid.Column="2" Style="{StaticResource Unmasked}" Text="{Binding UnmaskedValue, ElementName=FixedBox}" />
+
+                    <TextBlock Grid.Row="4" Grid.Column="0" Style="{StaticResource RowLabel}" Text="Percent  P1" />
+                    <sdg:WWTextBox x:Name="PercentBox" Grid.Row="4" Grid.Column="1" Style="{StaticResource MaskEditor}"
+                                   MaskType="Numeric" Mask="P1" TextAlignment="Right" Value="{Binding Percent, Mode=TwoWay}" />
+                    <TextBlock Grid.Row="4" Grid.Column="2" Style="{StaticResource Unmasked}" Text="{Binding UnmaskedValue, ElementName=PercentBox}" />
+                </Grid>
+
+                <!--  ── Date / time / duration ─────────────────────────────────  -->
+                <TextBlock Style="{StaticResource SectionHeader}" Text="Date, time &amp; duration (numeric-only patterns)" />
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="200" />
+                        <ColumnDefinition Width="210" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0" Grid.Column="1" Style="{StaticResource ColHeader}" Text="Editor" />
+                    <TextBlock Grid.Row="0" Grid.Column="2" Style="{StaticResource ColHeader}" Text="UnmaskedValue" Margin="14,0,0,6" />
+
+                    <TextBlock Grid.Row="1" Grid.Column="0" Style="{StaticResource RowLabel}" Text="Date  MM/dd/yyyy" />
+                    <sdg:WWTextBox x:Name="DateBox" Grid.Row="1" Grid.Column="1" Style="{StaticResource MaskEditor}"
+                                   MaskType="DateOnly" Mask="MM/dd/yyyy" Value="{Binding Date, Mode=TwoWay}" />
+                    <TextBlock Grid.Row="1" Grid.Column="2" Style="{StaticResource Unmasked}" Text="{Binding UnmaskedValue, ElementName=DateBox}" />
+
+                    <TextBlock Grid.Row="2" Grid.Column="0" Style="{StaticResource RowLabel}" Text="Time (24h)  HH:mm:ss" />
+                    <sdg:WWTextBox x:Name="TimeBox" Grid.Row="2" Grid.Column="1" Style="{StaticResource MaskEditor}"
+                                   MaskType="TimeOnly" Mask="HH:mm:ss" Value="{Binding Time, Mode=TwoWay}" />
+                    <TextBlock Grid.Row="2" Grid.Column="2" Style="{StaticResource Unmasked}" Text="{Binding UnmaskedValue, ElementName=TimeBox}" />
+
+                    <TextBlock Grid.Row="3" Grid.Column="0" Style="{StaticResource RowLabel}" Text="Duration  hh\:mm\:ss" />
+                    <sdg:WWTextBox x:Name="DurationBox" Grid.Row="3" Grid.Column="1" Style="{StaticResource MaskEditor}"
+                                   MaskType="TimeSpan" Mask="hh\:mm\:ss" Value="{Binding Duration, Mode=TwoWay}" />
+                    <TextBlock Grid.Row="3" Grid.Column="2" Style="{StaticResource Unmasked}" Text="{Binding UnmaskedValue, ElementName=DurationBox}" />
+                </Grid>
+
+                <!--  ── PromptChar ─────────────────────────────────────────────  -->
+                <TextBlock Style="{StaticResource SectionHeader}" Text="PromptChar — the placeholder for empty slots" />
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="200" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0" Grid.Column="0" Style="{StaticResource RowLabel}" Text="Default  '_'" />
+                    <sdg:WWTextBox Grid.Row="0" Grid.Column="1" Style="{StaticResource MaskEditor}"
+                                   Mask="(000) 000-0000" Value="{Binding PromptUnderscore, Mode=TwoWay}" />
+
+                    <TextBlock Grid.Row="1" Grid.Column="0" Style="{StaticResource RowLabel}" Text="PromptChar='#'" />
+                    <sdg:WWTextBox Grid.Row="1" Grid.Column="1" Style="{StaticResource MaskEditor}"
+                                   Mask="(000) 000-0000" PromptChar="#" Value="{Binding PromptHash, Mode=TwoWay}" />
+
+                    <TextBlock Grid.Row="2" Grid.Column="0" Style="{StaticResource RowLabel}" Text="PromptChar='*'" />
+                    <sdg:WWTextBox Grid.Row="2" Grid.Column="1" Style="{StaticResource MaskEditor}"
+                                   Mask="(000) 000-0000" PromptChar="*" Value="{Binding PromptStar, Mode=TwoWay}" />
+                </Grid>
+
+                <!--  ── Unmasked value + completion ────────────────────────────  -->
+                <TextBlock Style="{StaticResource SectionHeader}" Text="Reading back UnmaskedValue &amp; IsMaskComplete" />
+                <StackPanel Orientation="Horizontal">
+                    <sdg:WWTextBox x:Name="ReadbackBox" Style="{StaticResource MaskEditor}"
+                                   Mask="(000) 000-0000" Value="{Binding Readback, Mode=TwoWay}" />
+                    <StackPanel Margin="18,0,0,0" VerticalAlignment="Center">
+                        <TextBlock Foreground="#333">
+                            <Run Text="UnmaskedValue: " />
+                            <Run Foreground="#0066AA" FontFamily="Consolas, Cascadia Mono" Text="{Binding UnmaskedValue, ElementName=ReadbackBox, Mode=OneWay}" />
+                        </TextBlock>
+                        <TextBlock Foreground="#333" Margin="0,4,0,0">
+                            <Run Text="IsMaskComplete: " />
+                            <Run Foreground="#0066AA" FontFamily="Consolas, Cascadia Mono" Text="{Binding IsMaskComplete, ElementName=ReadbackBox, Mode=OneWay}" />
+                        </TextBlock>
+                    </StackPanel>
+                </StackPanel>
+                <TextBlock Style="{StaticResource Note}"
+                           Text="Both are read-only, mirrored live from the engine — gate a Save button on IsMaskComplete, or persist UnmaskedValue instead of the formatted text." />
+
+                <!--  ── Grammar reference ──────────────────────────────────────  -->
+                <TextBlock Style="{StaticResource SectionHeader}" Text="Simple mask grammar" />
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="60" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0" Grid.Column="0" Style="{StaticResource Token}" Text="0" />
+                    <TextBlock Grid.Row="0" Grid.Column="1" Style="{StaticResource TokenMeaning}" Text="required digit (0–9)" />
+                    <TextBlock Grid.Row="1" Grid.Column="0" Style="{StaticResource Token}" Text="9" />
+                    <TextBlock Grid.Row="1" Grid.Column="1" Style="{StaticResource TokenMeaning}" Text="optional digit (0–9 or space)" />
+                    <TextBlock Grid.Row="2" Grid.Column="0" Style="{StaticResource Token}" Text="#" />
+                    <TextBlock Grid.Row="2" Grid.Column="1" Style="{StaticResource TokenMeaning}" Text="optional digit, space, + or –" />
+                    <TextBlock Grid.Row="3" Grid.Column="0" Style="{StaticResource Token}" Text="L" />
+                    <TextBlock Grid.Row="3" Grid.Column="1" Style="{StaticResource TokenMeaning}" Text="required letter" />
+                    <TextBlock Grid.Row="4" Grid.Column="0" Style="{StaticResource Token}" Text="?" />
+                    <TextBlock Grid.Row="4" Grid.Column="1" Style="{StaticResource TokenMeaning}" Text="optional letter" />
+                    <TextBlock Grid.Row="5" Grid.Column="0" Style="{StaticResource Token}" Text="A" />
+                    <TextBlock Grid.Row="5" Grid.Column="1" Style="{StaticResource TokenMeaning}" Text="required alphanumeric" />
+                    <TextBlock Grid.Row="6" Grid.Column="0" Style="{StaticResource Token}" Text="a" />
+                    <TextBlock Grid.Row="6" Grid.Column="1" Style="{StaticResource TokenMeaning}" Text="optional alphanumeric" />
+                    <TextBlock Grid.Row="7" Grid.Column="0" Style="{StaticResource Token}" Text="+" />
+                    <TextBlock Grid.Row="7" Grid.Column="1" Style="{StaticResource TokenMeaning}" Text="quantifier — one or more of the preceding mask char" />
+                    <TextBlock Grid.Row="8" Grid.Column="0" Style="{StaticResource Token}" Text="*" />
+                    <TextBlock Grid.Row="8" Grid.Column="1" Style="{StaticResource TokenMeaning}" Text="quantifier — zero or more of the preceding mask char" />
+                    <TextBlock Grid.Row="9" Grid.Column="0" Style="{StaticResource Token}" Text="\" />
+                    <TextBlock Grid.Row="9" Grid.Column="1" Style="{StaticResource TokenMeaning}" Text="escape the next character as a literal (any other char is already a literal)" />
+                </Grid>
+
+                <!--  ── Behaviors ──────────────────────────────────────────────  -->
+                <TextBlock Style="{StaticResource SectionHeader}" Text="Built-in behaviors" />
+                <StackPanel>
+                    <TextBlock Style="{StaticResource Note}" Margin="0,0,0,0" Text="• Keystrokes are validated against the pattern; the caret auto-advances past literals as you type." />
+                    <TextBlock Style="{StaticResource Note}" Text="• Ctrl+Left / Ctrl+Right jump between editable regions; Ctrl+Shift+Arrow selects the current region." />
+                    <TextBlock Style="{StaticResource Note}" Text="• Paste is mask-aware — pasted text is filtered through the pattern rather than dropped in verbatim." />
+                    <TextBlock Style="{StaticResource Note}" Text="• The value finalizes on blur; an editor left empty commits a clean empty string, not the prompt skeleton." />
+                </StackPanel>
+            </StackPanel>
+        </ScrollViewer>
+    </sampleControls:SampleHostControl>
+</UserControl>

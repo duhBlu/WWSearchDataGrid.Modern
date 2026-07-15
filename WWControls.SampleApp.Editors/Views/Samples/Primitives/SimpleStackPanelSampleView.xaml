@@ -1,0 +1,150 @@
+<UserControl x:Class="WWControls.SampleApp.Editors.Views.Samples.Primitives.SimpleStackPanelSampleView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:sdg="http://schemas.wwcontrols.com/wpf"
+             xmlns:sampleControls="clr-namespace:WWControls.SampleApp.Editors.Controls"
+             xmlns:local="clr-namespace:WWControls.SampleApp.Editors.Views.Samples.Primitives"
+             mc:Ignorable="d">
+    <UserControl.DataContext>
+        <local:SimpleStackPanelSampleViewModel />
+    </UserControl.DataContext>
+
+    <UserControl.Resources>
+        <Style x:Key="Caption" TargetType="TextBlock">
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="#444" />
+            <Setter Property="Margin" Value="0,0,0,4" />
+        </Style>
+        <Style x:Key="OptionLabel" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="Foreground" Value="#666" />
+            <Setter Property="Margin" Value="0,0,0,3" />
+        </Style>
+        <Style x:Key="Hint" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="Foreground" Value="#888" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="Margin" Value="0,2,0,0" />
+        </Style>
+        <Style x:Key="BoundValue" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Foreground" Value="#0066AA" />
+            <Setter Property="Margin" Value="0,10,0,0" />
+        </Style>
+        <Style x:Key="OptionCombo" TargetType="{x:Type sdg:WWComboBox}" BasedOn="{StaticResource {x:Static sdg:EditorThemeKeys.ComboBox}}">
+            <Setter Property="Height" Value="26" />
+            <Setter Property="Margin" Value="0,0,0,12" />
+        </Style>
+        <Style x:Key="ToggleRow" BasedOn="{StaticResource {x:Static sdg:PrimitiveThemeKeys.CheckBox}}" TargetType="CheckBox">
+            <Setter Property="Foreground" Value="#333" />
+        </Style>
+
+        <!--  Demo tiles — a uniform accent so the Spacing gaps read clearly.  -->
+        <Style x:Key="Tile" TargetType="Border">
+            <Setter Property="Width" Value="64" />
+            <Setter Property="Height" Value="44" />
+            <Setter Property="Background" Value="#4C6EF5" />
+            <Setter Property="CornerRadius" Value="4" />
+        </Style>
+        <Style x:Key="TileText" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="HorizontalAlignment" Value="Center" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        <!--  The middle tile: distinct color, and collapsible from the options panel.  -->
+        <Style x:Key="MiddleTile" TargetType="Border" BasedOn="{StaticResource Tile}">
+            <Setter Property="Background" Value="#F76707" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding HideMiddleTile}" Value="True">
+                    <Setter Property="Visibility" Value="Collapsed" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </UserControl.Resources>
+
+    <sampleControls:SampleHostControl Sources="{x:Static sampleControls:SampleSources.SimpleStackPanel}">
+        <ScrollViewer Background="#FFFFFF" VerticalScrollBarVisibility="Auto">
+            <StackPanel Margin="24" MaxWidth="760" HorizontalAlignment="Left">
+                <TextBlock Style="{StaticResource SampleIntro}">
+                    <Run FontWeight="SemiBold" Text="SimpleStackPanel" />
+                    <LineBreak />
+                    <Run Text="A lightweight stack panel that adds a uniform Spacing gap (no per-child margins) and drops that gap for Collapsed children." />
+                </TextBlock>
+
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="230" />
+                        <ColumnDefinition Width="24" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <!--  Options — drive the demo panel.  -->
+                    <Border Grid.Column="0"
+                            Background="#FAFAFA"
+                            BorderBrush="#E3E3E3"
+                            BorderThickness="1"
+                            CornerRadius="6"
+                            Padding="14"
+                            VerticalAlignment="Top">
+                        <StackPanel>
+                            <TextBlock Style="{StaticResource Caption}" Text="Options" Margin="0,0,0,10" />
+
+                            <TextBlock Style="{StaticResource OptionLabel}" Text="Orientation" />
+                            <sdg:WWComboBox Style="{StaticResource OptionCombo}"
+                                            ToolTip="Lays children left-to-right (Horizontal) or top-to-bottom (Vertical); the cross axis stretches to the largest child"
+                                            ItemsSource="{Binding Orientations}"
+                                            SelectedItem="{Binding Orientation, Mode=TwoWay}" />
+
+                            <TextBlock Style="{StaticResource OptionLabel}" Text="{Binding Spacing, StringFormat='Spacing: {0:0} px'}" />
+                            <Slider Margin="0,0,0,14"
+                                    Minimum="0" Maximum="40"
+                                    TickFrequency="2" IsSnapToTickEnabled="True"
+                                    ToolTip="A uniform gap between visible children along the Orientation axis — no per-child margins"
+                                    Value="{Binding Spacing, Mode=TwoWay}" />
+
+                            <CheckBox Style="{StaticResource ToggleRow}" Content="Collapse tile 3"
+                                      ToolTip="Collapses the orange tile — a Collapsed child leaves no gap, so tiles 2 and 4 close up flush"
+                                      IsChecked="{Binding HideMiddleTile, Mode=TwoWay}" />
+                        </StackPanel>
+                    </Border>
+
+                    <!--  The demo panel.  -->
+                    <StackPanel Grid.Column="2">
+                        <TextBlock Style="{StaticResource Caption}" Text="Panel" />
+                        <Border Background="#F7F7F7"
+                                BorderBrush="#E3E3E3"
+                                BorderThickness="1"
+                                CornerRadius="6"
+                                Padding="16"
+                                HorizontalAlignment="Left">
+                            <sdg:SimpleStackPanel Orientation="{Binding Orientation}"
+                                                  Spacing="{Binding Spacing}">
+                                <Border Style="{StaticResource Tile}">
+                                    <TextBlock Style="{StaticResource TileText}" Text="1" />
+                                </Border>
+                                <Border Style="{StaticResource Tile}">
+                                    <TextBlock Style="{StaticResource TileText}" Text="2" />
+                                </Border>
+                                <Border Style="{StaticResource MiddleTile}">
+                                    <TextBlock Style="{StaticResource TileText}" Text="3" />
+                                </Border>
+                                <Border Style="{StaticResource Tile}">
+                                    <TextBlock Style="{StaticResource TileText}" Text="4" />
+                                </Border>
+                                <Border Style="{StaticResource Tile}">
+                                    <TextBlock Style="{StaticResource TileText}" Text="5" />
+                                </Border>
+                            </sdg:SimpleStackPanel>
+                        </Border>
+
+                        <TextBlock Style="{StaticResource BoundValue}"
+                                   Text="{Binding Orientation, StringFormat='Orientation: {0}'}" />
+                    </StackPanel>
+                </Grid>
+            </StackPanel>
+        </ScrollViewer>
+    </sampleControls:SampleHostControl>
+</UserControl>

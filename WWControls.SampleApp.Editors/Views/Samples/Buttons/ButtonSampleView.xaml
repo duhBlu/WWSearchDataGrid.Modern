@@ -44,10 +44,10 @@
     <sampleControls:SampleHostControl Sources="{x:Static sampleControls:SampleSources.Button}">
         <ScrollViewer Background="#FFFFFF" VerticalScrollBarVisibility="Auto">
             <StackPanel Margin="24" MaxWidth="760" HorizontalAlignment="Left">
-                <TextBlock FontSize="13" Foreground="#444" TextWrapping="Wrap" Margin="0,0,0,16">
+                <TextBlock Style="{StaticResource SampleIntro}">
                     <Run FontWeight="SemiBold" Text="WWButton" />
                     <LineBreak />
-                    <Run Text="One button, every property. ButtonKind picks Simple / Repeat / Toggle, a glyph docks on any side, CornerRadius restyles the chrome, and choosing an AsyncDisplayMode swaps the command for an async one so the wait wheel (or hover-cancel) engages. Change the options on the left and the preview button reflects them live." />
+                    <Run Text="One button covering every behavior — Simple / Repeat / Toggle, a docked glyph, custom corner radius, and an async wait / cancel wheel." />
                 </TextBlock>
 
                 <Grid>
@@ -71,6 +71,7 @@
                             <StackPanel Style="{StaticResource OptionGroup}">
                                 <TextBlock Style="{StaticResource OptionLabel}" Text="ButtonKind" />
                                 <sdg:WWComboBox Style="{StaticResource OptionCombo}"
+                                                ToolTip="Simple fires once; Repeat fires repeatedly while held (Delay / Interval pace it); Toggle cycles IsChecked on each click"
                                                 ItemsSource="{Binding Kinds}"
                                                 SelectedItem="{Binding Kind, Mode=TwoWay}" />
                             </StackPanel>
@@ -138,6 +139,7 @@
                             <StackPanel Style="{StaticResource OptionGroup}">
                                 <TextBlock Style="{StaticResource OptionLabel}" Text="AsyncDisplayMode" />
                                 <sdg:WWComboBox Style="{StaticResource OptionCombo}"
+                                                ToolTip="Runs the command as a 4 s async task (Simple kind) — Wait shows a spinner, WaitCancel adds a hover × that cancels"
                                                 ItemsSource="{Binding AsyncDisplayModes}"
                                                 SelectedItem="{Binding AsyncDisplayMode, Mode=TwoWay}" />
                             </StackPanel>
@@ -187,8 +189,6 @@
                         <TextBlock Style="{StaticResource Readout}" Text="{Binding ToggleState, StringFormat='Toggle IsChecked: {0}', TargetNullValue='Toggle IsChecked: (indeterminate)'}" />
                         <TextBlock Style="{StaticResource Readout}" Text="{Binding AsyncStatus, StringFormat='Async status: {0}'}" />
 
-                        <TextBlock FontSize="11" Foreground="#888" TextWrapping="Wrap" Margin="0,16,0,0"
-                                   Text="Repeat: hold the button and the counter climbs (Delay / Interval pace it). Toggle: each click cycles IsChecked (three-state adds an indeterminate step). Async: pick Wait or WaitCancel with Simple kind — the button runs a 4 s task; WaitCancel turns the wheel into a hover × that cancels." />
                     </StackPanel>
                 </Grid>
             </StackPanel>

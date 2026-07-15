@@ -52,10 +52,10 @@
     <sampleControls:SampleHostControl Sources="{x:Static sampleControls:SampleSources.ColorPicker}">
         <ScrollViewer Background="#FFFFFF" VerticalScrollBarVisibility="Auto">
             <StackPanel Margin="24" MaxWidth="820" HorizontalAlignment="Left">
-                <TextBlock FontSize="13" Foreground="#444" TextWrapping="Wrap" Margin="0,0,0,16">
+                <TextBlock Style="{StaticResource SampleIntro}">
                     <Run FontWeight="SemiBold" Text="WWColorPicker" />
                     <LineBreak />
-                    <Run Text="A swatch toggle that drops a popup with preset swatches, HSV sliders, and a hex box. Here six pickers each bind two-way to a theme role, and the mock dashboard on the right reskins live as you drag. SelectedColor is a Color (not a Brush), so the view model projects each role to a frozen brush — that one adapter is all a real consumer needs." />
+                    <Run Text="A swatch toggle dropping a popup with preset swatches, HSV sliders, and a hex box. Six pickers bind to theme roles and reskin the mock dashboard live." />
                 </TextBlock>
 
                 <Grid>
@@ -119,6 +119,7 @@
 
                             <TextBlock Style="{StaticResource OptionLabel}" Text="Preset set (PresetColors)" />
                             <sdg:WWComboBox Style="{StaticResource OptionCombo}"
+                                            ToolTip="A coordinated theme — reseeds all six roles and restocks every picker's swatch grid (Material / Grayscale / Web)"
                                             ItemsSource="{Binding PresetSets}"
                                             SelectedItem="{Binding PresetSet, Mode=TwoWay}" />
 
@@ -278,18 +279,9 @@
                             <Run Text="{Binding ElementName=AccentPicker, Path=Brightness, Mode=OneWay, StringFormat='· B {0:0}%'}" />
                         </TextBlock>
 
-                        <TextBlock Style="{StaticResource Hint}" Margin="0,14,0,0">
-                            <Run FontWeight="SemiBold" Text="Popup:" />
-                            <Run Text="click a swatch to open it — pick a preset, drag the H / S / B sliders (the tracks recolor as you go), or type a hex and press Enter. The preview border and hex box mirror the live color." />
-                        </TextBlock>
-                        <TextBlock Style="{StaticResource Hint}">
-                            <Run FontWeight="SemiBold" Text="PresetColors:" />
-                            <Run Text="the Preset set combo is a coordinated theme — it re-seeds all six roles and swaps the swatch grid on every picker at once (Material, a grayscale ramp, or the web-safe basics). Then fine-tune any single role from that set's swatches." />
-                        </TextBlock>
-                        <TextBlock Style="{StaticResource Hint}">
-                            <Run FontWeight="SemiBold" Text="Auto-contrast:" />
-                            <Run Text="the header title and primary-button label bind to a foreground the view model flips between black and white by the accent's brightness, so text stays readable however dark or light you drag the accent." />
-                        </TextBlock>
+                        <TextBlock Style="{StaticResource SampleNoteHeader}" Text="Tips" Margin="0,14,0,6" />
+                        <TextBlock Style="{StaticResource SampleTip}" Text="• Click a swatch to open the popup — pick a preset, drag the H / S / B sliders, or type a hex and press Enter." />
+                        <TextBlock Style="{StaticResource SampleTip}" Text="• The header title and primary-button label auto-flip between black and white so text stays readable over any accent." />
                     </StackPanel>
                 </Grid>
             </StackPanel>

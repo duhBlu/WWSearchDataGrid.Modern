@@ -57,6 +57,12 @@
     <EmbeddedResource Include="Views\Samples\Trees\TreeViewSampleView.xaml" />
     <EmbeddedResource Include="Views\Samples\Trees\TreeViewSampleView.xaml.cs" />
     <EmbeddedResource Include="Views\Samples\Trees\TreeViewSampleViewModel.cs" />
+    <EmbeddedResource Include="Views\Samples\Primitives\SimpleStackPanelSampleView.xaml" />
+    <EmbeddedResource Include="Views\Samples\Primitives\SimpleStackPanelSampleView.xaml.cs" />
+    <EmbeddedResource Include="Views\Samples\Primitives\SimpleStackPanelSampleViewModel.cs" />
+    <EmbeddedResource Include="Views\Samples\Primitives\HighlightTextBlockSampleView.xaml" />
+    <EmbeddedResource Include="Views\Samples\Primitives\HighlightTextBlockSampleView.xaml.cs" />
+    <EmbeddedResource Include="Views\Samples\Primitives\HighlightTextBlockSampleViewModel.cs" />
 
     <!-- Custom AvalonEdit syntax highlighting registered at startup; replaces the bundled XML / C# defaults. -->
     <EmbeddedResource Include="Themes\SyntaxHighlighting\CSharp.xshd" />

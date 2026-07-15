@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using WWControls.SampleApp.Editors.Views.Samples.Buttons;
 using WWControls.SampleApp.Editors.Views.Samples.Editors;
+using WWControls.SampleApp.Editors.Views.Samples.Primitives;
 using WWControls.SampleApp.Editors.Views.Samples.Trees;
 
 namespace WWControls.SampleApp.Editors.Views.Launcher
@@ -26,9 +27,14 @@ namespace WWControls.SampleApp.Editors.Views.Launcher
                 new SampleDefinition[]
                 {
                     new("WWTextBox",
-                        "Chrome (flat / bordered / read-only), TextAlignment, Simple masks (phone, SSN, plate), and Numeric masks (C2 / P0 / F2) — the full masking grammar on a standalone editor.",
-                        new[] { "Text", "Masking", "Chrome" },
+                        "An options-panel playground for one live editor — chrome (ShowBorder / flat), IsReadOnly, Watermark, ShowClearButton, an edge Glyph + placement, TextAlignment, MaxLength, and the UpdateDelay debounce.",
+                        new[] { "Text", "Chrome", "Glyph" },
                         () => new TextBoxSampleView()),
+
+                    new("Masking",
+                        "Masked input across all four engines — Simple (phone / SSN / card / plate), Numeric (C2 / N0 / F2 / P1), DateTime / TimeSpan — plus PromptChar, the UnmaskedValue / IsMaskComplete readback, and the Simple mask grammar.",
+                        new[] { "Text", "Masking", "Format" },
+                        () => new MaskSampleView()),
 
                     new("WWNumericUpDown",
                         "Spinner buttons plus Ctrl+Up/Down keyboard stepping — Minimum / Maximum bounds, Increment, and the Ctrl+Shift LargeIncrement jump.",
@@ -92,6 +98,22 @@ namespace WWControls.SampleApp.Editors.Views.Launcher
                         "Two-way SelectedObject binding, ExpandOnLoad, per-item expand/collapse buttons (ExpandCollapseButtonMode), the tree-level ExpandAll / CollapseAll commands, and drag-drop reparenting via OnDropCommand (payload is a (target, dragged) tuple; CanExecute rejects illegal moves). Structural roots opt out of dragging through IWWTreeViewDragItem.",
                         new[] { "Tree", "Selection", "DragDrop", "Expand" },
                         () => new TreeViewSampleView()),
+                }),
+
+            new SampleCategory(
+                "Primitives",
+                "The small building-block primitives — a spacing-aware layout panel and a search-highlighting text block.",
+                new SampleDefinition[]
+                {
+                    new("SimpleStackPanel",
+                        "A lightweight single-line layout panel: Orientation (Horizontal / Vertical) plus a uniform Spacing gap that needs no per-child margins — and skips the gap entirely for Collapsed children so neighbours close up flush.",
+                        new[] { "Layout", "Panel", "Spacing" },
+                        () => new SimpleStackPanelSampleView()),
+
+                    new("HighlightTextBlock",
+                        "A TextBlock that emits the first (case-insensitive) match of a search term as its own Run: HighlightTextBlockText / HighlightText binding, MatchMode anchoring (Contains / StartsWith / EndsWith), and a live-composed HighlightRunStyle (weight / italic / underline / foreground / background fill) applied to the match.",
+                        new[] { "Text", "Search", "Highlight" },
+                        () => new HighlightTextBlockSampleView()),
                 }),
         };
     }

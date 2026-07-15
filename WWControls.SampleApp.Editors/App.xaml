@@ -12,6 +12,9 @@
                 <!-- Window chrome style -->
                 <ResourceDictionary Source="/Styles/WindowStyle.xaml"/>
 
+                <!-- Shared formatting for sample on-screen notes (intro / keyboard chips / tips). -->
+                <ResourceDictionary Source="/Styles/SampleNotes.xaml"/>
+
                 <!-- SDG default theme. Swap the .Themes.Default assembly suffix to switch themes. -->
                 <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Theme.xaml"/>
             </ResourceDictionary.MergedDictionaries>

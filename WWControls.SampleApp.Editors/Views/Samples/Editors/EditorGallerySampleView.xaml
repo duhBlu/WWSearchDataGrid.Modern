@@ -14,10 +14,10 @@
     <sampleControls:SampleHostControl Sources="{x:Static sampleControls:SampleSources.EditorGallery}">
         <ScrollViewer Background="#FFFFFF" VerticalScrollBarVisibility="Auto">
             <StackPanel Margin="24" MaxWidth="620" HorizontalAlignment="Left">
-                <TextBlock FontSize="13" Foreground="#444" TextWrapping="Wrap" Margin="0,0,0,16">
+                <TextBlock Style="{StaticResource SampleIntro}">
                     <Run FontWeight="SemiBold" Text="Editor gallery" />
                     <LineBreak />
-                    <Run Text="The same editor controls the grid hosts in a cell, used directly on a form — no grid involved. Each editor owns its own chrome (border, focus accent, padding) and is bordered by default; a grid cell flattens it. The first row opts out with ShowBorder=false to show the in-cell look. Each editor's value two-way-binds to the echo on its right." />
+                    <Run Text="Every editor control on a plain form — the standalone look, bordered by default. The first row opts out with ShowBorder=false for the flat in-cell look." />
                 </TextBlock>
 
                 <!-- WWTextBox: the chrome story (flat vs bordered vs masked vs read-only). -->

@@ -38,12 +38,12 @@
     <sampleControls:SampleHostControl Sources="{x:Static sampleControls:SampleSources.PropertyGrid}">
         <ScrollViewer Background="#FFFFFF" VerticalScrollBarVisibility="Auto">
             <StackPanel Margin="24" MaxWidth="820" HorizontalAlignment="Left">
-                <TextBlock FontSize="13" Foreground="#444" TextWrapping="Wrap" Margin="0,0,0,16">
+                <TextBlock Style="{StaticResource SampleIntro}">
                     <Run FontWeight="SemiBold" Text="WWPropertyGrid" />
                     <LineBreak />
-                    <Run Text="Reflects a bound object's public properties, groups them by [Category], and labels them from [DisplayName] / [Description]. Editors are supplied per property through EditorDefinitions — here Name, SKU, Active, Currency, and Status get custom editors built from the WWControls editor controls." />
+                    <Run Text="Reflects a bound object's properties, grouped by [Category] and labeled from [DisplayName] / [Description], with a custom editor per property via EditorDefinitions." />
                     <LineBreak />
-                    <Run FontWeight="SemiBold" Foreground="#A15C00" Text="Note: " /><Run Foreground="#A15C00" Text="the grid has no built-in per-type editors yet, so properties without a custom template (Unit Price, Quantity On Hand, Created On, Internal Id) fall back to a read-only placeholder." />
+                    <Run FontWeight="SemiBold" Foreground="#A15C00" Text="Note: " /><Run Foreground="#A15C00" Text="no built-in per-type editors yet — properties without a custom template fall back to a read-only placeholder." />
                 </TextBlock>
 
                 <Grid>
@@ -99,8 +99,10 @@
                                 </sdg:WWEditorDefinition>
                             </sdg:WWPropertyGrid.EditorDefinitions>
                         </sdg:WWPropertyGrid>
-                        <TextBlock Style="{StaticResource Hint}" MaxWidth="360" Margin="0,8,0,0"
-                                   Text="Click a row to see its description below the grid. Type in the search box to filter by name or category. Drag the divider between the two columns to resize." />
+                        <TextBlock Style="{StaticResource SampleNoteHeader}" Text="Tips" Margin="0,10,0,6" />
+                        <TextBlock Style="{StaticResource SampleTip}" MaxWidth="360" Text="• Click a row to show its description below the grid." />
+                        <TextBlock Style="{StaticResource SampleTip}" MaxWidth="360" Text="• The search box filters rows by name or category." />
+                        <TextBlock Style="{StaticResource SampleTip}" MaxWidth="360" Text="• Drag the divider between the columns to resize." />
                     </StackPanel>
 
                     <!--  Live readout — reflects edits made through the grid.  -->
@@ -127,7 +129,7 @@
                             </StackPanel>
                         </Border>
                         <TextBlock Style="{StaticResource Hint}" MaxWidth="260"
-                                   Text="Edit Name, SKU, Active, Status, or Currency in the grid and watch these update — each editor two-way binds through the property item's Value." />
+                                   Text="Edit in the grid and these update live — each editor two-way binds through the property item's Value." />
                     </StackPanel>
                 </Grid>
             </StackPanel>

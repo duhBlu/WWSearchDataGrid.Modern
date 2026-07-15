@@ -14,10 +14,10 @@
     <sampleControls:SampleHostControl Sources="{x:Static sampleControls:SampleSources.NumericUpDown}">
         <ScrollViewer Background="#FFFFFF" VerticalScrollBarVisibility="Auto">
             <StackPanel Margin="24" MaxWidth="620" HorizontalAlignment="Left">
-                <TextBlock FontSize="13" Foreground="#444" TextWrapping="Wrap" Margin="0,0,0,16">
+                <TextBlock Style="{StaticResource SampleIntro}">
                     <Run FontWeight="SemiBold" Text="WWNumericUpDown" />
                     <LineBreak />
-                    <Run Text="Numeric editor with a spinner-button column and keyboard stepping — Ctrl+Up/Down steps by Increment, Ctrl+Shift+Up/Down jumps by LargeIncrement. Minimum / Maximum clamp both typed and stepped values; leave them unset for an unbounded editor." />
+                    <Run Text="Numeric editor with a spinner column and keyboard stepping. Minimum / Maximum clamp typed and stepped values alike." />
                 </TextBlock>
 
                 <Grid>
@@ -41,6 +41,7 @@
                     <!-- Unbounded: no Minimum/Maximum set. -->
                     <TextBlock Grid.Row="1" Grid.Column="0" Text="Unbounded (default)" VerticalAlignment="Center" Margin="0,4" Foreground="#333" />
                     <sdg:WWNumericUpDown Grid.Row="1" Grid.Column="1" Height="26" Margin="0,4"
+                                    ToolTip="No Minimum / Maximum set — accepts any value"
                                     Value="{Binding Unbounded, Mode=TwoWay}" />
                     <TextBlock Grid.Row="1" Grid.Column="2" Text="{Binding Unbounded}" VerticalAlignment="Center" Margin="12,4" Foreground="#0066AA" />
 
@@ -48,6 +49,7 @@
                     <TextBlock Grid.Row="2" Grid.Column="0" Text="Bounded 0–100" VerticalAlignment="Center" Margin="0,4" Foreground="#333" />
                     <sdg:WWNumericUpDown Grid.Row="2" Grid.Column="1" Height="26" Margin="0,4"
                                     Minimum="0" Maximum="100"
+                                    ToolTip="Minimum=0, Maximum=100 — clamps typed and stepped values"
                                     Value="{Binding Percentage, Mode=TwoWay}" />
                     <TextBlock Grid.Row="2" Grid.Column="2" Text="{Binding Percentage}" VerticalAlignment="Center" Margin="12,4" Foreground="#0066AA" />
 
@@ -55,6 +57,7 @@
                     <TextBlock Grid.Row="3" Grid.Column="0" Text="LargeIncrement 25" VerticalAlignment="Center" Margin="0,4" Foreground="#333" />
                     <sdg:WWNumericUpDown Grid.Row="3" Grid.Column="1" Height="26" Margin="0,4"
                                     Minimum="0" Maximum="1000" Increment="5" LargeIncrement="25"
+                                    ToolTip="Increment=5, LargeIncrement=25 (Ctrl+Shift+↑/↓)"
                                     Value="{Binding Stock, Mode=TwoWay}" />
                     <TextBlock Grid.Row="3" Grid.Column="2" Text="{Binding Stock}" VerticalAlignment="Center" Margin="12,4" Foreground="#0066AA" />
 
@@ -62,15 +65,27 @@
                     <TextBlock Grid.Row="4" Grid.Column="0" Text="Fractional (0.25 steps)" VerticalAlignment="Center" Margin="0,4" Foreground="#333" />
                     <sdg:WWNumericUpDown Grid.Row="4" Grid.Column="1" Height="26" Margin="0,4"
                                     Minimum="0" Maximum="10" Increment="0.25" LargeIncrement="1"
+                                    ToolTip="Increment=0.25 — fractional stepping"
                                     Value="{Binding Hours, Mode=TwoWay}" />
                     <TextBlock Grid.Row="4" Grid.Column="2" Text="{Binding Hours}" VerticalAlignment="Center" Margin="12,4" Foreground="#0066AA" />
 
                     <!-- Read-only: spinner and typing both disabled. -->
                     <TextBlock Grid.Row="5" Grid.Column="0" Text="Read-only" VerticalAlignment="Center" Margin="0,4" Foreground="#333" />
                     <sdg:WWNumericUpDown Grid.Row="5" Grid.Column="1" Height="26" Margin="0,4" IsReadOnly="True"
+                                    ToolTip="IsReadOnly — spinner and typing both disabled"
                                     Value="{Binding Locked, Mode=TwoWay}" />
                     <TextBlock Grid.Row="5" Grid.Column="2" Text="{Binding Locked}" VerticalAlignment="Center" Margin="12,4" Foreground="#0066AA" />
                 </Grid>
+
+                <TextBlock Style="{StaticResource SampleNoteHeader}" Text="Keyboard" Margin="0,22,0,6" />
+                <StackPanel Style="{StaticResource SampleKbdRow}">
+                    <Border Style="{StaticResource SampleKbd}"><TextBlock Style="{StaticResource SampleKbdText}" Text="Ctrl + ↑ / ↓" /></Border>
+                    <TextBlock Style="{StaticResource SampleKbdDesc}" Text="Step by Increment" />
+                </StackPanel>
+                <StackPanel Style="{StaticResource SampleKbdRow}">
+                    <Border Style="{StaticResource SampleKbd}"><TextBlock Style="{StaticResource SampleKbdText}" Text="Ctrl + Shift + ↑ / ↓" /></Border>
+                    <TextBlock Style="{StaticResource SampleKbdDesc}" Text="Jump by LargeIncrement" />
+                </StackPanel>
             </StackPanel>
         </ScrollViewer>
     </sampleControls:SampleHostControl>

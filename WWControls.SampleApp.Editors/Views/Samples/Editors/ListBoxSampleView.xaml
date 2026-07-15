@@ -73,11 +73,13 @@
 
                             <TextBlock Style="{StaticResource OptionLabel}" Text="SelectionMode" />
                             <sdg:WWComboBox Style="{StaticResource OptionCombo}"
+                                            ToolTip="Single = one row; Multiple = plain click toggles rows (no modifiers); Extended = click replaces, Ctrl+click toggles, Shift+click ranges"
                                             ItemsSource="{Binding SelectionModes}"
                                             SelectedItem="{Binding SelectionMode, Mode=TwoWay}" />
 
                             <TextBlock Style="{StaticResource OptionLabel}" Text="ItemKind" />
                             <sdg:WWComboBox Style="{StaticResource OptionCombo}"
+                                            ToolTip="Visual only — Default row highlight, Checked a checkbox per row, Radio a radio dot (all driven by IsSelected)"
                                             ItemsSource="{Binding ItemKinds}"
                                             SelectedItem="{Binding ItemKind, Mode=TwoWay}" />
 
@@ -110,22 +112,19 @@
                         <TextBlock Style="{StaticResource BoundValue}" Text="{Binding SelectionSummary}" />
                         <TextBlock Style="{StaticResource BoundValue}" Text="{Binding LastReorder}" />
 
-                        <TextBlock Style="{StaticResource Hint}" Margin="0,14,0,0">
-                            <Run FontWeight="SemiBold" Text="SelectionMode:" />
-                            <Run Text="Single keeps exactly one row selected. Multiple toggles rows with a plain click — click to select, click again to deselect, no modifier keys. Extended is the classic explorer feel — click replaces the selection, Ctrl+click toggles one row, Shift+click selects the range." />
-                        </TextBlock>
-                        <TextBlock Style="{StaticResource Hint}">
-                            <Run FontWeight="SemiBold" Text="ItemKind:" />
-                            <Run Text="purely visual — Default reads selection as the row highlight, Checked puts a checkbox on every row, Radio a radio dot, both lit by the row's IsSelected. Pair Checked with Multiple for a check-list and Radio with Single for an option list; the two properties stay independent either way." />
-                        </TextBlock>
-                        <TextBlock Style="{StaticResource Hint}">
-                            <Run FontWeight="SemiBold" Text="Reordering:" />
-                            <Run Text="drag a row and the list opens a traveling hole — the dragged row keeps its layout slot (hidden), a snapshot ghost follows the pointer, and the other rows slide between slots. Dragging near the top or bottom edge auto-scrolls. Escape cancels; the ItemReordered event reports the move and the consumer applies it to the data source." />
-                        </TextBlock>
-                        <TextBlock Style="{StaticResource Hint}">
-                            <Run FontWeight="SemiBold" Text="Virtualization:" />
-                            <Run Text="the drag engine needs every container realized, so WWListBox defaults VirtualizingPanel.IsVirtualizing to false and forces pixel scrolling. For a large list that never reorders, opt virtualization back in from XAML." />
-                        </TextBlock>
+                        <TextBlock Style="{StaticResource SampleNoteHeader}" Text="Keyboard (Extended mode)" Margin="0,16,0,6" />
+                        <StackPanel Style="{StaticResource SampleKbdRow}">
+                            <Border Style="{StaticResource SampleKbd}"><TextBlock Style="{StaticResource SampleKbdText}" Text="Ctrl + Click" /></Border>
+                            <TextBlock Style="{StaticResource SampleKbdDesc}" Text="Toggle one row" />
+                        </StackPanel>
+                        <StackPanel Style="{StaticResource SampleKbdRow}">
+                            <Border Style="{StaticResource SampleKbd}"><TextBlock Style="{StaticResource SampleKbdText}" Text="Shift + Click" /></Border>
+                            <TextBlock Style="{StaticResource SampleKbdDesc}" Text="Select the range" />
+                        </StackPanel>
+
+                        <TextBlock Style="{StaticResource SampleNoteHeader}" Text="Reordering" Margin="0,14,0,6" />
+                        <TextBlock Style="{StaticResource SampleTip}" Text="• Drag a row to reorder — a ghost follows the pointer and the others slide around the gap; dragging near an edge auto-scrolls, Esc cancels." />
+                        <TextBlock Style="{StaticResource SampleTip}" Text="• The drag engine needs every row realized, so WWListBox turns virtualization off by default — opt it back in for a large list that never reorders." />
                     </StackPanel>
                 </Grid>
             </StackPanel>

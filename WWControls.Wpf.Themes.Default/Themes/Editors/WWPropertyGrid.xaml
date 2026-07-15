@@ -74,8 +74,8 @@
                                                       IconSource="{StaticResource {x:Static sdg:IconKeys.IconCaretRight}}"
                                                       HorizontalAlignment="Center"
                                                       VerticalAlignment="Center"
-                                                      Width="8"
-                                                      Height="8" />
+                                                      Width="5"
+                                                      Height="5" />
                                             <ContentPresenter Grid.Column="1"
                                                               RecognizesAccessKey="True"
                                                               TextElement.FontWeight="Bold"

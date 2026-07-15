@@ -11,127 +11,155 @@
         <local:TextBoxSampleViewModel />
     </UserControl.DataContext>
 
+    <UserControl.Resources>
+        <Style x:Key="Caption" TargetType="TextBlock">
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="#444" />
+            <Setter Property="Margin" Value="0,0,0,4" />
+        </Style>
+        <Style x:Key="FieldLabel" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="Foreground" Value="#666" />
+            <Setter Property="Margin" Value="0,0,0,3" />
+        </Style>
+        <Style x:Key="Hint" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="Foreground" Value="#888" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="Margin" Value="0,8,0,0" />
+        </Style>
+        <Style x:Key="BoundValue" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Foreground" Value="#0066AA" />
+            <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+            <Setter Property="Margin" Value="0,14,0,0" />
+        </Style>
+        <Style x:Key="ToggleRow" BasedOn="{StaticResource {x:Static sdg:PrimitiveThemeKeys.CheckBox}}" TargetType="CheckBox">
+            <Setter Property="Margin" Value="0,0,0,10" />
+            <Setter Property="Foreground" Value="#333" />
+        </Style>
+        <Style x:Key="OptionCombo" TargetType="{x:Type sdg:WWComboBox}" BasedOn="{StaticResource {x:Static sdg:EditorThemeKeys.ComboBox}}">
+            <Setter Property="Height" Value="26" />
+            <Setter Property="Margin" Value="0,0,0,10" />
+        </Style>
+        <Style x:Key="OptionNumeric" TargetType="{x:Type sdg:WWNumericUpDown}" BasedOn="{StaticResource {x:Static sdg:EditorThemeKeys.NumericUpDown}}">
+            <Setter Property="Height" Value="26" />
+            <Setter Property="Margin" Value="0,0,0,10" />
+        </Style>
+        <Style x:Key="OptionText" TargetType="{x:Type sdg:WWTextBox}" BasedOn="{StaticResource {x:Static sdg:EditorThemeKeys.TextBox}}">
+            <Setter Property="Height" Value="26" />
+            <Setter Property="Margin" Value="0,0,0,10" />
+        </Style>
+    </UserControl.Resources>
+
     <sampleControls:SampleHostControl Sources="{x:Static sampleControls:SampleSources.TextBox}">
         <ScrollViewer Background="#FFFFFF" VerticalScrollBarVisibility="Auto">
-            <StackPanel Margin="24" MaxWidth="620" HorizontalAlignment="Left">
-                <TextBlock FontSize="13" Foreground="#444" TextWrapping="Wrap" Margin="0,0,0,16">
+            <StackPanel Margin="24" MaxWidth="740" HorizontalAlignment="Left">
+                <TextBlock Style="{StaticResource SampleIntro}">
                     <Run FontWeight="SemiBold" Text="WWTextBox" />
                     <LineBreak />
-                    <Run Text="The workhorse text editor. WWEditorBase owns the chrome (bordered by default, ShowBorder=false for the flat in-cell look); WWTextBox adds TextAlignment plus the masking engine — MaskType=Simple takes the literal/placeholder grammar, MaskType=Numeric takes standard .NET numeric format strings. Every editor two-way-binds Value to the echo on its right." />
+                    <Run Text="The workhorse text editor — chrome, watermark, clear button, an edge glyph, and an input debounce. Masking has its own sample." />
                 </TextBlock>
 
-                <!-- Chrome -->
-                <TextBlock Text="Chrome" FontWeight="SemiBold" Foreground="#222" Margin="0,4,0,8" />
                 <Grid>
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="170" />
-                        <ColumnDefinition Width="240" />
+                        <ColumnDefinition Width="250" />
+                        <ColumnDefinition Width="28" />
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                    </Grid.RowDefinitions>
 
-                    <TextBlock Grid.Row="0" Grid.Column="1" Text="Editor" FontWeight="SemiBold" Foreground="#666" Margin="0,0,0,6" />
-                    <TextBlock Grid.Row="0" Grid.Column="2" Text="Bound value" FontWeight="SemiBold" Foreground="#666" Margin="12,0,0,6" />
+                    <!--  Options — every property of the single demo editor.  -->
+                    <Border Grid.Column="0"
+                            Background="#FAFAFA"
+                            BorderBrush="#E3E3E3"
+                            BorderThickness="1"
+                            CornerRadius="6"
+                            Padding="14"
+                            VerticalAlignment="Top">
+                        <StackPanel>
+                            <TextBlock Style="{StaticResource Caption}" Text="Options" Margin="0,0,0,12" />
 
-                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Bordered (default)" VerticalAlignment="Center" Margin="0,4" Foreground="#333" />
-                    <sdg:WWTextBox Grid.Row="1" Grid.Column="1" Height="26" Margin="0,4"
-                                    Value="{Binding BorderedText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                    <TextBlock Grid.Row="1" Grid.Column="2" Text="{Binding BorderedText}" VerticalAlignment="Center" Margin="12,4" Foreground="#0066AA" />
+                            <CheckBox Style="{StaticResource ToggleRow}" Content="ShowBorder"
+                                      IsChecked="{Binding ShowBorder, Mode=TwoWay}" />
+                            <CheckBox Style="{StaticResource ToggleRow}" Content="IsReadOnly"
+                                      IsChecked="{Binding IsReadOnly, Mode=TwoWay}" />
+                            <CheckBox Style="{StaticResource ToggleRow}" Content="ShowClearButton"
+                                      ToolTip="Shows an inline clear button while the editor is non-empty and editable"
+                                      IsChecked="{Binding ShowClearButton, Mode=TwoWay}" />
 
-                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Flat (in-cell look)" VerticalAlignment="Center" Margin="0,4" Foreground="#333" />
-                    <sdg:WWTextBox Grid.Row="2" Grid.Column="1" Height="26" Margin="0,4" ShowBorder="False"
-                                    Value="{Binding PlainText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                    <TextBlock Grid.Row="2" Grid.Column="2" Text="{Binding PlainText}" VerticalAlignment="Center" Margin="12,4" Foreground="#0066AA" />
+                            <TextBlock Style="{StaticResource FieldLabel}" Text="Watermark" />
+                            <sdg:WWTextBox Style="{StaticResource OptionText}"
+                                           Value="{Binding Watermark, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
 
-                    <TextBlock Grid.Row="3" Grid.Column="0" Text="Read-only" VerticalAlignment="Center" Margin="0,4" Foreground="#333" />
-                    <sdg:WWTextBox Grid.Row="3" Grid.Column="1" Height="26" Margin="0,4" IsReadOnly="True"
-                                    Value="{Binding ReadOnlyText, Mode=TwoWay}" />
-                    <TextBlock Grid.Row="3" Grid.Column="2" Text="{Binding ReadOnlyText}" VerticalAlignment="Center" Margin="12,4" Foreground="#0066AA" />
+                            <TextBlock Style="{StaticResource FieldLabel}" Text="TextAlignment" />
+                            <sdg:WWComboBox Style="{StaticResource OptionCombo}"
+                                            ItemsSource="{Binding TextAlignments}"
+                                            SelectedItem="{Binding TextAlignment, Mode=TwoWay}" />
 
-                    <TextBlock Grid.Row="4" Grid.Column="0" Text="Right-aligned" VerticalAlignment="Center" Margin="0,4" Foreground="#333" />
-                    <sdg:WWTextBox Grid.Row="4" Grid.Column="1" Height="26" Margin="0,4" TextAlignment="Right"
-                                    Value="{Binding RightAlignedText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                    <TextBlock Grid.Row="4" Grid.Column="2" Text="{Binding RightAlignedText}" VerticalAlignment="Center" Margin="12,4" Foreground="#0066AA" />
-                </Grid>
+                            <TextBlock Style="{StaticResource FieldLabel}" Text="Glyph" />
+                            <sdg:WWComboBox Style="{StaticResource OptionCombo}"
+                                            ToolTip="An icon docked on the GlyphPlacement edge, tinted to the editor's foreground"
+                                            ItemsSource="{Binding GlyphKinds}"
+                                            SelectedItem="{Binding Glyph, Mode=TwoWay}" />
 
-                <!-- Simple masks: literal/placeholder grammar (0 required digit, L required letter, other chars literals). -->
-                <TextBlock Text="Simple masks (pattern grammar)" FontWeight="SemiBold" Foreground="#222" Margin="0,24,0,8" />
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="170" />
-                        <ColumnDefinition Width="240" />
-                        <ColumnDefinition Width="*" />
-                    </Grid.ColumnDefinitions>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                    </Grid.RowDefinitions>
+                            <TextBlock Style="{StaticResource FieldLabel}" Text="GlyphPlacement" />
+                            <sdg:WWComboBox Style="{StaticResource OptionCombo}"
+                                            ItemsSource="{Binding GlyphPlacements}"
+                                            SelectedItem="{Binding GlyphPlacement, Mode=TwoWay}" />
 
-                    <TextBlock Grid.Row="0" Grid.Column="1" Text="Editor" FontWeight="SemiBold" Foreground="#666" Margin="0,0,0,6" />
-                    <TextBlock Grid.Row="0" Grid.Column="2" Text="Bound value" FontWeight="SemiBold" Foreground="#666" Margin="12,0,0,6" />
+                            <TextBlock Style="{StaticResource FieldLabel}" Text="MaxLength (0 = unlimited)" />
+                            <sdg:WWNumericUpDown Style="{StaticResource OptionNumeric}"
+                                                 Minimum="0" Maximum="100" Increment="1"
+                                                 Value="{Binding MaxLength, Mode=TwoWay}" />
 
-                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Phone (000) 000-0000" VerticalAlignment="Center" Margin="0,4" Foreground="#333" />
-                    <sdg:WWTextBox Grid.Row="1" Grid.Column="1" Height="26" Margin="0,4"
-                                    Mask="(000) 000-0000"
-                                    Value="{Binding Phone, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                    <TextBlock Grid.Row="1" Grid.Column="2" Text="{Binding Phone}" VerticalAlignment="Center" Margin="12,4" Foreground="#0066AA" />
+                            <TextBlock Style="{StaticResource FieldLabel}" Text="UpdateDelay (ms)" />
+                            <sdg:WWNumericUpDown Style="{StaticResource OptionNumeric}"
+                                                 Margin="0"
+                                                 Minimum="0" Maximum="2000" Increment="50" LargeIncrement="250"
+                                                 ToolTip="Debounces the binding (Binding.Delay) — the value echo lags typing by this many ms"
+                                                 Value="{Binding UpdateDelay, Mode=TwoWay}" />
+                        </StackPanel>
+                    </Border>
 
-                    <TextBlock Grid.Row="2" Grid.Column="0" Text="SSN 000-00-0000" VerticalAlignment="Center" Margin="0,4" Foreground="#333" />
-                    <sdg:WWTextBox Grid.Row="2" Grid.Column="1" Height="26" Margin="0,4"
-                                    Mask="000-00-0000"
-                                    Value="{Binding Ssn, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                    <TextBlock Grid.Row="2" Grid.Column="2" Text="{Binding Ssn}" VerticalAlignment="Center" Margin="12,4" Foreground="#0066AA" />
+                    <!--  The single live editor. Glyph and Mask are enum/preset choices, mapped to
+                          concrete resources/patterns by the DataTriggers below; every other property
+                          binds straight to the option it mirrors.  -->
+                    <StackPanel Grid.Column="2" VerticalAlignment="Top">
+                        <TextBlock Style="{StaticResource Caption}" Text="Live editor" />
+                        <sdg:WWTextBox x:Name="Demo"
+                                       Width="340"
+                                       Height="30"
+                                       HorizontalAlignment="Left"
+                                       Value="{Binding SampleText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                       ShowBorder="{Binding ShowBorder}"
+                                       IsReadOnly="{Binding IsReadOnly}"
+                                       ShowClearButton="{Binding ShowClearButton}"
+                                       Watermark="{Binding Watermark}"
+                                       TextAlignment="{Binding TextAlignment}"
+                                       GlyphPlacement="{Binding GlyphPlacement}"
+                                       MaxLength="{Binding MaxLength}"
+                                       UpdateDelay="{Binding UpdateDelay}">
+                            <sdg:WWTextBox.Style>
+                                <Style TargetType="{x:Type sdg:WWTextBox}" BasedOn="{StaticResource {x:Static sdg:EditorThemeKeys.TextBox}}">
+                                    <Style.Triggers>
+                                        <!--  Glyph choice → icon resource (None leaves Glyph null).  -->
+                                        <DataTrigger Binding="{Binding Glyph}" Value="Edit">
+                                            <Setter Property="Glyph" Value="{StaticResource {x:Static sdg:IconKeys.IconEdit}}" />
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding Glyph}" Value="Calendar">
+                                            <Setter Property="Glyph" Value="{StaticResource {x:Static sdg:IconKeys.IconCalendar}}" />
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding Glyph}" Value="Filter">
+                                            <Setter Property="Glyph" Value="{StaticResource {x:Static sdg:IconKeys.IconFilter}}" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </sdg:WWTextBox.Style>
+                        </sdg:WWTextBox>
 
-                    <TextBlock Grid.Row="3" Grid.Column="0" Text="Plate LLL-000" VerticalAlignment="Center" Margin="0,4" Foreground="#333" />
-                    <sdg:WWTextBox Grid.Row="3" Grid.Column="1" Height="26" Margin="0,4"
-                                    Mask="LLL-000"
-                                    Value="{Binding Plate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                    <TextBlock Grid.Row="3" Grid.Column="2" Text="{Binding Plate}" VerticalAlignment="Center" Margin="12,4" Foreground="#0066AA" />
-                </Grid>
-
-                <!-- Numeric masks: standard .NET numeric format strings, culture-aware separators. -->
-                <TextBlock Text="Numeric masks (.NET format strings)" FontWeight="SemiBold" Foreground="#222" Margin="0,24,0,8" />
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="170" />
-                        <ColumnDefinition Width="240" />
-                        <ColumnDefinition Width="*" />
-                    </Grid.ColumnDefinitions>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                    </Grid.RowDefinitions>
-
-                    <TextBlock Grid.Row="0" Grid.Column="1" Text="Editor" FontWeight="SemiBold" Foreground="#666" Margin="0,0,0,6" />
-                    <TextBlock Grid.Row="0" Grid.Column="2" Text="Bound value" FontWeight="SemiBold" Foreground="#666" Margin="12,0,0,6" />
-
-                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Currency C2" VerticalAlignment="Center" Margin="0,4" Foreground="#333" />
-                    <sdg:WWTextBox Grid.Row="1" Grid.Column="1" Height="26" Margin="0,4"
-                                    MaskType="Numeric" Mask="C2" TextAlignment="Right"
-                                    Value="{Binding Price, Mode=TwoWay}" />
-                    <TextBlock Grid.Row="1" Grid.Column="2" Text="{Binding Price}" VerticalAlignment="Center" Margin="12,4" Foreground="#0066AA" />
-
-                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Percent P0" VerticalAlignment="Center" Margin="0,4" Foreground="#333" />
-                    <sdg:WWTextBox Grid.Row="2" Grid.Column="1" Height="26" Margin="0,4"
-                                    MaskType="Numeric" Mask="P0" TextAlignment="Right"
-                                    Value="{Binding Rate, Mode=TwoWay}" />
-                    <TextBlock Grid.Row="2" Grid.Column="2" Text="{Binding Rate}" VerticalAlignment="Center" Margin="12,4" Foreground="#0066AA" />
-
-                    <TextBlock Grid.Row="3" Grid.Column="0" Text="Fixed-point F2" VerticalAlignment="Center" Margin="0,4" Foreground="#333" />
-                    <sdg:WWTextBox Grid.Row="3" Grid.Column="1" Height="26" Margin="0,4"
-                                    MaskType="Numeric" Mask="F2" TextAlignment="Right"
-                                    Value="{Binding Weight, Mode=TwoWay}" />
-                    <TextBlock Grid.Row="3" Grid.Column="2" Text="{Binding Weight}" VerticalAlignment="Center" Margin="12,4" Foreground="#0066AA" />
+                        <TextBlock Style="{StaticResource BoundValue}"
+                                   Text="{Binding SampleText, StringFormat='Value: {0}', TargetNullValue='Value: (empty)', FallbackValue='Value: (empty)'}" />
+                    </StackPanel>
                 </Grid>
             </StackPanel>
         </ScrollViewer>

@@ -36,10 +36,10 @@
     <sampleControls:SampleHostControl Sources="{x:Static sampleControls:SampleSources.TreeView}">
         <ScrollViewer Background="#FFFFFF" VerticalScrollBarVisibility="Auto">
             <StackPanel Margin="24" MaxWidth="820" HorizontalAlignment="Left">
-                <TextBlock FontSize="13" Foreground="#444" TextWrapping="Wrap" Margin="0,0,0,16">
+                <TextBlock Style="{StaticResource SampleIntro}">
                     <Run FontWeight="SemiBold" Text="WWTreeView" />
                     <LineBreak />
-                    <Run Text="A themed tree with two-way selection binding, drag-and-drop reparenting, and expand-all / collapse-all. Click a node and SelectedObject updates; hover a node that has grandchildren to reveal its per-item expand/collapse buttons. Toggle AllowDragDrop, then drag a file or folder onto another folder to reparent it — the drop is routed to a command as (target, dragged), and illegal moves (onto itself or into its own subtree) are rejected. The two structural top-level nodes opt out of dragging via IWWTreeViewDragItem." />
+                    <Run Text="A themed tree with two-way selection binding, drag-and-drop reparenting, and expand / collapse-all." />
                 </TextBlock>
 
                 <Grid>
@@ -61,6 +61,7 @@
                             <TextBlock Style="{StaticResource SectionHeader}" Text="Options" />
                             <CheckBox Style="{StaticResource ToggleRow}"
                                       Content="AllowDragDrop"
+                                      ToolTip="Drag a node onto a folder to reparent it; dropping onto itself or its own subtree is rejected"
                                       IsChecked="{Binding AllowDragDrop, Mode=TwoWay}" />
 
                             <StackPanel Orientation="Horizontal" Margin="0,2,0,12">
@@ -97,6 +98,11 @@
                                         ExpandCollapseButtonMode="HasGrandchildren" />
                     </Border>
                 </Grid>
+
+                <TextBlock Style="{StaticResource SampleNoteHeader}" Text="Tips" Margin="0,16,0,6" />
+                <TextBlock Style="{StaticResource SampleTip}" Text="• Hover a node with grandchildren to reveal its expand / collapse button." />
+                <TextBlock Style="{StaticResource SampleTip}" Text="• With AllowDragDrop on, drag a file or folder onto another folder to reparent it." />
+                <TextBlock Style="{StaticResource SampleTip}" Text="• The two structural root nodes opt out of dragging (IWWTreeViewDragItem)." />
             </StackPanel>
         </ScrollViewer>
     </sampleControls:SampleHostControl>

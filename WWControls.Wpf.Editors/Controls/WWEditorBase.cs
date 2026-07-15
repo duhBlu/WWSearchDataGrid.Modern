@@ -76,6 +76,24 @@ namespace WWControls.Wpf.Editors
                 new PropertyMetadata(false));
 
         /// <summary>
+        /// Placeholder text shown while the editor is empty. A shared surface: concrete editors that
+        /// host a text input render it as a watermark behind the input (see <see cref="WWTextBox"/>);
+        /// editors with no free-text surface ignore it. Null / empty means "no watermark".
+        /// </summary>
+        public static readonly DependencyProperty WatermarkProperty =
+            DependencyProperty.Register(nameof(Watermark), typeof(string), typeof(WWEditorBase),
+                new PropertyMetadata(null));
+
+        /// <summary>
+        /// Whether the editor offers an inline clear affordance while it holds a value. A shared
+        /// surface: editors that support it (see <see cref="WWTextBox"/>) render the button; others
+        /// ignore it. Default <c>false</c> so the affordance is opt-in.
+        /// </summary>
+        public static readonly DependencyProperty ShowClearButtonProperty =
+            DependencyProperty.Register(nameof(ShowClearButton), typeof(bool), typeof(WWEditorBase),
+                new PropertyMetadata(false));
+
+        /// <summary>
         /// Whether the chrome border draws. Defaults to <c>true</c> — a standalone editor and the
         /// edit form read as discrete bordered inputs, with an accent edge while focused. A grid
         /// cell flattens it (see <see cref="OnBaseEditLoaded"/>) and the filter row sets it false,
@@ -95,6 +113,18 @@ namespace WWControls.Wpf.Editors
         {
             get => (bool)GetValue(IsReadOnlyProperty);
             set => SetValue(IsReadOnlyProperty, value);
+        }
+
+        public string Watermark
+        {
+            get => (string)GetValue(WatermarkProperty);
+            set => SetValue(WatermarkProperty, value);
+        }
+
+        public bool ShowClearButton
+        {
+            get => (bool)GetValue(ShowClearButtonProperty);
+            set => SetValue(ShowClearButtonProperty, value);
         }
 
         public bool ShowBorder

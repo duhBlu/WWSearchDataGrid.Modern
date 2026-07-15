@@ -41,10 +41,10 @@
     <sampleControls:SampleHostControl Sources="{x:Static sampleControls:SampleSources.ComboBox}">
         <ScrollViewer Background="#FFFFFF" VerticalScrollBarVisibility="Auto">
             <StackPanel Margin="24" MaxWidth="760" HorizontalAlignment="Left">
-                <TextBlock FontSize="13" Foreground="#444" TextWrapping="Wrap" Margin="0,0,0,16">
+                <TextBlock Style="{StaticResource SampleIntro}">
                     <Run FontWeight="SemiBold" Text="WWComboBox" />
                     <LineBreak />
-                    <Run Text="A retemplated native ComboBox with opt-in search-combo behaviors. Flip the toggles on the left — they drive all three combos at once. Typing filters and highlights matches (Escape clears the search, keeps the selection); auto-complete fills the closest item; ShowNone pins a clear row; the size grip makes the popup resizable." />
+                    <Run Text="A retemplated native ComboBox with opt-in search-combo behaviors. The toggles drive all three demo combos at once." />
                 </TextBlock>
 
                 <Grid>
@@ -66,6 +66,7 @@
                             <TextBlock Style="{StaticResource ComboCaption}" Text="Options" Margin="0,0,0,10" />
 
                             <CheckBox Style="{StaticResource ToggleRow}" Content="IncrementalFiltering"
+                                      ToolTip="Type in the combo to filter / highlight items in the popup"
                                       IsChecked="{Binding EnableFiltering, Mode=TwoWay}" />
                             <CheckBox Style="{StaticResource ToggleRow}" Content="FilterDropdownItems"
                                       ToolTip="Off = nothing hides while typing; matches sort to the top instead"
@@ -74,23 +75,31 @@
 
                             <TextBlock Text="IncrementalFilteringMode" FontSize="11" Foreground="#666" Margin="0,0,0,3" />
                             <sdg:WWComboBox Style="{StaticResource EditorCombo}" Margin="0,0,0,10"
+                                            ToolTip="How typed text matches — Contains, StartsWith, or a smart prefix-first rank"
                                             IsEnabled="{Binding EnableFiltering}"
                                             ItemsSource="{Binding FilterModes}"
                                             SelectedItem="{Binding FilterMode, Mode=TwoWay}" />
 
                             <CheckBox Style="{StaticResource ToggleRow}" Content="AutoComplete (editable)"
+                                      ToolTip="Editable combos auto-fill the closest item and select the typed tail"
                                       IsChecked="{Binding EnableAutoComplete, Mode=TwoWay}" />
                             <CheckBox Style="{StaticResource ToggleRow}" Content="ShowNone"
+                                      ToolTip="Pins a clear row at the top of the popup (a '(Clear all)' row in Checkbox mode)"
                                       IsChecked="{Binding EnableShowNone, Mode=TwoWay}" />
                             <CheckBox Style="{StaticResource ToggleRow}" Content="ShowSelectAll (checkbox)"
+                                      ToolTip="Adds a select-all row in Checkbox selection mode"
                                       IsChecked="{Binding EnableSelectAll, Mode=TwoWay}" />
                             <CheckBox Style="{StaticResource ToggleRow}" Content="ShowSizeGrip"
+                                      ToolTip="Adds a grip so the popup can be resized"
                                       IsChecked="{Binding EnableSizeGrip, Mode=TwoWay}" />
                             <CheckBox Style="{StaticResource ToggleRow}" Content="ShowPopupWhenFocused"
+                                      ToolTip="Opens the dropdown as soon as the combo takes focus"
                                       IsChecked="{Binding OpenOnFocus, Mode=TwoWay}" />
                             <CheckBox Style="{StaticResource ToggleRow}" Content="Radio glyphs (non-editable)"
+                                      ToolTip="Single-select non-editable shows a radio dot per row instead of a check"
                                       IsChecked="{Binding UseRadio, Mode=TwoWay}" />
                             <CheckBox Style="{StaticResource ToggleRow}" Margin="0" Content="ApplyItemTemplateToSelectedItem"
+                                      ToolTip="Renders the selection box with the ItemTemplate instead of plain text"
                                       IsChecked="{Binding ApplyItemTemplate, Mode=TwoWay}" />
                         </StackPanel>
                     </Border>
@@ -111,6 +120,7 @@
                                         Style="{StaticResource EditorCombo}"
                                         Width="260"
                                         HorizontalAlignment="Left"
+                                        ToolTip="Object items with a custom ItemTemplate — open and type to search (TextSearch.TextPath drives matching)"
                                         IncrementalFiltering="{Binding EnableFiltering}"
                                         IncrementalFilteringMode="{Binding FilterMode}"
                                         FilterDropdownItems="{Binding FilterDropdownItems}"
@@ -134,8 +144,6 @@
                                 </DataTemplate>
                             </sdg:WWComboBox.ItemTemplate>
                         </sdg:WWComboBox>
-                        <TextBlock Style="{StaticResource ComboHint}"
-                                   Text="Open it and just start typing — the search strip appears at the top of the popup. Backspace edits, Escape clears the search without losing the selection." />
                         <TextBlock Style="{StaticResource BoundValue}" Text="{Binding SelectedStatus.Name, StringFormat='SelectedItem: {0}', TargetNullValue='SelectedItem: (null)', FallbackValue='SelectedItem: (null)'}" />
 
                         <!--  Editable: strings, built-in highlight rows, auto-complete tail selection.  -->
@@ -144,6 +152,7 @@
                                         Width="260"
                                         HorizontalAlignment="Left"
                                         IsEditable="True"
+                                        ToolTip="Type to filter (try 'oak' with Smart mode — prefixes rank first); Enter commits the best match, blur commits only an exact match"
                                         IncrementalFiltering="{Binding EnableFiltering}"
                                         IncrementalFilteringMode="{Binding FilterMode}"
                                         FilterDropdownItems="{Binding FilterDropdownItems}"
@@ -153,8 +162,6 @@
                                         ShowPopupWhenFocused="{Binding OpenOnFocus}"
                                         ItemsSource="{Binding Woods}"
                                         SelectedItem="{Binding SelectedWood, Mode=TwoWay}" />
-                        <TextBlock Style="{StaticResource ComboHint}"
-                                   Text="Try 'oak' with Smart mode — prefix matches rank first. Enter commits the best match; blur commits only an exact match." />
                         <TextBlock Style="{StaticResource BoundValue}" Text="{Binding SelectedWood, StringFormat='SelectedItem: {0}', TargetNullValue='SelectedItem: (null)', FallbackValue='SelectedItem: (null)'}" />
 
                         <!--  Checkbox multi-select: toggles stay open; selection box joins the checked items.  -->
@@ -174,10 +181,27 @@
                                         ShowNone="{Binding EnableShowNone}"
                                         ShowSizeGrip="{Binding EnableSizeGrip}"
                                         ShowPopupWhenFocused="{Binding OpenOnFocus}"
+                                        ToolTip="SelectionMode=Checkbox — click or Space toggles rows without closing; ShowNone becomes a '(Clear all)' row"
                                         ItemsSource="{Binding Woods}" />
-                        <TextBlock Style="{StaticResource ComboHint}"
-                                   Text="Click or Space toggles a row without closing; Enter closes. ShowNone becomes a '(Clear all)' row here." />
                         <TextBlock Style="{StaticResource BoundValue}" Text="{Binding SelectionBoxDisplayText, ElementName=CheckedCombo, StringFormat='SelectedItems: {0}'}" />
+
+                        <TextBlock Style="{StaticResource SampleNoteHeader}" Text="Keyboard" Margin="0,20,0,6" />
+                        <StackPanel Style="{StaticResource SampleKbdRow}">
+                            <Border Style="{StaticResource SampleKbd}"><TextBlock Style="{StaticResource SampleKbdText}" Text="Type" /></Border>
+                            <TextBlock Style="{StaticResource SampleKbdDesc}" Text="Filter / highlight matches in the popup" />
+                        </StackPanel>
+                        <StackPanel Style="{StaticResource SampleKbdRow}">
+                            <Border Style="{StaticResource SampleKbd}"><TextBlock Style="{StaticResource SampleKbdText}" Text="Esc" /></Border>
+                            <TextBlock Style="{StaticResource SampleKbdDesc}" Text="Clear the search, keep the selection" />
+                        </StackPanel>
+                        <StackPanel Style="{StaticResource SampleKbdRow}">
+                            <Border Style="{StaticResource SampleKbd}"><TextBlock Style="{StaticResource SampleKbdText}" Text="Space" /></Border>
+                            <TextBlock Style="{StaticResource SampleKbdDesc}" Text="Toggle a checkbox row without closing" />
+                        </StackPanel>
+                        <StackPanel Style="{StaticResource SampleKbdRow}">
+                            <Border Style="{StaticResource SampleKbd}"><TextBlock Style="{StaticResource SampleKbdText}" Text="Enter" /></Border>
+                            <TextBlock Style="{StaticResource SampleKbdDesc}" Text="Commit the best match / close the popup" />
+                        </StackPanel>
                     </StackPanel>
                 </Grid>
             </StackPanel>

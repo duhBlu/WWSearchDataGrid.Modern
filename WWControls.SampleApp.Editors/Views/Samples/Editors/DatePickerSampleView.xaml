@@ -46,10 +46,10 @@
     <sampleControls:SampleHostControl Sources="{x:Static sampleControls:SampleSources.DatePicker}">
         <ScrollViewer Background="#FFFFFF" VerticalScrollBarVisibility="Auto">
             <StackPanel Margin="24" MaxWidth="760" HorizontalAlignment="Left">
-                <TextBlock FontSize="13" Foreground="#444" TextWrapping="Wrap" Margin="0,0,0,16">
+                <TextBlock Style="{StaticResource SampleIntro}">
                     <Run FontWeight="SemiBold" Text="WWDatePicker" />
                     <LineBreak />
-                    <Run Text="Date/time editor masked by standard .NET format strings, binding a nullable DateTime. Flip the options on the left — they all drive the picker live. Typing edits one segment at a time (arrows move between segments, Up/Down cycles the focused one); the dropdown offers a calendar or looping scroll columns, with a time surface whenever the mask carries time parts." />
+                    <Run Text="Date/time editor masked by standard .NET format strings, binding a nullable DateTime. The dropdown offers a calendar or looping scroll columns, with a time surface when the mask carries time parts." />
                 </TextBlock>
 
                 <Grid>
@@ -73,27 +73,32 @@
                             <TextBlock Style="{StaticResource OptionLabel}" Text="Mask (editable — type your own)" />
                             <sdg:WWComboBox Style="{StaticResource OptionCombo}"
                                             IsEditable="True"
+                                            ToolTip="A .NET date/time format (MM/dd/yyyy, g, t…) — time parts light up the popup's time surface"
                                             ItemsSource="{Binding MaskPresets}"
                                             Text="{Binding Mask, Mode=TwoWay}" />
 
                             <TextBlock Style="{StaticResource OptionLabel}" Text="PopupMode" />
                             <sdg:WWComboBox Style="{StaticResource OptionCombo}"
+                                            ToolTip="Calendar, looping ScrollList columns, or both"
                                             ItemsSource="{Binding PopupModes}"
                                             SelectedItem="{Binding PopupMode, Mode=TwoWay}" />
 
                             <TextBlock Style="{StaticResource OptionLabel}" Text="TimeInput" />
                             <sdg:WWComboBox Style="{StaticResource OptionCombo}"
+                                            ToolTip="Whether and where the popup shows a time editor"
                                             ItemsSource="{Binding TimeInputModes}"
                                             SelectedItem="{Binding TimeInput, Mode=TwoWay}" />
 
                             <TextBlock Style="{StaticResource OptionLabel}" Text="CycleModifier (for Up/Down spin)" />
                             <sdg:WWComboBox Style="{StaticResource OptionCombo}"
+                                            ToolTip="The modifier that must be held for Up/Down to cycle the focused segment"
                                             ItemsSource="{Binding CycleModifiers}"
                                             SelectedItem="{Binding CycleModifier, Mode=TwoWay}" />
 
                             <TextBlock Style="{StaticResource OptionLabel}" Text="DisplayFormat (unfocused text)" />
                             <sdg:WWComboBox Style="{StaticResource OptionCombo}"
                                             IsEditable="True"
+                                            ToolTip="How the value renders while the editor is unfocused"
                                             ItemsSource="{Binding DisplayFormatPresets}"
                                             Text="{Binding DisplayFormat, Mode=TwoWay}" />
 
@@ -101,6 +106,7 @@
                                       ToolTip="Ctrl+0 / Ctrl+Delete clears; emptied editor commits null"
                                       IsChecked="{Binding AllowNullInput, Mode=TwoWay}" />
                             <CheckBox Style="{StaticResource ToggleRow}" Content="ShowClearButton"
+                                      ToolTip="An inline clear button (needs AllowNullInput)"
                                       IsEnabled="{Binding AllowNullInput}"
                                       IsChecked="{Binding ShowClearButton, Mode=TwoWay}" />
                             <CheckBox Style="{StaticResource ToggleRow}" Content="ShowTodayButton"
@@ -110,6 +116,7 @@
                                       ToolTip="Shows only while the popup has a time surface"
                                       IsChecked="{Binding ShowNowButton, Mode=TwoWay}" />
                             <CheckBox Style="{StaticResource ToggleRow}" Content="ShowWeekNumbers"
+                                      ToolTip="Adds an ISO week-number column to the calendar"
                                       IsChecked="{Binding ShowWeekNumbers, Mode=TwoWay}" />
                             <CheckBox Style="{StaticResource ToggleRow}" Content="DisableWeekends"
                                       ToolTip="Saturday/Sunday can't be picked — calendar cells disable, typing/spin/scroll/Today reject a weekend result"
@@ -151,14 +158,21 @@
                         <TextBlock Style="{StaticResource BoundValue}"
                                    Text="{Binding Value, StringFormat='Bound value: {0}', TargetNullValue='Bound value: (null)'}" />
 
-                        <TextBlock Style="{StaticResource Hint}" Margin="0,14,0,0">
-                            <Run FontWeight="SemiBold" Text="Keyboard:" />
-                            <Run Text="Left/Right (or click) picks a segment, digits overwrite it, Up/Down cycles it (gated by CycleModifier), Backspace/Delete clears it. With AllowNullInput on: Ctrl+0, Ctrl+Delete, or Ctrl+Backspace clears the whole value to blank, and the first keystroke into the empty editor auto-fills the other regions from DefaultDate (or now)." />
-                        </TextBlock>
-                        <TextBlock Style="{StaticResource Hint}">
-                            <Run FontWeight="SemiBold" Text="Popup:" />
-                            <Run Text="a mask with time parts (try 'g' or 'MM/dd/yyyy HH:mm') lights up the time surface — an inline time editor under the calendar, or hour/minute columns in the scroll list. A time-only mask ('t') collapses the calendar entirely. 'HH' masks switch the scroll list to a 24-hour column." />
-                        </TextBlock>
+                        <TextBlock Style="{StaticResource SampleNoteHeader}" Text="Keyboard" Margin="0,16,0,6" />
+                        <StackPanel Style="{StaticResource SampleKbdRow}">
+                            <Border Style="{StaticResource SampleKbd}"><TextBlock Style="{StaticResource SampleKbdText}" Text="← / →" /></Border>
+                            <TextBlock Style="{StaticResource SampleKbdDesc}" Text="Move between segments (or click one); digits overwrite" />
+                        </StackPanel>
+                        <StackPanel Style="{StaticResource SampleKbdRow}">
+                            <Border Style="{StaticResource SampleKbd}"><TextBlock Style="{StaticResource SampleKbdText}" Text="↑ / ↓" /></Border>
+                            <TextBlock Style="{StaticResource SampleKbdDesc}" Text="Cycle the focused segment (gated by CycleModifier)" />
+                        </StackPanel>
+                        <StackPanel Style="{StaticResource SampleKbdRow}">
+                            <Border Style="{StaticResource SampleKbd}"><TextBlock Style="{StaticResource SampleKbdText}" Text="Ctrl + Del" /></Border>
+                            <TextBlock Style="{StaticResource SampleKbdDesc}" Text="Clear the whole value to blank (with AllowNullInput)" />
+                        </StackPanel>
+                        <TextBlock Style="{StaticResource SampleTip}" Margin="0,6,0,0"
+                                   Text="• A mask with time parts (try 'g' or 'MM/dd/yyyy HH:mm') lights up the popup's time surface; a time-only mask ('t') collapses the calendar." />
                     </StackPanel>
                 </Grid>
             </StackPanel>

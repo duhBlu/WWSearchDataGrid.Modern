@@ -23,6 +23,11 @@ namespace WWControls.SampleApp.Editors.Controls
             "Views/Samples/Editors/TextBoxSampleView.xaml.cs",
             "Views/Samples/Editors/TextBoxSampleViewModel.cs");
 
+        public static IReadOnlyList<SampleSourceFile> Mask { get; } = SampleSourceLoader.LoadFiles(
+            "Views/Samples/Editors/MaskSampleView.xaml",
+            "Views/Samples/Editors/MaskSampleView.xaml.cs",
+            "Views/Samples/Editors/MaskSampleViewModel.cs");
+
         public static IReadOnlyList<SampleSourceFile> NumericUpDown { get; } = SampleSourceLoader.LoadFiles(
             "Views/Samples/Editors/NumericUpDownSampleView.xaml",
             "Views/Samples/Editors/NumericUpDownSampleView.xaml.cs",
@@ -69,5 +74,16 @@ namespace WWControls.SampleApp.Editors.Controls
             "Views/Samples/Trees/TreeViewSampleView.xaml",
             "Views/Samples/Trees/TreeViewSampleView.xaml.cs",
             "Views/Samples/Trees/TreeViewSampleViewModel.cs");
+
+        // ── Primitives ───────────────────────────────────────────────────────
+        public static IReadOnlyList<SampleSourceFile> SimpleStackPanel { get; } = SampleSourceLoader.LoadFiles(
+            "Views/Samples/Primitives/SimpleStackPanelSampleView.xaml",
+            "Views/Samples/Primitives/SimpleStackPanelSampleView.xaml.cs",
+            "Views/Samples/Primitives/SimpleStackPanelSampleViewModel.cs");
+
+        public static IReadOnlyList<SampleSourceFile> HighlightTextBlock { get; } = SampleSourceLoader.LoadFiles(
+            "Views/Samples/Primitives/HighlightTextBlockSampleView.xaml",
+            "Views/Samples/Primitives/HighlightTextBlockSampleView.xaml.cs",
+            "Views/Samples/Primitives/HighlightTextBlockSampleViewModel.cs");
     }
 }
