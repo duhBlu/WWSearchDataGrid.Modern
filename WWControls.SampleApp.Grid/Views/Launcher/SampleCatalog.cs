@@ -61,15 +61,10 @@ namespace WWControls.SampleApp.Grid.Views.Launcher
                         new[] { "BestFit", "Auto-width", "Sizing" },
                         () => new BestFitSampleView()),
 
-                    new("Save and Restore Layout",
-                        "Persist and reload column layouts (order, width, visibility, pinning, grouping, totals).",
-                        new[] { "Layout", "Persistence" },
-                        () => PlannedSampleView.Planned(
-                            "Save and Restore Layout",
-                            "Save the current column layout and restore it later.",
-                            "Serialize/restore column order, width, visibility, pinning",
-                            "Prereq: column grouping",
-                            "Prereq: totals row")),
+                    new("Save and Restore Views",
+                        "Save and reload the grid's layout (order, width, visibility, pinning, sort, grouping) and its filters as portable .sdgview files — separately or together. Apply a built-in preset live, or save/load your own from the grid's context menu.",
+                        new[] { "Layout", "Filters", "Persistence" },
+                        () => new SaveRestoreViewSampleView()),
                 }),
 
             new SampleCategory(

@@ -1,0 +1,21 @@
+{
+  "SchemaVersion": 1,
+  "Name": "Grouped by product line & status",
+  "Layout": {
+    "Columns": [
+      { "FieldName": "OrderNumber", "DisplayIndex": 0, "Width": 90, "Visible": true },
+      { "FieldName": "CustomerName", "DisplayIndex": 1, "Width": 210, "Visible": true },
+      { "FieldName": "ProductLineName", "DisplayIndex": 2, "Width": 140, "Visible": true },
+      { "FieldName": "OrderStatusName", "DisplayIndex": 3, "Width": 130, "Visible": true },
+      { "FieldName": "OrderItemsTotalPrice", "DisplayIndex": 4, "Width": 120, "Visible": true },
+      { "FieldName": "OrderDate", "DisplayIndex": 5, "Width": 120, "Visible": true, "SortOrder": "Descending", "SortIndex": 0 },
+      { "FieldName": "State", "DisplayIndex": 6, "Width": 70, "Visible": true },
+      { "FieldName": "Submitted", "DisplayIndex": 7, "Visible": false }
+    ],
+    "Grouping": [
+      { "FieldName": "ProductLineName", "GroupInterval": "Value", "SortDirection": "Ascending" },
+      { "FieldName": "OrderStatusName", "GroupInterval": "Value", "SortDirection": "Ascending" }
+    ],
+    "IsGroupPanelVisible": true
+  }
+}

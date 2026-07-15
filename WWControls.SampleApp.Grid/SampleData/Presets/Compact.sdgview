@@ -1,0 +1,18 @@
+{
+  "SchemaVersion": 1,
+  "Name": "Compact — newest first",
+  "Layout": {
+    "Columns": [
+      { "FieldName": "OrderNumber", "DisplayIndex": 0, "Width": 90, "Visible": true, "Fixed": "None" },
+      { "FieldName": "CustomerName", "DisplayIndex": 1, "Width": 210, "Visible": true, "Fixed": "None" },
+      { "FieldName": "OrderStatusName", "DisplayIndex": 2, "Width": 130, "Visible": true, "Fixed": "None" },
+      { "FieldName": "OrderDate", "DisplayIndex": 3, "Width": 120, "Visible": true, "Fixed": "None", "SortOrder": "Descending", "SortIndex": 0 },
+      { "FieldName": "OrderItemsTotalPrice", "DisplayIndex": 4, "Width": 120, "Visible": true, "Fixed": "None" },
+      { "FieldName": "ProductLineName", "DisplayIndex": 5, "Visible": false },
+      { "FieldName": "State", "DisplayIndex": 6, "Visible": false },
+      { "FieldName": "Submitted", "DisplayIndex": 7, "Visible": false }
+    ],
+    "Grouping": [],
+    "IsGroupPanelVisible": false
+  }
+}

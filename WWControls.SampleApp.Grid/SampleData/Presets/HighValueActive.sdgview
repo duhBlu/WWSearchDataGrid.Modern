@@ -1,0 +1,32 @@
+{
+  "SchemaVersion": 1,
+  "Name": "High-value active orders",
+  "Filters": {
+    "Columns": [
+      {
+        "FieldName": "OrderItemsTotalPrice",
+        "ColumnDataType": "Number",
+        "Groups": [
+          {
+            "Operator": "And",
+            "Conditions": [
+              { "Operator": "And", "SearchType": "GreaterThanOrEqualTo", "Primary": "10000" }
+            ]
+          }
+        ]
+      },
+      {
+        "FieldName": "OrderStatusName",
+        "ColumnDataType": "String",
+        "Groups": [
+          {
+            "Operator": "And",
+            "Conditions": [
+              { "Operator": "And", "SearchType": "IsAnyOf", "Values": [ "Submitted", "In Production", "Shipped" ] }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,48 @@
+{
+  "SchemaVersion": 1,
+  "Name": "Executive review (layout + filters)",
+  "Layout": {
+    "Columns": [
+      { "FieldName": "CustomerName", "DisplayIndex": 0, "Width": 210, "Visible": true },
+      { "FieldName": "ProductLineName", "DisplayIndex": 1, "Width": 140, "Visible": true },
+      { "FieldName": "OrderStatusName", "DisplayIndex": 2, "Width": 130, "Visible": true },
+      { "FieldName": "OrderItemsTotalPrice", "DisplayIndex": 3, "Width": 130, "Visible": true, "SortOrder": "Descending", "SortIndex": 0 },
+      { "FieldName": "OrderDate", "DisplayIndex": 4, "Width": 120, "Visible": true },
+      { "FieldName": "OrderNumber", "DisplayIndex": 5, "Visible": false },
+      { "FieldName": "State", "DisplayIndex": 6, "Visible": false },
+      { "FieldName": "Submitted", "DisplayIndex": 7, "Visible": false }
+    ],
+    "Grouping": [
+      { "FieldName": "OrderStatusName", "GroupInterval": "Value", "SortDirection": "Ascending" }
+    ],
+    "IsGroupPanelVisible": true
+  },
+  "Filters": {
+    "Columns": [
+      {
+        "FieldName": "OrderItemsTotalPrice",
+        "ColumnDataType": "Number",
+        "Groups": [
+          {
+            "Operator": "And",
+            "Conditions": [
+              { "Operator": "And", "SearchType": "GreaterThanOrEqualTo", "Primary": "5000" }
+            ]
+          }
+        ]
+      },
+      {
+        "FieldName": "OrderStatusName",
+        "ColumnDataType": "String",
+        "Groups": [
+          {
+            "Operator": "And",
+            "Conditions": [
+              { "Operator": "And", "SearchType": "NotEquals", "Primary": "Cancelled" }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

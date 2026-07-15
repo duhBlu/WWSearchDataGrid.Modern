@@ -51,6 +51,9 @@
     <EmbeddedResource Include="Views\Samples\Columns\BestFitSampleView.xaml" />
     <EmbeddedResource Include="Views\Samples\Columns\BestFitSampleView.xaml.cs" />
     <EmbeddedResource Include="Views\Samples\Columns\BestFitSampleViewModel.cs" />
+    <EmbeddedResource Include="Views\Samples\Columns\SaveRestoreViewSampleView.xaml" />
+    <EmbeddedResource Include="Views\Samples\Columns\SaveRestoreViewSampleView.xaml.cs" />
+    <EmbeddedResource Include="Views\Samples\Columns\SaveRestoreViewSampleViewModel.cs" />
 
     <!-- Selection and Usability -->
     <EmbeddedResource Include="Views\Samples\Usability\CopyPasteSampleView.xaml" />
@@ -147,6 +150,14 @@
     <!-- Custom AvalonEdit syntax highlighting registered at startup; replaces the bundled XML / C# defaults. -->
     <EmbeddedResource Include="Themes\SyntaxHighlighting\CSharp.xshd" />
     <EmbeddedResource Include="Themes\SyntaxHighlighting\Xaml.xshd" />
+  </ItemGroup>
+
+  <!-- Built-in .sdgview presets shown in the Save/Restore Views sample; loaded at runtime via the assembly manifest. -->
+  <ItemGroup>
+    <EmbeddedResource Include="SampleData\Presets\Compact.sdgview" />
+    <EmbeddedResource Include="SampleData\Presets\GroupedByProductLine.sdgview" />
+    <EmbeddedResource Include="SampleData\Presets\HighValueActive.sdgview" />
+    <EmbeddedResource Include="SampleData\Presets\ExecutiveReview.sdgview" />
   </ItemGroup>
 
 </Project>

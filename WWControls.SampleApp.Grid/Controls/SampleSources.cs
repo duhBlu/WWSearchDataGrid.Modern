@@ -39,6 +39,13 @@ namespace WWControls.SampleApp.Grid.Controls
             "Models/OrderItem.cs",
             "SampleData/Generators/OrderGenerator.cs");
 
+        public static IReadOnlyList<SampleSourceFile> SaveRestoreView { get; } = SampleSourceLoader.LoadFiles(
+            "Views/Samples/Columns/SaveRestoreViewSampleView.xaml",
+            "Views/Samples/Columns/SaveRestoreViewSampleView.xaml.cs",
+            "Views/Samples/Columns/SaveRestoreViewSampleViewModel.cs",
+            "Models/OrderItem.cs",
+            "SampleData/Generators/OrderGenerator.cs");
+
         public static IReadOnlyList<SampleSourceFile> DisplayFormatting { get; } = SampleSourceLoader.LoadFiles(
             "Views/Samples/Columns/DisplayFormattingSampleView.xaml",
             "Views/Samples/Columns/DisplayFormattingSampleView.xaml.cs",
