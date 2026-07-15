@@ -74,6 +74,7 @@
                                               VerticalAlignment="Center"
                                               Width="{TemplateBinding GlyphWidth}"
                                               Height="{TemplateBinding GlyphHeight}"
+                                              StrokeThickness="{TemplateBinding GlyphStrokeThickness}"
                                               IconSource="{TemplateBinding Glyph}"
                                               IconBrush="{TemplateBinding GlyphBrush}" />
                                     <ContentPresenter x:Name="contentPresenter"

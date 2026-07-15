@@ -69,6 +69,12 @@ namespace WWControls.SampleApp.Editors.Controls
             "Views/Samples/Buttons/ButtonSampleView.xaml.cs",
             "Views/Samples/Buttons/ButtonSampleViewModel.cs");
 
+        // ── Dialogs ──────────────────────────────────────────────────────────
+        public static IReadOnlyList<SampleSourceFile> MessageBox { get; } = SampleSourceLoader.LoadFiles(
+            "Views/Samples/Dialogs/MessageBoxSampleView.xaml",
+            "Views/Samples/Dialogs/MessageBoxSampleView.xaml.cs",
+            "Views/Samples/Dialogs/MessageBoxSampleViewModel.cs");
+
         // ── Trees ────────────────────────────────────────────────────────────
         public static IReadOnlyList<SampleSourceFile> TreeView { get; } = SampleSourceLoader.LoadFiles(
             "Views/Samples/Trees/TreeViewSampleView.xaml",

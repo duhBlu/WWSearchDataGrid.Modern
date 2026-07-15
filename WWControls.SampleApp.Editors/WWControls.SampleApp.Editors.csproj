@@ -54,6 +54,9 @@
     <EmbeddedResource Include="Views\Samples\Buttons\ButtonSampleView.xaml" />
     <EmbeddedResource Include="Views\Samples\Buttons\ButtonSampleView.xaml.cs" />
     <EmbeddedResource Include="Views\Samples\Buttons\ButtonSampleViewModel.cs" />
+    <EmbeddedResource Include="Views\Samples\Dialogs\MessageBoxSampleView.xaml" />
+    <EmbeddedResource Include="Views\Samples\Dialogs\MessageBoxSampleView.xaml.cs" />
+    <EmbeddedResource Include="Views\Samples\Dialogs\MessageBoxSampleViewModel.cs" />
     <EmbeddedResource Include="Views\Samples\Trees\TreeViewSampleView.xaml" />
     <EmbeddedResource Include="Views\Samples\Trees\TreeViewSampleView.xaml.cs" />
     <EmbeddedResource Include="Views\Samples\Trees\TreeViewSampleViewModel.cs" />

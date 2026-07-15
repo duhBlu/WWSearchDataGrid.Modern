@@ -1354,10 +1354,11 @@
         </DrawingImage.Drawing>
     </DrawingImage>
 
+    <!--  "!" sits low in the 24-unit box so it reads centered inside the warning triangle.  -->
     <DrawingImage x:Key="{x:Static sdg:IconKeys.IconStatusWarning}">
         <DrawingImage.Drawing>
             <DrawingGroup ClipGeometry="M0,0 V24 H24 V0 H0 Z">
-                <GeometryDrawing Geometry="F1 M24,24z M0,0z M12,7L12,13">
+                <GeometryDrawing Geometry="F1 M24,24z M0,0z M12,9L12,15">
                     <GeometryDrawing.Pen>
                         <Pen Brush="#FF1C1C1C"
                              Thickness="2.5"
@@ -1366,7 +1367,7 @@
                              LineJoin="Round" />
                     </GeometryDrawing.Pen>
                 </GeometryDrawing>
-                <GeometryDrawing Geometry="F1 M24,24z M0,0z M12,17L12.01,17">
+                <GeometryDrawing Geometry="F1 M24,24z M0,0z M12,18.5L12.01,18.5">
                     <GeometryDrawing.Pen>
                         <Pen Brush="#FF1C1C1C"
                              Thickness="2.5"
@@ -1392,6 +1393,32 @@
                     </GeometryDrawing.Pen>
                 </GeometryDrawing>
                 <GeometryDrawing Geometry="F1 M24,24z M0,0z M16,8L8,16">
+                    <GeometryDrawing.Pen>
+                        <Pen Brush="#FF1C1C1C"
+                             Thickness="2.5"
+                             StartLineCap="Round"
+                             EndLineCap="Round"
+                             LineJoin="Round" />
+                    </GeometryDrawing.Pen>
+                </GeometryDrawing>
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
+
+    <!--  "?" — a hooked curve over a dot, centered in the 24-unit viewport.  -->
+    <DrawingImage x:Key="{x:Static sdg:IconKeys.IconStatusQuestion}">
+        <DrawingImage.Drawing>
+            <DrawingGroup ClipGeometry="M0,0 V24 H24 V0 H0 Z">
+                <GeometryDrawing Geometry="F1 M24,24z M0,0z M9,9.5C9,6.5 15,6.5 15,9.5 15,12 12,12 12,14.5">
+                    <GeometryDrawing.Pen>
+                        <Pen Brush="#FF1C1C1C"
+                             Thickness="2.5"
+                             StartLineCap="Round"
+                             EndLineCap="Round"
+                             LineJoin="Round" />
+                    </GeometryDrawing.Pen>
+                </GeometryDrawing>
+                <GeometryDrawing Geometry="F1 M24,24z M0,0z M12,17.5L12.01,17.5">
                     <GeometryDrawing.Pen>
                         <Pen Brush="#FF1C1C1C"
                              Thickness="2.5"

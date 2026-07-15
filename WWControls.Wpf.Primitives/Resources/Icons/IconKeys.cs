@@ -198,6 +198,10 @@ namespace WWControls.Wpf.Primitives
         public static ComponentResourceKey IconStatusError { get; } =
             new ComponentResourceKey(typeof(IconKeys), nameof(IconStatusError));
 
+        /// <summary>Question glyph ("?") — paired with <see cref="StatusKind.Question"/>.</summary>
+        public static ComponentResourceKey IconStatusQuestion { get; } =
+            new ComponentResourceKey(typeof(IconKeys), nameof(IconStatusQuestion));
+
 
         public static ComponentResourceKey IconCount { get; } =
             new ComponentResourceKey(typeof(IconKeys), nameof(IconCount));

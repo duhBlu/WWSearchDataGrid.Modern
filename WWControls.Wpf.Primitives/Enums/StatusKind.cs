@@ -10,5 +10,6 @@ namespace WWControls.Wpf.Primitives
         Success,
         Warning,
         Error,
+        Question,
     }
 }

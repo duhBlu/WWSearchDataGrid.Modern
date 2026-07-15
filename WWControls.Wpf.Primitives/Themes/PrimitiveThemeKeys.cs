@@ -97,6 +97,14 @@ namespace WWControls.Wpf.Primitives
             new ComponentResourceKey(typeof(PrimitiveThemeKeys), nameof(StatusIcon));
 
         /// <summary>
+        /// Default style for <see cref="Primitives.WWMessageBox"/> — the message dialog that renders
+        /// a severity icon, message text, and a footer of <see cref="Primitives.WWButton"/>s built
+        /// from a <see cref="Primitives.UICommand"/> list.
+        /// </summary>
+        public static ComponentResourceKey WWMessageBox { get; } =
+            new ComponentResourceKey(typeof(PrimitiveThemeKeys), nameof(WWMessageBox));
+
+        /// <summary>
         /// Default style for the <see cref="Primitives.WWTreeView"/> — a themed tree with two-way
         /// single-selection binding, drag-and-drop, and expand-all / collapse-all commands.
         /// </summary>

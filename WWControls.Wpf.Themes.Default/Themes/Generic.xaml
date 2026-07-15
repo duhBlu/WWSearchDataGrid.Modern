@@ -8,6 +8,7 @@
         <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Primitives/StatusIcon.xaml" />
         <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Primitives/WWSpinningWheel.xaml" />
         <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Primitives/WWButton.xaml" />
+        <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Primitives/WWMessageBox.xaml" />
         <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Primitives/WWTreeView.xaml" />
         <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Primitives/Window.xaml" />
         <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Grid/Validation/ValidationCellPresenter.xaml" />

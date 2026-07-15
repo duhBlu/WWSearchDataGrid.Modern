@@ -9,13 +9,16 @@
     </ResourceDictionary.MergedDictionaries>
 
     <!--
-        StatusIcon — a small circular severity badge.
-        
-        Status drives the fill color + glyph (and collapses the badge when None). AnimationKind
-        selects how the badge animates the moment it becomes visible: Blink flashes three times
-        then holds; Pulse scales in/out forever while shown. Both animations are keyed off the
-        control's Visibility flipping to Visible — which happens whenever Status leaves None — so a
-        badge re-animates each time it (re)appears, not on every revalidation.
+        StatusIcon — a small severity badge.
+
+        Each Status draws its own shape rather than recoloring one shared badge: Warning is a
+        rounded triangle, every other severity (Info / Success / Error / Question) is a circle,
+        each with its own fill and a white glyph. AnimationKind selects how the badge animates when
+        it becomes visible: Blink flashes three times then holds; Pulse scales in/out forever while
+        shown. Both animate PART_Badge — the container holding the shape and glyph — off its
+        Visibility flipping to Visible (which happens whenever Status leaves None), so a badge
+        re-animates each time it (re)appears. The glyph lives in a Viewbox so it scales with the
+        badge instead of staying a fixed size.
     -->
     <Style x:Key="{x:Static sdg:PrimitiveThemeKeys.StatusIcon}" TargetType="{x:Type sdg:StatusIcon}">
         <Setter Property="Width" Value="16" />
@@ -29,49 +32,93 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type sdg:StatusIcon}">
-                    <Border x:Name="PART_Badge"
-                            Width="{TemplateBinding Width}"
-                            Height="{TemplateBinding Height}"
-                            CornerRadius="8"
-                            RenderTransformOrigin="0.5,0.5"
-                            SnapsToDevicePixels="True">
-                        <Border.Effect>
-                            <DropShadowEffect Color="#000000"
-                                              Opacity="0.28"
-                                              BlurRadius="4"
-                                              Direction="270"
-                                              ShadowDepth="1" />
-                        </Border.Effect>
-                        <Border.RenderTransform>
+                    <Grid x:Name="PART_Badge"
+                          RenderTransformOrigin="0.5,0.5"
+                          SnapsToDevicePixels="True">
+                        <Grid.RenderTransform>
                             <ScaleTransform ScaleX="1" ScaleY="1" />
-                        </Border.RenderTransform>
-                        <sdg:Icon x:Name="PART_Glyph"
-                                  Width="8"
-                                  Height="8"
-                                  HorizontalAlignment="Center"
-                                  VerticalAlignment="Center"
-                                  IconBrush="White"
-                                  IconSource="{StaticResource {x:Static sdg:IconKeys.IconStatusError}}" />
-                    </Border>
+                        </Grid.RenderTransform>
+
+                        <!--  Circle — Info / Success / Error / Question  -->
+                        <Ellipse x:Name="PART_Circle" Visibility="Collapsed">
+                            <Ellipse.Effect>
+                                <DropShadowEffect Color="#000000"
+                                                  Opacity="0.28"
+                                                  BlurRadius="4"
+                                                  Direction="270"
+                                                  ShadowDepth="1" />
+                            </Ellipse.Effect>
+                        </Ellipse>
+
+                        <!--  Rounded triangle — Warning only  -->
+                        <Path x:Name="PART_Triangle"
+                              Visibility="Collapsed"
+                              Stretch="Uniform"
+                              Data="M12,3 C12.66,3 13.28,3.35 13.62,3.92 L22.13,18.75 C22.83,19.97 21.95,21.5 20.5,21.5 L3.5,21.5 C2.05,21.5 1.17,19.97 1.87,18.75 L10.38,3.92 C10.72,3.35 11.34,3 12,3 Z">
+                            <Path.Effect>
+                                <DropShadowEffect Color="#000000"
+                                                  Opacity="0.28"
+                                                  BlurRadius="4"
+                                                  Direction="270"
+                                                  ShadowDepth="1" />
+                            </Path.Effect>
+                        </Path>
+
+                        <!--
+                            Glyph — sized as a proportion of the badge via a 3×3 star grid: the glyph
+                            fills the center cell, so it scales with the badge (a 16px validation badge
+                            up to the 30px message-box icon) with no fixed pixel size. To resize the
+                            glyph, change the center weight below — larger center = bigger glyph. Here
+                            the center cell is 3/(1+3+1) = 60% of the badge in each dimension.
+                        -->
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="1*" />
+                                <RowDefinition Height="3*" />
+                                <RowDefinition Height="1*" />
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="1*" />
+                                <ColumnDefinition Width="3*" />
+                                <ColumnDefinition Width="1*" />
+                            </Grid.ColumnDefinitions>
+                            <sdg:Icon x:Name="PART_Glyph"
+                                      Grid.Row="1"
+                                      Grid.Column="1"
+                                      HorizontalAlignment="Stretch"
+                                      VerticalAlignment="Stretch"
+                                      Margin="1"
+                                      IconBrush="White"
+                                      IconSource="{StaticResource {x:Static sdg:IconKeys.IconStatusInfo}}" />
+                        </Grid>
+                    </Grid>
                     <ControlTemplate.Triggers>
 
-                        <!--  Status → color + glyph  -->
+                        <!--  Status → shape + color + glyph  -->
                         <Trigger Property="Status" Value="Info">
-                            <Setter TargetName="PART_Badge" Property="Background" Value="#0F6CBD" />
+                            <Setter TargetName="PART_Circle" Property="Visibility" Value="Visible" />
+                            <Setter TargetName="PART_Circle" Property="Fill" Value="#0F6CBD" />
                             <Setter TargetName="PART_Glyph" Property="IconSource" Value="{StaticResource {x:Static sdg:IconKeys.IconStatusInfo}}" />
                         </Trigger>
                         <Trigger Property="Status" Value="Success">
-                            <Setter TargetName="PART_Badge" Property="Background" Value="#0F7B0F" />
+                            <Setter TargetName="PART_Circle" Property="Visibility" Value="Visible" />
+                            <Setter TargetName="PART_Circle" Property="Fill" Value="#0F7B0F" />
                             <Setter TargetName="PART_Glyph" Property="IconSource" Value="{StaticResource {x:Static sdg:IconKeys.IconStatusSuccess}}" />
                         </Trigger>
-                        <Trigger Property="Status" Value="Warning">
-                            <Setter TargetName="PART_Badge" Property="Background" Value="#C77700" />
-                            <Setter TargetName="PART_Glyph" Property="IconSource" Value="{StaticResource {x:Static sdg:IconKeys.IconStatusWarning}}" />
-                            
-                        </Trigger>
                         <Trigger Property="Status" Value="Error">
-                            <Setter TargetName="PART_Badge" Property="Background" Value="#C42B1C" />
+                            <Setter TargetName="PART_Circle" Property="Visibility" Value="Visible" />
+                            <Setter TargetName="PART_Circle" Property="Fill" Value="#C42B1C" />
                             <Setter TargetName="PART_Glyph" Property="IconSource" Value="{StaticResource {x:Static sdg:IconKeys.IconStatusError}}" />
+                        </Trigger>
+                        <Trigger Property="Status" Value="Question">
+                            <Setter TargetName="PART_Circle" Property="Visibility" Value="Visible" />
+                            <Setter TargetName="PART_Circle" Property="Fill" Value="#5B5FC7" />
+                            <Setter TargetName="PART_Glyph" Property="IconSource" Value="{StaticResource {x:Static sdg:IconKeys.IconStatusQuestion}}" />
+                        </Trigger>
+                        <Trigger Property="Status" Value="Warning">
+                            <Setter TargetName="PART_Triangle" Property="Visibility" Value="Visible" />
+                            <Setter TargetName="PART_Triangle" Property="Fill" Value="#C77700" />
+                            <Setter TargetName="PART_Glyph" Property="IconSource" Value="{StaticResource {x:Static sdg:IconKeys.IconStatusWarning}}" />
                         </Trigger>
 
                         <!--  Blink three times when the badge appears  -->

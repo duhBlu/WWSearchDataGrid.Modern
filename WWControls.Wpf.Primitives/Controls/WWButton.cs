@@ -247,6 +247,11 @@ namespace WWControls.Wpf.Primitives
             DependencyProperty.Register(nameof(GlyphHeight), typeof(double), typeof(WWButton),
                 new PropertyMetadata(double.NaN));
 
+        /// <summary>Identifies the <see cref="GlyphStrokeThickness"/> dependency property.</summary>
+        public static readonly DependencyProperty GlyphStrokeThicknessProperty =
+            DependencyProperty.Register(nameof(GlyphStrokeThickness), typeof(double), typeof(WWButton),
+                new PropertyMetadata(double.NaN));
+
         /// <summary>Identifies the <see cref="GlyphToContentOffset"/> dependency property.</summary>
         public static readonly DependencyProperty GlyphToContentOffsetProperty =
             DependencyProperty.Register(nameof(GlyphToContentOffset), typeof(double), typeof(WWButton),
@@ -307,6 +312,19 @@ namespace WWControls.Wpf.Primitives
         {
             get => (double)GetValue(GlyphHeightProperty);
             set => SetValue(GlyphHeightProperty, value);
+        }
+
+        /// <summary>
+        /// Stroke thickness override for a <see cref="DrawingImage"/> glyph, in the glyph's own
+        /// source-coordinate units (so it is independent of <see cref="GlyphWidth"/> /
+        /// <see cref="GlyphHeight"/>). Use it to even out glyphs that read too thin or too heavy at
+        /// a given size. <see cref="double.NaN"/> (default) keeps each glyph's authored thickness.
+        /// Forwarded to the glyph's <see cref="Icon.StrokeThickness"/>.
+        /// </summary>
+        public double GlyphStrokeThickness
+        {
+            get => (double)GetValue(GlyphStrokeThicknessProperty);
+            set => SetValue(GlyphStrokeThicknessProperty, value);
         }
 
         /// <summary>Gap between the glyph and the content, applied on the <see cref="GlyphAlignment"/> side.</summary>

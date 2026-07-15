@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using WWControls.SampleApp.Editors.Views.Samples.Buttons;
+using WWControls.SampleApp.Editors.Views.Samples.Dialogs;
 using WWControls.SampleApp.Editors.Views.Samples.Editors;
 using WWControls.SampleApp.Editors.Views.Samples.Primitives;
 using WWControls.SampleApp.Editors.Views.Samples.Trees;
@@ -87,6 +88,17 @@ namespace WWControls.SampleApp.Editors.Views.Launcher
                         "ButtonKind (Simple / Repeat / Toggle with IsThreeState), Glyph docked on any side, per-instance CornerRadius, and the AsyncDisplayMode wait / wait-cancel wheel driven by an AsyncCommand.",
                         new[] { "Button", "Repeat", "Toggle", "Async" },
                         () => new ButtonSampleView()),
+                }),
+
+            new SampleCategory(
+                "Dialogs",
+                "The WWMessageBox — a modal message dialog whose buttons come from a UICommand list.",
+                new SampleDefinition[]
+                {
+                    new("WWMessageBox",
+                        "A message dialog in the library window chrome. Shows the standard MessageBoxButton / MessageBoxResult drop-in alongside custom UICommand lists (Save / Don't Save / Cancel with glyphs, and an arbitrary five-choice set), a severity icon per MessageBoxImage, and the Copy Message button.",
+                        new[] { "Dialog", "MessageBox", "UICommand" },
+                        () => new MessageBoxSampleView()),
                 }),
 
             new SampleCategory(
