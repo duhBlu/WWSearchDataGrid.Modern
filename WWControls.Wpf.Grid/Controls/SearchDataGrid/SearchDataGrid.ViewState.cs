@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -130,13 +131,21 @@ namespace WWControls.Wpf.Grids
         #region Capture
 
         /// <summary>
-        /// Captures the grid's current layout — column order, widths, visibility, pinning, sorting,
-        /// and grouping — as a serializable <see cref="GridViewState"/>. Filters are captured in a
-        /// later phase; today this returns a layout-only view.
+        /// Captures the grid's current layout (column order, widths, visibility, pinning, sorting,
+        /// grouping) and its active filters as a serializable <see cref="GridViewState"/>.
         /// </summary>
-        public GridViewState CaptureViewState()
+        public GridViewState CaptureViewState() => CaptureViewState(includeLayout: true, includeFilters: true);
+
+        /// <summary>
+        /// Captures the requested sections of the grid's state. Use this to save a layout-only or
+        /// filters-only view; an omitted section is left <c>null</c> in the result.
+        /// </summary>
+        public GridViewState CaptureViewState(bool includeLayout, bool includeFilters)
         {
-            return new GridViewState { Layout = CaptureLayout() };
+            var state = new GridViewState();
+            if (includeLayout) state.Layout = CaptureLayout();
+            if (includeFilters) state.Filters = CaptureFilters();
+            return state;
         }
 
         private GridLayoutState CaptureLayout()
@@ -196,6 +205,102 @@ namespace WWControls.Wpf.Grids
         private static string ResolveFieldKey(GridColumn d)
             => !string.IsNullOrEmpty(d.FieldName) ? d.FieldName : d.FilterMemberPath;
 
+        private GridFilterState CaptureFilters()
+        {
+            var descriptors = GridColumns;
+            if (descriptors == null) return null;
+
+            GridFilterState filters = null;
+            foreach (var d in descriptors)
+            {
+                if (d == null) continue;
+                var controller = d.SearchTemplateController;
+                if (controller == null || !controller.HasCustomExpression) continue;
+
+                var fieldName = ResolveFieldKey(d);
+                if (string.IsNullOrEmpty(fieldName)) continue;
+
+                var colFilter = new GridColumnFilter
+                {
+                    FieldName = fieldName,
+                    ColumnDataType = controller.ColumnDataType,
+                };
+
+                foreach (var grp in controller.SearchGroups)
+                {
+                    if (grp == null) continue;
+                    var g = new GridFilterGroup { Operator = grp.OperatorName };
+                    foreach (var t in grp.SearchTemplates)
+                    {
+                        if (t == null) continue;
+                        g.Conditions.Add(CaptureCondition(t));
+                    }
+                    colFilter.Groups.Add(g);
+                }
+
+                (filters ??= new GridFilterState()).Columns.Add(colFilter);
+            }
+            return filters;
+        }
+
+        private static GridFilterCondition CaptureCondition(SearchTemplate t)
+        {
+            var c = new GridFilterCondition
+            {
+                Operator = t.OperatorName,
+                SearchType = t.SearchType,
+            };
+
+            switch (t.SearchType)
+            {
+                case SearchType.IsNull:
+                case SearchType.IsNotNull:
+                case SearchType.Today:
+                case SearchType.Yesterday:
+                case SearchType.AboveAverage:
+                case SearchType.BelowAverage:
+                case SearchType.Unique:
+                case SearchType.Duplicate:
+                    break;
+                case SearchType.Between:
+                case SearchType.NotBetween:
+                case SearchType.BetweenDates:
+                case SearchType.NotBetweenDates:
+                    c.Primary = ToInvariantString(t.SelectedValue);
+                    c.Secondary = ToInvariantString(t.SelectedSecondaryValue);
+                    break;
+                case SearchType.IsAnyOf:
+                case SearchType.IsNoneOf:
+                    c.Values = t.SelectedValues?.Select(v => v?.Value).Where(v => v != null).ToList();
+                    break;
+                case SearchType.IsOnAnyOfDates:
+                    c.Dates = t.SelectedDates?.Select(dt => dt.ToString("o", CultureInfo.InvariantCulture)).ToList();
+                    break;
+                case SearchType.DateInterval:
+                    c.Intervals = t.DateIntervals?
+                        .Where(i => i != null && i.IsSelected)
+                        .Select(i => i.Interval.ToString())
+                        .ToList();
+                    break;
+                default:
+                    c.Primary = ToInvariantString(t.SelectedValue);
+                    break;
+            }
+            return c;
+        }
+
+        /// <summary>Renders an operand value as an invariant, re-parseable string (round-trip "o" for dates).</summary>
+        private static string ToInvariantString(object v)
+        {
+            switch (v)
+            {
+                case null: return null;
+                case DateTime dt: return dt.ToString("o", CultureInfo.InvariantCulture);
+                case IFormattable f: return f.ToString(null, CultureInfo.InvariantCulture);
+                default: return v.ToString();
+            }
+        }
+
         #endregion
 
         #region Apply
@@ -205,10 +310,18 @@ namespace WWControls.Wpf.Grids
         /// layout-only or filters-only view leaves the other aspect of the grid untouched. Columns
         /// that no longer exist are skipped (logged).
         /// </summary>
-        public void ApplyViewState(GridViewState state)
+        public void ApplyViewState(GridViewState state) => ApplyViewState(state, applyLayout: true, applyFilters: true);
+
+        /// <summary>
+        /// Applies the requested sections of a view state. <paramref name="applyLayout"/> /
+        /// <paramref name="applyFilters"/> let a caller apply just one aspect (e.g. a filters-only
+        /// preset) even when the file carries both.
+        /// </summary>
+        public void ApplyViewState(GridViewState state, bool applyLayout, bool applyFilters)
         {
-            if (state?.Layout != null) ApplyLayout(state.Layout);
-            // Filters are applied in a later phase.
+            if (state == null) return;
+            if (applyLayout && state.Layout != null) ApplyLayout(state.Layout);
+            if (applyFilters && state.Filters != null) ApplyFilters(state.Filters);
         }
 
         private void ApplyLayout(GridLayoutState layout)
@@ -306,6 +419,136 @@ namespace WWControls.Wpf.Grids
                 return true;
             result = default;
             return false;
+        }
+
+        private void ApplyFilters(GridFilterState filters)
+        {
+            var descriptors = GridColumns;
+            if (descriptors == null || descriptors.Count == 0) return;
+
+            var touched = new HashSet<SearchTemplateController>();
+
+            // 1. Clear any existing filters so the applied set is exactly the saved set.
+            foreach (var d in descriptors)
+            {
+                var existing = d?.SearchTemplateController;
+                if (existing != null && existing.HasCustomExpression)
+                {
+                    existing.SearchGroups.Clear();
+                    touched.Add(existing);
+                }
+            }
+
+            // 2. Rebuild the saved filters onto their columns.
+            if (filters?.Columns != null)
+            {
+                foreach (var cf in filters.Columns)
+                {
+                    var d = FindDescriptorByFieldName(descriptors, cf.FieldName);
+                    if (d == null)
+                    {
+                        Debug.WriteLine($"ViewState: no column for filter field '{cf.FieldName}'; skipping.");
+                        continue;
+                    }
+
+                    var controller = EnsureControllerBootstrapped(d);
+                    if (controller == null) continue;
+
+                    // Bootstrap may seed a starter group; own the collection outright.
+                    controller.SearchGroups.Clear();
+                    touched.Add(controller);
+
+                    foreach (var grp in cf.Groups ?? Enumerable.Empty<GridFilterGroup>())
+                    {
+                        controller.AddSearchGroup(canAddGroup: true, markAsChanged: false);
+                        var group = controller.SearchGroups[controller.SearchGroups.Count - 1];
+                        if (!string.IsNullOrEmpty(grp.Operator)) group.OperatorName = grp.Operator;
+
+                        bool firstTemplate = true;
+                        foreach (var cond in grp.Conditions ?? Enumerable.Empty<GridFilterCondition>())
+                        {
+                            if (!TryValidateSearchTypeForColumn(cond.SearchType, controller.ColumnDataType, d, out var error))
+                            {
+                                Debug.WriteLine($"ViewState: {error}");
+                                continue;
+                            }
+
+                            SearchTemplate template;
+                            if (firstTemplate)
+                            {
+                                // AddSearchGroup created one blank template; reuse it as the group's first.
+                                template = group.SearchTemplates[0];
+                                firstTemplate = false;
+                            }
+                            else
+                            {
+                                controller.AddSearchTemplate(markAsChanged: false, referenceTemplate: null, group: group);
+                                template = group.SearchTemplates[group.SearchTemplates.Count - 1];
+                                if (!string.IsNullOrEmpty(cond.Operator)) template.OperatorName = cond.Operator;
+                            }
+
+                            template.SearchType = cond.SearchType;
+                            ApplyConditionValues(cond, d, template);
+                        }
+                    }
+                }
+            }
+
+            foreach (var controller in touched)
+                controller.UpdateFilterExpression();
+
+            FilterItemsSource();
+        }
+
+        private static void ApplyConditionValues(GridFilterCondition cond, GridColumn descriptor, SearchTemplate template)
+        {
+            var ft = descriptor.FieldType;
+            var targetType = ft != null ? (Nullable.GetUnderlyingType(ft) ?? ft) : typeof(string);
+
+            switch (cond.SearchType)
+            {
+                case SearchType.IsNull:
+                case SearchType.IsNotNull:
+                case SearchType.Today:
+                case SearchType.Yesterday:
+                case SearchType.AboveAverage:
+                case SearchType.BelowAverage:
+                case SearchType.Unique:
+                case SearchType.Duplicate:
+                    return;
+                case SearchType.Between:
+                case SearchType.NotBetween:
+                case SearchType.BetweenDates:
+                case SearchType.NotBetweenDates:
+                    if (TryCoerce(cond.Primary, targetType, out var p1)) template.SelectedValue = p1;
+                    if (TryCoerce(cond.Secondary, targetType, out var p2)) template.SelectedSecondaryValue = p2;
+                    return;
+                case SearchType.IsAnyOf:
+                case SearchType.IsNoneOf:
+                    if (cond.Values != null)
+                        foreach (var rv in cond.Values)
+                            if (TryCoerce(rv, targetType, out var v))
+                                template.SelectedValues.Add(new SelectableValueItem(v));
+                    return;
+                case SearchType.IsOnAnyOfDates:
+                    if (cond.Dates != null)
+                        foreach (var rv in cond.Dates)
+                        {
+                            var dt = TypeTranslatorHelper.ConvertToDateTime(rv);
+                            if (dt.HasValue) template.SelectedDates.Add(dt.Value);
+                        }
+                    return;
+                case SearchType.DateInterval:
+                    if (cond.Intervals != null)
+                        foreach (var name in cond.Intervals)
+                            if (Enum.TryParse<DateInterval>(name, ignoreCase: true, out var iv))
+                                foreach (var item in template.DateIntervals)
+                                    if (item.Interval == iv) item.IsSelected = true;
+                    return;
+                default:
+                    if (TryCoerce(cond.Primary, targetType, out var pv)) template.SelectedValue = pv;
+                    return;
+            }
         }
 
         #endregion

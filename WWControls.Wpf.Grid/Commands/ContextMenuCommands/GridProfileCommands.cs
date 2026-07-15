@@ -26,39 +26,14 @@ namespace WWControls.Wpf.Commands
         }, grid => grid != null);
 
         /// <summary>
-        /// Saves the current grid view (layout today; filters added in a later phase) to a file the
-        /// user chooses, defaulting to the grid's configured preset directory.
+        /// Saves the current grid view — layout and filters — to a file the user chooses, defaulting
+        /// to the grid's configured preset directory.
         /// </summary>
         private static ICommand _saveCurrentProfileCommand;
         public static ICommand SaveCurrentProfileCommand => _saveCurrentProfileCommand ??= new RelayCommand<SearchDataGrid>(grid =>
         {
             if (grid == null) return;
-
-            var initialDir = ResolveInitialSaveDirectory(grid);
-            var dialog = new SaveFileDialog
-            {
-                Title = "Save grid view",
-                DefaultExt = ViewFileExtension,
-                Filter = ViewFileFilter,
-                AddExtension = true,
-                InitialDirectory = initialDir,
-            };
-            if (dialog.ShowDialog() != true) return;
-
-            try
-            {
-                var state = grid.CaptureViewState();
-                state.Name = Path.GetFileNameWithoutExtension(dialog.FileName);
-                var json = GridViewStateSerializer.Serialize(state);
-                GridViewStateFile.WriteAtomic(dialog.FileName, json);
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"Save grid view failed: {ex.Message}");
-                MessageBox.Show(
-                    $"Could not save the grid view.\n\n{ex.Message}",
-                    "Save grid view", MessageBoxButton.OK, MessageBoxImage.Warning);
-            }
+            SaveViewStateToFile(grid, grid.CaptureViewState(), "Save grid view");
         }, grid => grid != null);
 
         /// <summary>
@@ -69,42 +44,13 @@ namespace WWControls.Wpf.Commands
         public static ICommand LoadProfileCommand => _loadProfileCommand ??= new RelayCommand<SearchDataGrid>(grid =>
         {
             if (grid == null) return;
-
-            var dialog = new OpenFileDialog
-            {
-                Title = "Load grid view",
-                DefaultExt = ViewFileExtension,
-                Filter = ViewFileFilter,
-                CheckFileExists = true,
-                InitialDirectory = ResolveInitialLoadDirectory(grid),
-            };
-            if (dialog.ShowDialog() != true) return;
-
-            try
-            {
-                var json = GridViewStateFile.ReadText(dialog.FileName);
-                var state = GridViewStateSerializer.Deserialize(json);
-                if (state == null)
-                {
-                    MessageBox.Show(
-                        "The selected file is empty or not a valid grid view.",
-                        "Load grid view", MessageBoxButton.OK, MessageBoxImage.Warning);
-                    return;
-                }
-                grid.ApplyViewState(state);
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"Load grid view failed: {ex.Message}");
-                MessageBox.Show(
-                    $"Could not load the grid view.\n\n{ex.Message}",
-                    "Load grid view", MessageBoxButton.OK, MessageBoxImage.Warning);
-            }
+            var state = LoadViewStateFromFile(grid, "Load grid view");
+            if (state != null) grid.ApplyViewState(state);
         }, grid => grid != null);
 
         /// <summary>
-        /// Opens the profile management dialog. Not implemented — there is no managed preset catalog
-        /// in the file-based model; views are saved and loaded as individual files.
+        /// Opens the profile management dialog. Not applicable to the file-based model — views are
+        /// saved and loaded as individual files, so there is no managed catalog to organize.
         /// </summary>
         private static ICommand _manageProfilesCommand;
         public static ICommand ManageProfilesCommand => _manageProfilesCommand ??= new RelayCommand<SearchDataGrid>(grid =>
@@ -112,9 +58,85 @@ namespace WWControls.Wpf.Commands
             Debug.WriteLine($"[PLACEHOLDER] Manage Profiles - not applicable to the file-based model");
         }, grid => false);
 
+        #endregion
+
+        #region Shared view-state file I/O
+
         /// <summary>
-        /// Resolves (and creates) the directory the Save dialog opens to. Returns null when the
-        /// directory can't be resolved, letting the dialog fall back to its own default.
+        /// Prompts for a location and writes <paramref name="state"/> as a <c>.sdgview</c> file.
+        /// Shared by the profile (layout+filters) and filter-preset commands.
+        /// </summary>
+        internal static void SaveViewStateToFile(SearchDataGrid grid, GridViewState state, string title)
+        {
+            if (grid == null || state == null) return;
+
+            var dialog = new SaveFileDialog
+            {
+                Title = title,
+                DefaultExt = ViewFileExtension,
+                Filter = ViewFileFilter,
+                AddExtension = true,
+                InitialDirectory = ResolveInitialSaveDirectory(grid),
+            };
+            if (dialog.ShowDialog() != true) return;
+
+            try
+            {
+                state.Name = Path.GetFileNameWithoutExtension(dialog.FileName);
+                var json = GridViewStateSerializer.Serialize(state);
+                GridViewStateFile.WriteAtomic(dialog.FileName, json);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Save grid view failed: {ex.Message}");
+                MessageBox.Show(
+                    $"Could not save the grid view.\n\n{ex.Message}",
+                    title, MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+        }
+
+        /// <summary>
+        /// Prompts for a <c>.sdgview</c> file and deserializes it. Returns <c>null</c> when the user
+        /// cancels or the file can't be read/parsed (a message is shown in the latter case).
+        /// </summary>
+        internal static GridViewState LoadViewStateFromFile(SearchDataGrid grid, string title)
+        {
+            if (grid == null) return null;
+
+            var dialog = new OpenFileDialog
+            {
+                Title = title,
+                DefaultExt = ViewFileExtension,
+                Filter = ViewFileFilter,
+                CheckFileExists = true,
+                InitialDirectory = ResolveInitialLoadDirectory(grid),
+            };
+            if (dialog.ShowDialog() != true) return null;
+
+            try
+            {
+                var state = GridViewStateSerializer.Deserialize(GridViewStateFile.ReadText(dialog.FileName));
+                if (state == null)
+                {
+                    MessageBox.Show(
+                        "The selected file is empty or not a valid grid view.",
+                        title, MessageBoxButton.OK, MessageBoxImage.Warning);
+                }
+                return state;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Load grid view failed: {ex.Message}");
+                MessageBox.Show(
+                    $"Could not load the grid view.\n\n{ex.Message}",
+                    title, MessageBoxButton.OK, MessageBoxImage.Warning);
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Resolves (and creates) the directory the Save dialog opens to. Returns null when it can't
+        /// be resolved, letting the dialog fall back to its own default.
         /// </summary>
         private static string ResolveInitialSaveDirectory(SearchDataGrid grid)
         {

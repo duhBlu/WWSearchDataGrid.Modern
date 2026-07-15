@@ -34,11 +34,11 @@
         <MenuItem x:Name="miSaveFilterPreset"
                   Command="{x:Static commands:ContextMenuCommands.SaveFilterPresetCommand}"
                   CommandParameter="{Binding Grid}"
-                  Header="Save Filter Preset (Not Implemented)" />
+                  Header="Save Filter Preset..." />
         <MenuItem x:Name="miLoadFilterPreset"
                   Command="{x:Static commands:ContextMenuCommands.LoadFilterPresetCommand}"
                   CommandParameter="{Binding Grid}"
-                  Header="Load Filter Preset (Not Implemented)" />
+                  Header="Load Filter Preset..." />
         <Separator />
 
         <!--  Column Profiles submenu  -->
