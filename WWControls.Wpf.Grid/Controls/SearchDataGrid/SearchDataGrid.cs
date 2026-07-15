@@ -1884,6 +1884,9 @@ namespace WWControls.Wpf.Grids
             // Build the grouping projection once all columns exist so GroupIndex values declared in
             // XAML (or carried over from a prior generation) take effect in one pass.
             RebuildGroupDescriptions();
+
+            // Snapshot this freshly-generated layout as the "reset to defaults" baseline (once).
+            CaptureDefaultLayoutSnapshot();
         }
 
         /// <summary>

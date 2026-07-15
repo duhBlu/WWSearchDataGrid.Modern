@@ -46,11 +46,11 @@
             <MenuItem x:Name="miSaveCurrentProfile"
                       Command="{x:Static commands:ContextMenuCommands.SaveCurrentProfileCommand}"
                       CommandParameter="{Binding Grid}"
-                      Header="Save Current Profile (Not Implemented)" />
+                      Header="Save Current Profile..." />
             <MenuItem x:Name="miLoadProfile"
                       Command="{x:Static commands:ContextMenuCommands.LoadProfileCommand}"
                       CommandParameter="{Binding Grid}"
-                      Header="Load Profile... (Not Implemented)" />
+                      Header="Load Profile..." />
             <MenuItem x:Name="miManageProfiles"
                       Command="{x:Static commands:ContextMenuCommands.ManageProfilesCommand}"
                       CommandParameter="{Binding Grid}"
@@ -95,7 +95,7 @@
         <MenuItem x:Name="miResetLayout"
                   Command="{x:Static commands:ContextMenuCommands.ResetLayoutCommand}"
                   CommandParameter="{Binding Grid}"
-                  Header="Reset Layout (Not Implemented)" />
+                  Header="Reset Layout" />
     </ContextMenu>
 
 </ResourceDictionary>
