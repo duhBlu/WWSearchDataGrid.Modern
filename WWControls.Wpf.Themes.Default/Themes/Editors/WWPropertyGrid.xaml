@@ -12,21 +12,18 @@
 
     <BooleanToVisibilityConverter x:Key="WWPropertyGrid_BoolToVis" />
 
-    <!--  Chooses a custom editor from WWPropertyGrid.EditorDefinitions, else the placeholder below.  -->
+    <!--  Returns the editor the grid resolved onto each WWPropertyItem: a custom template, else the
+          settings-built editor, else the placeholder below.  -->
     <sdg:WWPropertyGridEditorSelector x:Key="WWPropertyGrid_EditorSelector" />
 
     <!--
         ═══════════════════════════════════════════════════════════════════════════════════════════
-        PLACEHOLDER EDITOR  (fallback for every property without a custom EditorDefinition)
+        PLACEHOLDER EDITOR  (fallback for a property whose CLR type has no built-in editor)
         ═══════════════════════════════════════════════════════════════════════════════════════════
-        WWPropertyGrid ships with NO built-in per-type editors yet. Consumers supply their own editor
-        templates per property via EditorDefinitions; anything without one lands here as a read-only
-        display of the value.
-
-        TODO: implement built-in typed editors (string / bool / enum / numeric / DateTime) over the
-        WWControls editor controls (WWTextBox, WWCheckBox, WWComboBox, WWNumericUpDown, WWDatePicker),
-        add a keyed DataTemplate per type here, and dispatch to them by property type in
-        WWPropertyGridEditorSelector.SelectTemplate.
+        WWPropertyGrid resolves a typed editor for the common CLR types (string, bool, enum, numeric,
+        DateTime) and honors per-property WWPropertyDefinition.EditSettings / EditTemplate. Only a
+        property whose type has no natural editor (a complex object, Guid, …) and no custom definition
+        lands here — a read-only display of the value.
     -->
     <DataTemplate x:Key="WWPropertyGrid_PlaceholderEditor">
         <TextBlock Text="{Binding Value, Mode=OneWay}"
@@ -34,7 +31,7 @@
                    VerticalAlignment="Center"
                    Foreground="#1C1C1C"
                    TextTrimming="CharacterEllipsis"
-                   ToolTip="No built-in editor yet — supply one via EditorDefinitions." />
+                   ToolTip="No built-in editor for this type — supply one via PropertyDefinitions." />
     </DataTemplate>
 
     <!--
@@ -162,18 +159,39 @@
                            ToolTip="{Binding Description}" />
             </Border>
 
-            <!--  Editor  -->
+            <!--  Editor — wrapped in a ValidationCellPresenter so a data-annotation / INotifyDataErrorInfo
+                  error surfaces as a badge in the left gutter (the same presenter the SearchDataGrid uses).
+                  ValidatedItem is the edited model (Source), which is what carries the attributes; the
+                  presenter's own DataContext stays the property item so the editor selector and metadata
+                  bindings resolve normally.  -->
             <Border x:Name="EditorBorder"
                     Grid.Column="1"
                     Background="#FFFFFF"
                     BorderBrush="#E3E3E3"
                     BorderThickness="1"
-                    MinHeight="22">
-                <ContentControl Focusable="False"
-                                VerticalAlignment="Stretch"
-                                Content="{Binding}"
-                                ContentTemplateSelector="{StaticResource WWPropertyGrid_EditorSelector}"
-                                IsTabStop="False" />
+                    MinHeight="22"
+                    sdg:WWEditorBase.FlattenEditors="True">
+                <Border.Style>
+                    <!--  A read-only property presents a non-interactive editor. The value binding runs
+                          two-way straight to the model, so disabling the editor host is what enforces
+                          read-only across every editor type and custom template alike. Applied to the
+                          border (not the validation presenter) so the error badge stays crisp.  -->
+                    <Style TargetType="Border">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsReadOnly}" Value="True">
+                                <Setter Property="IsEnabled" Value="False" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+                <sdg:ValidationCellPresenter Focusable="False"
+                                             VerticalAlignment="Stretch"
+                                             Content="{Binding}"
+                                             ContentTemplateSelector="{StaticResource WWPropertyGrid_EditorSelector}"
+                                             ValidatedItem="{Binding Source}"
+                                             PropertyName="{Binding PropertyName}"
+                                             IsValidationEnabled="{Binding ActualShowValidationErrors}"
+                                             IsTabStop="False" />
             </Border>
         </Grid>
 

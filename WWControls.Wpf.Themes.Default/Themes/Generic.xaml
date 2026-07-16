@@ -11,7 +11,7 @@
         <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Primitives/WWMessageBox.xaml" />
         <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Primitives/WWTreeView.xaml" />
         <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Primitives/Window.xaml" />
-        <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Grid/Validation/ValidationCellPresenter.xaml" />
+        <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Editors/ValidationCellPresenter.xaml" />
         <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Grid/ColumnFilterPopup/ColumnFilterPopup.xaml" />
         <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Grid/ColumnFilterPopup/CheckedListFilterElement.xaml" />
         <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Grid/ColumnFilterPopup/DateTreeFilterElement.xaml" />

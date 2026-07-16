@@ -173,8 +173,10 @@ namespace WWControls.Wpf.Editors.Settings
             // Grid-cell interaction — focus-on-edit, mouse-click caret, Left/Right caret-boundary
             // exit and bare Up/Down row exit — is layered on by the grid-side host. The control
             // keeps Ctrl+Up/Down (and Ctrl+Shift for the large step) for increment, and the host
-            // ignores modified arrows, so the two don't collide.
-            factory.SetValue(EditorHostBehavior.HostInCellProperty, true);
+            // ignores modified arrows, so the two don't collide. Only a grid-hosted column wants it;
+            // a hostless column (e.g. a property-grid row) has no cell to navigate.
+            if (column?.Host != null)
+                factory.SetValue(EditorHostBehavior.HostInCellProperty, true);
 
             return new DataTemplate { VisualTree = factory };
         }

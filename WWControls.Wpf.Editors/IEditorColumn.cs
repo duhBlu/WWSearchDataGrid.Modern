@@ -34,8 +34,26 @@ namespace WWControls.Wpf.Editors
         /// <summary>Whether data-annotation attribute errors surface for this column.</summary>
         bool ActualShowValidationAttributeErrors { get; }
 
+        /// <summary>
+        /// Whether a value that fails its data-annotation attributes may still commit to the source.
+        /// A grid-hosted column delegates to its <see cref="Host"/>; a hostless column (e.g. a
+        /// property-grid row) answers directly. Drives <c>DataAnnotationsValidationRule</c> when
+        /// there is no <see cref="Host"/> to consult.
+        /// </summary>
+        bool AllowCommitOnValidationError { get; }
+
         /// <summary>Builds the two-way value binding to the column's effective value path.</summary>
         Binding CreateFieldBinding();
+
+        /// <summary>
+        /// True when the column's value path cannot be written back (a get-only source property). A
+        /// two-way editor binding to a read-only CLR property throws, so
+        /// <see cref="BaseEditorSettings.CreateValueBinding"/> forces the value binding one-way when
+        /// this is set. Grid columns leave this false (a read-only cell simply never enters edit mode,
+        /// so its two-way edit binding is never created); a standalone host that always materializes
+        /// its editor (the property grid) sets it for get-only properties.
+        /// </summary>
+        bool IsValueReadOnly { get; }
 
         /// <summary>The grid host, when this column is hosted in a data grid; null otherwise (e.g. standalone / filter-row).</summary>
         IEditingGridHost Host { get; }

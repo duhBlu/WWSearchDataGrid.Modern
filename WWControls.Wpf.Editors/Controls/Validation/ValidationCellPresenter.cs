@@ -2,7 +2,7 @@ using System;
 using System.Windows;
 using System.Windows.Controls;
 
-namespace WWControls.Wpf.Grids
+namespace WWControls.Wpf.Editors
 {
     /// <summary>
     /// Hosts a validated cell's display content alongside a <see cref="ValidationErrorIcon"/>
@@ -14,9 +14,9 @@ namespace WWControls.Wpf.Grids
     /// </summary>
     /// <remarks>
     /// The entire cell layout — badge gutter on the left, content filling the rest — lives in the
-    /// default template (keyed <see cref="GridThemeKeys.ValidationCellPresenter"/> in
-    /// <c>Themes/Controls/Validation/ValidationCellPresenter.xaml</c>), so it can be retemplated in
-    /// XAML without touching code.
+    /// default template (keyed <see cref="EditorThemeKeys.ValidationCellPresenter"/> in
+    /// <c>Themes/Editors/ValidationCellPresenter.xaml</c>), so it can be retemplated in XAML without
+    /// touching code.
     /// </remarks>
     public class ValidationCellPresenter : ContentControl
     {
@@ -80,8 +80,29 @@ namespace WWControls.Wpf.Grids
             SetValue(EditorErrorMessagePropertyKey, message);
         }
 
-        /// <summary>The property on the row item (the <see cref="FrameworkElement.DataContext"/>)
-        /// that the badge validates.</summary>
+        /// <summary>
+        /// The object the badge validates — the object that actually carries the data-annotation
+        /// attributes / <see cref="System.ComponentModel.INotifyDataErrorInfo"/> errors. Defaults to
+        /// null; hosts set it explicitly. In the grid it is the row item (the same object as the
+        /// cell's <see cref="FrameworkElement.DataContext"/>); in the property grid it is the edited
+        /// model, which differs from the visual <see cref="FrameworkElement.DataContext"/> (the
+        /// property-item wrapper). Kept separate from the content/DataContext so the presenter works
+        /// in either host.
+        /// </summary>
+        public static readonly DependencyProperty ValidatedItemProperty =
+            DependencyProperty.Register(
+                nameof(ValidatedItem),
+                typeof(object),
+                typeof(ValidationCellPresenter),
+                new PropertyMetadata(null));
+
+        public object ValidatedItem
+        {
+            get => GetValue(ValidatedItemProperty);
+            set => SetValue(ValidatedItemProperty, value);
+        }
+
+        /// <summary>The property on <see cref="ValidatedItem"/> that the badge validates.</summary>
         public static readonly DependencyProperty PropertyNameProperty =
             DependencyProperty.Register(
                 nameof(PropertyName),

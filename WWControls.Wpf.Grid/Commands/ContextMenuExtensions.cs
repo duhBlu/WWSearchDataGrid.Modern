@@ -50,6 +50,8 @@ namespace WWControls.Wpf
 
         #region Initialization
 
+        private static bool _openedRequeryRegistered;
+
         /// <summary>
         /// Initializes context menu functionality for the SearchDataGrid
         /// </summary>
@@ -57,7 +59,33 @@ namespace WWControls.Wpf
         {
             if (grid == null) return;
 
+            EnsureContextMenuOpenedRequery();
             grid.ContextMenuOpening += OnContextMenuOpening;
+        }
+
+        /// <summary>
+        /// One-time class handler that pulses <see cref="Core.CommandManager"/> whenever a
+        /// ContextMenu finishes opening. Core's <see cref="RelayCommand{T}"/> gets no WPF
+        /// auto-requery, so a MenuItem re-evaluates <c>CanExecute</c> only when the command
+        /// raises <c>CanExecuteChanged</c> — not when its <c>CommandParameter</c> resolves. The
+        /// menus whose parameter binds off <c>PlacementTarget</c> (group header, fixed group
+        /// header, group panel, pill, and the summary cells) resolve that parameter only as the
+        /// popup opens, which is after the <see cref="OnContextMenuOpening"/> pulse has already
+        /// fired; without a second pulse their items evaluate once against a null parameter
+        /// (<c>null is T</c> is false) and stay disabled. By <see cref="ContextMenu.OpenedEvent"/>
+        /// the <c>PlacementTarget</c> bindings have resolved, so re-querying here enables them.
+        /// Registered against the <see cref="ContextMenu"/> class (not per grid), so it is guarded
+        /// to run once.
+        /// </summary>
+        private static void EnsureContextMenuOpenedRequery()
+        {
+            if (_openedRequeryRegistered) return;
+            _openedRequeryRegistered = true;
+
+            EventManager.RegisterClassHandler(
+                typeof(ContextMenu),
+                ContextMenu.OpenedEvent,
+                new RoutedEventHandler((_, _) => Core.CommandManager.InvalidateRequerySuggested()));
         }
 
         /// <summary>

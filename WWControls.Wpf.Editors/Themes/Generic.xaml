@@ -24,6 +24,7 @@
         <ResourceDictionary Source="pack://application:,,,/WWControls.Wpf.Themes.Default;component/Themes/Editors/WWListBox.xaml" />
         <ResourceDictionary Source="pack://application:,,,/WWControls.Wpf.Themes.Default;component/Themes/Editors/WWColorPicker.xaml" />
         <ResourceDictionary Source="pack://application:,,,/WWControls.Wpf.Themes.Default;component/Themes/Editors/WWPropertyGrid.xaml" />
+        <ResourceDictionary Source="pack://application:,,,/WWControls.Wpf.Themes.Default;component/Themes/Editors/ValidationCellPresenter.xaml" />
     </ResourceDictionary.MergedDictionaries>
 
 </ResourceDictionary>

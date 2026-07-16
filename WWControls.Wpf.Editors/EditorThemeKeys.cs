@@ -193,5 +193,15 @@ namespace WWControls.Wpf.Editors
         /// </summary>
         public static ComponentResourceKey PropertyGrid { get; } =
             new ComponentResourceKey(typeof(EditorThemeKeys), nameof(PropertyGrid));
+
+        /// <summary>
+        /// Default style for <see cref="ValidationCellPresenter"/>: the validated editing-surface
+        /// layout (a left badge gutter beside the content). Shared by both editing hosts — the
+        /// SearchDataGrid wraps each validated cell in one, and the property grid overlays one per
+        /// validated row. Retemplate this key to change how the data-annotation error badge is
+        /// arranged relative to the content.
+        /// </summary>
+        public static ComponentResourceKey ValidationCellPresenter { get; } =
+            new ComponentResourceKey(typeof(EditorThemeKeys), nameof(ValidationCellPresenter));
     }
 }

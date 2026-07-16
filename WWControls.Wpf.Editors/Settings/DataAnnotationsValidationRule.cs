@@ -63,9 +63,10 @@ namespace WWControls.Wpf.Editors.Settings
             // ValidationRule makes DataGrid.CommitEdit refuse to leave edit mode — that block sits
             // below the grid's own AllowCommit gate, so reporting failure would trap the cell in
             // edit even though the consumer asked to allow the commit. Report success and let the
-            // value flow to the source; the cell's ValidationErrorIcon re-validates the committed
-            // value by reflection and surfaces the error as an advisory badge.
-            if (_column.Host?.AllowCommitOnValidationAttributeError == true)
+            // value flow to the source; the ValidationErrorIcon re-validates the committed value by
+            // reflection and surfaces the error as an advisory badge. Read from the column so the
+            // gate works for a hostless column (property-grid row) as well as a grid-hosted one.
+            if (_column.AllowCommitOnValidationError)
                 return ValidationResult.ValidResult;
 
             object item = (owner as BindingExpression)?.DataItem;

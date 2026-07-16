@@ -2,6 +2,71 @@
 
 ## [Unreleased]
 
+### Changed — WWPropertyGrid: built-in typed editors, per-property settings & templates, live metadata, validation
+- **Built-in typed editors.** A property with no per-property definition now gets an editor
+  auto-picked from its CLR type (`string` → text, `bool` → checkbox, enum → combo auto-populated
+  from the enum, numeric → a plain numeric text box, `DateTime` → date); only a type with no
+  natural editor falls back to the read-only placeholder. The up/down spinner is never the
+  automatic numeric default — it is opt-in via an explicit `NumericUpDownSettings` or
+  `[PropertyGridEditor(EditorKind.Spin)]`, matching the SearchDataGrid's numeric column default.
+  Editors bind straight to the model property and reuse the same `BaseEditorSettings` stack the
+  SearchDataGrid builds its cells from.
+- **Per-property definitions apply reliably from XAML.** The first property build is deferred to
+  `OnInitialized` instead of running on the initial `SelectedObject` change. A XAML-bound
+  `SelectedObject` resolves during start-tag processing — before the `PropertyDefinitions` child
+  content is parsed — so the old timing built every row against an empty definition list and each
+  property silently fell back to its CLR-type default editor (masks, bounded spinners, bound
+  combos, and `DatePickerSettings` such as `PopupMode` all ignored). Building at `OnInitialized`
+  (definitions now present) makes each row resolve against its matching definition; a
+  `SelectedObject` set after initialization still rebuilds immediately.
+- **Checkbox / combo editors work inline (hostless).** The editor templates ran grid-cell-only
+  logic unconditionally — `AutoFocusOnLoad`, and arrow keys marked handled + routed to
+  `ExitCellViaArrow` — which no-ops without a `DataGridCell` but still swallowed the keys. Those
+  behaviors are now gated on the column having a `Host` (a grid). In a property-grid row:
+  a combo's Up/Down arrows change the selection again (no longer intercepted); the checkbox is a
+  tab stop (`IsTabStop` set on the hostless editor) and toggles on Space (`WWCheckBox` gained a
+  `OnKeyDown` Space toggle, used when the control itself holds focus); and the checkbox commits on
+  every toggle — its value binding now uses `UpdateSourceTrigger=PropertyChanged` instead of
+  `LostFocus`, so a click that toggles the box but never moves focus still writes through.
+  `WWEditorBase` also no longer forwards focus to a non-focusable inner element (it would bounce
+  focus off the editor), keeping focus on the checkbox so its Space handler runs.
+- **New `WWPropertyDefinition`** (supersedes `WWEditorDefinition`) + the **`PropertyDefinitions`**
+  collection on `WWPropertyGrid`. A definition carries `EditSettings` (any `BaseEditorSettings`:
+  mask / `ItemsSource` / bounds / …), a custom `EditTemplate` / `DisplayTemplate`, and bindable
+  metadata overrides. Editor resolution precedence: custom template → `EditSettings` →
+  `[PropertyGridEditor]` / `[DefaultEditor]` attribute → CLR type → placeholder. `EditorDefinitions`
+  is kept working (superseded).
+- **DataAnnotations metadata.** `WWPropertyItem` now reads `[Display(Name/GroupName/Order/Description)]`
+  (preferred) and `[Editable(false)]` alongside the classic `System.ComponentModel` attributes.
+- **Dynamic (live) metadata.** `WWPropertyItem` metadata is change-notifying and resolved by
+  precedence (definition binding → runtime provider → attribute → default). Two live mechanisms:
+  (A) `WWPropertyDefinition`'s bindable `IsReadOnly` / `IsVisible` / `DisplayName` / `Category` /
+  `Description` / `PropertyOrder` / `ShowValidationErrors` overrides bound against the view model
+  (the grid propagates its `DataContext` to each definition and its `EditSettings`); and (B) a new
+  **`IObservablePropertyMetadataProvider`** (an `IPropertyMetadataProvider` that raises
+  `PropertyMetadataChanged`). Rows show/hide live via the collection view's live filtering on
+  `IsVisible` — no `SelectedObject` reassignment.
+- **Validation.** New grid-level `ShowValidationErrors` (default `true`) + `AllowCommitOnValidationError`
+  (default `false`) DPs (resolvable per-definition). Each row wraps its editor in the
+  `ValidationCellPresenter` + `ValidationErrorIcon` badge — data-annotation attributes,
+  `INotifyDataErrorInfo`, and `IValidationSeverityProvider` severity all surface on one badge,
+  mirroring the SearchDataGrid.
+- **Shared plumbing.** `ValidationErrorIcon` / `ValidationCellPresenter` moved up from the Grid
+  assembly into Editors (`WWControls.Wpf.Editors` namespace; theme key
+  `EditorThemeKeys.ValidationCellPresenter`) so both hosts share them; the presenter gained a
+  `ValidatedItem` DP so the validated object can differ from the visual DataContext. New
+  **`EditorSettingsFactory`** (Editors) centralizes the `EditorKind` / CLR-type → `BaseEditorSettings`
+  mapping (repointed from `SmartColumnConfigurator`). `IEditorColumn` gained
+  `AllowCommitOnValidationError`; `WWPropertyItem` implements `IEditorColumn`.
+- **Flat editors inside the row.** The property row draws its own editor boundary (`EditorBorder`),
+  so the editor it hosts now renders borderless (`WWEditorBase.FlattenEditors="True"` on the row's
+  editor cell — the same inherited flag the grid's row-edit strip uses). This removes the
+  double border that a bordered editor (text / combo / numeric / date) drew inside the row cell,
+  matching how editors flatten inside a `DataGridCell`.
+- **Editors sample app**: the single WWPropertyGrid sample is split into five under a new
+  **Property Grid** category — Basics, Editor Settings, Custom Templates, Dynamic Metadata, and
+  Validation.
+
 ### Added — WWDatePicker weekend disabling + US federal holiday highlighting
 - **`DisableWeekends`** (`bool`, default `false`) on `SegmentedDateTimeEditor` / `WWDatePicker` /
   `DatePickerSettings` blocks Saturday/Sunday selection across every input path: the calendar

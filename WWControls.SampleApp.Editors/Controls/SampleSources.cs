@@ -58,10 +58,31 @@ namespace WWControls.SampleApp.Editors.Controls
             "Views/Samples/Editors/ColorPickerSampleView.xaml.cs",
             "Views/Samples/Editors/ColorPickerSampleViewModel.cs");
 
-        public static IReadOnlyList<SampleSourceFile> PropertyGrid { get; } = SampleSourceLoader.LoadFiles(
-            "Views/Samples/Editors/PropertyGridSampleView.xaml",
-            "Views/Samples/Editors/PropertyGridSampleView.xaml.cs",
-            "Views/Samples/Editors/PropertyGridSampleViewModel.cs");
+        // ── Property Grid ────────────────────────────────────────────────────
+        public static IReadOnlyList<SampleSourceFile> PropertyGridBasics { get; } = SampleSourceLoader.LoadFiles(
+            "Views/Samples/PropertyGrid/PropertyGridBasicsSampleView.xaml",
+            "Views/Samples/PropertyGrid/PropertyGridBasicsSampleView.xaml.cs",
+            "Views/Samples/PropertyGrid/PropertyGridBasicsSampleViewModel.cs");
+
+        public static IReadOnlyList<SampleSourceFile> PropertyGridEditorSettings { get; } = SampleSourceLoader.LoadFiles(
+            "Views/Samples/PropertyGrid/PropertyGridEditorSettingsSampleView.xaml",
+            "Views/Samples/PropertyGrid/PropertyGridEditorSettingsSampleView.xaml.cs",
+            "Views/Samples/PropertyGrid/PropertyGridEditorSettingsSampleViewModel.cs");
+
+        public static IReadOnlyList<SampleSourceFile> PropertyGridCustomTemplates { get; } = SampleSourceLoader.LoadFiles(
+            "Views/Samples/PropertyGrid/PropertyGridCustomTemplatesSampleView.xaml",
+            "Views/Samples/PropertyGrid/PropertyGridCustomTemplatesSampleView.xaml.cs",
+            "Views/Samples/PropertyGrid/PropertyGridCustomTemplatesSampleViewModel.cs");
+
+        public static IReadOnlyList<SampleSourceFile> PropertyGridDynamicMetadata { get; } = SampleSourceLoader.LoadFiles(
+            "Views/Samples/PropertyGrid/PropertyGridDynamicMetadataSampleView.xaml",
+            "Views/Samples/PropertyGrid/PropertyGridDynamicMetadataSampleView.xaml.cs",
+            "Views/Samples/PropertyGrid/PropertyGridDynamicMetadataSampleViewModel.cs");
+
+        public static IReadOnlyList<SampleSourceFile> PropertyGridValidation { get; } = SampleSourceLoader.LoadFiles(
+            "Views/Samples/PropertyGrid/PropertyGridValidationSampleView.xaml",
+            "Views/Samples/PropertyGrid/PropertyGridValidationSampleView.xaml.cs",
+            "Views/Samples/PropertyGrid/PropertyGridValidationSampleViewModel.cs");
 
         // ── Buttons ──────────────────────────────────────────────────────────
         public static IReadOnlyList<SampleSourceFile> Button { get; } = SampleSourceLoader.LoadFiles(

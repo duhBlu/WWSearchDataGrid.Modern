@@ -200,10 +200,13 @@
                             </MultiTrigger.Conditions>
                             <Setter TargetName="Box" Property="Background" Value="#005A9E" />
                         </MultiTrigger>
+                        <!--  Disabled is the read-only presentation in the editor hosts (the property
+                              grid disables the editor host to enforce read-only): keep the box's own
+                              fill, border, and check glyph and just dim the whole control, so a ticked
+                              read-only box reads as a visible blue rather than washing out to grey —
+                              the same treatment as the DataGridCell / DataGrid read-only gate below.  -->
                         <Trigger Property="IsEnabled" Value="False">
-                            <Setter Property="Foreground" Value="#999999" />
-                            <Setter TargetName="Box" Property="Background" Value="#F5F5F5" />
-                            <Setter TargetName="Box" Property="BorderBrush" Value="#CCCCCC" />
+                            <Setter Property="Opacity" Value="0.8" />
                             <Setter Property="Cursor" Value="Arrow" />
                         </Trigger>
                     </ControlTemplate.Triggers>

@@ -109,6 +109,22 @@ namespace WWControls.Wpf.Editors
             set => SetValue(ValueProperty, value);
         }
 
+        /// <summary>
+        /// The edited value the grid's commit / change-detection plumbing reads. Defaults to
+        /// <see cref="Value"/>; an editor that carries its edited value on a different DP overrides
+        /// this (<see cref="WWCheckBox"/> returns its IsChecked state).
+        /// </summary>
+        public virtual object EditedValue => Value;
+
+        /// <summary>
+        /// Pushes the editor's value binding to its source, running that binding's validation rules.
+        /// Defaults to the <see cref="Value"/> binding; an editor bound on a different DP overrides
+        /// this. The grid's commit gate calls it so the row-item binding updates and validates on
+        /// cell-leave rather than only on the editor's own <c>UpdateSourceTrigger</c>.
+        /// </summary>
+        public virtual void CommitValueToSource()
+            => GetBindingExpression(ValueProperty)?.UpdateSource();
+
         public bool IsReadOnly
         {
             get => (bool)GetValue(IsReadOnlyProperty);
@@ -149,8 +165,15 @@ namespace WWControls.Wpf.Editors
         protected override void OnGotKeyboardFocus(KeyboardFocusChangedEventArgs e)
         {
             base.OnGotKeyboardFocus(e);
-            if (ReferenceEquals(e.NewFocus, this) && FocusTarget != null)
+            // Forward only to a focusable target. A non-focusable input (e.g. WWCheckBox's inner
+            // CheckBox, which the theme leaves Focusable=False) can't take focus, and calling
+            // Keyboard.Focus on it would bounce focus away from this control instead of leaving it
+            // here — so keep focus on the editor and let it handle the keys itself.
+            if (ReferenceEquals(e.NewFocus, this) && FocusTarget != null
+                && (FocusTarget is not UIElement target || target.Focusable))
+            {
                 Keyboard.Focus(FocusTarget);
+            }
         }
     }
 }

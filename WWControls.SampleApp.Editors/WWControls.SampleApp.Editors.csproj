@@ -16,6 +16,12 @@
     <PackageReference Include="AvalonEdit" Version="6.3.1.120" />
   </ItemGroup>
 
+  <!-- DataAnnotations ([Display] / [Required] / [Range] / [EmailAddress]) used by the property-grid
+       samples. Part of the shared framework on net8+/net9; a GAC reference on .NET Framework. -->
+  <ItemGroup Condition="$(TargetFramework.StartsWith('net4'))">
+    <Reference Include="System.ComponentModel.DataAnnotations" />
+  </ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\WWControls.Wpf.Editors\WWControls.Wpf.Editors.csproj" />
     <ProjectReference Include="..\WWControls.Wpf.Primitives\WWControls.Wpf.Primitives.csproj" />
@@ -48,9 +54,21 @@
     <EmbeddedResource Include="Views\Samples\Editors\ColorPickerSampleView.xaml" />
     <EmbeddedResource Include="Views\Samples\Editors\ColorPickerSampleView.xaml.cs" />
     <EmbeddedResource Include="Views\Samples\Editors\ColorPickerSampleViewModel.cs" />
-    <EmbeddedResource Include="Views\Samples\Editors\PropertyGridSampleView.xaml" />
-    <EmbeddedResource Include="Views\Samples\Editors\PropertyGridSampleView.xaml.cs" />
-    <EmbeddedResource Include="Views\Samples\Editors\PropertyGridSampleViewModel.cs" />
+    <EmbeddedResource Include="Views\Samples\PropertyGrid\PropertyGridBasicsSampleView.xaml" />
+    <EmbeddedResource Include="Views\Samples\PropertyGrid\PropertyGridBasicsSampleView.xaml.cs" />
+    <EmbeddedResource Include="Views\Samples\PropertyGrid\PropertyGridBasicsSampleViewModel.cs" />
+    <EmbeddedResource Include="Views\Samples\PropertyGrid\PropertyGridEditorSettingsSampleView.xaml" />
+    <EmbeddedResource Include="Views\Samples\PropertyGrid\PropertyGridEditorSettingsSampleView.xaml.cs" />
+    <EmbeddedResource Include="Views\Samples\PropertyGrid\PropertyGridEditorSettingsSampleViewModel.cs" />
+    <EmbeddedResource Include="Views\Samples\PropertyGrid\PropertyGridCustomTemplatesSampleView.xaml" />
+    <EmbeddedResource Include="Views\Samples\PropertyGrid\PropertyGridCustomTemplatesSampleView.xaml.cs" />
+    <EmbeddedResource Include="Views\Samples\PropertyGrid\PropertyGridCustomTemplatesSampleViewModel.cs" />
+    <EmbeddedResource Include="Views\Samples\PropertyGrid\PropertyGridDynamicMetadataSampleView.xaml" />
+    <EmbeddedResource Include="Views\Samples\PropertyGrid\PropertyGridDynamicMetadataSampleView.xaml.cs" />
+    <EmbeddedResource Include="Views\Samples\PropertyGrid\PropertyGridDynamicMetadataSampleViewModel.cs" />
+    <EmbeddedResource Include="Views\Samples\PropertyGrid\PropertyGridValidationSampleView.xaml" />
+    <EmbeddedResource Include="Views\Samples\PropertyGrid\PropertyGridValidationSampleView.xaml.cs" />
+    <EmbeddedResource Include="Views\Samples\PropertyGrid\PropertyGridValidationSampleViewModel.cs" />
     <EmbeddedResource Include="Views\Samples\Buttons\ButtonSampleView.xaml" />
     <EmbeddedResource Include="Views\Samples\Buttons\ButtonSampleView.xaml.cs" />
     <EmbeddedResource Include="Views\Samples\Buttons\ButtonSampleViewModel.cs" />

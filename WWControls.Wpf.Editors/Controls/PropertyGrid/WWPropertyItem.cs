@@ -1,17 +1,37 @@
 using System;
 using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
 using System.Reflection;
 using System.Windows;
+using System.Windows.Data;
 using System.Windows.Threading;
+using WWControls.Wpf.Editors.Settings;
 
 namespace WWControls.Wpf.Editors
 {
     /// <summary>
     /// One property row in <see cref="WWPropertyGrid"/>. Acts as the <c>DataContext</c> for editor
-    /// templates: it exposes <see cref="Value"/> for two-way binding and the reflected metadata
-    /// (name, category, description, order, read-only) the row and description panel display.
+    /// templates: it exposes <see cref="Value"/> for two-way binding and the effective metadata
+    /// (name, category, description, order, read-only, visibility) the row and description panel show.
     /// </summary>
-    public class WWPropertyItem : INotifyPropertyChanged, IDisposable
+    /// <remarks>
+    /// <para>
+    /// Metadata is resolved live from four sources in precedence order — the matched
+    /// <see cref="WWPropertyDefinition"/>'s bindable override (A) &gt; an
+    /// <see cref="IPropertyMetadataProvider"/> override (B) &gt; the static attribute &gt; the default.
+    /// The properties raise <see cref="INotifyPropertyChanged"/>, so a definition binding that flips
+    /// (mechanism A) or a provider that signals a change (mechanism B) updates the row without
+    /// reassigning <c>SelectedObject</c>.
+    /// </para>
+    /// <para>
+    /// Implements <see cref="IEditorColumn"/> so the shared <c>BaseEditorSettings</c> editor stack
+    /// (the same one the SearchDataGrid uses) can build a typed editor for the row: the settings read
+    /// the item as a grid-agnostic column and bind the editor straight to the model property via
+    /// <see cref="IEditorColumn.CreateFieldBinding"/>. <see cref="IEditorColumn.Host"/> is null because
+    /// a property row has no data-grid host.
+    /// </para>
+    /// </remarks>
+    public class WWPropertyItem : INotifyPropertyChanged, IDisposable, IEditorColumn
     {
         private readonly object _source;
         private readonly PropertyInfo _propertyInfo;
@@ -19,44 +39,71 @@ namespace WWControls.Wpf.Editors
         private object _cachedValue;
         private bool _disposed;
 
+        // The matched definition (mechanism A) and the current provider override (mechanism B).
+        private readonly WWPropertyDefinition _definition;
+        private PropertyMetadataOverride _overrides;
+
+        // Static, attribute-resolved values (with defaults baked in) — the third precedence tier.
+        private readonly string _attrDisplayName;
+        private readonly string _attrDescription;
+        private readonly string _attrCategory;
+        private readonly int _attrOrder;
+        private readonly bool _attrReadOnly;
+        private readonly bool _attrBrowsable;
+
+        // Grid-level validation context, pushed by the grid (SetValidationContext); the effective
+        // per-row toggle resolves the definition override against the grid-level default.
+        private bool _gridShowValidationErrors = true;
+        private bool _gridAllowCommitOnValidationError;
+
         /// <summary>
         /// <param name="source">The object that owns the property.</param>
         /// <param name="propertyInfo">Reflection info for the property.</param>
         /// <param name="overrides">
-        /// Optional runtime overrides from <see cref="IPropertyMetadataProvider"/>.
-        /// Non-null fields take precedence over static attributes.
+        /// Optional runtime overrides from <see cref="IPropertyMetadataProvider"/> (mechanism B).
+        /// </param>
+        /// <param name="definition">
+        /// Optional matched <see cref="WWPropertyDefinition"/> whose bindable overrides drive
+        /// mechanism A. The item subscribes to its <see cref="WWPropertyDefinition.MetadataChanged"/>
+        /// so changes reflect live.
         /// </param>
         /// </summary>
-        public WWPropertyItem(object source, PropertyInfo propertyInfo, PropertyMetadataOverride overrides = null)
+        public WWPropertyItem(object source, PropertyInfo propertyInfo,
+            PropertyMetadataOverride overrides = null, WWPropertyDefinition definition = null)
         {
             _source = source ?? throw new ArgumentNullException(nameof(source));
             _propertyInfo = propertyInfo ?? throw new ArgumentNullException(nameof(propertyInfo));
+            _overrides = overrides;
+            _definition = definition;
 
             PropertyName = _propertyInfo.Name;
             PropertyType = _propertyInfo.PropertyType;
 
-            // DisplayName — override > [DisplayName] > property name
-            var displayAttr = _propertyInfo.GetCustomAttribute<DisplayNameAttribute>();
-            DisplayName = overrides?.DisplayName
-                ?? (displayAttr != null ? displayAttr.DisplayName : PropertyName);
+            // ── Static attribute tier (defaults baked in) ──────────────────────────────────────
+            // DataAnnotations [Display] carries name / group / order / description in one attribute
+            // and is preferred over the older System.ComponentModel attributes when it supplies a
+            // given facet (each Get* returns null when that facet is unset, so the fallbacks flow).
+            var display = _propertyInfo.GetCustomAttribute<DisplayAttribute>();
 
-            // Description — override > [Description] > empty
+            var displayNameAttr = _propertyInfo.GetCustomAttribute<DisplayNameAttribute>();
+            _attrDisplayName = display?.GetName() ?? displayNameAttr?.DisplayName ?? PropertyName;
+
             var descAttr = _propertyInfo.GetCustomAttribute<DescriptionAttribute>();
-            Description = overrides?.Description
-                ?? (descAttr != null ? descAttr.Description : string.Empty);
+            _attrDescription = display?.GetDescription() ?? descAttr?.Description ?? string.Empty;
 
-            // Category — override > [Category] > "Misc."
             var catAttr = _propertyInfo.GetCustomAttribute<CategoryAttribute>();
-            Category = overrides?.Category
-                ?? (catAttr != null ? catAttr.Category : "Misc.");
+            _attrCategory = display?.GroupName ?? catAttr?.Category ?? "Misc.";
 
-            // Order — override > [PropertyOrder] > last
-            PropertyOrder = overrides?.PropertyOrder ?? ReadPropertyOrder(_propertyInfo);
+            _attrOrder = display?.GetOrder() ?? ReadPropertyOrder(_propertyInfo);
 
-            // ReadOnly — override > [ReadOnly] > no setter
+            var editableAttr = _propertyInfo.GetCustomAttribute<EditableAttribute>();
             var readOnlyAttr = _propertyInfo.GetCustomAttribute<ReadOnlyAttribute>();
-            bool attrReadOnly = (readOnlyAttr != null && readOnlyAttr.IsReadOnly) || !_propertyInfo.CanWrite;
-            IsReadOnly = overrides?.IsReadOnly ?? attrReadOnly;
+            _attrReadOnly = (editableAttr != null && !editableAttr.AllowEdit)
+                || (readOnlyAttr != null && readOnlyAttr.IsReadOnly)
+                || !_propertyInfo.CanWrite;
+
+            var browsableAttr = _propertyInfo.GetCustomAttribute<BrowsableAttribute>();
+            _attrBrowsable = browsableAttr?.Browsable ?? true;
 
             // Enum support
             var underlying = Nullable.GetUnderlyingType(PropertyType) ?? PropertyType;
@@ -65,15 +112,21 @@ namespace WWControls.Wpf.Editors
                 EnumValues = Enum.GetValues(underlying);
             }
 
-            // Cache the initial value and capture the UI dispatcher
-            _cachedValue = _propertyInfo.GetValue(_source);
+            // Cache the initial value and capture the UI dispatcher. Guarded because the grid now
+            // builds an item for every property (visibility is a runtime filter, not a build-time
+            // skip), so a property whose getter throws must not abort the whole rebuild.
+            try { _cachedValue = _propertyInfo.GetValue(_source); }
+            catch { _cachedValue = null; }
             _dispatcher = Application.Current?.Dispatcher ?? Dispatcher.CurrentDispatcher;
 
-            // Listen for source changes
+            // Resolve the effective metadata from all tiers, then wire the live sources.
+            RecomputeMetadata();
+
+            if (_definition != null)
+                _definition.MetadataChanged += OnDefinitionMetadataChanged;
+
             if (_source is INotifyPropertyChanged npc)
-            {
                 npc.PropertyChanged += Source_PropertyChanged;
-            }
         }
 
         #region Properties
@@ -81,20 +134,76 @@ namespace WWControls.Wpf.Editors
         /// <summary>The CLR property name on the source object.</summary>
         public string PropertyName { get; }
 
-        /// <summary>Display label from the <c>[DisplayName]</c> attribute (or the property name).</summary>
-        public string DisplayName { get; }
+        /// <summary>
+        /// The object that owns the property (the edited model). The validation badge validates this
+        /// object — it carries the data-annotation attributes / <c>INotifyDataErrorInfo</c> errors,
+        /// distinct from this item, which is the row's visual DataContext.
+        /// </summary>
+        public object Source => _source;
 
-        /// <summary>Tooltip / description-panel text from the <c>[Description]</c> attribute.</summary>
-        public string Description { get; }
+        /// <summary>Effective display label (definition &gt; provider &gt; <c>[Display]</c>/<c>[DisplayName]</c> &gt; property name).</summary>
+        public string DisplayName
+        {
+            get => _displayName;
+            private set { if (_displayName != value) { _displayName = value; OnPropertyChanged(nameof(DisplayName)); } }
+        }
+        private string _displayName;
 
-        /// <summary>Category group from the <c>[Category]</c> attribute (or "Misc.").</summary>
-        public string Category { get; }
+        /// <summary>Effective tooltip / description-panel text (definition &gt; provider &gt; <c>[Display]</c>/<c>[Description]</c> &gt; empty).</summary>
+        public string Description
+        {
+            get => _description;
+            private set { if (_description != value) { _description = value; OnPropertyChanged(nameof(Description)); } }
+        }
+        private string _description;
 
-        /// <summary>Sort order within a category from the <c>[PropertyOrder]</c> attribute.</summary>
-        public int PropertyOrder { get; }
+        /// <summary>Effective category group (definition &gt; provider &gt; <c>[Display]</c>/<c>[Category]</c> &gt; "Misc.").</summary>
+        public string Category
+        {
+            get => _category;
+            private set { if (_category != value) { _category = value; OnPropertyChanged(nameof(Category)); } }
+        }
+        private string _category;
 
-        /// <summary>True if <c>[ReadOnly(true)]</c> or the property has no setter.</summary>
-        public bool IsReadOnly { get; }
+        /// <summary>Effective sort order within a category (definition &gt; provider &gt; <c>[Display]</c>/<c>[PropertyOrder]</c> &gt; last).</summary>
+        public int PropertyOrder
+        {
+            get => _propertyOrder;
+            private set { if (_propertyOrder != value) { _propertyOrder = value; OnPropertyChanged(nameof(PropertyOrder)); } }
+        }
+        private int _propertyOrder;
+
+        /// <summary>Effective read-only state (definition &gt; provider &gt; <c>[Editable]</c>/<c>[ReadOnly]</c>/no-setter &gt; false).</summary>
+        public bool IsReadOnly
+        {
+            get => _isReadOnly;
+            private set { if (_isReadOnly != value) { _isReadOnly = value; OnPropertyChanged(nameof(IsReadOnly)); } }
+        }
+        private bool _isReadOnly;
+
+        /// <summary>
+        /// Effective visibility (definition &gt; provider <c>Browsable</c> &gt; <c>[Browsable]</c> &gt; true).
+        /// The grid's collection view filters on this, so flipping it shows / hides the row live.
+        /// </summary>
+        public bool IsVisible
+        {
+            get => _isVisible;
+            private set { if (_isVisible != value) { _isVisible = value; OnPropertyChanged(nameof(IsVisible)); } }
+        }
+        private bool _isVisible = true;
+
+        /// <summary>
+        /// Effective "show validation errors" toggle for this row: the matched
+        /// <see cref="WWPropertyDefinition.ShowValidationErrors"/> override, else the grid-level
+        /// <c>WWPropertyGrid.ShowValidationErrors</c>. Bound by the row's validation presenter as
+        /// <c>IsValidationEnabled</c>, and read by the shared <c>DataAnnotationsValidationRule</c>.
+        /// </summary>
+        public bool ActualShowValidationErrors
+        {
+            get => _actualShowValidationErrors;
+            private set { if (_actualShowValidationErrors != value) { _actualShowValidationErrors = value; OnPropertyChanged(nameof(ActualShowValidationErrors)); } }
+        }
+        private bool _actualShowValidationErrors = true;
 
         /// <summary>The CLR type of the property.</summary>
         public Type PropertyType { get; }
@@ -102,8 +211,20 @@ namespace WWControls.Wpf.Editors
         /// <summary>For enum properties, the set of possible values. Null otherwise.</summary>
         public Array EnumValues { get; }
 
-        /// <summary>Custom editor template from <see cref="WWEditorDefinition"/>, or null for the default.</summary>
+        /// <summary>
+        /// A fully custom editor template (from a <see cref="WWPropertyDefinition.EditTemplate"/> or a
+        /// legacy <see cref="WWEditorDefinition"/>), or null when the editor comes from
+        /// <see cref="EditSettings"/> / the type default. Wins over <see cref="EditSettings"/>.
+        /// </summary>
         public DataTemplate EditorTemplate { get; set; }
+
+        /// <summary>
+        /// The resolved editor settings for this row — from a matched <see cref="WWPropertyDefinition"/>,
+        /// a <c>[PropertyGridEditor]</c> / <c>[DefaultEditor]</c> attribute, or the CLR type default.
+        /// Null when no editor could be resolved (the row falls back to the read-only placeholder).
+        /// The grid resolves this once per rebuild; the editor selector builds the row's template from it.
+        /// </summary>
+        public BaseEditorSettings EditSettings { get; set; }
 
         /// <summary>
         /// Callback invoked after a value is written through the editor. The parent grid uses it to
@@ -158,6 +279,99 @@ namespace WWControls.Wpf.Editors
                 }
             }
         }
+
+        #endregion
+
+        #region Live metadata
+
+        /// <summary>
+        /// Recomputes every effective-metadata property from its four tiers in precedence order:
+        /// the definition's bindable override (A) &gt; the provider override (B) &gt; the static
+        /// attribute &gt; the default. The property setters raise <see cref="INotifyPropertyChanged"/>
+        /// only for the fields that actually changed.
+        /// </summary>
+        private void RecomputeMetadata()
+        {
+            DisplayName = _definition?.DisplayName ?? _overrides?.DisplayName ?? _attrDisplayName;
+            Description = _definition?.Description ?? _overrides?.Description ?? _attrDescription;
+            Category = _definition?.Category ?? _overrides?.Category ?? _attrCategory;
+            PropertyOrder = _definition?.PropertyOrder ?? _overrides?.PropertyOrder ?? _attrOrder;
+            IsReadOnly = _definition?.IsReadOnly ?? _overrides?.IsReadOnly ?? _attrReadOnly;
+            IsVisible = _definition?.IsVisible ?? _overrides?.Browsable ?? _attrBrowsable;
+            // The validation toggle has no provider tier — a definition override, else the grid level.
+            ActualShowValidationErrors = _definition?.ShowValidationErrors ?? _gridShowValidationErrors;
+        }
+
+        /// <summary>
+        /// Pushes the grid-level validation context onto the row and recomputes the effective toggle.
+        /// The commit gate has no per-definition tier, so it is grid-level as-is.
+        /// </summary>
+        internal void SetValidationContext(bool showValidationErrors, bool allowCommitOnValidationError)
+        {
+            _gridShowValidationErrors = showValidationErrors;
+            _gridAllowCommitOnValidationError = allowCommitOnValidationError;
+            ActualShowValidationErrors = _definition?.ShowValidationErrors ?? _gridShowValidationErrors;
+        }
+
+        /// <summary>
+        /// Replaces the provider (mechanism B) override and recomputes. Called by the grid when an
+        /// <see cref="IObservablePropertyMetadataProvider"/> signals a change for this property.
+        /// </summary>
+        internal void SetMetadataOverride(PropertyMetadataOverride overrides)
+        {
+            _overrides = overrides;
+            RecomputeMetadata();
+        }
+
+        private void OnDefinitionMetadataChanged(object sender, EventArgs e)
+        {
+            if (_dispatcher.CheckAccess())
+                RecomputeMetadata();
+            else
+                _dispatcher.BeginInvoke(new Action(RecomputeMetadata));
+        }
+
+        #endregion
+
+        #region IEditorColumn
+
+        // Presents the row to the shared BaseEditorSettings editor stack as a grid-agnostic column.
+        // The editor binds straight to the model property (Source = the owning object, Path = the
+        // property name), so a settings-built editor edits the model exactly like a grid cell —
+        // while the reflection-backed Value stays available for legacy custom templates. Members are
+        // explicit so they don't widen WWPropertyItem's public surface; the settings reach them
+        // through the IEditorColumn reference they already receive.
+
+        string IEditorColumn.FieldName => PropertyName;
+
+        BindingBase IEditorColumn.Binding => null;
+
+        string IEditorColumn.DisplayStringFormat => null;
+
+        IValueConverter IEditorColumn.DisplayValueConverter => null;
+
+        object IEditorColumn.DisplayConverterParameter => null;
+
+        string IEditorColumn.DisplayMask => null;
+
+        TextAlignment IEditorColumn.TextAlignment => TextAlignment.Left;
+
+        // The shared DataAnnotationsValidationRule (attached by the settings-built editor's value
+        // binding) reads these: it no-ops when errors are off, and reports success — letting the
+        // value commit while the badge shows it advisory-style — when commit-on-error is on.
+        bool IEditorColumn.ActualShowValidationAttributeErrors => ActualShowValidationErrors;
+
+        bool IEditorColumn.AllowCommitOnValidationError => _gridAllowCommitOnValidationError;
+
+        // A get-only source property (no setter) can't take a two-way editor binding — the property
+        // grid always materializes its editor, so the value binding is forced one-way for these.
+        bool IEditorColumn.IsValueReadOnly => !_propertyInfo.CanWrite;
+
+        // A property row has no data-grid host — this is the seam that keeps grid-cell wiring
+        // (arrow-exit, mouse-caret, commit gating) from attaching in the property grid.
+        IEditingGridHost IEditorColumn.Host => null;
+
+        Binding IEditorColumn.CreateFieldBinding() => new Binding(PropertyName) { Source = _source };
 
         #endregion
 
@@ -219,7 +433,9 @@ namespace WWControls.Wpf.Editors
         /// </summary>
         internal void RefreshValue()
         {
-            var newValue = _propertyInfo.GetValue(_source);
+            object newValue;
+            try { newValue = _propertyInfo.GetValue(_source); }
+            catch { return; }
 
             // For reference types, instance identity matters — bindings target whichever object is in
             // the cache. A source that hands back a fresh wrapper whose values equal the cached one
@@ -267,6 +483,10 @@ namespace WWControls.Wpf.Editors
                 if (_source is INotifyPropertyChanged npc)
                 {
                     npc.PropertyChanged -= Source_PropertyChanged;
+                }
+                if (_definition != null)
+                {
+                    _definition.MetadataChanged -= OnDefinitionMetadataChanged;
                 }
                 _disposed = true;
             }

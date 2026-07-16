@@ -79,6 +79,13 @@ namespace WWControls.Wpf.Editors
             set => SetValue(IsCheckedProperty, value);
         }
 
+        /// <summary>The edited value is the checkbox state, carried on <see cref="IsChecked"/>.</summary>
+        public override object EditedValue => IsChecked;
+
+        /// <summary>Pushes the <see cref="IsChecked"/> binding to source (the checkbox's value binding).</summary>
+        public override void CommitValueToSource()
+            => GetBindingExpression(IsCheckedProperty)?.UpdateSource();
+
         public bool IsThreeState
         {
             get => (bool)GetValue(IsThreeStateProperty);
@@ -109,6 +116,36 @@ namespace WWControls.Wpf.Editors
         {
             base.OnApplyTemplate();
             _checkBox = GetTemplateChild(PartCheckBox) as CheckBox;
+        }
+
+        /// <summary>
+        /// Advances <see cref="IsChecked"/> one step — the same cycle as
+        /// <see cref="System.Windows.Controls.Primitives.ToggleButton"/>: false / indeterminate →
+        /// true, true → indeterminate (three-state) or false. No-op while read-only or disabled.
+        /// </summary>
+        internal void Toggle()
+        {
+            if (IsReadOnly || !IsEnabled)
+                return;
+            IsChecked = IsChecked == true ? (IsThreeState ? (bool?)null : false)
+                      : IsChecked == null ? false
+                      : true;
+        }
+
+        /// <summary>
+        /// Space toggles the box when the control itself holds keyboard focus — the keyboard path
+        /// for a hostless editor (e.g. a property-grid row) where the WWCheckBox is the tab stop and
+        /// its inner CheckBox is non-focusable. In a grid cell the cell owns focus and the key event
+        /// never routes through the WWCheckBox, so this leaves grid behavior untouched.
+        /// </summary>
+        protected override void OnKeyDown(KeyEventArgs e)
+        {
+            base.OnKeyDown(e);
+            if (!e.Handled && e.Key == Key.Space)
+            {
+                Toggle();
+                e.Handled = true;
+            }
         }
 
         // ── Modifier-gated hover ────────────────────────────────────────────
@@ -148,10 +185,7 @@ namespace WWControls.Wpf.Editors
                 return;
 
             _hoverToggled = true;
-            // Same cycle as ToggleButton.OnToggle: true → null (three-state) or false; null → false.
-            IsChecked = IsChecked == true ? (IsThreeState ? (bool?)null : false)
-                      : IsChecked == null ? false
-                      : true;
+            Toggle();
         }
     }
 }

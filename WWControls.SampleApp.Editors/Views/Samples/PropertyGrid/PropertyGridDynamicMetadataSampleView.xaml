@@ -1,0 +1,85 @@
+<UserControl x:Class="WWControls.SampleApp.Editors.Views.Samples.PropertyGrid.PropertyGridDynamicMetadataSampleView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:sdg="http://schemas.wwcontrols.com/wpf"
+             xmlns:sampleControls="clr-namespace:WWControls.SampleApp.Editors.Controls"
+             xmlns:local="clr-namespace:WWControls.SampleApp.Editors.Views.Samples.PropertyGrid"
+             mc:Ignorable="d">
+    <UserControl.DataContext>
+        <local:PropertyGridDynamicMetadataSampleViewModel />
+    </UserControl.DataContext>
+
+    <UserControl.Resources>
+        <Style x:Key="Caption" TargetType="TextBlock">
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="#444" />
+            <Setter Property="Margin" Value="0,0,0,6" />
+        </Style>
+        <Style x:Key="ToggleRow" TargetType="StackPanel">
+            <Setter Property="Orientation" Value="Horizontal" />
+            <Setter Property="Margin" Value="0,0,0,8" />
+        </Style>
+    </UserControl.Resources>
+
+    <sampleControls:SampleHostControl Sources="{x:Static sampleControls:SampleSources.PropertyGridDynamicMetadata}">
+        <ScrollViewer Background="#FFFFFF" VerticalScrollBarVisibility="Auto">
+            <StackPanel Margin="24" MaxWidth="900" HorizontalAlignment="Left">
+                <TextBlock Style="{StaticResource SampleIntro}">
+                    <Run FontWeight="SemiBold" Text="WWPropertyGrid — dynamic metadata" />
+                    <LineBreak />
+                    <Run Text="Metadata (read-only, visibility, …) updates live from two sources: (A) a WWPropertyDefinition whose IsReadOnly / IsVisible are bound to the view model, and (B) a model that implements IObservablePropertyMetadataProvider and signals its own changes. Toggle the switches — no object is reassigned." />
+                </TextBlock>
+
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="40" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <!--  Mechanism A — definition bindings against the view model.  -->
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Style="{StaticResource Caption}" Text="A · declarative (definition bindings)" />
+                        <StackPanel Style="{StaticResource ToggleRow}">
+                            <CheckBox Content="Locked" IsChecked="{Binding IsLocked}" Margin="0,0,16,0" />
+                            <CheckBox Content="Show advanced" IsChecked="{Binding ShowAdvanced}" />
+                        </StackPanel>
+                        <sdg:WWPropertyGrid Width="340"
+                                            Height="380"
+                                            NameColumnWidth="120"
+                                            ShowSearchBox="False"
+                                            SelectedObject="{Binding Declarative}">
+                            <sdg:WWPropertyGrid.PropertyDefinitions>
+                                <!--  Read-only tracks the Locked toggle live.  -->
+                                <sdg:WWPropertyDefinition TargetProperties="Name, Sku, UnitPrice"
+                                                          IsReadOnly="{Binding IsLocked}" />
+                                <!--  The Advanced rows appear / disappear with the Show-advanced toggle.  -->
+                                <sdg:WWPropertyDefinition TargetProperties="Cost, Margin"
+                                                          IsVisible="{Binding ShowAdvanced}" />
+                            </sdg:WWPropertyGrid.PropertyDefinitions>
+                        </sdg:WWPropertyGrid>
+                        <TextBlock Style="{StaticResource SampleTip}" MaxWidth="340" Margin="0,10,0,0"
+                                   Text="• Lock ⇒ the three rows go read-only; Show advanced ⇒ Cost / Margin appear — both without a rebuild." />
+                    </StackPanel>
+
+                    <!--  Mechanism B — the model is an IObservablePropertyMetadataProvider.  -->
+                    <StackPanel Grid.Column="2">
+                        <TextBlock Style="{StaticResource Caption}" Text="B · observable provider (model-driven)" />
+                        <StackPanel Style="{StaticResource ToggleRow}">
+                            <CheckBox Content="Locked" IsChecked="{Binding Provider.IsLocked}" />
+                        </StackPanel>
+                        <sdg:WWPropertyGrid Width="340"
+                                            Height="380"
+                                            NameColumnWidth="120"
+                                            ShowSearchBox="False"
+                                            SelectedObject="{Binding Provider}" />
+                        <TextBlock Style="{StaticResource SampleTip}" MaxWidth="340" Margin="0,10,0,0"
+                                   Text="• The model raises PropertyMetadataChanged on lock; the grid re-pulls GetPropertyMetadata and the rows go read-only live." />
+                    </StackPanel>
+                </Grid>
+            </StackPanel>
+        </ScrollViewer>
+    </sampleControls:SampleHostControl>
+</UserControl>

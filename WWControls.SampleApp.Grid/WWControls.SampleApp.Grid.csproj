@@ -121,6 +121,9 @@
     <EmbeddedResource Include="Views\Samples\Editing\EditEntireRowSampleView.xaml" />
     <EmbeddedResource Include="Views\Samples\Editing\EditEntireRowSampleView.xaml.cs" />
     <EmbeddedResource Include="Views\Samples\Editing\EditEntireRowSampleViewModel.cs" />
+    <EmbeddedResource Include="Views\Samples\Editing\EditFormSampleView.xaml" />
+    <EmbeddedResource Include="Views\Samples\Editing\EditFormSampleView.xaml.cs" />
+    <EmbeddedResource Include="Views\Samples\Editing\EditFormSampleViewModel.cs" />
 
     <!-- Animation & Performance -->
     <EmbeddedResource Include="Views\Samples\AnimationPerformance\ScrollingAnimationSampleView.xaml" />

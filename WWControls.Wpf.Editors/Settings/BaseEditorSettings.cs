@@ -599,7 +599,10 @@ namespace WWControls.Wpf.Editors.Settings
         protected static Binding CreateValueBinding(IEditorColumn column, BindingMode mode = BindingMode.TwoWay)
         {
             var binding = column.CreateFieldBinding();
-            binding.Mode = mode;
+            // A get-only source can't take a two-way binding (WPF throws), so force one-way. Grid
+            // columns report false here — a read-only cell never enters edit mode, so this edit
+            // binding is only ever built for a writable target.
+            binding.Mode = column.IsValueReadOnly ? BindingMode.OneWay : mode;
             binding.UpdateSourceTrigger = UpdateSourceTrigger.LostFocus;
             binding.ValidatesOnDataErrors = true;
             binding.ValidatesOnExceptions = true;

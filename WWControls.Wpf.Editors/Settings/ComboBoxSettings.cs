@@ -235,46 +235,52 @@ namespace WWControls.Wpf.Editors.Settings
             }
             SuppressValidationErrorAdorner(factory);
 
-            // Focus the editor when the edit template materializes (it forwards focus to the inner
-            // combo) so F4 / Alt+Down / Space can toggle the popup without a second Tab.
-            AutoFocusOnLoad(factory);
+            bool hosted = column?.Host != null;
 
-            // Auto-open the dropdown on edit-mode entry — either OpenDropDownOnEdit (explicit opt-in)
-            // or a mouse-driven edit (consuming the same SearchDataGrid mouse-edit stash TextBoxSettings
-            // uses for the caret); Tab / arrow / F2 / programmatic edits leave it closed so keyboard
-            // grid-navigation isn't interrupted. The Dispatcher hop defers the open past focus routing.
-            bool openOnEdit = OpenDropDownOnEdit;
-            factory.AddHandler(FrameworkElement.LoadedEvent,
-                new RoutedEventHandler((s, _) =>
-                {
-                    if (s is not WWComboBox editor) return;
+            if (hosted)
+            {
+                // Grid cell only: focus the editor when the edit template materializes (it forwards
+                // focus to the inner combo) so F4 / Alt+Down / Space can toggle the popup without a
+                // second Tab, and auto-open the dropdown on edit-mode entry — either
+                // OpenDropDownOnEdit (explicit opt-in) or a mouse-driven edit (consuming the same
+                // SearchDataGrid mouse-edit stash TextBoxSettings uses for the caret). A hostless row
+                // (property grid) wants neither: every combo would grab focus / pop open on load.
+                AutoFocusOnLoad(factory);
 
-                    bool shouldOpen = openOnEdit;
-                    if (!shouldOpen)
+                bool openOnEdit = OpenDropDownOnEdit;
+                factory.AddHandler(FrameworkElement.LoadedEvent,
+                    new RoutedEventHandler((s, _) =>
                     {
-                        var cell = VisualTreeHelperMethods.FindVisualAncestor<DataGridCell>(editor);
-                        var grid = VisualTreeHelperMethods.FindVisualAncestor<IEditingGridHost>(cell);
-                        if (grid != null && cell != null
-                            && grid.TryConsumeMouseEditPoint(cell, out Point _))
+                        if (s is not WWComboBox editor) return;
+
+                        bool shouldOpen = openOnEdit;
+                        if (!shouldOpen)
                         {
-                            shouldOpen = true;
+                            var cell = VisualTreeHelperMethods.FindVisualAncestor<DataGridCell>(editor);
+                            var grid = VisualTreeHelperMethods.FindVisualAncestor<IEditingGridHost>(cell);
+                            if (grid != null && cell != null
+                                && grid.TryConsumeMouseEditPoint(cell, out Point _))
+                            {
+                                shouldOpen = true;
+                            }
                         }
-                    }
 
-                    if (!shouldOpen) return;
+                        if (!shouldOpen) return;
 
-                    editor.Dispatcher.BeginInvoke(new Action(() =>
-                    {
-                        editor.IsDropDownOpen = true;
-                    }), DispatcherPriority.Input);
-                }));
+                        editor.Dispatcher.BeginInvoke(new Action(() =>
+                        {
+                            editor.IsDropDownOpen = true;
+                        }), DispatcherPriority.Input);
+                    }));
+            }
 
             // Keyboard interaction (the editor exposes IsDropDownOpen / IsEditable; the adapter — the
             // bridge — drives the grid coupling):
             //   • Tab with dropdown open → close + refocus the combo so DataGrid's Tab handler commits
             //     and moves on (not marked Handled).
             //   • Space on a non-editable combo → toggle the dropdown.
-            //   • Arrows with dropdown CLOSED → exit the cell; OPEN → fall through to navigate items.
+            //   • Arrows with dropdown CLOSED → exit the cell (grid only). Hostless, arrows are left to
+            //     the ComboBox so Up/Down change the selection; OPEN → both fall through to item nav.
             factory.AddHandler(UIElement.PreviewKeyDownEvent,
                 new KeyEventHandler((s, e) =>
                 {
@@ -294,7 +300,7 @@ namespace WWControls.Wpf.Editors.Settings
                         return;
                     }
 
-                    if (!editor.IsDropDownOpen
+                    if (hosted && !editor.IsDropDownOpen
                         && (e.Key == Key.Left || e.Key == Key.Right
                             || e.Key == Key.Up || e.Key == Key.Down))
                     {

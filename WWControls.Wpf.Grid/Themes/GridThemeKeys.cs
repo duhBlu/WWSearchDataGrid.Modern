@@ -19,14 +19,6 @@ namespace WWControls.Wpf
     {
         #region Grid
 
-        /// <summary>
-        /// Default style for <see cref="ValidationCellPresenter"/>: the validated-cell layout
-        /// (a left badge gutter beside the cell content). Retemplate this key to change how the
-        /// data-annotation error badge is arranged within a cell.
-        /// </summary>
-        public static ComponentResourceKey ValidationCellPresenter { get; } =
-            new ComponentResourceKey(typeof(GridThemeKeys), nameof(ValidationCellPresenter));
-
         /// <summary>Default style for the top-level <see cref="SearchDataGrid"/> control.</summary>
         public static ComponentResourceKey GridSearchDataGrid { get; } =
             new ComponentResourceKey(typeof(GridThemeKeys), nameof(GridSearchDataGrid));

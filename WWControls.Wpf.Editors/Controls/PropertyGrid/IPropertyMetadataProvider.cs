@@ -1,3 +1,5 @@
+using System;
+
 namespace WWControls.Wpf.Editors
 {
     /// <summary>
@@ -34,6 +36,52 @@ namespace WWControls.Wpf.Editors
         /// Called once per property while the grid builds its item list.
         /// </summary>
         PropertyMetadataOverride GetPropertyMetadata(string propertyName);
+    }
+
+    /// <summary>
+    /// A <see cref="IPropertyMetadataProvider"/> that also signals when its metadata changes, so the
+    /// grid can re-pull <see cref="IPropertyMetadataProvider.GetPropertyMetadata"/> and refresh the
+    /// affected rows live — without reassigning <c>SelectedObject</c>. A source that implements only
+    /// the base <see cref="IPropertyMetadataProvider"/> keeps the snapshot behavior (metadata read
+    /// once at build time).
+    /// </summary>
+    /// <example>
+    /// <code>
+    /// public class ProductRow : IObservablePropertyMetadataProvider
+    /// {
+    ///     public event EventHandler&lt;PropertyMetadataChangedEventArgs&gt; PropertyMetadataChanged;
+    ///
+    ///     private bool _isLocked;
+    ///     public bool IsLocked
+    ///     {
+    ///         get =&gt; _isLocked;
+    ///         set { _isLocked = value; PropertyMetadataChanged?.Invoke(this, new PropertyMetadataChangedEventArgs(nameof(Price))); }
+    ///     }
+    ///
+    ///     public PropertyMetadataOverride GetPropertyMetadata(string propertyName)
+    ///         =&gt; propertyName == nameof(Price) ? new PropertyMetadataOverride { IsReadOnly = IsLocked } : null;
+    /// }
+    /// </code>
+    /// </example>
+    public interface IObservablePropertyMetadataProvider : IPropertyMetadataProvider
+    {
+        /// <summary>
+        /// Raised when the metadata for a property has changed and should be re-pulled. A null or
+        /// empty <see cref="PropertyMetadataChangedEventArgs.PropertyName"/> means "all properties".
+        /// </summary>
+        event EventHandler<PropertyMetadataChangedEventArgs> PropertyMetadataChanged;
+    }
+
+    /// <summary>Carries the property whose metadata changed (null / empty = all).</summary>
+    public sealed class PropertyMetadataChangedEventArgs : EventArgs
+    {
+        public PropertyMetadataChangedEventArgs(string propertyName)
+        {
+            PropertyName = propertyName;
+        }
+
+        /// <summary>The property whose metadata changed, or null / empty for all properties.</summary>
+        public string PropertyName { get; }
     }
 
     /// <summary>

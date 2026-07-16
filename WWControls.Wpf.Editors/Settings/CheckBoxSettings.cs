@@ -53,31 +53,48 @@ namespace WWControls.Wpf.Editors.Settings
             // its two-way binding without going through edit mode, so there's no visually distinct
             // edit surface. The themed checkbox look + the cell read-only gate live in WWCheckBox's
             // hosted CheckBox style (EditorThemeKeys.DisplayCheckBox).
-            factory.SetBinding(WWCheckBox.IsCheckedProperty, CreateValueBinding(column));
+            //
+            // Commit on toggle, not on focus loss: the box is live in both display and edit, and in a
+            // hostless row (property grid) its inner CheckBox is non-focusable, so a click that
+            // toggles the box never raises LostFocus and the bound value would stay stale.
+            // PropertyChanged pushes each toggle straight through.
+            var valueBinding = CreateValueBinding(column);
+            valueBinding.UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged;
+            factory.SetBinding(WWCheckBox.IsCheckedProperty, valueBinding);
             SuppressValidationErrorAdorner(factory);
 
             if (!isDisplay)
             {
-                // Edit-template only: focus the editor when the user tabs into the cell so Space
-                // toggles immediately (WWCheckBox forwards focus to its checkbox). Display-mode
-                // clicks toggle the interactive checkbox directly without entering edit mode.
-                AutoFocusOnLoad(factory);
+                if (column?.Host != null)
+                {
+                    // Grid cell: focus the editor when the user tabs into the cell so Space toggles
+                    // immediately (WWCheckBox forwards focus to its checkbox).
+                    AutoFocusOnLoad(factory);
 
-                // CheckBox doesn't consume arrow keys and DataGrid skips arrow navigation while a
-                // cell is editing — so commit + re-raise on the parent grid for any arrow, letting
-                // the standard cell-arrow-navigation run. (Editor-specific coupling wired by the
-                // adapter, the bridge; the control stays grid-agnostic.)
-                factory.AddHandler(UIElement.PreviewKeyDownEvent,
-                    new KeyEventHandler((s, e) =>
-                    {
-                        if (s is not WWCheckBox editor) return;
-                        if (e.Key == Key.Left || e.Key == Key.Right
-                            || e.Key == Key.Up || e.Key == Key.Down)
+                    // CheckBox doesn't consume arrow keys and DataGrid skips arrow navigation while a
+                    // cell is editing — so commit + re-raise on the parent grid for any arrow, letting
+                    // the standard cell-arrow-navigation run. (Editor-specific coupling wired by the
+                    // adapter, the bridge; the control stays grid-agnostic.)
+                    factory.AddHandler(UIElement.PreviewKeyDownEvent,
+                        new KeyEventHandler((s, e) =>
                         {
-                            e.Handled = true;
-                            ExitCellViaArrow(editor, e);
-                        }
-                    }));
+                            if (s is not WWCheckBox editor) return;
+                            if (e.Key == Key.Left || e.Key == Key.Right
+                                || e.Key == Key.Up || e.Key == Key.Down)
+                            {
+                                e.Handled = true;
+                                ExitCellViaArrow(editor, e);
+                            }
+                        }));
+                }
+                else
+                {
+                    // Hostless (property grid): no cell owns the tab stop, so the checkbox is one
+                    // itself. Its inner CheckBox is non-focusable (theme), so focus rests on the
+                    // WWCheckBox, which toggles on Space (WWCheckBox.OnKeyDown). Arrows are left
+                    // untouched — there's no cell to navigate.
+                    factory.SetValue(WWCheckBox.IsTabStopProperty, true);
+                }
             }
 
             return new DataTemplate { VisualTree = factory };

@@ -10,6 +10,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
 using WWControls.Core;
+using WWControls.Wpf.Editors;
 
 namespace WWControls.Wpf.Grids
 {
@@ -347,12 +348,15 @@ namespace WWControls.Wpf.Grids
         }
 
         /// <summary>
-        /// Unwraps the ContentPresenter WPF generates for DataGridTemplateColumn edit templates
-        /// to the actual editor (TextBox/CheckBox/ComboBox/DatePicker). Breadth-first, first match wins.
+        /// Unwraps the ContentPresenter WPF generates for DataGridTemplateColumn edit templates to
+        /// the actual editor — a WWEditorBase editor (WWTextBox / WWNumericUpDown / WWDatePicker /
+        /// WWCheckBox) or a stock TextBox / CheckBox / ComboBox / DatePicker. Breadth-first, first
+        /// match wins; a WWEditorBase matches before its own inner input parts, so the value binding
+        /// lands on the editor, not the template-internal input.
         /// </summary>
         private static FrameworkElement UnwrapEditingElement(FrameworkElement editingElement)
         {
-            if (editingElement is TextBox || editingElement is CheckBox
+            if (editingElement is WWEditorBase || editingElement is TextBox || editingElement is CheckBox
                 || editingElement is ComboBox || editingElement is DatePicker)
                 return editingElement;
 
@@ -365,7 +369,7 @@ namespace WWControls.Wpf.Grids
                 for (int i = 0; i < count; i++)
                 {
                     var child = VisualTreeHelper.GetChild(node, i);
-                    if (child is TextBox || child is CheckBox || child is ComboBox || child is DatePicker)
+                    if (child is WWEditorBase || child is TextBox || child is CheckBox || child is ComboBox || child is DatePicker)
                         return (FrameworkElement)child;
                     queue.Enqueue(child);
                 }
@@ -389,8 +393,14 @@ namespace WWControls.Wpf.Grids
 
             object rawValue = null;
 
+            // WWEditorBase editors expose their edited value via EditedValue (Value, or IsChecked
+            // for WWCheckBox) — read that rather than a template-internal input's text.
+            if (editingElement is WWEditorBase wwEditor)
+            {
+                rawValue = wwEditor.EditedValue;
+            }
             // Handle TextBox (most common case)
-            if (editingElement is TextBox textBox)
+            else if (editingElement is TextBox textBox)
             {
                 rawValue = textBox.Text;
             }
@@ -495,8 +505,14 @@ namespace WWControls.Wpf.Grids
 
             try
             {
+                // WWEditorBase editors own the row-item binding on their value DP (Value, or
+                // IsChecked for WWCheckBox); CommitValueToSource pushes it and runs its rules.
+                if (editingElement is WWEditorBase wwEditor)
+                {
+                    wwEditor.CommitValueToSource();
+                }
                 // For TextBox, update the Text binding
-                if (editingElement is TextBox textBox)
+                else if (editingElement is TextBox textBox)
                 {
                     var binding = textBox.GetBindingExpression(TextBox.TextProperty);
                     binding?.UpdateSource();

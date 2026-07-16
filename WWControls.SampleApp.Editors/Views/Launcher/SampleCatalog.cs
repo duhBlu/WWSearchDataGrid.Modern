@@ -3,6 +3,7 @@ using WWControls.SampleApp.Editors.Views.Samples.Buttons;
 using WWControls.SampleApp.Editors.Views.Samples.Dialogs;
 using WWControls.SampleApp.Editors.Views.Samples.Editors;
 using WWControls.SampleApp.Editors.Views.Samples.Primitives;
+using WWControls.SampleApp.Editors.Views.Samples.PropertyGrid;
 using WWControls.SampleApp.Editors.Views.Samples.Trees;
 
 namespace WWControls.SampleApp.Editors.Views.Launcher
@@ -70,13 +71,33 @@ namespace WWControls.SampleApp.Editors.Views.Launcher
 
             new SampleCategory(
                 "Property Grid",
-                "The WWPropertyGrid — reflection-driven, category-grouped property editing with per-property editor templates.",
+                "The WWPropertyGrid — reflection-driven, category-grouped property editing: auto typed editors, per-property settings and templates, live metadata, and validation.",
                 new SampleDefinition[]
                 {
-                    new("WWPropertyGrid",
-                        "Reflects a bound object's properties (grouped by [Category], labeled from [DisplayName] / [Description]), with custom editor templates supplied per property via EditorDefinitions and a read-only placeholder for the rest. Includes the search filter, category expanders, resizable name column, and the selected-row description panel.",
-                        new[] { "PropertyGrid", "Reflection", "Editors" },
-                        () => new PropertyGridSampleView()),
+                    new("Basics",
+                        "Point the grid at any object: properties grouped by [Category] / [Display(GroupName)], labeled from [DisplayName] / [Display(Name)], described in the panel, and edited by a typed editor auto-picked from each CLR type — with the search filter, category expanders, and resizable name column. No per-property setup.",
+                        new[] { "PropertyGrid", "Reflection", "Auto" },
+                        () => new PropertyGridBasicsSampleView()),
+
+                    new("Editor Settings",
+                        "Per-property WWPropertyDefinition.EditSettings — the same BaseEditorSettings the SearchDataGrid uses for its cells: a currency mask, a Simple phone mask, a bounded/stepped spinner, a view-model-bound combo, and a date editor.",
+                        new[] { "PropertyGrid", "EditSettings", "Mask" },
+                        () => new PropertyGridEditorSettingsSampleView()),
+
+                    new("Custom Templates",
+                        "WWPropertyDefinition.EditTemplate supplies any control as the editor — a rating snap-slider, a percent slider, and a multiline notes box — bound to the property item's {Binding Value}. Custom templates win over settings and the auto editor.",
+                        new[] { "PropertyGrid", "Template", "Slider" },
+                        () => new PropertyGridCustomTemplatesSampleView()),
+
+                    new("Dynamic Metadata",
+                        "Live read-only / visibility from two sources: (A) a definition whose IsReadOnly / IsVisible are bound to the view model, and (B) a model implementing IObservablePropertyMetadataProvider that signals its own changes. Toggle a switch and the grid updates without reassigning the object.",
+                        new[] { "PropertyGrid", "Dynamic", "ReadOnly" },
+                        () => new PropertyGridDynamicMetadataSampleView()),
+
+                    new("Validation",
+                        "Data-annotation attributes ([Required] / [Range] / [StringLength] / [EmailAddress]) and INotifyDataErrorInfo surface as a per-row badge, with per-property severity (an advisory warning) via IValidationSeverityProvider. Grid-wide ShowValidationErrors and AllowCommitOnValidationError toggles drive display and commit gating.",
+                        new[] { "PropertyGrid", "Validation", "Badge" },
+                        () => new PropertyGridValidationSampleView()),
                 }),
 
             new SampleCategory(

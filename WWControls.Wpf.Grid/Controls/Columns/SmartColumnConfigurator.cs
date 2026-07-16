@@ -107,7 +107,7 @@ namespace WWControls.Wpf.Grids
             CoreAnnotations.EditorKind kind = ResolveEditorKind(attrs);
             CoreAnnotations.MaskAttribute mask = attrs.OfType<CoreAnnotations.MaskAttribute>().FirstOrDefault();
 
-            BaseEditorSettings settings = CreateEditor(kind);
+            BaseEditorSettings settings = EditorSettingsFactory.CreateSettings(kind);
 
             if (mask != null)
             {
@@ -162,15 +162,5 @@ namespace WWControls.Wpf.Grids
             var def = editorAttrs.FirstOrDefault(a => a.Context == CoreAnnotations.EditorContext.Default);
             return def?.Editor ?? CoreAnnotations.EditorKind.Default;
         }
-
-        private static BaseEditorSettings CreateEditor(CoreAnnotations.EditorKind kind) => kind switch
-        {
-            CoreAnnotations.EditorKind.Text => new TextBoxSettings(),
-            CoreAnnotations.EditorKind.CheckBox => new CheckBoxSettings(),
-            CoreAnnotations.EditorKind.ComboBox => new ComboBoxSettings(),
-            CoreAnnotations.EditorKind.Date => new DatePickerSettings(),
-            CoreAnnotations.EditorKind.Spin => new NumericUpDownSettings(),
-            _ => null, // Default → let ColumnDataBase.AutoCreateEditSettings pick by CLR type.
-        };
     }
 }

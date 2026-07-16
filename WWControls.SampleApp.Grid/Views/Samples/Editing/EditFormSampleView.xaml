@@ -12,8 +12,10 @@
     </UserControl.DataContext>
 
     <UserControl.Resources>
-        <!--  Custom edit-form layout, toggled on from the side panel. DataContext is the edited row
-              item; each EditFormEditor drops in the matching column's editor by FieldName.  -->
+        <!--
+            Custom edit-form layout, toggled on from the side panel. DataContext is the edited row
+            item; each EditFormEditor drops in the matching column's editor by FieldName.
+        -->
         <DataTemplate x:Key="CustomEditForm">
             <Grid Margin="16,12">
                 <Grid.ColumnDefinitions>
@@ -28,20 +30,52 @@
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
 
-                <TextBlock Text="Name:" VerticalAlignment="Center" Margin="0,4,12,4" />
-                <sdg:EditFormEditor FieldName="Name" Grid.Column="1" Grid.ColumnSpan="3" Margin="0,2" />
+                <TextBlock Text="Name:"
+                           Margin="0,4,12,4"
+                           VerticalAlignment="Center" />
+                <sdg:EditFormEditor Grid.Column="1"
+                                    Grid.ColumnSpan="3"
+                                    Margin="0,2"
+                                    FieldName="Name" />
 
-                <TextBlock Text="Department:" Grid.Row="1" VerticalAlignment="Center" Margin="0,4,12,4" />
-                <sdg:EditFormEditor FieldName="Department" Grid.Row="1" Grid.Column="1" Margin="0,2" />
+                <TextBlock Grid.Row="1"
+                           Text="Department:"
+                           Margin="0,4,12,4"
+                           VerticalAlignment="Center" />
+                <sdg:EditFormEditor Grid.Row="1"
+                                    Grid.Column="1"
+                                    Margin="0,2"
+                                    FieldName="Department" />
 
-                <TextBlock Text="Priority:" Grid.Row="1" Grid.Column="2" VerticalAlignment="Center" Margin="16,4,12,4" />
-                <sdg:EditFormEditor FieldName="PriorityId" Grid.Row="1" Grid.Column="3" Margin="0,2" />
+                <TextBlock Grid.Row="1"
+                           Grid.Column="2"
+                           Text="Priority:"
+                           Margin="16,4,12,4"
+                           VerticalAlignment="Center" />
+                <sdg:EditFormEditor Grid.Row="1"
+                                    Grid.Column="3"
+                                    Margin="0,2"
+                                    FieldName="PriorityId" />
 
-                <TextBlock Text="Salary:" Grid.Row="2" VerticalAlignment="Center" Margin="0,4,12,4" />
-                <sdg:EditFormEditor FieldName="Salary" Grid.Row="2" Grid.Column="1" Margin="0,2" />
+                <TextBlock Grid.Row="2"
+                           Text="Salary:"
+                           Margin="0,4,12,4"
+                           VerticalAlignment="Center" />
+                <sdg:EditFormEditor Grid.Row="2"
+                                    Grid.Column="1"
+                                    Margin="0,2"
+                                    FieldName="Salary" />
 
-                <TextBlock Text="Active:" Grid.Row="2" Grid.Column="2" VerticalAlignment="Center" Margin="16,4,12,4" />
-                <sdg:EditFormEditor FieldName="IsActive" Grid.Row="2" Grid.Column="3" Margin="0,2" HorizontalAlignment="Left" />
+                <TextBlock Grid.Row="2"
+                           Grid.Column="2"
+                           Text="Active:"
+                           Margin="16,4,12,4"
+                           VerticalAlignment="Center" />
+                <sdg:EditFormEditor Grid.Row="2"
+                                    Grid.Column="3"
+                                    Margin="0,2"
+                                    HorizontalAlignment="Left"
+                                    FieldName="IsActive" />
             </Grid>
         </DataTemplate>
     </UserControl.Resources>
@@ -49,11 +83,11 @@
     <sampleControls:SampleHostControl Sources="{x:Static sampleControls:SampleSources.EditForm}">
         <DockPanel>
             <TextBlock DockPanel.Dock="Top"
+                       Foreground="#444"
                        Margin="16,12,16,4"
                        FontSize="13"
-                       Foreground="#444"
                        TextWrapping="Wrap">
-                <Run FontWeight="SemiBold" Text="Inline edit form — edit a whole row through a form" />
+                <Run Text="Inline edit form — edit a whole row through a form" FontWeight="SemiBold" />
                 <LineBreak />
                 <Run Text="With EditFormShowMode set, the row promotes (on RowEditTrigger) into a caption/editor form hosted in the row's details area instead of the column-aligned strip. The form reuses each column's editor and the row's IEditableObject transaction, so Update commits every field and Cancel reverts them all." />
             </TextBlock>
@@ -75,38 +109,61 @@
                                     EditFormPostConfirmationMode="{Binding SelectedConfirmation}"
                                     EditFormCaption="Edit Employee">
                     <sdg:SearchDataGrid.GridColumns>
-                        <sdg:GridColumn Width="50" FieldName="Id" Header="#" IsReadOnly="True" EditFormCaption="Employee #" />
+                        <sdg:GridColumn IsReadOnly="True"
+                                        Width="50"
+                                        FieldName="Id"
+                                        Header="#"
+                                        EditFormCaption="Employee #" />
 
                         <!--  Name spans the full form width (EditFormColumnSpan = 2 renders it full-width).  -->
-                        <sdg:GridColumn Width="2*" FieldName="Name" Header="Name" EditFormColumnSpan="2" />
+                        <sdg:GridColumn Width="2*"
+                                        FieldName="Name"
+                                        Header="Name"
+                                        EditFormColumnSpan="2" />
 
-                        <sdg:GridColumn Width="130" FieldName="Department" Header="Department">
+                        <sdg:GridColumn Width="130"
+                                        FieldName="Department"
+                                        Header="Department">
                             <sdg:GridColumn.EditSettings>
                                 <sdg:ComboBoxSettings ItemsSource="{Binding Departments}" />
                             </sdg:GridColumn.EditSettings>
                         </sdg:GridColumn>
 
-                        <sdg:GridColumn Width="100" FieldName="PriorityId" Header="Priority" EditFormCaption="Priority level">
+                        <sdg:GridColumn Width="100"
+                                        FieldName="PriorityId"
+                                        Header="Priority"
+                                        EditFormCaption="Priority level">
                             <sdg:GridColumn.EditSettings>
                                 <sdg:ComboBoxSettings ItemsSource="{Binding Priorities}"
-                                                          DisplayMemberPath="Name"
-                                                          SelectedValuePath="Id" />
+                                                      DisplayMemberPath="Name"
+                                                      SelectedValuePath="Id" />
                             </sdg:GridColumn.EditSettings>
                         </sdg:GridColumn>
 
-                        <sdg:GridColumn Width="110" FieldName="Salary" Header="Salary" DisplayStringFormat="C0" EditFormCaption="Annual Salary">
+                        <sdg:GridColumn Width="110"
+                                        FieldName="Salary"
+                                        Header="Salary"
+                                        DisplayStringFormat="C0"
+                                        EditFormCaption="Annual Salary">
                             <sdg:GridColumn.EditSettings>
-                                <sdg:NumericUpDownSettings Minimum="0" Maximum="500000" Increment="1000" LargeIncrement="10000" />
+                                <sdg:NumericUpDownSettings Minimum="0"
+                                                           Maximum="500000"
+                                                           Increment="1000"
+                                                           LargeIncrement="10000" />
                             </sdg:GridColumn.EditSettings>
                         </sdg:GridColumn>
 
-                        <sdg:GridColumn Width="120" FieldName="StartDate" Header="Start Date">
+                        <sdg:GridColumn Width="120"
+                                        FieldName="StartDate"
+                                        Header="Start Date">
                             <sdg:GridColumn.EditSettings>
                                 <sdg:DatePickerSettings />
                             </sdg:GridColumn.EditSettings>
                         </sdg:GridColumn>
 
-                        <sdg:GridColumn Width="70" FieldName="IsActive" Header="Active">
+                        <sdg:GridColumn Width="70"
+                                        FieldName="IsActive"
+                                        Header="Active">
                             <sdg:GridColumn.EditSettings>
                                 <sdg:CheckBoxSettings />
                             </sdg:GridColumn.EditSettings>
@@ -114,17 +171,26 @@
                     </sdg:SearchDataGrid.GridColumns>
                 </sdg:SearchDataGrid>
 
-                <GridSplitter Grid.Column="1" HorizontalAlignment="Stretch" Width="5" Background="#CCCCCC" />
+                <GridSplitter Grid.Column="1"
+                              Background="#CCCCCC"
+                              HorizontalAlignment="Stretch"
+                              Width="5" />
 
-                <ScrollViewer Grid.Column="2" Background="#FFFFFF" VerticalScrollBarVisibility="Auto" Padding="8,4">
+                <ScrollViewer Grid.Column="2"
+                              Background="#FFFFFF"
+                              Padding="8,4"
+                              VerticalScrollBarVisibility="Auto">
                     <sdg:SimpleStackPanel Orientation="Vertical" Spacing="8">
 
                         <Expander Header="Form options" IsExpanded="True">
-                            <sdg:SimpleStackPanel Margin="4" Orientation="Vertical" Spacing="8">
-                                <TextBlock FontWeight="Bold" Text="EditFormShowMode:" />
-                                <ComboBox ItemsSource="{Binding ShowModeChoices}"
-                                          SelectedItem="{Binding SelectedShowMode, Mode=TwoWay}" />
-                                <TextBlock FontSize="11" Foreground="#666" TextWrapping="Wrap">
+                            <sdg:SimpleStackPanel Orientation="Vertical"
+                                                  Margin="4"
+                                                  Spacing="8">
+                                <TextBlock Text="EditFormShowMode:" FontWeight="Bold" />
+                                <ComboBox ItemsSource="{Binding ShowModeChoices}" SelectedItem="{Binding SelectedShowMode, Mode=TwoWay}" />
+                                <TextBlock Foreground="#666"
+                                           FontSize="11"
+                                           TextWrapping="Wrap">
                                     <Run Text="• None — full-row editing uses the column-aligned strip (no form)." />
                                     <LineBreak />
                                     <Run Text="• Inline — the form shows beneath the row; the row's cells stay visible." />
@@ -132,38 +198,50 @@
                                     <Run Text="• InlineHideRow — the form replaces the row (its cells are hidden)." />
                                 </TextBlock>
 
-                                <TextBlock FontWeight="Bold" Text="RowEditTrigger:" Margin="0,4,0,0" />
-                                <ComboBox ItemsSource="{Binding TriggerChoices}"
-                                          SelectedItem="{Binding SelectedTrigger, Mode=TwoWay}" />
+                                <TextBlock Text="RowEditTrigger:"
+                                           Margin="0,4,0,0"
+                                           FontWeight="Bold" />
+                                <ComboBox ItemsSource="{Binding TriggerChoices}" SelectedItem="{Binding SelectedTrigger, Mode=TwoWay}" />
 
-                                <TextBlock FontWeight="Bold" Text="EditFormPostConfirmationMode:" Margin="0,4,0,0" />
-                                <ComboBox ItemsSource="{Binding ConfirmationChoices}"
-                                          SelectedItem="{Binding SelectedConfirmation, Mode=TwoWay}" />
-                                <TextBlock FontSize="11" Foreground="#666" TextWrapping="Wrap"
-                                           Text="When set, moving focus out of a form with unsaved changes prompts before discarding the edit." />
+                                <TextBlock Text="EditFormPostConfirmationMode:"
+                                           Margin="0,4,0,0"
+                                           FontWeight="Bold" />
+                                <ComboBox ItemsSource="{Binding ConfirmationChoices}" SelectedItem="{Binding SelectedConfirmation, Mode=TwoWay}" />
+                                <TextBlock Foreground="#666"
+                                           Text="When set, moving focus out of a form with unsaved changes prompts before discarding the edit."
+                                           FontSize="11"
+                                           TextWrapping="Wrap" />
 
                                 <CheckBox x:Name="CustomLayoutToggle"
                                           Margin="0,8,0,0"
                                           Content="Use custom form layout (EditFormTemplate)"
                                           Checked="OnCustomLayoutToggled"
                                           Unchecked="OnCustomLayoutToggled" />
-                                <TextBlock FontSize="11" Foreground="#666" TextWrapping="Wrap"
-                                           Text="Swaps the auto-generated layout for a two-column custom template built from EditFormEditor elements." />
+                                <TextBlock Foreground="#666"
+                                           Text="Swaps the auto-generated layout for a two-column custom template built from EditFormEditor elements."
+                                           FontSize="11"
+                                           TextWrapping="Wrap" />
 
-                                <Button Margin="0,8,0,0"
+                                <Button Click="OnShowEditFormClick"
+                                        Margin="0,8,0,0"
                                         Padding="8,4"
-                                        Content="Show edit form for selected row"
-                                        Click="OnShowEditFormClick" />
+                                        Content="Show edit form for selected row" />
                             </sdg:SimpleStackPanel>
                         </Expander>
 
                         <Expander Header="Last action" IsExpanded="True">
-                            <TextBlock Margin="4" FontSize="12" Foreground="#444" TextWrapping="Wrap"
-                                       Text="{Binding LastAction}" />
+                            <TextBlock Foreground="#444"
+                                       Text="{Binding LastAction}"
+                                       Margin="4"
+                                       FontSize="12"
+                                       TextWrapping="Wrap" />
                         </Expander>
 
                         <Expander Header="Try it" IsExpanded="False">
-                            <TextBlock Margin="4" FontSize="11" Foreground="#666" TextWrapping="Wrap">
+                            <TextBlock Foreground="#666"
+                                       Margin="4"
+                                       FontSize="11"
+                                       TextWrapping="Wrap">
                                 <Run Text="• Click any cell — the row opens as a form (Inline shows it under the row; InlineHideRow replaces the row)." />
                                 <LineBreak />
                                 <Run Text="• Edit fields, then Update to commit them together, or Cancel / Esc to revert the whole row." />

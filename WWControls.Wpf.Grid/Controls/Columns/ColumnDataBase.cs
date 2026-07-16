@@ -25,6 +25,12 @@ namespace WWControls.Wpf.Grids
         /// <summary>The grid host when this column is hosted in a data grid; null otherwise. Satisfies <see cref="IEditorColumn.Host"/> (upcast of <see cref="ColumnLayoutBase.View"/>).</summary>
         public IEditingGridHost Host => View;
 
+        /// <summary>Satisfies <see cref="IEditorColumn.AllowCommitOnValidationError"/> by delegating to the grid host's <see cref="IEditingGridHost.AllowCommitOnValidationAttributeError"/> (false when unhosted).</summary>
+        public bool AllowCommitOnValidationError => Host?.AllowCommitOnValidationAttributeError ?? false;
+
+        /// <summary>Satisfies <see cref="IEditorColumn.IsValueReadOnly"/>. Always false for a grid column — a read-only cell never enters edit mode, so its two-way edit binding is never created.</summary>
+        public bool IsValueReadOnly => false;
+
         protected ColumnDataBase()
         {
             // Initialize the custom-popup tabs collection so the XAML implicit-collection syntax
@@ -2515,7 +2521,7 @@ namespace WWControls.Wpf.Grids
         /// <see cref="ValidationCellPresenter"/> so a <see cref="ValidationErrorIcon"/> badge sits
         /// beside the cell content (badge appears whenever the value fails its data-annotation
         /// attributes). The presenter's layout is themable via
-        /// <see cref="GridThemeKeys.ValidationCellPresenter"/>; this method only feeds it the per-column
+        /// <see cref="EditorThemeKeys.ValidationCellPresenter"/>; this method only feeds it the per-column
         /// content, field name, and resolved <see cref="ActualShowValidationAttributeErrors"/>.
         /// </summary>
         private static DataTemplate BuildValidatingCellTemplate(DataTemplate inner, ColumnDataBase column)
@@ -2528,6 +2534,8 @@ namespace WWControls.Wpf.Grids
             // display template. The presenter's themed template overlays the badge.
             presenter.SetBinding(ContentControl.ContentProperty, new Binding());
             presenter.SetValue(ContentControl.ContentTemplateProperty, inner);
+            // The badge validates the row item — here the same object as the cell DataContext.
+            presenter.SetBinding(ValidationCellPresenter.ValidatedItemProperty, new Binding());
             return new DataTemplate { VisualTree = presenter };
         }
 

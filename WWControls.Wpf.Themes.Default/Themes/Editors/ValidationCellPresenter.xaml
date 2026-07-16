@@ -3,15 +3,18 @@
                     xmlns:sdg="http://schemas.wwcontrols.com/wpf">
 
     <!--
-        ValidationCellPresenter — the layout of a validated grid cell.
+        ValidationCellPresenter — the layout of a validated editing surface.
 
-        A DockPanel keeps the error badge in a left gutter and lets the real cell content
-        (Content / ContentTemplate, supplied per column by the grid) fill the rest, so the badge
-        never overlaps the text. When the badge is collapsed (no error) it takes no space and the
-        content sits flush left. Retemplate this key to change that arrangement — e.g. move the
-        badge to the right, or reserve a fixed-width gutter.
+        A DockPanel keeps the error badge in a left gutter and lets the real content
+        (Content / ContentTemplate, supplied per column by the grid or per row by the property
+        grid) fill the rest, so the badge never overlaps the text. When the badge is collapsed
+        (no error) it takes no space and the content sits flush left. Retemplate this key to change
+        that arrangement — e.g. move the badge to the right, or reserve a fixed-width gutter.
+
+        Lives in the Editors theme slice (keyed off EditorThemeKeys) so both editing hosts — the
+        SearchDataGrid and the WWPropertyGrid — share one presenter.
     -->
-    <Style x:Key="{x:Static sdg:GridThemeKeys.ValidationCellPresenter}" TargetType="{x:Type sdg:ValidationCellPresenter}">
+    <Style x:Key="{x:Static sdg:EditorThemeKeys.ValidationCellPresenter}" TargetType="{x:Type sdg:ValidationCellPresenter}">
         <Setter Property="Focusable" Value="False" />
         <Setter Property="HorizontalContentAlignment" Value="Stretch" />
         <Setter Property="VerticalContentAlignment" Value="Stretch" />
@@ -25,7 +28,7 @@
                                                  HorizontalAlignment="Left"
                                                  VerticalAlignment="Center"
                                                  Validation.ErrorTemplate="{x:Null}"
-                                                 Item="{Binding}"
+                                                 Item="{Binding ValidatedItem, RelativeSource={RelativeSource TemplatedParent}}"
                                                  PropertyName="{Binding PropertyName, RelativeSource={RelativeSource TemplatedParent}}"
                                                  IsValidationEnabled="{Binding IsValidationEnabled, RelativeSource={RelativeSource TemplatedParent}}"
                                                  OverrideErrorMessage="{Binding EditorErrorMessage, RelativeSource={RelativeSource TemplatedParent}}" />
@@ -37,6 +40,6 @@
         </Setter>
     </Style>
 
-    <Style BasedOn="{StaticResource {x:Static sdg:GridThemeKeys.ValidationCellPresenter}}" TargetType="{x:Type sdg:ValidationCellPresenter}" />
+    <Style BasedOn="{StaticResource {x:Static sdg:EditorThemeKeys.ValidationCellPresenter}}" TargetType="{x:Type sdg:ValidationCellPresenter}" />
 
 </ResourceDictionary>

@@ -188,8 +188,11 @@ namespace WWControls.Wpf.Editors.Settings
             SuppressValidationErrorAdorner(factory);
 
             // Grid-cell interaction — focus-on-edit, mouse-click caret, and arrow-key cell exit —
-            // is layered on by the grid-side host (EditorHostBehavior), not by the control.
-            factory.SetValue(EditorHostBehavior.HostInCellProperty, true);
+            // is layered on by the grid-side host (EditorHostBehavior), not by the control. Only a
+            // grid-hosted column wants it; a hostless column (e.g. a property-grid row) has no cell
+            // to navigate, so leave the wiring off.
+            if (column?.Host != null)
+                factory.SetValue(EditorHostBehavior.HostInCellProperty, true);
 
             return new DataTemplate { VisualTree = factory };
         }

@@ -4,22 +4,23 @@ using System.Linq;
 using System.Windows;
 using WWControls.Core.Validation;
 
-namespace WWControls.Wpf.Grids
+namespace WWControls.Wpf.Editors
 {
     /// <summary>
     /// A <see cref="StatusIcon"/> that drives its <see cref="StatusIcon.Status"/> and
     /// <see cref="StatusIcon.Message"/> from a property's <see cref="System.ComponentModel.DataAnnotations"/>
-    /// validation attributes. Backs the display-mode half of Phase 2.2 — it surfaces validation
-    /// errors on data that's already loaded (not just while editing), reusing the
-    /// <see cref="StatusIcon"/> template for its visual and (blink) animation.
+    /// validation attributes. Surfaces validation errors on data that's already loaded (not just
+    /// while editing), reusing the <see cref="StatusIcon"/> template for its visual and (blink)
+    /// animation.
     /// </summary>
     /// <remarks>
-    /// The grid drops one onto each validated column's display template (see
-    /// <c>ColumnDataBase.CreateDataGridColumn</c>), binding <see cref="Item"/> to the row item and
-    /// <see cref="IsValidationEnabled"/> to the column's resolved
+    /// Lives in the Editors assembly so both editing hosts share it — the SearchDataGrid drops one
+    /// onto each validated column's cell template (via <c>ColumnDataBase.BuildValidatingCellTemplate</c>),
+    /// and the property grid overlays one per validated row. The host binds <see cref="Item"/> to the
+    /// row item / model and <see cref="IsValidationEnabled"/> to the column's resolved
     /// <c>ActualShowValidationAttributeErrors</c>. It re-validates whenever those inputs change and
-    /// whenever the row item raises <see cref="INotifyPropertyChanged"/> for the watched property,
-    /// then sets <see cref="StatusIcon.Status"/> to <see cref="StatusKind.Error"/> (or
+    /// whenever the item raises <see cref="INotifyPropertyChanged"/> for the watched property, then
+    /// sets <see cref="StatusIcon.Status"/> to <see cref="StatusKind.Error"/> (or
     /// <see cref="StatusKind.None"/>) — the template handles showing, hiding, and animating.
     /// </remarks>
     public sealed class ValidationErrorIcon : StatusIcon
