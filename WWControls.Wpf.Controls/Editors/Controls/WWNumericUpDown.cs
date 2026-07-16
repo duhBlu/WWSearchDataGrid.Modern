@@ -7,7 +7,7 @@ using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
 
-namespace WWControls.Wpf.Editors
+namespace WWControls.Wpf.Controls.Editors
 {
     /// <summary>
     /// Spinner numeric editor. A lookless control whose template hosts a right-aligned

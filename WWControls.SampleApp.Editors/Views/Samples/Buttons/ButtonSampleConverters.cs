@@ -3,7 +3,7 @@ using System.Globalization;
 using System.Windows;
 using System.Windows.Data;
 using System.Windows.Media;
-using WWControls.Wpf.Primitives;
+using WWControls.Wpf.Controls.Primitives;
 
 namespace WWControls.SampleApp.Editors.Views.Samples.Buttons
 {

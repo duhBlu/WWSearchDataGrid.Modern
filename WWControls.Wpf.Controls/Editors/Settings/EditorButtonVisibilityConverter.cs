@@ -3,7 +3,7 @@ using System.Globalization;
 using System.Windows;
 using System.Windows.Data;
 
-namespace WWControls.Wpf.Editors.Settings
+namespace WWControls.Wpf.Controls.Editors.Settings
 {
     /// <summary>
     /// Drives the <see cref="UIElement.Visibility"/> of an editor's decoration buttons (combo

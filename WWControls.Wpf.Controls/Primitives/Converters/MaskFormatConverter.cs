@@ -3,7 +3,7 @@ using System.Globalization;
 using System.Windows.Data;
 using WWControls.Core.Display;
 
-namespace WWControls.Wpf.Converters
+namespace WWControls.Wpf.Controls.Primitives
 {
     /// <summary>
     /// Value converter that formats raw values through a mask pattern. The mask string is

@@ -5,9 +5,9 @@ using System.Windows.Controls.Primitives;
 using System.Windows.Data;
 using System.Windows.Input;
 using WWControls.Core.Display;
-using WWControls.Wpf.Converters;
+using WWControls.Wpf.Controls.Primitives;
 
-namespace WWControls.Wpf.Editors.Settings
+namespace WWControls.Wpf.Controls.Editors.Settings
 {
     /// <summary>
     /// Date editor with full mask support.

@@ -2,7 +2,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 
-namespace WWControls.Wpf.Primitives
+namespace WWControls.Wpf.Controls.Primitives
 {
     /// <summary>
     /// Typed resource keys for the primitive controls' default styles. Consumers retheme a primitive

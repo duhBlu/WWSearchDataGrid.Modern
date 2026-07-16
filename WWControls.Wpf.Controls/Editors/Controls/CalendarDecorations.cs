@@ -1,6 +1,6 @@
 using System.Windows;
 
-namespace WWControls.Wpf.Editors
+namespace WWControls.Wpf.Controls.Editors
 {
     /// <summary>
     /// Inheritable attached properties the date editor sets on its popup <c>Calendar</c> so the

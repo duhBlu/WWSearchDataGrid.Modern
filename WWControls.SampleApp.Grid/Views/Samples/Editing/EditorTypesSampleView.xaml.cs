@@ -1,7 +1,7 @@
 using System.ComponentModel;
 using System.Windows.Controls;
 using WWControls.Wpf;
-using WWControls.Wpf.Editors.Settings;
+using WWControls.Wpf.Controls.Editors.Settings;
 
 namespace WWControls.SampleApp.Grid.Views.Samples.Editing
 {

@@ -2,7 +2,7 @@ using System;
 using WWControls.Core.DataAnnotations;
 using WWControls.Core.Display;
 
-namespace WWControls.Wpf.Editors.Settings
+namespace WWControls.Wpf.Controls.Editors.Settings
 {
     /// <summary>
     /// Maps an <see cref="EditorKind"/> (or a CLR type) to a fresh <see cref="BaseEditorSettings"/>

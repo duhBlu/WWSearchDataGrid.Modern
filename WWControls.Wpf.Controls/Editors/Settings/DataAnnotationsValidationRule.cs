@@ -8,7 +8,7 @@ using System.Windows.Data;
 // used only for the results list below (fully qualified to avoid the collision).
 using ValidationResult = System.Windows.Controls.ValidationResult;
 
-namespace WWControls.Wpf.Editors.Settings
+namespace WWControls.Wpf.Controls.Editors.Settings
 {
     /// <summary>
     /// A <see cref="ValidationRule"/> that validates a proposed cell value against the bound

@@ -1,6 +1,6 @@
 using System;
 
-namespace WWControls.Wpf.Editors
+namespace WWControls.Wpf.Controls.Editors
 {
     /// <summary>
     /// Implemented by a <see cref="WWPropertyGrid"/> source object to supply property metadata at

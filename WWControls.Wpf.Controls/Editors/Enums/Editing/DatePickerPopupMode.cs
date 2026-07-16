@@ -1,4 +1,4 @@
-namespace WWControls.Wpf
+namespace WWControls.Wpf.Controls.Editors
 {
     /// <summary>
     /// Which picker surface the date editor's dropdown popup presents.

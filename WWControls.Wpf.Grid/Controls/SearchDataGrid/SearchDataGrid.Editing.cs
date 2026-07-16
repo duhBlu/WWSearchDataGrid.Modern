@@ -10,7 +10,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
 using WWControls.Core;
-using WWControls.Wpf.Editors;
+using WWControls.Wpf.Controls.Editors;
 
 namespace WWControls.Wpf.Grids
 {

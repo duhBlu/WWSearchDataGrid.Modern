@@ -1,4 +1,4 @@
-namespace WWControls.Wpf
+namespace WWControls.Wpf.Controls.Editors
 {
     /// <summary>
     /// Controls when an editor's decoration buttons (ComboBox toggle, spinner up/down,

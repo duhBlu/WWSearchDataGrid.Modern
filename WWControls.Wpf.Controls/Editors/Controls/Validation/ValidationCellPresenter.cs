@@ -2,7 +2,7 @@ using System;
 using System.Windows;
 using System.Windows.Controls;
 
-namespace WWControls.Wpf.Editors
+namespace WWControls.Wpf.Controls.Editors
 {
     /// <summary>
     /// Hosts a validated cell's display content alongside a <see cref="ValidationErrorIcon"/>

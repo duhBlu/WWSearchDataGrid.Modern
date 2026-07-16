@@ -2,9 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
-using WWControls.Wpf.Editors.Settings;
+using WWControls.Wpf.Controls.Editors.Settings;
 
-namespace WWControls.Wpf.Editors
+namespace WWControls.Wpf.Controls.Editors
 {
     /// <summary>
     /// A per-property declaration for <see cref="WWPropertyGrid"/> — the property-grid parallel of a

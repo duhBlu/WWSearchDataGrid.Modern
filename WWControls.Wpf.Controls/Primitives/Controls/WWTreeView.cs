@@ -4,7 +4,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using WWControls.Core;
 
-namespace WWControls.Wpf.Primitives
+namespace WWControls.Wpf.Controls.Primitives
 {
     /// <summary>
     /// A <see cref="TreeView"/> that adds two-way single-selection binding (<see cref="SelectedObject"/>),

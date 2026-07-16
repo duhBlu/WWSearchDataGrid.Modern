@@ -4,7 +4,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Threading;
 
-namespace WWControls.Wpf.Editors.Settings
+namespace WWControls.Wpf.Controls.Editors.Settings
 {
     /// <summary>
     /// Grid-side glue that teaches a <see cref="WWEditorBase"/>-derived editor how to behave inside a
@@ -109,7 +109,7 @@ namespace WWControls.Wpf.Editors.Settings
 
             // A masked editor runs its own focus handler (selects the first editable region); leave it
             // alone so the two don't clobber each other.
-            if (!string.IsNullOrEmpty(Behaviors.MaskInputBehavior.GetMask(tb))) return;
+            if (!string.IsNullOrEmpty(MaskInputBehavior.GetMask(tb))) return;
 
             // Mouse-opened edit → caret at the clicked character; keyboard-opened edit → select all.
             if (TryApplyMouseClickCaret(tb)) return;

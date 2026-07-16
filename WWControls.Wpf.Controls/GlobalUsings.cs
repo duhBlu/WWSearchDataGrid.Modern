@@ -1,7 +1,5 @@
-// The primitive and editor controls live in one assembly but keep their distinct namespaces. These
-// global usings let any file here reach its siblings across those namespaces without per-file usings.
-// WWControls.Wpf.Behaviors holds MaskInputBehavior (used by the editors). The sub-namespaces share no
-// type names, so pulling them all into scope can never introduce an ambiguity.
-global using WWControls.Wpf.Primitives;
-global using WWControls.Wpf.Editors;
-global using WWControls.Wpf.Behaviors;
+// The primitive and editor controls live in one assembly under two folder-aligned namespaces. These
+// global usings let any file here reach across the two without per-file usings. The namespaces share
+// no type names, so pulling them both into scope can never introduce an ambiguity.
+global using WWControls.Wpf.Controls.Primitives;
+global using WWControls.Wpf.Controls.Editors;

@@ -1,4 +1,4 @@
-namespace WWControls.Wpf.Editors
+namespace WWControls.Wpf.Controls.Editors
 {
     /// <summary>
     /// How <see cref="WWComboBox"/> matches typed text against item display text when

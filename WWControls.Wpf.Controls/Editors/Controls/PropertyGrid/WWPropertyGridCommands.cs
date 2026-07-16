@@ -1,6 +1,6 @@
 using System.Windows.Input;
 
-namespace WWControls.Wpf.Editors
+namespace WWControls.Wpf.Controls.Editors
 {
     /// <summary>
     /// Routed commands for <see cref="WWPropertyGrid"/>. The item template raises

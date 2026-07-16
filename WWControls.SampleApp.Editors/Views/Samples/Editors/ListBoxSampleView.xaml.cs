@@ -1,5 +1,5 @@
 using System.Windows.Controls;
-using WWControls.Wpf.Editors;
+using WWControls.Wpf.Controls.Editors;
 
 namespace WWControls.SampleApp.Editors.Views.Samples.Editors
 {

@@ -1,6 +1,6 @@
 using System.Windows;
 
-namespace WWControls.Wpf.Editors
+namespace WWControls.Wpf.Controls.Editors
 {
     /// <summary>
     /// Typed resource keys for the editor controls' styles — each editor control's own chrome and

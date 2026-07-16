@@ -5,9 +5,9 @@ using System.Reflection;
 using System.Windows;
 using System.Windows.Data;
 using System.Windows.Threading;
-using WWControls.Wpf.Editors.Settings;
+using WWControls.Wpf.Controls.Editors.Settings;
 
-namespace WWControls.Wpf.Editors
+namespace WWControls.Wpf.Controls.Editors
 {
     /// <summary>
     /// One property row in <see cref="WWPropertyGrid"/>. Acts as the <c>DataContext</c> for editor

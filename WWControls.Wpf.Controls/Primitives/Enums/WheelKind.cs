@@ -1,4 +1,4 @@
-namespace WWControls.Wpf.Primitives
+namespace WWControls.Wpf.Controls.Primitives
 {
     /// <summary>
     /// Visual style of a <see cref="WWSpinningWheel"/>.

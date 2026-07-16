@@ -1,8 +1,7 @@
 using System.Windows;
 using System.Windows.Controls;
-using WWControls.Wpf;
 
-namespace WWControls.Wpf.Editors
+namespace WWControls.Wpf.Controls.Editors
 {
     /// <summary>
     /// The grid-side cell-editing services an editor's <c>EditSettings</c> needs when its editor is

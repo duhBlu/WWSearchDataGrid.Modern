@@ -1,4 +1,4 @@
-namespace WWControls.Wpf.Primitives
+namespace WWControls.Wpf.Controls.Primitives
 {
     /// <summary>How a <see cref="WWButton"/> responds to being clicked.</summary>
     public enum ButtonKind

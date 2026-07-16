@@ -9,7 +9,7 @@ using System.Windows.Input;
 using System.Windows.Threading;
 using WWControls.Core.Display;
 
-namespace WWControls.Wpf.Editors
+namespace WWControls.Wpf.Controls.Editors
 {
     /// <summary>
     /// Segmented datetime editor used by <see cref="DatePickerSettings"/>. Each format token in

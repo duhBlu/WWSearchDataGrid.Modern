@@ -1,4 +1,4 @@
-namespace WWControls.Wpf.Primitives
+namespace WWControls.Wpf.Controls.Primitives
 {
     /// <summary>
     /// Optional contract a <see cref="WWTreeView"/> bound item implements to gate its own dragging.

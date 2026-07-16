@@ -1,8 +1,8 @@
 using System;
 using System.Globalization;
 using System.Windows.Data;
-using WWControls.Wpf.Editors;
-using WWControls.Wpf.Primitives;
+using WWControls.Wpf.Controls.Editors;
+using WWControls.Wpf.Controls.Primitives;
 
 namespace WWControls.SampleApp.Editors.Views.Samples.Editors
 {

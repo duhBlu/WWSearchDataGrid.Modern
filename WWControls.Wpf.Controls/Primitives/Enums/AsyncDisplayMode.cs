@@ -1,4 +1,4 @@
-namespace WWControls.Wpf.Primitives
+namespace WWControls.Wpf.Controls.Primitives
 {
     /// <summary>
     /// How a <see cref="WWButton"/> visualizes an asynchronous operation while

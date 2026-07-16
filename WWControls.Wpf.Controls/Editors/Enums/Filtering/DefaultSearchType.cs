@@ -1,4 +1,4 @@
-namespace WWControls.Wpf
+namespace WWControls.Wpf.Controls.Editors
 {
     /// <summary>
     /// Default search type for the auto-filter row's per-column quick search.

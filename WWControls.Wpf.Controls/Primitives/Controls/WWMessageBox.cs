@@ -7,7 +7,7 @@ using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Media;
 
-namespace WWControls.Wpf.Primitives
+namespace WWControls.Wpf.Controls.Primitives
 {
     /// <summary>
     /// The library's message box — a modal dialog carrying a message, an optional severity icon,
@@ -18,10 +18,10 @@ namespace WWControls.Wpf.Primitives
     /// overloads are provided too, so it drops in for existing <c>MessageBox.Show</c> call sites.
     /// </summary>
     /// <remarks>
-    /// Shown by the static <see cref="O:WWControls.Wpf.Primitives.WWMessageBox.Show"/> methods,
+    /// Shown by the static <see cref="O:WWControls.Wpf.Controls.Primitives.WWMessageBox.Show"/> methods,
     /// which host the control in a modal <see cref="Window"/> wearing the library's shared chrome
     /// (<see cref="PrimitiveThemeKeys.Window"/>, applied through
-    /// <see cref="WWControls.Wpf.WindowHostHelper"/>) — the same hosting pattern the Filter Editor
+    /// <see cref="WWControls.Wpf.Controls.Primitives.WindowHostHelper"/>) — the same hosting pattern the Filter Editor
     /// and Column Chooser use. Clicking any command button records it as
     /// <see cref="SelectedCommand"/>, runs that command's <see cref="UICommand.Command"/> if set,
     /// and closes the dialog. A command marked <see cref="UICommand.IsDefault"/> answers to Enter;

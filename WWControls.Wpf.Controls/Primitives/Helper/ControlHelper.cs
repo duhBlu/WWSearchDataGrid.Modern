@@ -1,6 +1,6 @@
 using System.Windows;
 
-namespace WWControls.Wpf.Primitives
+namespace WWControls.Wpf.Controls.Primitives
 {
     /// <summary>
     /// Attached properties that extend any control with restylable chrome knobs the library's

@@ -1,4 +1,4 @@
-namespace WWControls.Wpf.Editors
+namespace WWControls.Wpf.Controls.Editors
 {
     /// <summary>
     /// How <see cref="WWComboBox"/> popup items select.

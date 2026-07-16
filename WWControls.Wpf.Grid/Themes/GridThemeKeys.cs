@@ -13,7 +13,7 @@ namespace WWControls.Wpf
     ///        TargetType="{x:Type sdg:SearchDataGrid}"
     ///        BasedOn="{StaticResource {x:Static sdg:GridThemeKeys.GridSearchDataGrid}}" /&gt;
     /// </code>
-    /// Editor element styles live separately in <see cref="WWControls.Wpf.Editors.EditorThemeKeys"/>.
+    /// Editor element styles live separately in <see cref="WWControls.Wpf.Controls.Editors.EditorThemeKeys"/>.
     /// </summary>
     public static class GridThemeKeys
     {

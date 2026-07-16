@@ -2,7 +2,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using WWControls.Core;
 
-namespace WWControls.Wpf.Primitives
+namespace WWControls.Wpf.Controls.Primitives
 {
     /// <summary>
     /// A button described declaratively: the caption, glyph, and behavior of one choice a

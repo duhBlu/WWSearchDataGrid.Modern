@@ -1,4 +1,4 @@
-namespace WWControls.Wpf.Primitives
+namespace WWControls.Wpf.Controls.Primitives
 {
     /// <summary>
     /// Specifies when the expand-all / collapse-all buttons appear on a <see cref="WWTreeViewItem"/>.

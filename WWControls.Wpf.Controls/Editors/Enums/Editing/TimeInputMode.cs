@@ -1,4 +1,4 @@
-namespace WWControls.Wpf
+namespace WWControls.Wpf.Controls.Editors
 {
     /// <summary>
     /// Whether the date editor lets the user set a time-of-day (the popup's time surface — the

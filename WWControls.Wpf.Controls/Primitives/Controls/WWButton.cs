@@ -6,7 +6,7 @@ using System.Windows.Media;
 using System.Windows.Threading;
 using WWControls.Core;
 
-namespace WWControls.Wpf.Primitives
+namespace WWControls.Wpf.Controls.Primitives
 {
     /// <summary>
     /// The library's general-purpose button. One control covers the three stock button behaviors —

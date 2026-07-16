@@ -5,9 +5,9 @@ using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Media;
 using WWControls.Core.Display;
-using WWControls.Wpf.Behaviors;
+using WWControls.Wpf.Controls.Primitives;
 
-namespace WWControls.Wpf.Editors
+namespace WWControls.Wpf.Controls.Editors
 {
     /// <summary>Which side of the text a <see cref="WWTextBox"/> renders its optional <see cref="WWTextBox.Glyph"/> on.</summary>
     public enum GlyphPlacement

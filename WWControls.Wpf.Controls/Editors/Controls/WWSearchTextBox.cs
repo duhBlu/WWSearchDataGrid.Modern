@@ -12,9 +12,9 @@ using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Threading;
 using WWControls.Core;
-using WWControls.Wpf.Behaviors;
+using WWControls.Wpf.Controls.Primitives;
 
-namespace WWControls.Wpf.Editors
+namespace WWControls.Wpf.Controls.Editors
 {
     /// <summary>
     /// Sort mode for dropdown values

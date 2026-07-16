@@ -1,7 +1,7 @@
 using System.Windows;
 using System.Windows.Input;
 
-namespace WWControls.Wpf
+namespace WWControls.Wpf.Controls.Primitives
 {
     /// <summary>
     /// Shared setup for the windows the library creates in code (Filter Editor, group summary

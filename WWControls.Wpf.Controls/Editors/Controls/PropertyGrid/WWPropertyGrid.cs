@@ -11,9 +11,9 @@ using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
 using WWControls.Core.DataAnnotations;
-using WWControls.Wpf.Editors.Settings;
+using WWControls.Wpf.Controls.Editors.Settings;
 
-namespace WWControls.Wpf.Editors
+namespace WWControls.Wpf.Controls.Editors
 {
     /// <summary>
     /// Reflection-driven property grid. Reads the standard metadata attributes

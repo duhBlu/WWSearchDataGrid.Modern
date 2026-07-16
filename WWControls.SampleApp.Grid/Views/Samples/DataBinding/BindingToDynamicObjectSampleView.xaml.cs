@@ -2,7 +2,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using WWControls.Wpf;
-using WWControls.Wpf.Editors.Settings;
+using WWControls.Wpf.Controls.Editors.Settings;
 
 namespace WWControls.SampleApp.Grid.Views.Samples.DataBinding
 {

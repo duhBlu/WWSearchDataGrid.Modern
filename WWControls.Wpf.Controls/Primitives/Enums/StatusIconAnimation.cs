@@ -1,4 +1,4 @@
-namespace WWControls.Wpf.Primitives
+namespace WWControls.Wpf.Controls.Primitives
 {
     /// <summary>
     /// How a <see cref="StatusIcon"/> animates when it becomes visible. Selected by the default

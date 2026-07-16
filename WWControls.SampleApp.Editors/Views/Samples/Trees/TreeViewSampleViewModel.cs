@@ -2,7 +2,7 @@ using System;
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using WWControls.Wpf.Primitives;
+using WWControls.Wpf.Controls.Primitives;
 
 namespace WWControls.SampleApp.Editors.Views.Samples.Trees
 {
@@ -85,10 +85,10 @@ namespace WWControls.SampleApp.Editors.Views.Samples.Trees
 
             return new[]
             {
-                N("WWControls.Wpf.Primitives", false,
+                N("WWControls.Wpf.Controls.Primitives", false,
                     N("Controls", true, N("WWButton.cs", true), N("WWTreeView.cs", true), N("Icon.cs", true)),
                     N("Themes", true, N("PrimitiveThemeKeys.cs", true), N("Generic.xaml", true))),
-                N("WWControls.Wpf.Editors", false,
+                N("WWControls.Wpf.Controls.Editors", false,
                     N("Controls", true, N("WWTextBox.cs", true), N("WWComboBox.cs", true), N("WWDatePicker.cs", true))),
                 N("Documentation", false,
                     N("Primitives", true, N("WWButton.md", true), N("WWTreeView.md", true))),

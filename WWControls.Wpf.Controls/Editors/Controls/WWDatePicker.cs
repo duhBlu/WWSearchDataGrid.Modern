@@ -2,7 +2,7 @@ using System;
 using System.Windows;
 using WWControls.Core.Display;
 
-namespace WWControls.Wpf.Editors
+namespace WWControls.Wpf.Controls.Editors
 {
     /// <summary>
     /// Date editor. A lookless control whose template wraps the existing

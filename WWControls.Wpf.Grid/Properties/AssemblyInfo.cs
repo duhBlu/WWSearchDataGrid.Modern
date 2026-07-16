@@ -31,7 +31,6 @@ using System.Windows.Markup;
 // (and our own theme dictionaries) use ONE xmlns despite the code being split across folders.
 [assembly: XmlnsPrefix("http://schemas.wwcontrols.com/wpf", "ww")]
 [assembly: XmlnsDefinition("http://schemas.wwcontrols.com/wpf", "WWControls.Wpf")]
-[assembly: XmlnsDefinition("http://schemas.wwcontrols.com/wpf", "WWControls.Wpf.Editors")]
 [assembly: XmlnsDefinition("http://schemas.wwcontrols.com/wpf", "WWControls.Wpf.Grids")]
 [assembly: XmlnsDefinition("http://schemas.wwcontrols.com/wpf", "WWControls.Wpf.Behaviors")]
 [assembly: XmlnsDefinition("http://schemas.wwcontrols.com/wpf", "WWControls.Wpf.Commands")]

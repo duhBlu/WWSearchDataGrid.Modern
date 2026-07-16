@@ -567,7 +567,7 @@ namespace WWControls.Wpf.Grids
                 nameof(DefaultSearchType),
                 typeof(DefaultSearchType),
                 typeof(ColumnDataBase),
-                new PropertyMetadata(WWControls.Wpf.DefaultSearchType.StartsWith, OnDefaultSearchTypePropertyChanged));
+                new PropertyMetadata(WWControls.Wpf.Controls.Editors.DefaultSearchType.StartsWith, OnDefaultSearchTypePropertyChanged));
 
         public DefaultSearchType DefaultSearchType
         {

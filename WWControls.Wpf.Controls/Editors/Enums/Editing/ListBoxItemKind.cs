@@ -1,4 +1,4 @@
-namespace WWControls.Wpf.Editors
+namespace WWControls.Wpf.Controls.Editors
 {
     /// <summary>
     /// Which selection glyph <see cref="WWListBox"/> rows render. Purely visual — how items

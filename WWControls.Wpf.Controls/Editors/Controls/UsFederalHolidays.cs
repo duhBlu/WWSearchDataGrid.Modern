@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace WWControls.Wpf.Editors
+namespace WWControls.Wpf.Controls.Editors
 {
     /// <summary>
     /// The eleven United States federal holidays, computed per year with the federal observance

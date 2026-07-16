@@ -4,9 +4,9 @@
 // those sub-namespaces without per-file usings — they were a single flat namespace before the
 // split, so no two of them share a type name and these can never introduce an ambiguity.
 global using WWControls.Wpf;
-global using WWControls.Wpf.Editors;
-global using WWControls.Wpf.Editors.Settings;
-global using WWControls.Wpf.Primitives;
+global using WWControls.Wpf.Controls.Editors;
+global using WWControls.Wpf.Controls.Editors.Settings;
+global using WWControls.Wpf.Controls.Primitives;
 global using WWControls.Wpf.Grids;
 global using WWControls.Wpf.Behaviors;
 global using WWControls.Wpf.Commands;

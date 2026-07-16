@@ -4,7 +4,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using WWControls.Wpf.Primitives;
+using WWControls.Wpf.Controls.Primitives;
 using AsyncCommand = WWControls.Core.AsyncCommand;
 
 namespace WWControls.SampleApp.Editors.Views.Samples.Buttons

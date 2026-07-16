@@ -2,7 +2,7 @@ using System.Windows;
 using System.Windows.Data;
 using System.Windows.Input;
 
-namespace WWControls.Wpf.Editors.Settings
+namespace WWControls.Wpf.Controls.Editors.Settings
 {
     /// <summary>
     /// Checkbox editor for boolean columns. The display CheckBox is interactive (toggles on

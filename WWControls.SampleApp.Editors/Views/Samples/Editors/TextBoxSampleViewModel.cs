@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Windows;
 using CommunityToolkit.Mvvm.ComponentModel;
-using WWControls.Wpf.Editors;
+using WWControls.Wpf.Controls.Editors;
 
 namespace WWControls.SampleApp.Editors.Views.Samples.Editors
 {

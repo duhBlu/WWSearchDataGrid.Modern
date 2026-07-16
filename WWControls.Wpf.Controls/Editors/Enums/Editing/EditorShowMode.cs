@@ -1,4 +1,4 @@
-namespace WWControls.Wpf
+namespace WWControls.Wpf.Controls.Editors
 {
     /// <summary>
     /// Controls when a click on a cell triggers <see cref="System.Windows.Controls.DataGrid.BeginEdit()"/>.

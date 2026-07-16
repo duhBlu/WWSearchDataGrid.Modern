@@ -6,7 +6,7 @@ using System.Windows.Data;
 using System.Windows.Input;
 using WWControls.Core.Display;
 
-namespace WWControls.Wpf.Behaviors
+namespace WWControls.Wpf.Controls.Primitives
 {
     /// <summary>
     /// Attached behavior that adds mask input handling to any TextBox.

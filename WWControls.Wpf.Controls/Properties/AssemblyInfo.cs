@@ -13,10 +13,10 @@ using System.Windows.Markup;
 
 // Contribute every control namespace to the shared WWControls XML namespace, so consumer XAML (and
 // the theme dictionaries) reach all controls through the one `ww` xmlns. The primitive controls
-// (WWControls.Wpf.Primitives), the editor controls (WWControls.Wpf.Editors) and the grid-agnostic
-// EditSettings adapters (WWControls.Wpf.Editors.Settings) all map to `ww`, so consumer XAML reaches
-// `ww:WWButton`, `ww:WWTextBox` and `ww:TextBoxSettings` alike.
+// (WWControls.Wpf.Controls.Primitives), the editor controls (WWControls.Wpf.Controls.Editors) and the
+// grid-agnostic EditSettings adapters (WWControls.Wpf.Controls.Editors.Settings) all map to `ww`, so
+// consumer XAML reaches `ww:WWButton`, `ww:WWTextBox` and `ww:TextBoxSettings` alike.
 [assembly: XmlnsPrefix("http://schemas.wwcontrols.com/wpf", "ww")]
-[assembly: XmlnsDefinition("http://schemas.wwcontrols.com/wpf", "WWControls.Wpf.Primitives")]
-[assembly: XmlnsDefinition("http://schemas.wwcontrols.com/wpf", "WWControls.Wpf.Editors")]
-[assembly: XmlnsDefinition("http://schemas.wwcontrols.com/wpf", "WWControls.Wpf.Editors.Settings")]
+[assembly: XmlnsDefinition("http://schemas.wwcontrols.com/wpf", "WWControls.Wpf.Controls.Primitives")]
+[assembly: XmlnsDefinition("http://schemas.wwcontrols.com/wpf", "WWControls.Wpf.Controls.Editors")]
+[assembly: XmlnsDefinition("http://schemas.wwcontrols.com/wpf", "WWControls.Wpf.Controls.Editors.Settings")]

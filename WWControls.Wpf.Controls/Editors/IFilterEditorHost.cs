@@ -1,6 +1,6 @@
 using System.Windows.Input;
 
-namespace WWControls.Wpf.Editors
+namespace WWControls.Wpf.Controls.Editors
 {
     /// <summary>
     /// Narrow, grid-agnostic contract an editor's <c>EditSettings</c> binds its filter-row editor to.

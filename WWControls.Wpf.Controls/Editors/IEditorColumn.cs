@@ -1,7 +1,7 @@
 using System.Windows;
 using System.Windows.Data;
 
-namespace WWControls.Wpf.Editors
+namespace WWControls.Wpf.Controls.Editors
 {
     /// <summary>
     /// Grid-agnostic view of a column that an editor's <c>EditSettings</c> reads to build its

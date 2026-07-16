@@ -11,9 +11,9 @@ using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
-using WWControls.Wpf.Primitives;
+using WWControls.Wpf.Controls.Primitives;
 
-namespace WWControls.Wpf.Editors
+namespace WWControls.Wpf.Controls.Editors
 {
     /// <summary>
     /// Dropdown editor. A real <see cref="ComboBox"/> whose single self-contained template owns

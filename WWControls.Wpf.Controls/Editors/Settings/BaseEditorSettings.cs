@@ -9,7 +9,7 @@ using System.Windows.Media;
 using System.Windows.Threading;
 using WWControls.Core;
 
-namespace WWControls.Wpf.Editors.Settings
+namespace WWControls.Wpf.Controls.Editors.Settings
 {
     /// <summary>
     /// Base class for column editor configurations. Each concrete implementation produces a

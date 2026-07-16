@@ -2,7 +2,7 @@ using System.Windows;
 using System.Windows.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using WWControls.Wpf.Primitives;
+using WWControls.Wpf.Controls.Primitives;
 
 namespace WWControls.SampleApp.Editors.Views.Samples.Dialogs
 {

@@ -3,9 +3,9 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using WWControls.Core.Display;
-using WWControls.Wpf.Converters;
+using WWControls.Wpf.Controls.Primitives;
 
-namespace WWControls.Wpf.Editors.Settings
+namespace WWControls.Wpf.Controls.Editors.Settings
 {
     /// <summary>
     /// Plain text editor. TextBlock in display, TextBox in edit. Honors the column's

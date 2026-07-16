@@ -4,7 +4,7 @@ using System.Linq;
 using System.Windows;
 using WWControls.Core.Validation;
 
-namespace WWControls.Wpf.Editors
+namespace WWControls.Wpf.Controls.Editors
 {
     /// <summary>
     /// A <see cref="StatusIcon"/> that drives its <see cref="StatusIcon.Status"/> and

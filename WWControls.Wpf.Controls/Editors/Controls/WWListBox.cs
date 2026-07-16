@@ -11,7 +11,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using Microsoft.Xaml.Behaviors;
 
-namespace WWControls.Wpf.Editors
+namespace WWControls.Wpf.Controls.Editors
 {
     #region Drag Adorner
 

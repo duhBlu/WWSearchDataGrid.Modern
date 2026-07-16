@@ -3,5 +3,5 @@
 // usings. This app deliberately has no WWControls.Wpf.Grids using — the point of the catalog is
 // the editors standing on their own.
 global using WWControls.Wpf;
-global using WWControls.Wpf.Editors;
-global using WWControls.Wpf.Primitives;
+global using WWControls.Wpf.Controls.Editors;
+global using WWControls.Wpf.Controls.Primitives;
