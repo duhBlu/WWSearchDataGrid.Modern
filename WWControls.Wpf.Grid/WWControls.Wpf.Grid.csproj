@@ -16,8 +16,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\WWControls.Core\WWControls.Core.csproj" />
-    <ProjectReference Include="..\WWControls.Wpf.Primitives\WWControls.Wpf.Primitives.csproj" />
-    <ProjectReference Include="..\WWControls.Wpf.Editors\WWControls.Wpf.Editors.csproj" />
+    <ProjectReference Include="..\WWControls.Wpf.Controls\WWControls.Wpf.Controls.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -13,8 +13,7 @@ using System.Runtime.InteropServices;
 
 [assembly: ComVisible(false)]
 
-[assembly: InternalsVisibleTo("WWControls.Wpf.Primitives")]
-[assembly: InternalsVisibleTo("WWControls.Wpf.Editors")]
+[assembly: InternalsVisibleTo("WWControls.Wpf.Controls")]
 [assembly: InternalsVisibleTo("WWControls.Wpf.Grid")]
 [assembly: InternalsVisibleTo("WWControls.Core.Tests")]
 

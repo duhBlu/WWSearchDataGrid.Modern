@@ -3,14 +3,29 @@
 
     <!-- Shim: the default theme lives in WWControls.Wpf.Themes.Default. This file exists so
          [ThemeInfo(GenericDictionaryLocation = SourceAssembly)] resolves to a valid Generic.xaml
-         inside the Editors assembly, giving the editor controls (WWEditorBase + the editor family,
-         SegmentedDateTimeEditor) their default styles without the consumer having to merge anything.
-         Merged bottom-up: DefaultControls brings the shared brushes + icons; EditorParts the shared
-         inner-part styles (flat TextBox, spin button, chevron, themed CheckBox) the per-editor
-         dictionaries reference via StaticResource; then one dictionary per editor; then the
-         EditSettings element styles. Order matters — parts before consumers. -->
+         inside this assembly, giving every WW control (primitives + editors) its default style
+         without the consumer having to merge anything.
+
+         Order matters — shared parts before consumers:
+           1. DefaultControls  — shared brushes + icons + keyed styles (referenced by everything).
+           2. the primitive dictionaries.
+           3. EditorParts      — shared editor inner-part styles (flat TextBox, spin button, chevron,
+              themed CheckBox) that the per-editor dictionaries reference via StaticResource.
+           4. the per-editor dictionaries, then the EditSettings element styles. -->
     <ResourceDictionary.MergedDictionaries>
+        <!-- shared base -->
         <ResourceDictionary Source="pack://application:,,,/WWControls.Wpf.Themes.Default;component/Themes/Primitives/DefaultControls.xaml" />
+
+        <!-- primitives -->
+        <ResourceDictionary Source="pack://application:,,,/WWControls.Wpf.Themes.Default;component/Themes/Primitives/WWSpinningWheel.xaml" />
+        <ResourceDictionary Source="pack://application:,,,/WWControls.Wpf.Themes.Default;component/Themes/Primitives/WWButton.xaml" />
+        <ResourceDictionary Source="pack://application:,,,/WWControls.Wpf.Themes.Default;component/Themes/Primitives/StatusIcon.xaml" />
+        <ResourceDictionary Source="pack://application:,,,/WWControls.Wpf.Themes.Default;component/Themes/Primitives/WWMessageBox.xaml" />
+        <ResourceDictionary Source="pack://application:,,,/WWControls.Wpf.Themes.Default;component/Themes/Primitives/WWTreeView.xaml" />
+        <ResourceDictionary Source="pack://application:,,,/WWControls.Wpf.Themes.Default;component/Themes/Primitives/ContextMenu.xaml" />
+        <ResourceDictionary Source="pack://application:,,,/WWControls.Wpf.Themes.Default;component/Themes/Primitives/Window.xaml" />
+
+        <!-- editors -->
         <ResourceDictionary Source="pack://application:,,,/WWControls.Wpf.Themes.Default;component/Themes/Editors/EditorParts.xaml" />
         <ResourceDictionary Source="pack://application:,,,/WWControls.Wpf.Themes.Default;component/Themes/Editors/WWTextBox.xaml" />
         <ResourceDictionary Source="pack://application:,,,/WWControls.Wpf.Themes.Default;component/Themes/Editors/WWNumericUpDown.xaml" />
