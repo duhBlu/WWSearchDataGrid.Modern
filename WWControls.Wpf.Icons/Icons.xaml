@@ -1,0 +1,16 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- Public entry point for the icon library. Merges the three icon sets so a consumer
+         pulls the whole library with a single dictionary reference:
+             <ResourceDictionary Source="/WWControls.Wpf.Icons;component/Icons.xaml"/>
+         Lucide    — the stock Lucide set.
+         SearchType — datagrid-specific filter glyphs.
+         Custom    — in-house icons drawn in the Lucide style. -->
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="/WWControls.Wpf.Icons;component/Lucide/LucideIcons.xaml" />
+        <ResourceDictionary Source="/WWControls.Wpf.Icons;component/SearchType/SearchTypeIcons.xaml" />
+        <ResourceDictionary Source="/WWControls.Wpf.Icons;component/Custom/CustomIcons.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+
+</ResourceDictionary>

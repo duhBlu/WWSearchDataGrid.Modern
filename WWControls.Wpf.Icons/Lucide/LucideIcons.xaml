@@ -1,0 +1,9 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sdg="http://schemas.wwcontrols.com/wpf">
+
+    <!-- Stock Lucide icons (https://lucide.dev). Each icon is a monochrome DrawingImage in a
+         24x24 viewport, stroke-based with a 2px round-cap / round-join Pen, keyed by a
+         ComponentResourceKey and tinted at render time by the Icon control. -->
+
+</ResourceDictionary>

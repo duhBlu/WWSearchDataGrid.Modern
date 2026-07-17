@@ -28,6 +28,9 @@
     <EmbeddedResource Include="Views\Samples\DataBinding\AutoColumnsSampleView.xaml" />
     <EmbeddedResource Include="Views\Samples\DataBinding\AutoColumnsSampleView.xaml.cs" />
     <EmbeddedResource Include="Views\Samples\DataBinding\AutoColumnsSampleViewModel.cs" />
+    <EmbeddedResource Include="Views\Samples\DataBinding\SmartColumnsSampleView.xaml" />
+    <EmbeddedResource Include="Views\Samples\DataBinding\SmartColumnsSampleView.xaml.cs" />
+    <EmbeddedResource Include="Views\Samples\DataBinding\SmartColumnsSampleViewModel.cs" />
     <EmbeddedResource Include="Views\Samples\DataBinding\DataTableManualSampleView.xaml" />
     <EmbeddedResource Include="Views\Samples\DataBinding\DataTableManualSampleView.xaml.cs" />
     <EmbeddedResource Include="Views\Samples\DataBinding\DataTableManualSampleViewModel.cs" />
@@ -141,6 +144,7 @@
     <EmbeddedResource Include="Models\Contact.cs" />
     <EmbeddedResource Include="Models\ValidationData.cs" />
     <EmbeddedResource Include="Models\PersonInfo.cs" />
+    <EmbeddedResource Include="Models\AnnotatedProduct.cs" />
     <EmbeddedResource Include="SampleData\SampleViewModelBase.cs" />
     <EmbeddedResource Include="SampleData\GeneratableSampleViewModel.cs" />
     <EmbeddedResource Include="SampleData\SampleDataGenerator.cs" />
@@ -149,6 +153,7 @@
     <EmbeddedResource Include="SampleData\Generators\OrderGenerator.cs" />
     <EmbeddedResource Include="SampleData\Generators\TaskGenerator.cs" />
     <EmbeddedResource Include="SampleData\Generators\ContactGenerator.cs" />
+    <EmbeddedResource Include="SampleData\Generators\AnnotatedProductGenerator.cs" />
 
     <!-- Custom AvalonEdit syntax highlighting registered at startup; replaces the bundled XML / C# defaults. -->
     <EmbeddedResource Include="Themes\SyntaxHighlighting\CSharp.xshd" />

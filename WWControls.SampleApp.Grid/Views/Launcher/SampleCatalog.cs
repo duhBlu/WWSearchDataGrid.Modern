@@ -25,6 +25,11 @@ namespace WWControls.SampleApp.Grid.Views.Launcher
                         new[] { "POCO", "DataTable", "Auto-gen" },
                         () => new AutoColumnsSampleView()),
 
+                    new("Smart Columns (Data Annotations)",
+                        "IsSmart columns configure header, display format, editor, and mask from the bound property's annotations — [Display], [DisplayFormat] / [DataType], [GridEditor] / [DefaultEditor], and the mask attributes. Compare plain vs smart vs auto-generated with EnableSmartColumnsGeneration.",
+                        new[] { "Smart", "Annotations", "IsSmart" },
+                        () => new SmartColumnsSampleView()),
+
                     new("Binding to Dynamic Object",
                         "Bind a grid to ExpandoObject rows — every column reaches its value via an explicit GridColumn.Binding (no FieldName). Add typed columns and rows at runtime; filtering works off the binding path.",
                         new[] { "Dynamic", "Binding", "Runtime" },

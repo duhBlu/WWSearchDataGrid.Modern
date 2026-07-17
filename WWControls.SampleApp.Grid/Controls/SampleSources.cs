@@ -20,6 +20,13 @@ namespace WWControls.SampleApp.Grid.Controls
             "SampleData/Generators/CustomerGenerator.cs",
             "SampleData/Generators/VendorTableGenerator.cs");
 
+        public static IReadOnlyList<SampleSourceFile> SmartColumns { get; } = SampleSourceLoader.LoadFiles(
+            "Views/Samples/DataBinding/SmartColumnsSampleView.xaml",
+            "Views/Samples/DataBinding/SmartColumnsSampleView.xaml.cs",
+            "Views/Samples/DataBinding/SmartColumnsSampleViewModel.cs",
+            "Models/AnnotatedProduct.cs",
+            "SampleData/Generators/AnnotatedProductGenerator.cs");
+
         public static IReadOnlyList<SampleSourceFile> DataTableManual { get; } = SampleSourceLoader.LoadFiles(
             "Views/Samples/DataBinding/DataTableManualSampleView.xaml",
             "Views/Samples/DataBinding/DataTableManualSampleView.xaml.cs",

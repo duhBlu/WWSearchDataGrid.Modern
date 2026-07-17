@@ -1,0 +1,8 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sdg="http://schemas.wwcontrols.com/wpf">
+
+    <!-- Datagrid-specific glyphs: one icon per SearchType and DateInterval used in the filter
+         row and filter editor. Authored in the Lucide style to sit alongside the stock set. -->
+
+</ResourceDictionary>
