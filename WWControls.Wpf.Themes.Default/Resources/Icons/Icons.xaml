@@ -1653,4 +1653,102 @@
         </DrawingImage.Drawing>
     </DrawingImage>
 
+    <!--  ── Text-editing context-menu glyphs (WWTextBox right-click menu) ──────────────  -->
+
+    <!--  Cut — scissors: two ring handles and the crossing blades.  -->
+    <DrawingImage x:Key="{x:Static sdg:IconKeys.IconCut}">
+        <DrawingImage.Drawing>
+            <DrawingGroup ClipGeometry="M0,0 V24 H24 V0 H0 Z">
+                <GeometryDrawing Geometry="F1 M24,24z M0,0z M20,4L8.12,15.88 M14.47,14.48L20,20 M8.12,8.12L12,12">
+                    <GeometryDrawing.Pen>
+                        <Pen Brush="#FF1C1C1C" Thickness="2" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" />
+                    </GeometryDrawing.Pen>
+                </GeometryDrawing>
+                <GeometryDrawing>
+                    <GeometryDrawing.Pen>
+                        <Pen Brush="#FF1C1C1C" Thickness="2" LineJoin="Round" />
+                    </GeometryDrawing.Pen>
+                    <GeometryDrawing.Geometry>
+                        <EllipseGeometry Center="6,6" RadiusX="3" RadiusY="3" />
+                    </GeometryDrawing.Geometry>
+                </GeometryDrawing>
+                <GeometryDrawing>
+                    <GeometryDrawing.Pen>
+                        <Pen Brush="#FF1C1C1C" Thickness="2" LineJoin="Round" />
+                    </GeometryDrawing.Pen>
+                    <GeometryDrawing.Geometry>
+                        <EllipseGeometry Center="6,18" RadiusX="3" RadiusY="3" />
+                    </GeometryDrawing.Geometry>
+                </GeometryDrawing>
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
+
+    <!--  Paste — a clipboard board with its clip tab.  -->
+    <DrawingImage x:Key="{x:Static sdg:IconKeys.IconPaste}">
+        <DrawingImage.Drawing>
+            <DrawingGroup ClipGeometry="M0,0 V24 H24 V0 H0 Z">
+                <GeometryDrawing Geometry="F1 M24,24z M0,0z M16,4L18,4A2,2,0,0,1,20,6L20,20A2,2,0,0,1,18,22L6,22A2,2,0,0,1,4,20L4,6A2,2,0,0,1,6,4L8,4">
+                    <GeometryDrawing.Pen>
+                        <Pen Brush="#FF1C1C1C" Thickness="2" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" />
+                    </GeometryDrawing.Pen>
+                </GeometryDrawing>
+                <GeometryDrawing>
+                    <GeometryDrawing.Pen>
+                        <Pen Brush="#FF1C1C1C" Thickness="2" LineJoin="Round" />
+                    </GeometryDrawing.Pen>
+                    <GeometryDrawing.Geometry>
+                        <RectangleGeometry RadiusX="1" RadiusY="1" Rect="8,2,8,4" />
+                    </GeometryDrawing.Geometry>
+                </GeometryDrawing>
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
+
+    <!--  Undo — a back-pointing arrow over a rightward loop.  -->
+    <DrawingImage x:Key="{x:Static sdg:IconKeys.IconUndo}">
+        <DrawingImage.Drawing>
+            <DrawingGroup ClipGeometry="M0,0 V24 H24 V0 H0 Z">
+                <GeometryDrawing Geometry="F1 M24,24z M0,0z M9,14L4,9L9,4 M4,9L14.5,9A5.5,5.5,0,0,1,20,14.5A5.5,5.5,0,0,1,14.5,20L11,20">
+                    <GeometryDrawing.Pen>
+                        <Pen Brush="#FF1C1C1C" Thickness="2" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" />
+                    </GeometryDrawing.Pen>
+                </GeometryDrawing>
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
+
+    <!--  Redo — mirror of undo: a forward-pointing arrow over a leftward loop.  -->
+    <DrawingImage x:Key="{x:Static sdg:IconKeys.IconRedo}">
+        <DrawingImage.Drawing>
+            <DrawingGroup ClipGeometry="M0,0 V24 H24 V0 H0 Z">
+                <GeometryDrawing Geometry="F1 M24,24z M0,0z M15,14L20,9L15,4 M20,9L9.5,9A5.5,5.5,0,0,0,4,14.5A5.5,5.5,0,0,0,9.5,20L13,20">
+                    <GeometryDrawing.Pen>
+                        <Pen Brush="#FF1C1C1C" Thickness="2" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" />
+                    </GeometryDrawing.Pen>
+                </GeometryDrawing>
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
+
+    <!--  Select all — a dashed selection marquee.  -->
+    <DrawingImage x:Key="{x:Static sdg:IconKeys.IconSelectAll}">
+        <DrawingImage.Drawing>
+            <DrawingGroup ClipGeometry="M0,0 V24 H24 V0 H0 Z">
+                <GeometryDrawing>
+                    <GeometryDrawing.Pen>
+                        <Pen Brush="#FF1C1C1C" Thickness="2" LineJoin="Round">
+                            <Pen.DashStyle>
+                                <DashStyle Dashes="2 2" />
+                            </Pen.DashStyle>
+                        </Pen>
+                    </GeometryDrawing.Pen>
+                    <GeometryDrawing.Geometry>
+                        <RectangleGeometry RadiusX="2" RadiusY="2" Rect="4,4,16,16" />
+                    </GeometryDrawing.Geometry>
+                </GeometryDrawing>
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
+
 </ResourceDictionary>

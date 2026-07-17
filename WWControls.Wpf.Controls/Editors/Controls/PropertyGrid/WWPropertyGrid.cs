@@ -102,6 +102,10 @@ namespace WWControls.Wpf.Controls.Editors
             DependencyProperty.Register(nameof(AllowCommitOnValidationError), typeof(bool), typeof(WWPropertyGrid),
                 new FrameworkPropertyMetadata(false, OnValidationContextChanged));
 
+        public static readonly DependencyProperty HeaderShowModeProperty =
+            DependencyProperty.Register(nameof(HeaderShowMode), typeof(PropertyHeaderShowMode), typeof(WWPropertyGrid),
+                new FrameworkPropertyMetadata(PropertyHeaderShowMode.Left, OnLayoutContextChanged));
+
         #endregion
 
         #region CLR Properties
@@ -170,6 +174,17 @@ namespace WWControls.Wpf.Controls.Editors
         {
             get => (bool)GetValue(AllowCommitOnValidationErrorProperty);
             set => SetValue(AllowCommitOnValidationErrorProperty, value);
+        }
+
+        /// <summary>
+        /// Grid-wide default for where each row places its header relative to the editor (default
+        /// <see cref="PropertyHeaderShowMode.Left"/>). A <see cref="WWPropertyDefinition.HeaderShowMode"/>
+        /// override wins per property.
+        /// </summary>
+        public PropertyHeaderShowMode HeaderShowMode
+        {
+            get => (PropertyHeaderShowMode)GetValue(HeaderShowModeProperty);
+            set => SetValue(HeaderShowModeProperty, value);
         }
 
         /// <summary>
@@ -405,6 +420,7 @@ namespace WWControls.Wpf.Controls.Editors
                 var item = new WWPropertyItem(newSource, prop, overrides, definition);
                 ResolveEditor(item, prop, definition);
                 item.SetValidationContext(ShowValidationErrors, AllowCommitOnValidationError);
+                item.SetLayoutContext(HeaderShowMode);
 
                 item.ValueWritten = RefreshAllValues;
                 _items.Add(item);
@@ -548,6 +564,19 @@ namespace WWControls.Wpf.Controls.Editors
         {
             foreach (var item in _items)
                 item.SetValidationContext(ShowValidationErrors, AllowCommitOnValidationError);
+        }
+
+        private static void OnLayoutContextChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            ((WWPropertyGrid)d).PropagateLayoutContext();
+        }
+
+        /// <summary>Pushes the grid-level header-layout default onto every row so a runtime change of
+        /// <see cref="HeaderShowMode"/> re-lays out the rows that inherit it.</summary>
+        private void PropagateLayoutContext()
+        {
+            foreach (var item in _items)
+                item.SetLayoutContext(HeaderShowMode);
         }
 
         private void Source_GlobalPropertyChanged(object sender, PropertyChangedEventArgs e)

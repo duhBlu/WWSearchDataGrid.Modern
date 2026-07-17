@@ -1,8 +1,10 @@
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
+using System.Windows.Input;
 using System.Windows.Media;
 using WWControls.Core.Display;
 using WWControls.Wpf.Controls.Primitives;
@@ -65,6 +67,10 @@ namespace WWControls.Wpf.Controls.Editors
         private TextBox _textBox;
         private Button _clearButton;
 
+        // MenuItems/Separator injected at the top of the context menu for the spelling error under
+        // the click; tracked so they can be cleared and rebuilt on the next open.
+        private readonly List<Control> _injectedSpellingItems = new List<Control>();
+
         static WWTextBox()
         {
             DefaultStyleKeyProperty.OverrideMetadata(typeof(WWTextBox),
@@ -86,7 +92,14 @@ namespace WWControls.Wpf.Controls.Editors
             DependencyProperty.Register(nameof(Mask), typeof(string), typeof(WWTextBox),
                 new PropertyMetadata(null, OnMaskChanged));
 
-        /// <summary>How the <see cref="Mask"/> pattern is interpreted. Default <see cref="MaskType.Simple"/>.</summary>
+        /// <summary>
+        /// How the <see cref="Mask"/> pattern is interpreted. Default <see cref="MaskType.Simple"/>.
+        /// Supported on <see cref="WWTextBox"/>: <see cref="MaskType.Simple"/>,
+        /// <see cref="MaskType.Numeric"/>, and <see cref="MaskType.TimeSpan"/>. The date/time types
+        /// (<see cref="MaskType.DateTime"/> / <see cref="MaskType.DateOnly"/> /
+        /// <see cref="MaskType.TimeOnly"/>) are rejected — use <see cref="WWDatePicker"/> for date and
+        /// time entry.
+        /// </summary>
         public static readonly DependencyProperty MaskTypeProperty =
             DependencyProperty.Register(nameof(MaskType), typeof(MaskType), typeof(WWTextBox),
                 new PropertyMetadata(MaskType.Simple, OnMaskChanged));
@@ -136,6 +149,86 @@ namespace WWControls.Wpf.Controls.Editors
         public static readonly DependencyProperty UpdateDelayProperty =
             DependencyProperty.Register(nameof(UpdateDelay), typeof(int), typeof(WWTextBox),
                 new PropertyMetadata(0, OnUpdateDelayChanged));
+
+        // Standard TextBox surface. Each of these mirrors a plain TextBox / TextBoxBase property and
+        // is TemplateBound straight onto the inner PART_TextBox, so a WWTextBox can stand in for a
+        // multi-line TextBox (Enter/Tab entry, wrapping, scrollbars) as well as a single-line one.
+        // Defaults match TextBox's so a WWTextBox with none of these set behaves identically to today.
+
+        /// <summary>Whether pressing Enter inserts a newline (multi-line entry) rather than being ignored. Default <c>false</c>.</summary>
+        public static readonly DependencyProperty AcceptsReturnProperty =
+            DependencyProperty.Register(nameof(AcceptsReturn), typeof(bool), typeof(WWTextBox),
+                new PropertyMetadata(false));
+
+        /// <summary>Whether pressing Tab inserts a tab character rather than moving focus to the next control. Default <c>false</c>.</summary>
+        public static readonly DependencyProperty AcceptsTabProperty =
+            DependencyProperty.Register(nameof(AcceptsTab), typeof(bool), typeof(WWTextBox),
+                new PropertyMetadata(false));
+
+        /// <summary>How text wraps when it reaches the editor's edge. Default <see cref="System.Windows.TextWrapping.NoWrap"/>.</summary>
+        public static readonly DependencyProperty TextWrappingProperty =
+            DependencyProperty.Register(nameof(TextWrapping), typeof(TextWrapping), typeof(WWTextBox),
+                new PropertyMetadata(TextWrapping.NoWrap));
+
+        /// <summary>Minimum number of visible text lines the editor sizes itself to. Default <c>1</c>.</summary>
+        public static readonly DependencyProperty MinLinesProperty =
+            DependencyProperty.Register(nameof(MinLines), typeof(int), typeof(WWTextBox),
+                new PropertyMetadata(1));
+
+        /// <summary>Maximum number of visible text lines before the editor scrolls instead of growing. Default <see cref="int.MaxValue"/>.</summary>
+        public static readonly DependencyProperty MaxLinesProperty =
+            DependencyProperty.Register(nameof(MaxLines), typeof(int), typeof(WWTextBox),
+                new PropertyMetadata(int.MaxValue));
+
+        /// <summary>Horizontal scrollbar policy for the text area. Default <see cref="ScrollBarVisibility.Hidden"/>.</summary>
+        public static readonly DependencyProperty HorizontalScrollBarVisibilityProperty =
+            DependencyProperty.Register(nameof(HorizontalScrollBarVisibility), typeof(ScrollBarVisibility), typeof(WWTextBox),
+                new PropertyMetadata(ScrollBarVisibility.Hidden));
+
+        /// <summary>Vertical scrollbar policy for the text area. Default <see cref="ScrollBarVisibility.Hidden"/>.</summary>
+        public static readonly DependencyProperty VerticalScrollBarVisibilityProperty =
+            DependencyProperty.Register(nameof(VerticalScrollBarVisibility), typeof(ScrollBarVisibility), typeof(WWTextBox),
+                new PropertyMetadata(ScrollBarVisibility.Hidden));
+
+        /// <summary>Decorations (underline, strikethrough, …) drawn over the text. Null (the default) draws none.</summary>
+        public static readonly DependencyProperty TextDecorationsProperty =
+            DependencyProperty.Register(nameof(TextDecorations), typeof(TextDecorationCollection), typeof(WWTextBox),
+                new PropertyMetadata(null));
+
+        /// <summary>Case conversion applied to text as it is typed. Default <see cref="System.Windows.Controls.CharacterCasing.Normal"/>.</summary>
+        public static readonly DependencyProperty CharacterCasingProperty =
+            DependencyProperty.Register(nameof(CharacterCasing), typeof(CharacterCasing), typeof(WWTextBox),
+                new PropertyMetadata(CharacterCasing.Normal));
+
+        /// <summary>Whether undo/redo history is kept for the editor. Default <c>true</c>.</summary>
+        public static readonly DependencyProperty IsUndoEnabledProperty =
+            DependencyProperty.Register(nameof(IsUndoEnabled), typeof(bool), typeof(WWTextBox),
+                new PropertyMetadata(true));
+
+        /// <summary>Number of undo actions retained; <c>-1</c> (the default) means unlimited.</summary>
+        public static readonly DependencyProperty UndoLimitProperty =
+            DependencyProperty.Register(nameof(UndoLimit), typeof(int), typeof(WWTextBox),
+                new PropertyMetadata(-1));
+
+        /// <summary>Whether the OS spell checker underlines misspellings. Feeds <c>SpellCheck.IsEnabled</c> on the inner input. Default <c>false</c>.</summary>
+        public static readonly DependencyProperty IsSpellCheckEnabledProperty =
+            DependencyProperty.Register(nameof(IsSpellCheckEnabled), typeof(bool), typeof(WWTextBox),
+                new PropertyMetadata(false));
+
+        /// <summary>Brush painting the caret. Null (the default) uses the inherited default.</summary>
+        public static readonly DependencyProperty CaretBrushProperty =
+            DependencyProperty.Register(nameof(CaretBrush), typeof(Brush), typeof(WWTextBox),
+                new PropertyMetadata(null));
+
+        /// <summary>Brush painting the selection highlight. Null (the default) uses the inherited default.</summary>
+        public static readonly DependencyProperty SelectionBrushProperty =
+            DependencyProperty.Register(nameof(SelectionBrush), typeof(Brush), typeof(WWTextBox),
+                new PropertyMetadata(null));
+
+        /// <summary>Opacity of the selection highlight. Default <c>0.4</c>, matching <see cref="TextBox"/>.</summary>
+        public static readonly DependencyProperty SelectionOpacityProperty =
+            DependencyProperty.Register(nameof(SelectionOpacity), typeof(double), typeof(WWTextBox),
+                new PropertyMetadata(0.4));
 
         /// <summary>
         /// The mask engine's raw value — the typed content with the mask literals and prompt
@@ -207,6 +300,96 @@ namespace WWControls.Wpf.Controls.Editors
             set => SetValue(UpdateDelayProperty, value);
         }
 
+        public bool AcceptsReturn
+        {
+            get => (bool)GetValue(AcceptsReturnProperty);
+            set => SetValue(AcceptsReturnProperty, value);
+        }
+
+        public bool AcceptsTab
+        {
+            get => (bool)GetValue(AcceptsTabProperty);
+            set => SetValue(AcceptsTabProperty, value);
+        }
+
+        public TextWrapping TextWrapping
+        {
+            get => (TextWrapping)GetValue(TextWrappingProperty);
+            set => SetValue(TextWrappingProperty, value);
+        }
+
+        public int MinLines
+        {
+            get => (int)GetValue(MinLinesProperty);
+            set => SetValue(MinLinesProperty, value);
+        }
+
+        public int MaxLines
+        {
+            get => (int)GetValue(MaxLinesProperty);
+            set => SetValue(MaxLinesProperty, value);
+        }
+
+        public ScrollBarVisibility HorizontalScrollBarVisibility
+        {
+            get => (ScrollBarVisibility)GetValue(HorizontalScrollBarVisibilityProperty);
+            set => SetValue(HorizontalScrollBarVisibilityProperty, value);
+        }
+
+        public ScrollBarVisibility VerticalScrollBarVisibility
+        {
+            get => (ScrollBarVisibility)GetValue(VerticalScrollBarVisibilityProperty);
+            set => SetValue(VerticalScrollBarVisibilityProperty, value);
+        }
+
+        public TextDecorationCollection TextDecorations
+        {
+            get => (TextDecorationCollection)GetValue(TextDecorationsProperty);
+            set => SetValue(TextDecorationsProperty, value);
+        }
+
+        public CharacterCasing CharacterCasing
+        {
+            get => (CharacterCasing)GetValue(CharacterCasingProperty);
+            set => SetValue(CharacterCasingProperty, value);
+        }
+
+        public bool IsUndoEnabled
+        {
+            get => (bool)GetValue(IsUndoEnabledProperty);
+            set => SetValue(IsUndoEnabledProperty, value);
+        }
+
+        public int UndoLimit
+        {
+            get => (int)GetValue(UndoLimitProperty);
+            set => SetValue(UndoLimitProperty, value);
+        }
+
+        public bool IsSpellCheckEnabled
+        {
+            get => (bool)GetValue(IsSpellCheckEnabledProperty);
+            set => SetValue(IsSpellCheckEnabledProperty, value);
+        }
+
+        public Brush CaretBrush
+        {
+            get => (Brush)GetValue(CaretBrushProperty);
+            set => SetValue(CaretBrushProperty, value);
+        }
+
+        public Brush SelectionBrush
+        {
+            get => (Brush)GetValue(SelectionBrushProperty);
+            set => SetValue(SelectionBrushProperty, value);
+        }
+
+        public double SelectionOpacity
+        {
+            get => (double)GetValue(SelectionOpacityProperty);
+            set => SetValue(SelectionOpacityProperty, value);
+        }
+
         public string UnmaskedValue => (string)GetValue(UnmaskedValueProperty);
 
         public bool IsMaskComplete => (bool)GetValue(IsMaskCompleteProperty);
@@ -227,6 +410,7 @@ namespace WWControls.Wpf.Controls.Editors
             {
                 UnmaskedValueDescriptor?.RemoveValueChanged(_textBox, OnMaskStateChanged);
                 MaskCompleteDescriptor?.RemoveValueChanged(_textBox, OnMaskStateChanged);
+                _textBox.ContextMenuOpening -= OnTextBoxContextMenuOpening;
             }
 
             _textBox = GetTemplateChild(PartTextBox) as TextBox;
@@ -238,6 +422,7 @@ namespace WWControls.Wpf.Controls.Editors
             {
                 UnmaskedValueDescriptor?.AddValueChanged(_textBox, OnMaskStateChanged);
                 MaskCompleteDescriptor?.AddValueChanged(_textBox, OnMaskStateChanged);
+                _textBox.ContextMenuOpening += OnTextBoxContextMenuOpening;
             }
 
             // Bind the inner TextBox to Value from code so UpdateDelay can attach Binding.Delay —
@@ -288,6 +473,69 @@ namespace WWControls.Wpf.Controls.Editors
         }
 
         /// <summary>
+        /// Rebuilds the spelling section of the themed context menu as it opens. A custom
+        /// <see cref="System.Windows.Controls.ContextMenu"/> replaces WPF's built-in editing menu,
+        /// which is also where the spell-check suggestions live — so when spell checking is on and
+        /// the click lands on a misspelled word, this re-creates that section at the top of our menu:
+        /// each suggestion, an "Ignore All", and a separator above the static editing commands.
+        /// Nothing is added when spell checking is off or the click isn't on an error, so the menu
+        /// falls back to the plain command list.
+        /// </summary>
+        private void OnTextBoxContextMenuOpening(object sender, ContextMenuEventArgs e)
+        {
+            if (_textBox?.ContextMenu is not ContextMenu menu)
+                return;
+
+            // Clear whatever a previous open injected, so the section reflects this click only.
+            foreach (Control item in _injectedSpellingItems)
+                menu.Items.Remove(item);
+            _injectedSpellingItems.Clear();
+
+            if (!IsSpellCheckEnabled)
+                return;
+
+            // Keyboard-invoked menus report a negative cursor position — target the caret then;
+            // otherwise map the mouse point to the character under it.
+            int charIndex = e.CursorLeft < 0 || e.CursorTop < 0
+                ? _textBox.CaretIndex
+                : _textBox.GetCharacterIndexFromPoint(Mouse.GetPosition(_textBox), true);
+            if (charIndex < 0)
+                return;
+
+            SpellingError error = _textBox.GetSpellingError(charIndex);
+            if (error == null)
+                return;
+
+            int insertAt = 0;
+            bool anySuggestion = false;
+            foreach (string suggestion in error.Suggestions)
+            {
+                string replacement = suggestion;
+                var item = new MenuItem { Header = replacement, FontWeight = FontWeights.SemiBold };
+                item.Click += (_, _) => error.Correct(replacement);
+                menu.Items.Insert(insertAt++, item);
+                _injectedSpellingItems.Add(item);
+                anySuggestion = true;
+            }
+
+            if (!anySuggestion)
+            {
+                var none = new MenuItem { Header = "(No suggestions)", IsEnabled = false };
+                menu.Items.Insert(insertAt++, none);
+                _injectedSpellingItems.Add(none);
+            }
+
+            var ignoreAll = new MenuItem { Header = "Ignore All" };
+            ignoreAll.Click += (_, _) => error.IgnoreAll();
+            menu.Items.Insert(insertAt++, ignoreAll);
+            _injectedSpellingItems.Add(ignoreAll);
+
+            var separator = new Separator();
+            menu.Items.Insert(insertAt, separator);
+            _injectedSpellingItems.Add(separator);
+        }
+
+        /// <summary>
         /// Attaches (or detaches) <see cref="MaskInputBehavior"/> on the inner TextBox to match the
         /// current <see cref="Mask"/> / <see cref="MaskType"/> / <see cref="PromptChar"/>. The mask is
         /// cleared first so a MaskType or PromptChar change forces the formatter to rebuild — resetting
@@ -304,9 +552,21 @@ namespace WWControls.Wpf.Controls.Editors
 
             if (!string.IsNullOrEmpty(Mask))
             {
-                MaskFormatterFactory.EnsureSupported(MaskType);
+                var maskType = MaskType;
+
+                // Date and time entry belongs on WWDatePicker (the segmented date/time editor), which
+                // handles it far better than a masked text box. The date/time mask engine stays in
+                // Core for the date picker and grid display formatting — WWTextBox just won't use it.
+                if (maskType is MaskType.DateTime or MaskType.DateOnly or MaskType.TimeOnly)
+                    throw new NotSupportedException(
+                        "WWTextBox does not support date/time input masks (MaskType.DateTime, DateOnly, " +
+                        "or TimeOnly). Use WWDatePicker — its segmented date/time editor handles date " +
+                        "and time entry better than a masked text box. Simple, Numeric, and TimeSpan " +
+                        "masks are still supported.");
+
+                MaskFormatterFactory.EnsureSupported(maskType);
                 MaskInputBehavior.SetPromptChar(_textBox, PromptChar);
-                MaskInputBehavior.SetMaskType(_textBox, MaskType);
+                MaskInputBehavior.SetMaskType(_textBox, maskType);
                 MaskInputBehavior.SetMask(_textBox, Mask);
             }
 

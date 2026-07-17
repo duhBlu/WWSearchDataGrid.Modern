@@ -18,7 +18,7 @@
     <ContextMenu x:Key="{x:Static sdg:GridThemeKeys.GridSearchDataGridCellContextMenu}"
                  Style="{StaticResource {x:Static sdg:PrimitiveThemeKeys.ContextMenu}}"
                  AutomationProperties.AutomationId="cmuCell">
-        <MenuItem x:Name="miCopy"
+        <MenuItem x:Name="miCopy" sdg:ContextMenuExtensions.ItemId="Copy"
                   Command="{x:Static commands:ContextMenuCommands.CopySelectedCellValuesCommand}"
                   CommandParameter="{Binding Grid}"
                   Header="Copy">
@@ -28,17 +28,17 @@
                              IconSource="{StaticResource {x:Static sdg:IconKeys.IconCopy}}" />
             </MenuItem.Icon>
         </MenuItem>
-        <MenuItem x:Name="miCopyWithHeaders"
+        <MenuItem x:Name="miCopyWithHeaders" sdg:ContextMenuExtensions.ItemId="CopyWithHeaders"
                   Command="{x:Static commands:ContextMenuCommands.CopySelectedCellValuesWithHeadersCommand}"
                   CommandParameter="{Binding Grid}"
                   Header="Copy With Headers" />
-        <MenuItem x:Name="miCopyCellValue"
+        <MenuItem x:Name="miCopyCellValue" sdg:ContextMenuExtensions.ItemId="CopyCellValue"
                   Command="{x:Static commands:ContextMenuCommands.CopyCellValueCommand}"
                   CommandParameter="{Binding}"
                   Header="Copy Cell Value"
                   Visibility="{Binding HasMultipleSelectedCells, Converter={StaticResource SdgCellMenuBoolToVis}}" />
         <Separator />
-        <MenuItem x:Name="miFilterByCellValue"
+        <MenuItem x:Name="miFilterByCellValue" sdg:ContextMenuExtensions.ItemId="FilterByCellValue"
                   Command="{x:Static commands:ContextMenuCommands.FilterByCellValueCommand}"
                   CommandParameter="{Binding}"
                   Header="Filter By This Value">

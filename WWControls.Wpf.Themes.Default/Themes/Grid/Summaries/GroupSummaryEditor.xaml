@@ -174,24 +174,22 @@
                                                            Foreground="#FF444444"
                                                            Text="Suffix:"
                                                            Margin="0,0,0,2" />
-                                                <TextBox Style="{StaticResource {x:Static sdg:PrimitiveThemeKeys.TextBox}}"
-                                                         Grid.Row="1"
-                                                         Grid.Column="0"
-                                                         Text="{Binding SelectedEntry.Prefix, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                                         Padding="2"
-                                                         VerticalContentAlignment="Center" />
+                                                <sdg:WWTextBox Grid.Row="1"
+                                                               Grid.Column="0"
+                                                               Value="{Binding SelectedEntry.Prefix, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                               Padding="2"
+                                                               VerticalContentAlignment="Center" />
                                                 <sdg:WWSearchTextBox Style="{StaticResource {x:Static sdg:EditorThemeKeys.SearchTextBox}}"
                                                                    Grid.Row="1"
                                                                    Grid.Column="2"
                                                                    ShowClearButton="False"
                                                                    Text="{Binding SelectedEntry.DisplayFormat, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                                                    ItemsSource="{Binding DisplayFormatOptions}" />
-                                                <TextBox Style="{StaticResource {x:Static sdg:PrimitiveThemeKeys.TextBox}}"
-                                                         Grid.Row="1"
-                                                         Grid.Column="4"
-                                                         Text="{Binding SelectedEntry.Suffix, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                                         Padding="2"
-                                                         VerticalContentAlignment="Center" />
+                                                <sdg:WWTextBox Grid.Row="1"
+                                                               Grid.Column="4"
+                                                               Value="{Binding SelectedEntry.Suffix, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                               Padding="2"
+                                                               VerticalContentAlignment="Center" />
                                             </Grid>
                                             <Grid Margin="0,8,0,0">
                                                 <Grid.ColumnDefinitions>

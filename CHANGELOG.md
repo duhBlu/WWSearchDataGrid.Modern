@@ -2,6 +2,72 @@
 
 ## [Unreleased]
 
+### Changed — WWTextBox: dropped date/time input masking
+- **`WWTextBox` no longer accepts the date/time mask types** (`MaskType.DateTime` / `DateOnly` /
+  `TimeOnly`) — applying one now throws `NotSupportedException` pointing to `WWDatePicker`, whose
+  segmented editor handles date and time entry far better than a masked text box. `Simple`,
+  `Numeric`, and `TimeSpan` masks are unchanged.
+- The mask engines themselves (including `DateTimeMaskFormatter`) stay in `WWControls.Core` — they
+  still back `WWDatePicker` / `SegmentedDateTimeEditor`, `MaskDisplayProvider`, and grid display
+  formatting. Only WWTextBox's masked *input* path drops the date/time types.
+- Masking sample trimmed to Simple / Numeric / TimeSpan (the date & time rows are gone).
+
+### Changed — internal editors now use WWTextBox instead of a plain TextBox
+- Plain themed text boxes (`PrimitiveThemeKeys.TextBox`) inside the library's own templates were
+  replaced with `WWTextBox`, so they pick up its chrome, watermark, clear button, and themed
+  right-click menu: the **WWPropertyGrid filter box** (its separate watermark overlay is gone —
+  `WWTextBox.Watermark` + `ShowClearButton` replace it), the **GroupSummaryEditor** prefix/suffix
+  inputs, and the **checked-list filter popup** search box (its `Delay=200` moved to
+  `WWTextBox.UpdateDelay`).
+- Left as plain `TextBox` by design: the required template parts that their controls' code-behind
+  drives as a `TextBox` — ComboBox's `PART_EditableTextBox`, WWNumericUpDown / WWSearchTextBox /
+  SegmentedDateTimeEditor `PART_TextBox`, and WWColorPicker's `PART_HexTextBox`.
+
+### Added — WWTextBox: themed right-click menu
+- **WWTextBox now shows a themed context menu** in place of the OS default — Undo / Redo, Cut /
+  Copy / Paste, Select All — each with an icon and keyboard gesture, using the shared
+  `PrimitiveThemeKeys.ContextMenu` flat-menu style. Items are the stock `ApplicationCommands` with
+  `CommandTarget` bound to the menu's `PlacementTarget`, so the inner `TextBox` drives their
+  enabled state (Paste greys out on an empty clipboard, Undo/Redo track history, Cut/Copy track the
+  selection). Defined in the control template, so each instance gets its own menu.
+- New monochrome `DrawingImage` icons under `IconKeys`: `IconCut`, `IconPaste`, `IconUndo`,
+  `IconRedo`, `IconSelectAll` (Copy reuses the existing `IconCopy`).
+- **Spell-check suggestions are preserved.** A custom `ContextMenu` normally replaces WPF's
+  built-in editing menu, where suggestions live. When `IsSpellCheckEnabled` is on and the click
+  lands on a misspelled word, `WWTextBox` injects that word's suggestions (bold) + "Ignore All" +
+  a separator at the top of the menu (via `ContextMenuOpening` and the `SpellingError` API);
+  applying a suggestion calls `SpellingError.Correct`, "Ignore All" calls `IgnoreAll`. Rebuilt on
+  every open; a click that isn't on an error shows just the editing commands.
+
+### Added — WWTextBox: full standard TextBox surface (multi-line, wrapping, scrollbars, …)
+- **`WWTextBox` now surfaces the standard `TextBox` / `TextBoxBase` properties** so it can stand in
+  for a plain multi-line `TextBox`, not just a single-line one: `AcceptsReturn`, `AcceptsTab`,
+  `TextWrapping`, `MinLines`, `MaxLines`, `HorizontalScrollBarVisibility`,
+  `VerticalScrollBarVisibility`, `TextDecorations`, `CharacterCasing`, `IsUndoEnabled`, `UndoLimit`,
+  `IsSpellCheckEnabled` (feeds `SpellCheck.IsEnabled`), `CaretBrush`, `SelectionBrush`, and
+  `SelectionOpacity`. Each is a pass-through, TemplateBound onto the inner `PART_TextBox`; every
+  default matches `TextBox`, so a `WWTextBox` with none of them set is unchanged.
+- **`VerticalContentAlignment` now flows through** to the text, watermark, glyph, and clear button
+  (previously the inner input was hard-coded to center). Its style default stays `Center` for the
+  single-line look; set it to `Top` for a multi-line box so content starts at the top edge. The
+  watermark also follows `TextWrapping`.
+- TextBox sample reorganized into purpose-built example cards — single-line input, multi-line memo
+  (wrapping / scrollbars / line bounds / spell check), and an adorned glyph input — each editor
+  grouped with only the options that shape it.
+
+### Added — WWPropertyGrid: header layout (`HeaderShowMode`)
+- **`HeaderShowMode` controls where a row places its header relative to its editor.** New
+  `PropertyHeaderShowMode` enum: `Left` (default — the existing two-column `Name | Editor` row),
+  `Top` (header stacked above the editor, full width), `Hidden` (editor only, no header), and
+  `OnlyHeader` (header only, no editor — a caption row).
+- **Set it grid-wide or per property.** `WWPropertyGrid.HeaderShowMode` (default `Left`) is the
+  grid-wide default; `WWPropertyDefinition.HeaderShowMode` (nullable) overrides it per property and
+  wins. Both are live — the grid-level value re-lays out inheriting rows without reassigning
+  `SelectedObject`, and a per-property value flows through the same bindable-metadata (mechanism A)
+  path as `IsReadOnly` / `IsVisible`, recomputing `WWPropertyItem.ActualHeaderShowMode` on change.
+- The shared name-column splitter hides when the grid-wide default is not `Left` (it only acts on
+  the left-header layout). New "Layout" sample under the Property Grid category.
+
 ### Changed — WWPropertyGrid: built-in typed editors, per-property settings & templates, live metadata, validation
 - **Built-in typed editors.** A property with no per-property definition now gets an editor
   auto-picked from its CLR type (`string` → text, `bool` → checkbox, enum → combo auto-populated

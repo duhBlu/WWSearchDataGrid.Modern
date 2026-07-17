@@ -711,6 +711,10 @@ namespace WWControls.Wpf.Grids
             // FixedGroupHeadersPresenter binds its ItemsSource to this collection.
             SetValue(FixedGroupHeadersPropertyKey, _fixedGroupHeadersBacking);
 
+            // Seed the four custom context-menu item collections so XAML property-element syntax
+            // (`<sdg:SearchDataGrid.CellContextMenuItems>…`) can populate them immediately.
+            InitializeCustomContextMenuItems();
+
             // Initialize context menu functionality
             this.InitializeContextMenu();
 

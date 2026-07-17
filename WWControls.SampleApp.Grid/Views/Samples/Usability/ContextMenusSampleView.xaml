@@ -18,21 +18,22 @@
                        FontSize="13"
                        Foreground="#444"
                        TextWrapping="Wrap">
-                <Run FontWeight="SemiBold" Text="Built-in context menus" />
+                <Run FontWeight="SemiBold" Text="Customizing the context menus" />
                 <LineBreak />
-                <Run Text="Right-click a cell, a column header, or a row header to see the built-in menus — they ship with the default theme, no wiring needed. Some items are gated by grid properties or by context (e.g. Clear Column Filter appears only when that column is filtered)." />
+                <Run Text="The menus ship with the theme. On top of that you can: append custom items, hide built-ins by id, replace a whole menu, or tweak items on the fly. Use the panel on the right to reconfigure the grid, then right-click a cell, a column header, or a row header to see the effect." />
             </TextBlock>
 
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="320" />
+                    <ColumnDefinition Width="360" />
                 </Grid.ColumnDefinitions>
 
                 <sdg:SearchDataGrid x:Name="Grid"
                                     Grid.Column="0"
                                     Margin="10"
+                                    ItemsSource="{Binding Items}"
                                     AllowFixedColumnMenu="True"
                                     IsColumnChooserEnabled="True"
                                     AutoGenerateColumns="False"
@@ -49,6 +50,33 @@
                         <sdg:GridColumn Width="110" FieldName="OrderItemsTotalPrice" Header="Total" DisplayStringFormat="C2" />
                         <sdg:GridColumn Width="90" FieldName="OrderCancelled" Header="Cancelled" />
                     </sdg:SearchDataGrid.GridColumns>
+
+                    <!--
+                        Append (default): these show under the built-ins. Switch the cell menu to
+                        Replace (panel on the right) and they become the whole cell menu instead.
+                        Injected items inherit DataContext = the ContextMenuContext, so bind the
+                        command via Grid.DataContext and the target via RowData / CellValue / Column.
+                    -->
+                    <sdg:SearchDataGrid.CellContextMenuItems>
+                        <MenuItem Header="Show order details"
+                                  Command="{Binding Grid.DataContext.ShowOrderDetailsCommand}"
+                                  CommandParameter="{Binding RowData}" />
+                        <MenuItem Header="Use this cell value…"
+                                  Command="{Binding Grid.DataContext.UseCellValueCommand}"
+                                  CommandParameter="{Binding CellValue}" />
+                    </sdg:SearchDataGrid.CellContextMenuItems>
+
+                    <sdg:SearchDataGrid.ColumnHeaderContextMenuItems>
+                        <MenuItem Header="Pin this column to my report"
+                                  Command="{Binding Grid.DataContext.PinColumnToReportCommand}"
+                                  CommandParameter="{Binding Column}" />
+                    </sdg:SearchDataGrid.ColumnHeaderContextMenuItems>
+
+                    <sdg:SearchDataGrid.RowContextMenuItems>
+                        <MenuItem Header="Flag order for follow-up"
+                                  Command="{Binding Grid.DataContext.FlagOrderCommand}"
+                                  CommandParameter="{Binding RowData}" />
+                    </sdg:SearchDataGrid.RowContextMenuItems>
                 </sdg:SearchDataGrid>
 
                 <GridSplitter Grid.Column="1" Width="5" HorizontalAlignment="Stretch" Background="#CCCCCC" />
@@ -56,41 +84,75 @@
                 <ScrollViewer Grid.Column="2" Padding="8,4" Background="#FFFFFF" VerticalScrollBarVisibility="Auto">
                     <sdg:SimpleStackPanel Orientation="Vertical" Spacing="8">
 
-                        <Expander Header="Header-menu options">
-                            <sdg:SimpleStackPanel Margin="4" Orientation="Vertical" Spacing="6">
-                                <CheckBox Content="AllowFixedColumnMenu"
-                                          IsChecked="{Binding ElementName=Grid, Path=AllowFixedColumnMenu, Mode=TwoWay}"
-                                          ToolTip="Shows / hides the Fixed (Pin Left / Pin Right / Unpin) submenu in the column-header menu." />
-                                <CheckBox Content="IsColumnChooserEnabled"
-                                          IsChecked="{Binding ElementName=Grid, Path=IsColumnChooserEnabled, Mode=TwoWay}"
-                                          ToolTip="Shows / hides the Column Chooser item in the column-header menu." />
-                                <TextBlock FontSize="11"
-                                           Foreground="#666"
-                                           TextWrapping="Wrap"
-                                           Text="Right-click a column header after toggling to see the items appear / disappear." />
-                            </sdg:SimpleStackPanel>
-                        </Expander>
-
-                        <Expander Header="What each menu offers" IsExpanded="False">
-                            <TextBlock Margin="4" FontSize="11" Foreground="#666" TextWrapping="Wrap">
-                                <Run Text="• Cell — Copy, Copy With Headers, Copy Cell Value, Filter By This Value." />
-                                <LineBreak />
-                                <Run Text="• Column header — Copy, Sort, Best Fit, Column Chooser, Hide Column, Fixed (Pin Left/Right/Unpin), Clear Filter, Open Filter Editor." />
-                                <LineBreak />
-                                <Run Text="• Row header — row-level operations." />
-                            </TextBlock>
-                        </Expander>
-
-                        <Border Background="#FFF3CD"
-                                BorderBrush="#FFE069"
+                        <Border Background="#E7F3FF"
+                                BorderBrush="#7FB8E6"
                                 BorderThickness="1"
                                 CornerRadius="4"
                                 Padding="8">
-                            <TextBlock FontSize="11" Foreground="#856404" TextWrapping="Wrap">
-                                <Run FontWeight="SemiBold" Text="🚧 Planned: " />
-                                <Run Text="injecting custom menu items into the built-in menus is not yet supported — it needs a custom context-menu-item API. The built-in items above are fully available today." />
-                            </TextBlock>
+                            <sdg:SimpleStackPanel Orientation="Vertical" Spacing="4">
+                                <TextBlock FontWeight="SemiBold" Foreground="#1A4E7A" Text="Last custom action" />
+                                <TextBlock FontSize="12"
+                                           Foreground="#1A4E7A"
+                                           Text="{Binding LastAction}"
+                                           TextWrapping="Wrap" />
+                            </sdg:SimpleStackPanel>
                         </Border>
+
+                        <!--  LAYER 1 — hide built-ins by id (declarative, live via HiddenContextMenuItems)  -->
+                        <Expander Header="1 · Hide built-in items" IsExpanded="True">
+                            <sdg:SimpleStackPanel Margin="4" Orientation="Vertical" Spacing="4">
+                                <TextBlock FontSize="11" Foreground="#666" TextWrapping="Wrap"
+                                           Text="Each toggles a GridContextMenuItem in Grid.HiddenContextMenuItems. IDs are shared across menus — hiding Copy hides it on cells, rows, and headers. Right-click after toggling." />
+                                <CheckBox Content="Copy" Tag="{x:Static sdg:GridContextMenuItem.Copy}"
+                                          Checked="OnHideItemToggled" Unchecked="OnHideItemToggled" />
+                                <CheckBox Content="Copy With Headers" Tag="{x:Static sdg:GridContextMenuItem.CopyWithHeaders}"
+                                          Checked="OnHideItemToggled" Unchecked="OnHideItemToggled" />
+                                <CheckBox Content="Filter By This Value (cell)" Tag="{x:Static sdg:GridContextMenuItem.FilterByCellValue}"
+                                          Checked="OnHideItemToggled" Unchecked="OnHideItemToggled" />
+                                <CheckBox Content="Sort Ascending (header)" Tag="{x:Static sdg:GridContextMenuItem.SortAscending}"
+                                          Checked="OnHideItemToggled" Unchecked="OnHideItemToggled" />
+                                <CheckBox Content="Sort Descending (header)" Tag="{x:Static sdg:GridContextMenuItem.SortDescending}"
+                                          Checked="OnHideItemToggled" Unchecked="OnHideItemToggled" />
+                                <CheckBox Content="Hide Column (header)" Tag="{x:Static sdg:GridContextMenuItem.HideColumn}"
+                                          Checked="OnHideItemToggled" Unchecked="OnHideItemToggled" />
+                                <CheckBox Content="Open Filter Editor (header)" Tag="{x:Static sdg:GridContextMenuItem.OpenFilterEditor}"
+                                          Checked="OnHideItemToggled" Unchecked="OnHideItemToggled" />
+                            </sdg:SimpleStackPanel>
+                        </Expander>
+
+                        <!--  LAYER 3 — replace a whole menu (per-surface mode)  -->
+                        <Expander Header="2 · Replace the cell menu" IsExpanded="True">
+                            <sdg:SimpleStackPanel Margin="4" Orientation="Vertical" Spacing="4">
+                                <CheckBox x:Name="ReplaceCellMenu"
+                                          Content="CellContextMenuMode = Replace"
+                                          Checked="OnReplaceCellMenuToggled"
+                                          Unchecked="OnReplaceCellMenuToggled" />
+                                <TextBlock FontSize="11" Foreground="#666" TextWrapping="Wrap"
+                                           Text="Append (off): your two cell items show under the built-ins. Replace (on): the built-ins are dropped and your items ARE the cell menu — re-add any built-in actions you still want with ContextMenuCommands." />
+                            </sdg:SimpleStackPanel>
+                        </Expander>
+
+                        <!--  LAYER 2 + append + dynamic event — explanatory  -->
+                        <Expander Header="3 · Custom &amp; dynamic items" IsExpanded="False">
+                            <TextBlock Margin="4" FontSize="11" Foreground="#666" TextWrapping="Wrap">
+                                <Run Text="Appended in XAML: cell → 'Show order details' / 'Use this cell value…'; header → 'Pin this column to my report'; row → 'Flag order for follow-up'." />
+                                <LineBreak />
+                                <Run Text="Added in the ContextMenuInitializing event (code-behind): a cell item 'Expedite order #…' for Submitted orders, plus 'Filter By This Value' hidden on cancelled orders — both decided per-open from the clicked row." />
+                            </TextBlock>
+                        </Expander>
+
+                        <Expander Header="Coarse feature gates (for contrast)" IsExpanded="False">
+                            <sdg:SimpleStackPanel Margin="4" Orientation="Vertical" Spacing="6">
+                                <CheckBox Content="AllowFixedColumnMenu"
+                                          IsChecked="{Binding ElementName=Grid, Path=AllowFixedColumnMenu, Mode=TwoWay}"
+                                          ToolTip="Whole Fixed (Pin) submenu on / off." />
+                                <CheckBox Content="IsColumnChooserEnabled"
+                                          IsChecked="{Binding ElementName=Grid, Path=IsColumnChooserEnabled, Mode=TwoWay}"
+                                          ToolTip="Column Chooser item on / off." />
+                                <TextBlock FontSize="11" Foreground="#666" TextWrapping="Wrap"
+                                           Text="These grid properties gate whole features. Use them for feature-level on/off, and HiddenContextMenuItems above for individual items." />
+                            </sdg:SimpleStackPanel>
+                        </Expander>
 
                     </sdg:SimpleStackPanel>
                 </ScrollViewer>

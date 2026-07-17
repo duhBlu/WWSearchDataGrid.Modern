@@ -22,18 +22,48 @@
             <Setter Property="Foreground" Value="#666" />
             <Setter Property="Margin" Value="0,0,0,3" />
         </Style>
-        <Style x:Key="Hint" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="11" />
-            <Setter Property="Foreground" Value="#888" />
-            <Setter Property="TextWrapping" Value="Wrap" />
-            <Setter Property="Margin" Value="0,8,0,0" />
-        </Style>
         <Style x:Key="BoundValue" TargetType="TextBlock">
             <Setter Property="FontSize" Value="12" />
             <Setter Property="Foreground" Value="#0066AA" />
             <Setter Property="TextTrimming" Value="CharacterEllipsis" />
             <Setter Property="Margin" Value="0,14,0,0" />
         </Style>
+
+        <!--  Example-card chrome: a titled panel holding one editor + its own options.  -->
+        <Style x:Key="Card" TargetType="Border">
+            <Setter Property="Background" Value="#FFFFFF" />
+            <Setter Property="BorderBrush" Value="#E3E3E3" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Padding" Value="18" />
+            <Setter Property="Margin" Value="0,0,0,18" />
+        </Style>
+        <Style x:Key="CardTitle" TargetType="TextBlock">
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="Foreground" Value="#222" />
+        </Style>
+        <Style x:Key="CardDesc" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Foreground" Value="#777" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="Margin" Value="0,2,0,16" />
+        </Style>
+        <Style x:Key="OptionsPanel" TargetType="Border">
+            <Setter Property="Background" Value="#FAFAFA" />
+            <Setter Property="BorderBrush" Value="#EEEEEE" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Padding" Value="14" />
+            <Setter Property="VerticalAlignment" Value="Top" />
+        </Style>
+        <Style x:Key="CardHint" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="Foreground" Value="#999" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="Margin" Value="0,10,0,0" />
+        </Style>
+
         <Style x:Key="ToggleRow" BasedOn="{StaticResource {x:Static sdg:PrimitiveThemeKeys.CheckBox}}" TargetType="CheckBox">
             <Setter Property="Margin" Value="0,0,0,10" />
             <Setter Property="Foreground" Value="#333" />
@@ -46,121 +76,212 @@
             <Setter Property="Height" Value="26" />
             <Setter Property="Margin" Value="0,0,0,10" />
         </Style>
-        <Style x:Key="OptionText" TargetType="{x:Type sdg:WWTextBox}" BasedOn="{StaticResource {x:Static sdg:EditorThemeKeys.TextBox}}">
-            <Setter Property="Height" Value="26" />
-            <Setter Property="Margin" Value="0,0,0,10" />
-        </Style>
     </UserControl.Resources>
 
     <sampleControls:SampleHostControl Sources="{x:Static sampleControls:SampleSources.TextBox}">
-        <ScrollViewer Background="#FFFFFF" VerticalScrollBarVisibility="Auto">
-            <StackPanel Margin="24" MaxWidth="740" HorizontalAlignment="Left">
+        <ScrollViewer Background="#F4F5F7" VerticalScrollBarVisibility="Auto">
+            <StackPanel Margin="24" MaxWidth="820" HorizontalAlignment="Left">
                 <TextBlock Style="{StaticResource SampleIntro}">
                     <Run FontWeight="SemiBold" Text="WWTextBox" />
                     <LineBreak />
-                    <Run Text="The workhorse text editor — chrome, watermark, clear button, an edge glyph, and an input debounce. Masking has its own sample." />
+                    <Run Text="The workhorse text editor. Each card below is a different kind of text box — single-line input, multi-line memo, adorned input — with the options that shape it grouped alongside. Right-click any editor for the themed edit menu. Masking has its own sample." />
                 </TextBlock>
 
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="250" />
-                        <ColumnDefinition Width="28" />
-                        <ColumnDefinition Width="*" />
-                    </Grid.ColumnDefinitions>
+                <!--  ── Card 1: single-line input ─────────────────────────────  -->
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource CardTitle}" Text="Single-line input" />
+                        <TextBlock Style="{StaticResource CardDesc}"
+                                   Text="The everyday field — a watermark while empty, an optional clear button, a length cap, text alignment, automatic casing, and a debounce on the value push." />
 
-                    <!--  Options — every property of the single demo editor.  -->
-                    <Border Grid.Column="0"
-                            Background="#FAFAFA"
-                            BorderBrush="#E3E3E3"
-                            BorderThickness="1"
-                            CornerRadius="6"
-                            Padding="14"
-                            VerticalAlignment="Top">
-                        <StackPanel>
-                            <TextBlock Style="{StaticResource Caption}" Text="Options" Margin="0,0,0,12" />
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="24" />
+                                <ColumnDefinition Width="250" />
+                            </Grid.ColumnDefinitions>
 
-                            <CheckBox Style="{StaticResource ToggleRow}" Content="ShowBorder"
-                                      IsChecked="{Binding ShowBorder, Mode=TwoWay}" />
-                            <CheckBox Style="{StaticResource ToggleRow}" Content="IsReadOnly"
-                                      IsChecked="{Binding IsReadOnly, Mode=TwoWay}" />
-                            <CheckBox Style="{StaticResource ToggleRow}" Content="ShowClearButton"
-                                      ToolTip="Shows an inline clear button while the editor is non-empty and editable"
-                                      IsChecked="{Binding ShowClearButton, Mode=TwoWay}" />
+                            <StackPanel Grid.Column="0" VerticalAlignment="Top">
+                                <sdg:WWTextBox Width="320"
+                                               Height="30"
+                                               HorizontalAlignment="Left"
+                                               Watermark="Search customers…"
+                                               Value="{Binding BasicText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                               ShowClearButton="{Binding BasicShowClearButton}"
+                                               MaxLength="{Binding BasicMaxLength}"
+                                               TextAlignment="{Binding BasicTextAlignment}"
+                                               CharacterCasing="{Binding BasicCharacterCasing}"
+                                               UpdateDelay="{Binding BasicUpdateDelay}" />
+                                <TextBlock Style="{StaticResource BoundValue}"
+                                           Text="{Binding BasicText, StringFormat='Value: {0}', TargetNullValue='Value: (empty)', FallbackValue='Value: (empty)'}" />
+                            </StackPanel>
 
-                            <TextBlock Style="{StaticResource FieldLabel}" Text="Watermark" />
-                            <sdg:WWTextBox Style="{StaticResource OptionText}"
-                                           Value="{Binding Watermark, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            <Border Grid.Column="2" Style="{StaticResource OptionsPanel}">
+                                <StackPanel>
+                                    <TextBlock Style="{StaticResource Caption}" Text="Options" Margin="0,0,0,12" />
 
-                            <TextBlock Style="{StaticResource FieldLabel}" Text="TextAlignment" />
-                            <sdg:WWComboBox Style="{StaticResource OptionCombo}"
-                                            ItemsSource="{Binding TextAlignments}"
-                                            SelectedItem="{Binding TextAlignment, Mode=TwoWay}" />
+                                    <CheckBox Style="{StaticResource ToggleRow}" Content="ShowClearButton"
+                                              ToolTip="Inline clear button, shown while the editor is non-empty and editable"
+                                              IsChecked="{Binding BasicShowClearButton, Mode=TwoWay}" />
 
-                            <TextBlock Style="{StaticResource FieldLabel}" Text="Glyph" />
-                            <sdg:WWComboBox Style="{StaticResource OptionCombo}"
-                                            ToolTip="An icon docked on the GlyphPlacement edge, tinted to the editor's foreground"
-                                            ItemsSource="{Binding GlyphKinds}"
-                                            SelectedItem="{Binding Glyph, Mode=TwoWay}" />
+                                    <TextBlock Style="{StaticResource FieldLabel}" Text="MaxLength (0 = unlimited)" />
+                                    <sdg:WWNumericUpDown Style="{StaticResource OptionNumeric}"
+                                                         Minimum="0" Maximum="100" Increment="1"
+                                                         Value="{Binding BasicMaxLength, Mode=TwoWay}" />
 
-                            <TextBlock Style="{StaticResource FieldLabel}" Text="GlyphPlacement" />
-                            <sdg:WWComboBox Style="{StaticResource OptionCombo}"
-                                            ItemsSource="{Binding GlyphPlacements}"
-                                            SelectedItem="{Binding GlyphPlacement, Mode=TwoWay}" />
+                                    <TextBlock Style="{StaticResource FieldLabel}" Text="TextAlignment" />
+                                    <sdg:WWComboBox Style="{StaticResource OptionCombo}"
+                                                    ItemsSource="{Binding TextAlignments}"
+                                                    SelectedItem="{Binding BasicTextAlignment, Mode=TwoWay}" />
 
-                            <TextBlock Style="{StaticResource FieldLabel}" Text="MaxLength (0 = unlimited)" />
-                            <sdg:WWNumericUpDown Style="{StaticResource OptionNumeric}"
-                                                 Minimum="0" Maximum="100" Increment="1"
-                                                 Value="{Binding MaxLength, Mode=TwoWay}" />
+                                    <TextBlock Style="{StaticResource FieldLabel}" Text="CharacterCasing" />
+                                    <sdg:WWComboBox Style="{StaticResource OptionCombo}"
+                                                    ItemsSource="{Binding CharacterCasings}"
+                                                    SelectedItem="{Binding BasicCharacterCasing, Mode=TwoWay}" />
 
-                            <TextBlock Style="{StaticResource FieldLabel}" Text="UpdateDelay (ms)" />
-                            <sdg:WWNumericUpDown Style="{StaticResource OptionNumeric}"
-                                                 Margin="0"
-                                                 Minimum="0" Maximum="2000" Increment="50" LargeIncrement="250"
-                                                 ToolTip="Debounces the binding (Binding.Delay) — the value echo lags typing by this many ms"
-                                                 Value="{Binding UpdateDelay, Mode=TwoWay}" />
-                        </StackPanel>
-                    </Border>
-
-                    <!--  The single live editor. Glyph and Mask are enum/preset choices, mapped to
-                          concrete resources/patterns by the DataTriggers below; every other property
-                          binds straight to the option it mirrors.  -->
-                    <StackPanel Grid.Column="2" VerticalAlignment="Top">
-                        <TextBlock Style="{StaticResource Caption}" Text="Live editor" />
-                        <sdg:WWTextBox x:Name="Demo"
-                                       Width="340"
-                                       Height="30"
-                                       HorizontalAlignment="Left"
-                                       Value="{Binding SampleText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                       ShowBorder="{Binding ShowBorder}"
-                                       IsReadOnly="{Binding IsReadOnly}"
-                                       ShowClearButton="{Binding ShowClearButton}"
-                                       Watermark="{Binding Watermark}"
-                                       TextAlignment="{Binding TextAlignment}"
-                                       GlyphPlacement="{Binding GlyphPlacement}"
-                                       MaxLength="{Binding MaxLength}"
-                                       UpdateDelay="{Binding UpdateDelay}">
-                            <sdg:WWTextBox.Style>
-                                <Style TargetType="{x:Type sdg:WWTextBox}" BasedOn="{StaticResource {x:Static sdg:EditorThemeKeys.TextBox}}">
-                                    <Style.Triggers>
-                                        <!--  Glyph choice → icon resource (None leaves Glyph null).  -->
-                                        <DataTrigger Binding="{Binding Glyph}" Value="Edit">
-                                            <Setter Property="Glyph" Value="{StaticResource {x:Static sdg:IconKeys.IconEdit}}" />
-                                        </DataTrigger>
-                                        <DataTrigger Binding="{Binding Glyph}" Value="Calendar">
-                                            <Setter Property="Glyph" Value="{StaticResource {x:Static sdg:IconKeys.IconCalendar}}" />
-                                        </DataTrigger>
-                                        <DataTrigger Binding="{Binding Glyph}" Value="Filter">
-                                            <Setter Property="Glyph" Value="{StaticResource {x:Static sdg:IconKeys.IconFilter}}" />
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </sdg:WWTextBox.Style>
-                        </sdg:WWTextBox>
-
-                        <TextBlock Style="{StaticResource BoundValue}"
-                                   Text="{Binding SampleText, StringFormat='Value: {0}', TargetNullValue='Value: (empty)', FallbackValue='Value: (empty)'}" />
+                                    <TextBlock Style="{StaticResource FieldLabel}" Text="UpdateDelay (ms)" />
+                                    <sdg:WWNumericUpDown Style="{StaticResource OptionNumeric}"
+                                                         Margin="0"
+                                                         Minimum="0" Maximum="2000" Increment="50" LargeIncrement="250"
+                                                         ToolTip="Debounces the binding (Binding.Delay) — the value echo lags typing by this many ms"
+                                                         Value="{Binding BasicUpdateDelay, Mode=TwoWay}" />
+                                </StackPanel>
+                            </Border>
+                        </Grid>
                     </StackPanel>
-                </Grid>
+                </Border>
+
+                <!--  ── Card 2: multi-line memo ────────────────────────────────  -->
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource CardTitle}" Text="Memo (multi-line)" />
+                        <TextBlock Style="{StaticResource CardDesc}"
+                                   Text="For long, free-form text like descriptions or notes. AcceptsReturn and top-aligned content are baked in; tune how it wraps, when the scrollbar shows, and the visible line bounds." />
+
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="24" />
+                                <ColumnDefinition Width="250" />
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Grid.Column="0" VerticalAlignment="Top">
+                                <!--  AcceptsReturn + Top alignment make this a memo; MinLines/MaxLines drive its height.  -->
+                                <sdg:WWTextBox Width="400"
+                                               HorizontalAlignment="Left"
+                                               AcceptsReturn="True"
+                                               VerticalContentAlignment="Top"
+                                               Value="{Binding MemoText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                               TextWrapping="{Binding MemoTextWrapping}"
+                                               VerticalScrollBarVisibility="{Binding MemoVerticalScrollBarVisibility}"
+                                               MinLines="{Binding MemoMinLines}"
+                                               MaxLines="{Binding MemoMaxLines}"
+                                               IsSpellCheckEnabled="{Binding MemoSpellCheck}" />
+                                <TextBlock Style="{StaticResource BoundValue}"
+                                           Text="{Binding MemoText.Length, StringFormat='{}{0} characters', FallbackValue='0 characters'}" />
+                            </StackPanel>
+
+                            <Border Grid.Column="2" Style="{StaticResource OptionsPanel}">
+                                <StackPanel>
+                                    <TextBlock Style="{StaticResource Caption}" Text="Options" Margin="0,0,0,12" />
+
+                                    <TextBlock Style="{StaticResource FieldLabel}" Text="TextWrapping" />
+                                    <sdg:WWComboBox Style="{StaticResource OptionCombo}"
+                                                    ItemsSource="{Binding TextWrappings}"
+                                                    SelectedItem="{Binding MemoTextWrapping, Mode=TwoWay}" />
+
+                                    <TextBlock Style="{StaticResource FieldLabel}" Text="VerticalScrollBarVisibility" />
+                                    <sdg:WWComboBox Style="{StaticResource OptionCombo}"
+                                                    ItemsSource="{Binding ScrollBarVisibilities}"
+                                                    SelectedItem="{Binding MemoVerticalScrollBarVisibility, Mode=TwoWay}" />
+
+                                    <TextBlock Style="{StaticResource FieldLabel}" Text="MinLines" />
+                                    <sdg:WWNumericUpDown Style="{StaticResource OptionNumeric}"
+                                                         Minimum="1" Maximum="10" Increment="1"
+                                                         Value="{Binding MemoMinLines, Mode=TwoWay}" />
+
+                                    <TextBlock Style="{StaticResource FieldLabel}" Text="MaxLines" />
+                                    <sdg:WWNumericUpDown Style="{StaticResource OptionNumeric}"
+                                                         Minimum="1" Maximum="20" Increment="1"
+                                                         Value="{Binding MemoMaxLines, Mode=TwoWay}" />
+
+                                    <CheckBox Style="{StaticResource ToggleRow}" Margin="0"
+                                              Content="IsSpellCheckEnabled"
+                                              ToolTip="Feeds SpellCheck.IsEnabled — the OS underlines misspellings"
+                                              IsChecked="{Binding MemoSpellCheck, Mode=TwoWay}" />
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+
+                        <TextBlock Style="{StaticResource CardHint}"
+                                   Text="Type past MaxLines to see it scroll instead of grow. Set MinLines = MaxLines for a fixed-height box." />
+                    </StackPanel>
+                </Border>
+
+                <!--  ── Card 3: adorned input (glyph) ──────────────────────────  -->
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource CardTitle}" Text="Adorned input (glyph)" />
+                        <TextBlock Style="{StaticResource CardDesc}"
+                                   Text="An input with a monochrome icon docked inside it — search fields, filters, labeled inputs. The glyph tints to the foreground and sits on the leading or trailing edge." />
+
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="24" />
+                                <ColumnDefinition Width="250" />
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Grid.Column="0" VerticalAlignment="Top">
+                                <!--  Glyph is an enum choice mapped to an icon resource by the triggers below;
+                                      GlyphPlacement binds straight through.  -->
+                                <sdg:WWTextBox Width="320"
+                                               Height="30"
+                                               HorizontalAlignment="Left"
+                                               Watermark="Filter…"
+                                               ShowClearButton="True"
+                                               Value="{Binding GlyphText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                               GlyphPlacement="{Binding GlyphPlacement}">
+                                    <sdg:WWTextBox.Style>
+                                        <Style TargetType="{x:Type sdg:WWTextBox}" BasedOn="{StaticResource {x:Static sdg:EditorThemeKeys.TextBox}}">
+                                            <Style.Triggers>
+                                                <!--  Glyph choice → icon resource (None leaves Glyph null).  -->
+                                                <DataTrigger Binding="{Binding GlyphKind}" Value="Edit">
+                                                    <Setter Property="Glyph" Value="{StaticResource {x:Static sdg:IconKeys.IconEdit}}" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding GlyphKind}" Value="Calendar">
+                                                    <Setter Property="Glyph" Value="{StaticResource {x:Static sdg:IconKeys.IconCalendar}}" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding GlyphKind}" Value="Filter">
+                                                    <Setter Property="Glyph" Value="{StaticResource {x:Static sdg:IconKeys.IconFilter}}" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </sdg:WWTextBox.Style>
+                                </sdg:WWTextBox>
+                                <TextBlock Style="{StaticResource BoundValue}"
+                                           Text="{Binding GlyphText, StringFormat='Value: {0}', TargetNullValue='Value: (empty)', FallbackValue='Value: (empty)'}" />
+                            </StackPanel>
+
+                            <Border Grid.Column="2" Style="{StaticResource OptionsPanel}">
+                                <StackPanel>
+                                    <TextBlock Style="{StaticResource Caption}" Text="Options" Margin="0,0,0,12" />
+
+                                    <TextBlock Style="{StaticResource FieldLabel}" Text="Glyph" />
+                                    <sdg:WWComboBox Style="{StaticResource OptionCombo}"
+                                                    ToolTip="An icon docked on the GlyphPlacement edge, tinted to the editor's foreground"
+                                                    ItemsSource="{Binding GlyphKinds}"
+                                                    SelectedItem="{Binding GlyphKind, Mode=TwoWay}" />
+
+                                    <TextBlock Style="{StaticResource FieldLabel}" Text="GlyphPlacement" />
+                                    <sdg:WWComboBox Style="{StaticResource OptionCombo}" Margin="0"
+                                                    ItemsSource="{Binding GlyphPlacements}"
+                                                    SelectedItem="{Binding GlyphPlacement, Mode=TwoWay}" />
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+                    </StackPanel>
+                </Border>
             </StackPanel>
         </ScrollViewer>
     </sampleControls:SampleHostControl>

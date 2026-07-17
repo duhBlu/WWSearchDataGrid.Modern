@@ -67,7 +67,7 @@
                 <TextBlock FontSize="13" Foreground="#444" TextWrapping="Wrap" Margin="0,0,0,4">
                     <Run FontWeight="SemiBold" Text="Masked input" />
                     <LineBreak />
-                    <Run Text="Set WWTextBox.Mask (and MaskType) and keystrokes validate against the pattern, the caret skips literals, and the value finalizes on blur. Four engines: Simple, Numeric, DateTime, TimeSpan. The blue column is UnmaskedValue — the raw value with literals stripped." />
+                    <Run Text="Set WWTextBox.Mask (and MaskType) and keystrokes validate against the pattern, the caret skips literals, and the value finalizes on blur. Three engines: Simple, Numeric, TimeSpan — date and time entry lives on WWDatePicker instead. The blue column is UnmaskedValue — the raw value with literals stripped." />
                 </TextBlock>
 
                 <!--  ── Simple ─────────────────────────────────────────────────  -->
@@ -162,8 +162,13 @@
                     <TextBlock Grid.Row="4" Grid.Column="2" Style="{StaticResource Unmasked}" Text="{Binding UnmaskedValue, ElementName=PercentBox}" />
                 </Grid>
 
-                <!--  ── Date / time / duration ─────────────────────────────────  -->
-                <TextBlock Style="{StaticResource SectionHeader}" Text="Date, time &amp; duration (numeric-only patterns)" />
+                <!--  ── Duration ─────────────────────────────────────────────────  -->
+                <TextBlock Style="{StaticResource SectionHeader}" Text="Duration (numeric-only pattern)" />
+                <TextBlock Margin="0,0,0,8"
+                           FontSize="11"
+                           Foreground="#888"
+                           TextWrapping="Wrap"
+                           Text="Date and time entry is not masked on WWTextBox — use WWDatePicker, whose segmented editor handles it better. TimeSpan (elapsed duration) is still masked here." />
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="200" />
@@ -173,27 +178,15 @@
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
 
                     <TextBlock Grid.Row="0" Grid.Column="1" Style="{StaticResource ColHeader}" Text="Editor" />
                     <TextBlock Grid.Row="0" Grid.Column="2" Style="{StaticResource ColHeader}" Text="UnmaskedValue" Margin="14,0,0,6" />
 
-                    <TextBlock Grid.Row="1" Grid.Column="0" Style="{StaticResource RowLabel}" Text="Date  MM/dd/yyyy" />
-                    <sdg:WWTextBox x:Name="DateBox" Grid.Row="1" Grid.Column="1" Style="{StaticResource MaskEditor}"
-                                   MaskType="DateOnly" Mask="MM/dd/yyyy" Value="{Binding Date, Mode=TwoWay}" />
-                    <TextBlock Grid.Row="1" Grid.Column="2" Style="{StaticResource Unmasked}" Text="{Binding UnmaskedValue, ElementName=DateBox}" />
-
-                    <TextBlock Grid.Row="2" Grid.Column="0" Style="{StaticResource RowLabel}" Text="Time (24h)  HH:mm:ss" />
-                    <sdg:WWTextBox x:Name="TimeBox" Grid.Row="2" Grid.Column="1" Style="{StaticResource MaskEditor}"
-                                   MaskType="TimeOnly" Mask="HH:mm:ss" Value="{Binding Time, Mode=TwoWay}" />
-                    <TextBlock Grid.Row="2" Grid.Column="2" Style="{StaticResource Unmasked}" Text="{Binding UnmaskedValue, ElementName=TimeBox}" />
-
-                    <TextBlock Grid.Row="3" Grid.Column="0" Style="{StaticResource RowLabel}" Text="Duration  hh\:mm\:ss" />
-                    <sdg:WWTextBox x:Name="DurationBox" Grid.Row="3" Grid.Column="1" Style="{StaticResource MaskEditor}"
+                    <TextBlock Grid.Row="1" Grid.Column="0" Style="{StaticResource RowLabel}" Text="Duration  hh\:mm\:ss" />
+                    <sdg:WWTextBox x:Name="DurationBox" Grid.Row="1" Grid.Column="1" Style="{StaticResource MaskEditor}"
                                    MaskType="TimeSpan" Mask="hh\:mm\:ss" Value="{Binding Duration, Mode=TwoWay}" />
-                    <TextBlock Grid.Row="3" Grid.Column="2" Style="{StaticResource Unmasked}" Text="{Binding UnmaskedValue, ElementName=DurationBox}" />
+                    <TextBlock Grid.Row="1" Grid.Column="2" Style="{StaticResource Unmasked}" Text="{Binding UnmaskedValue, ElementName=DurationBox}" />
                 </Grid>
 
                 <!--  ── PromptChar ─────────────────────────────────────────────  -->

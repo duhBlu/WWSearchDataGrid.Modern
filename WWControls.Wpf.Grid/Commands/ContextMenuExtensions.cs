@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -45,6 +47,28 @@ namespace WWControls.Wpf
         {
             obj.SetValue(ContextProperty, value);
         }
+
+        /// <summary>
+        /// Stable identifier stamped on each built-in menu item by the theme. Read by the hide-list
+        /// (<see cref="SearchDataGrid.HiddenContextMenuItems"/>) and the
+        /// <see cref="GridContextMenuInitializingEventArgs"/> lookup/hide helpers. Consumer-authored
+        /// items normally leave this unset (<see cref="GridContextMenuItem.None"/>); set it only if
+        /// you want your own item to be targetable by ID.
+        /// </summary>
+        public static readonly DependencyProperty ItemIdProperty =
+            DependencyProperty.RegisterAttached(
+                "ItemId",
+                typeof(GridContextMenuItem),
+                typeof(ContextMenuExtensions),
+                new PropertyMetadata(GridContextMenuItem.None));
+
+        /// <summary>Gets the <see cref="GridContextMenuItem"/> id stamped on a menu item.</summary>
+        public static GridContextMenuItem GetItemId(DependencyObject obj)
+            => (GridContextMenuItem)obj.GetValue(ItemIdProperty);
+
+        /// <summary>Sets the <see cref="GridContextMenuItem"/> id on a menu item.</summary>
+        public static void SetItemId(DependencyObject obj, GridContextMenuItem value)
+            => obj.SetValue(ItemIdProperty, value);
 
         #endregion
 
@@ -129,7 +153,18 @@ namespace WWControls.Wpf
                 var contextMenu = GetContextMenuForElement(targetElement);
                 if (contextMenu != null)
                 {
+                    // Rebuild the built-in set before anything else. The menus are shared resources,
+                    // so this clears whatever any grid injected last time, restores the built-ins in
+                    // order (minus HiddenContextMenuItems), or — in Replace mode — drops them so the
+                    // consumer's own items stand alone.
+                    BuildBuiltInItems(contextMenu, grid, context.ContextType);
+
                     contextMenu.DataContext = context;
+
+                    // Consumer customization: declarative per-surface collection first, then the
+                    // imperative event for anything built from the click's state.
+                    AppendCustomContextMenuItems(contextMenu, grid, context.ContextType);
+                    grid.RaiseContextMenuInitializing(contextMenu, context);
                 }
                 else
                 {
@@ -140,6 +175,133 @@ namespace WWControls.Wpf
             else
             {
                 e.Handled = true;
+            }
+        }
+
+        #endregion
+
+        #region Custom Item Injection
+
+        /// <summary>
+        /// Snapshot of each shared menu's (and submenu's) authored built-in items, captured the first
+        /// time a menu is opened — before any injection or hiding. Keyed weakly (on the
+        /// <see cref="ItemsControl"/> — the <see cref="ContextMenu"/> and every submenu
+        /// <see cref="MenuItem"/>) so menus that fall out of use don't leak.
+        /// </summary>
+        private static readonly ConditionalWeakTable<ItemsControl, List<object>> _menuSnapshots
+            = new ConditionalWeakTable<ItemsControl, List<object>>();
+
+        /// <summary>
+        /// Rebuilds a menu's built-in items from its pristine snapshot each opening. In
+        /// <see cref="ContextMenuItemsMode.Append"/> the built-ins are restored in order minus
+        /// anything in <see cref="SearchDataGrid.HiddenContextMenuItems"/> (submenus included, with
+        /// orphaned separators tidied); in <see cref="ContextMenuItemsMode.Replace"/> they are
+        /// dropped entirely. Either way this clears whatever collection / event items a prior opening
+        /// (on this or, via the shared instance, another grid) left behind, so customization can
+        /// never corrupt the built-in set.
+        /// </summary>
+        private static void BuildBuiltInItems(ContextMenu menu, SearchDataGrid grid, ContextMenuType contextType)
+        {
+            EnsureCaptured(menu);
+
+            if (grid.GetContextMenuModeFor(contextType) == ContextMenuItemsMode.Replace)
+            {
+                menu.Items.Clear();
+                return;
+            }
+
+            var hidden = grid.HiddenContextMenuItems;
+            var hiddenSet = (hidden == null || hidden.Count == 0)
+                ? null
+                : new HashSet<GridContextMenuItem>(hidden);
+
+            RebuildContainer(menu, hiddenSet);
+        }
+
+        /// <summary>Recursively snapshots a menu and its submenus on first sight.</summary>
+        private static void EnsureCaptured(ItemsControl container)
+        {
+            if (_menuSnapshots.TryGetValue(container, out _)) return;
+            _menuSnapshots.Add(container, container.Items.Cast<object>().ToList());
+
+            foreach (var obj in container.Items)
+                if (obj is MenuItem mi && mi.HasItems)
+                    EnsureCaptured(mi);
+        }
+
+        /// <summary>
+        /// Restores one container (menu or submenu) from its snapshot, skipping hidden ids and
+        /// dropping separators that would end up leading, trailing, or doubled once items are gone.
+        /// </summary>
+        private static void RebuildContainer(ItemsControl container, HashSet<GridContextMenuItem> hiddenSet)
+        {
+            if (!_menuSnapshots.TryGetValue(container, out var snapshot)) return;
+
+            container.Items.Clear();
+
+            object pendingSeparator = null;
+            var anyReal = false;
+
+            foreach (var child in snapshot)
+            {
+                if (child is Separator)
+                {
+                    // Hold it; only emit once a real item follows (drops leading / doubled ones).
+                    if (anyReal) pendingSeparator = child;
+                    continue;
+                }
+
+                if (child is MenuItem mi)
+                {
+                    var id = GetItemId(mi);
+                    if (id != GridContextMenuItem.None && hiddenSet != null && hiddenSet.Contains(id))
+                        continue;
+                }
+
+                if (pendingSeparator != null)
+                {
+                    container.Items.Add(pendingSeparator);
+                    pendingSeparator = null;
+                }
+
+                container.Items.Add(child);
+                anyReal = true;
+
+                if (child is MenuItem sub && _menuSnapshots.TryGetValue(sub, out _))
+                    RebuildContainer(sub, hiddenSet);
+            }
+
+            // A trailing pendingSeparator is intentionally dropped.
+        }
+
+        /// <summary>
+        /// Adds the grid's per-surface custom items (<see cref="SearchDataGrid.CellContextMenuItems"/>
+        /// and siblings) to the menu — beneath the built-ins under a separator in
+        /// <see cref="ContextMenuItemsMode.Append"/>, or as the whole menu in
+        /// <see cref="ContextMenuItemsMode.Replace"/> (where the built-ins were already cleared). The
+        /// menu's <c>DataContext</c> (the <see cref="ContextMenuContext"/>) flows to each item, so
+        /// their command/parameter bindings resolve against the click context.
+        /// </summary>
+        private static void AppendCustomContextMenuItems(ContextMenu menu, SearchDataGrid grid, ContextMenuType contextType)
+        {
+            var items = grid.GetContextMenuItemsFor(contextType);
+            if (items == null || items.Count == 0) return;
+
+            if (menu.Items.Count > 0)
+                menu.Items.Add(new Separator());
+
+            foreach (var item in items)
+            {
+                if (item == null) continue;
+
+                // A Control lives in one items collection at a time. If the same instance was placed
+                // in more than one surface collection, it may still be parented to another shared
+                // menu — detach before re-hosting so WPF doesn't throw on the duplicate parent.
+                if (item.Parent is ItemsControl owner && !ReferenceEquals(owner, menu))
+                    owner.Items.Remove(item);
+
+                if (!menu.Items.Contains(item))
+                    menu.Items.Add(item);
             }
         }
 

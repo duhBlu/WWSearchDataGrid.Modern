@@ -20,7 +20,7 @@
                  Style="{StaticResource {x:Static sdg:PrimitiveThemeKeys.ContextMenu}}"
                  StaysOpen="True">
         <!--  Column-specific Copy Operations  -->
-        <MenuItem x:Name="miCopy"
+        <MenuItem x:Name="miCopy" sdg:ContextMenuExtensions.ItemId="Copy"
                   Command="{x:Static commands:ContextMenuCommands.CopySelectedCellValuesCommand}"
                   CommandParameter="{Binding Grid}"
                   Header="Copy">
@@ -30,14 +30,14 @@
                           IconSource="{StaticResource {x:Static sdg:IconKeys.IconCopy}}" />
             </MenuItem.Icon>
         </MenuItem>
-        <MenuItem x:Name="miCopyWithHeaders"
+        <MenuItem x:Name="miCopyWithHeaders" sdg:ContextMenuExtensions.ItemId="CopyWithHeaders"
                   Command="{x:Static commands:ContextMenuCommands.CopySelectedCellValuesWithHeadersCommand}"
                   CommandParameter="{Binding Grid}"
                   Header="Copy With Headers" />
         <Separator />
 
         <!--  Sorting  -->
-        <MenuItem x:Name="miSortAscending"
+        <MenuItem x:Name="miSortAscending" sdg:ContextMenuExtensions.ItemId="SortAscending"
                   Command="{x:Static commands:ContextMenuCommands.SortAscendingCommand}"
                   CommandParameter="{Binding}"
                   Header="Sort Ascending">
@@ -47,7 +47,7 @@
                           IconSource="{StaticResource {x:Static sdg:IconKeys.IconSortAscending}}" />
             </MenuItem.Icon>
         </MenuItem>
-        <MenuItem x:Name="miSortDescending"
+        <MenuItem x:Name="miSortDescending" sdg:ContextMenuExtensions.ItemId="SortDescending"
                   Command="{x:Static commands:ContextMenuCommands.SortDescendingCommand}"
                   CommandParameter="{Binding}"
                   Header="Sort Descending">
@@ -57,7 +57,7 @@
                           IconSource="{StaticResource {x:Static sdg:IconKeys.IconSortDescending}}" />
             </MenuItem.Icon>
         </MenuItem>
-        <MenuItem x:Name="miClearSorting"
+        <MenuItem x:Name="miClearSorting" sdg:ContextMenuExtensions.ItemId="ClearSorting"
                   Command="{x:Static commands:ContextMenuCommands.ClearSortingCommand}"
                   CommandParameter="{Binding}"
                   Header="Clear Sorting" />
@@ -71,7 +71,7 @@
             Both items hide (not disable) when gated off — Group By via the descriptor's resolved
             ActualAllowGrouping (column AND grid), the panel toggle via the grid-level AllowGrouping.
         -->
-        <MenuItem x:Name="miGroupByColumn"
+        <MenuItem x:Name="miGroupByColumn" sdg:ContextMenuExtensions.ItemId="GroupByColumn"
                   Command="{x:Static commands:ContextMenuCommands.GroupByColumnCommand}"
                   CommandParameter="{Binding}"
                   Header="Group By This Column">
@@ -91,7 +91,7 @@
                 </Style>
             </MenuItem.Style>
         </MenuItem>
-        <MenuItem x:Name="miToggleGroupPanel"
+        <MenuItem x:Name="miToggleGroupPanel" sdg:ContextMenuExtensions.ItemId="ToggleGroupPanel"
                   Command="{x:Static commands:ContextMenuCommands.ToggleGroupPanelVisibilityCommand}"
                   CommandParameter="{Binding Grid}">
             <MenuItem.Style>
@@ -128,7 +128,7 @@
             and a hidden fixed panel have no surface to right-click, so this is the always-
             reachable path to show them and to open the totals editor.
         -->
-        <MenuItem x:Name="miTotalSummaries" Header="Total Summaries">
+        <MenuItem x:Name="miTotalSummaries" sdg:ContextMenuExtensions.ItemId="TotalSummaries" Header="Total Summaries">
             <MenuItem.Style>
                 <Style BasedOn="{StaticResource {x:Static sdg:PrimitiveThemeKeys.MenuItem}}" TargetType="MenuItem">
                     <Style.Triggers>
@@ -147,7 +147,7 @@
                     </Style.Triggers>
                 </Style>
             </MenuItem.Style>
-            <MenuItem x:Name="miToggleTotalSummaryRow"
+            <MenuItem x:Name="miToggleTotalSummaryRow" sdg:ContextMenuExtensions.ItemId="ToggleTotalSummaryRow"
                       Command="{x:Static commands:ContextMenuCommands.ToggleTotalSummaryRowCommand}"
                       CommandParameter="{Binding Grid}">
                 <MenuItem.Style>
@@ -168,7 +168,7 @@
                     </Style>
                 </MenuItem.Style>
             </MenuItem>
-            <MenuItem x:Name="miToggleFixedTotalSummary"
+            <MenuItem x:Name="miToggleFixedTotalSummary" sdg:ContextMenuExtensions.ItemId="ToggleFixedTotalSummary"
                       Command="{x:Static commands:ContextMenuCommands.ToggleFixedTotalSummaryCommand}"
                       CommandParameter="{Binding Grid}">
                 <MenuItem.Style>
@@ -200,7 +200,7 @@
                 </Separator.Style>
             </Separator>
             <!--  Column-scoped totals editor ("Totals for 'X'") — takes the whole context so the command can resolve this column's descriptor.  -->
-            <MenuItem x:Name="miCustomizeTotals"
+            <MenuItem x:Name="miCustomizeTotals" sdg:ContextMenuExtensions.ItemId="CustomizeTotals"
                       Command="{x:Static commands:ContextMenuCommands.OpenTotalSummaryEditorCommand}"
                       CommandParameter="{Binding}"
                       Header="Customize Totals…">
@@ -248,7 +248,7 @@
             per-column via the descriptor's resolved ActualAllowBestFit, All Columns via the
             grid-level AllowBestFit.
         -->
-        <MenuItem x:Name="miBestFitColumn"
+        <MenuItem x:Name="miBestFitColumn" sdg:ContextMenuExtensions.ItemId="BestFitColumn"
                   Command="{x:Static commands:ContextMenuCommands.BestFitColumnCommand}"
                   CommandParameter="{Binding}"
                   Header="Best Fit Column">
@@ -268,7 +268,7 @@
                 </Style>
             </MenuItem.Style>
         </MenuItem>
-        <MenuItem x:Name="miBestFitAllColumns"
+        <MenuItem x:Name="miBestFitAllColumns" sdg:ContextMenuExtensions.ItemId="BestFitAllColumns"
                   Command="{x:Static commands:ContextMenuCommands.BestFitAllColumnsCommand}"
                   CommandParameter="{Binding}"
                   Header="Best Fit All Columns">
@@ -302,7 +302,7 @@
         </Separator>
 
         <!--  Visibility and Layout  -->
-        <MenuItem x:Name="miShowColumnChooser"
+        <MenuItem x:Name="miShowColumnChooser" sdg:ContextMenuExtensions.ItemId="ColumnChooser"
                   Command="{x:Static commands:ContextMenuCommands.ShowColumnChooserCommand}"
                   CommandParameter="{Binding Grid}"
                   Header="Column Chooser">
@@ -322,7 +322,7 @@
                 </Style>
             </MenuItem.Style>
         </MenuItem>
-        <MenuItem x:Name="miHideColumn"
+        <MenuItem x:Name="miHideColumn" sdg:ContextMenuExtensions.ItemId="HideColumn"
                   Command="{x:Static commands:ContextMenuCommands.HideSelectedColumnCommand}"
                   CommandParameter="{Binding Column}"
                   Header="Hide Column">
@@ -334,7 +334,7 @@
         </MenuItem>
 
         <!--  Fixed (pinned) column controls — gated by SearchDataGrid.AllowFixedColumnMenu  -->
-        <MenuItem x:Name="miFixedColumn" Header="Fixed">
+        <MenuItem x:Name="miFixedColumn" sdg:ContextMenuExtensions.ItemId="FixedColumn" Header="Fixed">
             <MenuItem.Style>
                 <Style BasedOn="{StaticResource {x:Static sdg:PrimitiveThemeKeys.MenuItem}}" TargetType="MenuItem">
                     <Setter Property="Visibility" Value="Collapsed" />
@@ -345,7 +345,7 @@
                     </Style.Triggers>
                 </Style>
             </MenuItem.Style>
-            <MenuItem x:Name="miPinColumnLeft"
+            <MenuItem x:Name="miPinColumnLeft" sdg:ContextMenuExtensions.ItemId="PinColumnLeft"
                       Command="{x:Static commands:ContextMenuCommands.PinColumnLeftCommand}"
                       CommandParameter="{Binding}"
                       Header="Pin Left">
@@ -355,7 +355,7 @@
                               IconSource="{StaticResource {x:Static sdg:IconKeys.IconPinLeft}}" />
                 </MenuItem.Icon>
             </MenuItem>
-            <MenuItem x:Name="miPinColumnRight"
+            <MenuItem x:Name="miPinColumnRight" sdg:ContextMenuExtensions.ItemId="PinColumnRight"
                       Command="{x:Static commands:ContextMenuCommands.PinColumnRightCommand}"
                       CommandParameter="{Binding}"
                       Header="Pin Right">
@@ -365,7 +365,7 @@
                               IconSource="{StaticResource {x:Static sdg:IconKeys.IconPinRight}}" />
                 </MenuItem.Icon>
             </MenuItem>
-            <MenuItem x:Name="miUnpinColumn"
+            <MenuItem x:Name="miUnpinColumn" sdg:ContextMenuExtensions.ItemId="UnpinColumn"
                       Command="{x:Static commands:ContextMenuCommands.UnpinColumnCommand}"
                       CommandParameter="{Binding}"
                       Header="Unpin">
@@ -390,7 +390,7 @@
                 </Style>
             </Separator.Style>
         </Separator>
-        <MenuItem x:Name="miClearColumnFilter"
+        <MenuItem x:Name="miClearColumnFilter" sdg:ContextMenuExtensions.ItemId="ClearColumnFilter"
                   Command="{x:Static commands:ContextMenuCommands.ClearColumnFilterCommand}"
                   CommandParameter="{Binding ColumnSearchBox}"
                   Header="Clear Column Filter">
@@ -410,7 +410,7 @@
                 </Style>
             </MenuItem.Style>
         </MenuItem>
-        <MenuItem x:Name="miOpenFilterEditor"
+        <MenuItem x:Name="miOpenFilterEditor" sdg:ContextMenuExtensions.ItemId="OpenFilterEditor"
                   Command="{x:Static commands:ContextMenuCommands.OpenFilterEditorCommand}"
                   CommandParameter="{Binding Grid}"
                   Header="Open Filter Editor…">

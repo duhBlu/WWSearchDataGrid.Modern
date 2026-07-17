@@ -56,6 +56,10 @@ namespace WWControls.Wpf.Controls.Editors
         private bool _gridShowValidationErrors = true;
         private bool _gridAllowCommitOnValidationError;
 
+        // Grid-level header-layout default, pushed by the grid (SetLayoutContext); the effective
+        // per-row mode resolves the definition override against this default.
+        private PropertyHeaderShowMode _gridHeaderShowMode = PropertyHeaderShowMode.Left;
+
         /// <summary>
         /// <param name="source">The object that owns the property.</param>
         /// <param name="propertyInfo">Reflection info for the property.</param>
@@ -205,6 +209,18 @@ namespace WWControls.Wpf.Controls.Editors
         }
         private bool _actualShowValidationErrors = true;
 
+        /// <summary>
+        /// Effective header placement for this row: the matched
+        /// <see cref="WWPropertyDefinition.HeaderShowMode"/> override, else the grid-level
+        /// <c>WWPropertyGrid.HeaderShowMode</c>. The row template restructures on this.
+        /// </summary>
+        public PropertyHeaderShowMode ActualHeaderShowMode
+        {
+            get => _actualHeaderShowMode;
+            private set { if (_actualHeaderShowMode != value) { _actualHeaderShowMode = value; OnPropertyChanged(nameof(ActualHeaderShowMode)); } }
+        }
+        private PropertyHeaderShowMode _actualHeaderShowMode = PropertyHeaderShowMode.Left;
+
         /// <summary>The CLR type of the property.</summary>
         public Type PropertyType { get; }
 
@@ -300,6 +316,8 @@ namespace WWControls.Wpf.Controls.Editors
             IsVisible = _definition?.IsVisible ?? _overrides?.Browsable ?? _attrBrowsable;
             // The validation toggle has no provider tier — a definition override, else the grid level.
             ActualShowValidationErrors = _definition?.ShowValidationErrors ?? _gridShowValidationErrors;
+            // Header layout likewise: a definition override, else the grid-level default.
+            ActualHeaderShowMode = _definition?.HeaderShowMode ?? _gridHeaderShowMode;
         }
 
         /// <summary>
@@ -311,6 +329,16 @@ namespace WWControls.Wpf.Controls.Editors
             _gridShowValidationErrors = showValidationErrors;
             _gridAllowCommitOnValidationError = allowCommitOnValidationError;
             ActualShowValidationErrors = _definition?.ShowValidationErrors ?? _gridShowValidationErrors;
+        }
+
+        /// <summary>
+        /// Pushes the grid-level header-layout default onto the row and recomputes the effective mode.
+        /// A per-definition <see cref="WWPropertyDefinition.HeaderShowMode"/> wins over it.
+        /// </summary>
+        internal void SetLayoutContext(PropertyHeaderShowMode gridHeaderShowMode)
+        {
+            _gridHeaderShowMode = gridHeaderShowMode;
+            ActualHeaderShowMode = _definition?.HeaderShowMode ?? _gridHeaderShowMode;
         }
 
         /// <summary>

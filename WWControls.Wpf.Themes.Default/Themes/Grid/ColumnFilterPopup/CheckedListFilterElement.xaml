@@ -42,11 +42,14 @@
                                           Content="Select All"
                                           FontSize="11" />
 
-                                <TextBox Style="{StaticResource {x:Static sdg:PrimitiveThemeKeys.TextBox}}"
-                                         Grid.Column="1"
-                                         Text="{Binding FilterValueManager.SearchText, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, Delay=200}"
-                                         Padding="4,2"
-                                         FontSize="11" />
+                                <!--  WWTextBox debounces via UpdateDelay instead of the binding's Delay.  -->
+                                <sdg:WWTextBox Grid.Column="1"
+                                               Watermark="Search"
+                                               ShowClearButton="True"
+                                               UpdateDelay="200"
+                                               Value="{Binding FilterValueManager.SearchText, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                               Padding="4,2"
+                                               FontSize="11" />
                             </Grid>
 
                             <!-- Bottom: Status -->

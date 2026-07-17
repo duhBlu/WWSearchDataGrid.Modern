@@ -84,6 +84,11 @@ namespace WWControls.SampleApp.Editors.Controls
             "Views/Samples/PropertyGrid/PropertyGridValidationSampleView.xaml.cs",
             "Views/Samples/PropertyGrid/PropertyGridValidationSampleViewModel.cs");
 
+        public static IReadOnlyList<SampleSourceFile> PropertyGridLayout { get; } = SampleSourceLoader.LoadFiles(
+            "Views/Samples/PropertyGrid/PropertyGridLayoutSampleView.xaml",
+            "Views/Samples/PropertyGrid/PropertyGridLayoutSampleView.xaml.cs",
+            "Views/Samples/PropertyGrid/PropertyGridLayoutSampleViewModel.cs");
+
         // ── Buttons ──────────────────────────────────────────────────────────
         public static IReadOnlyList<SampleSourceFile> Button { get; } = SampleSourceLoader.LoadFiles(
             "Views/Samples/Buttons/ButtonSampleView.xaml",

@@ -226,5 +226,29 @@ namespace WWControls.Wpf.Controls.Primitives
         
         public static ComponentResourceKey IconTextUnderline { get; } =
             new ComponentResourceKey(typeof(IconKeys), nameof(IconTextUnderline));
+
+        // ─── Text editing ────────────────────────────────────────────────────────────────
+        // The clipboard / history glyphs on the WWTextBox right-click menu. Copy reuses
+        // <see cref="IconCopy"/> above.
+
+        /// <summary>Cut (scissors) — the editor context menu's cut action.</summary>
+        public static ComponentResourceKey IconCut { get; } =
+            new ComponentResourceKey(typeof(IconKeys), nameof(IconCut));
+
+        /// <summary>Paste (clipboard) — the editor context menu's paste action.</summary>
+        public static ComponentResourceKey IconPaste { get; } =
+            new ComponentResourceKey(typeof(IconKeys), nameof(IconPaste));
+
+        /// <summary>Undo (curved back-arrow) — the editor context menu's undo action.</summary>
+        public static ComponentResourceKey IconUndo { get; } =
+            new ComponentResourceKey(typeof(IconKeys), nameof(IconUndo));
+
+        /// <summary>Redo (curved forward-arrow) — the editor context menu's redo action.</summary>
+        public static ComponentResourceKey IconRedo { get; } =
+            new ComponentResourceKey(typeof(IconKeys), nameof(IconRedo));
+
+        /// <summary>Select-all (dashed marquee box) — the editor context menu's select-all action.</summary>
+        public static ComponentResourceKey IconSelectAll { get; } =
+            new ComponentResourceKey(typeof(IconKeys), nameof(IconSelectAll));
     }
 }

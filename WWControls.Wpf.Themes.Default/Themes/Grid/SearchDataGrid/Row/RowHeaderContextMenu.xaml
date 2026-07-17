@@ -16,7 +16,7 @@
     <ContextMenu x:Key="{x:Static sdg:GridThemeKeys.GridSearchDataGridRowHeaderContextMenu}"
                  Style="{StaticResource {x:Static sdg:PrimitiveThemeKeys.ContextMenu}}"
                  AutomationProperties.AutomationId="cmuRowHeader">
-        <MenuItem x:Name="miCopy"
+        <MenuItem x:Name="miCopy" sdg:ContextMenuExtensions.ItemId="Copy"
                   Command="{x:Static commands:ContextMenuCommands.CopySelectedCellValuesCommand}"
                   CommandParameter="{Binding Grid}"
                   Header="Copy">
@@ -26,7 +26,7 @@
                              IconSource="{StaticResource {x:Static sdg:IconKeys.IconCopy}}"/>
             </MenuItem.Icon>
         </MenuItem>
-        <MenuItem x:Name="miCopyWithHeaders"
+        <MenuItem x:Name="miCopyWithHeaders" sdg:ContextMenuExtensions.ItemId="CopyWithHeaders"
                   Command="{x:Static commands:ContextMenuCommands.CopySelectedCellValuesWithHeadersCommand}"
                   CommandParameter="{Binding Grid}"
                   Header="Copy With Headers" />

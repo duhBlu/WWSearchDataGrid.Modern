@@ -7,6 +7,26 @@ using WWControls.Wpf.Controls.Editors.Settings;
 namespace WWControls.Wpf.Controls.Editors
 {
     /// <summary>
+    /// Where a <see cref="WWPropertyGrid"/> row places its header (the property name) relative to the
+    /// editor. Set grid-wide via <see cref="WWPropertyGrid.HeaderShowMode"/> or per property via
+    /// <see cref="WWPropertyDefinition.HeaderShowMode"/> (which overrides the grid default).
+    /// </summary>
+    public enum PropertyHeaderShowMode
+    {
+        /// <summary>Header to the left of the editor — the default two-column row layout.</summary>
+        Left,
+
+        /// <summary>Header stacked above the editor, each spanning the full row width.</summary>
+        Top,
+
+        /// <summary>Header hidden; the editor takes the full row width.</summary>
+        Hidden,
+
+        /// <summary>Editor hidden; the header takes the full row width (a read-only caption row).</summary>
+        OnlyHeader
+    }
+
+    /// <summary>
     /// A per-property declaration for <see cref="WWPropertyGrid"/> — the property-grid parallel of a
     /// <c>GridColumn</c>. Matched to one or more properties by name, it supplies the editor for those
     /// rows: an <see cref="EditSettings"/> block (the same <see cref="BaseEditorSettings"/> the
@@ -185,6 +205,20 @@ namespace WWControls.Wpf.Controls.Editors
         {
             get => (bool?)GetValue(ShowValidationErrorsProperty);
             set => SetValue(ShowValidationErrorsProperty, value);
+        }
+
+        /// <summary>
+        /// Overrides where the matched rows place their header relative to the editor. Null = don't
+        /// override (the row inherits the grid-level <see cref="WWPropertyGrid.HeaderShowMode"/>).
+        /// </summary>
+        public static readonly DependencyProperty HeaderShowModeProperty =
+            DependencyProperty.Register(nameof(HeaderShowMode), typeof(PropertyHeaderShowMode?), typeof(WWPropertyDefinition),
+                new PropertyMetadata(null, OnMetadataChanged));
+
+        public PropertyHeaderShowMode? HeaderShowMode
+        {
+            get => (PropertyHeaderShowMode?)GetValue(HeaderShowModeProperty);
+            set => SetValue(HeaderShowModeProperty, value);
         }
 
         #endregion

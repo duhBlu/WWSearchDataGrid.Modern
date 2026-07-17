@@ -98,6 +98,11 @@ namespace WWControls.SampleApp.Editors.Views.Launcher
                         "Data-annotation attributes ([Required] / [Range] / [StringLength] / [EmailAddress]) and INotifyDataErrorInfo surface as a per-row badge, with per-property severity (an advisory warning) via IValidationSeverityProvider. Grid-wide ShowValidationErrors and AllowCommitOnValidationError toggles drive display and commit gating.",
                         new[] { "PropertyGrid", "Validation", "Badge" },
                         () => new PropertyGridValidationSampleView()),
+
+                    new("Layout",
+                        "HeaderShowMode places each row's header relative to its editor — Left (default), Top, Hidden (editor only), or OnlyHeader (a caption row). Set grid-wide (flipped live from a picker) or per property via WWPropertyDefinition, where the per-property value wins.",
+                        new[] { "PropertyGrid", "Layout", "HeaderShowMode" },
+                        () => new PropertyGridLayoutSampleView()),
                 }),
 
             new SampleCategory(

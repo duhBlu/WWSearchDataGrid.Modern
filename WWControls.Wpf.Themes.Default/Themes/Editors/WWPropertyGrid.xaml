@@ -143,10 +143,17 @@
                 <ColumnDefinition Width="{Binding NameColumnWidth, RelativeSource={RelativeSource AncestorType={x:Type sdg:WWPropertyGrid}}}" />
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
+            <!--  Row 0 hosts both header and editor in the default Left layout; row 1 is used only by
+                  the Top layout (editor stacked below the header). See the HeaderShowMode triggers.  -->
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
 
             <!--  Name  -->
             <Border x:Name="NameBorder"
                     Grid.Column="0"
+                    Grid.Row="0"
                     Background="#FAFAFA"
                     BorderBrush="#E3E3E3"
                     BorderThickness="1,1,0,1"
@@ -166,6 +173,7 @@
                   bindings resolve normally.  -->
             <Border x:Name="EditorBorder"
                     Grid.Column="1"
+                    Grid.Row="0"
                     Background="#FFFFFF"
                     BorderBrush="#E3E3E3"
                     BorderThickness="1"
@@ -196,6 +204,32 @@
         </Grid>
 
         <DataTemplate.Triggers>
+            <!--  Header layout — Left is the default (no trigger). The name column width still comes
+                  from the shared NameColumnWidth; the non-Left modes just span both columns.  -->
+
+            <!--  Top: header above the editor, each spanning the full row width.  -->
+            <DataTrigger Binding="{Binding ActualHeaderShowMode}" Value="{x:Static sdg:PropertyHeaderShowMode.Top}">
+                <Setter TargetName="NameBorder" Property="Grid.ColumnSpan" Value="2" />
+                <Setter TargetName="NameBorder" Property="BorderThickness" Value="1,1,1,0" />
+                <Setter TargetName="EditorBorder" Property="Grid.Row" Value="1" />
+                <Setter TargetName="EditorBorder" Property="Grid.Column" Value="0" />
+                <Setter TargetName="EditorBorder" Property="Grid.ColumnSpan" Value="2" />
+            </DataTrigger>
+
+            <!--  Hidden: header removed, editor takes the full row width.  -->
+            <DataTrigger Binding="{Binding ActualHeaderShowMode}" Value="{x:Static sdg:PropertyHeaderShowMode.Hidden}">
+                <Setter TargetName="NameBorder" Property="Visibility" Value="Collapsed" />
+                <Setter TargetName="EditorBorder" Property="Grid.Column" Value="0" />
+                <Setter TargetName="EditorBorder" Property="Grid.ColumnSpan" Value="2" />
+            </DataTrigger>
+
+            <!--  OnlyHeader: editor removed, header takes the full row width (a caption row).  -->
+            <DataTrigger Binding="{Binding ActualHeaderShowMode}" Value="{x:Static sdg:PropertyHeaderShowMode.OnlyHeader}">
+                <Setter TargetName="EditorBorder" Property="Visibility" Value="Collapsed" />
+                <Setter TargetName="NameBorder" Property="Grid.ColumnSpan" Value="2" />
+                <Setter TargetName="NameBorder" Property="BorderThickness" Value="1" />
+            </DataTrigger>
+
             <!--  Hover  -->
             <DataTrigger Binding="{Binding IsMouseOver, ElementName=NameBorder}" Value="True">
                 <Setter TargetName="NameBorder" Property="Background" Value="#F0F0F0" />
@@ -256,25 +290,12 @@
                             <Grid Grid.Row="1"
                                   Margin="4,4,4,2"
                                   Visibility="{Binding ShowSearchBox, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource WWPropertyGrid_BoolToVis}}">
-                                <TextBox x:Name="PART_FilterBox"
-                                         Style="{StaticResource {x:Static sdg:PrimitiveThemeKeys.TextBox}}"
-                                         Text="{Binding FilterText, RelativeSource={RelativeSource TemplatedParent}, UpdateSourceTrigger=PropertyChanged}" />
-                                <TextBlock IsHitTestVisible="False"
-                                           Margin="8,0,0,0"
-                                           VerticalAlignment="Center"
-                                           Foreground="#999999"
-                                           Text="Search properties...">
-                                    <TextBlock.Style>
-                                        <Style TargetType="TextBlock">
-                                            <Setter Property="Visibility" Value="Collapsed" />
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding Text, ElementName=PART_FilterBox}" Value="">
-                                                    <Setter Property="Visibility" Value="Visible" />
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </TextBlock.Style>
-                                </TextBlock>
+                                <!--  WWTextBox supplies the watermark and clear button directly, so the
+                                      separate overlay TextBlock is no longer needed.  -->
+                                <sdg:WWTextBox x:Name="PART_FilterBox"
+                                               Watermark="Search properties..."
+                                               ShowClearButton="True"
+                                               Value="{Binding FilterText, RelativeSource={RelativeSource TemplatedParent}, UpdateSourceTrigger=PropertyChanged}" />
                             </Grid>
 
                             <!--  Property list  -->
@@ -300,7 +321,8 @@
                                 </ItemsControl>
                             </ScrollViewer>
 
-                            <!--  Shared name/editor column splitter  -->
+                            <!--  Shared name/editor column splitter — only meaningful for the Left
+                                  layout, so it hides when the grid default is a non-Left mode.  -->
                             <Thumb x:Name="PART_ColumnSplitter"
                                    Grid.Row="2"
                                    Background="Transparent"
@@ -309,6 +331,22 @@
                                    HorizontalAlignment="Left"
                                    VerticalAlignment="Stretch"
                                    Width="6">
+                                <Thumb.Style>
+                                    <Style TargetType="Thumb">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding HeaderShowMode, RelativeSource={RelativeSource TemplatedParent}}" Value="{x:Static sdg:PropertyHeaderShowMode.Top}">
+                                                <Setter Property="Visibility" Value="Collapsed" />
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding HeaderShowMode, RelativeSource={RelativeSource TemplatedParent}}" Value="{x:Static sdg:PropertyHeaderShowMode.Hidden}">
+                                                <Setter Property="Visibility" Value="Collapsed" />
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding HeaderShowMode, RelativeSource={RelativeSource TemplatedParent}}" Value="{x:Static sdg:PropertyHeaderShowMode.OnlyHeader}">
+                                                <Setter Property="Visibility" Value="Collapsed" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Thumb.Style>
                                 <Thumb.Template>
                                     <ControlTemplate TargetType="Thumb">
                                         <Border Background="Transparent" />

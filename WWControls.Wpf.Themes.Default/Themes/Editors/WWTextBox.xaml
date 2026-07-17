@@ -7,6 +7,7 @@
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Primitives/DefaultControls.xaml" />
         <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Editors/EditorParts.xaml" />
+        <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Primitives/ContextMenu.xaml" />
     </ResourceDictionary.MergedDictionaries>
 
     <!--
@@ -19,6 +20,7 @@
         <Setter Property="Background" Value="#FFFFFF" />
         <Setter Property="Foreground" Value="#1C1C1C" />
         <Setter Property="BorderBrush" Value="#e3e3e3" />
+        <Setter Property="SelectionBrush" Value="#0078d4" />
         <Setter Property="BorderThickness" Value="0" />
         <Setter Property="Padding" Value="4,2" />
         <Setter Property="Focusable" Value="True" />
@@ -55,7 +57,7 @@
                                       Width="14"
                                       Height="14"
                                       Margin="2,0,6,0"
-                                      VerticalAlignment="Center"
+                                      VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
                                       IconSource="{TemplateBinding Glyph}"
                                       IconBrush="{TemplateBinding Foreground}" />
 
@@ -68,7 +70,8 @@
                                            Foreground="#FF9AA0A6"
                                            FontStyle="Italic"
                                            IsHitTestVisible="False"
-                                           VerticalAlignment="Center"
+                                           VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                           TextWrapping="{TemplateBinding TextWrapping}"
                                            TextTrimming="CharacterEllipsis"
                                            Visibility="Collapsed" />
 
@@ -78,18 +81,101 @@
                                          Background="Transparent"
                                          Padding="0"
                                          Foreground="{TemplateBinding Foreground}"
-                                         VerticalContentAlignment="Center"
+                                         VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
                                          VerticalAlignment="Stretch"
                                          IsReadOnly="{TemplateBinding IsReadOnly}"
                                          MaxLength="{TemplateBinding MaxLength}"
-                                         TextAlignment="{TemplateBinding TextAlignment}" />
+                                         TextAlignment="{TemplateBinding TextAlignment}"
+                                         AcceptsReturn="{TemplateBinding AcceptsReturn}"
+                                         AcceptsTab="{TemplateBinding AcceptsTab}"
+                                         TextWrapping="{TemplateBinding TextWrapping}"
+                                         MinLines="{TemplateBinding MinLines}"
+                                         MaxLines="{TemplateBinding MaxLines}"
+                                         HorizontalScrollBarVisibility="{TemplateBinding HorizontalScrollBarVisibility}"
+                                         VerticalScrollBarVisibility="{TemplateBinding VerticalScrollBarVisibility}"
+                                         TextDecorations="{TemplateBinding TextDecorations}"
+                                         CharacterCasing="{TemplateBinding CharacterCasing}"
+                                         IsUndoEnabled="{TemplateBinding IsUndoEnabled}"
+                                         UndoLimit="{TemplateBinding UndoLimit}"
+                                         SpellCheck.IsEnabled="{TemplateBinding IsSpellCheckEnabled}"
+                                         CaretBrush="{TemplateBinding CaretBrush}"
+                                         SelectionBrush="{TemplateBinding SelectionBrush}"
+                                         SelectionOpacity="{TemplateBinding SelectionOpacity}">
+                                    <!--  Themed right-click menu. Each WWTextBox instance gets its own
+                                          (template content isn't shared). The editing commands are the
+                                          stock ApplicationCommands, so the inner TextBox supplies their
+                                          CanExecute — Paste greys out with an empty clipboard, Undo/Redo
+                                          track history, Cut/Copy track the selection. CommandTarget is the
+                                          menu's PlacementTarget (this TextBox) so they route to it rather
+                                          than to the focused menu.  -->
+                                    <TextBox.ContextMenu>
+                                        <ContextMenu Style="{StaticResource {x:Static sdg:PrimitiveThemeKeys.ContextMenu}}">
+                                            <MenuItem Header="Undo"
+                                                      Command="{x:Static ApplicationCommands.Undo}"
+                                                      CommandTarget="{Binding PlacementTarget, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}"
+                                                      InputGestureText="Ctrl+Z">
+                                                <MenuItem.Icon>
+                                                    <sdg:Icon Width="14" Height="14"
+                                                              IconSource="{StaticResource {x:Static sdg:IconKeys.IconUndo}}" />
+                                                </MenuItem.Icon>
+                                            </MenuItem>
+                                            <MenuItem Header="Redo"
+                                                      Command="{x:Static ApplicationCommands.Redo}"
+                                                      CommandTarget="{Binding PlacementTarget, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}"
+                                                      InputGestureText="Ctrl+Y">
+                                                <MenuItem.Icon>
+                                                    <sdg:Icon Width="14" Height="14"
+                                                              IconSource="{StaticResource {x:Static sdg:IconKeys.IconRedo}}" />
+                                                </MenuItem.Icon>
+                                            </MenuItem>
+                                            <Separator />
+                                            <MenuItem Header="Cut"
+                                                      Command="{x:Static ApplicationCommands.Cut}"
+                                                      CommandTarget="{Binding PlacementTarget, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}"
+                                                      InputGestureText="Ctrl+X">
+                                                <MenuItem.Icon>
+                                                    <sdg:Icon Width="14" Height="14"
+                                                              IconSource="{StaticResource {x:Static sdg:IconKeys.IconCut}}" />
+                                                </MenuItem.Icon>
+                                            </MenuItem>
+                                            <MenuItem Header="Copy"
+                                                      Command="{x:Static ApplicationCommands.Copy}"
+                                                      CommandTarget="{Binding PlacementTarget, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}"
+                                                      InputGestureText="Ctrl+C">
+                                                <MenuItem.Icon>
+                                                    <sdg:Icon Width="14" Height="14"
+                                                              IconSource="{StaticResource {x:Static sdg:IconKeys.IconCopy}}" />
+                                                </MenuItem.Icon>
+                                            </MenuItem>
+                                            <MenuItem Header="Paste"
+                                                      Command="{x:Static ApplicationCommands.Paste}"
+                                                      CommandTarget="{Binding PlacementTarget, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}"
+                                                      InputGestureText="Ctrl+V">
+                                                <MenuItem.Icon>
+                                                    <sdg:Icon Width="14" Height="14"
+                                                              IconSource="{StaticResource {x:Static sdg:IconKeys.IconPaste}}" />
+                                                </MenuItem.Icon>
+                                            </MenuItem>
+                                            <Separator />
+                                            <MenuItem Header="Select All"
+                                                      Command="{x:Static ApplicationCommands.SelectAll}"
+                                                      CommandTarget="{Binding PlacementTarget, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}"
+                                                      InputGestureText="Ctrl+A">
+                                                <MenuItem.Icon>
+                                                    <sdg:Icon Width="14" Height="14"
+                                                              IconSource="{StaticResource {x:Static sdg:IconKeys.IconSelectAll}}" />
+                                                </MenuItem.Icon>
+                                            </MenuItem>
+                                        </ContextMenu>
+                                    </TextBox.ContextMenu>
+                                </TextBox>
                             </Grid>
 
                             <!--  Clear button — appears while non-empty (see triggers). Minimal inline
                                   template so it carries no default button chrome inside the editor.  -->
                             <Button x:Name="PART_ClearButton"
                                     Grid.Column="3"
-                                    VerticalAlignment="Center"
+                                    VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
                                     Focusable="False"
                                     IsTabStop="False"
                                     Cursor="Hand"

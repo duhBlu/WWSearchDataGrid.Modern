@@ -4,9 +4,10 @@ namespace WWControls.SampleApp.Editors.Views.Samples.Editors
 {
     /// <summary>
     /// Backs the masking sample: one bound value per masked editor, seeded with raw content the mask
-    /// engine formats on load. Values are strings so every MaskType (Simple / Numeric / DateTime /
-    /// TimeSpan) round-trips through the same property type — the engine's underlying value is shown
-    /// separately via WWTextBox.UnmaskedValue. The prompt-char and readback rows start partially
+    /// engine formats on load. Values are strings so every MaskType (Simple / Numeric / TimeSpan)
+    /// round-trips through the same property type — the engine's underlying value is shown separately
+    /// via WWTextBox.UnmaskedValue. Date/time entry is not masked on WWTextBox (use WWDatePicker), so
+    /// only the TimeSpan duration remains here. The prompt-char and readback rows start partially
     /// filled so their prompt characters (and the incomplete state) are visible without focusing.
     /// </summary>
     public partial class MaskSampleViewModel : ObservableObject
@@ -25,9 +26,8 @@ namespace WWControls.SampleApp.Editors.Views.Samples.Editors
         [ObservableProperty] private string _fixed = "42.5";
         [ObservableProperty] private string _percent = "0.25";
 
-        // Date / time / duration masks — numeric-only patterns (text specifiers aren't maskable).
-        [ObservableProperty] private string _date = "07/15/2026";
-        [ObservableProperty] private string _time = "09:30:00";
+        // Duration mask — numeric-only pattern (text specifiers aren't maskable). Date/time entry is
+        // handled by WWDatePicker, not by masked text input.
         [ObservableProperty] private string _duration = "01:30:00";
 
         // PromptChar showcase — same phone mask, three prompt characters. Partially filled so the

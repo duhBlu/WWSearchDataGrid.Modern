@@ -1,0 +1,105 @@
+<UserControl x:Class="WWControls.SampleApp.Editors.Views.Samples.PropertyGrid.PropertyGridLayoutSampleView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:sdg="http://schemas.wwcontrols.com/wpf"
+             xmlns:sampleControls="clr-namespace:WWControls.SampleApp.Editors.Controls"
+             xmlns:local="clr-namespace:WWControls.SampleApp.Editors.Views.Samples.PropertyGrid"
+             mc:Ignorable="d">
+    <UserControl.DataContext>
+        <local:PropertyGridLayoutSampleViewModel />
+    </UserControl.DataContext>
+
+    <UserControl.Resources>
+        <Style x:Key="Caption" TargetType="TextBlock">
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="#444" />
+            <Setter Property="Margin" Value="0,0,0,6" />
+        </Style>
+
+        <!--  A multiline, wrapping editor for the long Biography value — shared by both grids so the
+              text wraps instead of running off the row.  -->
+        <DataTemplate x:Key="BiographyEditor">
+            <sdg:WWTextBox Margin="4,2"
+                     MinHeight="52"
+                     AcceptsReturn="True"
+                     TextWrapping="Wrap"
+                     VerticalScrollBarVisibility="Auto"
+                     VerticalContentAlignment="Top"
+                     Value="{Binding Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+        </DataTemplate>
+    </UserControl.Resources>
+
+    <sampleControls:SampleHostControl Sources="{x:Static sampleControls:SampleSources.PropertyGridLayout}">
+        <ScrollViewer Background="#FFFFFF" VerticalScrollBarVisibility="Auto">
+            <StackPanel Margin="24" MaxWidth="900" HorizontalAlignment="Left">
+                <TextBlock Style="{StaticResource SampleIntro}">
+                    <Run FontWeight="SemiBold" Text="WWPropertyGrid — header layout" />
+                    <LineBreak />
+                    <Run Text="HeaderShowMode controls where each row places its header relative to the editor: Left (default), Top, Hidden (editor only), or OnlyHeader (a caption row). Set it grid-wide on the grid, or per property on a WWPropertyDefinition — the per-property value wins." />
+                </TextBlock>
+
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="40" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <!--  Grid-wide default, flipped live from a picker  -->
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Style="{StaticResource Caption}" Text="Grid-wide default" />
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                            <TextBlock Text="HeaderShowMode:" VerticalAlignment="Center" Foreground="#666" Margin="0,0,8,0" />
+                            <ComboBox Width="140"
+                                      ItemsSource="{Binding AvailableHeaderModes}"
+                                      SelectedItem="{Binding SelectedHeaderMode}" />
+                        </StackPanel>
+                        <sdg:WWPropertyGrid Width="340"
+                                            Height="360"
+                                            ShowSearchBox="False"
+                                            NameColumnWidth="130"
+                                            HeaderShowMode="{Binding SelectedHeaderMode}"
+                                            SelectedObject="{Binding Profile}">
+                            <sdg:WWPropertyGrid.PropertyDefinitions>
+                                <!--  Only supplies a wrapping editor — no HeaderShowMode, so Biography
+                                      still follows the grid-wide mode from the picker.  -->
+                                <sdg:WWPropertyDefinition TargetProperties="Biography"
+                                                          EditTemplate="{StaticResource BiographyEditor}" />
+                            </sdg:WWPropertyGrid.PropertyDefinitions>
+                        </sdg:WWPropertyGrid>
+                        <TextBlock Style="{StaticResource SampleNoteHeader}" Text="Tips" Margin="0,10,0,6" />
+                        <TextBlock Style="{StaticResource SampleTip}" MaxWidth="340" Text="• Pick a mode above — every row re-lays out live; no rebuild of the object." />
+                        <TextBlock Style="{StaticResource SampleTip}" MaxWidth="340" Text="• The name-column splitter only shows for Left, where it does something." />
+                    </StackPanel>
+
+                    <!--  Per-property overrides on a default (Left) grid  -->
+                    <StackPanel Grid.Column="2">
+                        <TextBlock Style="{StaticResource Caption}" Text="Per-property override" />
+                        <sdg:WWPropertyGrid Width="340"
+                                            Height="360"
+                                            ShowSearchBox="False"
+                                            NameColumnWidth="130"
+                                            SelectedObject="{Binding Profile}">
+                            <sdg:WWPropertyGrid.PropertyDefinitions>
+                                <!--  A caption row: header only, no editor.  -->
+                                <sdg:WWPropertyDefinition TargetProperties="SectionCaption" HeaderShowMode="OnlyHeader" />
+                                <!--  Long text reads better with the header on top — and a wrapping
+                                      editor so it doesn't run off the row.  -->
+                                <sdg:WWPropertyDefinition TargetProperties="Biography"
+                                                          HeaderShowMode="Top"
+                                                          EditTemplate="{StaticResource BiographyEditor}" />
+                                <!--  Editor with no header label.  -->
+                                <sdg:WWPropertyDefinition TargetProperties="InternalToken" HeaderShowMode="Hidden" />
+                            </sdg:WWPropertyGrid.PropertyDefinitions>
+                        </sdg:WWPropertyGrid>
+                        <TextBlock Style="{StaticResource SampleNoteHeader}" Text="Tips" Margin="0,10,0,6" />
+                        <TextBlock Style="{StaticResource SampleTip}" MaxWidth="340" Text="• The grid stays Left by default; only About (OnlyHeader), Biography (Top), and Internal Token (Hidden) override." />
+                        <TextBlock Style="{StaticResource SampleTip}" MaxWidth="340" Text="• Both grids edit the same object — a change on one shows on the other." />
+                    </StackPanel>
+                </Grid>
+            </StackPanel>
+        </ScrollViewer>
+    </sampleControls:SampleHostControl>
+</UserControl>

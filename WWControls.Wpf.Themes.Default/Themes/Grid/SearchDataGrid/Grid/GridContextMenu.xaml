@@ -17,7 +17,7 @@
                  Style="{StaticResource {x:Static sdg:PrimitiveThemeKeys.ContextMenu}}"
                  AutomationProperties.AutomationId="cmuGridBody">
         <!--  Filter operations  -->
-        <MenuItem x:Name="miClearAllFilters"
+        <MenuItem x:Name="miClearAllFilters" sdg:ContextMenuExtensions.ItemId="ClearAllFilters"
                   Command="{x:Static commands:ContextMenuCommands.ClearAllFiltersCommand}"
                   CommandParameter="{Binding Grid}"
                   Header="Clear All Filters (Not Implemented)">
@@ -27,31 +27,31 @@
                              IconSource="{StaticResource {x:Static sdg:IconKeys.IconClearFilter}}" />
             </MenuItem.Icon>
         </MenuItem>
-        <MenuItem x:Name="miToggleFilterPanel"
+        <MenuItem x:Name="miToggleFilterPanel" sdg:ContextMenuExtensions.ItemId="ToggleFilterPanel"
                   Command="{x:Static commands:ContextMenuCommands.ToggleFilterPanelCommand}"
                   CommandParameter="{Binding Grid}"
                   Header="Toggle Filter Panel (Not Implemented)" />
-        <MenuItem x:Name="miSaveFilterPreset"
+        <MenuItem x:Name="miSaveFilterPreset" sdg:ContextMenuExtensions.ItemId="SaveFilterPreset"
                   Command="{x:Static commands:ContextMenuCommands.SaveFilterPresetCommand}"
                   CommandParameter="{Binding Grid}"
                   Header="Save Filter Preset..." />
-        <MenuItem x:Name="miLoadFilterPreset"
+        <MenuItem x:Name="miLoadFilterPreset" sdg:ContextMenuExtensions.ItemId="LoadFilterPreset"
                   Command="{x:Static commands:ContextMenuCommands.LoadFilterPresetCommand}"
                   CommandParameter="{Binding Grid}"
                   Header="Load Filter Preset..." />
         <Separator />
 
         <!--  Column Profiles submenu  -->
-        <MenuItem x:Name="miColumnProfiles" Header="Column Profiles">
-            <MenuItem x:Name="miSaveCurrentProfile"
+        <MenuItem x:Name="miColumnProfiles" sdg:ContextMenuExtensions.ItemId="ColumnProfiles" Header="Column Profiles">
+            <MenuItem x:Name="miSaveCurrentProfile" sdg:ContextMenuExtensions.ItemId="SaveCurrentProfile"
                       Command="{x:Static commands:ContextMenuCommands.SaveCurrentProfileCommand}"
                       CommandParameter="{Binding Grid}"
                       Header="Save Current Profile..." />
-            <MenuItem x:Name="miLoadProfile"
+            <MenuItem x:Name="miLoadProfile" sdg:ContextMenuExtensions.ItemId="LoadProfile"
                       Command="{x:Static commands:ContextMenuCommands.LoadProfileCommand}"
                       CommandParameter="{Binding Grid}"
                       Header="Load Profile..." />
-            <MenuItem x:Name="miManageProfiles"
+            <MenuItem x:Name="miManageProfiles" sdg:ContextMenuExtensions.ItemId="ManageProfiles"
                       Command="{x:Static commands:ContextMenuCommands.ManageProfilesCommand}"
                       CommandParameter="{Binding Grid}"
                       Header="Manage Profiles... (Not Implemented)" />
@@ -60,11 +60,11 @@
         <Separator />
 
         <!--  Export operations  -->
-        <MenuItem x:Name="miExportToCsv"
+        <MenuItem x:Name="miExportToCsv" sdg:ContextMenuExtensions.ItemId="ExportToCsv"
                   Command="{x:Static commands:ContextMenuCommands.ExportToCsvCommand}"
                   CommandParameter="{Binding Grid}"
                   Header="Export to CSV (Not Implemented)" />
-        <MenuItem x:Name="miExportToExcel"
+        <MenuItem x:Name="miExportToExcel" sdg:ContextMenuExtensions.ItemId="ExportToExcel"
                   Command="{x:Static commands:ContextMenuCommands.ExportToExcelCommand}"
                   CommandParameter="{Binding Grid}"
                   Header="Export to Excel (Not Implemented)" />
@@ -72,7 +72,7 @@
         <Separator />
 
         <!--  Layout operations  -->
-        <MenuItem x:Name="miShowColumnChooser"
+        <MenuItem x:Name="miShowColumnChooser" sdg:ContextMenuExtensions.ItemId="ColumnChooser"
                   Command="{x:Static commands:ContextMenuCommands.ShowColumnChooserCommand}"
                   CommandParameter="{Binding Grid}"
                   Header="Show Column Chooser">
@@ -92,7 +92,7 @@
                 </Style>
             </MenuItem.Style>
         </MenuItem>
-        <MenuItem x:Name="miResetLayout"
+        <MenuItem x:Name="miResetLayout" sdg:ContextMenuExtensions.ItemId="ResetLayout"
                   Command="{x:Static commands:ContextMenuCommands.ResetLayoutCommand}"
                   CommandParameter="{Binding Grid}"
                   Header="Reset Layout" />
