@@ -24,12 +24,6 @@ namespace WWControls.Core.Display
     ///   \  Escape next character as literal (e.g., \. for a literal period)
     ///   Any other character is a non-editable literal
     ///
-    /// Examples:
-    ///   "0+\.00"           Decimal with 2 places: 1246 -> "1246.00", 1.5 -> "1.50"
-    ///   "(000) 000-0000"   Phone: 5551234567 -> "(555) 123-4567"
-    ///   "00/00/0000"       Date slots: 03302026 -> "03/30/2026"
-    ///
-    /// Extracted from WWFormattedTextBox (WPF-CabinetDesigner) with all UI dependencies removed.
     /// </summary>
     public class SimpleMaskFormatter : IMaskFormatter
     {

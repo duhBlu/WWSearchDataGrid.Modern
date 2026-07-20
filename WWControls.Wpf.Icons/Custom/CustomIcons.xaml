@@ -1,8 +1,9 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-                    xmlns:sdg="http://schemas.wwcontrols.com/wpf">
+                    xmlns:icons="clr-namespace:WWControls.Wpf.Icons">
 
     <!-- In-house icons with no Lucide equivalent, drawn to match the Lucide style: 24x24
-         viewport, 2px round-cap / round-join stroke, monochrome, tinted at render time. -->
+         viewport, 2px round-cap / round-join stroke, monochrome, keyed by a ComponentResourceKey
+         from CustomIconKeys and tinted at render time. -->
 
 </ResourceDictionary>
