@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
@@ -18,7 +19,7 @@ namespace WWControls.Wpf.Controls.Primitives
         #region Private Fields
 
         private bool _disposed = false;
-        private bool _isUserInitiatedSelection = false;
+        private Point _dragStartPoint;
         private FrameworkElement _hitArea;
 
         private static DispatcherTimer _autoScrollTimer;
@@ -53,7 +54,6 @@ namespace WWControls.Wpf.Controls.Primitives
             EventManager.RegisterClassHandler(typeof(WWTreeViewItem), DragLeaveEvent, new DragEventHandler(OnDragLeave));
             EventManager.RegisterClassHandler(typeof(WWTreeViewItem), DropEvent, new DragEventHandler(OnDrop));
             EventManager.RegisterClassHandler(typeof(WWTreeViewItem), DragOverEvent, new DragEventHandler(OnDragOver));
-            EventManager.RegisterClassHandler(typeof(WWTreeViewItem), SelectedEvent, new RoutedEventHandler(OnSelected));
             EventManager.RegisterClassHandler(typeof(WWTreeViewItem), PreviewMouseLeftButtonDownEvent, new MouseButtonEventHandler(OnPreviewMouseLeftButtonDown));
             EventManager.RegisterClassHandler(typeof(WWTreeViewItem), QueryContinueDragEvent, new QueryContinueDragEventHandler(OnQueryContinueDrag));
         }
@@ -62,6 +62,7 @@ namespace WWControls.Wpf.Controls.Primitives
         {
             this.Loaded += OnItemLoaded;
             this.Unloaded += OnUnloaded;
+            this.DataContextChanged += OnDataContextChanged;
 
             CommandBindings.Add(new CommandBinding(ExpandAllCommand, OnExpandAllExecuted));
             CommandBindings.Add(new CommandBinding(CollapseAllCommand, OnCollapseAllExecuted));
@@ -94,6 +95,20 @@ namespace WWControls.Wpf.Controls.Primitives
             set => SetValue(IsRootLevelProperty, value);
         }
 
+        public static readonly DependencyProperty LevelProperty =
+            DependencyProperty.Register(nameof(Level), typeof(int), typeof(WWTreeViewItem), new PropertyMetadata(0));
+
+        /// <summary>
+        /// The item's depth from the root (root items are level 0). Set as each container is prepared, so
+        /// it is virtualization-safe. The full-width row highlight uses it to shift itself back to the
+        /// tree's left edge by one indent per level.
+        /// </summary>
+        public int Level
+        {
+            get => (int)GetValue(LevelProperty);
+            set => SetValue(LevelProperty, value);
+        }
+
         public static readonly DependencyProperty HandleRightClickToSelectProperty =
             DependencyProperty.Register(nameof(HandleRightClickToSelect), typeof(bool), typeof(WWTreeViewItem), new PropertyMetadata(false));
 
@@ -110,15 +125,6 @@ namespace WWControls.Wpf.Controls.Primitives
         {
             get => (bool)GetValue(BringIntoViewEnabledProperty);
             set => SetValue(BringIntoViewEnabledProperty, value);
-        }
-
-        public static readonly DependencyProperty CommandOnDoubleClickProperty =
-            DependencyProperty.Register(nameof(CommandOnDoubleClick), typeof(ICommand), typeof(WWTreeViewItem), new PropertyMetadata(null));
-
-        public ICommand CommandOnDoubleClick
-        {
-            get => (ICommand)GetValue(CommandOnDoubleClickProperty);
-            set => SetValue(CommandOnDoubleClickProperty, value);
         }
 
         public static readonly DependencyProperty CommandOnKeyProperty =
@@ -155,6 +161,64 @@ namespace WWControls.Wpf.Controls.Primitives
         {
             get => (bool)GetValue(IsDragOverValidProperty);
             set => SetValue(IsDragOverValidProperty, value);
+        }
+
+        public static readonly DependencyProperty IsMultiSelectedProperty =
+            DependencyProperty.Register(nameof(IsMultiSelected), typeof(bool), typeof(WWTreeViewItem), new PropertyMetadata(false));
+
+        /// <summary>
+        /// Whether this item is part of the owning <see cref="WWTreeView"/>'s multi-selection. Drives the
+        /// selection visual in the multi modes, independently of native single <see cref="TreeViewItem.IsSelected"/>.
+        /// </summary>
+        public bool IsMultiSelected
+        {
+            get => (bool)GetValue(IsMultiSelectedProperty);
+            set => SetValue(IsMultiSelectedProperty, value);
+        }
+
+        public static readonly DependencyProperty IsCurrentSearchMatchProperty =
+            DependencyProperty.Register(nameof(IsCurrentSearchMatch), typeof(bool), typeof(WWTreeViewItem), new PropertyMetadata(false));
+
+        /// <summary>
+        /// Whether this item is the match currently focused during search navigation. Drives the accent
+        /// visual distinct from selection.
+        /// </summary>
+        public bool IsCurrentSearchMatch
+        {
+            get => (bool)GetValue(IsCurrentSearchMatchProperty);
+            set => SetValue(IsCurrentSearchMatchProperty, value);
+        }
+
+        public static readonly DependencyProperty HasExpandableChildrenProperty =
+            DependencyProperty.Register(nameof(HasExpandableChildren), typeof(bool), typeof(WWTreeViewItem), new PropertyMetadata(false));
+
+        /// <summary>
+        /// Whether the expander should be shown: true when there are realized children, or when a lazy node
+        /// (<see cref="IWWLazyTreeNode"/>) reports <see cref="IWWLazyTreeNode.HasChildren"/> before loading.
+        /// </summary>
+        public bool HasExpandableChildren
+        {
+            get => (bool)GetValue(HasExpandableChildrenProperty);
+            set => SetValue(HasExpandableChildrenProperty, value);
+        }
+
+        public static readonly DependencyProperty IsLoadingProperty =
+            DependencyProperty.Register(nameof(IsLoading), typeof(bool), typeof(WWTreeViewItem), new PropertyMetadata(false));
+
+        /// <summary>Whether this node's children are currently being lazy-loaded. Drives the loading indicator.</summary>
+        public bool IsLoading
+        {
+            get => (bool)GetValue(IsLoadingProperty);
+            set => SetValue(IsLoadingProperty, value);
+        }
+
+        /// <summary>
+        /// Recomputes <see cref="HasExpandableChildren"/> from the current children and any lazy-node hint.
+        /// </summary>
+        internal void UpdateExpanderState()
+        {
+            bool lazy = DataContext is IWWLazyTreeNode node && node.HasChildren;
+            HasExpandableChildren = HasItems || lazy;
         }
 
         public static readonly DependencyProperty ShowExpandCollapseButtonsProperty =
@@ -218,18 +282,13 @@ namespace WWControls.Wpf.Controls.Primitives
                         return true;
                     }
 
-                    // Check via DataContext if it has a Children/Items property with count > 0
-                    if (item != null)
+                    // Check the node's own child collection when it opts into IWWTreeNode.
+                    if (item is IWWTreeNode node)
                     {
-                        var childrenProp = item.GetType().GetProperty("Children")
-                            ?? item.GetType().GetProperty("Items");
-                        if (childrenProp != null)
+                        var children = node.Children;
+                        if (children != null && children.Cast<object>().Any())
                         {
-                            var children = childrenProp.GetValue(item) as System.Collections.IEnumerable;
-                            if (children != null && children.Cast<object>().Any())
-                            {
-                                return true;
-                            }
+                            return true;
                         }
                     }
                 }
@@ -322,6 +381,15 @@ namespace WWControls.Wpf.Controls.Primitives
             var treeViewItem = sender as WWTreeViewItem;
             if (treeViewItem != null && e.LeftButton == MouseButtonState.Pressed && treeViewItem.AllowDragDrop() && treeViewItem.IsSelected)
             {
+                // Require movement past the system drag threshold so a slightly-shaky click doesn't
+                // become an accidental drag.
+                Point position = e.GetPosition(null);
+                if (Math.Abs(position.X - treeViewItem._dragStartPoint.X) < SystemParameters.MinimumHorizontalDragDistance &&
+                    Math.Abs(position.Y - treeViewItem._dragStartPoint.Y) < SystemParameters.MinimumVerticalDragDistance)
+                {
+                    return;
+                }
+
                 // An item implementing IWWTreeViewDragItem can veto its own drag; items that don't
                 // implement it are draggable once selected.
                 if (treeViewItem.DataContext is IWWTreeViewDragItem dragItem && !dragItem.CanDrag)
@@ -477,27 +545,34 @@ namespace WWControls.Wpf.Controls.Primitives
                         item.IsExpanded = true;
                     }
                 }
+
+                item.UpdateExpanderState();
             }
         }
 
         private static void OnPreviewMouseDoubleClick(object sender, RoutedEventArgs e)
         {
-            if (sender is WWTreeViewItem item)
-            {
-                var command = item.CommandOnDoubleClick;
-                if (command != null && command.CanExecute(item.DataContext))
-                {
-                    if (item.IsSelected)
-                    {
-                        command.Execute(item.DataContext);
-                    }
-                }
+            if (!(sender is WWTreeViewItem item))
+                return;
 
-                var parentTreeView = VisualTreeHelperMethods.FindVisualAncestor<WWTreeView>(item);
-                if (parentTreeView != null && !parentTreeView.EnableDoubleClickExpand)
-                {
-                    e.Handled = true;
-                }
+            // The event bubbles through ancestor items too; act only on the item directly under the pointer.
+            var source = VisualTreeHelperMethods.FindVisualAncestor<WWTreeViewItem>(e.OriginalSource as DependencyObject);
+            if (source != item)
+                return;
+
+            var parentTreeView = VisualTreeHelperMethods.FindVisualAncestor<WWTreeView>(item);
+            if (parentTreeView == null)
+                return;
+
+            var trigger = parentTreeView.ActivationTrigger;
+            if (trigger == TreeItemActivationTrigger.DoubleClick || trigger == TreeItemActivationTrigger.DoubleClickOrEnter)
+            {
+                parentTreeView.ActivateItem(item.DataContext);
+            }
+
+            if (!parentTreeView.DoubleClickExpands)
+            {
+                e.Handled = true;
             }
         }
 
@@ -505,8 +580,9 @@ namespace WWControls.Wpf.Controls.Primitives
         {
             base.OnItemsChanged(e);
 
-            // Update button visibility when children change
+            // Update button + expander visibility when children change
             UpdateShowExpandCollapseButtons();
+            UpdateExpanderState();
 
             // Also update parent's grandchildren status
             var parent = GetParent(this);
@@ -514,6 +590,15 @@ namespace WWControls.Wpf.Controls.Primitives
             {
                 parent.UpdateShowExpandCollapseButtons();
             }
+        }
+
+        protected override void OnExpanded(RoutedEventArgs e)
+        {
+            base.OnExpanded(e);
+
+            // Trigger lazy loading of children on first expand.
+            var parentTreeView = VisualTreeHelperMethods.FindVisualAncestor<WWTreeView>(this);
+            parentTreeView?.RequestLazyLoad(this);
         }
 
         private static void OnRequestBringIntoView(object sender, RequestBringIntoViewEventArgs e)
@@ -543,100 +628,89 @@ namespace WWControls.Wpf.Controls.Primitives
 
         private static void OnTreeViewItemKeyDown(object sender, KeyEventArgs e)
         {
-            if (sender is WWTreeViewItem treeViewItem)
+            if (!(sender is WWTreeViewItem treeViewItem))
+                return;
+
+            if (treeViewItem.KeyToTriggerCommand != Key.None
+                && e.Key == treeViewItem.KeyToTriggerCommand
+                && Keyboard.Modifiers == treeViewItem.ModifierKeysToTriggerCommand)
             {
-                if (treeViewItem.KeyToTriggerCommand != Key.None
-                    && e.Key == treeViewItem.KeyToTriggerCommand
-                    && Keyboard.Modifiers == treeViewItem.ModifierKeysToTriggerCommand)
+                var command = treeViewItem.CommandOnKey;
+                if (command != null && command.CanExecute(treeViewItem.DataContext))
                 {
-                    var command = treeViewItem.CommandOnKey;
-                    if (command != null && command.CanExecute(treeViewItem.DataContext))
-                    {
-                        command.Execute(treeViewItem.DataContext);
-                        e.Handled = true;
-                    }
+                    command.Execute(treeViewItem.DataContext);
+                    e.Handled = true;
                 }
+            }
+
+            if (e.Handled || e.Key != Key.Enter)
+                return;
+
+            // The event bubbles through ancestor items; activate only the focused item.
+            var source = VisualTreeHelperMethods.FindVisualAncestor<WWTreeViewItem>(e.OriginalSource as DependencyObject);
+            if (source != treeViewItem)
+                return;
+
+            var parentTreeView = VisualTreeHelperMethods.FindVisualAncestor<WWTreeView>(treeViewItem);
+            if (parentTreeView == null)
+                return;
+
+            var trigger = parentTreeView.ActivationTrigger;
+            if (trigger == TreeItemActivationTrigger.Enter || trigger == TreeItemActivationTrigger.DoubleClickOrEnter)
+            {
+                parentTreeView.ActivateItem(treeViewItem.DataContext);
+                e.Handled = true;
             }
         }
 
         private static void OnPreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
-            if (sender is WWTreeViewItem item)
-            {
-                item._isUserInitiatedSelection = true;
-            }
-        }
-
-        private static void OnSelected(object sender, RoutedEventArgs e)
-        {
-            // Only handle if this is the original source
-            if (!ReferenceEquals(sender, e.OriginalSource))
+            if (!(sender is WWTreeViewItem item))
                 return;
 
-            if (sender is WWTreeViewItem item && item.BringIntoViewEnabled)
-            {
-                // If Selected by user, do not center the element or change the scroll viewer offsets
-                if (item._isUserInitiatedSelection)
-                {
-                    item._isUserInitiatedSelection = false;
-                    return;
-                }
+            item._dragStartPoint = e.GetPosition(null);
 
-                CenterElementInView(item);
-            }
+            var parentTreeView = VisualTreeHelperMethods.FindVisualAncestor<WWTreeView>(item);
+            if (parentTreeView == null || !parentTreeView.IsMultiSelectEnabled)
+                return;
+
+            // Act only for the item directly under the pointer (the event tunnels through ancestor items).
+            var source = e.OriginalSource as DependencyObject;
+            if (VisualTreeHelperMethods.FindVisualAncestor<WWTreeViewItem>(source) != item)
+                return;
+
+            // Clicks on a button (the expander, the expand/collapse-all buttons, or a consumer's own
+            // header button) or the connector-line hit area drive their own action, not row selection —
+            // letting selection mark e.Handled here would swallow those clicks in the multi modes.
+            if (IsWithinButton(source, item) ||
+                IsWithinNamedElement(source, "PART_VerticalLineHitArea", item))
+                return;
+
+            parentTreeView.HandleItemClick(item, e);
         }
 
-        private static void CenterElementInView(FrameworkElement element)
+        private static bool IsWithinButton(DependencyObject source, WWTreeViewItem stop)
         {
-            double elementHeight = default;
-
-            element.Dispatcher.BeginInvoke(DispatcherPriority.Render, new Action(() =>
+            var current = source;
+            while (current != null && current != stop)
             {
-                ContentPresenter headerElement = VisualTreeHelperMethods.FindVisualDescendant<ContentPresenter>(element);
-                if (headerElement != null && element.DataContext != null && ReferenceEquals(headerElement.DataContext, element.DataContext))
-                {
-                    element = headerElement;
-                    elementHeight = headerElement.ActualHeight;
-                }
+                if (current is System.Windows.Controls.Primitives.ButtonBase)
+                    return true;
+                current = VisualTreeHelperMethods.GetParent(current);
+            }
+            return false;
+        }
 
-                if (double.IsNaN(elementHeight) || elementHeight <= 0)
-                {
-                    // Force a layout update if necessary.
-                    element.UpdateLayout();
-                    elementHeight = element.ActualHeight;
-                }
-
-                // If height is still not valid, fallback to the standard behavior.
-                if (double.IsNaN(elementHeight) || elementHeight <= 0)
-                {
-                    element.BringIntoView();
-                    return;
-                }
-
-                ScrollViewer scrollViewer = VisualTreeHelperMethods.FindVisualAncestor<ScrollViewer>(element);
-                if (scrollViewer == null)
-                {
-                    element.BringIntoView();
-                    return;
-                }
-
-                // Transform the element's bounds to coordinates relative to the ScrollViewer.
-                GeneralTransform transform = element.TransformToAncestor(scrollViewer);
-                Rect elementRect = transform.TransformBounds(new Rect(new Point(0, 0), new Size(element.RenderSize.Width, elementHeight)));
-
-                // Calculate the vertical center of the element and the viewport.
-                double elementCenterY = elementRect.Top + (elementRect.Height / 2);
-                double viewportCenterY = scrollViewer.ViewportHeight / 2;
-
-                // Adjust the offset so that the element's center aligns with the viewport's center.
-                double desiredOffset = scrollViewer.VerticalOffset + (elementCenterY - viewportCenterY);
-
-                // Clamp the desired offset between 0 and the scrollable height.
-                desiredOffset = Math.Max(0, Math.Min(desiredOffset, scrollViewer.ExtentHeight - scrollViewer.ViewportHeight));
-
-                // Scroll to the calculated offset.
-                scrollViewer.ScrollToVerticalOffset(desiredOffset);
-            }));
+        private static bool IsWithinNamedElement(DependencyObject source, string name, WWTreeViewItem stop)
+        {
+            var current = source;
+            while (current != null && current != stop)
+            {
+                if (current is FrameworkElement fe && fe.Name == name)
+                    return true;
+                current = VisualTreeHelperMethods.GetParent(current);
+            }
+            return false;
         }
 
         private void OnItemLoaded(object sender, RoutedEventArgs e)
@@ -645,6 +719,26 @@ namespace WWControls.Wpf.Controls.Primitives
             SetupHitArea();
 
             SetupParentLineHoveredBinding();
+        }
+
+        private void OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
+        {
+            // Two-way bind IsExpanded to the node so filter auto-expand and expand-to-match drive the
+            // container — but only for nodes that expose it, to avoid binding-error noise on plain items.
+            if (DataContext is IWWTreeNode)
+            {
+                var binding = new System.Windows.Data.Binding(nameof(IWWTreeNode.IsExpanded))
+                {
+                    Mode = System.Windows.Data.BindingMode.TwoWay
+                };
+                System.Windows.Data.BindingOperations.SetBinding(this, IsExpandedProperty, binding);
+            }
+            else
+            {
+                System.Windows.Data.BindingOperations.ClearBinding(this, IsExpandedProperty);
+            }
+
+            UpdateExpanderState();
         }
 
         private void SetupHitArea()
@@ -845,6 +939,21 @@ namespace WWControls.Wpf.Controls.Primitives
         }
 
         /// <summary>
+        /// Reflects the owning tree's multi-selection onto a child container as it is (re)realized.
+        /// </summary>
+        protected override void PrepareContainerForItemOverride(DependencyObject element, object item)
+        {
+            base.PrepareContainerForItemOverride(element, item);
+            if (element is WWTreeViewItem tvi)
+            {
+                tvi.Level = Level + 1;
+                var tree = VisualTreeHelperMethods.FindVisualAncestor<WWTreeView>(this);
+                tvi.IsMultiSelected = tree != null && tree.IsMultiSelectEnabled && tree.ContainsSelected(item);
+                tvi.IsCurrentSearchMatch = tree != null && tree.IsCurrentMatchData(item);
+            }
+        }
+
+        /// <summary>
         /// Called by WPF for EVERY child container being removed — including virtualized ones.
         /// </summary>
         protected override void ClearContainerForItemOverride(DependencyObject element, object item)
@@ -887,50 +996,40 @@ namespace WWControls.Wpf.Controls.Primitives
         /// </summary>
         public void SetAllExpanded(bool expanded)
         {
-            SetAllExpandedInternal(expanded, true);
+            SetExpandedDeep(DataContext, this, expanded);
         }
 
-        private void SetAllExpandedInternal(bool expanded, bool isRoot)
+        /// <summary>
+        /// Expands or collapses <paramref name="data"/> and its whole subtree. The expansion flag is
+        /// written to every <see cref="IWWTreeNode"/> — virtualization-safe, because the two-way
+        /// <c>IsExpanded</c> binding reflects the flag onto each container as it realizes (a collapsed
+        /// subtree's containers don't need to exist yet). Realized containers are also set directly so
+        /// plain items and non-notifying nodes update immediately. Replaces the old approach that walked
+        /// <see cref="ItemsControl.ItemContainerGenerator"/> and silently skipped unrealized branches.
+        /// </summary>
+        internal static void SetExpandedDeep(object data, WWTreeViewItem container, bool expanded)
         {
-            IsExpanded = expanded;
+            if (data is IWWTreeNode node)
+                node.IsExpanded = expanded;
 
-            // Also update the DataContext if it has an IsExpanded property
-            var dataContext = DataContext;
-            if (dataContext != null)
+            if (container != null)
+                container.IsExpanded = expanded;
+
+            IEnumerable children = (data as IWWTreeNode)?.Children;
+            if (children != null)
             {
-                var isExpandedProperty = dataContext.GetType().GetProperty("IsExpanded");
-                if (isExpandedProperty != null && isExpandedProperty.PropertyType == typeof(bool) && isExpandedProperty.CanWrite)
+                foreach (var child in children)
                 {
-                    isExpandedProperty.SetValue(dataContext, expanded);
+                    var childContainer = container?.ItemContainerGenerator.ContainerFromItem(child) as WWTreeViewItem;
+                    SetExpandedDeep(child, childContainer, expanded);
                 }
             }
-
-            if (!HasItems) return;
-
-            if (expanded)
+            else if (container != null)
             {
-                // Force layout update to generate containers, then process children
-                Dispatcher.BeginInvoke(DispatcherPriority.Loaded, new Action(() =>
+                foreach (var child in container.Items)
                 {
-                    UpdateLayout();
-                    ExpandCollapseChildren(expanded);
-                }));
-            }
-            else
-            {
-                // Collapsing doesn't need to wait for container generation
-                ExpandCollapseChildren(expanded);
-            }
-        }
-
-        private void ExpandCollapseChildren(bool expanded)
-        {
-            for (int i = 0; i < Items.Count; i++)
-            {
-                var container = ItemContainerGenerator.ContainerFromIndex(i) as WWTreeViewItem;
-                if (container != null)
-                {
-                    container.SetAllExpandedInternal(expanded, false);
+                    var childContainer = container.ItemContainerGenerator.ContainerFromItem(child) as WWTreeViewItem;
+                    SetExpandedDeep(child, childContainer, expanded);
                 }
             }
         }
@@ -950,9 +1049,11 @@ namespace WWControls.Wpf.Controls.Primitives
                     // Unsubscribe from instance events
                     this.Loaded -= OnItemLoaded;
                     this.Unloaded -= OnUnloaded;
+                    this.DataContextChanged -= OnDataContextChanged;
 
                     UnhookHitArea();
                     UnhookParentLineHovered();
+                    System.Windows.Data.BindingOperations.ClearBinding(this, IsExpandedProperty);
                     _hitArea = null;
 
                     // Clear CommandBindings to break Button -> WWTreeViewItem reference chain

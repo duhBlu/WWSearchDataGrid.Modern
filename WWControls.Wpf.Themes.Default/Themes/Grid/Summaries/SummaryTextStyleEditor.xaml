@@ -39,7 +39,7 @@
                               ToolTip="Bold">
                     <sdg:Icon Width="11"
                               Height="11"
-                              IconSource="{StaticResource {x:Static sdg:IconKeys.IconTextBold}}"
+                              IconSource="{StaticResource {x:Static sdg:LucideIconKeys.Bold}}"
                               IconBrush="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type ToggleButton}}}" />
                 </ToggleButton>
                 <ToggleButton Style="{StaticResource {x:Static sdg:PrimitiveThemeKeys.ToggleButton}}"
@@ -48,7 +48,7 @@
                               ToolTip="Italic">
                     <sdg:Icon Width="11"
                               Height="11"
-                              IconSource="{StaticResource {x:Static sdg:IconKeys.IconTextItalic}}"
+                              IconSource="{StaticResource {x:Static sdg:LucideIconKeys.Italic}}"
                               IconBrush="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type ToggleButton}}}" />
                 </ToggleButton>
                 <ToggleButton Style="{StaticResource {x:Static sdg:PrimitiveThemeKeys.ToggleButton}}"
@@ -57,7 +57,7 @@
                               ToolTip="Underline">
                     <sdg:Icon Width="11"
                               Height="11"
-                              IconSource="{StaticResource {x:Static sdg:IconKeys.IconTextUnderline}}"
+                              IconSource="{StaticResource {x:Static sdg:LucideIconKeys.Underline}}"
                               IconBrush="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type ToggleButton}}}" />
                 </ToggleButton>
             </sdg:SimpleStackPanel>

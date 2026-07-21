@@ -4,7 +4,7 @@
                     xmlns:sdg="http://schemas.wwcontrols.com/wpf">
 
     <ResourceDictionary.MergedDictionaries>
-        <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Resources/Icons/Icons.xaml" />
+        <ResourceDictionary Source="/WWControls.Wpf.Icons;component/Icons.xaml" />
         <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Primitives/ContextMenu.xaml" />
     </ResourceDictionary.MergedDictionaries>
 
@@ -23,7 +23,7 @@
             <MenuItem.Icon>
                 <sdg:Icon Width="14"
                              Height="14"
-                             IconSource="{StaticResource {x:Static sdg:IconKeys.IconCopy}}"/>
+                             IconSource="{StaticResource {x:Static sdg:LucideIconKeys.Copy}}"/>
             </MenuItem.Icon>
         </MenuItem>
         <MenuItem x:Name="miCopyWithHeaders" sdg:ContextMenuExtensions.ItemId="CopyWithHeaders"

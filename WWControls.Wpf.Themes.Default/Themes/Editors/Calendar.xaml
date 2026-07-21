@@ -305,7 +305,7 @@
                                     </Grid.ColumnDefinitions>
                                     <Button x:Name="PART_PreviousButton"
                                             Style="{StaticResource CalendarNavigationButton}">
-                                        <sdg:Icon IconSource="{StaticResource {x:Static sdg:IconKeys.IconChevronLeft}}"
+                                        <sdg:Icon IconSource="{StaticResource {x:Static sdg:LucideIconKeys.ChevronLeft}}"
                                                   Width="10" Height="10"
                                                   IconBrush="#505050" />
                                     </Button>
@@ -316,7 +316,7 @@
                                     <Button x:Name="PART_NextButton"
                                             Grid.Column="2"
                                             Style="{StaticResource CalendarNavigationButton}">
-                                        <sdg:Icon IconSource="{StaticResource {x:Static sdg:IconKeys.IconChevronRight}}"
+                                        <sdg:Icon IconSource="{StaticResource {x:Static sdg:LucideIconKeys.ChevronRight}}"
                                                   Width="10" Height="10"
                                                   IconBrush="#505050" />
                                     </Button>

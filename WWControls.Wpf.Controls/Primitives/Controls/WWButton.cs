@@ -9,25 +9,18 @@ using WWControls.Core;
 namespace WWControls.Wpf.Controls.Primitives
 {
     /// <summary>
-    /// The library's general-purpose button. One control covers the three stock button behaviors —
-    /// <see cref="ButtonKind"/> selects simple (one <c>Click</c> per click), repeat (<c>Click</c>
-    /// fires on press and repeats until release, paced by <see cref="Delay"/> /
-    /// <see cref="Interval"/>), or toggle (each click cycles <see cref="IsChecked"/>, three-state
-    /// when <see cref="IsThreeState"/> is set). A <see cref="Glyph"/> renders beside the content on
-    /// the <see cref="GlyphAlignment"/> side, tinted by <see cref="GlyphBrush"/> (bound to
-    /// <see cref="Control.Foreground"/> by the default style) so it follows hover / pressed /
-    /// disabled states. <see cref="AsyncDisplayMode"/> visualizes an asynchronous command: the
-    /// button shows a loading wheel while <see cref="IsAsyncOperationInProgress"/> is set — driven
-    /// automatically when <see cref="System.Windows.Controls.Primitives.ButtonBase.Command"/>
-    /// implements <see cref="IAsyncCommand"/> — and in
-    /// <see cref="Primitives.AsyncDisplayMode.WaitCancel"/> mode hovering swaps the wheel for a
-    /// cancel affordance that requests cancellation instead of clicking.
+    /// The library's general-purpose button. <see cref="ButtonKind"/> selects its behavior:
+    /// simple (one click), repeat (fires on press and repeats while held, paced by
+    /// <see cref="Delay"/> / <see cref="Interval"/>), or toggle (cycles <see cref="IsChecked"/>,
+    /// three-state when <see cref="IsThreeState"/> is set). An optional <see cref="Glyph"/> renders
+    /// beside the content, tinted to follow the button's state. When <see cref="AsyncDisplayMode"/>
+    /// is set and the bound command is an <see cref="IAsyncCommand"/>, the button shows a wait wheel
+    /// while it runs — and in <see cref="Primitives.AsyncDisplayMode.WaitCancel"/> mode, hovering
+    /// swaps the wheel for a cancel affordance.
     /// </summary>
     /// <remarks>
-    /// Derives <see cref="Button"/>, so <see cref="Button.IsDefault"/> / <see cref="Button.IsCancel"/>
-    /// dialog semantics, commanding, and access keys all come along. The default style switches
-    /// <see cref="System.Windows.Controls.Primitives.ButtonBase.ClickMode"/> to <c>Press</c> for the
-    /// repeat kind so the first click lands on press, matching <see cref="System.Windows.Controls.Primitives.RepeatButton"/>.
+    /// Derives <see cref="Button"/>, so dialog semantics (<see cref="Button.IsDefault"/> /
+    /// <see cref="Button.IsCancel"/>), commanding, and access keys all carry over.
     /// </remarks>
     public class WWButton : Button
     {

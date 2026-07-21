@@ -295,7 +295,7 @@
                                                     <sdg:Icon Width="8"
                                                               Height="8"
                                                               IconBrush="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}"
-                                                              IconSource="{StaticResource {x:Static sdg:IconKeys.IconCaretUp}}" />
+                                                              IconSource="{StaticResource {x:Static sdg:CustomIconKeys.IconCaretUp}}" />
                                                 </Button>
                                                 <Button Style="{StaticResource {x:Static sdg:PrimitiveThemeKeys.Button}}"
                                                         Command="{Binding MoveDownCommand}"
@@ -305,7 +305,7 @@
                                                     <sdg:Icon Width="8"
                                                               Height="8"
                                                               IconBrush="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}"
-                                                              IconSource="{StaticResource {x:Static sdg:IconKeys.IconCaretDown}}" />
+                                                              IconSource="{StaticResource {x:Static sdg:CustomIconKeys.IconCaretDown}}" />
                                                 </Button>
                                                 <Button Style="{StaticResource {x:Static sdg:PrimitiveThemeKeys.Button}}"
                                                         Visibility="{Binding IsAlignmentVisible, Converter={StaticResource SummaryEditorBooleanToVisibilityConverter}}"
@@ -316,7 +316,7 @@
                                                     <sdg:Icon Width="10"
                                                               Height="10"
                                                               IconBrush="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}"
-                                                              IconSource="{StaticResource {x:Static sdg:IconKeys.IconCaretLeft}}" />
+                                                              IconSource="{StaticResource {x:Static sdg:CustomIconKeys.IconCaretLeft}}" />
                                                 </Button>
                                                 <Button Style="{StaticResource {x:Static sdg:PrimitiveThemeKeys.Button}}"
                                                         Visibility="{Binding IsAlignmentVisible, Converter={StaticResource SummaryEditorBooleanToVisibilityConverter}}"
@@ -327,7 +327,7 @@
                                                     <sdg:Icon Width="10"
                                                               Height="10"
                                                               IconBrush="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}"
-                                                              IconSource="{StaticResource {x:Static sdg:IconKeys.IconCaretRight}}" />
+                                                              IconSource="{StaticResource {x:Static sdg:CustomIconKeys.IconCaretRight}}" />
                                                 </Button>
                                             </sdg:SimpleStackPanel>
                                             <Border Grid.Row="1"

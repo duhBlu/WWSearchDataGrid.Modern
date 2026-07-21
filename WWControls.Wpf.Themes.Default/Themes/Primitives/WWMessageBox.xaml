@@ -4,7 +4,7 @@
 
     <!--  Icons.xaml carries IconCopy for the footer's copy button.  -->
     <ResourceDictionary.MergedDictionaries>
-        <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Resources/Icons/Icons.xaml" />
+        <ResourceDictionary Source="/WWControls.Wpf.Icons;component/Icons.xaml" />
     </ResourceDictionary.MergedDictionaries>
 
     <!--
@@ -73,7 +73,7 @@
                                     <sdg:WWButton x:Name="PART_CopyButton"
                                                   DockPanel.Dock="Left"
                                                   Content="{TemplateBinding CopyButtonCaption}"
-                                                  Glyph="{StaticResource {x:Static sdg:IconKeys.IconCopy}}"
+                                                  Glyph="{StaticResource {x:Static sdg:LucideIconKeys.Copy}}"
                                                   GlyphWidth="12"
                                                   GlyphHeight="12"
                                                   Padding="10,3"

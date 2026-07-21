@@ -61,14 +61,14 @@ namespace WWControls.SampleApp.Editors.Views.Samples.Dialogs
                 // GlyphSize / GlyphStrokeThickness tune how the glyph renders on the generated button.
                 new UICommand("save", "_Save", isDefault: true)
                 {
-                    Glyph = Glyph(IconKeys.IconCheck),
+                    Glyph = Glyph(LucideIconKeys.Check),
                     GlyphSize = 15,
                     GlyphStrokeThickness = 2,
                 },
                 new UICommand("dontsave", "Do_n't Save"),
                 new UICommand("cancel", "_Cancel", isCancel: true) 
                 { 
-                    Glyph = Glyph(IconKeys.IconClear), 
+                    Glyph = Glyph(LucideIconKeys.X), 
                     GlyphSize = 12,
                     GlyphStrokeThickness = 2,
                 },

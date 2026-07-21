@@ -27,9 +27,13 @@
             <Setter Property="Foreground" Value="#333" />
         </Style>
 
-        <!--  One HierarchicalDataTemplate drives every level of the tree.  -->
-        <HierarchicalDataTemplate x:Key="NodeTemplate" ItemsSource="{Binding Children}">
-            <TextBlock Text="{Binding Name}" VerticalAlignment="Center" Padding="2,1" />
+        <!--  One HierarchicalDataTemplate drives every level of the tree. ItemsSource binds ChildrenView
+              (not Children) so Filter mode can hide non-matching nodes; the label highlights the term.  -->
+        <HierarchicalDataTemplate x:Key="NodeTemplate" ItemsSource="{Binding ChildrenView}">
+            <sdg:HighlightTextBlock HighlightTextBlockText="{Binding Name}"
+                                    HighlightText="{Binding FilterText, RelativeSource={RelativeSource AncestorType={x:Type sdg:WWTreeView}}}"
+                                    VerticalAlignment="Center"
+                                    Padding="2,1" />
         </HierarchicalDataTemplate>
     </UserControl.Resources>
 
@@ -64,6 +68,52 @@
                                       ToolTip="Drag a node onto a folder to reparent it; dropping onto itself or its own subtree is rejected"
                                       IsChecked="{Binding AllowDragDrop, Mode=TwoWay}" />
 
+                            <TextBlock Style="{StaticResource SectionHeader}" Text="Selection mode" Margin="0,0,0,6" />
+                            <ComboBox ItemsSource="{Binding SelectionModes}"
+                                      SelectedItem="{Binding SelectionMode, Mode=TwoWay}"
+                                      ToolTip="Extended = click replaces, Ctrl toggles, Shift ranges. Multiple = click toggles."
+                                      Margin="0,0,0,12" />
+
+                            <TextBlock Style="{StaticResource SectionHeader}" Text="Search mode" Margin="0,0,0,6" />
+                            <ComboBox ItemsSource="{Binding SearchModes}"
+                                      SelectedItem="{Binding SearchMode, Mode=TwoWay}"
+                                      ToolTip="Highlight = keep every node, cycle matches. Filter = hide non-matches (keeps ancestors)."
+                                      Margin="0,0,0,8" />
+                            <CheckBox Style="{StaticResource ToggleRow}"
+                                      Content="FilterKeepsAncestors"
+                                      ToolTip="In Filter mode, keep a matched node's full subtree visible for context"
+                                      IsChecked="{Binding FilterKeepsAncestors, Mode=TwoWay}" />
+
+                            <TextBlock Style="{StaticResource SectionHeader}" Text="Per-item buttons" Margin="0,0,0,6" />
+                            <ComboBox ItemsSource="{Binding ExpandCollapseButtonModes}"
+                                      SelectedItem="{Binding ExpandCollapseButtonMode, Mode=TwoWay}"
+                                      ToolTip="When the hover-revealed expand-all / collapse-all buttons appear on a node: never, every node with children, roots only, or only nodes with grandchildren."
+                                      Margin="0,0,0,12" />
+
+                            <TextBlock Style="{StaticResource SectionHeader}" Text="Layout" Margin="0,0,0,6" />
+                            <CheckBox Style="{StaticResource ToggleRow}"
+                                      Content="ShowConnectorLines"
+                                      ToolTip="Draw the parent/child connector lines"
+                                      IsChecked="{Binding ShowConnectorLines, Mode=TwoWay}" />
+                            <CheckBox Style="{StaticResource ToggleRow}"
+                                      Content="RowFullWidthHover"
+                                      ToolTip="Extend the hover / selection highlight across the indent column, not just the content"
+                                      IsChecked="{Binding RowFullWidthHover, Mode=TwoWay}" />
+                            <CheckBox Style="{StaticResource ToggleRow}"
+                                      Content="Show empty state"
+                                      ToolTip="Empty the tree to show the EmptyContent placeholder"
+                                      IsChecked="{Binding ShowEmptyState, Mode=TwoWay}" />
+
+                            <TextBlock Style="{StaticResource SectionHeader}" Text="Indentation" Margin="0,0,0,2" />
+                            <Slider Minimum="8"
+                                    Maximum="40"
+                                    TickFrequency="2"
+                                    IsSnapToTickEnabled="True"
+                                    Value="{Binding Indentation, Mode=TwoWay}" />
+                            <TextBlock Style="{StaticResource Readout}"
+                                       Text="{Binding Indentation, StringFormat='{}{0:0} px'}"
+                                       Margin="0,0,0,12" />
+
                             <StackPanel Orientation="Horizontal" Margin="0,2,0,12">
                                 <sdg:WWButton Content="Expand all"
                                               Padding="10,4"
@@ -74,9 +124,14 @@
                                               Command="{Binding ElementName=Tree, Path=CollapseAllCommand}" />
                             </StackPanel>
 
-                            <TextBlock Style="{StaticResource SectionHeader}" Text="Selection" Margin="0,4,0,6" />
+                            <TextBlock Style="{StaticResource SectionHeader}" Text="Selection (anchor)" Margin="0,4,0,6" />
                             <TextBlock Style="{StaticResource Readout}"
                                        Text="{Binding Selected.Name, TargetNullValue='(none)', FallbackValue='(none)'}" />
+
+                            <TextBlock Style="{StaticResource SectionHeader}" Text="Selected items" Margin="0,10,0,6" />
+                            <TextBlock Style="{StaticResource Readout}"
+                                       Text="{Binding SelectionSummary}"
+                                       TextWrapping="Wrap" />
                         </StackPanel>
                     </Border>
 
@@ -92,10 +147,19 @@
                                         ItemsSource="{Binding Roots}"
                                         ItemTemplate="{StaticResource NodeTemplate}"
                                         SelectedObject="{Binding Selected, Mode=TwoWay}"
-                                        ExpandOnLoad="True"
+                                        SelectionMode="{Binding SelectionMode}"
+                                        SelectionChangedCommand="{Binding SelectionChangedCommand}"
+                                        ShowSearchBar="True"
+                                        SearchMode="{Binding SearchMode}"
+                                        FilterKeepsAncestors="{Binding FilterKeepsAncestors}"
+                                        ExpandOnLoad="false"
                                         AllowDragDrop="{Binding AllowDragDrop}"
                                         OnDropCommand="{Binding DropCommand}"
-                                        ExpandCollapseButtonMode="HasGrandchildren" />
+                                        ExpandCollapseButtonMode="{Binding ExpandCollapseButtonMode}"
+                                        Indentation="{Binding Indentation}"
+                                        ShowConnectorLines="{Binding ShowConnectorLines}"
+                                        RowFullWidthHover="{Binding RowFullWidthHover}"
+                                        EmptyContent="No items — turn off &quot;Show empty state&quot; to restore." />
                     </Border>
                 </Grid>
 
@@ -103,6 +167,10 @@
                 <TextBlock Style="{StaticResource SampleTip}" Text="• Hover a node with grandchildren to reveal its expand / collapse button." />
                 <TextBlock Style="{StaticResource SampleTip}" Text="• With AllowDragDrop on, drag a file or folder onto another folder to reparent it." />
                 <TextBlock Style="{StaticResource SampleTip}" Text="• The two structural root nodes opt out of dragging (IWWTreeViewDragItem)." />
+                <TextBlock Style="{StaticResource SampleTip}" Text="• In Extended mode: Ctrl+click toggles a node, Shift+click selects a range. Multiple mode toggles on plain click." />
+                <TextBlock Style="{StaticResource SampleTip}" Text="• Type in the search bar; ↑ / ↓ cycle matches — the current match gets an amber accent without changing selection. Switch Highlight / Filter above." />
+                <TextBlock Style="{StaticResource SampleTip}" Text="• The 'Lazy load demo' node fetches its children on first expand (IWWLazyTreeNode), showing 'Loading...' briefly." />
+                <TextBlock Style="{StaticResource SampleTip}" Text="• Layout knobs: drag Indentation to re-space levels (connector lines track it), toggle the connector lines, and switch full-width vs content-only hover highlighting." />
             </StackPanel>
         </ScrollViewer>
     </sampleControls:SampleHostControl>

@@ -5,7 +5,7 @@
                     xmlns:sys="clr-namespace:System;assembly=System.Runtime">
 
     <ResourceDictionary.MergedDictionaries>
-        <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Resources/Icons/Icons.xaml" />
+        <ResourceDictionary Source="/WWControls.Wpf.Icons;component/Icons.xaml" />
         <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Primitives/ContextMenu.xaml" />
     </ResourceDictionary.MergedDictionaries>
 
@@ -28,7 +28,7 @@
                       Height="11"
                       Margin="0,0,6,0"
                       VerticalAlignment="Center"
-                      IconSource="{StaticResource {x:Static sdg:IconKeys.IconCheck}}">
+                      IconSource="{StaticResource {x:Static sdg:LucideIconKeys.Check}}">
                 <sdg:Icon.Style>
                     <Style TargetType="{x:Type sdg:Icon}">
                         <Setter Property="Visibility" Value="Hidden" />
@@ -62,7 +62,7 @@
                   CommandParameter="{Binding PlacementTarget.OwnerGrid, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}">
             <MenuItem.Icon>
                 <sdg:Icon Width="14" Height="14"
-                          IconSource="{StaticResource {x:Static sdg:IconKeys.IconExpandGroups}}" />
+                          IconSource="{StaticResource {x:Static sdg:LucideIconKeys.ListChevronsUpDown}}" />
             </MenuItem.Icon>
         </MenuItem>
         <MenuItem Header="Collapse All Groups"
@@ -70,7 +70,7 @@
                   CommandParameter="{Binding PlacementTarget.OwnerGrid, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}">
             <MenuItem.Icon>
                 <sdg:Icon Width="14" Height="14"
-                          IconSource="{StaticResource {x:Static sdg:IconKeys.IconCollapseGroups}}" />
+                          IconSource="{StaticResource {x:Static sdg:LucideIconKeys.ListChevronsDownUp}}" />
             </MenuItem.Icon>
         </MenuItem>
         <Separator />
@@ -79,7 +79,7 @@
                   CommandParameter="{Binding PlacementTarget.OwnerGrid, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}">
             <MenuItem.Icon>
                 <sdg:Icon Width="14" Height="14"
-                          IconSource="{StaticResource {x:Static sdg:IconKeys.IconUngroup}}" />
+                          IconSource="{StaticResource {x:Static sdg:CustomIconKeys.IconUngroup}}" />
             </MenuItem.Icon>
         </MenuItem>
     </ContextMenu>
@@ -106,7 +106,7 @@
                   CommandParameter="{Binding}">
             <MenuItem.Icon>
                 <sdg:Icon Width="14" Height="14"
-                          IconSource="{StaticResource {x:Static sdg:IconKeys.IconExpandGroups}}" />
+                          IconSource="{StaticResource {x:Static sdg:LucideIconKeys.ListChevronsUpDown}}" />
             </MenuItem.Icon>
         </MenuItem>
         <MenuItem Header="Full Collapse"
@@ -114,7 +114,7 @@
                   CommandParameter="{Binding}">
             <MenuItem.Icon>
                 <sdg:Icon Width="14" Height="14"
-                          IconSource="{StaticResource {x:Static sdg:IconKeys.IconCollapseGroups}}" />
+                          IconSource="{StaticResource {x:Static sdg:LucideIconKeys.ListChevronsDownUp}}" />
             </MenuItem.Icon>
         </MenuItem>
         <Separator />
@@ -123,7 +123,7 @@
                   CommandParameter="{Binding ., Converter={StaticResource GridColumnToContextMenuContextConverter}}">
             <MenuItem.Icon>
                 <sdg:Icon Width="14" Height="14"
-                          IconSource="{StaticResource {x:Static sdg:IconKeys.IconUngroup}}" />
+                          IconSource="{StaticResource {x:Static sdg:CustomIconKeys.IconUngroup}}" />
             </MenuItem.Icon>
         </MenuItem>
         <Separator />
@@ -134,7 +134,7 @@
                   CommandParameter="{Binding ., Converter={StaticResource GridColumnToContextMenuContextConverter}}">
             <MenuItem.Icon>
                 <sdg:Icon Width="14" Height="14"
-                          IconSource="{StaticResource {x:Static sdg:IconKeys.IconSortAscending}}" />
+                          IconSource="{StaticResource {x:Static sdg:LucideIconKeys.ArrowDownAZ}}" />
             </MenuItem.Icon>
         </MenuItem>
         <MenuItem Header="Sort Descending"
@@ -142,7 +142,7 @@
                   CommandParameter="{Binding ., Converter={StaticResource GridColumnToContextMenuContextConverter}}">
             <MenuItem.Icon>
                 <sdg:Icon Width="14" Height="14"
-                          IconSource="{StaticResource {x:Static sdg:IconKeys.IconSortDescending}}" />
+                          IconSource="{StaticResource {x:Static sdg:LucideIconKeys.ArrowDownZA}}" />
             </MenuItem.Icon>
         </MenuItem>
         <!--
@@ -206,7 +206,7 @@
                   CommandParameter="{Binding ., Converter={StaticResource GridColumnToContextMenuContextConverter}}">
             <MenuItem.Icon>
                 <sdg:Icon Width="14" Height="14"
-                          IconSource="{StaticResource {x:Static sdg:IconKeys.IconBestFit}}" />
+                          IconSource="{StaticResource {x:Static sdg:CustomIconKeys.IconBestFit}}" />
             </MenuItem.Icon>
             <MenuItem.Style>
                 <Style TargetType="MenuItem" BasedOn="{StaticResource {x:Static sdg:PrimitiveThemeKeys.MenuItem}}">
@@ -239,7 +239,7 @@
                   CommandParameter="{Binding InternalColumn}">
             <MenuItem.Icon>
                 <sdg:Icon Width="14" Height="14"
-                          IconSource="{StaticResource {x:Static sdg:IconKeys.IconHideColumn}}" />
+                          IconSource="{StaticResource {x:Static sdg:LucideIconKeys.EyeOff}}" />
             </MenuItem.Icon>
         </MenuItem>
         <MenuItem Header="Fixed">
@@ -258,7 +258,7 @@
                       CommandParameter="{Binding ., Converter={StaticResource GridColumnToContextMenuContextConverter}}">
                 <MenuItem.Icon>
                     <sdg:Icon Width="14" Height="14"
-                              IconSource="{StaticResource {x:Static sdg:IconKeys.IconPinLeft}}" />
+                              IconSource="{StaticResource {x:Static sdg:CustomIconKeys.IconPinLeft}}" />
                 </MenuItem.Icon>
             </MenuItem>
             <MenuItem Header="Pin Right"
@@ -266,7 +266,7 @@
                       CommandParameter="{Binding ., Converter={StaticResource GridColumnToContextMenuContextConverter}}">
                 <MenuItem.Icon>
                     <sdg:Icon Width="14" Height="14"
-                              IconSource="{StaticResource {x:Static sdg:IconKeys.IconPinRight}}" />
+                              IconSource="{StaticResource {x:Static sdg:CustomIconKeys.IconPinRight}}" />
                 </MenuItem.Icon>
             </MenuItem>
             <MenuItem Header="Unpin"
@@ -274,7 +274,7 @@
                       CommandParameter="{Binding ., Converter={StaticResource GridColumnToContextMenuContextConverter}}">
                 <MenuItem.Icon>
                     <sdg:Icon Width="14" Height="14"
-                              IconSource="{StaticResource {x:Static sdg:IconKeys.IconUnpin}}" />
+                              IconSource="{StaticResource {x:Static sdg:LucideIconKeys.Columns3}}" />
                 </MenuItem.Icon>
             </MenuItem>
         </MenuItem>
@@ -377,7 +377,7 @@
                                                             ToolTip="Column Filter Editor">
                                                         <sdg:Icon Width="12"
                                                                   Height="12"
-                                                                  IconSource="{StaticResource {x:Static sdg:IconKeys.IconFilter}}"
+                                                                  IconSource="{StaticResource {x:Static sdg:LucideIconKeys.Funnel}}"
                                                                   IconBrush="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
                                                         <Button.Style>
                                                             <Style TargetType="Button">
@@ -443,11 +443,11 @@
                                                 <!-- Sort direction reads from GridColumn.SortOrder (the pill's DataContext). -->
                                                 <DataTrigger Binding="{Binding SortOrder}" Value="Ascending">
                                                     <Setter TargetName="SortArrow" Property="IconSource"
-                                                            Value="{StaticResource {x:Static sdg:IconKeys.IconChevronUp}}" />
+                                                            Value="{StaticResource {x:Static sdg:LucideIconKeys.ChevronUp}}" />
                                                 </DataTrigger>
                                                 <DataTrigger Binding="{Binding SortOrder}" Value="Descending">
                                                     <Setter TargetName="SortArrow" Property="IconSource"
-                                                            Value="{StaticResource {x:Static sdg:IconKeys.IconChevronDown}}" />
+                                                            Value="{StaticResource {x:Static sdg:LucideIconKeys.ChevronDown}}" />
                                                 </DataTrigger>
                                                 <!-- Mouse states mirror the column header. -->
                                                 <Trigger Property="IsMouseOver" Value="True">

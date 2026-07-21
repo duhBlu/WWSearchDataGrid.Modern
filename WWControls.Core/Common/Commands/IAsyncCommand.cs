@@ -3,11 +3,10 @@ using System.Windows.Input;
 namespace WWControls.Core
 {
     /// <summary>
-    /// A cancelable, state-reporting async command. Controls that visualize asynchronous work
-    /// (e.g. <c>WWButton</c>'s wait / wait-cancel display modes) test their bound
-    /// <see cref="ICommand"/> for this interface: <see cref="IsExecuting"/> drives the busy
-    /// indicator and <see cref="Cancel"/> backs the hover cancel affordance. Implementations should
-    /// also raise <see cref="System.ComponentModel.INotifyPropertyChanged"/> for these properties —
+    /// An <see cref="ICommand"/> that reports async execution state, so controls can visualize
+    /// in-progress work: <see cref="IsExecuting"/> drives a busy indicator and <see cref="Cancel"/>
+    /// backs a cancel affordance. Implementations should raise
+    /// <see cref="System.ComponentModel.INotifyPropertyChanged"/> for these properties;
     /// <see cref="AsyncCommand"/> is the stock implementation.
     /// </summary>
     public interface IAsyncCommand : ICommand

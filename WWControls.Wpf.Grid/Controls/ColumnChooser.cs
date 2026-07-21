@@ -716,10 +716,43 @@ namespace WWControls.Wpf.Grids
                 double gridWidth = gridBottomRight.X - gridTopLeft.X;
                 double gridHeight = gridBottomRight.Y - gridTopLeft.Y;
 
-                // Position in bottom-left corner with some padding
                 double padding = 10;
-                _parentWindow.Left = gridTopLeft.X + padding;
-                _parentWindow.Top = gridBottomRight.Y - _parentWindow.Height - padding;
+
+                // Horizontal placement within the grid's viewport: left-anchored modes
+                // hug the grid's left edge, right-anchored modes hug the right edge, and
+                // centered modes split the difference.
+                switch (WindowPositionMode)
+                {
+                    case ColumnChooserPositionMode.BottomLeft:
+                    case ColumnChooserPositionMode.TopLeft:
+                        _parentWindow.Left = gridTopLeft.X + padding;
+                        break;
+                    case ColumnChooserPositionMode.Center:
+                    case ColumnChooserPositionMode.CenterScreen:
+                        _parentWindow.Left = gridTopLeft.X + (gridWidth - _parentWindow.Width) / 2;
+                        break;
+                    default: // BottomRight, TopRight
+                        _parentWindow.Left = gridBottomRight.X - _parentWindow.Width - padding;
+                        break;
+                }
+
+                // Vertical placement within the grid's viewport: top-anchored modes hug the
+                // top edge, centered modes split the difference, everything else rests along
+                // the bottom edge.
+                switch (WindowPositionMode)
+                {
+                    case ColumnChooserPositionMode.TopLeft:
+                    case ColumnChooserPositionMode.TopRight:
+                        _parentWindow.Top = gridTopLeft.Y + padding;
+                        break;
+                    case ColumnChooserPositionMode.Center:
+                    case ColumnChooserPositionMode.CenterScreen:
+                        _parentWindow.Top = gridTopLeft.Y + (gridHeight - _parentWindow.Height) / 2;
+                        break;
+                    default: // BottomRight, BottomLeft
+                        _parentWindow.Top = gridBottomRight.Y - _parentWindow.Height - padding;
+                        break;
+                }
 
                 // If confinement is enabled, ensure it's within bounds
                 if (_isConfinedToGrid)

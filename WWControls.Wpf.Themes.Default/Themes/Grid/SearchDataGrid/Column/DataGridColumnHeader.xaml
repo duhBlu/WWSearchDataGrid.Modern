@@ -130,7 +130,7 @@
                                         ToolTip="Column Filter Editor">
                                     <sdg:Icon Width="12"
                                                  Height="12"
-                                                 IconSource="{StaticResource {x:Static sdg:IconKeys.IconFilter}}"
+                                                 IconSource="{StaticResource {x:Static sdg:LucideIconKeys.Funnel}}"
                                                  IconBrush="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
                                     <Button.Style>
                                         <Style TargetType="Button">
@@ -209,11 +209,11 @@
                         </DataTrigger>
                         <Trigger Property="SortDirection" Value="Ascending">
                             <Setter TargetName="SortArrow" Property="Visibility" Value="Visible" />
-                            <Setter TargetName="SortArrow" Property="IconSource" Value="{StaticResource {x:Static sdg:IconKeys.IconChevronUp}}" />
+                            <Setter TargetName="SortArrow" Property="IconSource" Value="{StaticResource {x:Static sdg:LucideIconKeys.ChevronUp}}" />
                         </Trigger>
                         <Trigger Property="SortDirection" Value="Descending">
                             <Setter TargetName="SortArrow" Property="Visibility" Value="Visible" />
-                            <Setter TargetName="SortArrow" Property="IconSource" Value="{StaticResource {x:Static sdg:IconKeys.IconChevronDown}}" />
+                            <Setter TargetName="SortArrow" Property="IconSource" Value="{StaticResource {x:Static sdg:LucideIconKeys.ChevronDown}}" />
                         </Trigger>
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter TargetName="HeaderBorder" Property="Background" Value="#FFF0F0F0" />

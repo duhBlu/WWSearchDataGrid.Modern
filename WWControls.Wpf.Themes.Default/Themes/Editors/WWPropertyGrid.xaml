@@ -68,7 +68,7 @@
                                             <sdg:Icon x:Name="Arrow"
                                                       Grid.Column="0"
                                                       IconBrush="#1C1C1C"
-                                                      IconSource="{StaticResource {x:Static sdg:IconKeys.IconCaretRight}}"
+                                                      IconSource="{StaticResource {x:Static sdg:CustomIconKeys.IconCaretRight}}"
                                                       HorizontalAlignment="Center"
                                                       VerticalAlignment="Center"
                                                       Width="5"
@@ -80,7 +80,7 @@
                                         </Grid>
                                         <ControlTemplate.Triggers>
                                             <Trigger Property="IsChecked" Value="True">
-                                                <Setter TargetName="Arrow" Property="IconSource" Value="{StaticResource {x:Static sdg:IconKeys.IconCaretDown}}" />
+                                                <Setter TargetName="Arrow" Property="IconSource" Value="{StaticResource {x:Static sdg:CustomIconKeys.IconCaretDown}}" />
                                             </Trigger>
                                         </ControlTemplate.Triggers>
                                     </ControlTemplate>

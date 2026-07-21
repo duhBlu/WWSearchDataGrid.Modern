@@ -5,3 +5,4 @@
 global using WWControls.Wpf;
 global using WWControls.Wpf.Controls.Editors;
 global using WWControls.Wpf.Controls.Primitives;
+global using WWControls.Wpf.Icons;

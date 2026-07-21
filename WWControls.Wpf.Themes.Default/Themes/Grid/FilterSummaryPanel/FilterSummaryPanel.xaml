@@ -5,7 +5,7 @@
                     xmlns:sdg="http://schemas.wwcontrols.com/wpf">
 
     <ResourceDictionary.MergedDictionaries>
-        <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Resources/Icons/Icons.xaml" />
+        <ResourceDictionary Source="/WWControls.Wpf.Icons;component/Icons.xaml" />
         <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Primitives/DefaultControls.xaml" />
         <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Grid/FilterSummaryPanel/FilterTokenTemplates.xaml" />
     </ResourceDictionary.MergedDictionaries>
@@ -139,7 +139,7 @@
                                                 <Setter.Value>
                                                     <sdg:Icon Width="12"
                                                                  Height="12"
-                                                                 IconSource="{StaticResource {x:Static sdg:IconKeys.IconExpandPanel}}"
+                                                                 IconSource="{StaticResource {x:Static sdg:LucideIconKeys.PanelBottomOpen}}"
                                                                  IconBrush="#1c1c1c" />
                                                 </Setter.Value>
                                             </Setter>
@@ -174,7 +174,7 @@
                                                         <Setter.Value>
                                                             <sdg:Icon Width="12"
                                                                          Height="12"
-                                                                         IconSource="{StaticResource {x:Static sdg:IconKeys.IconCollapsePanel}}"
+                                                                         IconSource="{StaticResource {x:Static sdg:LucideIconKeys.PanelBottomClose}}"
                                                                          IconBrush="#1c1c1c" />
                                                         </Setter.Value>
                                                     </Setter>
@@ -203,7 +203,7 @@
                                     <sdg:Icon Width="14"
                                                  Height="14"
                                                  StrokeThickness="3"
-                                                 IconSource="{StaticResource {x:Static sdg:IconKeys.IconFilterEditor}}"
+                                                 IconSource="{StaticResource {x:Static sdg:LucideIconKeys.ListFilter}}"
                                                  IconBrush="#1c1c1c" />
                                     <Button.Style>
                                         <Style TargetType="{x:Type Button}">
@@ -249,7 +249,7 @@
                                         ToolTip="Clear all filters">
                                     <sdg:Icon Width="12"
                                                  Height="12"
-                                                 IconSource="{StaticResource {x:Static sdg:IconKeys.IconClear}}"
+                                                 IconSource="{StaticResource {x:Static sdg:LucideIconKeys.X}}"
                                                  IconBrush="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
                                     <Button.Style>
                                         <Style TargetType="{x:Type Button}">

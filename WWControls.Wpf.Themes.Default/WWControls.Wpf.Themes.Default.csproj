@@ -9,6 +9,7 @@
   <ItemGroup>
     <ProjectReference Include="..\WWControls.Wpf.Grid\WWControls.Wpf.Grid.csproj" />
     <ProjectReference Include="..\WWControls.Wpf.Controls\WWControls.Wpf.Controls.csproj" />
+    <ProjectReference Include="..\WWControls.Wpf.Icons\WWControls.Wpf.Icons.csproj" />
   </ItemGroup>
 
 </Project>

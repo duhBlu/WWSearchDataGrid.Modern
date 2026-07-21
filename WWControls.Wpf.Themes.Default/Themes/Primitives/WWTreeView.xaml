@@ -5,10 +5,14 @@
     <!--  The chevron / expand-all / collapse-all glyphs live in Icons.xaml; merge it so the
           StaticResource lookups below resolve when these default styles are applied.  -->
     <ResourceDictionary.MergedDictionaries>
-        <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Resources/Icons/Icons.xaml" />
+        <ResourceDictionary Source="/WWControls.Wpf.Icons;component/Icons.xaml" />
     </ResourceDictionary.MergedDictionaries>
 
     <sdg:TreeViewIsLastItemConverter x:Key="TreeViewIsLastItemConverter" />
+    <sdg:IndentationToThicknessConverter x:Key="IndentationToThicknessConverter" />
+    <sdg:IndentationScaleConverter x:Key="IndentationScaleConverter" />
+    <sdg:HorizontalConnectorWidthConverter x:Key="HorizontalConnectorWidthConverter" />
+    <sdg:FullWidthHighlightMarginConverter x:Key="FullWidthHighlightMarginConverter" />
 
     <!--  Expander caret for a WWTreeViewItem: chevron-right when collapsed, chevron-down when expanded.  -->
     <Style x:Key="WWTreeViewItem_ExpanderButton_Style" TargetType="{x:Type ToggleButton}">
@@ -31,13 +35,13 @@
                                 Padding="{TemplateBinding Padding}">
                             <Grid x:Name="grid">
                                 <!--  Collapsed: ChevronRight  -->
-                                <sdg:Icon x:Name="PART_Arrow" IconBrush="{TemplateBinding Foreground}" IconSource="{StaticResource {x:Static sdg:IconKeys.IconChevronRight}}" Width="8" Height="8" />
+                                <sdg:Icon x:Name="PART_Arrow" IconBrush="{TemplateBinding Foreground}" IconSource="{StaticResource {x:Static sdg:LucideIconKeys.ChevronRight}}" Width="8" Height="8" />
                             </Grid>
                         </Border>
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsChecked" Value="True">
-                            <Setter TargetName="PART_Arrow" Property="IconSource" Value="{StaticResource {x:Static sdg:IconKeys.IconChevronDown}}" />
+                            <Setter TargetName="PART_Arrow" Property="IconSource" Value="{StaticResource {x:Static sdg:LucideIconKeys.ChevronDown}}" />
                         </Trigger>
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter Property="Background" Value="#F5F5F5" />
@@ -129,38 +133,126 @@
                             <RowDefinition Height="Auto" />
                             <RowDefinition />
                         </Grid.RowDefinitions>
-                        <ToggleButton x:Name="PART_ToggleButton"
-                                      Style="{StaticResource WWTreeViewItem_ExpanderButton_Style}"
-                                      Background="{TemplateBinding Background}"
-                                      Foreground="{TemplateBinding Foreground}"
-                                      IsChecked="{Binding IsExpanded, RelativeSource={RelativeSource TemplatedParent}}"
-                                      Padding="3"
-                                      ClickMode="Press" />
 
+                        <!--  Highlight layers for the header row, drawn behind the header content (which
+                              sits over a transparent background). IsHitTestVisible=False so clicks reach the
+                              toggle / header / line hit area. RowFullWidthHover spans them across the indent
+                              column (Grid.Column/ColumnSpan trigger below) and pulls their left edge out to
+                              the tree's left with a negative margin of one indent per level. Each brush is
+                              inherited from the owning WWTreeView.  -->
+                        <Border x:Name="PART_HoverHighlight"
+                                Grid.Row="0"
+                                Grid.Column="1"
+                                Background="{Binding ItemHoverBrush, RelativeSource={RelativeSource AncestorType={x:Type sdg:WWTreeView}}}"
+                                IsHitTestVisible="False"
+                                Visibility="Collapsed">
+                            <Border.Margin>
+                                <MultiBinding Converter="{StaticResource FullWidthHighlightMarginConverter}">
+                                    <Binding Path="RowFullWidthHover" RelativeSource="{RelativeSource AncestorType={x:Type sdg:WWTreeView}}" />
+                                    <Binding Path="Level" RelativeSource="{RelativeSource TemplatedParent}" />
+                                    <Binding Path="Indentation" RelativeSource="{RelativeSource AncestorType={x:Type sdg:WWTreeView}}" />
+                                </MultiBinding>
+                            </Border.Margin>
+                        </Border>
+                        <Border x:Name="PART_SelectionHighlight"
+                                Grid.Row="0"
+                                Grid.Column="1"
+                                Background="{Binding SelectionBrush, RelativeSource={RelativeSource AncestorType={x:Type sdg:WWTreeView}}}"
+                                IsHitTestVisible="False"
+                                Visibility="Collapsed">
+                            <Border.Margin>
+                                <MultiBinding Converter="{StaticResource FullWidthHighlightMarginConverter}">
+                                    <Binding Path="RowFullWidthHover" RelativeSource="{RelativeSource AncestorType={x:Type sdg:WWTreeView}}" />
+                                    <Binding Path="Level" RelativeSource="{RelativeSource TemplatedParent}" />
+                                    <Binding Path="Indentation" RelativeSource="{RelativeSource AncestorType={x:Type sdg:WWTreeView}}" />
+                                </MultiBinding>
+                            </Border.Margin>
+                        </Border>
+                        <Border x:Name="PART_CurrentMatchHighlight"
+                                Grid.Row="0"
+                                Grid.Column="1"
+                                Background="#FFE8A3"
+                                IsHitTestVisible="False"
+                                Visibility="Collapsed">
+                            <Border.Margin>
+                                <MultiBinding Converter="{StaticResource FullWidthHighlightMarginConverter}">
+                                    <Binding Path="RowFullWidthHover" RelativeSource="{RelativeSource AncestorType={x:Type sdg:WWTreeView}}" />
+                                    <Binding Path="Level" RelativeSource="{RelativeSource TemplatedParent}" />
+                                    <Binding Path="Indentation" RelativeSource="{RelativeSource AncestorType={x:Type sdg:WWTreeView}}" />
+                                </MultiBinding>
+                            </Border.Margin>
+                        </Border>
+
+                        <!--  Connector lines: drawn under the expander so the chevron sits on the line. Their
+                              offsets derive from the tree's Indentation (converter factors), so they track it.
+                              Layout/visual values come from the owning WWTreeView via AncestorType bindings.  -->
                         <!--  Hit area for the vertical line - transparent but clickable  -->
                         <Border x:Name="PART_VerticalLineHitArea"
                                 Grid.RowSpan="2"
+                                Grid.Column="0"
                                 Background="Transparent"
                                 Cursor="Hand"
-                                Margin="-35,0,0,0"
-                                Width="20" />
+                                HorizontalAlignment="Left"
+                                Margin="{Binding Indentation, RelativeSource={RelativeSource AncestorType={x:Type sdg:WWTreeView}}, Converter={StaticResource IndentationToThicknessConverter}, ConverterParameter=-1}"
+                                Width="{Binding Indentation, RelativeSource={RelativeSource AncestorType={x:Type sdg:WWTreeView}}}" />
+
+                        <!--  Horizontal stub: runs from the vertical line (-0.5 indent) rightward. A leaf
+                              gets the full 1.5 indents so the line reaches the header content; a node with a
+                              chevron gets a 0.5-indent stub that stops at the expander column instead of
+                              running under and past the chevron glyph.  -->
+                        <Rectangle x:Name="PART_RectangleHorizontal"
+                                   Grid.Row="0"
+                                   Grid.Column="0"
+                                   Stroke="{Binding ConnectorLineBrush, RelativeSource={RelativeSource AncestorType={x:Type sdg:WWTreeView}}}"
+                                   IsHitTestVisible="False"
+                                   HorizontalAlignment="Left"
+                                   VerticalAlignment="Center"
+                                   Margin="{Binding Indentation, RelativeSource={RelativeSource AncestorType={x:Type sdg:WWTreeView}}, Converter={StaticResource IndentationToThicknessConverter}, ConverterParameter=-0.5}"
+                                   Height="{Binding ConnectorLineThickness, RelativeSource={RelativeSource AncestorType={x:Type sdg:WWTreeView}}}"
+                                   StrokeThickness="{Binding ConnectorLineThickness, RelativeSource={RelativeSource AncestorType={x:Type sdg:WWTreeView}}}">
+                            <Rectangle.Width>
+                                <MultiBinding Converter="{StaticResource HorizontalConnectorWidthConverter}">
+                                    <Binding Path="Indentation" RelativeSource="{RelativeSource AncestorType={x:Type sdg:WWTreeView}}" />
+                                    <Binding Path="HasExpandableChildren" RelativeSource="{RelativeSource TemplatedParent}" />
+                                </MultiBinding>
+                            </Rectangle.Width>
+                        </Rectangle>
 
                         <Rectangle x:Name="PART_RectangleVertical"
                                    Grid.RowSpan="2"
-                                   Stroke="#E0E0E0"
+                                   Grid.Column="0"
+                                   Stroke="{Binding ConnectorLineBrush, RelativeSource={RelativeSource AncestorType={x:Type sdg:WWTreeView}}}"
                                    IsHitTestVisible="False"
-                                   Margin="-28,0,0,0"
-                                   Panel.ZIndex="1"
-                                   Width="1"
-                                   StrokeThickness="1" />
-
-                        <Rectangle x:Name="PART_RectangleHorizontal"
-                                   Grid.Row="0"
-                                   Stroke="#E0E0E0"
-                                   Margin="-7,1,0,0"
                                    HorizontalAlignment="Left"
-                                   Width="15"
-                                   Height="1"/>
+                                   Margin="{Binding Indentation, RelativeSource={RelativeSource AncestorType={x:Type sdg:WWTreeView}}, Converter={StaticResource IndentationToThicknessConverter}, ConverterParameter=-0.5}"
+                                   Panel.ZIndex="1"
+                                   Width="{Binding ConnectorLineThickness, RelativeSource={RelativeSource AncestorType={x:Type sdg:WWTreeView}}}"
+                                   StrokeThickness="{Binding ConnectorLineThickness, RelativeSource={RelativeSource AncestorType={x:Type sdg:WWTreeView}}}" />
+
+                        <!--  Accent overlay for the vertical line, shown while the parent's line is hovered.  -->
+                        <Rectangle x:Name="PART_RectangleVerticalHover"
+                                   Grid.RowSpan="2"
+                                   Grid.Column="0"
+                                   Stroke="{Binding LineHoverBrush, RelativeSource={RelativeSource AncestorType={x:Type sdg:WWTreeView}}}"
+                                   IsHitTestVisible="False"
+                                   HorizontalAlignment="Left"
+                                   Margin="{Binding Indentation, RelativeSource={RelativeSource AncestorType={x:Type sdg:WWTreeView}}, Converter={StaticResource IndentationToThicknessConverter}, ConverterParameter=-0.5}"
+                                   Panel.ZIndex="1"
+                                   Width="2"
+                                   StrokeThickness="2"
+                                   Visibility="Collapsed" />
+
+                        <ToggleButton x:Name="PART_ToggleButton"
+                                      Grid.Row="0"
+                                      Grid.Column="0"
+                                      Style="{StaticResource WWTreeViewItem_ExpanderButton_Style}"
+                                      Background="{TemplateBinding Background}"
+                                      Foreground="{TemplateBinding Foreground}"
+                                      Width="{Binding Indentation, RelativeSource={RelativeSource AncestorType={x:Type sdg:WWTreeView}}}"
+                                      HorizontalAlignment="Center"
+                                      IsChecked="{Binding IsExpanded, RelativeSource={RelativeSource TemplatedParent}}"
+                                      Padding="3"
+                                      ClickMode="Press" />
 
                         <Border x:Name="PART_HeaderBorder"
                                 Grid.Column="1"
@@ -195,7 +287,7 @@
                                             VerticalAlignment="Stretch"
                                             Width="{Binding ActualHeight, RelativeSource={RelativeSource Self}}"
                                             ToolTip="Expand All">
-                                        <sdg:Icon IconSource="{StaticResource {x:Static sdg:IconKeys.IconExpandGroups}}"
+                                        <sdg:Icon IconSource="{StaticResource {x:Static sdg:LucideIconKeys.ListChevronsUpDown}}"
                                                   IconBrush="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}"
                                                   Width="9" Height="9" />
                                     </Button>
@@ -209,7 +301,7 @@
                                             VerticalAlignment="Stretch"
                                             Width="{Binding ActualHeight, RelativeSource={RelativeSource Self}}"
                                             ToolTip="Collapse All">
-                                        <sdg:Icon IconSource="{StaticResource {x:Static sdg:IconKeys.IconCollapseGroups}}"
+                                        <sdg:Icon IconSource="{StaticResource {x:Static sdg:LucideIconKeys.ListChevronsDownUp}}"
                                                   IconBrush="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}"
                                                   Width="9" Height="9" />
                                     </Button>
@@ -220,26 +312,54 @@
                                         Grid.Row="1"
                                         Grid.Column="1"
                                         Visibility="Collapsed" />
+
+                        <!--  Lazy-load placeholder, shown while a node's children are being fetched.  -->
+                        <TextBlock x:Name="PART_LoadingIndicator"
+                                   Grid.Row="1"
+                                   Grid.Column="1"
+                                   Margin="5,2,0,4"
+                                   Foreground="#909090"
+                                   Text="Loading..."
+                                   Visibility="Collapsed" />
                     </Grid>
                     <ControlTemplate.Triggers>
                         <Trigger SourceName="PART_HeaderBorder" Property="IsMouseOver" Value="True">
-                            <Setter Property="Background" Value="#F0F0F0" />
+                            <Setter TargetName="PART_HoverHighlight" Property="Visibility" Value="Visible" />
                         </Trigger>
                         <Trigger SourceName="PART_ToggleButton" Property="IsMouseOver" Value="True">
-                            <Setter Property="Background" Value="#F0F0F0" />
+                            <Setter TargetName="PART_HoverHighlight" Property="Visibility" Value="Visible" />
                         </Trigger>
                         <Trigger Property="IsExpanded" Value="True">
                             <Setter TargetName="PART_ItemsHost" Property="Visibility" Value="Visible" />
                         </Trigger>
 
-                        <Trigger Property="HasItems" Value="false">
+                        <Trigger Property="HasExpandableChildren" Value="false">
                             <Setter TargetName="PART_ToggleButton" Property="Visibility" Value="Hidden" />
-                            <Setter TargetName="PART_HeaderBorder" Property="Margin" Value="-13,0,0,0" />
-                            <Setter TargetName="PART_Header" Property="Margin" Value="5,0,0,0" />
                         </Trigger>
-                        <Trigger Property="HasItems" Value="true">
-                            <Setter TargetName="PART_RectangleHorizontal" Property="Width" Value="8" />
+                        <Trigger Property="IsLoading" Value="True">
+                            <Setter TargetName="PART_LoadingIndicator" Property="Visibility" Value="Visible" />
                         </Trigger>
+
+                        <!--  Selection / multi-selection / current-match highlights (overlay borders).  -->
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter TargetName="PART_SelectionHighlight" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                        <Trigger Property="IsMultiSelected" Value="True">
+                            <Setter TargetName="PART_SelectionHighlight" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                        <Trigger Property="IsCurrentSearchMatch" Value="True">
+                            <Setter TargetName="PART_CurrentMatchHighlight" Property="Visibility" Value="Visible" />
+                        </Trigger>
+
+                        <!--  Full-width highlight: extend the header-row highlights across the indent column.  -->
+                        <DataTrigger Binding="{Binding RowFullWidthHover, RelativeSource={RelativeSource AncestorType={x:Type sdg:WWTreeView}}}" Value="True">
+                            <Setter TargetName="PART_HoverHighlight" Property="Grid.Column" Value="0" />
+                            <Setter TargetName="PART_HoverHighlight" Property="Grid.ColumnSpan" Value="2" />
+                            <Setter TargetName="PART_SelectionHighlight" Property="Grid.Column" Value="0" />
+                            <Setter TargetName="PART_SelectionHighlight" Property="Grid.ColumnSpan" Value="2" />
+                            <Setter TargetName="PART_CurrentMatchHighlight" Property="Grid.Column" Value="0" />
+                            <Setter TargetName="PART_CurrentMatchHighlight" Property="Grid.ColumnSpan" Value="2" />
+                        </DataTrigger>
 
                         <!--  Show Expand/Collapse buttons on hover when enabled  -->
                         <MultiTrigger>
@@ -250,16 +370,16 @@
                             <Setter TargetName="PART_ExpandCollapseButtons" Property="Visibility" Value="Visible" />
                         </MultiTrigger>
 
-                        <!--  When the PARENT's line is hovered, make this item's vertical line bold + accented  -->
+                        <!--  When the PARENT's line is hovered, reveal this item's accent line overlay.  -->
                         <DataTrigger Binding="{Binding Path=IsParentLineHovered, RelativeSource={RelativeSource Self}}" Value="True">
-                            <Setter TargetName="PART_RectangleVertical" Property="StrokeThickness" Value="2" />
-                            <Setter TargetName="PART_RectangleVertical" Property="Width" Value="2" />
-                            <Setter TargetName="PART_RectangleVertical" Property="Stroke" Value="#0078D4" />
+                            <Setter TargetName="PART_RectangleVerticalHover" Property="Visibility" Value="Visible" />
                         </DataTrigger>
 
                         <DataTrigger Binding="{Binding RelativeSource={RelativeSource Self}, Converter={StaticResource TreeViewIsLastItemConverter}}" Value="True">
                             <Setter TargetName="PART_RectangleVertical" Property="Height" Value="10" />
                             <Setter TargetName="PART_RectangleVertical" Property="VerticalAlignment" Value="Top" />
+                            <Setter TargetName="PART_RectangleVerticalHover" Property="Height" Value="10" />
+                            <Setter TargetName="PART_RectangleVerticalHover" Property="VerticalAlignment" Value="Top" />
                             <Setter TargetName="PART_VerticalLineHitArea" Property="Height" Value="10" />
                             <Setter TargetName="PART_VerticalLineHitArea" Property="VerticalAlignment" Value="Top" />
                         </DataTrigger>
@@ -267,20 +387,32 @@
                         <DataTrigger Binding="{Binding RelativeSource={RelativeSource Self}, Converter={StaticResource TreeViewIsLastItemConverter}}" Value="False">
                             <Setter TargetName="PART_RectangleVertical" Property="Height" Value="Auto" />
                             <Setter TargetName="PART_RectangleVertical" Property="VerticalAlignment" Value="Stretch" />
+                            <Setter TargetName="PART_RectangleVerticalHover" Property="Height" Value="Auto" />
+                            <Setter TargetName="PART_RectangleVerticalHover" Property="VerticalAlignment" Value="Stretch" />
                             <Setter TargetName="PART_VerticalLineHitArea" Property="Height" Value="Auto" />
                             <Setter TargetName="PART_VerticalLineHitArea" Property="VerticalAlignment" Value="Stretch" />
+                        </DataTrigger>
+
+                        <!--  Hide all connectors when the tree disables them.  -->
+                        <DataTrigger Binding="{Binding ShowConnectorLines, RelativeSource={RelativeSource AncestorType={x:Type sdg:WWTreeView}}}" Value="False">
+                            <Setter TargetName="PART_RectangleHorizontal" Property="Visibility" Value="Collapsed" />
+                            <Setter TargetName="PART_RectangleVertical" Property="Visibility" Value="Collapsed" />
+                            <Setter TargetName="PART_RectangleVerticalHover" Property="Visibility" Value="Collapsed" />
+                            <Setter TargetName="PART_VerticalLineHitArea" Property="Visibility" Value="Collapsed" />
                         </DataTrigger>
 
                         <!--  Hide lines and hit area ONLY for root level items  -->
                         <DataTrigger Binding="{Binding Path=IsRootLevel, RelativeSource={RelativeSource Self}}" Value="True">
                             <Setter TargetName="PART_RectangleHorizontal" Property="Visibility" Value="Hidden" />
                             <Setter TargetName="PART_RectangleVertical" Property="Visibility" Value="Hidden" />
+                            <Setter TargetName="PART_RectangleVerticalHover" Property="Visibility" Value="Hidden" />
                             <Setter TargetName="PART_VerticalLineHitArea" Property="Visibility" Value="Hidden" />
                         </DataTrigger>
 
                         <DataTrigger Binding="{Binding}" Value="{x:Null}">
                             <Setter TargetName="PART_RectangleHorizontal" Property="Visibility" Value="Hidden" />
                             <Setter TargetName="PART_RectangleVertical" Property="Visibility" Value="Hidden" />
+                            <Setter TargetName="PART_RectangleVerticalHover" Property="Visibility" Value="Hidden" />
                             <Setter TargetName="PART_VerticalLineHitArea" Property="Visibility" Value="Hidden" />
                         </DataTrigger>
                         <MultiTrigger>
@@ -306,18 +438,9 @@
         <Setter Property="VirtualizingPanel.IsVirtualizing" Value="True" />
         <Setter Property="VirtualizingPanel.VirtualizationMode" Value="Recycling" />
         <Style.Triggers>
-            <!--  Selected state uses neutral item hover brushes so selection doesn't clash with the theme accent.  -->
-            <Trigger Property="IsSelected" Value="True">
-                <Setter Property="Background" Value="#E5F1FB" />
-                <Setter Property="Foreground" Value="#1C1C1C" />
-            </Trigger>
-            <MultiTrigger>
-                <MultiTrigger.Conditions>
-                    <Condition Property="IsSelected" Value="True" />
-                    <Condition Property="IsSelectionActive" Value="False" />
-                </MultiTrigger.Conditions>
-                <Setter Property="Background" Value="#E5F1FB" />
-            </MultiTrigger>
+            <!--  Selection, multi-selection, hover, and current-match visuals are drawn by overlay borders
+                  inside the ControlTemplate so their brushes come from the tree's SelectionBrush /
+                  ItemHoverBrush DPs. Only the disabled state tints the row background directly here.  -->
             <Trigger Property="IsEnabled" Value="False">
                 <Setter Property="Background" Value="#F5F5F5" />
                 <Setter Property="Foreground" Value="#9CA3AF" />
@@ -346,18 +469,86 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type sdg:WWTreeView}">
-                    <Border Name="PART_Border"
-                            Background="{TemplateBinding Background}"
-                            BorderBrush="{TemplateBinding BorderBrush}"
-                            BorderThickness="{TemplateBinding BorderThickness}"
-                            CornerRadius="1">
-                        <ScrollViewer x:Name="PART_ScrollViewer"
-                                      Focusable="False"
-                                      Padding="4"
-                                      CanContentScroll="{TemplateBinding ScrollViewer.CanContentScroll}">
-                            <ItemsPresenter x:Name="PART_Presenter" MaxWidth="{Binding RelativeSource={RelativeSource AncestorType={x:Type ScrollViewer}}, Path=ViewportWidth}" />
-                        </ScrollViewer>
-                    </Border>
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+
+                        <!--  Built-in search bar: shown when ShowSearchBar is true. Search box + "n of m" + prev/next.  -->
+                        <Border x:Name="PART_SearchBar"
+                                Grid.Row="0"
+                                Background="#FAFAFA"
+                                BorderBrush="#E0E0E0"
+                                BorderThickness="0,0,0,1"
+                                Padding="4"
+                                Visibility="Collapsed">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBox x:Name="PART_SearchBox"
+                                         Grid.Column="0"
+                                         VerticalContentAlignment="Center"
+                                         Text="{Binding FilterText, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                <TextBlock Grid.Column="1"
+                                           VerticalAlignment="Center"
+                                           Margin="8,0,4,0"
+                                           Foreground="#646464"
+                                           Text="{Binding MatchDisplay, RelativeSource={RelativeSource TemplatedParent}}" />
+                                <Button Grid.Column="2"
+                                        Content="&#x2191;"
+                                        Width="22"
+                                        Padding="0"
+                                        Margin="0,0,2,0"
+                                        ToolTip="Previous match"
+                                        Command="{Binding PreviousMatchCommand, RelativeSource={RelativeSource TemplatedParent}}"
+                                        IsEnabled="{Binding HasMatches, RelativeSource={RelativeSource TemplatedParent}}" />
+                                <Button Grid.Column="3"
+                                        Content="&#x2193;"
+                                        Width="22"
+                                        Padding="0"
+                                        ToolTip="Next match"
+                                        Command="{Binding NextMatchCommand, RelativeSource={RelativeSource TemplatedParent}}"
+                                        IsEnabled="{Binding HasMatches, RelativeSource={RelativeSource TemplatedParent}}" />
+                            </Grid>
+                        </Border>
+
+                        <Border Name="PART_Border"
+                                Grid.Row="1"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="1">
+                            <Grid>
+                                <ScrollViewer x:Name="PART_ScrollViewer"
+                                              Focusable="False"
+                                              Padding="4"
+                                              CanContentScroll="{TemplateBinding ScrollViewer.CanContentScroll}">
+                                    <ItemsPresenter x:Name="PART_Presenter" MaxWidth="{Binding RelativeSource={RelativeSource AncestorType={x:Type ScrollViewer}}, Path=ViewportWidth}" />
+                                </ScrollViewer>
+
+                                <!--  Empty-state placeholder, shown when the tree has no items.  -->
+                                <ContentPresenter x:Name="PART_EmptyContent"
+                                                  Content="{TemplateBinding EmptyContent}"
+                                                  ContentTemplate="{TemplateBinding EmptyTemplate}"
+                                                  HorizontalAlignment="Center"
+                                                  VerticalAlignment="Center"
+                                                  Visibility="Collapsed" />
+                            </Grid>
+                        </Border>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="ShowSearchBar" Value="True">
+                            <Setter TargetName="PART_SearchBar" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                        <Trigger Property="HasItems" Value="False">
+                            <Setter TargetName="PART_EmptyContent" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>

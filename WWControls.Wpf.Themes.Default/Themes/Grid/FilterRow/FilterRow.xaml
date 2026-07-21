@@ -392,7 +392,7 @@
                                              Width="6"
                                              Height="6"
                                              StrokeThickness="3"
-                                             IconSource="{StaticResource {x:Static sdg:IconKeys.IconClear}}"
+                                             IconSource="{StaticResource {x:Static sdg:LucideIconKeys.X}}"
                                              IconBrush="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
                                 <Button.Visibility>
                                     <MultiBinding Converter="{StaticResource FilterRowClearButtonModeConverter}">

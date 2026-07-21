@@ -12,3 +12,4 @@ global using WWControls.Wpf.Behaviors;
 global using WWControls.Wpf.Commands;
 global using WWControls.Wpf.Converters;
 global using WWControls.Wpf.Display;
+global using WWControls.Wpf.Icons;

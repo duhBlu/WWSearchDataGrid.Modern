@@ -141,6 +141,18 @@ namespace WWControls.Wpf.Controls.Primitives
             new ComponentResourceKey(typeof(PrimitiveThemeKeys), nameof(MenuItemIcon));
 
         /// <summary>
+        /// Shared text-editing <see cref="System.Windows.Controls.ContextMenu"/> — the standard
+        /// Undo / Redo / Cut / Copy / Paste / Select All commands (stock <c>ApplicationCommands</c>
+        /// routed to the menu's <c>PlacementTarget</c>) wearing the <see cref="ContextMenu"/> shell.
+        /// Attached to the library's text inputs via their default styles so every editable text box
+        /// gets the same themed right-click menu. Declared <c>x:Shared="False"</c>, so each text box
+        /// receives its own instance (the spell-check suggestions <see cref="Editors.WWTextBox"/>
+        /// injects on open stay isolated to that control).
+        /// </summary>
+        public static ComponentResourceKey TextBoxContextMenu { get; } =
+            new ComponentResourceKey(typeof(PrimitiveThemeKeys), nameof(TextBoxContextMenu));
+
+        /// <summary>
         /// Default chrome for every <see cref="System.Windows.Window"/> the library opens — borderless
         /// DWM window with rounded corners, drop shadow, accent border, and a caption with taskbar-aware
         /// Min / Max / Close buttons. Consumers that reuse it must register the SystemCommands bindings.

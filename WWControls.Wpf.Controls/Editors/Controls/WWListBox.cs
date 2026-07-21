@@ -670,6 +670,8 @@ namespace WWControls.Wpf.Controls.Editors
 
         private void UpdateDrag(Point posInListBox)
         {
+            if (_state != DragState.Dragging || _holeCenters == null) return;
+
             _lastPointInListBox = posInListBox;
 
             UpdateGhostPosition(posInListBox);

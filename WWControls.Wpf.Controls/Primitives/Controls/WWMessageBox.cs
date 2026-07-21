@@ -10,22 +10,19 @@ using System.Windows.Media;
 namespace WWControls.Wpf.Controls.Primitives
 {
     /// <summary>
-    /// The library's message box — a modal dialog carrying a message, an optional severity icon,
-    /// and a row of buttons. Unlike <see cref="System.Windows.MessageBox"/>, the buttons are not a
-    /// fixed Yes / No / OK / Cancel set: pass a list of <see cref="UICommand"/> and the box renders
-    /// one <see cref="WWButton"/> per command, returning the one the user picked. Standard
-    /// <see cref="System.Windows.MessageBoxButton"/> / <see cref="System.Windows.MessageBoxResult"/>
-    /// overloads are provided too, so it drops in for existing <c>MessageBox.Show</c> call sites.
+    /// The library's message box — a modal dialog with a message, an optional severity icon, and a
+    /// row of buttons. Unlike <see cref="System.Windows.MessageBox"/>, the buttons aren't a fixed
+    /// Yes / No / OK / Cancel set: pass a list of <see cref="UICommand"/> and the box renders one
+    /// button per command, returning the one the user picked. Standard
+    /// <see cref="System.Windows.MessageBoxButton"/> overloads are provided too, so it drops in for
+    /// existing <c>MessageBox.Show</c> call sites.
     /// </summary>
     /// <remarks>
-    /// Shown by the static <see cref="O:WWControls.Wpf.Controls.Primitives.WWMessageBox.Show"/> methods,
-    /// which host the control in a modal <see cref="Window"/> wearing the library's shared chrome
-    /// (<see cref="PrimitiveThemeKeys.Window"/>, applied through
-    /// <see cref="WWControls.Wpf.Controls.Primitives.WindowHostHelper"/>) — the same hosting pattern the Filter Editor
-    /// and Column Chooser use. Clicking any command button records it as
-    /// <see cref="SelectedCommand"/>, runs that command's <see cref="UICommand.Command"/> if set,
-    /// and closes the dialog. A command marked <see cref="UICommand.IsDefault"/> answers to Enter;
-    /// one marked <see cref="UICommand.IsCancel"/> answers to Esc and to the window's close button.
+    /// Use the static <see cref="O:WWControls.Wpf.Controls.Primitives.WWMessageBox.Show"/> methods.
+    /// Clicking a button records it as <see cref="SelectedCommand"/>, runs that command's
+    /// <see cref="UICommand.Command"/> if set, and closes the dialog. The
+    /// <see cref="UICommand.IsDefault"/> command answers to Enter; <see cref="UICommand.IsCancel"/>
+    /// answers to Esc and the window's close button.
     /// </remarks>
     public class WWMessageBox : Control
     {

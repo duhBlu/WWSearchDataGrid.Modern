@@ -5,7 +5,7 @@
                     xmlns:sdg="http://schemas.wwcontrols.com/wpf">
 
     <ResourceDictionary.MergedDictionaries>
-        <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Resources/Icons/Icons.xaml" />
+        <ResourceDictionary Source="/WWControls.Wpf.Icons;component/Icons.xaml" />
     </ResourceDictionary.MergedDictionaries>
 
     <!--  Converters  -->
@@ -93,7 +93,7 @@
                     Tag="{Binding FilterId}">
                 <sdg:Icon Width="12"
                              Height="12"
-                             IconSource="{StaticResource {x:Static sdg:IconKeys.IconClear}}"
+                             IconSource="{StaticResource {x:Static sdg:LucideIconKeys.X}}"
                              IconBrush="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
                 <Button.ToolTip>
                     <ToolTip>
@@ -175,7 +175,7 @@
                     Tag="{Binding FilterId}">
                 <sdg:Icon Width="12"
                              Height="12"
-                             IconSource="{StaticResource {x:Static sdg:IconKeys.IconClear}}"
+                             IconSource="{StaticResource {x:Static sdg:LucideIconKeys.X}}"
                              IconBrush="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
                 <Button.ToolTip>
                     <ToolTip>
@@ -338,7 +338,7 @@
             <sdg:Icon Width="6"
                          Height="6"
                          StrokeThickness="3"
-                         IconSource="{StaticResource {x:Static sdg:IconKeys.IconClear}}"
+                         IconSource="{StaticResource {x:Static sdg:LucideIconKeys.X}}"
                          IconBrush="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
             <Button.Style>
                 <Style TargetType="Button">

@@ -85,7 +85,7 @@
                                                  Width="12"
                                                  Height="12"
                                                  IconBrush="#1c1c1c"
-                                                 IconSource="{StaticResource {x:Static sdg:IconKeys.IconFilter}}"
+                                                 IconSource="{StaticResource {x:Static sdg:LucideIconKeys.Funnel}}"
                                                  ToolTip="An active filter is applied to this column">
                                         <sdg:Icon.Style>
                                             <Style TargetType="sdg:Icon">
@@ -110,12 +110,12 @@
                                                 <Style.Triggers>
                                                     <DataTrigger Binding="{Binding Column.SortDirection}" Value="{x:Static ComponentModel:ListSortDirection.Ascending}">
                                                         <Setter Property="Visibility" Value="Visible" />
-                                                        <Setter Property="IconSource" Value="{StaticResource {x:Static sdg:IconKeys.IconChevronUp}}" />
+                                                        <Setter Property="IconSource" Value="{StaticResource {x:Static sdg:LucideIconKeys.ChevronUp}}" />
                                                         <Setter Property="ToolTip" Value="Sorted ascending" />
                                                     </DataTrigger>
                                                     <DataTrigger Binding="{Binding Column.SortDirection}" Value="{x:Static ComponentModel:ListSortDirection.Descending}">
                                                         <Setter Property="Visibility" Value="Visible" />
-                                                        <Setter Property="IconSource" Value="{StaticResource {x:Static sdg:IconKeys.IconChevronDown}}" />
+                                                        <Setter Property="IconSource" Value="{StaticResource {x:Static sdg:LucideIconKeys.ChevronDown}}" />
                                                         <Setter Property="ToolTip" Value="Sorted descending" />
                                                     </DataTrigger>
                                                 </Style.Triggers>
@@ -141,11 +141,11 @@
                                                     <DataTrigger Binding="{Binding FixedPosition}" Value="Left">
                                                         <Setter Property="ToolTip" Value="Pinned left — reorder is restricted to other left-pinned columns" />
                                                         
-                                                        <Setter Property="IconSource" Value="{StaticResource {x:Static sdg:IconKeys.IconPinLeft}}" />
+                                                        <Setter Property="IconSource" Value="{StaticResource {x:Static sdg:CustomIconKeys.IconPinLeft}}" />
                                                     </DataTrigger>
                                                     <DataTrigger Binding="{Binding FixedPosition}" Value="Right">
                                                         <Setter Property="ToolTip" Value="Pinned right — reorder is restricted to other right-pinned columns" />
-                                                        <Setter Property="IconSource" Value="{StaticResource {x:Static sdg:IconKeys.IconPinRight}}" />
+                                                        <Setter Property="IconSource" Value="{StaticResource {x:Static sdg:CustomIconKeys.IconPinRight}}" />
                                                     </DataTrigger>
                                                 </Style.Triggers>
                                             </Style>

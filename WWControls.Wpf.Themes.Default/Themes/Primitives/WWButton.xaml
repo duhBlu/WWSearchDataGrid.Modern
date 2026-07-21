@@ -104,7 +104,7 @@
                                   VerticalAlignment="Center"
                                   Width="10"
                                   Height="10"
-                                  IconSource="{StaticResource {x:Static sdg:IconKeys.IconClear}}"
+                                  IconSource="{StaticResource {x:Static sdg:LucideIconKeys.X}}"
                                   IconBrush="{TemplateBinding Foreground}" />
                     </Grid>
                     <ControlTemplate.Triggers>

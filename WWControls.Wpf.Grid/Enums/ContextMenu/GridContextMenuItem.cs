@@ -83,20 +83,10 @@ namespace WWControls.Wpf
         // ── Grid-body menu ──
         /// <summary>Clear all filters.</summary>
         ClearAllFilters,
-        /// <summary>Toggle the filter panel.</summary>
-        ToggleFilterPanel,
-        /// <summary>Save a filter preset.</summary>
-        SaveFilterPreset,
-        /// <summary>Load a filter preset.</summary>
-        LoadFilterPreset,
-        /// <summary>The "Column Profiles" submenu.</summary>
-        ColumnProfiles,
-        /// <summary>Save the current profile.</summary>
-        SaveCurrentProfile,
-        /// <summary>Load a profile.</summary>
-        LoadProfile,
-        /// <summary>Manage profiles.</summary>
-        ManageProfiles,
+        /// <summary>Save the current layout to a file.</summary>
+        SaveLayout,
+        /// <summary>Load a saved layout from a file.</summary>
+        LoadLayout,
         /// <summary>Export to CSV.</summary>
         ExportToCsv,
         /// <summary>Export to Excel.</summary>

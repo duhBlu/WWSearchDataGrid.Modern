@@ -25,6 +25,7 @@
   <ItemGroup>
     <ProjectReference Include="..\WWControls.Wpf.Controls\WWControls.Wpf.Controls.csproj" />
     <ProjectReference Include="..\WWControls.Wpf.Themes.Default\WWControls.Wpf.Themes.Default.csproj" />
+    <ProjectReference Include="..\WWControls.Wpf.Icons\WWControls.Wpf.Icons.csproj" />
   </ItemGroup>
 
   <!-- Embed each sample's source files so SampleHostControl can show XAML / C# tabs alongside the live editors. -->
@@ -77,6 +78,12 @@
     <EmbeddedResource Include="Views\Samples\Trees\TreeViewSampleView.xaml" />
     <EmbeddedResource Include="Views\Samples\Trees\TreeViewSampleView.xaml.cs" />
     <EmbeddedResource Include="Views\Samples\Trees\TreeViewSampleViewModel.cs" />
+    <EmbeddedResource Include="Views\Samples\Trees\TreeSearchSampleView.xaml" />
+    <EmbeddedResource Include="Views\Samples\Trees\TreeSearchSampleView.xaml.cs" />
+    <EmbeddedResource Include="Views\Samples\Trees\TreeSearchSampleViewModel.cs" />
+    <EmbeddedResource Include="Views\Samples\Trees\TreeThemingSampleView.xaml" />
+    <EmbeddedResource Include="Views\Samples\Trees\TreeThemingSampleView.xaml.cs" />
+    <EmbeddedResource Include="Views\Samples\Trees\TreeThemingSampleViewModel.cs" />
     <EmbeddedResource Include="Views\Samples\Primitives\SimpleStackPanelSampleView.xaml" />
     <EmbeddedResource Include="Views\Samples\Primitives\SimpleStackPanelSampleView.xaml.cs" />
     <EmbeddedResource Include="Views\Samples\Primitives\SimpleStackPanelSampleViewModel.cs" />

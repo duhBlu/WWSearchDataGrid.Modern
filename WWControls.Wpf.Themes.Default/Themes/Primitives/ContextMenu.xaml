@@ -3,7 +3,7 @@
                     xmlns:sdg="http://schemas.wwcontrols.com/wpf">
 
     <ResourceDictionary.MergedDictionaries>
-        <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Resources/Icons/Icons.xaml" />
+        <ResourceDictionary Source="/WWControls.Wpf.Icons;component/Icons.xaml" />
     </ResourceDictionary.MergedDictionaries>
 
     <!--
@@ -100,7 +100,7 @@
                                       VerticalAlignment="Center"
                                       Width="8"
                                       Height="8"
-                                      IconSource="{StaticResource {x:Static sdg:IconKeys.IconCaretRight}}"
+                                      IconSource="{StaticResource {x:Static sdg:CustomIconKeys.IconCaretRight}}"
                                       IconBrush="#888888" />
                         </Grid>
 
@@ -215,6 +215,79 @@
             </Setter.Value>
         </Setter>
     </Style>
+
+    <!--
+        Standard text-editing context menu shared by every editable text box in the library
+        (WWTextBox's inner box, the numeric / combo / color / date editors, the search box, and
+        the plain themed TextBox). The editing commands are the stock ApplicationCommands, so the
+        text box under the menu supplies their CanExecute — Paste greys out with an empty clipboard,
+        Undo/Redo track history, Cut/Copy track the selection. CommandTarget is the menu's
+        PlacementTarget (the text box) so they route to it rather than to the focused menu.
+
+        x:Shared="False" so each text box gets its own instance: a shared ContextMenu can only
+        parent one set of items, and WWTextBox mutates its menu's items on open (injecting spelling
+        suggestions) — a shared instance would leak those across controls.
+    -->
+    <ContextMenu x:Key="{x:Static sdg:PrimitiveThemeKeys.TextBoxContextMenu}"
+                 x:Shared="False"
+                 Style="{StaticResource {x:Static sdg:PrimitiveThemeKeys.ContextMenu}}">
+        <MenuItem Header="Undo"
+                  Command="{x:Static ApplicationCommands.Undo}"
+                  CommandTarget="{Binding PlacementTarget, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}"
+                  InputGestureText="Ctrl+Z">
+            <MenuItem.Icon>
+                <sdg:Icon Width="14" Height="14"
+                          IconSource="{StaticResource {x:Static sdg:LucideIconKeys.Undo2}}" />
+            </MenuItem.Icon>
+        </MenuItem>
+        <MenuItem Header="Redo"
+                  Command="{x:Static ApplicationCommands.Redo}"
+                  CommandTarget="{Binding PlacementTarget, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}"
+                  InputGestureText="Ctrl+Y">
+            <MenuItem.Icon>
+                <sdg:Icon Width="14" Height="14"
+                          IconSource="{StaticResource {x:Static sdg:LucideIconKeys.Redo2}}" />
+            </MenuItem.Icon>
+        </MenuItem>
+        <Separator />
+        <MenuItem Header="Cut"
+                  Command="{x:Static ApplicationCommands.Cut}"
+                  CommandTarget="{Binding PlacementTarget, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}"
+                  InputGestureText="Ctrl+X">
+            <MenuItem.Icon>
+                <sdg:Icon Width="14" Height="14"
+                          IconSource="{StaticResource {x:Static sdg:LucideIconKeys.Scissors}}" />
+            </MenuItem.Icon>
+        </MenuItem>
+        <MenuItem Header="Copy"
+                  Command="{x:Static ApplicationCommands.Copy}"
+                  CommandTarget="{Binding PlacementTarget, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}"
+                  InputGestureText="Ctrl+C">
+            <MenuItem.Icon>
+                <sdg:Icon Width="14" Height="14"
+                          IconSource="{StaticResource {x:Static sdg:LucideIconKeys.Copy}}" />
+            </MenuItem.Icon>
+        </MenuItem>
+        <MenuItem Header="Paste"
+                  Command="{x:Static ApplicationCommands.Paste}"
+                  CommandTarget="{Binding PlacementTarget, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}"
+                  InputGestureText="Ctrl+V">
+            <MenuItem.Icon>
+                <sdg:Icon Width="14" Height="14"
+                          IconSource="{StaticResource {x:Static sdg:LucideIconKeys.Clipboard}}" />
+            </MenuItem.Icon>
+        </MenuItem>
+        <Separator />
+        <MenuItem Header="Select All"
+                  Command="{x:Static ApplicationCommands.SelectAll}"
+                  CommandTarget="{Binding PlacementTarget, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}"
+                  InputGestureText="Ctrl+A">
+            <MenuItem.Icon>
+                <sdg:Icon Width="14" Height="14"
+                          IconSource="{StaticResource {x:Static sdg:LucideIconKeys.SquareDashed}}" />
+            </MenuItem.Icon>
+        </MenuItem>
+    </ContextMenu>
 
     <!--
         Summary-function picker decorations for menu-item icons: the active-state pill that sits

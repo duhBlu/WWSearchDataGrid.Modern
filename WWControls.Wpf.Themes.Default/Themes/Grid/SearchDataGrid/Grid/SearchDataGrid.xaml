@@ -145,7 +145,7 @@
                                                 </Border.Visibility>
                                                 <sdg:Icon Width="12"
                                                           Height="12"
-                                                          IconSource="{StaticResource {x:Static sdg:IconKeys.IconFilter}}"
+                                                          IconSource="{StaticResource {x:Static sdg:LucideIconKeys.Funnel}}"
                                                           IconBrush="Gray" />
                                             </Border>
 

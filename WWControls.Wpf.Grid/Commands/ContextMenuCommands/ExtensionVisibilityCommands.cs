@@ -79,16 +79,6 @@ namespace WWControls.Wpf.Commands
         }, grid => grid != null);
 
         /// <summary>
-        /// Toggles the visibility of the filter panel
-        /// </summary>
-        private static ICommand _toggleFilterPanelCommand;
-        public static ICommand ToggleFilterPanelCommand => _toggleFilterPanelCommand ??= new RelayCommand<SearchDataGrid>(grid =>
-        {
-            Debug.WriteLine($"[PLACEHOLDER] Toggle Filter Panel - Not implemented");
-            // TODO: Toggle FilterSummaryPanel visibility
-        }, grid => grid?.FilterSummaryPanel != null);
-
-        /// <summary>
         /// Toggles the visibility of search controls
         /// </summary>
         private static ICommand _toggleSearchControlCommand;

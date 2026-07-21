@@ -46,7 +46,7 @@
                         <sdg:Icon Width="6"
                                   Height="6"
                                   StrokeThickness="4"
-                                  IconSource="{StaticResource {x:Static sdg:IconKeys.IconClear}}"
+                                  IconSource="{StaticResource {x:Static sdg:LucideIconKeys.X}}"
                                   IconBrush="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
                         <Button.Style>
                             <Style TargetType="Button">
@@ -108,7 +108,7 @@
                         <sdg:Icon Width="8"
                                      Height="8"
                                      StrokeThickness="3.5"
-                                     IconSource="{StaticResource {x:Static sdg:IconKeys.IconAdd}}"
+                                     IconSource="{StaticResource {x:Static sdg:LucideIconKeys.Plus}}"
                                      IconBrush="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
                         <Button.Style>
                             <Style TargetType="Button">
@@ -144,7 +144,7 @@
                             Height="22">
                         <sdg:Icon Width="8"
                                      Height="8"
-                                     IconSource="{StaticResource {x:Static sdg:IconKeys.IconChevronDown}}"
+                                     IconSource="{StaticResource {x:Static sdg:LucideIconKeys.ChevronDown}}"
                                      IconBrush="Gray" />
                         <Button.Template>
                             <ControlTemplate TargetType="Button">
@@ -163,7 +163,7 @@
                                     <MenuItem.Icon>
                                         <sdg:Icon Width="14"
                                                      Height="14"
-                                                     IconSource="{StaticResource {x:Static sdg:IconKeys.IconAddCondition}}" />
+                                                     IconSource="{StaticResource {x:Static sdg:LucideIconKeys.ListPlus}}" />
                                     </MenuItem.Icon>
                                 </MenuItem>
                                 <MenuItem Header="Add group"
@@ -171,7 +171,7 @@
                                     <MenuItem.Icon>
                                         <sdg:Icon Width="14"
                                                      Height="14"
-                                                     IconSource="{StaticResource {x:Static sdg:IconKeys.IconAddGroup}}" />
+                                                     IconSource="{StaticResource {x:Static sdg:LucideIconKeys.LayersPlus}}" />
                                     </MenuItem.Icon>
                                 </MenuItem>
                                 <MenuItem Header="Add custom expression"
@@ -194,7 +194,7 @@
                         <sdg:Icon Width="6"
                                      Height="6"
                                      StrokeThickness="4"
-                                     IconSource="{StaticResource {x:Static sdg:IconKeys.IconClear}}"
+                                     IconSource="{StaticResource {x:Static sdg:LucideIconKeys.X}}"
                                      IconBrush="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
                         <Button.Style>
                             <Style TargetType="Button">

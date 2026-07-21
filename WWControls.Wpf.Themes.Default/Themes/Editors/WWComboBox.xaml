@@ -58,7 +58,7 @@
                                           HorizontalAlignment="Center"
                                           VerticalAlignment="Center"
                                           StrokeThickness="3"
-                                          IconSource="{StaticResource {x:Static sdg:IconKeys.IconCheck}}"
+                                          IconSource="{StaticResource {x:Static sdg:LucideIconKeys.Check}}"
                                           IconBrush="White" />
                             </Border>
 
@@ -360,7 +360,7 @@
                                                                           HorizontalAlignment="Center"
                                                                           VerticalAlignment="Center"
                                                                           StrokeThickness="3"
-                                                                          IconSource="{StaticResource {x:Static sdg:IconKeys.IconCheck}}"
+                                                                          IconSource="{StaticResource {x:Static sdg:LucideIconKeys.Check}}"
                                                                           IconBrush="White" />
                                                                 <sdg:Icon x:Name="PartialGlyph"
                                                                           Width="10"
@@ -368,7 +368,7 @@
                                                                           Opacity="0"
                                                                           HorizontalAlignment="Center"
                                                                           VerticalAlignment="Center"
-                                                                          IconSource="{StaticResource {x:Static sdg:IconKeys.IconCheckIntermediate}}"
+                                                                          IconSource="{StaticResource {x:Static sdg:LucideIconKeys.Minus}}"
                                                                           IconBrush="#FFFFFF" />
                                                             </Grid>
                                                         </Border>

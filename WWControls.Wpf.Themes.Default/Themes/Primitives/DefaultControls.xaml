@@ -3,7 +3,8 @@
                     xmlns:sdg="http://schemas.wwcontrols.com/wpf">
 
     <ResourceDictionary.MergedDictionaries>
-        <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Resources/Icons/Icons.xaml" />
+        <ResourceDictionary Source="/WWControls.Wpf.Icons;component/Icons.xaml" />
+        <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Primitives/ContextMenu.xaml" />
     </ResourceDictionary.MergedDictionaries>
 
     <!--  Shared chrome corner rounding — feeds ControlHelper.CornerRadius via each style's setter.  -->
@@ -102,7 +103,7 @@
                                              Width="10"
                                              Height="10"
                                              StrokeThickness="3"
-                                             IconSource="{StaticResource {x:Static sdg:IconKeys.IconCheck}}"
+                                             IconSource="{StaticResource {x:Static sdg:LucideIconKeys.Check}}"
                                              IconBrush="White" />
                                 <sdg:Icon x:Name="IndeterminateGlyph"
                                              Opacity="0"
@@ -111,7 +112,7 @@
                                              Width="10"
                                              Height="10"
                                              IconBrush="#FFFFFF"
-                                             IconSource="{StaticResource {x:Static sdg:IconKeys.IconCheckIntermediate}}" />
+                                             IconSource="{StaticResource {x:Static sdg:LucideIconKeys.Minus}}" />
                             </Grid>
                         </Border>
 
@@ -427,7 +428,7 @@
                                  Width="10"
                                  Height="10"
                                  StrokeThickness="1"
-                                 IconSource="{StaticResource {x:Static sdg:IconKeys.IconChevronDown}}"
+                                 IconSource="{StaticResource {x:Static sdg:LucideIconKeys.ChevronDown}}"
                                  IconBrush="{TemplateBinding Foreground}" />
 
                         <!--
@@ -445,7 +446,8 @@
                              IsReadOnly="{TemplateBinding IsReadOnly}"
                              Focusable="True"
                              VerticalContentAlignment="Center"
-                             Margin="4,2,0,2">
+                             Margin="4,2,0,2"
+                             ContextMenu="{StaticResource {x:Static sdg:PrimitiveThemeKeys.TextBoxContextMenu}}">
                             <TextBox.Style>
                                 <Style TargetType="{x:Type TextBox}">
                                     <Setter Property="OverridesDefaultStyle" Value="True" />
@@ -550,6 +552,7 @@
         <Setter Property="SelectionBrush" Value="#0078D4" />
         <Setter Property="CaretBrush" Value="#1C1C1C" />
         <Setter Property="SnapsToDevicePixels" Value="True" />
+        <Setter Property="ContextMenu" Value="{StaticResource {x:Static sdg:PrimitiveThemeKeys.TextBoxContextMenu}}" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type TextBox}">
@@ -716,7 +719,7 @@
                             <RepeatButton.Template>
                                 <ControlTemplate TargetType="{x:Type RepeatButton}">
                                     <Border Background="Transparent" CornerRadius="4,4,0,0">
-                                        <sdg:Icon IconSource="{StaticResource {x:Static sdg:IconKeys.IconCaretUp}}" IconBrush="#646464" Width="8" Height="8" />
+                                        <sdg:Icon IconSource="{StaticResource {x:Static sdg:CustomIconKeys.IconCaretUp}}" IconBrush="#646464" Width="8" Height="8" />
                                     </Border>
                                 </ControlTemplate>
                             </RepeatButton.Template>
@@ -804,7 +807,7 @@
                             <RepeatButton.Template>
                                 <ControlTemplate TargetType="{x:Type RepeatButton}">
                                     <Border Background="Transparent" CornerRadius="0,0,4,4">
-                                        <sdg:Icon IconSource="{StaticResource {x:Static sdg:IconKeys.IconCaretDown}}" IconBrush="#646464" Width="8" Height="8" />
+                                        <sdg:Icon IconSource="{StaticResource {x:Static sdg:CustomIconKeys.IconCaretDown}}" IconBrush="#646464" Width="8" Height="8" />
                                     </Border>
                                 </ControlTemplate>
                             </RepeatButton.Template>
@@ -876,7 +879,7 @@
                                     <RepeatButton.Template>
                                         <ControlTemplate TargetType="{x:Type RepeatButton}">
                                             <Border Background="Transparent" CornerRadius="4,0,0,4">
-                                                <sdg:Icon IconSource="{StaticResource {x:Static sdg:IconKeys.IconCaretLeft}}" IconBrush="#646464" Width="8" Height="8" />
+                                                <sdg:Icon IconSource="{StaticResource {x:Static sdg:CustomIconKeys.IconCaretLeft}}" IconBrush="#646464" Width="8" Height="8" />
                                             </Border>
                                         </ControlTemplate>
                                     </RepeatButton.Template>
@@ -964,7 +967,7 @@
                                     <RepeatButton.Template>
                                         <ControlTemplate TargetType="{x:Type RepeatButton}">
                                             <Border Background="Transparent" CornerRadius="0,4,4,0">
-                                                <sdg:Icon IconSource="{StaticResource {x:Static sdg:IconKeys.IconCaretRight}}" IconBrush="#646464" Width="8" Height="8" />
+                                                <sdg:Icon IconSource="{StaticResource {x:Static sdg:CustomIconKeys.IconCaretRight}}" IconBrush="#646464" Width="8" Height="8" />
                                             </Border>
                                         </ControlTemplate>
                                     </RepeatButton.Template>

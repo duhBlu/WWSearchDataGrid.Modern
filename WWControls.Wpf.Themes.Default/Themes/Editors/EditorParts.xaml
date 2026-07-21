@@ -6,6 +6,7 @@
           resolves reliably within this dictionary's own merge chain (see EditSettings.xaml).  -->
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Primitives/DefaultControls.xaml" />
+        <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Primitives/ContextMenu.xaml" />
     </ResourceDictionary.MergedDictionaries>
 
     <!--
@@ -28,6 +29,7 @@
         <Setter Property="VerticalContentAlignment" Value="Center" />
         <Setter Property="VerticalAlignment" Value="Stretch" />
         <Setter Property="HorizontalAlignment" Value="Stretch" />
+        <Setter Property="ContextMenu" Value="{StaticResource {x:Static sdg:PrimitiveThemeKeys.TextBoxContextMenu}}" />
     </Style>
 
     <!--
@@ -154,7 +156,7 @@
                                              Width="10"
                                              Height="10"
                                              StrokeThickness="3"
-                                             IconSource="{StaticResource {x:Static sdg:IconKeys.IconCheck}}"
+                                             IconSource="{StaticResource {x:Static sdg:LucideIconKeys.Check}}"
                                              IconBrush="White" />
                                 <sdg:Icon x:Name="IndeterminateGlyph"
                                              Opacity="0"
@@ -163,7 +165,7 @@
                                              Width="10"
                                              Height="10"
                                              IconBrush="#FFFFFF"
-                                             IconSource="{StaticResource {x:Static sdg:IconKeys.IconCheckIntermediate}}" />
+                                             IconSource="{StaticResource {x:Static sdg:LucideIconKeys.Minus}}" />
                             </Grid>
                         </Border>
 

@@ -100,75 +100,7 @@
                                          SpellCheck.IsEnabled="{TemplateBinding IsSpellCheckEnabled}"
                                          CaretBrush="{TemplateBinding CaretBrush}"
                                          SelectionBrush="{TemplateBinding SelectionBrush}"
-                                         SelectionOpacity="{TemplateBinding SelectionOpacity}">
-                                    <!--  Themed right-click menu. Each WWTextBox instance gets its own
-                                          (template content isn't shared). The editing commands are the
-                                          stock ApplicationCommands, so the inner TextBox supplies their
-                                          CanExecute — Paste greys out with an empty clipboard, Undo/Redo
-                                          track history, Cut/Copy track the selection. CommandTarget is the
-                                          menu's PlacementTarget (this TextBox) so they route to it rather
-                                          than to the focused menu.  -->
-                                    <TextBox.ContextMenu>
-                                        <ContextMenu Style="{StaticResource {x:Static sdg:PrimitiveThemeKeys.ContextMenu}}">
-                                            <MenuItem Header="Undo"
-                                                      Command="{x:Static ApplicationCommands.Undo}"
-                                                      CommandTarget="{Binding PlacementTarget, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}"
-                                                      InputGestureText="Ctrl+Z">
-                                                <MenuItem.Icon>
-                                                    <sdg:Icon Width="14" Height="14"
-                                                              IconSource="{StaticResource {x:Static sdg:IconKeys.IconUndo}}" />
-                                                </MenuItem.Icon>
-                                            </MenuItem>
-                                            <MenuItem Header="Redo"
-                                                      Command="{x:Static ApplicationCommands.Redo}"
-                                                      CommandTarget="{Binding PlacementTarget, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}"
-                                                      InputGestureText="Ctrl+Y">
-                                                <MenuItem.Icon>
-                                                    <sdg:Icon Width="14" Height="14"
-                                                              IconSource="{StaticResource {x:Static sdg:IconKeys.IconRedo}}" />
-                                                </MenuItem.Icon>
-                                            </MenuItem>
-                                            <Separator />
-                                            <MenuItem Header="Cut"
-                                                      Command="{x:Static ApplicationCommands.Cut}"
-                                                      CommandTarget="{Binding PlacementTarget, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}"
-                                                      InputGestureText="Ctrl+X">
-                                                <MenuItem.Icon>
-                                                    <sdg:Icon Width="14" Height="14"
-                                                              IconSource="{StaticResource {x:Static sdg:IconKeys.IconCut}}" />
-                                                </MenuItem.Icon>
-                                            </MenuItem>
-                                            <MenuItem Header="Copy"
-                                                      Command="{x:Static ApplicationCommands.Copy}"
-                                                      CommandTarget="{Binding PlacementTarget, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}"
-                                                      InputGestureText="Ctrl+C">
-                                                <MenuItem.Icon>
-                                                    <sdg:Icon Width="14" Height="14"
-                                                              IconSource="{StaticResource {x:Static sdg:IconKeys.IconCopy}}" />
-                                                </MenuItem.Icon>
-                                            </MenuItem>
-                                            <MenuItem Header="Paste"
-                                                      Command="{x:Static ApplicationCommands.Paste}"
-                                                      CommandTarget="{Binding PlacementTarget, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}"
-                                                      InputGestureText="Ctrl+V">
-                                                <MenuItem.Icon>
-                                                    <sdg:Icon Width="14" Height="14"
-                                                              IconSource="{StaticResource {x:Static sdg:IconKeys.IconPaste}}" />
-                                                </MenuItem.Icon>
-                                            </MenuItem>
-                                            <Separator />
-                                            <MenuItem Header="Select All"
-                                                      Command="{x:Static ApplicationCommands.SelectAll}"
-                                                      CommandTarget="{Binding PlacementTarget, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}"
-                                                      InputGestureText="Ctrl+A">
-                                                <MenuItem.Icon>
-                                                    <sdg:Icon Width="14" Height="14"
-                                                              IconSource="{StaticResource {x:Static sdg:IconKeys.IconSelectAll}}" />
-                                                </MenuItem.Icon>
-                                            </MenuItem>
-                                        </ContextMenu>
-                                    </TextBox.ContextMenu>
-                                </TextBox>
+                                         SelectionOpacity="{TemplateBinding SelectionOpacity}" />
                             </Grid>
 
                             <!--  Clear button — appears while non-empty (see triggers). Minimal inline
@@ -189,7 +121,7 @@
                                                       Height="9"
                                                       HorizontalAlignment="Center"
                                                       VerticalAlignment="Center"
-                                                      IconSource="{StaticResource {x:Static sdg:IconKeys.IconClear}}"
+                                                      IconSource="{StaticResource {x:Static sdg:LucideIconKeys.X}}"
                                                       IconBrush="{TemplateBinding Foreground}" />
                                         <ControlTemplate.Triggers>
                                             <Trigger Property="IsMouseOver" Value="False">

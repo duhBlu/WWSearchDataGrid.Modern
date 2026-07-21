@@ -6,36 +6,14 @@ namespace WWControls.Wpf.Controls.Primitives
 {
     /// <summary>
     /// Image presenter that recolors a monochrome <see cref="DrawingImage"/> with a caller-supplied
-    /// <see cref="Brush"/> at render time. Designed for button-content icons defined under
-    /// <see cref="IconKeys"/> so a single resource serves every state (default / hover / pressed /
-    /// disabled) of every button, driven by the host control's <see cref="Control.Foreground"/>.
+    /// <see cref="Brush"/>, so one icon resource serves every control state. Each <see cref="Icon"/>
+    /// tints its own clone; the source resource is never mutated. A <see langword="null"/>
+    /// <see cref="IconBrush"/> renders untinted. Source icons must be single-color.
     /// </summary>
-    /// <remarks>
-    /// Usage inside a control template:
-    /// <code>
-    /// &lt;sdg:Icon IconSource="{StaticResource {x:Static sdg:IconKeys.IconClose}}"
-    ///              IconBrush="{TemplateBinding Foreground}"
-    ///              Width="12" Height="12" /&gt;
-    /// </code>
-    /// When the templated parent's <c>Foreground</c> changes (e.g. via an <c>IsMouseOver</c> trigger),
-    /// <see cref="IconBrushProperty"/> updates and the underlying <see cref="DrawingImage"/> is
-    /// rebuilt with the new brush. The resource referenced by <see cref="IconSource"/> is never
-    /// mutated — each <see cref="Icon"/> owns its tinted clone.
-    ///
-    /// <para>If <see cref="IconBrush"/> is <see langword="null"/>, the original
-    /// <see cref="IconSource"/> is rendered untinted — useful when the same icon set is reused in a
-    /// purely decorative context.</para>
-    ///
-    /// <para>Source icons should be authored as a single foreground color
-    /// (any opaque <see cref="GeometryDrawing.Brush"/> or <see cref="Pen.Brush"/>). All fills and
-    /// strokes in the drawing tree are replaced — multi-color icons are not supported here and
-    /// should remain in <see cref="SearchTypeIconKeys"/>, rendered with a plain
-    /// <see cref="Image"/>.</para>
-    /// </remarks>
     public class Icon : Image
     {
         /// <summary>Source image — typically a monochrome <see cref="DrawingImage"/> from
-        /// <see cref="IconKeys"/>. A non-<see cref="DrawingImage"/> source (e.g. a bitmap) renders
+        /// the icon library. A non-<see cref="DrawingImage"/> source (e.g. a bitmap) renders
         /// as-is; tinting and stroke overrides apply only to drawings.</summary>
         public static readonly DependencyProperty IconSourceProperty =
             DependencyProperty.Register(
@@ -54,9 +32,8 @@ namespace WWControls.Wpf.Controls.Primitives
                 new PropertyMetadata(null, OnIconChanged));
 
         /// <summary>Optional override for the stroke thickness of every <see cref="Pen"/> in
-        /// <see cref="IconSource"/>, expressed in source-coordinate units. Use to compensate when an
-        /// icon authored in a 24-unit viewport is rendered at a smaller size and its strokes look
-        /// thin. Defaults to <see cref="double.NaN"/>, which preserves the authored thickness.</summary>
+        /// <see cref="IconSource"/>. 
+        /// Defaults to <see cref="double.NaN"/>, which preserves the authored thickness.</summary>
         public static readonly DependencyProperty StrokeThicknessProperty =
             DependencyProperty.Register(
                 nameof(StrokeThickness),

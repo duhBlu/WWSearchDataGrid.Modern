@@ -7,24 +7,11 @@ using System.Windows.Input;
 namespace WWControls.Core
 {
     /// <summary>
-    /// An <see cref="ICommand"/> whose execute delegate is asynchronous and cancelable. The command
-    /// tracks its own execution state: <see cref="IsExecuting"/> is <see langword="true"/> from
-    /// invoke until the returned task settles, and <see cref="Cancel"/> signals the
-    /// <see cref="CancellationToken"/> handed to the delegate and flips
-    /// <see cref="IsCancellationRequested"/>. Both notify through
-    /// <see cref="INotifyPropertyChanged"/>, so controls (e.g. <c>WWButton</c> with an async display
-    /// mode) can mirror the operation without extra plumbing.
+    /// An <see cref="ICommand"/> with an async, cancelable execute delegate. <see cref="IsExecuting"/>
+    /// tracks whether a run is in flight; <see cref="Cancel"/> cancels the token passed to the delegate.
+    /// Re-entry is blocked while running unless <c>allowConcurrentExecutions</c> is set.
+    /// <see cref="OperationCanceledException"/> is swallowed as normal cancellation; other exceptions propagate.
     /// </summary>
-    /// <remarks>
-    /// By default the command refuses re-entry — <see cref="CanExecute"/> is <see langword="false"/>
-    /// while a run is in flight — so a bound button disables itself for the duration. Construct with
-    /// <c>allowConcurrentExecutions: true</c> to opt out. An
-    /// <see cref="OperationCanceledException"/> thrown by the delegate is treated as a normal
-    /// cancel completion and swallowed; any other exception propagates to the caller's
-    /// synchronization context. State changes are raised on whatever context the transition happens
-    /// on; invoke from the UI thread (the normal command path) and completions marshal back to it
-    /// via the awaited task's captured context.
-    /// </remarks>
     public class AsyncCommand : IAsyncCommand, INotifyPropertyChanged
     {
         private readonly Func<object, CancellationToken, Task> execute;

@@ -5,7 +5,7 @@
     <!--  The status glyphs (IconKeys.IconStatus*) live in Icons.xaml; merge it so the
           StaticResource lookups below resolve when this default style is applied.  -->
     <ResourceDictionary.MergedDictionaries>
-        <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Resources/Icons/Icons.xaml" />
+        <ResourceDictionary Source="/WWControls.Wpf.Icons;component/Icons.xaml" />
     </ResourceDictionary.MergedDictionaries>
 
     <!--
@@ -89,7 +89,7 @@
                                       VerticalAlignment="Stretch"
                                       Margin="1"
                                       IconBrush="White"
-                                      IconSource="{StaticResource {x:Static sdg:IconKeys.IconStatusInfo}}" />
+                                      IconSource="{StaticResource {x:Static sdg:CustomIconKeys.IconStatusInfo}}" />
                         </Grid>
                     </Grid>
                     <ControlTemplate.Triggers>
@@ -98,27 +98,27 @@
                         <Trigger Property="Status" Value="Info">
                             <Setter TargetName="PART_Circle" Property="Visibility" Value="Visible" />
                             <Setter TargetName="PART_Circle" Property="Fill" Value="#0F6CBD" />
-                            <Setter TargetName="PART_Glyph" Property="IconSource" Value="{StaticResource {x:Static sdg:IconKeys.IconStatusInfo}}" />
+                            <Setter TargetName="PART_Glyph" Property="IconSource" Value="{StaticResource {x:Static sdg:CustomIconKeys.IconStatusInfo}}" />
                         </Trigger>
                         <Trigger Property="Status" Value="Success">
                             <Setter TargetName="PART_Circle" Property="Visibility" Value="Visible" />
                             <Setter TargetName="PART_Circle" Property="Fill" Value="#0F7B0F" />
-                            <Setter TargetName="PART_Glyph" Property="IconSource" Value="{StaticResource {x:Static sdg:IconKeys.IconStatusSuccess}}" />
+                            <Setter TargetName="PART_Glyph" Property="IconSource" Value="{StaticResource {x:Static sdg:CustomIconKeys.IconStatusSuccess}}" />
                         </Trigger>
                         <Trigger Property="Status" Value="Error">
                             <Setter TargetName="PART_Circle" Property="Visibility" Value="Visible" />
                             <Setter TargetName="PART_Circle" Property="Fill" Value="#C42B1C" />
-                            <Setter TargetName="PART_Glyph" Property="IconSource" Value="{StaticResource {x:Static sdg:IconKeys.IconStatusError}}" />
+                            <Setter TargetName="PART_Glyph" Property="IconSource" Value="{StaticResource {x:Static sdg:CustomIconKeys.IconStatusError}}" />
                         </Trigger>
                         <Trigger Property="Status" Value="Question">
                             <Setter TargetName="PART_Circle" Property="Visibility" Value="Visible" />
                             <Setter TargetName="PART_Circle" Property="Fill" Value="#5B5FC7" />
-                            <Setter TargetName="PART_Glyph" Property="IconSource" Value="{StaticResource {x:Static sdg:IconKeys.IconStatusQuestion}}" />
+                            <Setter TargetName="PART_Glyph" Property="IconSource" Value="{StaticResource {x:Static sdg:CustomIconKeys.IconStatusQuestion}}" />
                         </Trigger>
                         <Trigger Property="Status" Value="Warning">
                             <Setter TargetName="PART_Triangle" Property="Visibility" Value="Visible" />
                             <Setter TargetName="PART_Triangle" Property="Fill" Value="#C77700" />
-                            <Setter TargetName="PART_Glyph" Property="IconSource" Value="{StaticResource {x:Static sdg:IconKeys.IconStatusWarning}}" />
+                            <Setter TargetName="PART_Glyph" Property="IconSource" Value="{StaticResource {x:Static sdg:CustomIconKeys.IconStatusWarning}}" />
                         </Trigger>
 
                         <!--  Blink three times when the badge appears  -->

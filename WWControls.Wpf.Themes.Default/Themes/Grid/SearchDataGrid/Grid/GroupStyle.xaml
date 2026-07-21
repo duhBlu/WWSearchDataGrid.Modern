@@ -5,7 +5,7 @@
                     xmlns:commands="clr-namespace:WWControls.Wpf.Commands;assembly=WWControls.Wpf.Grid">
 
     <ResourceDictionary.MergedDictionaries>
-        <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Resources/Icons/Icons.xaml" />
+        <ResourceDictionary Source="/WWControls.Wpf.Icons;component/Icons.xaml" />
         <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Primitives/ContextMenu.xaml" />
     </ResourceDictionary.MergedDictionaries>
 
@@ -162,7 +162,7 @@
             <MenuItem.Icon>
                 <sdg:Icon Width="14"
                           Height="14"
-                          IconSource="{StaticResource {x:Static sdg:IconKeys.IconExpandGroups}}" />
+                          IconSource="{StaticResource {x:Static sdg:LucideIconKeys.ListChevronsUpDown}}" />
             </MenuItem.Icon>
             <MenuItem.Style>
                 <Style TargetType="{x:Type MenuItem}">
@@ -180,7 +180,7 @@
             <MenuItem.Icon>
                 <sdg:Icon Width="14"
                           Height="14"
-                          IconSource="{StaticResource {x:Static sdg:IconKeys.IconCollapseGroups}}" />
+                          IconSource="{StaticResource {x:Static sdg:LucideIconKeys.ListChevronsDownUp}}" />
             </MenuItem.Icon>
             <MenuItem.Style>
                 <Style TargetType="{x:Type MenuItem}">
@@ -199,7 +199,7 @@
             <MenuItem.Icon>
                 <sdg:Icon Width="14"
                           Height="14"
-                          IconSource="{StaticResource {x:Static sdg:IconKeys.IconExpandGroups}}" />
+                          IconSource="{StaticResource {x:Static sdg:LucideIconKeys.ListChevronsUpDown}}" />
             </MenuItem.Icon>
         </MenuItem>
         <MenuItem Command="{x:Static commands:ContextMenuCommands.CollapseAllAtLevelCommand}"
@@ -208,7 +208,7 @@
             <MenuItem.Icon>
                 <sdg:Icon Width="14"
                           Height="14"
-                          IconSource="{StaticResource {x:Static sdg:IconKeys.IconCollapseGroups}}" />
+                          IconSource="{StaticResource {x:Static sdg:LucideIconKeys.ListChevronsDownUp}}" />
             </MenuItem.Icon>
         </MenuItem>
         <Separator />
@@ -218,7 +218,7 @@
             <MenuItem.Icon>
                 <sdg:Icon Width="14"
                           Height="14"
-                          IconSource="{StaticResource {x:Static sdg:IconKeys.IconUngroup}}" />
+                          IconSource="{StaticResource {x:Static sdg:CustomIconKeys.IconUngroup}}" />
             </MenuItem.Icon>
         </MenuItem>
         <Separator x:Name="sepGroupSummaries">
@@ -239,7 +239,7 @@
             <MenuItem.Icon>
                 <Grid>
                     <Border Style="{StaticResource FooterSummaryFunctionActivePillStyle}" />
-                    <sdg:Icon Style="{StaticResource FooterSummaryFunctionIconStyle}" IconSource="{StaticResource {x:Static sdg:IconKeys.IconCustomizeSummary}}" />
+                    <sdg:Icon Style="{StaticResource FooterSummaryFunctionIconStyle}" IconSource="{StaticResource {x:Static sdg:LucideIconKeys.SquarePen}}" />
                 </Grid>
             </MenuItem.Icon>
             <MenuItem.Style>
@@ -300,7 +300,7 @@
                                   sdg:GroupChevron.Attach="True"
                                   sdg:GroupChevron.IsExpanded="{Binding IsExpanded}"
                                   IconBrush="{TemplateBinding Foreground}"
-                                  IconSource="{StaticResource {x:Static sdg:IconKeys.IconCaretRight}}" />
+                                  IconSource="{StaticResource {x:Static sdg:CustomIconKeys.IconCaretRight}}" />
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
@@ -519,7 +519,7 @@
             <MenuItem.Icon>
                 <sdg:Icon Width="14"
                           Height="14"
-                          IconSource="{StaticResource {x:Static sdg:IconKeys.IconExpandGroups}}" />
+                          IconSource="{StaticResource {x:Static sdg:LucideIconKeys.ListChevronsUpDown}}" />
             </MenuItem.Icon>
             <MenuItem.Style>
                 <Style TargetType="{x:Type MenuItem}">
@@ -537,7 +537,7 @@
             <MenuItem.Icon>
                 <sdg:Icon Width="14"
                           Height="14"
-                          IconSource="{StaticResource {x:Static sdg:IconKeys.IconCollapseGroups}}" />
+                          IconSource="{StaticResource {x:Static sdg:LucideIconKeys.ListChevronsDownUp}}" />
             </MenuItem.Icon>
             <MenuItem.Style>
                 <Style TargetType="{x:Type MenuItem}">
@@ -556,7 +556,7 @@
             <MenuItem.Icon>
                 <sdg:Icon Width="14"
                           Height="14"
-                          IconSource="{StaticResource {x:Static sdg:IconKeys.IconExpandGroups}}" />
+                          IconSource="{StaticResource {x:Static sdg:LucideIconKeys.ListChevronsUpDown}}" />
             </MenuItem.Icon>
         </MenuItem>
         <MenuItem Command="{x:Static commands:ContextMenuCommands.CollapseAllAtFixedLevelCommand}"
@@ -565,7 +565,7 @@
             <MenuItem.Icon>
                 <sdg:Icon Width="14"
                           Height="14"
-                          IconSource="{StaticResource {x:Static sdg:IconKeys.IconCollapseGroups}}" />
+                          IconSource="{StaticResource {x:Static sdg:LucideIconKeys.ListChevronsDownUp}}" />
             </MenuItem.Icon>
         </MenuItem>
         <Separator />
@@ -575,7 +575,7 @@
             <MenuItem.Icon>
                 <sdg:Icon Width="14"
                           Height="14"
-                          IconSource="{StaticResource {x:Static sdg:IconKeys.IconUngroup}}" />
+                          IconSource="{StaticResource {x:Static sdg:CustomIconKeys.IconUngroup}}" />
             </MenuItem.Icon>
         </MenuItem>
         <Separator>
@@ -596,7 +596,7 @@
             <MenuItem.Icon>
                 <Grid>
                     <Border Style="{StaticResource FooterSummaryFunctionActivePillStyle}" />
-                    <sdg:Icon Style="{StaticResource FooterSummaryFunctionIconStyle}" IconSource="{StaticResource {x:Static sdg:IconKeys.IconCustomizeSummary}}" />
+                    <sdg:Icon Style="{StaticResource FooterSummaryFunctionIconStyle}" IconSource="{StaticResource {x:Static sdg:LucideIconKeys.SquarePen}}" />
                 </Grid>
             </MenuItem.Icon>
             <MenuItem.Style>

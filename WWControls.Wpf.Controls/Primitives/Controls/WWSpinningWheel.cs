@@ -8,16 +8,11 @@ using System.Windows.Shapes;
 namespace WWControls.Wpf.Controls.Primitives
 {
     /// <summary>
-    /// Indeterminate progress ring with two visual kinds selected by <see cref="WheelKind"/>:
-    /// <see cref="Primitives.WheelKind.Arc"/> (default) is a rotating arc whose sweep breathes
-    /// between <see cref="MinArc"/> and <see cref="MaxArc"/> degrees over a faint full-circle
-    /// track — the template supplies the visuals (track ellipse + <c>PART_Arc</c> path) and this
-    /// class animates two internal angles, rebuilding the arc geometry each frame.
-    /// <see cref="Primitives.WheelKind.Dots"/> is the classic Windows progress ring — a chasing
-    /// orbit of dots driven entirely by a template storyboard over the computed
-    /// <see cref="DotDiameter"/> / <see cref="DotOffset"/> metrics. Either way, animation runs
-    /// only while the control is visible, so a collapsed spinner (e.g. inside an idle
-    /// <see cref="WWButton"/>) costs nothing.
+    /// Indeterminate progress spinner with two looks, selected by <see cref="WheelKind"/>:
+    /// <see cref="Primitives.WheelKind.Arc"/> (default), a rotating arc whose sweep breathes between
+    /// <see cref="MinArc"/> and <see cref="MaxArc"/> degrees, or <see cref="Primitives.WheelKind.Dots"/>,
+    /// the classic Windows chasing-dots ring. Animation runs only while the control is visible, so a
+    /// collapsed spinner (e.g. inside an idle <see cref="WWButton"/>) costs nothing.
     /// </summary>
     [TemplatePart(Name = "PART_Arc", Type = typeof(Path))]
     public class WWSpinningWheel : Control

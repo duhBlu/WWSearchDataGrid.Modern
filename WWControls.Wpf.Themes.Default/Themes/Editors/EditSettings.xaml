@@ -206,7 +206,7 @@
                     <Border x:Name="MainBorder"
                             Background="{TemplateBinding Background}"
                             SnapsToDevicePixels="True">
-                        <sdg:Icon IconSource="{StaticResource {x:Static sdg:IconKeys.IconCalendar}}"
+                        <sdg:Icon IconSource="{StaticResource {x:Static sdg:LucideIconKeys.CalendarDays}}"
                                      Width="14"
                                      Height="14"
                                      IconBrush="{TemplateBinding Foreground}" />

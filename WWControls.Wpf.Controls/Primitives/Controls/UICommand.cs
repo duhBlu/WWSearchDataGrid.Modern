@@ -5,22 +5,15 @@ using WWControls.Core;
 namespace WWControls.Wpf.Controls.Primitives
 {
     /// <summary>
-    /// A button described declaratively: the caption, glyph, and behavior of one choice a
-    /// <see cref="WWMessageBox"/> (or any consumer that renders a command list) turns into a
-    /// button. Passing a list of these is what lets a message box offer arbitrary choices instead
-    /// of the fixed Yes / No / OK / Cancel set — the box renders one <see cref="WWButton"/> per
-    /// command, bound to <see cref="Command"/> / <see cref="Caption"/> / <see cref="Glyph"/>, and
-    /// reports back the one the user picked.
+    /// A declarative description of one button — its caption, glyph, and behavior — that a
+    /// <see cref="WWMessageBox"/> (or any command-list consumer) renders as a <see cref="WWButton"/>.
+    /// Passing a list of these lets a message box offer arbitrary choices instead of the fixed
+    /// Yes / No / OK / Cancel set, then report back the one the user picked.
     /// </summary>
     /// <remarks>
-    /// <see cref="Id"/> is the identity the caller matches on after the dialog closes (e.g. a
-    /// <see cref="System.Windows.MessageBoxResult"/> for the standard sets, or any app-specific
-    /// token). <see cref="IsDefault"/> / <see cref="IsCancel"/> map onto the rendered button's
-    /// <see cref="System.Windows.Controls.Button.IsDefault"/> / <see cref="System.Windows.Controls.Button.IsCancel"/>,
-    /// so Enter and Esc pick those choices. When <see cref="Command"/> implements
-    /// <see cref="IAsyncCommand"/>, the rendered <see cref="WWButton"/> mirrors its execution
-    /// through <see cref="AsyncDisplayMode"/> automatically — set the mode to opt into the wait
-    /// wheel.
+    /// <see cref="Id"/> is what the caller matches on after the dialog closes. <see cref="IsDefault"/>
+    /// and <see cref="IsCancel"/> wire up Enter and Esc. When <see cref="Command"/> is an
+    /// <see cref="IAsyncCommand"/>, set <see cref="AsyncDisplayMode"/> to show the wait wheel while it runs.
     /// </remarks>
     public class UICommand : ObservableObject
     {

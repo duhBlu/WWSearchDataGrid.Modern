@@ -26,37 +26,35 @@ namespace WWControls.Wpf.Commands
         }, grid => grid != null);
 
         /// <summary>
-        /// Saves the current grid view — layout and filters — to a file the user chooses, defaulting
-        /// to the grid's configured preset directory.
+        /// Saves the current grid layout — column order/width/visibility/pinning, sorting, and
+        /// grouping — to a file the user chooses, defaulting to the grid's configured preset
+        /// directory. Filters are not included.
         /// </summary>
-        private static ICommand _saveCurrentProfileCommand;
-        public static ICommand SaveCurrentProfileCommand => _saveCurrentProfileCommand ??= new RelayCommand<SearchDataGrid>(grid =>
+        private static ICommand _saveLayoutCommand;
+        public static ICommand SaveLayoutCommand => _saveLayoutCommand ??= new RelayCommand<SearchDataGrid>(grid =>
         {
             if (grid == null) return;
-            SaveViewStateToFile(grid, grid.CaptureViewState(), "Save grid view");
+            SaveViewStateToFile(grid, grid.CaptureViewState(includeLayout: true, includeFilters: false), "Save layout");
         }, grid => grid != null);
 
         /// <summary>
-        /// Loads a saved grid view from a file and applies whichever sections it contains
-        /// (layout / filters / both).
+        /// Loads a saved layout from a file and applies it, leaving any active filters untouched.
         /// </summary>
-        private static ICommand _loadProfileCommand;
-        public static ICommand LoadProfileCommand => _loadProfileCommand ??= new RelayCommand<SearchDataGrid>(grid =>
+        private static ICommand _loadLayoutCommand;
+        public static ICommand LoadLayoutCommand => _loadLayoutCommand ??= new RelayCommand<SearchDataGrid>(grid =>
         {
             if (grid == null) return;
-            var state = LoadViewStateFromFile(grid, "Load grid view");
-            if (state != null) grid.ApplyViewState(state);
+            var state = LoadViewStateFromFile(grid, "Load layout");
+            if (state == null) return;
+            if (state.Layout == null)
+            {
+                MessageBox.Show(
+                    "The selected file does not contain a saved layout.",
+                    "Load layout", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+            grid.ApplyViewState(state, applyLayout: true, applyFilters: false);
         }, grid => grid != null);
-
-        /// <summary>
-        /// Opens the profile management dialog. Not applicable to the file-based model — views are
-        /// saved and loaded as individual files, so there is no managed catalog to organize.
-        /// </summary>
-        private static ICommand _manageProfilesCommand;
-        public static ICommand ManageProfilesCommand => _manageProfilesCommand ??= new RelayCommand<SearchDataGrid>(grid =>
-        {
-            Debug.WriteLine($"[PLACEHOLDER] Manage Profiles - not applicable to the file-based model");
-        }, grid => false);
 
         #endregion
 

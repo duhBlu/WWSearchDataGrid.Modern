@@ -54,7 +54,7 @@
                                           HorizontalAlignment="Center"
                                           VerticalAlignment="Center"
                                           StrokeThickness="3"
-                                          IconSource="{StaticResource {x:Static sdg:IconKeys.IconCheck}}"
+                                          IconSource="{StaticResource {x:Static sdg:LucideIconKeys.Check}}"
                                           IconBrush="White" />
                             </Border>
 

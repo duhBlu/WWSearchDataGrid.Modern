@@ -7,7 +7,7 @@ using WWControls.Wpf.Controls.Primitives;
 
 namespace WWControls.SampleApp.Editors.Views.Samples.Buttons
 {
-    /// <summary>The glyphs the button playground offers, mapped to <see cref="IconKeys"/> resources.</summary>
+    /// <summary>The glyphs the button playground offers, mapped to <see cref="LucideIconKeys"/> resources.</summary>
     public enum GlyphChoice
     {
         None,
@@ -32,12 +32,12 @@ namespace WWControls.SampleApp.Editors.Views.Samples.Buttons
         {
             ComponentResourceKey key = (value as GlyphChoice?) switch
             {
-                GlyphChoice.Add => IconKeys.IconAdd,
-                GlyphChoice.Edit => IconKeys.IconEdit,
-                GlyphChoice.Calendar => IconKeys.IconCalendar,
-                GlyphChoice.Filter => IconKeys.IconFilter,
-                GlyphChoice.Copy => IconKeys.IconCopy,
-                GlyphChoice.Check => IconKeys.IconCheck,
+                GlyphChoice.Add => LucideIconKeys.Plus,
+                GlyphChoice.Edit => LucideIconKeys.Pencil,
+                GlyphChoice.Calendar => LucideIconKeys.CalendarDays,
+                GlyphChoice.Filter => LucideIconKeys.Funnel,
+                GlyphChoice.Copy => LucideIconKeys.Copy,
+                GlyphChoice.Check => LucideIconKeys.Check,
                 _ => null,
             };
             return key == null ? null : Application.Current?.TryFindResource(key) as ImageSource;

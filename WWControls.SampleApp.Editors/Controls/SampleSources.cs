@@ -107,6 +107,16 @@ namespace WWControls.SampleApp.Editors.Controls
             "Views/Samples/Trees/TreeViewSampleView.xaml.cs",
             "Views/Samples/Trees/TreeViewSampleViewModel.cs");
 
+        public static IReadOnlyList<SampleSourceFile> TreeSearch { get; } = SampleSourceLoader.LoadFiles(
+            "Views/Samples/Trees/TreeSearchSampleView.xaml",
+            "Views/Samples/Trees/TreeSearchSampleView.xaml.cs",
+            "Views/Samples/Trees/TreeSearchSampleViewModel.cs");
+
+        public static IReadOnlyList<SampleSourceFile> TreeTheming { get; } = SampleSourceLoader.LoadFiles(
+            "Views/Samples/Trees/TreeThemingSampleView.xaml",
+            "Views/Samples/Trees/TreeThemingSampleView.xaml.cs",
+            "Views/Samples/Trees/TreeThemingSampleViewModel.cs");
+
         // ── Primitives ───────────────────────────────────────────────────────
         public static IReadOnlyList<SampleSourceFile> SimpleStackPanel { get; } = SampleSourceLoader.LoadFiles(
             "Views/Samples/Primitives/SimpleStackPanelSampleView.xaml",

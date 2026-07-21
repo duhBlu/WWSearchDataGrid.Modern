@@ -136,6 +136,16 @@ namespace WWControls.SampleApp.Editors.Views.Launcher
                         "Two-way SelectedObject binding, ExpandOnLoad, per-item expand/collapse buttons (ExpandCollapseButtonMode), the tree-level ExpandAll / CollapseAll commands, and drag-drop reparenting via OnDropCommand (payload is a (target, dragged) tuple; CanExecute rejects illegal moves). Structural roots opt out of dragging through IWWTreeViewDragItem.",
                         new[] { "Tree", "Selection", "DragDrop", "Expand" },
                         () => new TreeViewSampleView()),
+
+                    new("Search & Navigation",
+                        "Drives the tree from a hand-built find bar with ShowSearchBar=False: a text box bound to FilterText, Prev / Next buttons bound to the match commands, and an 'n of m' counter bound to MatchDisplay. Adds a SelectMatchOnNavigate toggle, a SearchDebounce slider, a 'Go to node' picker calling BringItemIntoView, and a 'Select all matches' button calling SelectItems.",
+                        new[] { "Tree", "Search", "Navigation", "Filter" },
+                        () => new TreeSearchSampleView()),
+
+                    new("Theming",
+                        "Restyle the chrome with plain brush / metric properties — no retemplating. WWColorPickers bind SelectionBrush / ItemHoverBrush / ConnectorLineBrush / LineHoverBrush (via a Color→brush projection), a slider sizes ConnectorLineThickness, a preset picker re-seeds every role at once, and a custom EmptyTemplate replaces the empty-state placeholder.",
+                        new[] { "Tree", "Theming", "Brush", "EmptyTemplate" },
+                        () => new TreeThemingSampleView()),
                 }),
 
             new SampleCategory(

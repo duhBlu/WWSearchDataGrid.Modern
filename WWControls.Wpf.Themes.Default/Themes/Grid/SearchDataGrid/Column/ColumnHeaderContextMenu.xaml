@@ -4,7 +4,7 @@
                     xmlns:sdg="http://schemas.wwcontrols.com/wpf">
 
     <ResourceDictionary.MergedDictionaries>
-        <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Resources/Icons/Icons.xaml" />
+        <ResourceDictionary Source="/WWControls.Wpf.Icons;component/Icons.xaml" />
         <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Primitives/ContextMenu.xaml" />
     </ResourceDictionary.MergedDictionaries>
 
@@ -27,7 +27,7 @@
             <MenuItem.Icon>
                 <sdg:Icon Width="14"
                           Height="14"
-                          IconSource="{StaticResource {x:Static sdg:IconKeys.IconCopy}}" />
+                          IconSource="{StaticResource {x:Static sdg:LucideIconKeys.Copy}}" />
             </MenuItem.Icon>
         </MenuItem>
         <MenuItem x:Name="miCopyWithHeaders" sdg:ContextMenuExtensions.ItemId="CopyWithHeaders"
@@ -44,7 +44,7 @@
             <MenuItem.Icon>
                 <sdg:Icon Width="14"
                           Height="14"
-                          IconSource="{StaticResource {x:Static sdg:IconKeys.IconSortAscending}}" />
+                          IconSource="{StaticResource {x:Static sdg:LucideIconKeys.ArrowDownAZ}}" />
             </MenuItem.Icon>
         </MenuItem>
         <MenuItem x:Name="miSortDescending" sdg:ContextMenuExtensions.ItemId="SortDescending"
@@ -54,7 +54,7 @@
             <MenuItem.Icon>
                 <sdg:Icon Width="14"
                           Height="14"
-                          IconSource="{StaticResource {x:Static sdg:IconKeys.IconSortDescending}}" />
+                          IconSource="{StaticResource {x:Static sdg:LucideIconKeys.ArrowDownZA}}" />
             </MenuItem.Icon>
         </MenuItem>
         <MenuItem x:Name="miClearSorting" sdg:ContextMenuExtensions.ItemId="ClearSorting"
@@ -78,7 +78,7 @@
             <MenuItem.Icon>
                 <sdg:Icon Width="14"
                           Height="14"
-                          IconSource="{StaticResource {x:Static sdg:IconKeys.IconGroup}}" />
+                          IconSource="{StaticResource {x:Static sdg:LucideIconKeys.Group}}" />
             </MenuItem.Icon>
             <MenuItem.Style>
                 <Style BasedOn="{StaticResource {x:Static sdg:PrimitiveThemeKeys.MenuItem}}" TargetType="MenuItem">
@@ -207,7 +207,7 @@
                 <MenuItem.Icon>
                     <Grid>
                         <Border Style="{StaticResource FooterSummaryFunctionActivePillStyle}" />
-                        <sdg:Icon Style="{StaticResource FooterSummaryFunctionIconStyle}" IconSource="{StaticResource {x:Static sdg:IconKeys.IconCustomizeSummary}}" />
+                        <sdg:Icon Style="{StaticResource FooterSummaryFunctionIconStyle}" IconSource="{StaticResource {x:Static sdg:LucideIconKeys.SquarePen}}" />
                     </Grid>
                 </MenuItem.Icon>
                 <MenuItem.Style>
@@ -255,7 +255,7 @@
             <MenuItem.Icon>
                 <sdg:Icon Width="14"
                           Height="14"
-                          IconSource="{StaticResource {x:Static sdg:IconKeys.IconBestFit}}" />
+                          IconSource="{StaticResource {x:Static sdg:CustomIconKeys.IconBestFit}}" />
             </MenuItem.Icon>
             <MenuItem.Style>
                 <Style BasedOn="{StaticResource {x:Static sdg:PrimitiveThemeKeys.MenuItem}}" TargetType="MenuItem">
@@ -309,7 +309,7 @@
             <MenuItem.Icon>
                 <sdg:Icon Width="14"
                           Height="14"
-                          IconSource="{StaticResource {x:Static sdg:IconKeys.IconColumnChooser}}" />
+                          IconSource="{StaticResource {x:Static sdg:LucideIconKeys.Columns3Cog}}" />
             </MenuItem.Icon>
             <MenuItem.Style>
                 <Style BasedOn="{StaticResource {x:Static sdg:PrimitiveThemeKeys.MenuItem}}" TargetType="MenuItem">
@@ -329,7 +329,7 @@
             <MenuItem.Icon>
                 <sdg:Icon Width="14"
                           Height="14"
-                          IconSource="{StaticResource {x:Static sdg:IconKeys.IconHideColumn}}" />
+                          IconSource="{StaticResource {x:Static sdg:LucideIconKeys.EyeOff}}" />
             </MenuItem.Icon>
         </MenuItem>
 
@@ -352,7 +352,7 @@
                 <MenuItem.Icon>
                     <sdg:Icon Width="14"
                               Height="14"
-                              IconSource="{StaticResource {x:Static sdg:IconKeys.IconPinLeft}}" />
+                              IconSource="{StaticResource {x:Static sdg:CustomIconKeys.IconPinLeft}}" />
                 </MenuItem.Icon>
             </MenuItem>
             <MenuItem x:Name="miPinColumnRight" sdg:ContextMenuExtensions.ItemId="PinColumnRight"
@@ -362,7 +362,7 @@
                 <MenuItem.Icon>
                     <sdg:Icon Width="14"
                               Height="14"
-                              IconSource="{StaticResource {x:Static sdg:IconKeys.IconPinRight}}" />
+                              IconSource="{StaticResource {x:Static sdg:CustomIconKeys.IconPinRight}}" />
                 </MenuItem.Icon>
             </MenuItem>
             <MenuItem x:Name="miUnpinColumn" sdg:ContextMenuExtensions.ItemId="UnpinColumn"
@@ -372,7 +372,7 @@
                 <MenuItem.Icon>
                     <sdg:Icon Width="14"
                               Height="14"
-                              IconSource="{StaticResource {x:Static sdg:IconKeys.IconUnpin}}" />
+                              IconSource="{StaticResource {x:Static sdg:LucideIconKeys.Columns3}}" />
                 </MenuItem.Icon>
             </MenuItem>
         </MenuItem>
@@ -397,7 +397,7 @@
             <MenuItem.Icon>
                 <sdg:Icon Width="14"
                           Height="14"
-                          IconSource="{StaticResource {x:Static sdg:IconKeys.IconClearFilter}}" />
+                          IconSource="{StaticResource {x:Static sdg:LucideIconKeys.FunnelX}}" />
             </MenuItem.Icon>
             <MenuItem.Style>
                 <Style BasedOn="{StaticResource {x:Static sdg:PrimitiveThemeKeys.MenuItem}}" TargetType="MenuItem">
@@ -417,7 +417,7 @@
             <MenuItem.Icon>
                 <sdg:Icon Width="14"
                           Height="14"
-                          IconSource="{StaticResource {x:Static sdg:IconKeys.IconFilterEditor}}" />
+                          IconSource="{StaticResource {x:Static sdg:LucideIconKeys.ListFilter}}" />
             </MenuItem.Icon>
         </MenuItem>
     </ContextMenu>

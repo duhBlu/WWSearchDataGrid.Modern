@@ -247,13 +247,13 @@
                                             <Style.Triggers>
                                                 <!--  Glyph choice → icon resource (None leaves Glyph null).  -->
                                                 <DataTrigger Binding="{Binding GlyphKind}" Value="Edit">
-                                                    <Setter Property="Glyph" Value="{StaticResource {x:Static sdg:IconKeys.IconEdit}}" />
+                                                    <Setter Property="Glyph" Value="{StaticResource {x:Static sdg:LucideIconKeys.Pencil}}" />
                                                 </DataTrigger>
                                                 <DataTrigger Binding="{Binding GlyphKind}" Value="Calendar">
-                                                    <Setter Property="Glyph" Value="{StaticResource {x:Static sdg:IconKeys.IconCalendar}}" />
+                                                    <Setter Property="Glyph" Value="{StaticResource {x:Static sdg:LucideIconKeys.CalendarDays}}" />
                                                 </DataTrigger>
                                                 <DataTrigger Binding="{Binding GlyphKind}" Value="Filter">
-                                                    <Setter Property="Glyph" Value="{StaticResource {x:Static sdg:IconKeys.IconFilter}}" />
+                                                    <Setter Property="Glyph" Value="{StaticResource {x:Static sdg:LucideIconKeys.Funnel}}" />
                                                 </DataTrigger>
                                             </Style.Triggers>
                                         </Style>

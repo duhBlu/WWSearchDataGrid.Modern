@@ -56,18 +56,18 @@
                                     BorderThickness="1"
                                     CornerRadius="4"
                                     ClipToBounds="True">
-                                <TreeView BorderThickness="0"
-                                          Padding="2"
-                                          Margin="1"
-                                          Background="Transparent"
-                                          ClipToBounds="True"
-                                          ItemsSource="{Binding FilterValueManager.DateTreeRoots, RelativeSource={RelativeSource TemplatedParent}}">
-                                    <TreeView.ItemContainerStyle>
-                                        <Style TargetType="TreeViewItem">
+                                <sdg:WWTreeView BorderThickness="0"
+                                                Background="Transparent"
+                                                ClipToBounds="True"
+                                                ExpandCollapseButtonMode="None"
+                                                ItemsSource="{Binding FilterValueManager.DateTreeRoots, RelativeSource={RelativeSource TemplatedParent}}">
+                                    <sdg:WWTreeView.ItemContainerStyle>
+                                        <Style TargetType="{x:Type sdg:WWTreeViewItem}"
+                                               BasedOn="{StaticResource {x:Static sdg:PrimitiveThemeKeys.WWTreeViewItem}}">
                                             <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
                                         </Style>
-                                    </TreeView.ItemContainerStyle>
-                                    <TreeView.ItemTemplate>
+                                    </sdg:WWTreeView.ItemContainerStyle>
+                                    <sdg:WWTreeView.ItemTemplate>
                                         <HierarchicalDataTemplate ItemsSource="{Binding Children}">
                                             <CheckBox Style="{StaticResource {x:Static sdg:PrimitiveThemeKeys.CheckBox}}"
                                                       IsChecked="{Binding IsChecked}"
@@ -85,8 +85,8 @@
                                                 </CheckBox.Content>
                                             </CheckBox>
                                         </HierarchicalDataTemplate>
-                                    </TreeView.ItemTemplate>
-                                </TreeView>
+                                    </sdg:WWTreeView.ItemTemplate>
+                                </sdg:WWTreeView>
                             </Border>
 
                         </DockPanel>

@@ -18,7 +18,7 @@
     -->
 
     <ResourceDictionary.MergedDictionaries>
-        <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Resources/Icons/Icons.xaml" />
+        <ResourceDictionary Source="/WWControls.Wpf.Icons;component/Icons.xaml" />
         <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Primitives/ContextMenu.xaml" />
     </ResourceDictionary.MergedDictionaries>
 
@@ -53,7 +53,7 @@
             <MenuItem.Icon>
                 <Grid>
                     <Border Style="{StaticResource FooterSummaryFunctionActivePillStyle}" />
-                    <sdg:Icon Style="{StaticResource FooterSummaryFunctionIconStyle}" IconSource="{StaticResource {x:Static sdg:IconKeys.IconCount}}" />
+                    <sdg:Icon Style="{StaticResource FooterSummaryFunctionIconStyle}" IconSource="{StaticResource {x:Static sdg:LucideIconKeys.Hash}}" />
                 </Grid>
             </MenuItem.Icon>
         </MenuItem>
@@ -71,7 +71,7 @@
             <MenuItem.Icon>
                 <Grid>
                     <Border Style="{StaticResource FooterSummaryFunctionActivePillStyle}" />
-                    <sdg:Icon Style="{StaticResource FooterSummaryFunctionIconStyle}" IconSource="{StaticResource {x:Static sdg:IconKeys.IconSum}}" />
+                    <sdg:Icon Style="{StaticResource FooterSummaryFunctionIconStyle}" IconSource="{StaticResource {x:Static sdg:LucideIconKeys.Sigma}}" />
                 </Grid>
             </MenuItem.Icon>
         </MenuItem>
@@ -89,7 +89,7 @@
             <MenuItem.Icon>
                 <Grid>
                     <Border Style="{StaticResource FooterSummaryFunctionActivePillStyle}" />
-                    <sdg:Icon Style="{StaticResource FooterSummaryFunctionIconStyle}" IconSource="{StaticResource {x:Static sdg:IconKeys.IconMin}}" />
+                    <sdg:Icon Style="{StaticResource FooterSummaryFunctionIconStyle}" IconSource="{StaticResource {x:Static sdg:CustomIconKeys.IconMin}}" />
                 </Grid>
             </MenuItem.Icon>
         </MenuItem>
@@ -107,7 +107,7 @@
             <MenuItem.Icon>
                 <Grid>
                     <Border Style="{StaticResource FooterSummaryFunctionActivePillStyle}" />
-                    <sdg:Icon Style="{StaticResource FooterSummaryFunctionIconStyle}" IconSource="{StaticResource {x:Static sdg:IconKeys.IconMax}}" />
+                    <sdg:Icon Style="{StaticResource FooterSummaryFunctionIconStyle}" IconSource="{StaticResource {x:Static sdg:CustomIconKeys.IconMax}}" />
                 </Grid>
             </MenuItem.Icon>
         </MenuItem>
@@ -125,7 +125,7 @@
             <MenuItem.Icon>
                 <Grid>
                     <Border Style="{StaticResource FooterSummaryFunctionActivePillStyle}" />
-                    <sdg:Icon Style="{StaticResource FooterSummaryFunctionIconStyle}" IconSource="{StaticResource {x:Static sdg:IconKeys.IconAverage}}" />
+                    <sdg:Icon Style="{StaticResource FooterSummaryFunctionIconStyle}" IconSource="{StaticResource {x:Static sdg:LucideIconKeys.XLineTop}}" />
                 </Grid>
             </MenuItem.Icon>
         </MenuItem>
@@ -140,7 +140,7 @@
             <MenuItem.Icon>
                 <Grid>
                     <Border Style="{StaticResource FooterSummaryFunctionActivePillStyle}" />
-                    <sdg:Icon Style="{StaticResource FooterSummaryFunctionIconStyle}" IconSource="{StaticResource {x:Static sdg:IconKeys.IconCustomizeSummary}}" />
+                    <sdg:Icon Style="{StaticResource FooterSummaryFunctionIconStyle}" IconSource="{StaticResource {x:Static sdg:LucideIconKeys.SquarePen}}" />
                 </Grid>
             </MenuItem.Icon>
         </MenuItem>
