@@ -74,6 +74,13 @@ namespace WWControls.SampleApp.Grid.Controls
             "Models/OrderItem.cs",
             "SampleData/Generators/OrderGenerator.cs");
 
+        public static IReadOnlyList<SampleSourceFile> ColumnBands { get; } = SampleSourceLoader.LoadFiles(
+            "Views/Samples/Columns/ColumnBandsSampleView.xaml",
+            "Views/Samples/Columns/ColumnBandsSampleView.xaml.cs",
+            "Views/Samples/Columns/ColumnBandsSampleViewModel.cs",
+            "Models/OrderItem.cs",
+            "SampleData/Generators/OrderGenerator.cs");
+
         public static IReadOnlyList<SampleSourceFile> BestFit { get; } = SampleSourceLoader.LoadFiles(
             "Views/Samples/Columns/BestFitSampleView.xaml",
             "Views/Samples/Columns/BestFitSampleView.xaml.cs",

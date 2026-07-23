@@ -43,6 +43,7 @@
                                     CanUserAddRows="False"
                                     CanUserDeleteRows="False"
                                     IsReadOnly="True"
+                                    BestFitMode="VisibleRows"
                                     AllowFilterPopup="True"
                                     SelectionMode="Extended"
                                     SelectionUnit="FullRow">

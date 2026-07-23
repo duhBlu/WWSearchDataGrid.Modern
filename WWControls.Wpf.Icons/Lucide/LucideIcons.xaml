@@ -40845,7 +40845,7 @@
                 </GeometryDrawing>
                 <GeometryDrawing Geometry="F1 M24,24z M0,0z M16,17L22,17">
                     <GeometryDrawing.Pen>
-                        <Pen Brush="#FF1C1C1C"
+                        <Pen Brush="#42A358"
                              Thickness="2"
                              StartLineCap="Round"
                              EndLineCap="Round"
@@ -40854,7 +40854,7 @@
                 </GeometryDrawing>
                 <GeometryDrawing Geometry="F1 M24,24z M0,0z M19,14L19,20">
                     <GeometryDrawing.Pen>
-                        <Pen Brush="#FF1C1C1C"
+                        <Pen Brush="#42A358"
                              Thickness="2"
                              StartLineCap="Round"
                              EndLineCap="Round"
@@ -40863,7 +40863,7 @@
                 </GeometryDrawing>
                 <GeometryDrawing Geometry="F1 M24,24z M0,0z M2,12A1,1,0,0,0,2.58,12.91L11.18,16.82A2,2,0,0,0,12.005,16.998">
                     <GeometryDrawing.Pen>
-                        <Pen Brush="#42A358"
+                        <Pen Brush="#FF1C1C1C"
                              Thickness="2"
                              StartLineCap="Round"
                              EndLineCap="Round"
@@ -40872,7 +40872,7 @@
                 </GeometryDrawing>
                 <GeometryDrawing Geometry="F1 M24,24z M0,0z M2,17A1,1,0,0,0,2.58,17.91L11.18,21.82A2,2,0,0,0,12.83,21.82L14.946,20.858">
                     <GeometryDrawing.Pen>
-                        <Pen Brush="#42A358"
+                        <Pen Brush="#FF1C1C1C"
                              Thickness="2"
                              StartLineCap="Round"
                              EndLineCap="Round"
@@ -42018,7 +42018,7 @@
                 </GeometryDrawing>
                 <GeometryDrawing Geometry="F1 M24,24z M0,0z M15,5L18,8 21,5">
                     <GeometryDrawing.Pen>
-                        <Pen Brush="#FF1C1C1C"
+                        <Pen Brush="#42A358"
                              Thickness="2"
                              StartLineCap="Round"
                              EndLineCap="Round"
@@ -42027,7 +42027,7 @@
                 </GeometryDrawing>
                 <GeometryDrawing Geometry="F1 M24,24z M0,0z M15,19L18,16 21,19">
                     <GeometryDrawing.Pen>
-                        <Pen Brush="#FF1C1C1C"
+                        <Pen Brush="#42A358"
                              Thickness="2"
                              StartLineCap="Round"
                              EndLineCap="Round"
@@ -42070,7 +42070,7 @@
                 </GeometryDrawing>
                 <GeometryDrawing Geometry="F1 M24,24z M0,0z M15,8L18,5 21,8">
                     <GeometryDrawing.Pen>
-                        <Pen Brush="#FF1C1C1C"
+                        <Pen Brush="#42A358"
                              Thickness="2"
                              StartLineCap="Round"
                              EndLineCap="Round"
@@ -42079,7 +42079,7 @@
                 </GeometryDrawing>
                 <GeometryDrawing Geometry="F1 M24,24z M0,0z M15,16L18,19 21,16">
                     <GeometryDrawing.Pen>
-                        <Pen Brush="#FF1C1C1C"
+                        <Pen Brush="#42A358"
                              Thickness="2"
                              StartLineCap="Round"
                              EndLineCap="Round"
@@ -42532,7 +42532,7 @@
             <DrawingGroup ClipGeometry="M0,0 V24 H24 V0 H0 Z">
                 <GeometryDrawing Geometry="F1 M24,24z M0,0z M16,5L3,5">
                     <GeometryDrawing.Pen>
-                        <Pen Brush="#42A358"
+                        <Pen Brush="#FF1C1C1C"
                              Thickness="2"
                              StartLineCap="Round"
                              EndLineCap="Round"
@@ -42541,7 +42541,7 @@
                 </GeometryDrawing>
                 <GeometryDrawing Geometry="F1 M24,24z M0,0z M11,12L3,12">
                     <GeometryDrawing.Pen>
-                        <Pen Brush="#42A358"
+                        <Pen Brush="#FF1C1C1C"
                              Thickness="2"
                              StartLineCap="Round"
                              EndLineCap="Round"
@@ -42559,7 +42559,7 @@
                 </GeometryDrawing>
                 <GeometryDrawing Geometry="F1 M24,24z M0,0z M18,9L18,15">
                     <GeometryDrawing.Pen>
-                        <Pen Brush="#FF1C1C1C"
+                        <Pen Brush="#42A358"
                              Thickness="2"
                              StartLineCap="Round"
                              EndLineCap="Round"
@@ -42568,7 +42568,7 @@
                 </GeometryDrawing>
                 <GeometryDrawing Geometry="F1 M24,24z M0,0z M21,12L15,12">
                     <GeometryDrawing.Pen>
-                        <Pen Brush="#FF1C1C1C"
+                        <Pen Brush="#42A358"
                              Thickness="2"
                              StartLineCap="Round"
                              EndLineCap="Round"

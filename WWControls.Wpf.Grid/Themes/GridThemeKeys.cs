@@ -108,6 +108,20 @@ namespace WWControls.Wpf
             new ComponentResourceKey(typeof(GridThemeKeys), nameof(GridSearchDataGridColumnHeader));
 
         /// <summary>
+        /// Default style for a <see cref="BandHeaderCell"/> — one caption cell in the banded
+        /// column-header area, spanning the columns grouped under a <see cref="GridColumnBand"/>.
+        /// </summary>
+        public static ComponentResourceKey GridSearchDataGridBandHeaderCell { get; } =
+            new ComponentResourceKey(typeof(GridThemeKeys), nameof(GridSearchDataGridBandHeaderCell));
+
+        /// <summary>
+        /// Default style for the <see cref="BandHeadersPresenter"/> — the banded column-header
+        /// rows hosted above the column headers (one <see cref="BandHeaderCell"/> per band).
+        /// </summary>
+        public static ComponentResourceKey GridSearchDataGridBandHeadersPresenter { get; } =
+            new ComponentResourceKey(typeof(GridThemeKeys), nameof(GridSearchDataGridBandHeadersPresenter));
+
+        /// <summary>
         /// Default <see cref="Style"/> for the <see cref="GroupPanel"/> — the strip above the
         /// column headers that shows one pill per grouped column.
         /// </summary>

@@ -1,6 +1,5 @@
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
-using System.Linq;
 using System.Windows.Input;
 using WWControls.Core;
 
@@ -33,13 +32,7 @@ namespace WWControls.Wpf.Grids
         public LogicalOperator Operator
         {
             get => op;
-            set
-            {
-                if (SetProperty(value, ref op))
-                {
-                    OnPropertyChanged(nameof(HasMixedColumnsWithOrOperator));
-                }
-            }
+            set => SetProperty(value, ref op);
         }
 
         /// <summary>
@@ -63,30 +56,6 @@ namespace WWControls.Wpf.Grids
             }
         }
 
-        /// <summary>
-        /// Inline warning trigger: true when this group's operator is OR-flavored
-        /// (<see cref="LogicalOperator.Or"/> or <see cref="LogicalOperator.NotOr"/>) and its direct
-        /// condition children target more than one column. The editor writes per-column slices
-        /// back to each column's controller, so cross-column OR / NotOr cannot round-trip — the
-        /// predicate degrades to the lossy AND form.
-        /// </summary>
-        public bool HasMixedColumnsWithOrOperator
-        {
-            get
-            {
-                if (Operator != LogicalOperator.Or && Operator != LogicalOperator.NotOr) return false;
-
-                var distinctColumns = Children
-                    .OfType<FilterConditionNode>()
-                    .Where(c => c.Column != null)
-                    .Select(c => c.Column)
-                    .Distinct()
-                    .Count();
-
-                return distinctColumns > 1;
-            }
-        }
-
         public ICommand AddConditionCommand =>
             addConditionCommand ?? (addConditionCommand = new RelayCommand(_ =>
             {
@@ -102,7 +71,7 @@ namespace WWControls.Wpf.Grids
         public ICommand AddGroupCommand =>
             addGroupCommand ?? (addGroupCommand = new RelayCommand(_ =>
             {
-                Children.Insert(0, new FilterGroupNode { Operator = LogicalOperator.And });
+                Children.Add(new FilterGroupNode { Operator = LogicalOperator.And });
             }));
 
         public ICommand RemoveCommand =>
@@ -131,7 +100,6 @@ namespace WWControls.Wpf.Grids
                         child.Parent = null;
                 }
             }
-            OnPropertyChanged(nameof(HasMixedColumnsWithOrOperator));
         }
     }
 }

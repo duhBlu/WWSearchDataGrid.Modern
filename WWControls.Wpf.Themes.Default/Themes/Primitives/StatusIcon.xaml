@@ -87,7 +87,6 @@
                                       Grid.Column="1"
                                       HorizontalAlignment="Stretch"
                                       VerticalAlignment="Stretch"
-                                      Margin="1"
                                       IconBrush="White"
                                       IconSource="{StaticResource {x:Static sdg:CustomIconKeys.IconStatusInfo}}" />
                         </Grid>
@@ -119,6 +118,7 @@
                             <Setter TargetName="PART_Triangle" Property="Visibility" Value="Visible" />
                             <Setter TargetName="PART_Triangle" Property="Fill" Value="#C77700" />
                             <Setter TargetName="PART_Glyph" Property="IconSource" Value="{StaticResource {x:Static sdg:CustomIconKeys.IconStatusWarning}}" />
+                            <Setter TargetName="PART_Glyph" Property="Margin" Value="1,3,2,1" />
                         </Trigger>
 
                         <!--  Blink three times when the badge appears  -->

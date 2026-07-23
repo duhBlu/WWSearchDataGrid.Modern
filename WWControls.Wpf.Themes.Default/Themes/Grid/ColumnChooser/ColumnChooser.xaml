@@ -14,20 +14,144 @@
     <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
 
     <!--
-        Shared item-container style for every section listbox in the chooser.
-        Defined as a resource so each section listbox can reference it instead
-        of duplicating the template; the chooser uses three separate listboxes
-        (Left / Unpinned / Right) but every row renders the same way.
-        
-        The row mirrors the column header chrome — sort-direction glyph and
-        filter-active glyph are bound to the same state the header reads, so
-        the chooser stays in lockstep with what the user sees in the headers
-        band. Right-click on a row opens the shared column-header context
-        menu (same instance the header itself uses), giving the chooser the
-        full sort / best-fit / hide / pin / clear-filter surface. The menu's
-        DataContext is set per-row from ColumnVisibilityInfo.ContextMenuContext
-        in ColumnChooser.OnSectionContextMenuOpening, matching how the header
-        path wires its menu at opening time.
+        Shared row visual for a single chooser column, keyed on the data type so both the flat
+        section listboxes AND the banded tree resolve it implicitly — one source of truth for the
+        row, so the two surfaces never drift.
+
+        The row mirrors the column header chrome — sort-direction glyph and filter-active glyph are
+        bound to the same state the header reads, so the chooser stays in lockstep with what the
+        user sees in the headers band. Right-click opens the shared column-header context menu (same
+        instance the header itself uses), giving the chooser the full sort / best-fit / hide / pin /
+        clear-filter surface. The menu's DataContext is set per-row from
+        ColumnVisibilityInfo.ContextMenuContext in ColumnChooser.ApplyRowContextMenu, matching how the
+        header path wires its menu at opening time.
+    -->
+    <DataTemplate x:Key="ColumnChooserColumnRowTemplate">
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <CheckBox Style="{StaticResource {x:Static sdg:PrimitiveThemeKeys.CheckBox}}"
+                      Grid.Column="0"
+                      IsChecked="{Binding IsVisible}"
+                      Focusable="False"
+                      Margin="0,0,8,0"
+                      VerticalAlignment="Center" />
+
+            <Border Grid.Column="1">
+                <Border.Style>
+                    <Style TargetType="{x:Type Border}">
+                        <Setter Property="Background" Value="#F0F0F0" />
+                        <Setter Property="BorderBrush" Value="#CCCCCC" />
+                        <Setter Property="BorderThickness" Value="1" />
+                        <Setter Property="Padding" Value="4,2" />
+                        <Setter Property="CornerRadius" Value="4" />
+                        <Style.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#FFFFFF" />
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <!--  Name — HighlightTextBlock bolds the matched substring when the banded tree is
+                          searched. In the flat sections there is no WWTreeView ancestor, so HighlightText
+                          resolves to null and it renders as a plain TextBlock.  -->
+                    <sdg:HighlightTextBlock HighlightTextBlockText="{Binding DisplayName}"
+                                            HighlightText="{Binding FilterText, RelativeSource={RelativeSource AncestorType={x:Type sdg:WWTreeView}}, FallbackValue={x:Null}}"
+                                            VerticalAlignment="Center"
+                                            TextTrimming="CharacterEllipsis" />
+                    <!--  Filter-active glyph  -->
+                    <sdg:Icon Grid.Column="2"
+                                 Margin="6,0,0,0"
+                                 VerticalAlignment="Center"
+                                 Width="12"
+                                 Height="12"
+                                 IconBrush="#1c1c1c"
+                                 IconSource="{StaticResource {x:Static sdg:LucideIconKeys.Funnel}}"
+                                 ToolTip="An active filter is applied to this column">
+                        <sdg:Icon.Style>
+                            <Style TargetType="sdg:Icon">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding ColumnFilterHost.HasActiveFilter}" Value="True">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </sdg:Icon.Style>
+                    </sdg:Icon>
+
+                    <!--  Sort-direction glyph  -->
+                    <sdg:Icon Grid.Column="2"
+                               Margin="6,0,0,0"
+                                 IconBrush="Gray" Width="12" Height="12"
+                               VerticalAlignment="Center">
+                        <sdg:Icon.Style>
+                            <Style TargetType="sdg:Icon">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Column.SortDirection}" Value="{x:Static ComponentModel:ListSortDirection.Ascending}">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                        <Setter Property="IconSource" Value="{StaticResource {x:Static sdg:LucideIconKeys.ChevronUp}}" />
+                                        <Setter Property="ToolTip" Value="Sorted ascending" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Column.SortDirection}" Value="{x:Static ComponentModel:ListSortDirection.Descending}">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                        <Setter Property="IconSource" Value="{StaticResource {x:Static sdg:LucideIconKeys.ChevronDown}}" />
+                                        <Setter Property="ToolTip" Value="Sorted descending" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </sdg:Icon.Style>
+                    </sdg:Icon>
+
+                    <!--  Pin glyph for fixed rows  -->
+                    <sdg:Icon Grid.Column="3"
+                               IconBrush="#6C757D"
+                               Margin="6,0,0,0"
+                               VerticalAlignment="Center"
+                                 Width="12"
+                                 Height="12"
+                               >
+                        <sdg:Icon.Style>
+                            <Style TargetType="sdg:Icon">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsFixed}" Value="True">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding FixedPosition}" Value="Left">
+                                        <Setter Property="ToolTip" Value="Pinned left — reorder is restricted to other left-pinned columns" />
+
+                                        <Setter Property="IconSource" Value="{StaticResource {x:Static sdg:CustomIconKeys.IconPinLeft}}" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding FixedPosition}" Value="Right">
+                                        <Setter Property="ToolTip" Value="Pinned right — reorder is restricted to other right-pinned columns" />
+                                        <Setter Property="IconSource" Value="{StaticResource {x:Static sdg:CustomIconKeys.IconPinRight}}" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </sdg:Icon.Style>
+                    </sdg:Icon>
+                </Grid>
+            </Border>
+        </Grid>
+    </DataTemplate>
+
+    <!--
+        Item-container style for every section listbox in the chooser. Defined once as a resource so
+        each section listbox (Left / Unpinned / Right) can reference it. The row content itself comes
+        from the shared ColumnVisibilityInfo DataTemplate above (resolved by the ContentPresenter);
+        this style only carries the container chrome (padding + selection highlight).
     -->
     <Style x:Key="{x:Static sdg:GridThemeKeys.ColumnChooserSectionItem}" TargetType="ListBoxItem">
         <Setter Property="HorizontalContentAlignment" Value="Stretch" />
@@ -40,120 +164,7 @@
                             Background="{TemplateBinding Background}"
                             Padding="4,2,2,2"
                             CornerRadius="0">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-
-                            <CheckBox Style="{StaticResource {x:Static sdg:PrimitiveThemeKeys.CheckBox}}"
-                                      Grid.Column="0"
-                                      IsChecked="{Binding IsVisible}"
-                                      Focusable="False"
-                                      Margin="0,0,8,0"
-                                      VerticalAlignment="Center" />
-
-                            <Border Grid.Column="1">
-                                <Border.Style>
-                                    <Style TargetType="{x:Type Border}">
-                                        <Setter Property="Background" Value="#F0F0F0" />
-                                        <Setter Property="BorderBrush" Value="#CCCCCC" />
-                                        <Setter Property="BorderThickness" Value="1" />
-                                        <Setter Property="Padding" Value="4,2" />
-                                        <Setter Property="CornerRadius" Value="4" />
-                                        <Style.Triggers>
-                                            <Trigger Property="IsMouseOver" Value="True">
-                                                <Setter Property="Background" Value="#FFFFFF" />
-                                            </Trigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </Border.Style>
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="Auto" />
-                                        <ColumnDefinition Width="Auto" />
-                                        <ColumnDefinition Width="Auto" />
-                                    </Grid.ColumnDefinitions>
-                                    <TextBlock Text="{Binding DisplayName}"
-                                               VerticalAlignment="Center"
-                                               TextTrimming="CharacterEllipsis" />
-                                    <!--  Filter-active glyph  -->
-                                    <sdg:Icon Grid.Column="2"
-                                                 Margin="6,0,0,0"
-                                                 VerticalAlignment="Center"
-                                                 Width="12"
-                                                 Height="12"
-                                                 IconBrush="#1c1c1c"
-                                                 IconSource="{StaticResource {x:Static sdg:LucideIconKeys.Funnel}}"
-                                                 ToolTip="An active filter is applied to this column">
-                                        <sdg:Icon.Style>
-                                            <Style TargetType="sdg:Icon">
-                                                <Setter Property="Visibility" Value="Collapsed" />
-                                                <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding ColumnFilterHost.HasActiveFilter}" Value="True">
-                                                        <Setter Property="Visibility" Value="Visible" />
-                                                    </DataTrigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </sdg:Icon.Style>
-                                    </sdg:Icon>
-
-                                    <!--  Sort-direction glyph  -->
-                                    <sdg:Icon Grid.Column="2"
-                                               Margin="6,0,0,0"
-                                                 IconBrush="Gray" Width="12" Height="12"
-                                               VerticalAlignment="Center">
-                                        <sdg:Icon.Style>
-                                            <Style TargetType="sdg:Icon">
-                                                <Setter Property="Visibility" Value="Collapsed" />
-                                                <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding Column.SortDirection}" Value="{x:Static ComponentModel:ListSortDirection.Ascending}">
-                                                        <Setter Property="Visibility" Value="Visible" />
-                                                        <Setter Property="IconSource" Value="{StaticResource {x:Static sdg:LucideIconKeys.ChevronUp}}" />
-                                                        <Setter Property="ToolTip" Value="Sorted ascending" />
-                                                    </DataTrigger>
-                                                    <DataTrigger Binding="{Binding Column.SortDirection}" Value="{x:Static ComponentModel:ListSortDirection.Descending}">
-                                                        <Setter Property="Visibility" Value="Visible" />
-                                                        <Setter Property="IconSource" Value="{StaticResource {x:Static sdg:LucideIconKeys.ChevronDown}}" />
-                                                        <Setter Property="ToolTip" Value="Sorted descending" />
-                                                    </DataTrigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </sdg:Icon.Style>
-                                    </sdg:Icon>
-
-                                    <!--  Pin glyph for fixed rows  -->
-                                    <sdg:Icon Grid.Column="3"
-                                               IconBrush="#6C757D"
-                                               Margin="6,0,0,0"
-                                               VerticalAlignment="Center"
-                                                 Width="12"
-                                                 Height="12"
-                                               >
-                                        <sdg:Icon.Style>
-                                            <Style TargetType="sdg:Icon">
-                                                <Setter Property="Visibility" Value="Collapsed" />
-                                                <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding IsFixed}" Value="True">
-                                                        <Setter Property="Visibility" Value="Visible" />
-                                                    </DataTrigger>
-                                                    <DataTrigger Binding="{Binding FixedPosition}" Value="Left">
-                                                        <Setter Property="ToolTip" Value="Pinned left — reorder is restricted to other left-pinned columns" />
-                                                        
-                                                        <Setter Property="IconSource" Value="{StaticResource {x:Static sdg:CustomIconKeys.IconPinLeft}}" />
-                                                    </DataTrigger>
-                                                    <DataTrigger Binding="{Binding FixedPosition}" Value="Right">
-                                                        <Setter Property="ToolTip" Value="Pinned right — reorder is restricted to other right-pinned columns" />
-                                                        <Setter Property="IconSource" Value="{StaticResource {x:Static sdg:CustomIconKeys.IconPinRight}}" />
-                                                    </DataTrigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </sdg:Icon.Style>
-                                    </sdg:Icon>
-                                </Grid>
-                            </Border>
-                        </Grid>
+                        <ContentPresenter ContentTemplate="{StaticResource ColumnChooserColumnRowTemplate}" />
                     </Border>
                     <ControlTemplate.Triggers>
 
@@ -211,10 +222,10 @@
                                               IsThreeState="True"
                                               FontWeight="Normal" />
 
-                                    <!--  Reorder Buttons for Selected Column  -->
+                                    <!--  Reorder Buttons for Selected Column. Hidden in banded mode (reorder not yet supported there).  -->
                                     <StackPanel Grid.Column="1"
                                                 Orientation="Horizontal"
-                                                Visibility="{Binding SourceDataGrid.CanUserReorderColumns, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                                Visibility="{Binding CanReorderInFlatView, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource BooleanToVisibilityConverter}}"
                                                 Margin="4,0,0,0">
                                         <Button x:Name="PART_MoveUpButton"
                                                 Cursor="Hand"
@@ -305,65 +316,119 @@
                                 </Grid>
                             </Border>
 
-                            <!--  Column List with Drag-Drop Reordering. 3 listboxes, for left/none/right pinned columns  -->
-                            <AdornerDecorator Grid.Row="1">
-                                <Grid>
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="Auto" />
-                                        <RowDefinition Height="Auto" />
-                                        <RowDefinition Height="*" />
-                                        <RowDefinition Height="Auto" />
-                                        <RowDefinition Height="Auto" />
-                                    </Grid.RowDefinitions>
+                            <!--  Column list. Flat 3-section listboxes when the grid has no bands;
+                                  a hierarchical tree (band → child bands/columns) when it does.  -->
+                            <Grid Grid.Row="1">
+                                <!--  Flat view: 3 listboxes for left/none/right pinned columns.  -->
+                                <AdornerDecorator x:Name="PART_FlatHost">
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="*" />
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                        </Grid.RowDefinitions>
 
-                                    <!--  Left section  -->
-                                    <sdg:WWListBox x:Name="PART_LeftSectionList"
-                                                 ItemContainerStyle="{StaticResource {x:Static sdg:GridThemeKeys.ColumnChooserSectionItem}}"
-                                                 Grid.Row="0"
-                                                 BorderThickness="0"
-                                                 Visibility="{Binding HasLeftFixedColumns, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                                 Padding="0"
-                                                 AllowReorder="{Binding IsLeftDragEnabled, RelativeSource={RelativeSource TemplatedParent}}"
-                                                 ItemsSource="{Binding LeftFixedColumns, RelativeSource={RelativeSource TemplatedParent}}"
-                                                 SelectionMode="Single" />
+                                        <!--  Left section  -->
+                                        <sdg:WWListBox x:Name="PART_LeftSectionList"
+                                                     ItemContainerStyle="{StaticResource {x:Static sdg:GridThemeKeys.ColumnChooserSectionItem}}"
+                                                     Grid.Row="0"
+                                                     BorderThickness="0"
+                                                     Visibility="{Binding HasLeftFixedColumns, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                                     Padding="0"
+                                                     AllowReorder="{Binding IsLeftDragEnabled, RelativeSource={RelativeSource TemplatedParent}}"
+                                                     ItemsSource="{Binding LeftFixedColumns, RelativeSource={RelativeSource TemplatedParent}}"
+                                                     SelectionMode="Single" />
 
-                                    <!--  Divider between Left and the rest.  -->
-                                    <Border Grid.Row="1"
-                                            Background="#DEE2E6"
-                                            Visibility="{Binding IsTopDividerVisible, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                            Height="1" />
+                                        <!--  Divider between Left and the rest.  -->
+                                        <Border Grid.Row="1"
+                                                Background="#DEE2E6"
+                                                Visibility="{Binding IsTopDividerVisible, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                                Height="1" />
 
-                                    <!--  Unpinned section — fills remaining vertical space.  -->
-                                    <sdg:WWListBox x:Name="PART_UnpinnedSectionList"
-                                                 ItemContainerStyle="{StaticResource {x:Static sdg:GridThemeKeys.ColumnChooserSectionItem}}"
-                                                 Grid.Row="2"
-                                                 BorderThickness="0"
-                                                 Visibility="{Binding HasUnpinnedColumns, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                                 Padding="0"
-                                                 AllowReorder="{Binding IsUnpinnedDragEnabled, RelativeSource={RelativeSource TemplatedParent}}"
-                                                 ItemsSource="{Binding UnpinnedColumns, RelativeSource={RelativeSource TemplatedParent}}"
-                                                 SelectionMode="Single" />
+                                        <!--  Unpinned section — fills remaining vertical space.  -->
+                                        <sdg:WWListBox x:Name="PART_UnpinnedSectionList"
+                                                     ItemContainerStyle="{StaticResource {x:Static sdg:GridThemeKeys.ColumnChooserSectionItem}}"
+                                                     Grid.Row="2"
+                                                     BorderThickness="0"
+                                                     Visibility="{Binding HasUnpinnedColumns, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                                     Padding="0"
+                                                     AllowReorder="{Binding IsUnpinnedDragEnabled, RelativeSource={RelativeSource TemplatedParent}}"
+                                                     ItemsSource="{Binding UnpinnedColumns, RelativeSource={RelativeSource TemplatedParent}}"
+                                                     SelectionMode="Single" />
 
-                                    <!--  Divider between Unpinned and Right.  -->
-                                    <Border Grid.Row="3"
-                                            Background="#DEE2E6"
-                                            Visibility="{Binding IsBottomDividerVisible, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                            Height="1" />
+                                        <!--  Divider between Unpinned and Right.  -->
+                                        <Border Grid.Row="3"
+                                                Background="#DEE2E6"
+                                                Visibility="{Binding IsBottomDividerVisible, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                                Height="1" />
 
-                                    <!--  Right section  -->
-                                    <sdg:WWListBox x:Name="PART_RightSectionList"
-                                                 ItemContainerStyle="{StaticResource {x:Static sdg:GridThemeKeys.ColumnChooserSectionItem}}"
-                                                 Grid.Row="4"
-                                                 BorderThickness="0"
-                                                 Visibility="{Binding HasRightFixedColumns, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                                 Padding="0"
-                                                 AllowReorder="{Binding IsRightDragEnabled, RelativeSource={RelativeSource TemplatedParent}}"
-                                                 ItemsSource="{Binding RightFixedColumns, RelativeSource={RelativeSource TemplatedParent}}"
-                                                 SelectionMode="Single" />
-                                </Grid>
-                            </AdornerDecorator>
+                                        <!--  Right section  -->
+                                        <sdg:WWListBox x:Name="PART_RightSectionList"
+                                                     ItemContainerStyle="{StaticResource {x:Static sdg:GridThemeKeys.ColumnChooserSectionItem}}"
+                                                     Grid.Row="4"
+                                                     BorderThickness="0"
+                                                     Visibility="{Binding HasRightFixedColumns, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                                     Padding="0"
+                                                     AllowReorder="{Binding IsRightDragEnabled, RelativeSource={RelativeSource TemplatedParent}}"
+                                                     ItemsSource="{Binding RightFixedColumns, RelativeSource={RelativeSource TemplatedParent}}"
+                                                     SelectionMode="Single" />
+                                    </Grid>
+                                </AdornerDecorator>
+
+                                <!--  Banded tree view: shown in place of the sections when the grid declares bands.
+                                      WWTreeView provides the native search bar (ShowSearchBar) and Highlight-mode
+                                      match cycling; band nodes carry a tri-state group checkbox; leaf columns render
+                                      via the shared row template. Right-click on a leaf opens the shared header
+                                      context menu (wired in ColumnChooser.OnTreeContextMenuOpening).  -->
+                                <sdg:WWTreeView x:Name="PART_BandTree"
+                                                Visibility="Collapsed"
+                                                BorderThickness="0"
+                                                Background="Transparent"
+                                                ShowSearchBar="True"
+                                                SearchMode="Highlight"
+                                                ShowConnectorLines="False"
+                                                ExpandOnLoad="True"
+                                                ItemsSource="{Binding BandTreeRoots, RelativeSource={RelativeSource TemplatedParent}}"
+                                                ContextMenu="{StaticResource {x:Static sdg:GridThemeKeys.GridSearchDataGridColumnHeaderContextMenu}}">
+                                    <sdg:WWTreeView.Resources>
+                                        <!--  Band (parent) node — tri-state group checkbox + highlightable caption.
+                                              ItemsSource binds ChildrenView (the filter-gated view) per WWTreeView's
+                                              contract. IsThreeState is false so the user only toggles all-on / all-off,
+                                              but a bound null still renders as the indeterminate (mixed) glyph.  -->
+                                        <HierarchicalDataTemplate DataType="{x:Type sdg:ColumnChooserBandNode}" ItemsSource="{Binding ChildrenView}">
+                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                <CheckBox Style="{StaticResource {x:Static sdg:PrimitiveThemeKeys.CheckBox}}"
+                                                          IsThreeState="False"
+                                                          IsChecked="{Binding IsChecked, Mode=TwoWay}"
+                                                          Focusable="False"
+                                                          Margin="0,0,8,0"
+                                                          VerticalAlignment="Center" />
+                                                <sdg:HighlightTextBlock FontWeight="SemiBold"
+                                                                        VerticalAlignment="Center"
+                                                                        HighlightTextBlockText="{Binding Header}"
+                                                                        HighlightText="{Binding FilterText, RelativeSource={RelativeSource AncestorType={x:Type sdg:WWTreeView}}, FallbackValue={x:Null}}" />
+                                            </StackPanel>
+                                        </HierarchicalDataTemplate>
+
+                                        <!--  Leaf column node — reuses the shared row template so tree leaves match the section rows exactly.  -->
+                                        <DataTemplate DataType="{x:Type sdg:ColumnChooserColumnNode}">
+                                            <ContentPresenter Content="{Binding Column}"
+                                                              ContentTemplate="{StaticResource ColumnChooserColumnRowTemplate}" />
+                                        </DataTemplate>
+                                    </sdg:WWTreeView.Resources>
+                                </sdg:WWTreeView>
+                            </Grid>
                         </Grid>
                     </Border>
+                    <ControlTemplate.Triggers>
+                        <!--  Swap the flat sections for the tree when the source grid declares bands.  -->
+                        <Trigger Property="HasBands" Value="True">
+                            <Setter TargetName="PART_FlatHost" Property="Visibility" Value="Collapsed" />
+                            <Setter TargetName="PART_BandTree" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>

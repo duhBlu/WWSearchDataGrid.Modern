@@ -2,10 +2,14 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:sdg="http://schemas.wwcontrols.com/wpf">
 
-    <!--  The chevron / expand-all / collapse-all glyphs live in Icons.xaml; merge it so the
-          StaticResource lookups below resolve when these default styles are applied.  -->
+    <!--  Icons.xaml backs the chevron / expand-all / collapse-all glyphs. DefaultControls.xaml backs
+          the search bar's TextBox and prev/next Buttons — the search box and buttons reference the
+          primitive keyed styles explicitly (below) so they render correctly regardless of ambient
+          resources, including when the tree is hosted in the ColumnChooser's own top-level window
+          (which does not inherit a consumer's window-scoped implicit styles).  -->
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="/WWControls.Wpf.Icons;component/Icons.xaml" />
+        <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Primitives/DefaultControls.xaml" />
     </ResourceDictionary.MergedDictionaries>
 
     <sdg:TreeViewIsLastItemConverter x:Key="TreeViewIsLastItemConverter" />
@@ -492,6 +496,7 @@
                                 </Grid.ColumnDefinitions>
                                 <TextBox x:Name="PART_SearchBox"
                                          Grid.Column="0"
+                                         Style="{StaticResource {x:Static sdg:PrimitiveThemeKeys.TextBox}}"
                                          VerticalContentAlignment="Center"
                                          Text="{Binding FilterText, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                                 <TextBlock Grid.Column="1"
@@ -500,6 +505,7 @@
                                            Foreground="#646464"
                                            Text="{Binding MatchDisplay, RelativeSource={RelativeSource TemplatedParent}}" />
                                 <Button Grid.Column="2"
+                                        Style="{StaticResource {x:Static sdg:PrimitiveThemeKeys.Button}}"
                                         Content="&#x2191;"
                                         Width="22"
                                         Padding="0"
@@ -508,6 +514,7 @@
                                         Command="{Binding PreviousMatchCommand, RelativeSource={RelativeSource TemplatedParent}}"
                                         IsEnabled="{Binding HasMatches, RelativeSource={RelativeSource TemplatedParent}}" />
                                 <Button Grid.Column="3"
+                                        Style="{StaticResource {x:Static sdg:PrimitiveThemeKeys.Button}}"
                                         Content="&#x2193;"
                                         Width="22"
                                         Padding="0"

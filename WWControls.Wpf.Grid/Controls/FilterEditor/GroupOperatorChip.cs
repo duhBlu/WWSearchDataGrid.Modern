@@ -1,14 +1,15 @@
-using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using WWControls.Core;
 
 namespace WWControls.Wpf.Grids
 {
     /// <summary>
-    /// Dropdown chip rendering a group's <see cref="LogicalOperator"/> (And / Or / NotAnd / NotOr).
-    /// The chip text always shows the operator's friendly name; clicking opens a popup ListBox
-    /// with the four options.
+    /// Two-segment AND | OR toggle for a filter group's <see cref="LogicalOperator"/>. The active
+    /// segment is highlighted; clicking a segment sets the group's combiner. Only the non-negated
+    /// operators are offered — negation in the Filter Editor lives on the condition operator
+    /// (NotEquals, DoesNotContain, IsNoneOf, …), not on the group.
     /// </summary>
     public class GroupOperatorChip : Control
     {
@@ -18,22 +19,25 @@ namespace WWControls.Wpf.Grids
                     FrameworkPropertyMetadataOptions.BindsTwoWayByDefault,
                     OnOperatorChanged));
 
-        public static readonly DependencyProperty DisplayTextProperty =
-            DependencyProperty.Register(nameof(DisplayText), typeof(string), typeof(GroupOperatorChip),
-                new PropertyMetadata(LogicalOperator.And.DisplayText()));
+        private static readonly DependencyPropertyKey IsAndPropertyKey =
+            DependencyProperty.RegisterReadOnly(nameof(IsAnd), typeof(bool), typeof(GroupOperatorChip),
+                new PropertyMetadata(true));
 
-        private static readonly DependencyPropertyKey AvailableOperatorsPropertyKey =
-            DependencyProperty.RegisterReadOnly(nameof(AvailableOperators), typeof(IReadOnlyList<LogicalOperator>),
-                typeof(GroupOperatorChip),
-                new PropertyMetadata(new[]
-                {
-                    LogicalOperator.And,
-                    LogicalOperator.Or,
-                    LogicalOperator.NotAnd,
-                    LogicalOperator.NotOr
-                }));
+        public static readonly DependencyProperty IsAndProperty = IsAndPropertyKey.DependencyProperty;
 
-        public static readonly DependencyProperty AvailableOperatorsProperty = AvailableOperatorsPropertyKey.DependencyProperty;
+        private static readonly DependencyPropertyKey IsOrPropertyKey =
+            DependencyProperty.RegisterReadOnly(nameof(IsOr), typeof(bool), typeof(GroupOperatorChip),
+                new PropertyMetadata(false));
+
+        public static readonly DependencyProperty IsOrProperty = IsOrPropertyKey.DependencyProperty;
+
+        private ICommand setAndCommand;
+        private ICommand setOrCommand;
+
+        public GroupOperatorChip()
+        {
+            DefaultStyleKey = typeof(GroupOperatorChip);
+        }
 
         public LogicalOperator Operator
         {
@@ -41,25 +45,34 @@ namespace WWControls.Wpf.Grids
             set => SetValue(OperatorProperty, value);
         }
 
-        public string DisplayText
+        /// <summary>True when the group's combiner is the And segment (And / NotAnd).</summary>
+        public bool IsAnd
         {
-            get => (string)GetValue(DisplayTextProperty);
-            private set => SetValue(DisplayTextProperty, value);
+            get => (bool)GetValue(IsAndProperty);
+            private set => SetValue(IsAndPropertyKey, value);
         }
 
-        public IReadOnlyList<LogicalOperator> AvailableOperators =>
-            (IReadOnlyList<LogicalOperator>)GetValue(AvailableOperatorsProperty);
-
-        public GroupOperatorChip()
+        /// <summary>True when the group's combiner is the Or segment (Or / NotOr).</summary>
+        public bool IsOr
         {
-            DefaultStyleKey = typeof(GroupOperatorChip);
+            get => (bool)GetValue(IsOrProperty);
+            private set => SetValue(IsOrPropertyKey, value);
         }
+
+        public ICommand SetAndCommand =>
+            setAndCommand ?? (setAndCommand = new RelayCommand(_ => Operator = LogicalOperator.And));
+
+        public ICommand SetOrCommand =>
+            setOrCommand ?? (setOrCommand = new RelayCommand(_ => Operator = LogicalOperator.Or));
 
         private static void OnOperatorChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
             if (d is GroupOperatorChip chip)
             {
-                chip.DisplayText = chip.Operator.DisplayText();
+                var op = (LogicalOperator)e.NewValue;
+                bool isOr = op == LogicalOperator.Or || op == LogicalOperator.NotOr;
+                chip.IsAnd = !isOr;
+                chip.IsOr = isOr;
             }
         }
     }

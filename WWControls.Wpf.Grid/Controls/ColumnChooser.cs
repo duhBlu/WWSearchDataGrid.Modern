@@ -74,6 +74,37 @@ namespace WWControls.Wpf.Grids
                 new PropertyMetadata(null));
 
         /// <summary>
+        /// Root nodes of the banded tree view — a mix of <see cref="ColumnChooserBandNode"/> (top-level
+        /// bands) and bare <see cref="ColumnVisibilityInfo"/> leaves (ungrouped columns), in display
+        /// order. Populated only when <see cref="SourceDataGrid"/> declares bands; bound by the
+        /// tree that replaces the section listboxes in banded mode.
+        /// </summary>
+        public static readonly DependencyProperty BandTreeRootsProperty =
+            DependencyProperty.Register(nameof(BandTreeRoots), typeof(ObservableCollection<object>), typeof(ColumnChooser),
+                new PropertyMetadata(null));
+
+        /// <summary>
+        /// True when the source grid declares bands and the tree was built. Drives the template
+        /// switch between the flat 3-section listbox view and the banded tree view.
+        /// </summary>
+        private static readonly DependencyPropertyKey HasBandsPropertyKey =
+            DependencyProperty.RegisterReadOnly(nameof(HasBands), typeof(bool), typeof(ColumnChooser),
+                new PropertyMetadata(false));
+
+        public static readonly DependencyProperty HasBandsProperty = HasBandsPropertyKey.DependencyProperty;
+
+        /// <summary>
+        /// True when reorder controls (Move Up/Down + drag) should be offered — i.e. the grid allows
+        /// reordering AND the flat section view is active. Reorder isn't supported in banded mode yet,
+        /// so it is suppressed there.
+        /// </summary>
+        private static readonly DependencyPropertyKey CanReorderInFlatViewPropertyKey =
+            DependencyProperty.RegisterReadOnly(nameof(CanReorderInFlatView), typeof(bool), typeof(ColumnChooser),
+                new PropertyMetadata(false));
+
+        public static readonly DependencyProperty CanReorderInFlatViewProperty = CanReorderInFlatViewPropertyKey.DependencyProperty;
+
+        /// <summary>
         /// The currently selected <see cref="ColumnVisibilityInfo"/> across all three
         /// section listboxes. Updated when any section ListBox raises SelectionChanged
         /// and used as the CommandParameter for the Move Up / Move Down buttons.
@@ -205,6 +236,27 @@ namespace WWControls.Wpf.Grids
         {
             get => (ObservableCollection<ColumnVisibilityInfo>)GetValue(RightFixedColumnsProperty);
             set => SetValue(RightFixedColumnsProperty, value);
+        }
+
+        /// <summary>Root nodes of the banded tree. See <see cref="BandTreeRootsProperty"/>.</summary>
+        public ObservableCollection<object> BandTreeRoots
+        {
+            get => (ObservableCollection<object>)GetValue(BandTreeRootsProperty);
+            set => SetValue(BandTreeRootsProperty, value);
+        }
+
+        /// <summary>True when the source grid declares bands (tree view active). Read-only.</summary>
+        public bool HasBands
+        {
+            get => (bool)GetValue(HasBandsProperty);
+            private set => SetValue(HasBandsPropertyKey, value);
+        }
+
+        /// <summary>True when reorder controls should be offered (flat view + grid allows reorder). Read-only.</summary>
+        public bool CanReorderInFlatView
+        {
+            get => (bool)GetValue(CanReorderInFlatViewProperty);
+            private set => SetValue(CanReorderInFlatViewPropertyKey, value);
         }
 
         /// <summary>The currently selected column across all three sections.</summary>
@@ -356,6 +408,7 @@ namespace WWControls.Wpf.Grids
             LeftFixedColumns = new ObservableCollection<ColumnVisibilityInfo>();
             UnpinnedColumns = new ObservableCollection<ColumnVisibilityInfo>();
             RightFixedColumns = new ObservableCollection<ColumnVisibilityInfo>();
+            BandTreeRoots = new ObservableCollection<object>();
 
             // Cached delegate so AddValueChanged/RemoveValueChanged see the same
             // instance — DependencyPropertyDescriptor uses identity equality.
@@ -425,6 +478,9 @@ namespace WWControls.Wpf.Grids
             //   sections are populated; otherwise the top divider already covers it.
             IsTopDividerVisible = hasLeft && (hasUnpinned || hasRight);
             IsBottomDividerVisible = hasUnpinned && hasRight;
+
+            // Reorder is a flat-view-only affordance for now — hide the Move buttons in banded mode.
+            CanReorderInFlatView = canReorder && !HasBands;
         }
 
         public override void OnApplyTemplate()
@@ -462,6 +518,13 @@ namespace WWControls.Wpf.Grids
                 listBox.ContextMenuOpening += OnSectionContextMenuOpening;
             }
 
+            // The banded tree (shown in place of the sections when bands are declared) reuses the
+            // same shared header context menu, wired the same way — pushed onto whichever leaf row
+            // opened it.
+            _bandTree = GetTemplateChild("PART_BandTree") as TreeView;
+            if (_bandTree != null)
+                _bandTree.ContextMenuOpening += OnTreeContextMenuOpening;
+
             // Move Up/Down buttons fire on whichever section row is currently selected.
             // We mirror the selection into SelectedColumn so a single CommandParameter
             // binding works regardless of which listbox owns the focus.
@@ -489,6 +552,7 @@ namespace WWControls.Wpf.Grids
         private WWListBox _leftSectionListBox;
         private WWListBox _unpinnedSectionListBox;
         private WWListBox _rightSectionListBox;
+        private TreeView _bandTree;
 
         private IEnumerable<WWListBox> EnumerateSectionListBoxes()
         {
@@ -508,6 +572,12 @@ namespace WWControls.Wpf.Grids
             _leftSectionListBox = null;
             _unpinnedSectionListBox = null;
             _rightSectionListBox = null;
+
+            if (_bandTree != null)
+            {
+                _bandTree.ContextMenuOpening -= OnTreeContextMenuOpening;
+                _bandTree = null;
+            }
         }
 
         /// <summary>
@@ -530,31 +600,42 @@ namespace WWControls.Wpf.Grids
 
             // Walk up to the originating ListBoxItem so the chooser-row identity is preserved
             // even when the click lands on a child element (checkbox, text, glyph).
-            var origin = e.OriginalSource as DependencyObject;
-            ListBoxItem item = null;
-            var cursor = origin;
-            while (cursor != null)
-            {
-                if (cursor is ListBoxItem candidate)
-                {
-                    item = candidate;
-                    break;
-                }
-                cursor = System.Windows.Media.VisualTreeHelper.GetParent(cursor)
-                         ?? LogicalTreeHelper.GetParent(cursor);
-            }
+            var item = FindAncestor<ListBoxItem>(e.OriginalSource as DependencyObject);
+            ApplyRowContextMenu(item, listBox.ContextMenu, e);
+        }
 
-            if (item?.DataContext is not ColumnVisibilityInfo columnInfo || columnInfo.ContextMenuContext == null)
+        /// <summary>
+        /// Tree analog of <see cref="OnSectionContextMenuOpening"/>. Walks from the click up to the
+        /// owning <see cref="TreeViewItem"/>; leaf column rows get the shared header menu pushed onto
+        /// them, band caption rows (DataContext is a <see cref="ColumnChooserBandNode"/>) suppress it.
+        /// </summary>
+        private void OnTreeContextMenuOpening(object sender, ContextMenuEventArgs e)
+        {
+            if (sender is not TreeView tree) return;
+
+            var item = FindAncestor<TreeViewItem>(e.OriginalSource as DependencyObject);
+            ApplyRowContextMenu(item, tree.ContextMenu, e);
+        }
+
+        /// <summary>
+        /// Pushes a chooser row's pre-built <see cref="ColumnVisibilityInfo.ContextMenuContext"/> onto
+        /// the shared column-header context menu before it opens — mirroring the runtime DataContext
+        /// assignment the header right-click path performs, so the sort / best-fit / hide / pin /
+        /// clear-filter commands behave identically. Suppresses the menu when the row isn't an
+        /// identifiable column (right-click on background, or a band caption row).
+        /// </summary>
+        private void ApplyRowContextMenu(FrameworkElement item, ContextMenu fallbackMenu, ContextMenuEventArgs e)
+        {
+            var columnInfo = ResolveColumnInfo(item?.DataContext);
+            if (columnInfo?.ContextMenuContext == null)
             {
-                // No identifiable row (e.g., right-click on listbox background) — suppress the
-                // menu rather than show a half-bound copy whose commands would no-op.
                 e.Handled = true;
                 return;
             }
 
             Core.CommandManager.InvalidateRequerySuggested();
 
-            var menu = item.ContextMenu ?? listBox.ContextMenu;
+            var menu = item.ContextMenu ?? fallbackMenu;
             if (menu == null)
             {
                 e.Handled = true;
@@ -564,6 +645,35 @@ namespace WWControls.Wpf.Grids
             menu.DataContext = columnInfo.ContextMenuContext;
             menu.PlacementTarget = item;
         }
+
+        /// <summary>
+        /// Walks the visual (then logical) ancestor chain from <paramref name="origin"/> to the first
+        /// element of type <typeparamref name="T"/>, or null. Resolves which chooser row a
+        /// context-menu click landed on even when the click hit a child element.
+        /// </summary>
+        private static T FindAncestor<T>(DependencyObject origin) where T : DependencyObject
+        {
+            var cursor = origin;
+            while (cursor != null)
+            {
+                if (cursor is T match) return match;
+                cursor = System.Windows.Media.VisualTreeHelper.GetParent(cursor)
+                         ?? LogicalTreeHelper.GetParent(cursor);
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// Resolves the <see cref="ColumnVisibilityInfo"/> a chooser row represents from its DataContext —
+        /// the CVI directly (flat section rows) or via <see cref="ColumnChooserColumnNode.Column"/> (banded
+        /// tree leaves). Returns null for band caption rows or non-row targets (e.g. the search box).
+        /// </summary>
+        private static ColumnVisibilityInfo ResolveColumnInfo(object dataContext) => dataContext switch
+        {
+            ColumnVisibilityInfo cvi => cvi,
+            ColumnChooserColumnNode node => node.Column,
+            _ => null,
+        };
 
         #endregion
 
@@ -929,6 +1039,106 @@ namespace WWControls.Wpf.Grids
             // the rebuilt master list — clear otherwise so the Move buttons disable.
             if (SelectedColumn != null && !Columns.Contains(SelectedColumn))
                 SelectedColumn = null;
+
+            // Reflect the band structure (if any) into the tree view. Runs after the flat lists are
+            // built so leaves can reuse the same ColumnVisibilityInfo instances.
+            RebuildBandTree();
+        }
+
+        /// <summary>
+        /// Tracks the band nodes built for the current tree so their descendant-leaf subscriptions
+        /// can be torn down on the next rebuild.
+        /// </summary>
+        private readonly List<ColumnChooserBandNode> _bandNodes = new List<ColumnChooserBandNode>();
+
+        /// <summary>
+        /// Rebuilds <see cref="BandTreeRoots"/> from the source grid's
+        /// <see cref="SearchDataGrid.Bands"/> tree, reusing the <see cref="ColumnVisibilityInfo"/>
+        /// instances <see cref="RefreshColumns"/> just built for the leaves (so the tree, the flat
+        /// list, and the header context menu all act on the same objects). Sets <see cref="HasBands"/>
+        /// which flips the template between the flat section view and the banded tree. A no-op (tree
+        /// empty, <see cref="HasBands"/> false) when the grid declares no bands.
+        /// </summary>
+        private void RebuildBandTree()
+        {
+            // Tear down previous nodes' leaf subscriptions before dropping them.
+            foreach (var node in _bandNodes)
+                node.Dispose();
+            _bandNodes.Clear();
+            BandTreeRoots.Clear();
+
+            var grid = SourceDataGrid;
+            if (grid == null || grid.MaxBandDepth == 0 || grid.Bands == null || grid.Bands.Count == 0)
+            {
+                HasBands = false;
+                UpdateSectionFlags();
+                return;
+            }
+
+            // Map each leaf descriptor to its freshly built ColumnVisibilityInfo. Columns hidden from
+            // the chooser (ShowInColumnChooser=false) aren't in Columns, so they're absent here and
+            // get skipped in the walk below.
+            var byDescriptor = new Dictionary<GridColumn, ColumnVisibilityInfo>();
+            foreach (var info in Columns)
+            {
+                if (info.GridColumnDescriptor != null)
+                    byDescriptor[info.GridColumnDescriptor] = info;
+            }
+
+            var rootLeafSink = new List<ColumnVisibilityInfo>(); // discarded — only bands aggregate leaves
+            foreach (var descriptor in grid.Bands)
+            {
+                var node = BuildTreeNode(descriptor, byDescriptor, rootLeafSink);
+                if (node != null)
+                    BandTreeRoots.Add(node);
+            }
+
+            HasBands = BandTreeRoots.Count > 0;
+            UpdateSectionFlags();
+        }
+
+        /// <summary>
+        /// Recursively converts one band-tree descriptor into a chooser tree object: a leaf
+        /// <see cref="GridColumn"/> yields its <see cref="ColumnVisibilityInfo"/> (or null when the
+        /// column is hidden from the chooser); a <see cref="GridColumnBand"/> yields a
+        /// <see cref="ColumnChooserBandNode"/> (or null when it has no visible members). Every leaf
+        /// encountered is appended to <paramref name="leafSink"/> for the ancestor band's tri-state.
+        /// Mirrors <c>SearchDataGrid.BuildBandNode</c>.
+        /// </summary>
+        private ColumnChooserNode BuildTreeNode(
+            ColumnDescriptorElement descriptor,
+            Dictionary<GridColumn, ColumnVisibilityInfo> byDescriptor,
+            List<ColumnVisibilityInfo> leafSink)
+        {
+            switch (descriptor)
+            {
+                case GridColumn column:
+                    if (!byDescriptor.TryGetValue(column, out var info))
+                        return null;
+                    leafSink.Add(info);
+                    return new ColumnChooserColumnNode(info);
+
+                case GridColumnBand band:
+                    var children = new List<ColumnChooserNode>();
+                    var bandLeaves = new List<ColumnVisibilityInfo>();
+                    foreach (var child in band.Children)
+                    {
+                        var childNode = BuildTreeNode(child, byDescriptor, bandLeaves);
+                        if (childNode != null)
+                            children.Add(childNode);
+                    }
+
+                    if (children.Count == 0)
+                        return null;
+
+                    leafSink.AddRange(bandLeaves);
+                    var bandNode = new ColumnChooserBandNode(band.Header, band.HeaderTemplate, children, bandLeaves);
+                    _bandNodes.Add(bandNode);
+                    return bandNode;
+
+                default:
+                    return null;
+            }
         }
 
         /// <summary>

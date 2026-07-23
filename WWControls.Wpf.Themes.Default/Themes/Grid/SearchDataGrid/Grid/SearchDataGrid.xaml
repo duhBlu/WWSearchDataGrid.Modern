@@ -14,6 +14,7 @@
         <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Grid/SearchDataGrid/Row/RowEditPresenter.xaml" />
         <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Grid/SearchDataGrid/Row/EditFormPresenter.xaml" />
         <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Grid/SearchDataGrid/Column/DataGridColumnHeader.xaml" />
+        <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Grid/SearchDataGrid/Column/BandHeader.xaml" />
         <!--  GroupStyle.xaml is merged transitively via Row/DataGridRow.xaml (its flat group-header
               row template is referenced by the row style), so it is not merged again here.  -->
         <ResourceDictionary Source="/WWControls.Wpf.Themes.Default;component/Themes/Grid/SearchDataGrid/Grid/GroupPanel.xaml" />
@@ -105,7 +106,11 @@
                                                 <ColumnDefinition Width="Auto" />
                                             </Grid.ColumnDefinitions>
                                             <Grid.RowDefinitions>
+                                                <!--  Band header rows (collapsed when no bands)  -->
                                                 <RowDefinition Height="Auto" />
+                                                <!--  Column headers  -->
+                                                <RowDefinition Height="Auto" />
+                                                <!--  Filter row  -->
                                                 <RowDefinition Height="Auto" />
                                                 <!--  Total summary row slot when TotalSummaryPosition=Top  -->
                                                 <RowDefinition Height="Auto" />
@@ -119,6 +124,7 @@
                                             <!--  Per-Column Select All  -->
                                             <Button Style="{StaticResource {x:Static sdg:GridThemeKeys.GridSelectAllButton}}"
                                                     Focusable="false"
+                                                    Grid.Row="1"
                                                     Command="{x:Static DataGrid.SelectAllCommand}"
                                                     Panel.ZIndex="2" />
 
@@ -130,7 +136,7 @@
                                                 row-header column. Visibility mirrors the filter row so the
                                                 gap is only filled when the filter row is showing.
                                             -->
-                                            <Border Grid.Row="1"
+                                            <Border Grid.Row="2"
                                                     Grid.Column="0"
                                                     Background="#FFf9f9f9"
                                                     BorderBrush="#FFd0d0d0"
@@ -150,11 +156,33 @@
                                             </Border>
 
                                             <!--
+                                                Band header rows — caption cells grouping columns, stacked
+                                                above the column headers. Collapsed when no bands are declared
+                                                (MaxBandDepth = 0). Same grid-column as the headers so it shares
+                                                the horizontal scroll clip and the column-1 region; a col-0
+                                                gutter filler keeps the corner continuous above the Select-All.
+                                            -->
+                                            <Border Grid.Row="0"
+                                                    Grid.Column="0"
+                                                    Background="#FFf3f3f3"
+                                                    BorderBrush="#FFd0d0d0"
+                                                    BorderThickness="0,0,1,0"
+                                                    UseLayoutRounding="True"
+                                                    SnapsToDevicePixels="True"
+                                                    Visibility="{Binding MaxBandDepth, RelativeSource={RelativeSource AncestorType={x:Type sdg:SearchDataGrid}}, Converter={StaticResource IntToVisibilityConverter}}" />
+                                            <sdg:BandHeadersPresenter x:Name="PART_BandHeaders"
+                                                                      Grid.Row="0"
+                                                                      Grid.Column="1"
+                                                                      Style="{StaticResource {x:Static sdg:GridThemeKeys.GridSearchDataGridBandHeadersPresenter}}"
+                                                                      Visibility="{Binding MaxBandDepth, RelativeSource={RelativeSource AncestorType={x:Type sdg:SearchDataGrid}}, Converter={StaticResource IntToVisibilityConverter}}" />
+
+                                            <!--
                                                 Column Headers. The custom header type carries the OnClick
                                                 override that suppresses sort when the click originated on an
                                                 interactive child (the filter-popup button).
                                             -->
                                             <sdg:SearchDataGridColumnHeadersPresenter x:Name="PART_ColumnHeadersPresenter"
+                                                                                      Grid.Row="1"
                                                                                       Grid.Column="1"
                                                                                       Margin="0,0,0,0" />
 
@@ -167,7 +195,7 @@
                                             -->
                                             <sdg:FilterRowPresenter x:Name="PART_FilterRow"
                                                                     Style="{StaticResource {x:Static sdg:GridThemeKeys.FilterRowPresenter}}"
-                                                                    Grid.Row="1"
+                                                                    Grid.Row="2"
                                                                     Grid.Column="1">
                                                 <sdg:FilterRowPresenter.Visibility>
                                                     <MultiBinding Converter="{StaticResource FilterRowVisibilityConverter}">
@@ -188,7 +216,7 @@
                                                 rounded inconsistently, nudging the pinned row down 1px.
                                             -->
                                             <Border x:Name="PART_ColumnHeaderBottomBorder"
-                                                    Grid.Row="3"
+                                                    Grid.Row="4"
                                                     Grid.Column="0"
                                                     Grid.ColumnSpan="2"
                                                     Background="#d0d0d0"
@@ -201,12 +229,12 @@
 
                                             <!--  Rows  -->
                                             <ScrollContentPresenter x:Name="PART_ScrollContentPresenter"
-                                                                    Grid.Row="3"
+                                                                    Grid.Row="4"
                                                                     Grid.ColumnSpan="2"
                                                                     Margin="0,0,0,0"
                                                                     CanContentScroll="{TemplateBinding CanContentScroll}" />
 
-                                            <Border Grid.Row="3"
+                                            <Border Grid.Row="4"
                                                     Grid.ColumnSpan="2"
                                                     Margin="0,0,0,0"
                                                     VerticalAlignment="Top"
@@ -255,7 +283,7 @@
                                                 when its band is empty.
                                             -->
                                             <Border x:Name="PART_LeftFixedSeparator"
-                                                    Grid.Row="0"
+                                                    Grid.Row="1"
                                                     Grid.RowSpan="5"
                                                     Grid.Column="1"
                                                     HorizontalAlignment="Left"
@@ -282,7 +310,7 @@
                                                 </Border.Style>
                                             </Border>
                                             <Border x:Name="PART_RightFixedSeparator"
-                                                    Grid.Row="0"
+                                                    Grid.Row="1"
                                                     Grid.RowSpan="5"
                                                     Grid.Column="1"
                                                     HorizontalAlignment="Right"
@@ -312,6 +340,7 @@
                                                 Placeholder: top-right gap above the vertical scrollbar.
                                             -->
                                             <Border Grid.Row="0"
+                                                    Grid.RowSpan="2"
                                                     Grid.Column="2"
                                                     Background="#F9F9F9"
                                                     BorderBrush="#FFd0d0d0"
@@ -320,7 +349,7 @@
                                                     Margin="-1,0,0,0"
                                                     UseLayoutRounding="True"
                                                     SnapsToDevicePixels="True" />
-                                            <Border Grid.Row="1"
+                                            <Border Grid.Row="2"
                                                     Grid.Column="2"
                                                     Background="#ffffff"
                                                     BorderBrush="#FFd0d0d0"
@@ -341,7 +370,7 @@
                                                 for adding summaries via right-click.
                                             -->
                                             <Border x:Name="TotalSummaryGutter"
-                                                    Grid.Row="4"
+                                                    Grid.Row="5"
                                                     Grid.Column="0"
                                                     Background="#FFf9f9f9"
                                                     BorderBrush="#FFd0d0d0"
@@ -351,11 +380,11 @@
                                                     Visibility="{Binding ActualShowTotalSummaryRow, RelativeSource={RelativeSource AncestorType={x:Type sdg:SearchDataGrid}}, Converter={StaticResource BooleanToVisibilityCollapsedConverter}}" />
                                             <sdg:TotalSummaryRowPresenter x:Name="PART_TotalSummaryRow"
                                                                           Style="{StaticResource {x:Static sdg:GridThemeKeys.GridSearchDataGridTotalSummaryRow}}"
-                                                                          Grid.Row="4"
+                                                                          Grid.Row="5"
                                                                           Grid.Column="1"
                                                                           Visibility="{Binding ActualShowTotalSummaryRow, RelativeSource={RelativeSource AncestorType={x:Type sdg:SearchDataGrid}}, Converter={StaticResource BooleanToVisibilityCollapsedConverter}}" />
                                             <Border x:Name="TotalSummaryScrollFiller"
-                                                    Grid.Row="4"
+                                                    Grid.Row="5"
                                                     Grid.Column="2"
                                                     Background="#F9F9F9"
                                                     BorderBrush="#FFd0d0d0"
@@ -367,7 +396,7 @@
 
                                             <!--  Scrollbars  -->
                                             <ScrollBar x:Name="PART_VerticalScrollBar"
-                                                       Grid.Row="3"
+                                                       Grid.Row="4"
                                                        Grid.Column="2"
                                                        Orientation="Vertical"
                                                        Visibility="{TemplateBinding ComputedVerticalScrollBarVisibility}"
@@ -379,7 +408,7 @@
                                                 spacer = right band width, so the scrollbar spans only the
                                                 scrollable middle region.
                                             -->
-                                            <Grid Grid.Row="5" Grid.Column="1">
+                                            <Grid Grid.Row="6" Grid.Column="1">
                                                 <Grid.ColumnDefinitions>
                                                     <ColumnDefinition>
                                                         <ColumnDefinition.Width>
@@ -411,7 +440,7 @@
                                             <!--
                                                 Placeholder: bottom-left gap (below row header area, left of horizontal scrollbar).
                                             -->
-                                            <Border Grid.Row="5"
+                                            <Border Grid.Row="6"
                                                     Grid.Column="0"
                                                     Background="#F9F9F9"
                                                     BorderBrush="#FFd0d0d0"
@@ -421,7 +450,7 @@
                                             <!--
                                                 Placeholder: bottom-right corner (intersection of both scrollbars).
                                             -->
-                                            <Border Grid.Row="5"
+                                            <Border Grid.Row="6"
                                                     Grid.Column="2"
                                                     Background="#F9F9F9"
                                                     BorderBrush="#FFd0d0d0"
@@ -443,7 +472,7 @@
                                                 </Border.Style>
                                             </Border>
                                             <!-- Bottom Border of the grid when content extends offscreen -->
-                                            <Border Grid.Row="5"
+                                            <Border Grid.Row="6"
                                                     Grid.ColumnSpan="2"
                                                     BorderBrush="#FFd0d0d0"
                                                     BorderThickness="0,1,0,0"
@@ -465,7 +494,7 @@
                                             </Border>
                                             
                                             <!-- Right  Border of the grid when content extends offscreen -->
-                                            <Border Grid.RowSpan="5"
+                                            <Border Grid.RowSpan="6"
                                                     Grid.Column="3"
                                                     BorderBrush="#FFd0d0d0"
                                                     BorderThickness="0,0,1,0"
@@ -487,15 +516,15 @@
                                                 TotalSummaryPosition=Top relocates the summary row (and its
                                                 gutter / scrollbar fillers) to the slot between the filter
                                                 row and the data area, flipping the seam border from a top
-                                                edge to a bottom edge. Bottom (default) renders in row 4;
+                                                edge to a bottom edge. Bottom (default) renders in row 5;
                                                 None is handled by ActualShowTotalSummaryRow.
                                             -->
                                             <DataTrigger Binding="{Binding TotalSummaryPosition, RelativeSource={RelativeSource AncestorType={x:Type sdg:SearchDataGrid}}}" Value="Top">
-                                                <Setter TargetName="TotalSummaryGutter" Property="Grid.Row" Value="2" />
+                                                <Setter TargetName="TotalSummaryGutter" Property="Grid.Row" Value="3" />
                                                 <Setter TargetName="TotalSummaryGutter" Property="BorderThickness" Value="0,0,1,1" />
-                                                <Setter TargetName="PART_TotalSummaryRow" Property="Grid.Row" Value="2" />
+                                                <Setter TargetName="PART_TotalSummaryRow" Property="Grid.Row" Value="3" />
                                                 <Setter TargetName="PART_TotalSummaryRow" Property="BorderThickness" Value="0,0,0,1" />
-                                                <Setter TargetName="TotalSummaryScrollFiller" Property="Grid.Row" Value="2" />
+                                                <Setter TargetName="TotalSummaryScrollFiller" Property="Grid.Row" Value="3" />
                                                 <Setter TargetName="TotalSummaryScrollFiller" Property="BorderThickness" Value="1,0,0,1" />
                                             </DataTrigger>
                                         </ControlTemplate.Triggers>

@@ -2,7 +2,6 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:sdg="http://schemas.wwcontrols.com/wpf"
                     xmlns:sdgCore="clr-namespace:WWControls.Core;assembly=WWControls.Core"
-                    xmlns:behaviors="clr-namespace:WWControls.Wpf.Behaviors;assembly=WWControls.Wpf.Grid"
                     xmlns:converters="clr-namespace:WWControls.Wpf.Converters;assembly=WWControls.Wpf.Grid">
 
     <ResourceDictionary.MergedDictionaries>
@@ -11,6 +10,57 @@
     </ResourceDictionary.MergedDictionaries>
 
     <converters:BooleanToVisibilityCollapsedConverter x:Key="FilterEditorBoolToVis" />
+    <converters:FilterEditorDepthToBrushConverter x:Key="FilterEditorDepthToBrush" />
+
+    <!--  Group header action button chrome. The fill color comes from the derived Add / Delete styles.  -->
+    <Style x:Key="FilterEditorGroupButtonBase" TargetType="{x:Type Button}">
+        <Setter Property="Foreground" Value="White" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Padding" Value="8,3" />
+        <Setter Property="Margin" Value="4,0,0,0" />
+        <Setter Property="FontSize" Value="11" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type Button}">
+                    <Border Background="{TemplateBinding Background}"
+                            Padding="{TemplateBinding Padding}"
+                            CornerRadius="3">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="FilterEditorAddButton" TargetType="{x:Type Button}" BasedOn="{StaticResource FilterEditorGroupButtonBase}">
+        <Setter Property="Background" Value="#42a358" />
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Background" Value="#358648" />
+            </Trigger>
+            <Trigger Property="IsPressed" Value="True">
+                <Setter Property="Background" Value="#2c723d" />
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <!--  Delete button collapses on the root group (the group with no parent).  -->
+    <Style x:Key="FilterEditorDeleteButton" TargetType="{x:Type Button}" BasedOn="{StaticResource FilterEditorGroupButtonBase}">
+        <Setter Property="Background" Value="#ed4341" />
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Background" Value="#c83532" />
+            </Trigger>
+            <Trigger Property="IsPressed" Value="True">
+                <Setter Property="Background" Value="#a82e2c" />
+            </Trigger>
+            <DataTrigger Binding="{Binding Parent}" Value="{x:Null}">
+                <Setter Property="Visibility" Value="Collapsed" />
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
 
     <!--
         Shared template selector. Both group and condition templates are looked up by resource
@@ -81,187 +131,79 @@
         </Grid>
     </DataTemplate>
 
-    <!--  Group: operator chip + add-popup button + warning banner + recursive child list.  -->
+    <!--  Group: depth-tinted card with an AND/OR toggle, Add rule / Add group / Delete, and a recursive child list.  -->
     <DataTemplate x:Key="{x:Static sdg:GridThemeKeys.FilterEditorGroup}" DataType="{x:Type sdg:FilterGroupNode}">
-        <Border BorderBrush="#E1E5E9"
-                BorderThickness="0,0,0,0"
-                Margin="0,2,0,2"
-                Padding="0">
+        <Border Background="{Binding Depth, Converter={StaticResource FilterEditorDepthToBrush}}"
+                BorderBrush="#C7D3E2"
+                BorderThickness="1"
+                CornerRadius="5"
+                Margin="0,4"
+                Padding="8"
+                SnapsToDevicePixels="True">
             <StackPanel Orientation="Vertical">
 
-                <!--  Header: operator chip + [+] add popup button  -->
-                <StackPanel x:Name="GroupHeaderRow"
-                            Background="Transparent"
-                            Orientation="Horizontal"
-                            VerticalAlignment="Center">
-                    <sdg:GroupOperatorChip Operator="{Binding Operator, Mode=TwoWay}" />
+                <!--  Header: AND/OR toggle on the left; Add rule / Add group / Delete on the right.  -->
+                <Grid x:Name="GroupHeaderRow">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
 
-                    <Button x:Name="AddConditionDirectButton"
-                            BorderThickness="0"
-                            Cursor="Hand"
-                            Command="{Binding AddConditionCommand}"
-                            Margin="4,0,0,0"
-                            HorizontalAlignment="Center"
-                            VerticalAlignment="Center"
-                            Width="14"
-                            Height="14">
-                        <sdg:Icon Width="8"
-                                     Height="8"
-                                     StrokeThickness="3.5"
-                                     IconSource="{StaticResource {x:Static sdg:LucideIconKeys.Plus}}"
-                                     IconBrush="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
-                        <Button.Style>
-                            <Style TargetType="Button">
-                                <Setter Property="Background" Value="Gray" />
-                                <Setter Property="Foreground" Value="White" />
-                                <Setter Property="Template">
-                                    <Setter.Value>
-                                        <ControlTemplate TargetType="Button">
-                                            <Border Background="{TemplateBinding Background}" CornerRadius="8">
-                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                            </Border>
-                                        </ControlTemplate>
-                                    </Setter.Value>
-                                </Setter>
-                                <Style.Triggers>
-                                    <Trigger Property="IsMouseOver" Value="True">
-                                        <Setter Property="Background" Value="#42a358" />
-                                    </Trigger>
-                                    <Trigger Property="IsPressed" Value="True">
-                                        <Setter Property="Background" Value="#358648" />
-                                    </Trigger>
-                                </Style.Triggers>
-                            </Style>
-                        </Button.Style>
-                    </Button>
+                    <sdg:GroupOperatorChip Grid.Column="0" Operator="{Binding Operator, Mode=TwoWay}" />
 
-                    <Button x:Name="AddMenuButton"
-                            behaviors:ButtonContextMenuBehavior.OpenOnClick="True"
-                            Cursor="Hand"
-                            Margin="0,0,0,0"
-                            Padding="0"
-                            Width="18"
-                            Height="22">
-                        <sdg:Icon Width="8"
-                                     Height="8"
-                                     IconSource="{StaticResource {x:Static sdg:LucideIconKeys.ChevronDown}}"
-                                     IconBrush="Gray" />
-                        <Button.Template>
-                            <ControlTemplate TargetType="Button">
-                                <Border Background="Transparent"
-                                        BorderBrush="Transparent"
-                                        BorderThickness="1"
-                                        CornerRadius="3">
-                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                </Border>
-                            </ControlTemplate>
-                        </Button.Template>
-                        <Button.ContextMenu>
-                            <ContextMenu Style="{StaticResource {x:Static sdg:PrimitiveThemeKeys.ContextMenu}}">
-                                <MenuItem Header="Add condition"
-                                          Command="{Binding AddConditionCommand}">
-                                    <MenuItem.Icon>
-                                        <sdg:Icon Width="14"
-                                                     Height="14"
-                                                     IconSource="{StaticResource {x:Static sdg:LucideIconKeys.ListPlus}}" />
-                                    </MenuItem.Icon>
-                                </MenuItem>
-                                <MenuItem Header="Add group"
-                                          Command="{Binding AddGroupCommand}">
-                                    <MenuItem.Icon>
-                                        <sdg:Icon Width="14"
-                                                     Height="14"
-                                                     IconSource="{StaticResource {x:Static sdg:LucideIconKeys.LayersPlus}}" />
-                                    </MenuItem.Icon>
-                                </MenuItem>
-                                <MenuItem Header="Add custom expression"
-                                          IsEnabled="False"
-                                          ToolTip="Coming soon" />
-                            </ContextMenu>
-                        </Button.ContextMenu>
-                    </Button>
+                    <StackPanel Grid.Column="2" Orientation="Horizontal">
+                        <Button Style="{StaticResource FilterEditorAddButton}"
+                                Command="{Binding AddConditionCommand}"
+                                ToolTip="Add rule">
+                            <StackPanel Orientation="Horizontal">
+                                <sdg:Icon Width="12"
+                                          Height="12"
+                                          StrokeThickness="3"
+                                          IconSource="{StaticResource {x:Static sdg:LucideIconKeys.ListPlus}}"
+                                          IconBrush="White" />
+                                <TextBlock Text="Add rule" Margin="4,0,0,0" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
 
-                    <!--  Group-level remove (hidden for the root, which has no parent; otherwise visible on header hover)  -->
-                    <Button BorderThickness="0"
-                            Cursor="Hand"
-                            Command="{Binding RemoveCommand}"
-                            Margin="6,0,0,0"
-                            Padding="0"
-                            VerticalAlignment="Center"
-                            Width="14"
-                            Height="14"
-                            ToolTip="Remove group">
-                        <sdg:Icon Width="6"
-                                     Height="6"
-                                     StrokeThickness="4"
-                                     IconSource="{StaticResource {x:Static sdg:LucideIconKeys.X}}"
-                                     IconBrush="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
-                        <Button.Style>
-                            <Style TargetType="Button">
-                                <Setter Property="Background" Value="Gray" />
-                                <Setter Property="Foreground" Value="White" />
-                                <Setter Property="Visibility" Value="Collapsed" />
-                                <Setter Property="Template">
-                                    <Setter.Value>
-                                        <ControlTemplate TargetType="Button">
-                                            <Border Background="{TemplateBinding Background}" CornerRadius="7">
-                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                            </Border>
-                                        </ControlTemplate>
-                                    </Setter.Value>
-                                </Setter>
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding ElementName=GroupHeaderRow, Path=IsMouseOver}" Value="True">
-                                        <Setter Property="Visibility" Value="Visible" />
-                                    </DataTrigger>
-                                    <Trigger Property="IsMouseOver" Value="True">
-                                        <Setter Property="Background" Value="#ed4341" />
-                                    </Trigger>
-                                    <Trigger Property="IsPressed" Value="True">
-                                        <Setter Property="Background" Value="#c83532" />
-                                    </Trigger>
-                                    <DataTrigger Binding="{Binding Parent}" Value="{x:Null}">
-                                        <Setter Property="Visibility" Value="Collapsed" />
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </Button.Style>
-                    </Button>
-                </StackPanel>
+                        <Button Style="{StaticResource FilterEditorAddButton}"
+                                Command="{Binding AddGroupCommand}"
+                                ToolTip="Add group">
+                            <StackPanel Orientation="Horizontal">
+                                <sdg:Icon Width="12"
+                                          Height="12"
+                                          StrokeThickness="3"
+                                          IconSource="{StaticResource {x:Static sdg:LucideIconKeys.LayersPlus}}"
+                                          IconBrush="White" />
+                                <TextBlock Text="Add group" Margin="4,0,0,0" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
 
-                <!--  Inline lossy-OR warning  -->
-                <Border Background="#FFF4E5"
-                        BorderBrush="#F0B27A"
-                        BorderThickness="1"
-                        Margin="0,4,0,0"
-                        Padding="8,4"
-                        CornerRadius="3">
-                    <Border.Style>
-                        <Style TargetType="Border">
-                            <Setter Property="Visibility" Value="Collapsed" />
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding HasMixedColumnsWithOrOperator}" Value="True">
-                                    <Setter Property="Visibility" Value="Visible" />
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </Border.Style>
-                    <TextBlock Foreground="#7A4F1B"
-                               Text="Or / Not Or across multiple columns can't round-trip. The saved filter degrades to AND across columns."
-                               TextWrapping="Wrap"
-                               FontSize="11" />
-                </Border>
+                        <Button Style="{StaticResource FilterEditorDeleteButton}"
+                                Command="{Binding RemoveCommand}"
+                                ToolTip="Remove group">
+                            <StackPanel Orientation="Horizontal">
+                                <sdg:Icon Width="10"
+                                          Height="10"
+                                          StrokeThickness="3"
+                                          IconSource="{StaticResource {x:Static sdg:LucideIconKeys.X}}"
+                                          IconBrush="White" />
+                                <TextBlock Text="Delete" Margin="4,0,0,0" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                </Grid>
 
-                <!--  Recursive body. Indent nested groups by 24px.  -->
-                <Border Margin="24,4,0,0">
-                    <ItemsControl ItemsSource="{Binding Children}" ItemTemplateSelector="{StaticResource FilterEditorNodeTemplateSelector}">
-                        <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <StackPanel Orientation="Vertical" />
-                            </ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
-                    </ItemsControl>
-                </Border>
+                <!--  Recursive body: conditions first (added at the top), nested groups below (added at the bottom).  -->
+                <ItemsControl Margin="6,6,0,0"
+                              ItemsSource="{Binding Children}"
+                              ItemTemplateSelector="{StaticResource FilterEditorNodeTemplateSelector}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel Orientation="Vertical" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                </ItemsControl>
             </StackPanel>
         </Border>
     </DataTemplate>
@@ -284,7 +226,7 @@
 
                             <!--  Body: recursive group tree, rooted at RootGroup  -->
                             <Border Grid.Row="0"
-                                    Background="#F8F9FA"
+                                    Background="White"
                                     BorderBrush="#E1E5E9"
                                     BorderThickness="1"
                                     Padding="8"

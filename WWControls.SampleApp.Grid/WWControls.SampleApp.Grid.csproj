@@ -51,6 +51,9 @@
     <EmbeddedResource Include="Views\Samples\Columns\FixedColumnsSampleView.xaml" />
     <EmbeddedResource Include="Views\Samples\Columns\FixedColumnsSampleView.xaml.cs" />
     <EmbeddedResource Include="Views\Samples\Columns\FixedColumnsSampleViewModel.cs" />
+    <EmbeddedResource Include="Views\Samples\Columns\ColumnBandsSampleView.xaml" />
+    <EmbeddedResource Include="Views\Samples\Columns\ColumnBandsSampleView.xaml.cs" />
+    <EmbeddedResource Include="Views\Samples\Columns\ColumnBandsSampleViewModel.cs" />
     <EmbeddedResource Include="Views\Samples\Columns\BestFitSampleView.xaml" />
     <EmbeddedResource Include="Views\Samples\Columns\BestFitSampleView.xaml.cs" />
     <EmbeddedResource Include="Views\Samples\Columns\BestFitSampleViewModel.cs" />

@@ -1,0 +1,97 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sdg="http://schemas.wwcontrols.com/wpf">
+
+    <!--
+        ═══════════════════════════════════════════════════════════════════════
+        Banded column headers — the caption rows stacked above the real column
+        headers. One BandHeaderCell per GridColumnBand, positioned by the band
+        header presenter (added in a later phase) to span its member columns.
+
+        Palette matches the column header (bg #F9F9F9 / border #d0d0d0 / fg #333);
+        the caption is centered and SemiBold to read as a grouping header.
+        ═══════════════════════════════════════════════════════════════════════
+    -->
+
+    <Style x:Key="{x:Static sdg:GridThemeKeys.GridSearchDataGridBandHeaderCell}" TargetType="{x:Type sdg:BandHeaderCell}">
+        <Setter Property="Background" Value="#FFF3F3F3" />
+        <Setter Property="BorderBrush" Value="#FFd0d0d0" />
+        <Setter Property="Foreground" Value="#FF333333" />
+        <Setter Property="BorderThickness" Value="0,0,1,1" />
+        <Setter Property="Padding" Value="8,4" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type sdg:BandHeaderCell}">
+                    <ControlTemplate.Resources>
+                        <!--  Invisible hit-target thumb for band resize (mirrors the column-header gripper).  -->
+                        <Style x:Key="BandGripperThumbStyle" TargetType="{x:Type Thumb}">
+                            <Setter Property="Background" Value="Transparent" />
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="{x:Type Thumb}">
+                                        <Border Background="{TemplateBinding Background}" SnapsToDevicePixels="True" />
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </ControlTemplate.Resources>
+                    <Grid>
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                Padding="{TemplateBinding Padding}"
+                                UseLayoutRounding="True"
+                                SnapsToDevicePixels="True">
+                            <ContentPresenter Content="{TemplateBinding Header}"
+                                              ContentTemplate="{TemplateBinding HeaderTemplate}"
+                                              HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                              VerticalAlignment="{TemplateBinding VerticalContentAlignment}">
+                                <ContentPresenter.Resources>
+                                    <!--  Default look when Header is a plain string and no HeaderTemplate is set.  -->
+                                    <Style TargetType="{x:Type TextBlock}">
+                                        <Setter Property="FontWeight" Value="SemiBold" />
+                                        <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+                                    </Style>
+                                </ContentPresenter.Resources>
+                            </ContentPresenter>
+                        </Border>
+                        <Thumb x:Name="PART_BandRightGripper"
+                               Style="{StaticResource BandGripperThumbStyle}"
+                               HorizontalAlignment="Right"
+                               Width="6"
+                               Cursor="SizeWE"
+                               Panel.ZIndex="10" />
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style BasedOn="{StaticResource {x:Static sdg:GridThemeKeys.GridSearchDataGridBandHeaderCell}}" TargetType="{x:Type sdg:BandHeaderCell}" />
+
+    <!--
+        Band header rows presenter — hosts the column-aligned BandHeaderPanel that positions one
+        BandHeaderCell per band. Placed above the column headers by the grid template (Phase 4).
+        ClipToBounds keeps cells inside the column region while scrolling.
+    -->
+    <Style x:Key="{x:Static sdg:GridThemeKeys.GridSearchDataGridBandHeadersPresenter}" TargetType="{x:Type sdg:BandHeadersPresenter}">
+        <Setter Property="Background" Value="#FFF3F3F3" />
+        <Setter Property="BandRowHeight" Value="26" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type sdg:BandHeadersPresenter}">
+                    <Border Background="{TemplateBinding Background}"
+                            ClipToBounds="True">
+                        <sdg:BandHeaderPanel x:Name="PART_BandHeaderPanel"
+                                             RowHeight="{TemplateBinding BandRowHeight}" />
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style BasedOn="{StaticResource {x:Static sdg:GridThemeKeys.GridSearchDataGridBandHeadersPresenter}}" TargetType="{x:Type sdg:BandHeadersPresenter}" />
+
+</ResourceDictionary>

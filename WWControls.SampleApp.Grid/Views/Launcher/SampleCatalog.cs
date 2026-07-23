@@ -61,6 +61,11 @@ namespace WWControls.SampleApp.Grid.Views.Launcher
                         new[] { "Fixed", "Pinned" },
                         () => new FixedColumnsSampleView()),
 
+                    new("Column Bands",
+                        "SearchDataGrid.Bands groups columns under caption rows above the headers. Bands nest — a band's children are columns or sub-bands — and flatten into the normal column pipeline, so the filter row and sorting still work.",
+                        new[] { "Bands", "Grouped headers", "Nested" },
+                        () => new ColumnBandsSampleView()),
+
                     new("Best Fit (Auto-Width)",
                         "Measurement-based column auto-sizing: VisibleRows vs AllRows, per-column AllowBestFit / BestFitArea overrides, gripper double-click, and auto-fit on source change.",
                         new[] { "BestFit", "Auto-width", "Sizing" },

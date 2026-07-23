@@ -1,0 +1,63 @@
+<UserControl x:Class="WWControls.SampleApp.Grid.Views.Samples.Columns.ColumnBandsSampleView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:sdg="http://schemas.wwcontrols.com/wpf"
+             xmlns:sampleControls="clr-namespace:WWControls.SampleApp.Grid.Controls"
+             xmlns:local="clr-namespace:WWControls.SampleApp.Grid.Views.Samples.Columns"
+             mc:Ignorable="d">
+    <UserControl.DataContext>
+        <local:ColumnBandsSampleViewModel />
+    </UserControl.DataContext>
+
+    <sampleControls:SampleHostControl Sources="{x:Static sampleControls:SampleSources.ColumnBands}">
+        <DockPanel>
+            <TextBlock DockPanel.Dock="Top"
+                       Margin="16,12,16,4"
+                       FontSize="13"
+                       Foreground="#444"
+                       TextWrapping="Wrap">
+                <Run FontWeight="SemiBold" Text="Banded column headers" />
+                <LineBreak />
+                <Run Text="SearchDataGrid.Bands groups columns under caption rows above the column headers. A band's children can be columns or nested bands — here 'Parties &amp; Fulfillment' contains the 'Parties' and 'Fulfillment' sub-bands, so the header area stacks two caption rows. Bands are flattened into the normal column pipeline, so sorting, the filter row, and the column chooser all still work. Scroll sideways — the band captions stay aligned to their columns." />
+            </TextBlock>
+
+            <sdg:SearchDataGrid x:Name="Grid"
+                                Margin="10"
+                                ItemsSource="{Binding Items}"
+                                AutoGenerateColumns="False"
+                                CanUserAddRows="False"
+                                CanUserDeleteRows="False"
+                                IsReadOnly="True"
+                                IsColumnChooserEnabled="True"
+                                HorizontalScrollBarVisibility="Auto"
+                                SelectionMode="Extended"
+                                SelectionUnit="FullRow">
+                <sdg:SearchDataGrid.Bands>
+                    <sdg:GridColumnBand Header="Order">
+                        <sdg:GridColumn Width="90" FieldName="OrderNumber" Header="Order #" />
+                        <sdg:GridColumn Width="130" FieldName="OrderStatusName" Header="Status" DefaultSearchType="Equals" />
+                        <sdg:GridColumn Width="150" FieldName="OrderDate" Header="Order Date" DisplayStringFormat="MM/dd/yyyy" />
+                    </sdg:GridColumnBand>
+
+                    <sdg:GridColumnBand Header="Parties &amp; Fulfillment">
+                        <sdg:GridColumnBand Header="Parties">
+                            <sdg:GridColumn Width="200" FieldName="CustomerName" Header="Customer" />
+                            <sdg:GridColumn Width="170" FieldName="EmployeeName" Header="Employee" />
+                        </sdg:GridColumnBand>
+                        <sdg:GridColumnBand Header="Fulfillment">
+                            <sdg:GridColumn Width="150" FieldName="OrderLocationName" Header="Location" DefaultSearchType="Equals" />
+                            <sdg:GridColumn Width="130" FieldName="DealerPO" Header="Dealer PO" />
+                        </sdg:GridColumnBand>
+                    </sdg:GridColumnBand>
+
+                    <sdg:GridColumnBand Header="Financials">
+                        <sdg:GridColumn Width="110" FieldName="OrderItemsTotalPrice" Header="Total" DisplayStringFormat="C2" />
+                        <sdg:GridColumn Width="90" FieldName="OrderCancelled" Header="Cancelled" />
+                    </sdg:GridColumnBand>
+                </sdg:SearchDataGrid.Bands>
+            </sdg:SearchDataGrid>
+        </DockPanel>
+    </sampleControls:SampleHostControl>
+</UserControl>
